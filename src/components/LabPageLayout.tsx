@@ -28,7 +28,7 @@ export default function LabPageLayout({
   children,
 }: LabPageLayoutProps) {
   return (
-    <div className="pt-28 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="pt-8 pb-8 sm:pb-12 lg:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="lg:grid lg:grid-cols-12 lg:gap-12">
         {/* Left Column (Sticky) */}
         <aside className="lg:col-span-4 xl:col-span-3 mb-12 lg:mb-0">
@@ -114,7 +114,7 @@ export default function LabPageLayout({
                     }}
                   >
                     {link.label}
-                    <ExternalLink size={10} />
+                    <ExternalLink size={10} aria-hidden="true" />
                   </a>
                 ))}
               </div>
@@ -156,7 +156,7 @@ export function GrantsSection({ grants }: { grants: GrantRow[] }) {
         {grants.map((grant) => (
           <div
             key={grant.title}
-            className="card p-5 flex flex-col sm:flex-row sm:items-center gap-3"
+            className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3"
           >
             <span className="mechanism-pill flex-shrink-0">
               {grant.mechanism}
@@ -190,7 +190,7 @@ export function GrantsSection({ grants }: { grants: GrantRow[] }) {
 
 interface ProjectCard {
   title: string
-  status: 'Active' | 'In Review' | 'Published'
+  status: 'Active' | 'In Review' | 'Published' | 'In Preparation'
   description?: string
 }
 
@@ -209,6 +209,8 @@ export function ProjectsSection({
         return 'badge badge-review'
       case 'Published':
         return 'badge badge-published'
+      case 'In Preparation':
+        return 'badge badge-preparation'
       default:
         return 'badge badge-active'
     }
@@ -230,7 +232,7 @@ export function ProjectsSection({
         {projects.map((project) => (
           <div
             key={project.title}
-            className="card p-5"
+            className="card p-4 sm:p-5"
             style={{ borderLeft: '3px solid var(--gold)' }}
           >
             <div className="flex items-start justify-between gap-3 mb-2">
@@ -284,7 +286,7 @@ export function MenteesSection({ mentees }: { mentees: MenteeCard[] }) {
         {mentees.map((mentee) => (
           <div
             key={mentee.name}
-            className="p-5 rounded-lg"
+            className="p-4 sm:p-5 rounded-lg"
             style={{
               background: 'var(--gold-light)',
               border: '1px solid rgba(201, 168, 76, 0.15)',

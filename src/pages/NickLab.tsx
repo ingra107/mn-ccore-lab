@@ -4,6 +4,7 @@ import LabPageLayout, {
   MenteesSection,
 } from '../components/LabPageLayout'
 import SectionDivider from '../components/SectionDivider'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const grants = [
   {
@@ -54,6 +55,10 @@ const mentees = [
 ]
 
 export default function NickLab() {
+  usePageMeta(
+    'Nick Ingraham Lab | MN-CCORE',
+    'Nick Ingraham, MD -- Assistant Professor of Pulmonary & Critical Care Medicine at the University of Minnesota. Research in provider variation, lung-protective ventilation, and CLIF Consortium data science.'
+  )
   return (
     <LabPageLayout
       name="Nick Ingraham"

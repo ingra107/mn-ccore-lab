@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import SectionDivider from '../components/SectionDivider'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const pillars = [
   {
@@ -41,7 +42,7 @@ const pillars = [
 const affiliates = [
   {
     name: 'CLIF Consortium',
-    description: 'Common Longitudinal ICU Format — founding member',
+    description: 'Common Longitudinal ICU Format -- founding member',
     href: 'https://clif-icu.com/',
   },
   {
@@ -62,6 +63,10 @@ const affiliates = [
 ]
 
 export default function Home() {
+  usePageMeta(
+    'MN-CCORE | Minnesota Critical Care Outcomes & Research Effort',
+    'MN-CCORE Lab at the University of Minnesota. Advancing critical care through data-driven discovery, provider variation research, and the CLIF Consortium.'
+  )
   const [heroVisible, setHeroVisible] = useState(false)
   const pillarsRef = useScrollRevealGroup('.fade-in-up', 150)
   const affiliatesRef = useScrollRevealGroup('.fade-in-up', 100)
@@ -112,39 +117,27 @@ export default function Home() {
         `}</style>
 
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <h1
-            className="mb-6 transition-all duration-700"
+          {/* SVG Logo - the hero centerpiece */}
+          <div
+            className="mb-6 sm:mb-8 transition-all duration-700"
             style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 800,
-              fontSize: 'clamp(3rem, 8vw, 6rem)',
-              color: '#faf8f3',
-              letterSpacing: '0.06em',
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
             }}
           >
-            MN-CCORE
-          </h1>
+            <img
+              src="/logos/mnccore-logo-dark.svg"
+              alt="MN-CCORE - Minnesota Critical Care Outcomes & Research Effort"
+              className="mx-auto"
+              style={{
+                height: 'clamp(60px, 12vw, 100px)',
+                width: 'auto',
+              }}
+            />
+          </div>
 
           <p
-            className="mb-4 transition-all duration-700"
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 600,
-              fontSize: 'clamp(1.1rem, 2.5vw, 1.6rem)',
-              color: 'rgba(250, 248, 243, 0.85)',
-              letterSpacing: '0.02em',
-              opacity: heroVisible ? 1 : 0,
-              transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-              transitionDelay: '200ms',
-            }}
-          >
-            Minnesota Critical Care Outcomes & Research Effort
-          </p>
-
-          <p
-            className="mb-8 transition-all duration-700"
+            className="mb-6 sm:mb-8 transition-all duration-700"
             style={{
               fontFamily: 'var(--font-body)',
               fontStyle: 'italic',
@@ -152,7 +145,7 @@ export default function Home() {
               color: 'rgba(250, 248, 243, 0.6)',
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-              transitionDelay: '400ms',
+              transitionDelay: '300ms',
             }}
           >
             Advancing Critical Care Through Data-Driven Discovery
@@ -168,13 +161,13 @@ export default function Home() {
               textTransform: 'uppercase',
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-              transitionDelay: '600ms',
+              transitionDelay: '500ms',
             }}
           >
             University of Minnesota
           </p>
 
-          <div className="mt-12 flex justify-center gap-4">
+          <div className="mt-8 sm:mt-12 flex justify-center gap-4">
             <Link
               to="/team"
               className="cursor-pointer px-6 py-3 rounded-md text-sm font-semibold transition-all duration-200"
@@ -184,7 +177,7 @@ export default function Home() {
                 color: '#0f1923',
                 opacity: heroVisible ? 1 : 0,
                 transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-                transitionDelay: '700ms',
+                transitionDelay: '600ms',
               }}
             >
               Meet the Team
@@ -198,7 +191,7 @@ export default function Home() {
                 color: '#faf8f3',
                 opacity: heroVisible ? 1 : 0,
                 transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-                transitionDelay: '800ms',
+                transitionDelay: '700ms',
               }}
             >
               Publications
@@ -212,10 +205,11 @@ export default function Home() {
           style={{
             animation: 'bounceChevron 2s ease-in-out infinite',
             color: 'var(--gold)',
-            opacity: 0.6,
+            opacity: 0.4,
           }}
+          aria-hidden="true"
         >
-          <ChevronDown size={28} />
+          <ChevronDown size={24} />
         </div>
       </section>
 
@@ -223,12 +217,12 @@ export default function Home() {
 
       {/* Research Pillars */}
       <section
-        className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+        className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
         ref={pillarsRef}
       >
-        <div className="mb-16 max-w-2xl">
+        <div className="mb-8 sm:mb-12 lg:mb-16 max-w-2xl">
           <h2
-            className="fade-in-up text-3xl sm:text-4xl mb-4"
+            className="fade-in-up text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4"
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 600,
@@ -238,7 +232,7 @@ export default function Home() {
             Research Pillars
           </h2>
           <p
-            className="fade-in-up text-lg"
+            className="fade-in-up text-base sm:text-lg"
             style={{ color: 'var(--slate)' }}
           >
             Our work spans four interconnected domains, each advancing the
@@ -246,30 +240,30 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {pillars.map((pillar) => {
             const Icon = pillar.icon
             return (
               <div
                 key={pillar.title}
-                className="fade-in-up card p-8 cursor-default"
+                className="fade-in-up card p-4 sm:p-6 cursor-default"
                 style={{
                   borderLeft: '4px solid var(--gold)',
                 }}
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3 sm:gap-4">
                   <div
-                    className="flex-shrink-0 p-3 rounded-lg"
+                    className="flex-shrink-0 p-2.5 sm:p-3 rounded-lg"
                     style={{
                       background: 'rgba(201, 168, 76, 0.1)',
                       color: 'var(--gold)',
                     }}
                   >
-                    <Icon size={24} strokeWidth={1.5} />
+                    <Icon size={24} strokeWidth={1.5} aria-hidden="true" />
                   </div>
                   <div>
                     <h3
-                      className="text-xl mb-2"
+                      className="text-lg sm:text-xl mb-1.5 sm:mb-2"
                       style={{
                         fontFamily: 'var(--font-display)',
                         fontWeight: 600,
@@ -279,7 +273,7 @@ export default function Home() {
                       {pillar.title}
                     </h3>
                     <p
-                      className="text-base leading-relaxed"
+                      className="text-sm sm:text-base leading-relaxed"
                       style={{ color: 'var(--slate)' }}
                     >
                       {pillar.description}
@@ -296,12 +290,12 @@ export default function Home() {
 
       {/* Consortium & Affiliations */}
       <section
-        className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+        className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
         ref={affiliatesRef}
       >
-        <div className="mb-16 max-w-2xl">
+        <div className="mb-8 sm:mb-12 lg:mb-16 max-w-2xl">
           <h2
-            className="fade-in-up text-3xl sm:text-4xl mb-4"
+            className="fade-in-up text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4"
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 600,
@@ -311,7 +305,7 @@ export default function Home() {
             Consortium & Affiliations
           </h2>
           <p
-            className="fade-in-up text-lg"
+            className="fade-in-up text-base sm:text-lg"
             style={{ color: 'var(--slate)' }}
           >
             We are part of a growing network of institutions committed to
@@ -319,19 +313,19 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {affiliates.map((affiliate) => (
             <a
               key={affiliate.name}
               href={affiliate.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="fade-in-up card p-6 cursor-pointer group"
+              className="fade-in-up card p-5 sm:p-6 cursor-pointer group"
               style={{ textDecoration: 'none' }}
             >
-              <div className="flex items-start justify-between mb-3">
+              <div className="flex items-start justify-between mb-2 sm:mb-3">
                 <h3
-                  className="text-base font-semibold"
+                  className="text-sm sm:text-base font-semibold"
                   style={{
                     fontFamily: 'var(--font-body)',
                     color: 'var(--ink)',
@@ -343,10 +337,11 @@ export default function Home() {
                   size={14}
                   className="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   style={{ color: 'var(--gold)' }}
+                  aria-hidden="true"
                 />
               </div>
               <p
-                className="text-sm leading-relaxed"
+                className="text-xs sm:text-sm leading-relaxed"
                 style={{ color: 'var(--slate)' }}
               >
                 {affiliate.description}

@@ -33,6 +33,9 @@ export default function Layout() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Homepage hero is full-bleed, so no top padding needed there
+  const isHome = location.pathname === '/'
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Skip to content */}
@@ -46,6 +49,7 @@ export default function Layout() {
 
       {/* Navigation */}
       <nav
+        aria-label="Main navigation"
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
         style={{
           background: scrolled
@@ -56,7 +60,7 @@ export default function Layout() {
           backdropFilter: scrolled ? 'blur(12px)' : 'none',
           WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
           borderBottom: scrolled ? '1px solid rgba(201, 168, 76, 0.2)' : 'none',
-          padding: scrolled ? '12px 0' : '20px 0',
+          padding: scrolled ? '8px 0' : '16px 0',
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -65,17 +69,25 @@ export default function Layout() {
             className="flex items-center gap-3 cursor-pointer"
             style={{ textDecoration: 'none' }}
           >
-            <span
-              className="font-bold tracking-wider transition-all duration-300"
+            {/* Desktop: full SVG logo */}
+            <img
+              src={isDark ? '/logos/mnccore-logo-dark.svg' : '/logos/mnccore-logo-primary.svg'}
+              alt="MN-CCORE"
+              className="hidden sm:block transition-all duration-300"
               style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: scrolled ? '20px' : '24px',
-                color: 'var(--ink)',
-                letterSpacing: '0.08em',
+                height: scrolled ? '32px' : '38px',
               }}
-            >
-              MN-CCORE
-            </span>
+            />
+            {/* Mobile: compact mark */}
+            <img
+              src="/logos/mnccore-logo-mark.svg"
+              alt="MN-CCORE"
+              className="block sm:hidden transition-all duration-300"
+              style={{
+                height: scrolled ? '32px' : '36px',
+                filter: isDark ? 'invert(1) brightness(1.5)' : 'none',
+              }}
+            />
           </Link>
 
           {/* Desktop Nav */}
@@ -172,8 +184,8 @@ export default function Layout() {
         </div>
       </nav>
 
-      {/* Main content */}
-      <main id="main-content" className="flex-1">
+      {/* Main content — add top padding for non-home pages to clear sticky nav */}
+      <main id="main-content" className={`flex-1 ${isHome ? '' : 'pt-20'}`}>
         <Outlet />
       </main>
 
@@ -185,9 +197,8 @@ export default function Layout() {
           borderTop: '2px solid var(--gold)',
         }}
       >
-        {/* Adjust cream color reference for footer since it's always light text on dark bg */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {/* Column 1: About */}
             <div>
               <h3
@@ -214,6 +225,16 @@ export default function Layout() {
                 Department of Medicine
                 <br />
                 Division of Pulmonary, Allergy, Critical Care & Sleep Medicine
+              </p>
+              <p
+                className="text-sm mt-2"
+                style={{ color: 'rgba(250, 248, 243, 0.5)' }}
+              >
+                Mayo Memorial Building
+                <br />
+                420 Delaware St SE
+                <br />
+                Minneapolis, MN 55455
               </p>
             </div>
 
@@ -296,11 +317,49 @@ export default function Layout() {
                 ))}
               </ul>
             </div>
+
+            {/* Column 4: Social */}
+            <div>
+              <h3
+                className="text-lg font-bold mb-4"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  color: '#faf8f3',
+                }}
+              >
+                Social
+              </h3>
+              <ul className="space-y-2">
+                {[
+                  { label: 'Google Scholar', href: 'https://scholar.google.com/' },
+                  { label: 'ORCID', href: 'https://orcid.org/' },
+                  { label: 'GitHub', href: 'https://github.com/' },
+                ].map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm cursor-pointer transition-colors duration-200"
+                      style={{ color: 'rgba(250, 248, 243, 0.7)' }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.color = '#c9a84c')
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.color = 'rgba(250, 248, 243, 0.7)')
+                      }
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
           {/* Bottom bar */}
           <div
-            className="mt-12 pt-8 text-center text-xs"
+            className="mt-8 md:mt-12 pt-6 md:pt-8 text-center text-xs"
             style={{
               borderTop: '1px solid rgba(201, 168, 76, 0.2)',
               color: 'rgba(250, 248, 243, 0.4)',

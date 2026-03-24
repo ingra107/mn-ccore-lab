@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mn-ccore-lab.pages.dev/sitemap.xml

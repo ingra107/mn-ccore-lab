@@ -3,6 +3,7 @@ import LabPageLayout, {
   ProjectsSection,
 } from '../components/LabPageLayout'
 import SectionDivider from '../components/SectionDivider'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const grants = [
   {
@@ -18,6 +19,10 @@ const projects = [
 ]
 
 export default function NateLab() {
+  usePageMeta(
+    'Nathan Mesfin Lab | MN-CCORE',
+    'Nathan Mesfin, MD -- Assistant Professor of Critical Care Medicine at the University of Minnesota. Research in cardiac arrest survivability, DNR order variation, and chronic critical illness.'
+  )
   return (
     <LabPageLayout
       name="Nathan Mesfin"
