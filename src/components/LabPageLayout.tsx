@@ -1,6 +1,8 @@
 import { type ReactNode, useEffect, useState } from 'react'
 import { ArrowRight, ExternalLink } from 'lucide-react'
 import Avatar from './Avatar'
+import PublicationCard from './PublicationCard'
+import type { Publication } from '../data/types'
 
 interface ProfileLink {
   label: string
@@ -382,6 +384,37 @@ export function ProjectsSection({
 interface MenteeCard {
   name: string
   project: string
+}
+
+export function PublicationsSection({
+  publications,
+  id,
+  title = 'Publications',
+}: {
+  publications: Publication[]
+  id?: string
+  title?: string
+}) {
+  const sorted = [...publications].sort((a, b) => b.year - a.year)
+  return (
+    <section className="mb-16" id={id}>
+      <h2
+        className="text-xl sm:text-2xl mb-6"
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontWeight: 600,
+          color: 'var(--ink)',
+        }}
+      >
+        {title}
+      </h2>
+      <div className="space-y-4">
+        {sorted.map((pub) => (
+          <PublicationCard key={pub.id} pub={pub} />
+        ))}
+      </div>
+    </section>
+  )
 }
 
 export function MenteesSection({ mentees, id, title = 'MNCCORE Trainees' }: { mentees: MenteeCard[]; id?: string; title?: string }) {

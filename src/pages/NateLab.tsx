@@ -1,9 +1,11 @@
 import LabPageLayout, {
   GrantsSection,
   ProjectsSection,
+  PublicationsSection,
 } from '../components/LabPageLayout'
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { publications } from '../data/publications'
 
 const grants = [
   {
@@ -36,11 +38,19 @@ export default function NateLab() {
         { label: 'ORCID', href: 'https://orcid.org/0000-0001-8419-0339' },
         { label: 'UMN Bio', href: 'https://med.umn.edu/bio/nathan-mesfin' },
       ]}
+      photoUrl="https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/images/dom-faculty-_0135_layer-164_0.png?itok=YWiCOKFA"
       sections={[
+        { id: 'publications', label: 'Publications' },
         { id: 'grants', label: 'Grants & Proposals' },
         { id: 'research-projects', label: 'Research Projects' },
       ]}
     >
+      <PublicationsSection
+        publications={publications.filter((p) => p.authorSlugs?.includes('nate'))}
+        id="publications"
+      />
+      <SectionDivider />
+      <div className="py-4" />
       <GrantsSection grants={grants} id="grants" title="Grants & Proposals" />
       <SectionDivider />
       <div className="py-4" />

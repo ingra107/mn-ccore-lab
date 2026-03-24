@@ -2,9 +2,11 @@ import LabPageLayout, {
   GrantsSection,
   ProjectsSection,
   MenteesSection,
+  PublicationsSection,
 } from '../components/LabPageLayout'
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { publications } from '../data/publications'
 
 const grants = [
   {
@@ -71,13 +73,21 @@ export default function NickLab() {
         { label: 'ORCID', href: 'https://orcid.org/0000-0002-0292-0594' },
         { label: 'GitHub', href: 'https://github.com/ingra107' },
       ]}
+      photoUrl="https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-06/Nick%20Picture_2022.jpg?itok=VEDKgpUN"
       sections={[
+        { id: 'publications', label: 'Publications' },
         { id: 'grants', label: 'Active Grants' },
         { id: 'clif-projects', label: 'CLIF Projects' },
         { id: 'lab-projects', label: 'Lab Projects' },
         { id: 'mentees', label: 'Trainees' },
       ]}
     >
+      <PublicationsSection
+        publications={publications.filter((p) => p.authorSlugs?.includes('nick'))}
+        id="publications"
+      />
+      <SectionDivider />
+      <div className="py-4" />
       <GrantsSection grants={grants} id="grants" />
       <SectionDivider />
       <div className="py-4" />

@@ -31,6 +31,13 @@ const mnccoreMembers = [
   'Collins C',
   'Shyu D',
   'Fitzgerald B',
+  'Pendleton KM',
+  'Chipman JG',
+  'Dudley RA',
+  'Wacker D',
+  'Trujeque J',
+  'McEachron K',
+  'Safadi S',
 ]
 
 function topicLabel(topic: string): string {
@@ -52,28 +59,51 @@ function formatCitation(pub: Publication): string {
 }
 
 function formatAuthors(authors: string): React.ReactNode[] {
-  // Split by comma to get individual author segments
-  const segments = authors.split(',')
-  const result: React.ReactNode[] = []
+  const raw = authors.replace(/\.$/, '')
+  const segments = raw.split(',').map((s) => s.trim()).filter(Boolean)
 
-  segments.forEach((segment, i) => {
-    const trimmed = segment.trim()
-    const isMember = mnccoreMembers.some((m) => trimmed.includes(m))
+  const isMember = (seg: string) => mnccoreMembers.some((m) => seg.includes(m))
 
-    // Reconstruct with commas (except last segment)
-    const text = i === 0 ? segment : `,${segment}`
+  const renderSeg = (seg: string, key: string, prefix = ', '): React.ReactNode => {
+    const text = key === 'f0' ? seg : `${prefix}${seg}`
+    return isMember(seg) ? (
+      <strong key={key} style={{ color: 'var(--ink)', fontWeight: 600 }}>
+        {text}
+      </strong>
+    ) : (
+      <span key={key}>{text}</span>
+    )
+  }
 
-    if (isMember) {
+  if (segments.length <= 10) {
+    return segments.map((seg, i) => renderSeg(seg, i === 0 ? 'f0' : `f${i}`))
+  }
+
+  // >10 authors: first 3 + ... + MNCCORE members in order + ... + last author
+  const firstThree = segments.slice(0, 3)
+  const middle = segments.slice(3, segments.length - 1)
+  const last = segments[segments.length - 1]
+  const middleMembers = middle.filter(isMember)
+
+  const result: React.ReactNode[] = [
+    ...firstThree.map((seg, i) => renderSeg(seg, i === 0 ? 'f0' : `f${i}`)),
+  ]
+
+  if (middleMembers.length > 0) {
+    result.push(<span key="e1">, ...</span>)
+    middleMembers.forEach((seg, i) => {
       result.push(
-        <strong key={i} style={{ color: 'var(--ink)', fontWeight: 600 }}>
-          {text}
+        <strong key={`m${i}`} style={{ color: 'var(--ink)', fontWeight: 600 }}>
+          {`, ${seg}`}
         </strong>
       )
-    } else {
-      result.push(<span key={i}>{text}</span>)
-    }
-  })
+    })
+    result.push(<span key="e2">, ...</span>)
+  } else {
+    result.push(<span key="e1">, ...</span>)
+  }
 
+  result.push(renderSeg(last, 'last'))
   return result
 }
 
