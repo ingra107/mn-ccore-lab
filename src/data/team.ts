@@ -28,7 +28,10 @@ export const seniorMentors: TeamMember[] = [
   { name: 'Jeff Chipman', initials: 'JC', role: 'Senior Mentor & Surgical Critical Care', credentials: 'MD' },
 ]
 
+// Order = activity level in MNCCORE (most active first). Keep updated.
 export const facultyCollaborators: TeamMember[] = [
+  { name: 'Kendall McEachron', initials: 'KM', role: 'Faculty Collaborator' },
+  { name: 'Sami Safadi', initials: 'SS', role: 'Faculty Collaborator' },
   { name: 'Abbie Begnaud', initials: 'AB', role: 'Faculty', credentials: 'MD' },
   { name: 'Ben Henkle', initials: 'BH', role: 'Faculty', credentials: 'MD, MPH' },
   { name: 'Dave MacDonald', initials: 'DM', role: 'Faculty', credentials: 'MD, MS' },
@@ -37,10 +40,12 @@ export const facultyCollaborators: TeamMember[] = [
   { name: 'Michael Kalinoski', initials: 'MK', role: 'Faculty', credentials: 'MD' },
 ]
 
+// Order = activity level in MNCCORE (most active first). Keep updated.
 export const researchTeam: TeamMember[] = [
-  { name: 'Dan Shyu', initials: 'DS', role: 'Critical Care Fellow', credentials: 'MD' },
-  { name: 'Beret Fitzgerald', initials: 'BF', role: 'Critical Care Fellow', credentials: 'MD' },
+  { name: 'Steven Arriaza', initials: 'SA', role: 'Research Coordinator' },
   { name: 'Emma Bromley', initials: 'EB', role: 'Research Coordinator' },
   { name: 'Casey Eddington', initials: 'CE', role: 'Data Analyst' },
+  { name: 'Dan Shyu', initials: 'DS', role: 'Critical Care Fellow', credentials: 'MD' },
+  { name: 'Beret Fitzgerald', initials: 'BF', role: 'Critical Care Fellow', credentials: 'MD' },
   { name: 'Claire Collins', initials: 'CC', role: 'Medical Student Researcher' },
 ]
