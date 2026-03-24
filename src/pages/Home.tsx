@@ -105,7 +105,8 @@ export default function Home() {
     <>
       {/* Hero — compact, dense, no wasted space */}
       <section
-        className="relative overflow-hidden pt-20 sm:pt-24 pb-12 sm:pb-16"
+        className="relative overflow-hidden pb-12 sm:pb-16"
+        style={{ paddingTop: '140px' }}
         style={{
           background:
             'linear-gradient(135deg, #0f1923 0%, #1a2a3a 40%, #2c3e50 100%)',
@@ -131,7 +132,7 @@ export default function Home() {
           }
         `}</style>
 
-        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
+        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
           {/* SVG Logo */}
           <div
             className="mb-4 sm:mb-6 transition-all duration-700"
