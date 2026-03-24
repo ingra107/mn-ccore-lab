@@ -254,6 +254,29 @@ a:hover {
   color: var(--cream);
 }
 
+/* ── Content container — guaranteed centering ── */
+.content-container {
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .content-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content-container {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
 /* ── Section Header accent line ── */
 .section-header-line {
   flex: 1;

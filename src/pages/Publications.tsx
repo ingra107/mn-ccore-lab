@@ -143,7 +143,7 @@ export default function Publications() {
   return (
     <>
       {/* Header */}
-      <section className="pt-12 pb-8 sm:pb-12 lg:pb-16 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto">
+      <section className="pt-12 pb-8 sm:pb-12 lg:pb-16 content-container">
         <h1
           className="text-3xl sm:text-4xl lg:text-5xl mb-3 sm:mb-4"
           style={{
@@ -167,7 +167,7 @@ export default function Publications() {
 
       {/* Search + Filters + List */}
       <section
-        className="py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto"
+        className="py-12 sm:py-16 lg:py-24 content-container"
         ref={pubsRef}
       >
         {/* Search */}

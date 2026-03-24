@@ -73,7 +73,7 @@ export default function LabPageLayout({
   }
 
   return (
-    <div className="pt-8 pb-8 sm:pb-12 lg:pb-16 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto">
+    <div className="pt-8 pb-8 sm:pb-12 lg:pb-16 content-container">
       <div className="lg:grid lg:grid-cols-12 lg:gap-12">
         {/* Left Column (Sticky) */}
         <aside className="lg:col-span-4 xl:col-span-3 mb-12 lg:mb-0">
