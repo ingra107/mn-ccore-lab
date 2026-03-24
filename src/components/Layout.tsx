@@ -65,7 +65,7 @@ export default function Layout() {
           padding: scrolled ? '10px 0' : '16px 0',
         }}
       >
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="content-container flex items-center justify-between">
           <Link
             to="/"
             className="flex items-center gap-3 cursor-pointer"
@@ -203,7 +203,7 @@ export default function Layout() {
           borderTop: '2px solid var(--gold)',
         }}
       >
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div className="content-container py-12 md:py-16">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {/* Column 1: About */}
             <div>

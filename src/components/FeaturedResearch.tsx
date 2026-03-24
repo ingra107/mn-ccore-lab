@@ -35,7 +35,7 @@ export default function FeaturedResearch() {
       className="py-12 sm:py-16 lg:py-20"
       style={{ background: 'linear-gradient(135deg, var(--ice) 0%, var(--gold-light) 100%)' }}
     >
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="content-container">
         {/* Header */}
         <div className="mb-8 sm:mb-12 max-w-2xl">
           <h2
