@@ -102,11 +102,11 @@ export default function Home() {
 
   return (
     <>
-      {/* Hero — compact, dense, no wasted space */}
+      {/* Hero */}
       <section
-        className="relative overflow-hidden pb-12 sm:pb-16"
+        className="relative overflow-hidden pb-16 sm:pb-20"
         style={{
-          paddingTop: '140px',
+          paddingTop: '130px',
           background: 'linear-gradient(135deg, #0f1923 0%, #1a2a3a 40%, #2c3e50 100%)',
         }}
       >
@@ -181,9 +181,9 @@ export default function Home() {
             University of Minnesota
           </p>
 
-          {/* Stats — prominent, CLIF-style */}
+          {/* Stats — equal-width grid, consistent sizing */}
           <div
-            className="mb-8 transition-all duration-700 flex justify-center items-center gap-4 sm:gap-6"
+            className="mb-12 sm:mb-16 transition-all duration-700 grid grid-cols-3 gap-4 sm:gap-6 max-w-lg mx-auto"
             style={{
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
@@ -193,53 +193,28 @@ export default function Home() {
             {heroStats.map((stat) => (
               <div
                 key={stat.label}
-                className="px-5 py-3 rounded-lg text-center"
+                className="py-4 px-3 rounded-lg text-center"
                 style={{ background: 'rgba(250, 248, 243, 0.08)', border: '1px solid rgba(201, 168, 76, 0.15)' }}
               >
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 700, color: 'var(--gold)' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', fontWeight: 700, color: 'var(--gold)', lineHeight: 1 }}>
                   <HeroStat value={stat.value} suffix={stat.suffix} label="" />
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'rgba(250, 248, 243, 0.6)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(250, 248, 243, 0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '6px' }}>
                   {stat.label}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Buttons */}
+          {/* Action cards — primary CTAs, full-width grid */}
           <div
-            className="mb-10 sm:mb-12 flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 transition-all duration-700"
+            className="transition-all duration-700 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
             style={{
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
               transitionDelay: '500ms',
             }}
           >
-            <Link
-              to="/team"
-              className="cursor-pointer px-8 py-4 rounded-md text-base font-semibold transition-all duration-200"
-              style={{ fontFamily: 'var(--font-body)', background: 'var(--gold)', color: '#0f1923' }}
-            >
-              Meet the Team
-            </Link>
-            <Link
-              to="/publications"
-              className="cursor-pointer px-8 py-4 rounded-md text-base font-semibold transition-all duration-200"
-              style={{ fontFamily: 'var(--font-body)', border: '1px solid rgba(250, 248, 243, 0.3)', color: '#faf8f3' }}
-            >
-              Publications
-            </Link>
-            <button
-              onClick={() => document.getElementById('research-pillars')?.scrollIntoView({ behavior: 'smooth' })}
-              className="cursor-pointer px-8 py-4 rounded-md text-base font-semibold transition-all duration-200"
-              style={{ fontFamily: 'var(--font-body)', background: 'transparent', border: '1px solid var(--gold)', color: 'var(--gold)' }}
-            >
-              Our Research
-            </button>
-          </div>
-
-          {/* Action cards — INSIDE hero, dark variant */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {[
               { icon: Users, title: 'Our Team', description: 'Meet the researchers', to: '/team' },
               { icon: BookOpen, title: 'Publications', description: 'Research in top journals', to: '/publications' },
@@ -251,12 +226,12 @@ export default function Home() {
                 <Link
                   key={item.title}
                   to={item.to}
-                  className="cursor-pointer rounded-lg p-4 sm:p-5 text-center transition-all duration-200 group flex flex-col items-center justify-center"
+                  className="cursor-pointer rounded-lg p-5 sm:p-6 text-center transition-all duration-200 flex flex-col items-center justify-center gap-2"
                   style={{
                     textDecoration: 'none',
                     background: 'rgba(250, 248, 243, 0.05)',
                     border: '1px solid rgba(201, 168, 76, 0.15)',
-                    minHeight: '100px',
+                    minHeight: '110px',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'rgba(201, 168, 76, 0.1)'
@@ -268,21 +243,22 @@ export default function Home() {
                   }}
                 >
                   <Icon
-                    size={24}
+                    size={22}
                     strokeWidth={1.5}
-                    className="mx-auto mb-2"
-                    style={{ color: 'var(--gold)' }}
+                    style={{ color: 'var(--gold)', flexShrink: 0 }}
                     aria-hidden="true"
                   />
-                  <h3
-                    className="text-sm sm:text-base font-semibold mb-0.5"
-                    style={{ fontFamily: 'var(--font-body)', fontWeight: 600, color: '#faf8f3' }}
-                  >
-                    {item.title}
-                  </h3>
-                  <p className="text-xs" style={{ color: 'rgba(250, 248, 243, 0.5)' }}>
-                    {item.description}
-                  </p>
+                  <div>
+                    <h3
+                      className="text-sm sm:text-base font-semibold"
+                      style={{ fontFamily: 'var(--font-body)', fontWeight: 600, color: '#faf8f3', lineHeight: 1.2 }}
+                    >
+                      {item.title}
+                    </h3>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(250, 248, 243, 0.5)' }}>
+                      {item.description}
+                    </p>
+                  </div>
                 </Link>
             )
           })}
