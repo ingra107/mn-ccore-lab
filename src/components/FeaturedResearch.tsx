@@ -32,7 +32,7 @@ export default function FeaturedResearch() {
 
   return (
     <section
-      className="py-12 sm:py-16 lg:py-20"
+      className="py-8 sm:py-12 lg:py-16"
       style={{ background: 'linear-gradient(135deg, var(--ice) 0%, var(--gold-light) 100%)' }}
     >
       <div className="content-container">

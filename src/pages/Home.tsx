@@ -104,9 +104,9 @@ export default function Home() {
     <>
       {/* Hero */}
       <section
-        className="relative overflow-hidden pb-20 sm:pb-28"
+        className="relative overflow-hidden pb-12 sm:pb-16"
         style={{
-          paddingTop: '130px',
+          paddingTop: '90px',
           background: 'linear-gradient(135deg, #0f1923 0%, #1a2a3a 40%, #2c3e50 100%)',
         }}
       >
@@ -133,7 +133,7 @@ export default function Home() {
         <div className="relative z-10 text-center content-container">
           {/* SVG Logo */}
           <div
-            className="mb-4 sm:mb-6 transition-all duration-700"
+            className="flex justify-center mb-4 sm:mb-6 transition-all duration-700"
             style={{
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
@@ -142,7 +142,6 @@ export default function Home() {
             <img
               src="/logos/mnccore-logo-dark.svg"
               alt="MN-CCORE - Minnesota Critical Care Outcomes & Research Effort"
-              className="mx-auto"
               style={{
                 height: 'clamp(80px, 15vw, 150px)',
                 width: 'auto',
@@ -151,7 +150,7 @@ export default function Home() {
           </div>
 
           <p
-            className="mb-4 sm:mb-6 transition-all duration-700"
+            className="mb-3 sm:mb-5 transition-all duration-700"
             style={{
               fontFamily: 'var(--font-body)',
               fontStyle: 'italic',
@@ -166,7 +165,7 @@ export default function Home() {
           </p>
 
           <p
-            className="mb-6 transition-all duration-700"
+            className="mb-6 sm:mb-8 transition-all duration-700"
             style={{
               fontFamily: 'var(--font-mono)',
               fontSize: '0.8rem',
@@ -183,7 +182,7 @@ export default function Home() {
 
           {/* Stats — full-width grid, matches action cards below */}
           <div
-            className="mb-10 sm:mb-12 transition-all duration-700 grid grid-cols-3 gap-4 sm:gap-6"
+            className="mb-5 sm:mb-6 transition-all duration-700 grid grid-cols-3 gap-4 sm:gap-6"
             style={{
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
@@ -272,7 +271,7 @@ export default function Home() {
       <div className="section-cream">
         <section
           id="research-pillars"
-          className="py-12 sm:py-16 lg:py-24 content-container"
+          className="py-8 sm:py-12 lg:py-16 content-container"
           ref={pillarsRef}
         >
         <div className="mb-8 sm:mb-12 lg:mb-16 max-w-2xl">
@@ -351,7 +350,7 @@ export default function Home() {
       {/* Consortium & Affiliations */}
       <div style={{ background: 'var(--ice)' }}>
         <section
-          className="py-12 sm:py-16 lg:py-24 content-container"
+          className="py-8 sm:py-12 lg:py-16 content-container"
           ref={affiliatesRef}
         >
           <div className="mb-8 sm:mb-12 lg:mb-16 max-w-2xl">

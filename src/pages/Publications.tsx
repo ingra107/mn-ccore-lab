@@ -167,7 +167,7 @@ export default function Publications() {
 
       {/* Search + Filters + List */}
       <section
-        className="py-12 sm:py-16 lg:py-24 content-container"
+        className="py-8 sm:py-12 lg:py-16 content-container"
         ref={pubsRef}
       >
         {/* Search */}

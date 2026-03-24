@@ -91,7 +91,7 @@ export default function CLIFMap() {
       style={{ overflow: 'hidden' }}
     >
       <div
-        className="py-12 sm:py-16 lg:py-24 content-container"
+        className="py-8 sm:py-12 lg:py-16 content-container"
         style={{
           opacity: visible ? 1 : 0,
           transform: visible ? 'translateY(0)' : 'translateY(30px)',

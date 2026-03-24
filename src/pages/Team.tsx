@@ -60,7 +60,7 @@ export default function Team() {
 
       {/* Co-Directors */}
       <section
-        className="py-12 sm:py-16 lg:py-24 content-container"
+        className="py-8 sm:py-12 lg:py-16 content-container"
         ref={directorsRef}
       >
         <h2
@@ -74,7 +74,7 @@ export default function Team() {
           Co-Directors
         </h2>
 
-        <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {directors.map((director) => {
             const stats = getDirectorStats(director.slug)
             const keywords = researchKeywords[director.slug] ?? []
@@ -188,7 +188,7 @@ export default function Team() {
 
       {/* Senior Mentors */}
       <section
-        className="py-12 sm:py-16 lg:py-24 content-container"
+        className="py-8 sm:py-12 lg:py-16 content-container"
         ref={mentorsRef}
       >
         <h2
@@ -234,7 +234,7 @@ export default function Team() {
 
       {/* Faculty Collaborators */}
       <section
-        className="py-12 sm:py-16 lg:py-24 content-container"
+        className="py-8 sm:py-12 lg:py-16 content-container"
         ref={facultyRef}
       >
         <h2
@@ -278,7 +278,7 @@ export default function Team() {
 
       {/* Research Team */}
       <section
-        className="py-12 sm:py-16 lg:py-24 content-container"
+        className="py-8 sm:py-12 lg:py-16 content-container"
         ref={researchRef}
       >
         <h2
