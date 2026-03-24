@@ -17,20 +17,20 @@ function generateNodes(count: number): Node[] {
   for (let i = 0; i < count; i++) {
     nodes.push({
       id: i,
-      cx: Math.random() * 100,
-      cy: Math.random() * 100,
-      r: 1.5 + Math.random() * 1.5,
+      cx: Math.random() * 1000,
+      cy: Math.random() * 1000,
+      r: 2 + Math.random() * 2,
       opacity: 0.06 + Math.random() * 0.04,
       duration: 15 + Math.random() * 15,
       delay: -(Math.random() * 20),
-      dx: (Math.random() - 0.5) * 6,
-      dy: (Math.random() - 0.5) * 6,
+      dx: (Math.random() - 0.5) * 15,
+      dy: (Math.random() - 0.5) * 15,
     })
   }
   return nodes
 }
 
-function generateEdges(nodes: Node[], threshold: number) {
+function generateEdges(nodes: Node[], threshold: number = 250) {
   const edges: { x1: number; y1: number; x2: number; y2: number; opacity: number }[] = []
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
@@ -54,8 +54,8 @@ function generateEdges(nodes: Node[], threshold: number) {
 
 export default function NetworkBackground() {
   const { nodes, edges, keyframes } = useMemo(() => {
-    const n = generateNodes(25)
-    const e = generateEdges(n, 25)
+    const n = generateNodes(30)
+    const e = generateEdges(n, 250)
 
     // Generate unique keyframe definitions for each node
     const kf = n
@@ -63,8 +63,8 @@ export default function NetworkBackground() {
         (node) => `
       @keyframes networkFloat${node.id} {
         0%, 100% { transform: translate(0, 0); }
-        33% { transform: translate(${node.dx}px, ${node.dy * 0.6}px); }
-        66% { transform: translate(${node.dx * -0.4}px, ${node.dy}px); }
+        33% { transform: translate(${node.dx}px, ${(node.dy * 0.6).toFixed(1)}px); }
+        66% { transform: translate(${(node.dx * -0.4).toFixed(1)}px, ${node.dy}px); }
       }
     `
       )
@@ -88,7 +88,7 @@ export default function NetworkBackground() {
       <svg
         width="100%"
         height="100%"
-        viewBox="0 0 100 100"
+        viewBox="0 0 1000 1000"
         preserveAspectRatio="xMidYMid slice"
         xmlns="http://www.w3.org/2000/svg"
       >
@@ -100,7 +100,7 @@ export default function NetworkBackground() {
             x2={edge.x2}
             y2={edge.y2}
             stroke="#c9a84c"
-            strokeWidth="0.1"
+            strokeWidth="0.5"
             opacity={edge.opacity}
           />
         ))}
