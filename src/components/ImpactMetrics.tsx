@@ -51,8 +51,7 @@ function MetricCard({
 export default function ImpactMetrics() {
   return (
     <section
-      className="relative py-16 sm:py-20"
-      style={{ background: 'var(--ink)' }}
+      className="section-ink relative py-16 sm:py-20"
     >
       {/* Top gold accent line */}
       <div

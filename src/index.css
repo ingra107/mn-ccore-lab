@@ -164,7 +164,12 @@ a:hover {
 }
 
 .dark .card {
-  border: 1px solid rgba(201, 168, 76, 0.08);
+  background: #162535;
+  border: 1px solid rgba(201, 168, 76, 0.12);
+}
+
+.dark .card:hover {
+  background: #1e3048;
 }
 
 /* ── Status Badges ── */
@@ -284,4 +289,21 @@ a:hover {
   background: linear-gradient(to right, var(--gold), transparent);
   opacity: 0.5;
   margin-left: 12px;
+}
+
+/* ── Always-dark sections (ink bg) — don't flip in dark mode ── */
+/* Use on ImpactMetrics, CLIFMap, any section that must stay dark on both themes */
+.section-ink {
+  background-color: #0f1923;
+}
+.dark .section-ink {
+  background-color: #0a1118;
+}
+
+/* ── Cream section divider — slight tint in dark mode for visibility ── */
+.section-cream {
+  background-color: var(--cream);
+}
+.dark .section-cream {
+  background-color: #131f2d;
 }

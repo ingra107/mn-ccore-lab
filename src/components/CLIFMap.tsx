@@ -87,10 +87,8 @@ export default function CLIFMap() {
   return (
     <section
       ref={sectionRef}
-      style={{
-        background: 'var(--ink)',
-        overflow: 'hidden',
-      }}
+      className="section-ink"
+      style={{ overflow: 'hidden' }}
     >
       <div
         className="py-12 sm:py-16 lg:py-24 content-container"

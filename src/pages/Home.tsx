@@ -268,8 +268,8 @@ export default function Home() {
 
       {/* Sections alternate backgrounds: dark → cream → gradient → dark → dark → ice */}
 
-      {/* Research Pillars — full-width cream bg */}
-      <div style={{ background: 'var(--cream)' }}>
+      {/* Research Pillars — cream/dark alternate bg */}
+      <div className="section-cream">
         <section
           id="research-pillars"
           className="py-12 sm:py-16 lg:py-24 content-container"
