@@ -47,7 +47,6 @@ const labProjects = [
 ]
 
 const mentees = [
-  { name: 'Nathan Mesfin', project: 'CCI in ARDS' },
   { name: 'Emma Bromley', project: 'GDMS x LPV Hebbel Abstract' },
   { name: 'Steven Arriaza', project: 'Hospital Transfer Qualitative' },
   { name: 'Kendall McEachron', project: 'EGS Database' },
@@ -76,7 +75,7 @@ export default function NickLab() {
         { id: 'grants', label: 'Active Grants' },
         { id: 'clif-projects', label: 'CLIF Projects' },
         { id: 'lab-projects', label: 'Lab Projects' },
-        { id: 'mentees', label: 'Mentees' },
+        { id: 'mentees', label: 'Trainees' },
       ]}
     >
       <GrantsSection grants={grants} id="grants" />

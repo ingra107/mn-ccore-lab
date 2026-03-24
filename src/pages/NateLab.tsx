@@ -10,6 +10,7 @@ const grants = [
     mechanism: 'K23',
     title: 'IHCA Survivability Calculator',
     agency: 'NHLBI',
+    proposed: true,
   },
 ]
 
@@ -36,11 +37,11 @@ export default function NateLab() {
         { label: 'UMN Bio', href: 'https://med.umn.edu/bio/nathan-mesfin' },
       ]}
       sections={[
-        { id: 'grants', label: 'Active Grants' },
+        { id: 'grants', label: 'Grants & Proposals' },
         { id: 'research-projects', label: 'Research Projects' },
       ]}
     >
-      <GrantsSection grants={grants} id="grants" />
+      <GrantsSection grants={grants} id="grants" title="Grants & Proposals" />
       <SectionDivider />
       <div className="py-4" />
       <ProjectsSection title="Research Projects" projects={projects} id="research-projects" />

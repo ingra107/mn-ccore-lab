@@ -217,9 +217,10 @@ interface GrantRow {
   mechanism: string
   title: string
   agency: string
+  proposed?: boolean
 }
 
-export function GrantsSection({ grants, id }: { grants: GrantRow[]; id?: string }) {
+export function GrantsSection({ grants, id, title = 'Active Grants' }: { grants: GrantRow[]; id?: string; title?: string }) {
   return (
     <section className="mb-16" id={id}>
       <h2
@@ -230,13 +231,14 @@ export function GrantsSection({ grants, id }: { grants: GrantRow[]; id?: string 
           color: 'var(--ink)',
         }}
       >
-        Active Grants
+        {title}
       </h2>
       <div className="space-y-4">
         {grants.map((grant) => (
           <div
             key={grant.title}
             className="card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-3"
+            style={grant.proposed ? { opacity: 0.75 } : undefined}
           >
             <span className="mechanism-pill flex-shrink-0">
               {grant.mechanism}
@@ -251,6 +253,11 @@ export function GrantsSection({ grants, id }: { grants: GrantRow[]; id?: string 
               >
                 {grant.title}
               </h3>
+              {grant.proposed && (
+                <p className="text-xs mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
+                  Under review
+                </p>
+              )}
             </div>
             <span
               className="text-xs flex-shrink-0"
@@ -377,19 +384,22 @@ interface MenteeCard {
   project: string
 }
 
-export function MenteesSection({ mentees, id }: { mentees: MenteeCard[]; id?: string }) {
+export function MenteesSection({ mentees, id, title = 'MNCCORE Trainees' }: { mentees: MenteeCard[]; id?: string; title?: string }) {
   return (
     <section className="mb-16" id={id}>
       <h2
-        className="text-xl sm:text-2xl mb-6"
+        className="text-xl sm:text-2xl mb-2"
         style={{
           fontFamily: 'var(--font-display)',
           fontWeight: 600,
           color: 'var(--ink)',
         }}
       >
-        Mentee Projects
+        {title}
       </h2>
+      <p className="text-sm mb-6" style={{ color: 'var(--slate)', fontFamily: 'var(--font-body)' }}>
+        Trainees are shared across MNCCORE — we mentor as a team.
+      </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {mentees.map((mentee) => (
           <div

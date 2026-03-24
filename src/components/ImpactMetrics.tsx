@@ -1,10 +1,10 @@
 import { useCountUp } from '../hooks/useCountUp'
 
 const metrics = [
-  { value: 4, suffix: '', label: 'Active Grants' },
+  { value: 3, suffix: '', label: 'Active Grants' },
   { value: 14, suffix: '+', label: 'Publications' },
   { value: 13, suffix: '+', label: 'Research Sites' },
-  { value: 15, suffix: '', label: 'Team Members' },
+  { value: 8, suffix: '+', label: 'MNCCORE Trainees' },
 ]
 
 function MetricCard({
