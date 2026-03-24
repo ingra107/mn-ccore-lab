@@ -131,7 +131,7 @@ export default function Home() {
           }
         `}</style>
 
-        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto">
           {/* SVG Logo */}
           <div
             className="mb-4 sm:mb-6 transition-all duration-700"
@@ -240,7 +240,7 @@ export default function Home() {
           </div>
 
           {/* Action cards — INSIDE hero, dark variant */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-[1440px] mx-auto">
             {[
               { icon: Users, title: 'Our Team', description: 'Meet the researchers', to: '/team' },
               { icon: BookOpen, title: 'Publications', description: 'Research in top journals', to: '/publications' },
@@ -295,7 +295,7 @@ export default function Home() {
       {/* Research Pillars */}
       <section
         id="research-pillars"
-        className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+        className="py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto"
         ref={pillarsRef}
       >
         <div className="mb-8 sm:mb-12 lg:mb-16 max-w-2xl">
@@ -377,7 +377,7 @@ export default function Home() {
       {/* Consortium & Affiliations */}
       <div style={{ background: 'var(--ice)' }}>
         <section
-          className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+          className="py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto"
           ref={affiliatesRef}
         >
           <div className="mb-8 sm:mb-12 lg:mb-16 max-w-2xl">

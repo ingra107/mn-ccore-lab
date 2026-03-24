@@ -93,7 +93,7 @@ export default function CLIFMap() {
       }}
     >
       <div
-        className="py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+        className="py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto"
         style={{
           opacity: visible ? 1 : 0,
           transform: visible ? 'translateY(0)' : 'translateY(30px)',

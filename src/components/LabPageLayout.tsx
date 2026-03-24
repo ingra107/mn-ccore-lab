@@ -73,7 +73,7 @@ export default function LabPageLayout({
   }
 
   return (
-    <div className="pt-8 pb-8 sm:pb-12 lg:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="pt-8 pb-8 sm:pb-12 lg:pb-16 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto">
       <div className="lg:grid lg:grid-cols-12 lg:gap-12">
         {/* Left Column (Sticky) */}
         <aside className="lg:col-span-4 xl:col-span-3 mb-12 lg:mb-0">
@@ -294,7 +294,7 @@ function ProjectCardItem({ project }: { project: ProjectCard }) {
 
   return (
     <div
-      className="card p-5 sm:p-6 cursor-pointer transition-all duration-200 relative"
+      className="card p-5 sm:p-6 pl-6 sm:pl-8 cursor-pointer transition-all duration-200 relative"
       style={{
         borderLeft: hovered ? '5px solid var(--gold)' : '3px solid var(--gold)',
         outline: 'none',

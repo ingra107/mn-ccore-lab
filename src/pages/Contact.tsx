@@ -31,7 +31,7 @@ export default function Contact() {
   return (
     <>
       {/* Header */}
-      <section className="pt-12 pb-8 sm:pb-12 lg:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <section className="pt-12 pb-8 sm:pb-12 lg:pb-16 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto">
         <h1
           className="text-3xl sm:text-4xl lg:text-5xl mb-3 sm:mb-4"
           style={{
@@ -54,7 +54,7 @@ export default function Contact() {
       <SectionDivider />
 
       <section
-        className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+        className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto"
         ref={contentRef}
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">

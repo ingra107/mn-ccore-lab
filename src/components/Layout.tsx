@@ -8,8 +8,8 @@ import PageTransition from './PageTransition'
 const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/team', label: 'Team' },
-  { to: '/nick', label: 'Nick Ingraham' },
-  { to: '/nate', label: 'Nathan Mesfin' },
+  { to: '/nick', label: 'Ingraham Lab' },
+  { to: '/nate', label: 'Mesfin Lab' },
   { to: '/publications', label: 'Publications' },
   { to: '/contact', label: 'Contact' },
 ]
@@ -65,7 +65,7 @@ export default function Layout() {
           padding: scrolled ? '10px 0' : '16px 0',
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <Link
             to="/"
             className="flex items-center gap-3 cursor-pointer"
@@ -93,12 +93,12 @@ export default function Layout() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="cursor-pointer px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap"
                 style={{
                   fontFamily: 'var(--font-body)',
                   color:
@@ -203,7 +203,7 @@ export default function Layout() {
           borderTop: '2px solid var(--gold)',
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {/* Column 1: About */}
             <div>
