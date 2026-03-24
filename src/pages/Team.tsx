@@ -247,7 +247,7 @@ export default function Team() {
           Faculty Collaborators
         </h2>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 sm:gap-6">
           {facultyCollaborators.map((member) => (
             <div key={member.name} className="fade-in-up text-center p-4 rounded-lg transition-all duration-200" style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)' }}>
               <div className="flex justify-center mb-2">

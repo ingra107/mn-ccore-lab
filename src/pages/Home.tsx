@@ -208,7 +208,7 @@ export default function Home() {
 
           {/* Buttons */}
           <div
-            className="mb-14 sm:mb-16 flex flex-wrap justify-center gap-3 sm:gap-4 transition-all duration-700"
+            className="mb-10 sm:mb-12 flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 transition-all duration-700"
             style={{
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
@@ -239,7 +239,7 @@ export default function Home() {
           </div>
 
           {/* Action cards — INSIDE hero, dark variant */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {[
               { icon: Users, title: 'Our Team', description: 'Meet the researchers', to: '/team' },
               { icon: BookOpen, title: 'Publications', description: 'Research in top journals', to: '/publications' },
@@ -251,11 +251,12 @@ export default function Home() {
                 <Link
                   key={item.title}
                   to={item.to}
-                  className="cursor-pointer rounded-lg p-4 sm:p-5 text-center transition-all duration-200 group"
+                  className="cursor-pointer rounded-lg p-4 sm:p-5 text-center transition-all duration-200 group flex flex-col items-center justify-center"
                   style={{
                     textDecoration: 'none',
                     background: 'rgba(250, 248, 243, 0.05)',
                     border: '1px solid rgba(201, 168, 76, 0.15)',
+                    minHeight: '100px',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'rgba(201, 168, 76, 0.1)'
