@@ -44,16 +44,16 @@ const directors: Director[] = [
 
 const seniorMentors: TeamMember[] = [
   { name: 'Adams Dudley', initials: 'AD', role: 'Senior Mentor', credentials: 'MD, MBA' },
-  { name: 'Jeff Chipman', initials: 'JC', role: 'Senior Mentor & Biostatistician', credentials: 'PhD' },
+  { name: 'Jeff Chipman', initials: 'JC', role: 'Senior Mentor & Surgical Critical Care', credentials: 'MD' },
 ]
 
 const facultyCollaborators: TeamMember[] = [
-  { name: 'Abby Begnaud', initials: 'AB', role: 'Faculty' },
-  { name: 'Ben Henkle', initials: 'BH', role: 'Faculty' },
-  { name: 'Dave MacDonald', initials: 'DM', role: 'Faculty' },
-  { name: 'Josh Trujeque', initials: 'JT', role: 'Faculty' },
-  { name: 'Katie Pendleton', initials: 'KP', role: 'Faculty' },
-  { name: 'Michael Kalinoski', initials: 'MK', role: 'Faculty' },
+  { name: 'Abbie Begnaud', initials: 'AB', role: 'Faculty', credentials: 'MD' },
+  { name: 'Ben Henkle', initials: 'BH', role: 'Faculty', credentials: 'MD, MPH' },
+  { name: 'Dave MacDonald', initials: 'DM', role: 'Faculty', credentials: 'MD, MS' },
+  { name: 'Josh Trujeque', initials: 'JT', role: 'Faculty', credentials: 'MD' },
+  { name: 'Katie Pendleton', initials: 'KP', role: 'Faculty', credentials: 'MD' },
+  { name: 'Michael Kalinoski', initials: 'MK', role: 'Faculty', credentials: 'MD' },
 ]
 
 const researchTeam: TeamMember[] = [
@@ -280,7 +280,7 @@ export default function Team() {
                 className="text-xs sm:text-sm font-semibold mb-0.5"
                 style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
               >
-                {member.name}
+                {member.name}{member.credentials ? `, ${member.credentials}` : ''}
               </h3>
               <p className="text-xs" style={{ color: 'var(--slate)' }}>
                 {member.role}

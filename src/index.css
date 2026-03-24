@@ -247,3 +247,12 @@ a:hover {
   background: var(--gold);
   color: var(--cream);
 }
+
+/* ── Section Header accent line ── */
+.section-header-line {
+  flex: 1;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.3;
+  margin-left: 12px;
+}

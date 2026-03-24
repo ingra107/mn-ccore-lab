@@ -5,11 +5,13 @@ import {
   BarChart3,
   Brain,
   Database,
-  ChevronDown,
   ExternalLink,
 } from 'lucide-react'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
+import { useCountUp } from '../hooks/useCountUp'
 import SectionDivider from '../components/SectionDivider'
+import NetworkBackground from '../components/NetworkBackground'
+import ImpactMetrics from '../components/ImpactMetrics'
 import { usePageMeta } from '../hooks/usePageMeta'
 
 const pillars = [
@@ -62,6 +64,21 @@ const affiliates = [
   },
 ]
 
+const heroStats = [
+  { value: 13, suffix: '+', label: 'Centers' },
+  { value: 80, suffix: '+', label: 'Researchers' },
+  { value: 150, suffix: '+', label: 'Publications' },
+]
+
+function HeroStat({ value, suffix, label }: { value: number; suffix: string; label: string }) {
+  const { count } = useCountUp(value, 1800, false)
+  return (
+    <span>
+      {count}{suffix} {label}
+    </span>
+  )
+}
+
 export default function Home() {
   usePageMeta(
     'MN-CCORE | Minnesota Critical Care Outcomes & Research Effort',
@@ -86,14 +103,8 @@ export default function Home() {
             'linear-gradient(135deg, #0f1923 0%, #1a2a3a 40%, #2c3e50 100%)',
         }}
       >
-        {/* Topographic contour pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 10c22 0 40 18 40 40s-18 40-40 40S10 72 10 50 28 10 50 10z' fill='none' stroke='%23c9a84c' stroke-width='0.5'/%3E%3Cpath d='M50 20c16.5 0 30 13.5 30 30s-13.5 30-30 30-30-13.5-30-30 13.5-30 30-30z' fill='none' stroke='%23c9a84c' stroke-width='0.5'/%3E%3Cpath d='M50 30c11 0 20 9 20 20s-9 20-20 20-20-9-20-20 9-20 20-20z' fill='none' stroke='%23c9a84c' stroke-width='0.5'/%3E%3Cpath d='M50 40c5.5 0 10 4.5 10 10s-4.5 10-10 10-10-4.5-10-10 4.5-10 10-10z' fill='none' stroke='%23c9a84c' stroke-width='0.5'/%3E%3C/svg%3E")`,
-            backgroundSize: '200px 200px',
-          }}
-        />
+        {/* Network background */}
+        <NetworkBackground />
 
         {/* Animated gradient overlay */}
         <div
@@ -110,9 +121,12 @@ export default function Home() {
             0% { opacity: 0.4; transform: translate(0, 0); }
             100% { opacity: 0.8; transform: translate(5%, 3%); }
           }
-          @keyframes bounceChevron {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(8px); }
+          @keyframes scrollLine {
+            0%, 100% { opacity: 0.2; transform: translateY(0); }
+            50% { opacity: 0.6; transform: translateY(6px); }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .scroll-line { animation: none !important; opacity: 0.4 !important; }
           }
         `}</style>
 
@@ -167,7 +181,27 @@ export default function Home() {
             University of Minnesota
           </p>
 
-          <div className="mt-8 sm:mt-12 flex justify-center gap-4">
+          {/* Hero stats bar */}
+          <div
+            className="mt-6 sm:mt-8 mb-2 transition-all duration-700 flex justify-center items-center gap-3"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '13px',
+              color: 'rgba(201, 168, 76, 0.5)',
+              opacity: heroVisible ? 1 : 0,
+              transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
+              transitionDelay: '400ms',
+            }}
+          >
+            {heroStats.map((stat, i) => (
+              <span key={stat.label} className="flex items-center gap-3">
+                {i > 0 && <span aria-hidden="true">&middot;</span>}
+                <HeroStat value={stat.value} suffix={stat.suffix} label={stat.label} />
+              </span>
+            ))}
+          </div>
+
+          <div className="mt-4 sm:mt-8 flex justify-center gap-4">
             <Link
               to="/team"
               className="cursor-pointer px-6 py-3 rounded-md text-sm font-semibold transition-all duration-200"
@@ -199,18 +233,17 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Scroll chevron */}
+        {/* Scroll indicator line */}
         <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="scroll-line absolute bottom-8 left-1/2 -translate-x-1/2"
           style={{
-            animation: 'bounceChevron 2s ease-in-out infinite',
-            color: 'var(--gold)',
-            opacity: 0.4,
+            width: '1px',
+            height: '40px',
+            background: 'var(--gold)',
+            animation: 'scrollLine 2s ease-in-out infinite',
           }}
           aria-hidden="true"
-        >
-          <ChevronDown size={24} />
-        </div>
+        />
       </section>
 
       <SectionDivider />
@@ -285,6 +318,8 @@ export default function Home() {
           })}
         </div>
       </section>
+
+      <ImpactMetrics />
 
       <SectionDivider />
 
