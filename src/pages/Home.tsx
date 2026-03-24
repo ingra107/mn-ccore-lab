@@ -13,7 +13,6 @@ import {
 } from 'lucide-react'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import { useCountUp } from '../hooks/useCountUp'
-import SectionDivider from '../components/SectionDivider'
 import NetworkBackground from '../components/NetworkBackground'
 import ImpactMetrics from '../components/ImpactMetrics'
 import FeaturedResearch from '../components/FeaturedResearch'
