@@ -106,10 +106,9 @@ export default function Home() {
       {/* Hero — compact, dense, no wasted space */}
       <section
         className="relative overflow-hidden pb-12 sm:pb-16"
-        style={{ paddingTop: '140px' }}
         style={{
-          background:
-            'linear-gradient(135deg, #0f1923 0%, #1a2a3a 40%, #2c3e50 100%)',
+          paddingTop: '140px',
+          background: 'linear-gradient(135deg, #0f1923 0%, #1a2a3a 40%, #2c3e50 100%)',
         }}
       >
         {/* Network background */}
