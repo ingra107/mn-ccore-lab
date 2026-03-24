@@ -35,7 +35,7 @@ export const facultyCollaborators: TeamMember[] = [
   { name: 'Kendall McEachron', initials: 'KM', role: 'Faculty Collaborator', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/images/u_of_m_2023_resident_graduation_6-27-23_0107-edit.jpeg?itok=3fV81qKA' },
   { name: 'Sami Safadi', initials: 'SS', role: 'Faculty Collaborator', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0076_Layer-223.png' },
   { name: 'Abbie Begnaud', initials: 'AB', role: 'Faculty', credentials: 'MD', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/begnaud-abbie.png?itok=gSTF7AGX' },
-  { name: 'Ben Henkle', initials: 'BH', role: 'Faculty', credentials: 'MD, MPH' },
+  { name: 'Ben Henkle', initials: 'BH', role: 'Faculty', credentials: 'MD, MPH', photoUrl: 'https://www.va.gov/MINNEAPOLISRESEARCH/images/staff/benjaminhenkle.jpg' },
   { name: 'Dave MacDonald', initials: 'DM', role: 'Faculty', credentials: 'MD, MS' },
   { name: 'Josh Trujeque', initials: 'JT', role: 'Faculty', credentials: 'MD', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/picture9.png' },
   { name: 'Katie Pendleton', initials: 'KP', role: 'Faculty', credentials: 'MD', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0112_Layer-187.png?itok=1xJq3yYt' },
