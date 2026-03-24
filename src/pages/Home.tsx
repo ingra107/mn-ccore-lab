@@ -12,6 +12,7 @@ import { useCountUp } from '../hooks/useCountUp'
 import SectionDivider from '../components/SectionDivider'
 import NetworkBackground from '../components/NetworkBackground'
 import ImpactMetrics from '../components/ImpactMetrics'
+import FeaturedResearch from '../components/FeaturedResearch'
 import { usePageMeta } from '../hooks/usePageMeta'
 
 const pillars = [
@@ -318,6 +319,10 @@ export default function Home() {
           })}
         </div>
       </section>
+
+      <SectionDivider />
+
+      <FeaturedResearch />
 
       <ImpactMetrics />
 
