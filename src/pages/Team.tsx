@@ -15,9 +15,10 @@ const researchKeywords: Record<string, string[]> = {
 }
 
 function getDirectorStats(slug: string) {
-  const grantCount = grants.filter((g) => g.pi === slug).length
+  const grantCount = grants.filter((g) => g.pi === slug && !g.proposed).length
   const pubCount = publications.filter((p) => p.authorSlugs?.includes(slug)).length
-  const menteeCount = mentees.filter((m) => m.mentor === slug).length
+  // Trainees are shared — show total MNCCORE trainees for both directors
+  const menteeCount = mentees.filter((m) => m.mentor === 'shared' || m.mentor === slug).length
   return { grantCount, pubCount, menteeCount }
 }
 
@@ -145,7 +146,7 @@ export default function Team() {
                       {' \u00B7 '}
                       {stats.pubCount} Publication{stats.pubCount !== 1 ? 's' : ''}
                       {' \u00B7 '}
-                      {stats.menteeCount} Mentee{stats.menteeCount !== 1 ? 's' : ''}
+                      {stats.menteeCount} MNCCORE Trainee{stats.menteeCount !== 1 ? 's' : ''}
                     </p>
 
                     {/* Research keyword pills */}

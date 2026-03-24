@@ -1,9 +1,9 @@
 import type { Mentee } from './types'
 
+// Trainees = fellows, residents, students. Shared across MNCCORE.
 export const mentees: Mentee[] = [
-  { name: 'Nathan Mesfin', project: 'CCI in ARDS', mentor: 'nick' },
-  { name: 'Emma Bromley', project: 'GDMS x LPV Hebbel Abstract', mentor: 'nick' },
-  { name: 'Steven Arriaza', project: 'Hospital Transfer Qualitative', mentor: 'nick' },
-  { name: 'Kendall McEachron', project: 'EGS Database', mentor: 'nick' },
-  { name: 'Sami Safadi', project: 'Severe Hyponatremia', mentor: 'nick' },
+  { name: 'Dan Shyu', project: 'Critical Care Fellow', mentor: 'shared' },
+  { name: 'Beret Fitzgerald', project: 'Critical Care Fellow', mentor: 'shared' },
+  { name: 'Emma Bromley', project: 'Research Coordinator / Pre-doctoral candidate', mentor: 'shared' },
+  { name: 'Claire Collins', project: 'Medical Student Researcher', mentor: 'shared' },
 ]

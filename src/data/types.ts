@@ -39,6 +39,7 @@ export interface Grant {
   title: string
   agency: string
   pi: string
+  proposed?: boolean
 }
 
 export interface Project {

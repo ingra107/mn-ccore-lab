@@ -104,7 +104,7 @@ export default function Home() {
     <>
       {/* Hero */}
       <section
-        className="relative overflow-hidden pb-16 sm:pb-20"
+        className="relative overflow-hidden pb-20 sm:pb-28"
         style={{
           paddingTop: '130px',
           background: 'linear-gradient(135deg, #0f1923 0%, #1a2a3a 40%, #2c3e50 100%)',
@@ -181,9 +181,9 @@ export default function Home() {
             University of Minnesota
           </p>
 
-          {/* Stats — equal-width grid, consistent sizing */}
+          {/* Stats — full-width grid, matches action cards below */}
           <div
-            className="mb-12 sm:mb-16 transition-all duration-700 grid grid-cols-3 gap-4 sm:gap-6 max-w-lg mx-auto"
+            className="mb-10 sm:mb-12 transition-all duration-700 grid grid-cols-3 gap-4 sm:gap-6"
             style={{
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
