@@ -1,9 +1,15 @@
-import type { ReactNode } from 'react'
-import { ExternalLink } from 'lucide-react'
+import { type ReactNode, useEffect, useState } from 'react'
+import { ArrowRight, ExternalLink } from 'lucide-react'
+import Avatar from './Avatar'
 
 interface ProfileLink {
   label: string
   href: string
+}
+
+interface SectionAnchor {
+  id: string
+  label: string
 }
 
 interface LabPageLayoutProps {
@@ -14,6 +20,8 @@ interface LabPageLayoutProps {
   initials: string
   bio?: string
   links: ProfileLink[]
+  sections?: SectionAnchor[]
+  photoUrl?: string
   children: ReactNode
 }
 
@@ -25,31 +33,60 @@ export default function LabPageLayout({
   initials,
   bio,
   links,
+  sections,
+  photoUrl,
   children,
 }: LabPageLayoutProps) {
+  const [activeSection, setActiveSection] = useState<string>('')
+
+  useEffect(() => {
+    if (!sections || sections.length === 0) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the first section that is intersecting
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id)
+          }
+        }
+      },
+      {
+        rootMargin: '-80px 0px -60% 0px',
+        threshold: 0,
+      }
+    )
+
+    for (const section of sections) {
+      const el = document.getElementById(section.id)
+      if (el) observer.observe(el)
+    }
+
+    return () => observer.disconnect()
+  }, [sections])
+
+  const handleAnchorClick = (id: string) => {
+    const el = document.getElementById(id)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   return (
     <div className="pt-8 pb-8 sm:pb-12 lg:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="lg:grid lg:grid-cols-12 lg:gap-12">
         {/* Left Column (Sticky) */}
         <aside className="lg:col-span-4 xl:col-span-3 mb-12 lg:mb-0">
           <div className="lg:sticky lg:top-28">
-            {/* Headshot placeholder */}
-            <div
-              className="w-32 h-32 rounded-full flex items-center justify-center mb-6 mx-auto lg:mx-0"
-              style={{
-                background: 'var(--gold-light)',
-                border: '3px solid var(--gold)',
-              }}
-            >
-              <span
-                className="text-3xl font-bold"
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  color: 'var(--gold)',
-                }}
-              >
-                {initials}
-              </span>
+            {/* Avatar */}
+            <div className="flex justify-center lg:justify-start mb-6">
+              <Avatar
+                name={`${name}, ${credentials}`}
+                initials={initials}
+                photoUrl={photoUrl}
+                size="lg"
+                variant="gold"
+              />
             </div>
 
             <div className="text-center lg:text-left">
@@ -118,6 +155,49 @@ export default function LabPageLayout({
                   </a>
                 ))}
               </div>
+
+              {/* On this page — anchor nav */}
+              {sections && sections.length > 0 && (
+                <nav className="hidden lg:block mt-8" aria-label="On this page">
+                  <p
+                    className="mb-3 uppercase"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '10px',
+                      letterSpacing: '0.08em',
+                      color: 'var(--slate)',
+                    }}
+                  >
+                    On this page
+                  </p>
+                  <ul className="space-y-0.5">
+                    {sections.map((section) => {
+                      const isActive = activeSection === section.id
+                      return (
+                        <li key={section.id}>
+                          <button
+                            type="button"
+                            onClick={() => handleAnchorClick(section.id)}
+                            className="cursor-pointer w-full text-left uppercase tracking-wider transition-all duration-200"
+                            style={{
+                              fontFamily: 'var(--font-body)',
+                              fontSize: '11px',
+                              letterSpacing: '0.05em',
+                              padding: '6px 12px',
+                              color: isActive ? 'var(--gold)' : 'var(--slate)',
+                              borderLeft: isActive
+                                ? '2px solid var(--gold)'
+                                : '2px solid transparent',
+                            }}
+                          >
+                            {section.label}
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </nav>
+              )}
             </div>
           </div>
         </aside>
@@ -139,9 +219,9 @@ interface GrantRow {
   agency: string
 }
 
-export function GrantsSection({ grants }: { grants: GrantRow[] }) {
+export function GrantsSection({ grants, id }: { grants: GrantRow[]; id?: string }) {
   return (
-    <section className="mb-16">
+    <section className="mb-16" id={id}>
       <h2
         className="text-xl sm:text-2xl mb-6"
         style={{
@@ -194,13 +274,9 @@ interface ProjectCard {
   description?: string
 }
 
-export function ProjectsSection({
-  title,
-  projects,
-}: {
-  title: string
-  projects: ProjectCard[]
-}) {
+function ProjectCardItem({ project }: { project: ProjectCard }) {
+  const [hovered, setHovered] = useState(false)
+
   const badgeClass = (status: string) => {
     switch (status) {
       case 'Active':
@@ -217,7 +293,66 @@ export function ProjectsSection({
   }
 
   return (
-    <section className="mb-16">
+    <div
+      className="card p-4 sm:p-5 cursor-pointer transition-all duration-200 relative"
+      style={{
+        borderLeft: hovered ? '5px solid var(--gold)' : '3px solid var(--gold)',
+        outline: 'none',
+      }}
+      tabIndex={0}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
+    >
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <h3
+          className="text-sm font-semibold leading-tight"
+          style={{
+            fontFamily: 'var(--font-body)',
+            color: 'var(--ink)',
+          }}
+        >
+          {project.title}
+        </h3>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className={badgeClass(project.status)}>
+            {project.status}
+          </span>
+          <ArrowRight
+            size={14}
+            aria-hidden="true"
+            className="transition-opacity duration-200"
+            style={{
+              color: 'var(--gold)',
+              opacity: hovered ? 1 : 0,
+            }}
+          />
+        </div>
+      </div>
+      {project.description && (
+        <p
+          className="text-sm leading-relaxed"
+          style={{ color: 'var(--slate)' }}
+        >
+          {project.description}
+        </p>
+      )}
+    </div>
+  )
+}
+
+export function ProjectsSection({
+  title,
+  projects,
+  id,
+}: {
+  title: string
+  projects: ProjectCard[]
+  id?: string
+}) {
+  return (
+    <section className="mb-16" id={id}>
       <h2
         className="text-xl sm:text-2xl mb-6"
         style={{
@@ -230,34 +365,7 @@ export function ProjectsSection({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {projects.map((project) => (
-          <div
-            key={project.title}
-            className="card p-4 sm:p-5"
-            style={{ borderLeft: '3px solid var(--gold)' }}
-          >
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <h3
-                className="text-sm font-semibold leading-tight"
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  color: 'var(--ink)',
-                }}
-              >
-                {project.title}
-              </h3>
-              <span className={badgeClass(project.status)}>
-                {project.status}
-              </span>
-            </div>
-            {project.description && (
-              <p
-                className="text-sm leading-relaxed"
-                style={{ color: 'var(--slate)' }}
-              >
-                {project.description}
-              </p>
-            )}
-          </div>
+          <ProjectCardItem key={project.title} project={project} />
         ))}
       </div>
     </section>
@@ -269,9 +377,9 @@ interface MenteeCard {
   project: string
 }
 
-export function MenteesSection({ mentees }: { mentees: MenteeCard[] }) {
+export function MenteesSection({ mentees, id }: { mentees: MenteeCard[]; id?: string }) {
   return (
-    <section className="mb-16">
+    <section className="mb-16" id={id}>
       <h2
         className="text-xl sm:text-2xl mb-6"
         style={{

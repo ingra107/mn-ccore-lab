@@ -72,17 +72,23 @@ export default function NickLab() {
         { label: 'ORCID', href: 'https://orcid.org/' },
         { label: 'GitHub', href: 'https://github.com/' },
       ]}
+      sections={[
+        { id: 'grants', label: 'Active Grants' },
+        { id: 'clif-projects', label: 'CLIF Projects' },
+        { id: 'lab-projects', label: 'Lab Projects' },
+        { id: 'mentees', label: 'Mentees' },
+      ]}
     >
-      <GrantsSection grants={grants} />
+      <GrantsSection grants={grants} id="grants" />
       <SectionDivider />
       <div className="py-4" />
-      <ProjectsSection title="CLIF Projects" projects={clifProjects} />
+      <ProjectsSection title="CLIF Projects" projects={clifProjects} id="clif-projects" />
       <SectionDivider />
       <div className="py-4" />
-      <ProjectsSection title="Lab Projects" projects={labProjects} />
+      <ProjectsSection title="Lab Projects" projects={labProjects} id="lab-projects" />
       <SectionDivider />
       <div className="py-4" />
-      <MenteesSection mentees={mentees} />
+      <MenteesSection mentees={mentees} id="mentees" />
     </LabPageLayout>
   )
 }

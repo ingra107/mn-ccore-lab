@@ -35,11 +35,15 @@ export default function NateLab() {
         { label: 'Scholar', href: 'https://scholar.google.com/' },
         { label: 'ORCID', href: 'https://orcid.org/' },
       ]}
+      sections={[
+        { id: 'grants', label: 'Active Grants' },
+        { id: 'research-projects', label: 'Research Projects' },
+      ]}
     >
-      <GrantsSection grants={grants} />
+      <GrantsSection grants={grants} id="grants" />
       <SectionDivider />
       <div className="py-4" />
-      <ProjectsSection title="Research Projects" projects={projects} />
+      <ProjectsSection title="Research Projects" projects={projects} id="research-projects" />
     </LabPageLayout>
   )
 }
