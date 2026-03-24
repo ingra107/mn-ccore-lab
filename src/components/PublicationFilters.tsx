@@ -47,7 +47,7 @@ function Pill({
         fontFamily: 'var(--font-mono)',
         minHeight: '32px',
         background: active ? 'var(--gold)' : 'var(--ice)',
-        color: active ? 'var(--cream)' : 'var(--slate)',
+        color: active ? '#0f1923' : 'var(--slate)',
         border: 'none',
         transitionProperty: 'background-color, color',
         transitionDuration: '200ms',

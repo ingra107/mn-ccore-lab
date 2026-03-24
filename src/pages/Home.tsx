@@ -6,6 +6,10 @@ import {
   Brain,
   Database,
   ExternalLink,
+  Users,
+  BookOpen,
+  FlaskConical,
+  Mail,
 } from 'lucide-react'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import { useCountUp } from '../hooks/useCountUp'
@@ -103,7 +107,7 @@ export default function Home() {
     <>
       {/* Hero */}
       <section
-        className="relative min-h-screen flex items-center justify-center overflow-hidden"
+        className="relative min-h-[65vh] flex items-center justify-center overflow-hidden"
         style={{
           background:
             'linear-gradient(135deg, #0f1923 0%, #1a2a3a 40%, #2c3e50 100%)',
@@ -150,7 +154,7 @@ export default function Home() {
               alt="MN-CCORE - Minnesota Critical Care Outcomes & Research Effort"
               className="mx-auto"
               style={{
-                height: 'clamp(60px, 12vw, 100px)',
+                height: 'clamp(80px, 15vw, 150px)',
                 width: 'auto',
               }}
             />
@@ -192,25 +196,28 @@ export default function Home() {
             className="mt-6 sm:mt-8 mb-2 transition-all duration-700 flex justify-center items-center gap-3"
             style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: '14px',
+              fontSize: '16px',
               color: 'rgba(201, 168, 76, 0.7)',
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
               transitionDelay: '400ms',
             }}
           >
-            {heroStats.map((stat, i) => (
-              <span key={stat.label} className="flex items-center gap-3">
-                {i > 0 && <span aria-hidden="true">&middot;</span>}
+            {heroStats.map((stat) => (
+              <div
+                key={stat.label}
+                className="px-4 py-2 rounded-lg"
+                style={{ background: 'rgba(250, 248, 243, 0.08)' }}
+              >
                 <HeroStat value={stat.value} suffix={stat.suffix} label={stat.label} />
-              </span>
+              </div>
             ))}
           </div>
 
-          <div className="mt-4 sm:mt-8 flex justify-center gap-4">
+          <div className="mt-4 sm:mt-8 flex flex-wrap justify-center gap-3 sm:gap-4">
             <Link
               to="/team"
-              className="cursor-pointer px-6 py-3 rounded-md text-sm font-semibold transition-all duration-200"
+              className="cursor-pointer px-8 py-4 rounded-md text-base font-semibold transition-all duration-200"
               style={{
                 fontFamily: 'var(--font-body)',
                 background: 'var(--gold)',
@@ -224,7 +231,7 @@ export default function Home() {
             </Link>
             <Link
               to="/publications"
-              className="cursor-pointer px-6 py-3 rounded-md text-sm font-semibold transition-all duration-200"
+              className="cursor-pointer px-8 py-4 rounded-md text-base font-semibold transition-all duration-200"
               style={{
                 fontFamily: 'var(--font-body)',
                 border: '1px solid rgba(250, 248, 243, 0.3)',
@@ -236,26 +243,70 @@ export default function Home() {
             >
               Publications
             </Link>
+            <button
+              onClick={() => document.getElementById('research-pillars')?.scrollIntoView({ behavior: 'smooth' })}
+              className="cursor-pointer px-8 py-4 rounded-md text-base font-semibold transition-all duration-200"
+              style={{
+                fontFamily: 'var(--font-body)',
+                background: 'transparent',
+                border: '1px solid var(--gold)',
+                color: 'var(--gold)',
+                opacity: heroVisible ? 1 : 0,
+                transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
+                transitionDelay: '800ms',
+              }}
+            >
+              Our Research
+            </button>
           </div>
         </div>
 
-        {/* Scroll indicator line */}
-        <div
-          className="scroll-line absolute bottom-8 left-1/2 -translate-x-1/2"
-          style={{
-            width: '1px',
-            height: '40px',
-            background: 'var(--gold)',
-            animation: 'scrollLine 2s ease-in-out infinite',
-          }}
-          aria-hidden="true"
-        />
+      </section>
+
+      {/* Quick Navigation */}
+      <section className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {[
+            { icon: Users, title: 'Our Team', description: 'Meet the researchers', to: '/team' },
+            { icon: BookOpen, title: 'Publications', description: 'Research in top journals', to: '/publications' },
+            { icon: FlaskConical, title: 'Active Projects', description: '18 ongoing studies', to: '/nick' },
+            { icon: Mail, title: 'Contact & Join', description: 'Get involved', to: '/contact' },
+          ].map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.title}
+                to={item.to}
+                className="card p-6 sm:p-8 cursor-pointer group text-center sm:text-left"
+                style={{ textDecoration: 'none', borderTop: '3px solid var(--gold)' }}
+              >
+                <Icon
+                  size={28}
+                  strokeWidth={1.5}
+                  className="mx-auto sm:mx-0 mb-3"
+                  style={{ color: 'var(--gold)' }}
+                  aria-hidden="true"
+                />
+                <h3
+                  className="text-base sm:text-lg font-semibold mb-1"
+                  style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--ink)' }}
+                >
+                  {item.title}
+                </h3>
+                <p className="text-xs sm:text-sm" style={{ color: 'var(--slate)' }}>
+                  {item.description}
+                </p>
+              </Link>
+            )
+          })}
+        </div>
       </section>
 
       <SectionDivider />
 
       {/* Research Pillars */}
       <section
+        id="research-pillars"
         className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
         ref={pillarsRef}
       >

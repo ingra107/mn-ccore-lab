@@ -3,42 +3,39 @@ import { useState, useRef, useEffect } from 'react'
 interface CLIFSite {
   name: string
   city: string
-  state: string
   x: number
   y: number
   isHome?: boolean
 }
 
 const sites: CLIFSite[] = [
-  { name: 'University of Minnesota', city: 'Minneapolis', state: 'MN', x: 465, y: 165, isHome: true },
-  { name: 'University of Chicago', city: 'Chicago', state: 'IL', x: 530, y: 225 },
-  { name: 'University of Colorado', city: 'Denver', state: 'CO', x: 305, y: 295 },
-  { name: 'University of Michigan', city: 'Ann Arbor', state: 'MI', x: 570, y: 210 },
-  { name: 'University of Pennsylvania', city: 'Philadelphia', state: 'PA', x: 735, y: 245 },
-  { name: 'Rush University', city: 'Chicago', state: 'IL', x: 540, y: 232 },
-  { name: 'Emory University', city: 'Atlanta', state: 'GA', x: 620, y: 355 },
-  { name: 'Oregon Health & Science', city: 'Portland', state: 'OR', x: 108, y: 155 },
-  { name: 'Loyola University', city: 'Maywood', state: 'IL', x: 522, y: 218 },
-  { name: 'Northwestern University', city: 'Chicago', state: 'IL', x: 535, y: 240 },
-  { name: 'University of Washington', city: 'Seattle', state: 'WA', x: 115, y: 115 },
-  { name: 'Johns Hopkins University', city: 'Baltimore', state: 'MD', x: 720, y: 260 },
-  { name: 'Beth Israel Deaconess', city: 'Boston', state: 'MA', x: 770, y: 195 },
+  { name: 'University of Minnesota', city: 'Minneapolis, MN', x: 480, y: 175, isHome: true },
+  { name: 'University of Chicago', city: 'Chicago, IL', x: 545, y: 230 },
+  { name: 'Rush University', city: 'Chicago, IL', x: 540, y: 235 },
+  { name: 'Northwestern University', city: 'Chicago, IL', x: 550, y: 225 },
+  { name: 'Loyola University', city: 'Maywood, IL', x: 535, y: 240 },
+  { name: 'University of Michigan', city: 'Ann Arbor, MI', x: 585, y: 215 },
+  { name: 'University of Colorado', city: 'Denver, CO', x: 310, y: 290 },
+  { name: 'Emory University', city: 'Atlanta, GA', x: 620, y: 365 },
+  { name: 'Oregon Health & Science', city: 'Portland, OR', x: 130, y: 165 },
+  { name: 'University of Washington', city: 'Seattle, WA', x: 140, y: 125 },
+  { name: 'University of Pennsylvania', city: 'Philadelphia, PA', x: 735, y: 240 },
+  { name: 'Johns Hopkins University', city: 'Baltimore, MD', x: 720, y: 260 },
+  { name: 'Beth Israel Deaconess', city: 'Boston, MA', x: 770, y: 200 },
 ]
 
-// Simplified US mainland outline
+// Simplified US mainland outline (viewBox 0 0 960 600)
 const US_OUTLINE =
-  'M 85,190 C 85,190 78,215 75,240 C 72,265 70,290 75,315 C 80,340 90,360 100,380 ' +
-  'C 110,400 130,415 155,425 C 180,435 210,430 240,420 C 270,410 290,400 310,395 ' +
-  'C 330,390 345,400 360,410 C 375,420 395,432 415,435 C 435,438 455,432 475,430 ' +
-  'C 495,428 510,432 530,428 C 550,424 570,435 590,430 C 610,425 630,415 650,400 ' +
-  'C 660,390 672,375 685,360 C 695,348 708,338 720,325 C 732,312 745,295 755,278 ' +
-  'C 762,265 768,250 772,235 C 776,220 778,205 772,192 C 766,180 755,175 742,178 ' +
-  'C 730,181 720,190 710,200 C 700,210 688,218 675,222 C 662,226 648,222 635,216 ' +
-  'C 622,210 608,208 595,205 C 580,202 565,198 550,193 C 535,188 520,183 505,178 ' +
-  'C 490,173 475,168 460,162 C 445,156 430,152 415,148 C 400,144 385,142 370,143 ' +
-  'C 355,144 340,148 325,152 C 310,156 295,160 280,162 C 265,164 250,163 235,160 ' +
-  'C 220,157 205,152 190,147 C 175,142 160,138 145,135 C 130,132 118,130 110,135 ' +
-  'C 102,140 95,150 90,165 C 87,175 85,185 85,190 Z'
+  'M 170 130 C 160 160, 140 200, 120 240 C 100 280, 90 320, 100 370 ' +
+  'C 110 400, 140 420, 180 430 C 220 440, 260 430, 300 420 ' +
+  'C 320 415, 340 425, 370 435 C 400 445, 430 430, 460 440 ' +
+  'C 490 450, 520 440, 550 435 C 580 430, 610 425, 640 410 ' +
+  'C 660 400, 680 380, 700 360 C 720 340, 740 320, 755 295 ' +
+  'C 770 270, 775 245, 770 220 C 765 200, 750 190, 730 185 ' +
+  'C 710 180, 690 190, 670 210 C 650 225, 630 230, 610 220 ' +
+  'C 590 210, 570 200, 540 190 C 510 180, 480 170, 450 160 ' +
+  'C 420 150, 390 145, 360 148 C 330 151, 300 158, 270 160 ' +
+  'C 240 162, 210 155, 185 145 Z'
 
 export default function CLIFMap() {
   const [hoveredSite, setHoveredSite] = useState<CLIFSite | null>(null)
@@ -131,7 +128,7 @@ export default function CLIFMap() {
         <div className="relative w-full" style={{ maxWidth: '800px', margin: '0 auto' }}>
           <svg
             ref={svgRef}
-            viewBox="0 60 960 540"
+            viewBox="0 0 960 600"
             className="w-full h-auto"
             style={{ overflow: 'visible' }}
             aria-label="Map of CLIF Consortium sites across the United States"
@@ -159,8 +156,8 @@ export default function CLIFMap() {
               .map((site) => (
                 <line
                   key={`line-${site.name}`}
-                  x1={465}
-                  y1={165}
+                  x1={480}
+                  y1={175}
                   x2={site.x}
                   y2={site.y}
                   stroke="rgba(201, 168, 76, 0.08)"
@@ -200,7 +197,7 @@ export default function CLIFMap() {
                 <circle
                   cx={site.x}
                   cy={site.y}
-                  r={site.isHome ? 7 : 5}
+                  r={site.isHome ? 12 : 8}
                   fill="#c9a84c"
                   stroke={site.isHome ? '#faf8f3' : 'rgba(250, 248, 243, 0.3)'}
                   strokeWidth={site.isHome ? 2 : 1}
@@ -221,7 +218,7 @@ export default function CLIFMap() {
                 {site.isHome && (
                   <text
                     x={site.x}
-                    y={site.y - 18}
+                    y={site.y - 20}
                     textAnchor="middle"
                     fill="rgba(201, 168, 76, 0.6)"
                     style={{
@@ -236,6 +233,44 @@ export default function CLIFMap() {
                 )}
               </g>
             ))}
+
+            {/* Cluster labels */}
+            <text
+              x={542}
+              y={262}
+              textAnchor="middle"
+              fill="rgba(250,248,243,0.7)"
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '11px',
+              }}
+            >
+              Chicago
+            </text>
+            <text
+              x={740}
+              y={288}
+              textAnchor="middle"
+              fill="rgba(250,248,243,0.7)"
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '11px',
+              }}
+            >
+              East Coast
+            </text>
+            <text
+              x={135}
+              y={190}
+              textAnchor="middle"
+              fill="rgba(250,248,243,0.7)"
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '11px',
+              }}
+            >
+              Pacific NW
+            </text>
           </svg>
 
           {/* Tooltip */}
@@ -273,7 +308,7 @@ export default function CLIFMap() {
                     color: 'var(--slate)',
                   }}
                 >
-                  {hoveredSite.city}, {hoveredSite.state}
+                  {hoveredSite.city}
                   {hoveredSite.isHome && (
                     <span
                       style={{
@@ -322,12 +357,12 @@ export default function CLIFMap() {
       {/* Pulse animation CSS */}
       <style>{`
         @keyframes clifPulse {
-          0% { r: 7; opacity: 0.6; }
-          100% { r: 28; opacity: 0; }
+          0% { r: 12; opacity: 0.6; }
+          100% { r: 32; opacity: 0; }
         }
         @keyframes clifPulseDelayed {
-          0% { r: 7; opacity: 0.4; }
-          100% { r: 35; opacity: 0; }
+          0% { r: 12; opacity: 0.4; }
+          100% { r: 40; opacity: 0; }
         }
         .clif-pulse-ring {
           animation: clifPulse 2.5s ease-out infinite;

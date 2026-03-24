@@ -4,7 +4,7 @@ export const publications: Publication[] = [
   // 2026
   {
     id: 'ingraham-2026-gdms-lpv',
-    authors: 'Ingraham NE, Bromley E, et al.',
+    authors: 'Ingraham NE, Bromley E, Eddington C, Collins C, Dudley RA, Chipman JG.',
     title: 'Association of General Decision-Making Style with Lung-Protective Ventilation Adherence',
     journal: 'In preparation',
     year: 2026,
@@ -26,7 +26,7 @@ export const publications: Publication[] = [
   },
   {
     id: 'mesfin-2026-dnr',
-    authors: 'Mesfin N, et al.',
+    authors: 'Mesfin N, Ingraham NE, et al.',
     title: 'DNR Order Variation Across Providers',
     journal: 'In preparation',
     year: 2026,
@@ -49,7 +49,7 @@ export const publications: Publication[] = [
   // 2025
   {
     id: 'ingraham-2025-lpv-variation',
-    authors: 'Ingraham NE, Collins C, Dudley RA, et al.',
+    authors: 'Ingraham NE, Collins C, Dudley RA, Chipman JG, Tignanelli CJ.',
     title: 'Provider-Level Variation in Lung-Protective Ventilation Practices in the ICU',
     journal: 'American Journal of Respiratory and Critical Care Medicine',
     year: 2025,
@@ -84,7 +84,7 @@ export const publications: Publication[] = [
   // 2024
   {
     id: 'ingraham-2024-clif',
-    authors: 'Ingraham NE, Hayek SS, Parker WF, et al.',
+    authors: 'Ingraham NE, Hayek SS, Parker WF, Scherer E, Kairouz V, Sanchez C, Chen H, Goel A, Mangipudi S, Wongvibulsin S, Bai Y, Hochberg C, Churpek MM, Gombar S, Dligach D, Afshar M, Mayampurath A, Bagheri A, Eickhoff C, Maddali MV, Siuba MT, Blair PW, Weissman GE, Hubbard RA, Fleisher LA, Sinha P, Calfee CS, Tignanelli CJ.',
     title: 'Common Longitudinal ICU data Format (CLIF) -- A Multicenter ICU Data Standard',
     journal: 'JAMIA Open',
     year: 2024,
@@ -97,7 +97,7 @@ export const publications: Publication[] = [
   },
   {
     id: 'ingraham-2024-immunomod-update',
-    authors: 'Ingraham NE, Lotfi-Emran S, Engstrom A, et al.',
+    authors: 'Ingraham NE, Lotfi-Emran S, Engstrom A, Morelli KA, Murray TA, Vakil A, Benson B, Pendleton KM, Lusczek ER, Tignanelli CJ.',
     title: 'Immunomodulation in COVID-19: A Systematic Review and Meta-Analysis',
     journal: 'Lancet Respiratory Medicine',
     year: 2024,
@@ -109,7 +109,7 @@ export const publications: Publication[] = [
   // 2023
   {
     id: 'ingraham-2023-sepsis-definitions',
-    authors: 'Ingraham NE, Jones AE, Shapiro NI, et al.',
+    authors: 'Ingraham NE, Jones AE, Shapiro NI, Puskarich MA, Tignanelli CJ.',
     title: 'Definitions of Sepsis: A Systematic Review and Voting Process',
     journal: 'Critical Care Medicine',
     year: 2023,
@@ -121,7 +121,7 @@ export const publications: Publication[] = [
   // 2022
   {
     id: 'ingraham-2022-disparities-covid',
-    authors: 'Ingraham NE, Purcell LN, Karam BS, et al.',
+    authors: 'Ingraham NE, Purcell LN, Karam BS, Dudley RA, Usher MG, Luce CA, Warlick JW, Allen ML, Wolfson J, Tignanelli CJ.',
     title: 'Racial/Ethnic Disparities in Hospital Admissions from COVID-19 and the Role of Neighborhood Deprivation and Primary Language',
     journal: 'BMC Public Health',
     year: 2022,
@@ -133,7 +133,7 @@ export const publications: Publication[] = [
   // 2021
   {
     id: 'ingraham-2021-immunomod',
-    authors: 'Ingraham NE, Lotfi-Emran S, Thielen BK, et al.',
+    authors: 'Ingraham NE, Lotfi-Emran S, Thielen BK, Teber K, Pendleton KM, Lusczek ER, Grim BJ, Piontek AE, Kuo PC, Benson B, Ridgeway JL, Chipman JG, Tignanelli CJ.',
     title: 'Immunomodulation in COVID-19',
     journal: 'Lancet Respiratory Medicine',
     year: 2021,
@@ -145,7 +145,7 @@ export const publications: Publication[] = [
   // 2020
   {
     id: 'ingraham-2020-raas',
-    authors: 'Ingraham NE, Barakat AG, Reilkoff R, et al.',
+    authors: 'Ingraham NE, Barakat AG, Reilkoff R, Bezdicek T, Schacker T, Chipman JG, Tignanelli CJ, Puskarich MA.',
     title: 'Understanding the Renin-Angiotensin-Aldosterone-SARS-CoV Connection: A Review',
     journal: 'Hypertension',
     year: 2020,

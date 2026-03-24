@@ -23,6 +23,16 @@ const TOPIC_COLORS: Record<string, { bg: string; color: string }> = {
   disparities: { bg: 'rgba(14, 165, 233, 0.1)', color: '#0284c7' },
 }
 
+const mnccoreMembers = [
+  'Ingraham NE',
+  'Mesfin N',
+  'Eddington C',
+  'Bromley E',
+  'Collins C',
+  'Shyu D',
+  'Fitzgerald B',
+]
+
 function topicLabel(topic: string): string {
   return TOPIC_DISPLAY[topic] ?? topic.charAt(0).toUpperCase() + topic.slice(1)
 }
@@ -41,22 +51,35 @@ function formatCitation(pub: Publication): string {
   return `${pub.authors} (${pub.year}). ${pub.title}. ${pub.journal}.${doiStr}`
 }
 
+function formatAuthors(authors: string): React.ReactNode[] {
+  // Split by comma to get individual author segments
+  const segments = authors.split(',')
+  const result: React.ReactNode[] = []
+
+  segments.forEach((segment, i) => {
+    const trimmed = segment.trim()
+    const isMember = mnccoreMembers.some((m) => trimmed.includes(m))
+
+    // Reconstruct with commas (except last segment)
+    const text = i === 0 ? segment : `,${segment}`
+
+    if (isMember) {
+      result.push(
+        <strong key={i} style={{ color: 'var(--ink)', fontWeight: 600 }}>
+          {text}
+        </strong>
+      )
+    } else {
+      result.push(<span key={i}>{text}</span>)
+    }
+  })
+
+  return result
+}
+
 export default function PublicationCard({ pub }: { pub: Publication }) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
-
-  const formatAuthors = (authors: string) => {
-    const parts = authors.split(/(Ingraham NE|Mesfin N)/g)
-    return parts.map((part, i) =>
-      part === 'Ingraham NE' || part === 'Mesfin N' ? (
-        <strong key={i} style={{ color: 'var(--ink)', fontWeight: 600 }}>
-          {part}
-        </strong>
-      ) : (
-        <span key={i}>{part}</span>
-      )
-    )
-  }
 
   const statusColor = () => {
     switch (pub.status) {
