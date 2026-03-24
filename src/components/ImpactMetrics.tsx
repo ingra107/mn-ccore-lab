@@ -2,7 +2,7 @@ import { useCountUp } from '../hooks/useCountUp'
 
 const metrics = [
   { value: 3, suffix: '', label: 'Active Grants' },
-  { value: 28, suffix: '+', label: 'Publications' },
+  { value: 60, suffix: '+', label: 'Publications' },
   { value: 13, suffix: '+', label: 'Research Sites' },
   { value: 4, suffix: '', label: 'MNCCORE Trainees' },
 ]

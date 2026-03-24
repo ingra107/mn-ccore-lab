@@ -4,6 +4,40 @@ export const publications: Publication[] = [
   // ── 2026 ─────────────────────────────────────────────────────────────────
 
   {
+    id: 'hilliard-2026-cardiac-monitoring',
+    authors: 'Hilliard B, et al., Ingraham NE.',
+    title: 'Aligning Cardiac Monitoring with AHA Guidelines',
+    journal: 'PLoS One',
+    year: 2026,
+    status: 'Published',
+    doi: 'https://doi.org/10.1371/journal.pone.0338943',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'lyons-2026-federation-paradigm',
+    authors: 'Lyons PG, et al., Ingraham NE.',
+    title: 'Federation, Not Centralization: A New Paradigm for EHR-Based Critical Care Research',
+    journal: 'Annals of the American Thoracic Society',
+    year: 2026,
+    status: 'Published',
+    topics: ['clif'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'olson-2026-pccm-job-offers',
+    authors: 'Olson EM, et al., Ingraham NE.',
+    title: 'Variability in First Academic Medicine Job Offers in Pulmonary and Critical Care Medicine',
+    journal: 'ATS Scholar',
+    year: 2026,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
     id: 'ingraham-2026-gdms-lpv',
     authors: 'Ingraham NE, Bromley E, Eddington C, Collins C, Dudley RA, Chipman JG.',
     title: 'Association of General Decision-Making Style with Lung-Protective Ventilation Adherence',
@@ -63,6 +97,61 @@ export const publications: Publication[] = [
     year: 2025,
     status: 'Published',
     topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'trujeque-2025-nlp-firearm-vha',
+    authors: 'Trujeque J, et al., Ingraham NE.',
+    title: 'Comparison of NLP Approaches to Assessing Firearm Access in VHA Electronic Health Records',
+    journal: 'Journal of the American Medical Informatics Association',
+    year: 2025,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'amagai-2025-icu-readmission-epidemiology',
+    authors: 'Amagai S, et al., Ingraham NE.',
+    title: 'The Epidemiology of ICU Readmissions Across Ten Health Systems',
+    journal: 'Critical Care Explorations',
+    year: 2025,
+    status: 'Published',
+    topics: ['quality', 'clif'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'thakkar-2025-llm-vs-traditional-ie',
+    authors: 'Thakkar V, et al., Ingraham NE.',
+    title: 'A Comparative Analysis of Large Language Models Versus Traditional Information Extraction',
+    journal: 'PLoS One',
+    year: 2025,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'mesfin-2025-loc-variation',
+    authors: 'Mesfin N, et al., Ingraham NE.',
+    title: 'Hospital and Temporal Variations in Limitations of Care Among Hospitalized Patients with COVID-19',
+    journal: 'Palliative Medicine Reports',
+    year: 2025,
+    status: 'Published',
+    topics: ['covid', 'decision-making'],
+    authorSlugs: ['nate', 'nick'],
+  },
+
+  {
+    id: 'gao-2025-clif-correspondence',
+    authors: 'Gao CA, Ingraham NE, et al.',
+    title: 'CLIF Correspondence - Author\'s Reply',
+    journal: 'Intensive Care Medicine',
+    year: 2025,
+    status: 'Published',
+    topics: ['clif'],
     authorSlugs: ['nick'],
   },
 
@@ -131,6 +220,50 @@ export const publications: Publication[] = [
   // ── 2024 ─────────────────────────────────────────────────────────────────
 
   {
+    id: 'byrd-2024-deterioration-definition',
+    authors: 'Byrd TF IV, et al., Ingraham NE.',
+    title: 'Beyond Unplanned ICU Transfers: Linking a Revised Definition of Deterioration to Patient Outcomes',
+    journal: 'Critical Care Medicine',
+    year: 2024,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'rajamani-2024-building-to-learn',
+    authors: 'Rajamani G, et al., Ingraham NE.',
+    title: 'Building to Learn: IT Innovations for Rapid Pragmatic Evaluation',
+    journal: 'Learning Health Systems',
+    year: 2024,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'bramante-2024-metformin-viral-load',
+    authors: 'Bramante CT, et al., Ingraham NE.',
+    title: 'Favorable Antiviral Effect of Metformin on SARS-CoV-2 Viral Load',
+    journal: 'Clinical Infectious Diseases',
+    year: 2024,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'king-2024-appendicitis-cci',
+    authors: 'King S, et al., Ingraham NE.',
+    title: 'Acute Appendicitis Treatment Strategies and Mortality Based on Critical Illness',
+    journal: 'Surgical Infections',
+    year: 2024,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
     id: 'ingraham-2024-cci-definition',
     authors: 'Ingraham NE, Mesfin N, Eddington C, Bromley E, Tignanelli CJ.',
     title: 'Defining Chronic Critical Illness Using Electronic Health Record Data: A Multi-Center Validation Study',
@@ -167,6 +300,50 @@ export const publications: Publication[] = [
   // ── 2023 ─────────────────────────────────────────────────────────────────
 
   {
+    id: 'boulware-2023-vaccination-severity',
+    authors: 'Boulware DR, et al., Ingraham NE.',
+    title: 'Impact of SARS-CoV-2 Vaccination and Booster on COVID-19 Symptom Severity',
+    journal: 'Clinical Infectious Diseases',
+    year: 2023,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'ikramuddin-2023-discharge-disposition',
+    authors: 'Ikramuddin F, et al., Ingraham NE.',
+    title: 'Predictors of Discharge Disposition and Mortality Following Hospitalization with SARS-CoV-2',
+    journal: 'PLoS One',
+    year: 2023,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'castro-pearson-2023-proteomic-covid',
+    authors: 'Castro-Pearson S, et al., Ingraham NE.',
+    title: 'Development of a Proteomic Signature Associated with Severe Disease for COVID-19',
+    journal: 'Scientific Reports',
+    year: 2023,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'kalinoski-2023-mrsa-pneumonia',
+    authors: 'Kalinoski M, Ingraham NE.',
+    title: 'MRSA Pneumonia with Negative Nasal Swab',
+    journal: 'American Journal of Case Reports',
+    year: 2023,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
     id: 'ingraham-2023-covid-out-longcovid',
     authors: 'Bramante CT, Buse JB, Ingraham NE, Bodurtha P, Bridges LG, Bury J, Cattamanchi A, Cipolla J, Collins C, Crowley J, Dean JM, Erickson SM, Geng EH, Golden S, Grannis SJ, Haynes D, Huling JD, Johnson J, Johnson SG, Jones P, Karger AB, Kelleher KJ, Kozhimannil KB, Larkin MA, Lee KCL, Lindsley A, MacMillan L, Martin ML, Mitchell NB, Modi H, Murray TA, Nicklas JM, Odom E, Okafor C, Poleon M, Puskarich MA, Rosario R, Ruff C, Schechter-Perkins EM, Sheridan P, Shimpi RA, Smith BM, Tignanelli CJ, Thompson MA, Winkelman JW, Wynn KK, Yoo KM, Zwald M.',
     title: 'Outpatient Treatment of Covid-19 with Metformin, Ivermectin, and Fluvoxamine and the Development of Long Covid over 10-Month Follow-Up',
@@ -182,8 +359,8 @@ export const publications: Publication[] = [
 
   {
     id: 'ingraham-2023-laps2-medcare',
-    authors: 'Ingraham NE, Eddington C, Tignanelli CJ.',
-    title: 'Validation of the Laboratory-Based Acute Physiology Score (LAPS2) for Inpatient Mortality Prediction',
+    authors: 'Kohn R, et al., Ingraham NE.',
+    title: 'Prediction of In-Hospital Mortality Among ICU Patients Using Modified Daily LAPS2',
     journal: 'Medical Care',
     year: 2023,
     status: 'Published',
@@ -213,7 +390,7 @@ export const publications: Publication[] = [
     status: 'Published',
     doi: 'https://doi.org/10.1056/NEJMoa2201662',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/36070710/',
-    abstract: 'This phase 3, randomized, quadruple-blind trial (COVID-OUT) tested metformin, ivermectin, and fluvoxamine in non-hospitalized adults with COVID-19. Metformin reduced the risk of hypoxemia, emergency department visit, hospitalization, or death by 42% (OR 0.58; 95% CI 0.35–0.94).',
+    abstract: 'This phase 3, randomized, quadruple-blind trial (COVID-OUT) tested metformin, ivermectin, and fluvoxamine in non-hospitalized adults with COVID-19. Metformin reduced the risk of hypoxemia, emergency department visit, hospitalization, or death by 42% (OR 0.58; 95% CI 0.35-0.94).',
     topics: ['covid'],
     featured: true,
     authorSlugs: ['nick'],
@@ -233,6 +410,83 @@ export const publications: Publication[] = [
   },
 
   {
+    id: 'sun-2022-chest-xray-ai',
+    authors: 'Sun J, Peng L, et al., Ingraham NE.',
+    title: 'Performance of a Chest Radiograph AI Diagnostic Tool for COVID-19',
+    journal: 'Radiology: Artificial Intelligence',
+    year: 2022,
+    status: 'Published',
+    topics: ['covid', 'quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'bramante-2022-vaccination-viral-load',
+    authors: 'Bramante CT, et al., Ingraham NE.',
+    title: 'Vaccination Against SARS-CoV-2 Is Associated with a Lower Viral Load',
+    journal: 'Open Forum Infectious Diseases',
+    year: 2022,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'lupei-2022-cds-prognostic',
+    authors: 'Lupei MI, et al., Ingraham NE.',
+    title: 'A 12-Hospital Prospective Evaluation of a Clinical Decision Support Prognostic Algorithm',
+    journal: 'PLoS One',
+    year: 2022,
+    status: 'Published',
+    topics: ['covid', 'quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'abdelwahab-2022-pasc-rehab',
+    authors: 'Abdelwahab N, Ingraham NE, et al.',
+    title: 'Predictors of Postacute Sequelae of COVID-19 Development and Rehabilitation',
+    journal: 'Archives of Physical Medicine and Rehabilitation',
+    year: 2022,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'usher-2022-interhospital-coordination',
+    authors: 'Usher MG, et al., Ingraham NE.',
+    title: 'Responding to COVID-19 Through Interhospital Resource Coordination',
+    journal: 'Journal of Patient Safety',
+    year: 2022,
+    status: 'Published',
+    topics: ['covid', 'quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'jennaro-2022-acylcarnitines-sepsis',
+    authors: 'Jennaro TS, et al., Ingraham NE.',
+    title: 'Serum Levels of Acylcarnitines and Amino Acids Are Associated with Liberation from Organ Support in Patients with Septic Shock',
+    journal: 'Journal of Clinical Medicine',
+    year: 2022,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'ingraham-2022-admission-diagnosis-trends',
+    authors: 'Ingraham NE, et al.',
+    title: 'Recent Trends in Admission Diagnosis and Related Mortality in the Medically Critically Ill',
+    journal: 'Journal of Intensive Care Medicine',
+    year: 2022,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
     id: 'ingraham-2022-icu-trends',
     authors: 'Ingraham NE, Eddington C, Tignanelli CJ.',
     title: 'Trends in ICU Utilization and Patient Complexity Over the COVID-19 Pandemic',
@@ -247,7 +501,7 @@ export const publications: Publication[] = [
     id: 'ingraham-2022-disparities-covid',
     authors: 'Ingraham NE, Purcell LN, Karam BS, Dudley RA, Usher MG, Luce CA, Warlick JW, Allen ML, Wolfson J, Tignanelli CJ.',
     title: 'Racial/Ethnic Disparities in Hospital Admissions from COVID-19 and the Role of Neighborhood Deprivation and Primary Language',
-    journal: 'BMC Public Health',
+    journal: 'Journal of General Internal Medicine',
     year: 2022,
     status: 'Published',
     abstract: 'This study examines racial and ethnic disparities in COVID-19 hospital admissions and their relationship to neighborhood-level social determinants of health. Using geocoded data linked to area deprivation indices, we demonstrate how structural factors including neighborhood deprivation and primary language contribute to observed disparities.',
@@ -266,16 +520,126 @@ export const publications: Publication[] = [
     status: 'Published',
     doi: 'https://doi.org/10.1016/S2666-7568(20)30033-7',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/33521772/',
-    abstract: 'Retrospective cohort analysis of 6,256 adults hospitalized with COVID-19. Metformin use before hospitalization was associated with a significant reduction in in-hospital mortality (OR 0.52; 95% CI 0.37–0.73), providing observational rationale for the COVID-OUT randomized trial.',
+    abstract: 'Retrospective cohort analysis of 6,256 adults hospitalized with COVID-19. Metformin use before hospitalization was associated with a significant reduction in in-hospital mortality (OR 0.52; 95% CI 0.37-0.73), providing observational rationale for the COVID-OUT randomized trial.',
     topics: ['covid'],
     featured: true,
     authorSlugs: ['nick'],
   },
 
   {
+    id: 'karam-2021-mtor-covid',
+    authors: 'Karam BS, Morris RS, et al., Ingraham NE.',
+    title: 'mTOR Inhibition in COVID-19: A Commentary and Review of Efficacy in RNA Viruses',
+    journal: 'Journal of Medical Virology',
+    year: 2021,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'lusczek-2021-covid-phenotypes',
+    authors: 'Lusczek ER, Ingraham NE, et al.',
+    title: 'Characterizing COVID-19 Clinical Phenotypes and Associated Comorbidities',
+    journal: 'PLoS One',
+    year: 2021,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'puskarich-2021-losartan-outpatient',
+    authors: 'Puskarich MA, Cummins NW, Ingraham NE, et al.',
+    title: 'A Multi-Center Phase II Randomized Clinical Trial of Losartan on Symptomatic Outpatients with COVID-19',
+    journal: 'EClinicalMedicine',
+    year: 2021,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'ingraham-2021-omicron-unknowns',
+    authors: 'Ingraham NE, Ingbar DH.',
+    title: 'The Omicron Variant of SARS-CoV-2: Understanding the Known and Living with Unknowns',
+    journal: 'Clinical and Translational Medicine',
+    year: 2021,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'ibrahim-2021-metformin-mechanisms',
+    authors: 'Ibrahim S, Lowe JR, et al., Ingraham NE.',
+    title: 'Metformin and Covid-19: Focused Review of Mechanisms',
+    journal: 'Frontiers in Endocrinology',
+    year: 2021,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'bramante-2021-metformin-severity',
+    authors: 'Bramante CT, et al., Ingraham NE.',
+    title: 'Outpatient Metformin Use Is Associated with Reduced Severity of COVID-19',
+    journal: 'Journal of Medical Virology',
+    year: 2021,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'silverman-2021-nlp-covid-symptoms',
+    authors: 'Silverman GM, et al., Ingraham NE.',
+    title: 'NLP Methods for Extraction of Symptoms from Unstructured Data for Use in Prognostic COVID-19 Analytic Models',
+    journal: 'Journal of Artificial Intelligence Research',
+    year: 2021,
+    status: 'Published',
+    topics: ['covid', 'quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'ingraham-2021-pancreatitis-trends',
+    authors: 'Ingraham NE, et al.',
+    title: 'Morbidity and Mortality Trends of Pancreatitis: An Observational Study',
+    journal: 'Surgical Infections',
+    year: 2021,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'sahoo-2021-rule-based-covid',
+    authors: 'Sahoo HS, et al., Ingraham NE.',
+    title: 'A Fast, Resource Efficient, and Reliable Rule-Based System for COVID-19 Symptom Identification',
+    journal: 'JAMIA Open',
+    year: 2021,
+    status: 'Published',
+    topics: ['covid', 'quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'dutta-2021-obesity-treatment',
+    authors: 'Dutta N, Ingraham NE, et al.',
+    title: 'We Should Do More to Offer Evidence-Based Treatment for Obesity',
+    journal: 'Journal of Primary Care and Community Health',
+    year: 2021,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
     id: 'ingraham-2021-discordant-cpr',
     authors: 'Ingraham NE, Mesfin N, Jones B, Chipman JG, Tignanelli CJ.',
-    title: 'Discordant CPR: Characterizing Patients Who Receive Resuscitation Despite DNR Orders',
+    title: 'Discordant Cardiopulmonary Resuscitation and Code Status at Death',
     journal: 'Journal of Pain and Symptom Management',
     year: 2021,
     status: 'Published',
@@ -311,6 +675,61 @@ export const publications: Publication[] = [
   // ── 2020 ─────────────────────────────────────────────────────────────────
 
   {
+    id: 'tignanelli-2020-antihypertensives-covid',
+    authors: 'Tignanelli CJ, Ingraham NE, et al.',
+    title: 'Antihypertensive Drugs and Risk of COVID-19?',
+    journal: 'Lancet Respiratory Medicine',
+    year: 2020,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'ingraham-2020-functional-status',
+    authors: 'Ingraham NE, et al.',
+    title: 'National Trends and Variation of Functional Status Deterioration in the Medically Critically Ill',
+    journal: 'Critical Care Medicine',
+    year: 2020,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'vakayil-2020-surgical-icu-trends',
+    authors: 'Vakayil V, Ingraham NE, et al.',
+    title: 'Epidemiological Trends of Surgical Admissions to the Intensive Care Unit',
+    journal: 'Journal of Trauma and Acute Care Surgery',
+    year: 2020,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'ingraham-2020-hydroxychloroquine',
+    authors: 'Ingraham NE, et al.',
+    title: 'Shining a Light on the Evidence for Hydroxychloroquine in SARS-CoV-2',
+    journal: 'Critical Care',
+    year: 2020,
+    status: 'Published',
+    topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  {
+    id: 'ingraham-2020-cci-liver-transplant',
+    authors: 'Ingraham NE, et al.',
+    title: 'Pre- and Peri-Operative Factors Associated with Chronic Critical Illness in Liver Transplant Recipients',
+    journal: 'Surgical Infections',
+    year: 2020,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  {
     id: 'ingraham-2020-national-trends',
     authors: 'Ingraham NE, Vakil A, Chipman JG, Tignanelli CJ.',
     title: 'National Trends in Critical Illness and Non-Invasive Ventilation from 2010 to 2019',
@@ -342,6 +761,45 @@ export const publications: Publication[] = [
     status: 'Published',
     abstract: 'An editorial commentary on the challenge of evidence-based decision-making during the early COVID-19 pandemic, emphasizing the need for rigorous clinical trial evidence over untested therapeutic interventions and the importance of clinical equipoise.',
     topics: ['covid'],
+    authorSlugs: ['nick'],
+  },
+
+  // ── 2019 ─────────────────────────────────────────────────────────────────
+
+  {
+    id: 'wong-2019-dnr-cpr-case-series',
+    authors: 'Wong J, Duane PG, Ingraham NE.',
+    title: 'A Case Series of Patients Who Were Do Not Resuscitate but Underwent CPR',
+    journal: 'Resuscitation',
+    year: 2019,
+    status: 'Published',
+    topics: ['decision-making'],
+    authorSlugs: ['nick'],
+  },
+
+  // ── 2018 ─────────────────────────────────────────────────────────────────
+
+  {
+    id: 'macdonald-2018-smoking-hiv',
+    authors: 'MacDonald DM, et al., Ingraham NE.',
+    title: 'Smoking and Accelerated Lung Function Decline in HIV-Positive Individuals',
+    journal: 'Journal of Acquired Immune Deficiency Syndromes',
+    year: 2018,
+    status: 'Published',
+    topics: ['quality'],
+    authorSlugs: ['nick'],
+  },
+
+  // ── 2017 ─────────────────────────────────────────────────────────────────
+
+  {
+    id: 'ingraham-2017-prosthetic-joint-mai',
+    authors: 'Ingraham NE, Schneider B, Alpern JD.',
+    title: 'Prosthetic Joint Infection due to Mycobacterium avium-intracellulare',
+    journal: 'Case Reports in Infectious Diseases',
+    year: 2017,
+    status: 'Published',
+    topics: ['quality'],
     authorSlugs: ['nick'],
   },
 ]
