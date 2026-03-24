@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" fill="none">
+  <defs>
+    <linearGradient id="goldShimmerDark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c9a84c"/>
+      <stop offset="50%" stop-color="#dbb960"/>
+      <stop offset="100%" stop-color="#c9a84c"/>
+    </linearGradient>
+  </defs>
+  <!-- MN text (cream on dark) -->
+  <text x="0" y="82" font-family="'Fraunces', Georgia, serif" font-weight="800" font-size="72" fill="#faf8f3" letter-spacing="-1">MN</text>
+  <!-- Pulse line connector -->
+  <path d="M 118 60 L 135 60 L 142 35 L 149 85 L 156 45 L 163 65 L 170 55 L 185 55" 
+        stroke="url(#goldShimmerDark)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- CCORE text -->
+  <text x="190" y="82" font-family="'Fraunces', Georgia, serif" font-weight="800" font-size="72" fill="#faf8f3" letter-spacing="-1">CCORE</text>
+  <!-- Subtitle -->
+  <text x="0" y="112" font-family="'DM Sans', Helvetica, sans-serif" font-weight="400" font-size="14" fill="#a0a8b0" letter-spacing="3.5">MINNESOTA CRITICAL CARE OUTCOMES &amp; RESEARCH EFFORT</text>
+</svg>

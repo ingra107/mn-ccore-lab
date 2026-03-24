@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c9a84c"/>
+      <stop offset="100%" stop-color="#dbb960"/>
+    </linearGradient>
+  </defs>
+  <!-- Hexagonal frame (data/science nod) -->
+  <path d="M40 4 L72 22 L72 58 L40 76 L8 58 L8 22 Z" 
+        stroke="#0f1923" stroke-width="2.5" fill="none"/>
+  <!-- Inner pulse line -->
+  <path d="M18 40 L28 40 L33 25 L38 55 L43 32 L48 45 L53 38 L62 38" 
+        stroke="url(#goldGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- MC monogram below pulse -->
+  <text x="40" y="68" font-family="'Fraunces', Georgia, serif" font-weight="700" font-size="14" 
+        fill="#0f1923" text-anchor="middle" letter-spacing="1">MC</text>
+</svg>
