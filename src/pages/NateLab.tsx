@@ -65,7 +65,6 @@ export default function NateLab() {
       initials="NM"
       bio="Critical care physician at the University of Minnesota investigating how provider decision-making shapes outcomes for the most vulnerable ICU patients. His research program centers on three interconnected questions: How do providers vary in their approach to goals-of-care conversations? Can we predict survivability after in-hospital cardiac arrest to inform these conversations? And what defines the trajectory of patients who develop chronic critical illness? He uses multi-center CLIF data and electronic health record analytics to answer these questions at scale."
       links={[
-        { label: 'Scholar', href: 'https://scholar.google.com/citations?user=PLACEHOLDER' },
         { label: 'ORCID', href: 'https://orcid.org/0000-0001-8419-0339' },
         { label: 'UMN Bio', href: 'https://med.umn.edu/bio/nathan-mesfin' },
       ]}
