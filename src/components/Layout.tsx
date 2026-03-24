@@ -187,7 +187,7 @@ export default function Layout() {
       </nav>
 
       {/* Main content — add top padding for non-home pages to clear sticky nav */}
-      <main id="main-content" className={`flex-1 ${isHome ? '' : 'pt-28'}`}>
+      <main id="main-content" className={`flex-1 ${isHome ? '' : 'pt-32'}`}>
         <AnimatePresence mode="wait">
           <PageTransition key={location.pathname}>
             <Outlet />
