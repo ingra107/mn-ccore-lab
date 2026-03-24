@@ -63,6 +63,13 @@
 - **Role:** Faculty
 - **Photo:** _not found_
 
+### Dave Wacker
+- **Role:** Faculty
+- **Title:** Associate Professor of Medicine
+- **Credentials:** MD
+- **Photo:** https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0028_Layer-271.png?itok=skFv-xW5
+- **Profile:** https://med.umn.edu/bio/david-wacker
+
 ---
 
 ## Research Team

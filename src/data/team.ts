@@ -38,6 +38,7 @@ export const facultyCollaborators: TeamMember[] = [
   { name: 'Josh Trujeque', initials: 'JT', role: 'Faculty', credentials: 'MD' },
   { name: 'Katie Pendleton', initials: 'KP', role: 'Faculty', credentials: 'MD' },
   { name: 'Michael Kalinoski', initials: 'MK', role: 'Faculty', credentials: 'MD' },
+  { name: 'Dave Wacker', initials: 'DW', role: 'Faculty', credentials: 'MD' },
 ]
 
 // Order = activity level in MNCCORE (most active first). Keep updated.
