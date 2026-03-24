@@ -47,10 +47,10 @@ const labProjects = [
 ]
 
 const mentees = [
-  { name: 'Emma Bromley', project: 'GDMS x LPV Hebbel Abstract' },
-  { name: 'Steven Arriaza', project: 'Hospital Transfer Qualitative' },
-  { name: 'Kendall McEachron', project: 'EGS Database' },
-  { name: 'Sami Safadi', project: 'Severe Hyponatremia' },
+  { name: 'Dan Shyu, MD', project: 'Critical Care Fellow' },
+  { name: 'Beret Fitzgerald, MD', project: 'Critical Care Fellow' },
+  { name: 'Emma Bromley', project: 'Research Coordinator — Pre-doctoral candidate' },
+  { name: 'Claire Collins', project: 'Medical Student Researcher' },
 ]
 
 export default function NickLab() {
