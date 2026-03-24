@@ -34,10 +34,23 @@ const mnccoreMembers = [
   'Pendleton KM',
   'Chipman JG',
   'Dudley RA',
+  'Wacker DA',
   'Wacker D',
   'Trujeque J',
   'McEachron K',
   'Safadi S',
+  'Kalinoski M',
+  'MacDonald DM',
+  'Henkle BE',
+  'Begnaud A',
+]
+
+const clifMembers = [
+  'Hayek SS', 'Parker WF', 'Churpek MM', 'Gombar S', 'Dligach D',
+  'Afshar M', 'Mayampurath A', 'Maddali MV', 'Siuba MT', 'Blair PW',
+  'Weissman GE', 'Sinha P', 'Calfee CS', 'Rojas JC', 'Hochberg C',
+  'Chhikara K', 'Chaudhari V', 'Lyons PG', 'Gao CA', 'Buell KG',
+  'Barker AK', 'Amagai S', 'Nour M',
 ]
 
 function topicLabel(topic: string): string {
@@ -62,12 +75,18 @@ function formatAuthors(authors: string): React.ReactNode[] {
   const raw = authors.replace(/\.$/, '')
   const segments = raw.split(',').map((s) => s.trim()).filter(Boolean)
 
-  const isMember = (seg: string) => mnccoreMembers.some((m) => seg.includes(m))
+  const isMnccore = (seg: string) => mnccoreMembers.some((m) => seg.includes(m))
+  const isClif = (seg: string) => clifMembers.some((m) => seg.includes(m))
+  const isHighlighted = (seg: string) => isMnccore(seg) || isClif(seg)
 
   const renderSeg = (seg: string, key: string, prefix = ', '): React.ReactNode => {
     const text = key === 'f0' ? seg : `${prefix}${seg}`
-    return isMember(seg) ? (
+    return isMnccore(seg) ? (
       <strong key={key} style={{ color: 'var(--ink)', fontWeight: 600 }}>
+        {text}
+      </strong>
+    ) : isClif(seg) ? (
+      <strong key={key} style={{ color: 'var(--ink)', fontWeight: 500 }}>
         {text}
       </strong>
     ) : (
@@ -75,35 +94,42 @@ function formatAuthors(authors: string): React.ReactNode[] {
     )
   }
 
+  // ≤10 authors: show all
   if (segments.length <= 10) {
     return segments.map((seg, i) => renderSeg(seg, i === 0 ? 'f0' : `f${i}`))
   }
 
-  // >10 authors: first 3 + ... + MNCCORE members in order + ... + last author
+  // >10 authors: first 3 + MNCCORE/CLIF members + last 3
   const firstThree = segments.slice(0, 3)
-  const middle = segments.slice(3, segments.length - 1)
-  const last = segments[segments.length - 1]
-  const middleMembers = middle.filter(isMember)
+  const lastThree = segments.slice(-3)
+  const middle = segments.slice(3, segments.length - 3)
+
+  // Get highlighted middle members (MNCCORE first priority, then CLIF)
+  let middleHighlighted = middle.filter(isHighlighted)
+
+  // If >10 highlighted members in the middle, focus on MNCCORE only
+  if (middleHighlighted.length > 10) {
+    middleHighlighted = middle.filter(isMnccore)
+  }
 
   const result: React.ReactNode[] = [
     ...firstThree.map((seg, i) => renderSeg(seg, i === 0 ? 'f0' : `f${i}`)),
   ]
 
-  if (middleMembers.length > 0) {
+  if (middleHighlighted.length > 0) {
     result.push(<span key="e1">, ...</span>)
-    middleMembers.forEach((seg, i) => {
-      result.push(
-        <strong key={`m${i}`} style={{ color: 'var(--ink)', fontWeight: 600 }}>
-          {`, ${seg}`}
-        </strong>
-      )
+    middleHighlighted.forEach((seg, i) => {
+      result.push(renderSeg(seg, `m${i}`))
     })
     result.push(<span key="e2">, ...</span>)
   } else {
     result.push(<span key="e1">, ...</span>)
   }
 
-  result.push(renderSeg(last, 'last'))
+  lastThree.forEach((seg, i) => {
+    result.push(renderSeg(seg, `l${i}`))
+  })
+
   return result
 }
 

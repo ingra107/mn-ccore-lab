@@ -90,30 +90,21 @@ export const publications: Publication[] = [
   },
 
   {
-    id: 'ingraham-2025-nlp-firearm',
-    authors: 'Ingraham NE, Eddington C, Tignanelli CJ.',
-    title: 'Natural Language Processing for Firearm Access Documentation in the Electronic Health Record',
+    id: 'trujeque-2025-nlp-firearm',
+    authors: 'Trujeque J, Dudley RA, Mesfin N, Ingraham NE, Ortiz I, Bangerter A, Halek K, Owen R, Lew RA, Miller CJ, Bair MJ, Mavandadi S.',
+    title: 'Comparison of Six Natural Language Processing Approaches to Assessing Firearm Access in Veterans Health Administration Electronic Health Records',
     journal: 'Journal of the American Medical Informatics Association',
     year: 2025,
     status: 'Published',
+    doi: 'https://doi.org/10.1093/jamia/ocae256',
+    pubmed: 'https://pubmed.ncbi.nlm.nih.gov/39432709/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
-  },
-
-  {
-    id: 'trujeque-2025-nlp-firearm-vha',
-    authors: 'Trujeque J, et al., Ingraham NE.',
-    title: 'Comparison of NLP Approaches to Assessing Firearm Access in VHA Electronic Health Records',
-    journal: 'Journal of the American Medical Informatics Association',
-    year: 2025,
-    status: 'Published',
-    topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick', 'nate'],
   },
 
   {
     id: 'amagai-2025-icu-readmission-epidemiology',
-    authors: 'Amagai S, et al., Ingraham NE.',
+    authors: 'Amagai S, Chaudhari V, Chhikara K, Ingraham NE, Hochberg CH, Rojas JC, Lyons PG, Parker WF, Weissman GE, Gao CA, Maddali MV.',
     title: 'The Epidemiology of ICU Readmissions Across Ten Health Systems',
     journal: 'Critical Care Explorations',
     year: 2025,
