@@ -64,7 +64,7 @@ export default function ImpactMetrics() {
         }}
       />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {metrics.map((metric, i) => (
             <MetricCard

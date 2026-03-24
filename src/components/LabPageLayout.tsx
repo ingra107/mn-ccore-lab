@@ -305,9 +305,9 @@ function ProjectCardItem({ project }: { project: ProjectCard }) {
       onFocus={() => setHovered(true)}
       onBlur={() => setHovered(false)}
     >
-      <div className="flex items-start justify-between gap-3 mb-2">
+      <div className="flex items-center justify-between gap-3 mb-2">
         <h3
-          className="text-sm font-semibold leading-tight"
+          className="text-sm sm:text-base font-semibold leading-snug"
           style={{
             fontFamily: 'var(--font-body)',
             color: 'var(--ink)',

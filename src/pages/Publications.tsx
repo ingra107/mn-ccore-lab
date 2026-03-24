@@ -167,7 +167,7 @@ export default function Publications() {
 
       {/* Search + Filters + List */}
       <section
-        className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto"
+        className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
         ref={pubsRef}
       >
         {/* Search */}
