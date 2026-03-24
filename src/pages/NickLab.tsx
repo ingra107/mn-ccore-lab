@@ -27,25 +27,25 @@ const grants = [
 ]
 
 const clifProjects = [
-  { title: 'P1: Gender Disparities & Low Tidal Volume', status: 'Active' as const },
-  { title: 'P4: ICU Quality Metrics', status: 'Active' as const },
-  { title: 'IV Fluids Shortage', status: 'Active' as const },
-  { title: 'PF-v-SF Oxygenation Severity', status: 'In Review' as const },
-  { title: 'VentMode Waterfall Brief — JAMIA', status: 'In Review' as const },
-  { title: 'Volume vs Pressure Control Mortality', status: 'Active' as const },
+  { title: 'P1: Gender Disparities & Low Tidal Volume', status: 'Active' as const, description: 'Examining whether gender influences the delivery of lung-protective ventilation across CLIF consortium sites.' },
+  { title: 'P4: ICU Quality Metrics', status: 'Active' as const, description: 'Developing and validating standardized quality metrics for ICU care using multi-center CLIF data.' },
+  { title: 'IV Fluids Shortage', status: 'Active' as const, description: 'Evaluating the impact of the 2024 IV fluid shortage on ICU fluid resuscitation practices and patient outcomes.' },
+  { title: 'PF-v-SF Oxygenation Severity', status: 'In Review' as const, description: 'Comparing PaO2/FiO2 and SpO2/FiO2 ratios for classifying oxygenation severity in mechanically ventilated patients.' },
+  { title: 'VentMode Waterfall Brief — JAMIA', status: 'In Review' as const, description: 'Characterizing ventilation mode transitions and their association with outcomes in mechanically ventilated ICU patients.' },
+  { title: 'Volume vs Pressure Control Mortality', status: 'Active' as const, description: 'Multi-center comparison of volume-controlled vs pressure-controlled ventilation on ICU mortality.' },
   { title: 'Hypothermia Rewarming Rates', status: 'Active' as const },
   { title: 'WBC & Temperature Thresholds for Sepsis', status: 'Active' as const },
   { title: 'Clinical Implications of Sepsis Definitions', status: 'Active' as const },
   { title: 'FLAME', status: 'Active' as const },
-  { title: 'Proning Incidence in Severe ARF', status: 'Active' as const },
+  { title: 'Proning Incidence in Severe ARF', status: 'Active' as const, description: 'Quantifying prone positioning utilization rates across CLIF sites in patients with severe acute respiratory failure.' },
 ]
 
 const labProjects = [
-  { title: 'LPV Adherence Paper', status: 'In Review' as const },
-  { title: 'Decision-Making Survey / GDMS', status: 'Active' as const },
-  { title: 'Provider EBP Research Program', status: 'Active' as const },
+  { title: 'LPV Adherence Paper', status: 'In Review' as const, description: 'Quantifying provider-level variation in lung-protective ventilation adherence using multi-center CLIF data.' },
+  { title: 'Decision-Making Survey / GDMS', status: 'Active' as const, description: 'Surveying ICU providers on general decision-making styles and correlating with ventilator management choices.' },
+  { title: 'Provider EBP Research Program', status: 'Active' as const, description: 'Building a research program studying how provider characteristics influence evidence-based practice adoption in the ICU.' },
   { title: 'Critical Care Quality Manuscript', status: 'Active' as const },
-  { title: 'SGLT2 & Metformin in COPD Readmissions', status: 'Active' as const },
+  { title: 'SGLT2 & Metformin in COPD Readmissions', status: 'Active' as const, description: 'Investigating whether SGLT2 inhibitors and metformin reduce 30-day readmission risk in COPD patients.' },
 ]
 
 const mentees = [

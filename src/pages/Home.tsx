@@ -347,6 +347,91 @@ export default function Home() {
 
       <CLIFMap />
 
+      {/* Funding */}
+      <div className="section-cream">
+        <section className="py-8 sm:py-12 lg:py-16 content-container">
+          <div className="text-center mb-6 sm:mb-8">
+            <p
+              className="text-xs sm:text-sm mb-4"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--slate)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.15em',
+                opacity: 0.7,
+              }}
+            >
+              Research funded by
+            </p>
+            <div className="flex flex-wrap justify-center items-center gap-6 sm:gap-10 lg:gap-14">
+              {[
+                {
+                  abbr: 'NIH',
+                  name: 'National Institutes of Health',
+                  href: 'https://www.nih.gov/',
+                  colorClass: 'funding-nih',
+                },
+                {
+                  abbr: 'NHLBI',
+                  name: 'National Heart, Lung, and Blood Institute',
+                  href: 'https://www.nhlbi.nih.gov/',
+                  colorClass: 'funding-nhlbi',
+                },
+                {
+                  abbr: 'NLM',
+                  name: 'National Library of Medicine',
+                  href: 'https://www.nlm.nih.gov/',
+                  colorClass: 'funding-nlm',
+                },
+              ].map((agency) => (
+                <a
+                  key={agency.abbr}
+                  href={agency.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group text-center transition-all duration-200 hover:scale-105"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <div
+                    className={`text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 ${agency.colorClass}`}
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 800,
+                      letterSpacing: '-0.02em',
+                      lineHeight: 1,
+                      opacity: 0.85,
+                    }}
+                  >
+                    {agency.abbr}
+                  </div>
+                  <div
+                    className="text-xs"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      color: 'var(--slate)',
+                      maxWidth: '140px',
+                      lineHeight: 1.3,
+                      opacity: 0.6,
+                    }}
+                  >
+                    {agency.name}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Subtle divider */}
+          <div
+            style={{
+              height: '1px',
+              background: 'linear-gradient(to right, transparent, var(--gold), transparent)',
+              opacity: 0.3,
+            }}
+          />
+        </section>
+      </div>
+
       {/* Consortium & Affiliations */}
       <div style={{ background: 'var(--ice)' }}>
         <section

@@ -303,3 +303,11 @@ a:hover {
 .dark .section-cream {
   background-color: #131f2d;
 }
+
+/* ── Funding agency colors — brighter in dark mode ── */
+.funding-nih { color: #1a4480; }
+.funding-nhlbi { color: #b51d09; }
+.funding-nlm { color: #2e7d32; }
+.dark .funding-nih { color: #5b9bd5; }
+.dark .funding-nhlbi { color: #ef6c57; }
+.dark .funding-nlm { color: #66bb6a; }
