@@ -290,14 +290,15 @@ export default function Home() {
         </div>
       </section>
 
-      <SectionDivider />
+      {/* Sections alternate backgrounds: dark → cream → gradient → dark → dark → ice */}
 
-      {/* Research Pillars */}
-      <section
-        id="research-pillars"
-        className="py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto"
-        ref={pillarsRef}
-      >
+      {/* Research Pillars — full-width cream bg */}
+      <div style={{ background: 'var(--cream)' }}>
+        <section
+          id="research-pillars"
+          className="py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto"
+          ref={pillarsRef}
+        >
         <div className="mb-8 sm:mb-12 lg:mb-16 max-w-2xl">
           <h2
             className="fade-in-up text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4"
@@ -363,16 +364,13 @@ export default function Home() {
           })}
         </div>
       </section>
-
-      <SectionDivider />
+      </div>
 
       <FeaturedResearch />
 
       <ImpactMetrics />
 
       <CLIFMap />
-
-      <SectionDivider />
 
       {/* Consortium & Affiliations */}
       <div style={{ background: 'var(--ice)' }}>
