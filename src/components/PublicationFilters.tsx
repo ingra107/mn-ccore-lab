@@ -88,7 +88,7 @@ export default function PublicationFilters({
 
   return (
     <div
-      className="card p-4 sm:p-6"
+      className="card p-5 sm:p-8"
       style={{ border: '1px solid rgba(201, 168, 76, 0.12)' }}
     >
       {/* Year row */}
@@ -128,7 +128,7 @@ export default function PublicationFilters({
       </FilterRow>
 
       {/* Result count + clear */}
-      <div className="flex items-center justify-between mt-4 pt-3" style={{ borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}>
+      <div className="flex items-center justify-between mt-4 pt-3" style={{ borderTop: '1px solid rgba(201, 168, 76, 0.25)' }}>
         <span
           className="text-xs"
           style={{

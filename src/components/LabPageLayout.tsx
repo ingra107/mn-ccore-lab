@@ -236,7 +236,7 @@ export function GrantsSection({ grants, id }: { grants: GrantRow[]; id?: string 
         {grants.map((grant) => (
           <div
             key={grant.title}
-            className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3"
+            className="card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-3"
           >
             <span className="mechanism-pill flex-shrink-0">
               {grant.mechanism}
@@ -294,7 +294,7 @@ function ProjectCardItem({ project }: { project: ProjectCard }) {
 
   return (
     <div
-      className="card p-4 sm:p-5 cursor-pointer transition-all duration-200 relative"
+      className="card p-5 sm:p-6 cursor-pointer transition-all duration-200 relative"
       style={{
         borderLeft: hovered ? '5px solid var(--gold)' : '3px solid var(--gold)',
         outline: 'none',
@@ -394,7 +394,7 @@ export function MenteesSection({ mentees, id }: { mentees: MenteeCard[]; id?: st
         {mentees.map((mentee) => (
           <div
             key={mentee.name}
-            className="p-4 sm:p-5 rounded-lg"
+            className="p-5 sm:p-6 rounded-lg"
             style={{
               background: 'var(--gold-light)',
               border: '1px solid rgba(201, 168, 76, 0.15)',

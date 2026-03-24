@@ -62,7 +62,7 @@ export default function Layout() {
           backdropFilter: scrolled ? 'blur(12px)' : 'none',
           WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
           borderBottom: scrolled ? '1px solid rgba(201, 168, 76, 0.2)' : 'none',
-          padding: scrolled ? '8px 0' : '16px 0',
+          padding: scrolled ? '10px 0' : '16px 0',
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -255,7 +255,7 @@ export default function Layout() {
               >
                 Quick Links
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {navLinks.map((link) => (
                   <li key={link.to}>
                     <Link
@@ -287,7 +287,7 @@ export default function Layout() {
               >
                 Affiliates
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {[
                   { label: 'CLIF Consortium', href: 'https://clif-icu.com/' },
                   {
@@ -335,11 +335,11 @@ export default function Layout() {
               >
                 Social
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {[
-                  { label: 'Google Scholar', href: 'https://scholar.google.com/' },
-                  { label: 'ORCID', href: 'https://orcid.org/' },
-                  { label: 'GitHub', href: 'https://github.com/' },
+                  { label: 'Google Scholar', href: 'https://scholar.google.com/citations?user=ZKMVVHkAAAAJ&hl=en' },
+                  { label: 'GitHub', href: 'https://github.com/ingra107' },
+                  { label: 'CLIF GitHub', href: 'https://github.com/Common-Longitudinal-ICU-data-Format' },
                 ].map((link) => (
                   <li key={link.href}>
                     <a

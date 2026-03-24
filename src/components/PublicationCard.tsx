@@ -61,7 +61,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
   const statusColor = () => {
     switch (pub.status) {
       case 'Published':
-        return { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }
+        return { bg: 'rgba(122, 0, 25, 0.1)', color: '#7a0019' }
       case 'In Review':
         return { bg: 'rgba(245, 158, 11, 0.12)', color: '#d97706' }
       case 'In Preparation':
@@ -106,7 +106,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
         }
       }}
     >
-      <div className="p-4 sm:p-6">
+      <div className="p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
           {/* Year + Status */}
           <div className="flex sm:flex-col items-center sm:items-start gap-2 sm:w-32 flex-shrink-0">
@@ -194,10 +194,10 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
             <div
               className="px-4 sm:px-6 pb-4 sm:pb-6 pt-0"
               style={{
-                borderTop: '1px solid rgba(201, 168, 76, 0.15)',
+                borderTop: '1px solid rgba(201, 168, 76, 0.3)',
               }}
             >
-              <div className="pt-3 sm:pt-4 sm:pl-36">
+              <div className="pt-4 sm:pt-5 sm:pl-36">
                 {pub.abstract && (
                   <p
                     className="text-sm leading-relaxed mb-3 sm:mb-4"
@@ -209,16 +209,16 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
 
                 {/* Topic chips */}
                 {pub.topics.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-3 sm:mb-4">
+                  <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
                     {pub.topics.map((t) => {
                       const tc = topicColor(t)
                       return (
                         <span
                           key={t}
-                          className="inline-flex items-center px-2 py-0.5 rounded-full"
+                          className="inline-flex items-center px-2.5 py-1 rounded-full"
                           style={{
                             fontFamily: 'var(--font-mono)',
-                            fontSize: '10px',
+                            fontSize: '11px',
                             background: tc.bg,
                             color: tc.color,
                           }}

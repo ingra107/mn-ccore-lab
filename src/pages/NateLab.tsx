@@ -32,8 +32,8 @@ export default function NateLab() {
       initials="NM"
       bio="Critical care physician at the University of Minnesota focused on improving outcomes for critically ill patients through predictive modeling and understanding provider decision-making around goals of care. Research interests include in-hospital cardiac arrest survivability, DNR order variation, and chronic critical illness."
       links={[
-        { label: 'Scholar', href: 'https://scholar.google.com/' },
-        { label: 'ORCID', href: 'https://orcid.org/' },
+        { label: 'ORCID', href: 'https://orcid.org/0000-0001-8419-0339' },
+        { label: 'UMN Bio', href: 'https://med.umn.edu/bio/nathan-mesfin' },
       ]}
       sections={[
         { id: 'grants', label: 'Active Grants' },

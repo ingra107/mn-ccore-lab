@@ -22,24 +22,28 @@ const pillars = [
     title: 'Provider Variation',
     description:
       'Characterizing how individual clinician practice patterns shape ICU outcomes across diverse hospital settings.',
+    color: 'var(--gold)',
   },
   {
     icon: BarChart3,
     title: 'ICU Quality Metrics',
     description:
       'Developing and validating evidence-based quality measures for critical care using multi-center data.',
+    color: 'var(--teal)',
   },
   {
     icon: Brain,
     title: 'Clinical Decision-Making',
     description:
       'Understanding how cognitive styles and heuristics influence provider behavior at the bedside.',
+    color: 'var(--maroon)',
   },
   {
     icon: Database,
     title: 'Multi-Center Data Science',
     description:
       'Building open data infrastructure through the CLIF Consortium to enable reproducible ICU research.',
+    color: '#5b8abf',
   },
 ]
 
@@ -188,8 +192,8 @@ export default function Home() {
             className="mt-6 sm:mt-8 mb-2 transition-all duration-700 flex justify-center items-center gap-3"
             style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: '13px',
-              color: 'rgba(201, 168, 76, 0.5)',
+              fontSize: '14px',
+              color: 'rgba(201, 168, 76, 0.7)',
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
               transitionDelay: '400ms',
@@ -281,9 +285,9 @@ export default function Home() {
             return (
               <div
                 key={pillar.title}
-                className="fade-in-up card p-4 sm:p-6 cursor-default"
+                className="fade-in-up card p-5 sm:p-6 cursor-default"
                 style={{
-                  borderLeft: '4px solid var(--gold)',
+                  borderLeft: `4px solid ${pillar.color}`,
                 }}
               >
                 <div className="flex items-start gap-3 sm:gap-4">
@@ -332,67 +336,69 @@ export default function Home() {
       <SectionDivider />
 
       {/* Consortium & Affiliations */}
-      <section
-        className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
-        ref={affiliatesRef}
-      >
-        <div className="mb-8 sm:mb-12 lg:mb-16 max-w-2xl">
-          <h2
-            className="fade-in-up text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4"
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 600,
-              color: 'var(--ink)',
-            }}
-          >
-            Consortium & Affiliations
-          </h2>
-          <p
-            className="fade-in-up text-base sm:text-lg"
-            style={{ color: 'var(--slate)' }}
-          >
-            We are part of a growing network of institutions committed to
-            improving critical care through collaboration and open science.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {affiliates.map((affiliate) => (
-            <a
-              key={affiliate.name}
-              href={affiliate.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="fade-in-up card p-5 sm:p-6 cursor-pointer group"
-              style={{ textDecoration: 'none' }}
+      <div style={{ background: 'var(--ice)' }}>
+        <section
+          className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+          ref={affiliatesRef}
+        >
+          <div className="mb-8 sm:mb-12 lg:mb-16 max-w-2xl">
+            <h2
+              className="fade-in-up text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 600,
+                color: 'var(--ink)',
+              }}
             >
-              <div className="flex items-start justify-between mb-2 sm:mb-3">
-                <h3
-                  className="text-sm sm:text-base font-semibold"
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    color: 'var(--ink)',
-                  }}
-                >
-                  {affiliate.name}
-                </h3>
-                <ExternalLink
-                  size={14}
-                  className="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  style={{ color: 'var(--gold)' }}
-                  aria-hidden="true"
-                />
-              </div>
-              <p
-                className="text-xs sm:text-sm leading-relaxed"
-                style={{ color: 'var(--slate)' }}
+              Consortium & Affiliations
+            </h2>
+            <p
+              className="fade-in-up text-base sm:text-lg"
+              style={{ color: 'var(--slate)' }}
+            >
+              We are part of a growing network of institutions committed to
+              improving critical care through collaboration and open science.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {affiliates.map((affiliate) => (
+              <a
+                key={affiliate.name}
+                href={affiliate.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="fade-in-up card p-5 sm:p-6 cursor-pointer group"
+                style={{ textDecoration: 'none' }}
               >
-                {affiliate.description}
-              </p>
-            </a>
-          ))}
-        </div>
-      </section>
+                <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <h3
+                    className="text-sm sm:text-base font-semibold"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      color: 'var(--ink)',
+                    }}
+                  >
+                    {affiliate.name}
+                  </h3>
+                  <ExternalLink
+                    size={14}
+                    className="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    style={{ color: 'var(--gold)' }}
+                    aria-hidden="true"
+                  />
+                </div>
+                <p
+                  className="text-xs sm:text-sm leading-relaxed"
+                  style={{ color: 'var(--slate)' }}
+                >
+                  {affiliate.description}
+                </p>
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
     </>
   )
 }

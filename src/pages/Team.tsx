@@ -249,7 +249,7 @@ export default function Team() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
           {facultyCollaborators.map((member) => (
-            <div key={member.name} className="fade-in-up text-center">
+            <div key={member.name} className="fade-in-up text-center p-4 rounded-lg transition-all duration-200" style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)' }}>
               <div className="flex justify-center mb-2">
                 <Avatar
                   name={member.name}
@@ -293,7 +293,7 @@ export default function Team() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
           {researchTeam.map((member) => (
-            <div key={member.name} className="fade-in-up text-center">
+            <div key={member.name} className="fade-in-up text-center p-4 rounded-lg transition-all duration-200" style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)' }}>
               <div className="flex justify-center mb-2">
                 <Avatar
                   name={member.name}

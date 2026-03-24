@@ -68,9 +68,9 @@ export default function NickLab() {
       initials="NI"
       bio="Physician-scientist at the University of Minnesota studying how provider-level variation in clinical practice impacts ICU outcomes. Founding member of the CLIF Consortium. Research interests include lung-protective ventilation adherence, clinical decision-making styles, and multi-center ICU data science."
       links={[
-        { label: 'Scholar', href: 'https://scholar.google.com/' },
-        { label: 'ORCID', href: 'https://orcid.org/' },
-        { label: 'GitHub', href: 'https://github.com/' },
+        { label: 'Scholar', href: 'https://scholar.google.com/citations?user=ZKMVVHkAAAAJ&hl=en' },
+        { label: 'ORCID', href: 'https://orcid.org/0000-0002-0292-0594' },
+        { label: 'GitHub', href: 'https://github.com/ingra107' },
       ]}
       sections={[
         { id: 'grants', label: 'Active Grants' },

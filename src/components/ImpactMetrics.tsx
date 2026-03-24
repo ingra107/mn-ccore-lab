@@ -37,7 +37,7 @@ function MetricCard({
         className="mt-2 text-xs sm:text-sm"
         style={{
           fontFamily: 'var(--font-mono)',
-          color: 'rgba(250, 248, 243, 0.6)',
+          color: 'rgba(250, 248, 243, 0.8)',
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
         }}
@@ -60,7 +60,7 @@ export default function ImpactMetrics() {
         style={{
           height: '1px',
           background: 'var(--gold)',
-          opacity: 0.3,
+          opacity: 0.5,
         }}
       />
 
@@ -84,7 +84,7 @@ export default function ImpactMetrics() {
         style={{
           height: '1px',
           background: 'var(--gold)',
-          opacity: 0.3,
+          opacity: 0.5,
         }}
       />
     </section>

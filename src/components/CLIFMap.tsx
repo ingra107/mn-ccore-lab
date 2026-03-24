@@ -120,7 +120,7 @@ export default function CLIFMap() {
             className="text-base sm:text-lg"
             style={{
               fontFamily: 'var(--font-body)',
-              color: 'rgba(250, 248, 243, 0.6)',
+              color: 'rgba(250, 248, 243, 0.8)',
             }}
           >
             13 academic medical centers collaborating on ICU data standards

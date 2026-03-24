@@ -33,7 +33,7 @@ export default function FeaturedResearch() {
   return (
     <section
       className="py-12 sm:py-16 lg:py-20"
-      style={{ background: 'var(--ice)' }}
+      style={{ background: 'linear-gradient(135deg, var(--ice) 0%, var(--gold-light) 100%)' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
