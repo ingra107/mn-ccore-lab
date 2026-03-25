@@ -10,6 +10,7 @@ import MemberPage from './pages/MemberPage'
 import Dashboard from './pages/Dashboard'
 import Network from './pages/Network'
 import Projects from './pages/Projects'
+import Meetings from './pages/Meetings'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/meetings" element={<Meetings />} />
         </Route>
       </Routes>
     </BrowserRouter>

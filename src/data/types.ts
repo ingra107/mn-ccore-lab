@@ -86,3 +86,23 @@ export interface ResearchPillar {
   title: string
   description: string
 }
+
+export interface ActionItem {
+  description: string
+  assignee: string  // team member slug
+  dueDate?: string
+  completed: boolean
+  projectSlug?: string  // links to a project
+}
+
+export interface Meeting {
+  id: string
+  date: string  // ISO date
+  title: string
+  type: 'biweekly' | 'ad-hoc' | 'journal-club'
+  attendees?: string[]  // team member slugs
+  agenda?: string[]
+  actionItems?: ActionItem[]
+  decisions?: string[]
+  notes?: string
+}

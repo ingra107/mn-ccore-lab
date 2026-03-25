@@ -9,6 +9,7 @@ const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/projects', label: 'Projects' },
+  { to: '/meetings', label: 'Meetings' },
   { to: '/team', label: 'Team' },
   { to: '/nick', label: 'Ingraham Lab' },
   { to: '/nate', label: 'Mesfin Lab' },

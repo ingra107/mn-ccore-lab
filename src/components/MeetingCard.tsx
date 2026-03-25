@@ -1,0 +1,362 @@
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronDown, CheckCircle2, Circle, Users, ListChecks } from 'lucide-react'
+import Avatar from './Avatar'
+import { directors, getAllMembers } from '../data/team'
+import type { Meeting } from '../data/types'
+
+function getPersonInfo(slug: string) {
+  const director = directors.find((d) => d.slug === slug)
+  if (director) {
+    return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
+  }
+  const member = getAllMembers().find((m) => m.slug === slug)
+  if (member) {
+    return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
+  }
+  return { name: slug, initials: slug.slice(0, 2).toUpperCase(), photoUrl: undefined }
+}
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00')
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function formatShortDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00')
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+interface MeetingCardProps {
+  meeting: Meeting
+}
+
+export default function MeetingCard({ meeting }: MeetingCardProps) {
+  const [expanded, setExpanded] = useState(false)
+  const pendingActions = meeting.actionItems?.filter((a) => !a.completed).length ?? 0
+  const totalActions = meeting.actionItems?.length ?? 0
+
+  return (
+    <motion.div
+      layout
+      className="meeting-card"
+      style={{
+        background: 'var(--cream)',
+        borderRadius: '12px',
+        borderLeft: pendingActions > 0 ? '3px solid var(--gold)' : '3px solid var(--ice)',
+        boxShadow: 'var(--shadow-card)',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'box-shadow 0.2s ease',
+      }}
+      whileHover={{
+        boxShadow: 'var(--shadow-card-hover)',
+      }}
+      onClick={() => setExpanded(!expanded)}
+    >
+      {/* Collapsed header — always visible */}
+      <div className="flex items-center gap-3 sm:gap-4 p-4">
+        {/* Date badge */}
+        <div
+          className="shrink-0 flex flex-col items-center justify-center rounded-lg"
+          style={{
+            width: '52px',
+            height: '52px',
+            background: 'var(--gold-light)',
+            border: '1px solid rgba(201,168,76,0.3)',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '10px',
+              color: 'var(--gold)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              lineHeight: 1,
+            }}
+          >
+            {new Date(meeting.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short' })}
+          </span>
+          <span
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '20px',
+              fontWeight: 700,
+              color: 'var(--ink)',
+              lineHeight: 1.2,
+            }}
+          >
+            {new Date(meeting.date + 'T12:00:00').getDate()}
+          </span>
+        </div>
+
+        {/* Title + meta */}
+        <div className="flex-1 min-w-0">
+          <h3
+            className="text-sm sm:text-base font-semibold leading-snug truncate"
+            style={{
+              fontFamily: 'var(--font-body)',
+              color: 'var(--ink)',
+              margin: 0,
+            }}
+          >
+            {meeting.title}
+          </h3>
+          <div className="flex items-center gap-3 mt-1">
+            <span
+              className="flex items-center gap-1 text-xs"
+              style={{ color: 'var(--slate)', opacity: 0.7, fontFamily: 'var(--font-mono)' }}
+            >
+              <Users size={12} />
+              {meeting.attendees?.length ?? 0}
+            </span>
+            {totalActions > 0 && (
+              <span
+                className="flex items-center gap-1 text-xs"
+                style={{
+                  color: pendingActions > 0 ? 'var(--gold)' : 'var(--teal)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                <ListChecks size={12} />
+                {pendingActions > 0 ? `${pendingActions} pending` : `${totalActions} done`}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Attendee avatars (desktop) */}
+        <div className="hidden sm:flex items-center -space-x-2">
+          {meeting.attendees?.slice(0, 4).map((slug) => {
+            const info = getPersonInfo(slug)
+            return (
+              <div key={slug} style={{ width: 28, height: 28 }}>
+                <Avatar
+                  name={info.name}
+                  initials={info.initials}
+                  photoUrl={info.photoUrl}
+                  size="sm"
+                  variant="ice"
+                  className="!w-7 !h-7 !min-w-0 !min-h-0"
+                />
+              </div>
+            )
+          })}
+          {(meeting.attendees?.length ?? 0) > 4 && (
+            <span
+              className="text-xs pl-2"
+              style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-mono)' }}
+            >
+              +{(meeting.attendees?.length ?? 0) - 4}
+            </span>
+          )}
+        </div>
+
+        {/* Expand chevron */}
+        <motion.div
+          animate={{ rotate: expanded ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="shrink-0"
+          style={{ color: 'var(--slate)', opacity: 0.5 }}
+        >
+          <ChevronDown size={20} />
+        </motion.div>
+      </div>
+
+      {/* Expanded content */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="px-4 pb-4"
+              style={{ borderTop: '1px solid rgba(201,168,76,0.15)' }}
+            >
+              {/* Date line */}
+              <p
+                className="text-xs mt-3 mb-3"
+                style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-mono)' }}
+              >
+                {formatDate(meeting.date)}
+              </p>
+
+              {/* Attendees (full list) */}
+              {meeting.attendees && meeting.attendees.length > 0 && (
+                <div className="mb-4">
+                  <h4
+                    className="text-xs font-semibold uppercase tracking-wider mb-2"
+                    style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}
+                  >
+                    Attendees
+                  </h4>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {meeting.attendees.map((slug) => {
+                      const info = getPersonInfo(slug)
+                      return (
+                        <div key={slug} className="flex items-center gap-1.5">
+                          <div style={{ width: 24, height: 24 }}>
+                            <Avatar
+                              name={info.name}
+                              initials={info.initials}
+                              photoUrl={info.photoUrl}
+                              size="sm"
+                              variant="ice"
+                              className="!w-6 !h-6 !min-w-0 !min-h-0"
+                            />
+                          </div>
+                          <span
+                            className="text-xs"
+                            style={{ color: 'var(--ink)', fontFamily: 'var(--font-body)' }}
+                          >
+                            {info.name}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Agenda */}
+              {meeting.agenda && meeting.agenda.length > 0 && (
+                <div className="mb-4">
+                  <h4
+                    className="text-xs font-semibold uppercase tracking-wider mb-2"
+                    style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}
+                  >
+                    Agenda
+                  </h4>
+                  <ol className="list-decimal list-inside space-y-1">
+                    {meeting.agenda.map((item, i) => (
+                      <li
+                        key={i}
+                        className="text-sm leading-relaxed"
+                        style={{ color: 'var(--ink)', fontFamily: 'var(--font-body)' }}
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* Decisions */}
+              {meeting.decisions && meeting.decisions.length > 0 && (
+                <div className="mb-4">
+                  <h4
+                    className="text-xs font-semibold uppercase tracking-wider mb-2"
+                    style={{ color: 'var(--gold)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}
+                  >
+                    Decisions
+                  </h4>
+                  <div className="space-y-2">
+                    {meeting.decisions.map((decision, i) => (
+                      <div
+                        key={i}
+                        className="flex gap-2 px-3 py-2 rounded-md text-sm"
+                        style={{
+                          background: 'rgba(201,168,76,0.08)',
+                          border: '1px solid rgba(201,168,76,0.2)',
+                          color: 'var(--ink)',
+                          fontFamily: 'var(--font-body)',
+                        }}
+                      >
+                        <span style={{ color: 'var(--gold)', flexShrink: 0, marginTop: '1px' }}>&#9670;</span>
+                        {decision}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Items */}
+              {meeting.actionItems && meeting.actionItems.length > 0 && (
+                <div className="mb-4">
+                  <h4
+                    className="text-xs font-semibold uppercase tracking-wider mb-2"
+                    style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}
+                  >
+                    Action Items
+                  </h4>
+                  <div className="space-y-2">
+                    {meeting.actionItems.map((item, i) => {
+                      const info = getPersonInfo(item.assignee)
+                      return (
+                        <div
+                          key={i}
+                          className="flex items-start gap-2 text-sm"
+                          style={{ color: 'var(--ink)', fontFamily: 'var(--font-body)' }}
+                        >
+                          {item.completed ? (
+                            <CheckCircle2 size={16} className="shrink-0 mt-0.5" style={{ color: 'var(--teal)' }} />
+                          ) : (
+                            <Circle size={16} className="shrink-0 mt-0.5" style={{ color: 'var(--gold)' }} />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <span style={{ textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.6 : 1 }}>
+                              {item.description}
+                            </span>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="flex items-center gap-1">
+                                <div style={{ width: 16, height: 16 }}>
+                                  <Avatar
+                                    name={info.name}
+                                    initials={info.initials}
+                                    photoUrl={info.photoUrl}
+                                    size="sm"
+                                    variant="ice"
+                                    className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]"
+                                  />
+                                </div>
+                                <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+                                  {info.name}
+                                </span>
+                              </div>
+                              {item.dueDate && (
+                                <span
+                                  className="text-xs"
+                                  style={{ color: 'var(--slate)', opacity: 0.5, fontFamily: 'var(--font-mono)' }}
+                                >
+                                  due {formatShortDate(item.dueDate)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              {meeting.notes && (
+                <div>
+                  <h4
+                    className="text-xs font-semibold uppercase tracking-wider mb-2"
+                    style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}
+                  >
+                    Notes
+                  </h4>
+                  <p
+                    className="text-sm leading-relaxed"
+                    style={{ color: 'var(--slate)', fontFamily: 'var(--font-body)' }}
+                  >
+                    {meeting.notes}
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
