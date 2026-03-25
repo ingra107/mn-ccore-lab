@@ -1,0 +1,115 @@
+import { motion } from 'framer-motion'
+import { useScrollReveal } from '../../hooks/useScrollReveal'
+import type { ReactNode } from 'react'
+import type { LucideIcon } from 'lucide-react'
+
+type BentoSize = 'span-1' | 'span-2' | 'span-2x2' | 'span-1x2'
+
+interface BentoCardProps {
+  title: string
+  subtitle?: string
+  size?: BentoSize
+  icon?: LucideIcon
+  className?: string
+  glass?: boolean
+  children: ReactNode
+}
+
+const sizeClasses: Record<BentoSize, string> = {
+  'span-1': '',
+  'span-2': 'bento-span-2',
+  'span-2x2': 'bento-span-2x2',
+  'span-1x2': 'bento-span-1x2',
+}
+
+export default function BentoCard({
+  title,
+  subtitle,
+  size = 'span-1',
+  icon: Icon,
+  className = '',
+  glass = false,
+  children,
+}: BentoCardProps) {
+  const ref = useScrollReveal<HTMLDivElement>()
+
+  return (
+    <div ref={ref} className={`fade-in-up ${sizeClasses[size]} ${className}`}>
+      <motion.div
+        layoutId={`bento-${title.replace(/\s+/g, '-').toLowerCase()}`}
+        className="bento-card h-full"
+        style={{
+          borderRadius: '16px',
+          padding: '1.25rem 1.5rem',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          position: 'relative',
+          background: glass
+            ? 'rgba(250, 248, 243, 0.7)'
+            : 'var(--cream)',
+          backdropFilter: glass ? 'blur(12px)' : undefined,
+          WebkitBackdropFilter: glass ? 'blur(12px)' : undefined,
+          border: '1px solid rgba(201, 168, 76, 0.12)',
+          boxShadow: 'var(--shadow-card)',
+          transition: 'transform 0.25s ease, box-shadow 0.25s ease, background-color 0.3s ease',
+        }}
+        whileHover={{
+          y: -2,
+          boxShadow: 'var(--shadow-card-hover)',
+        }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      >
+        {/* Header */}
+        <div className="flex items-start gap-2.5 mb-3">
+          {Icon && (
+            <div
+              className="flex-shrink-0 mt-0.5"
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(201, 168, 76, 0.1)',
+              }}
+            >
+              <Icon size={15} style={{ color: 'var(--gold)' }} />
+            </div>
+          )}
+          <div className="min-w-0">
+            <h3
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 600,
+                fontSize: '16px',
+                lineHeight: 1.3,
+                color: 'var(--ink)',
+                margin: 0,
+              }}
+            >
+              {title}
+            </h3>
+            {subtitle && (
+              <p
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '12px',
+                  color: 'var(--slate)',
+                  margin: '2px 0 0 0',
+                  opacity: 0.7,
+                }}
+              >
+                {subtitle}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-h-0">{children}</div>
+      </motion.div>
+    </div>
+  )
+}

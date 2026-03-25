@@ -1,0 +1,12 @@
+name = "mn-ccore-lab-api"
+main = "api/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mnccore-lab"
+database_id = "PLACEHOLDER_REPLACE_WITH_ACTUAL_ID"
+
+[site]
+bucket = "./dist"
