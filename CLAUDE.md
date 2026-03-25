@@ -13,54 +13,76 @@ This is the **MN-CCORE Lab Hub** — not just a website, but the central project
 | Deploy | `cd /c/Users/ingra107/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Deploy mode | Manual via wrangler — NO auto-deploy |
+| Scholar CSV | `C:\Users\ingra107\Downloads\citations (3).csv` — ground truth for publications |
 
 ## Design System
 
 - **Fonts:** Fraunces (display) / DM Sans (body) / JetBrains Mono (mono)
-- **Palette:** ink / gold / cream / maroon / teal (see `src/styles/`)
-- **Centering:** All containers use `.content-container` (max-width: 1440px, margin: 0 auto) — do NOT add custom centering
-- **Inner page paddingTop:** 90px (navbar height)
+- **Palette:** ink / gold / cream / maroon / teal (see `src/index.css`)
+- **Centering:** ALL containers use `.content-container` — no custom max-width
+- **Dark mode:** CSS variables invert via `.dark` class. Use CSS classes (not inline styles) for dark-mode-adaptive colors.
 
 ## Architecture
 
 - **Now:** Static React SPA, all data in `src/data/*.ts` files
-- **Next:** Cloudflare D1 replaces static data files (decision: `Context/Decisions/2026-03-23_mn-ccore-lab-architecture.md` in Peripheral Brain)
-- **Auth future:** Cloudflare Access for team-facing project management features
+- **Next:** Cloudflare D1 replaces static data files
+- **Auth future:** Cloudflare Access for team-facing features
+- **Visibility:** Types have `visibility?: 'public' | 'internal'` — use this to hide in-progress items from public site
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/data/team.ts` | All team members, photos, roles |
-| `src/data/publications.ts` | Nick + Nate publications (~28 papers) |
-| `src/data/types.ts` | TypeScript interfaces |
-| `src/components/PublicationCard.tsx` | Author formatting logic (>10 author truncation) |
+| `src/data/team.ts` | All team members + photos + slugs + authorNames + scholarIds |
+| `src/data/publications.ts` | 63 papers (56 published, PubMed-verified). Scholar CSV is ground truth. |
+| `src/data/grants.ts` | Active + Pending grants with status field |
+| `src/data/types.ts` | TypeScript interfaces (Publication, Grant, Project, TeamMember) |
+| `src/components/PublicationCard.tsx` | Author formatting + dark mode topic chips |
 | `src/components/LabPageLayout.tsx` | Shared lab page shell + section components |
-| `src/pages/NickLab.tsx` | Nick's individual page |
-| `src/pages/NateLab.tsx` | Nate's individual page |
-| `src/pages/Team.tsx` | Full team roster |
+| `src/components/CollaborationNetwork.tsx` | Canvas co-authorship graph (core trio: Nick/Nate/Casey) |
+| `src/components/ResearchImpact.tsx` | Publication timeline + journal distribution |
+| `src/pages/MemberPage.tsx` | Dynamic `/team/:slug` for any team member |
+| `src/pages/NickLab.tsx` | Nick's page: Grants → Lab → CLIF → Trainees → Pubs |
+| `src/pages/NateLab.tsx` | Nate's page |
+| `src/hooks/useCountUp.ts` | Animated counters — uses ref (not state) for trigger flag |
+| `src/hooks/useScrollReveal.ts` | Scroll animations — visible by default, animation is enhancement |
 
 ## Author Formatting Rules (PublicationCard.tsx)
 
-- ≤10 authors: show all, **bold** MNCCORE/CLIF members
-- >10 authors: first 3, `...`, **bold** MNCCORE members in order, `...`, last author
-- `mnccoreMembers` array includes: Ingraham NE, Mesfin N, Eddington C, Bromley E, Collins C, Shyu D, Fitzgerald B, Pendleton KM, Chipman JG, Dudley RA, Wacker D, Trujeque J, McEachron K, Safadi S
+- ≤10 authors: show all, **bold** MNCCORE members (600), **semi-bold** CLIF members (500)
+- >10 authors: first 3 + last 3 + all MNCCORE/CLIF members in between
+- If >10 MNCCORE/CLIF in middle: focus on MNCCORE only
+- `mnccoreMembers` and `clifMembers` arrays maintained in PublicationCard.tsx
 
-## Roadmap (Hub Evolution)
+## Critical Rules
 
-1. **Phase 1 — Done:** Public face (team, publications, lab pages)
-2. **Phase 2 — Next:** D1 backend, dynamic data, project tracker visible to team
-3. **Phase 3:** Authenticated team portal (project management, meeting notes, task board)
+1. **Content visible by default.** The `.fade-in-up` class starts at opacity:1. The scroll hook adds `.will-animate` only to below-viewport elements. NEVER hide content behind animations.
+2. **Hero action cards use `<a>` tags** (full page load), not React Router `<Link>`. React Router v7 + AnimatePresence has a render loop bug with useCountUp.
+3. **In-progress items are internal only.** Publications with `status: 'In Review'` or `'In Preparation'` show on the site. But pending grants must be clearly labeled "Pending Review". Use `visibility: 'internal'` for team-only items when the portal is built.
+4. **PubMed is truth for publications.** Scholar CSV for completeness check, PubMed for exact titles/authors/DOIs.
+5. **Grants: Active vs Pending.** Active grants have funding. Pending grants are under review. Display them separately with clear labels — don't let visitors think we're claiming unfunded grants.
+
+## Roadmap
+
+1. **Phase 1 — Done:** Public face, 63 publications, team pages, analytics, collaboration network
+2. **Phase 2 — Next:** D1 backend, dashboard, network page, bento grid
+3. **Phase 3:** Auth portal, project pipeline, grant tracker, meeting hub
 
 ## Peripheral Brain Connection
 
 - **Project record:** `MN-CCORE Lab Hub` (type: Nick_Lab) in SQLite/Airtable
-- **Learnings memory:** `memory/project_mnccore-website-redesign.md` in Peripheral Brain
-- **Design plan:** `Scratch/plans/mnccore-lab-website.md` in Peripheral Brain
+- **Living plan:** `Scratch/plans/mnccore-lab-website.md` — READ FIRST every session
+- **Memory:** `memory/project_mnccore-website-redesign.md`
+- **Architecture:** `Context/Decisions/2026-03-23_mn-ccore-lab-architecture.md`
 
-## Known Patterns / Gotchas
+## Known Gotchas
 
-- UMN bio photo pages return 403 (Cloudflare) — use Playwright to scrape faculty listing pages, not individual bio pages
-- Wrangler deploy from bash: must use `cd /c/Users/...` path (not Windows path)
-- `npm run build` before every deploy — wrangler doesn't auto-build
-- Tailwind v4 uses `@import` syntax, not `@tailwind` directives
+| Problem | Fix |
+|---------|-----|
+| UMN bio photos 403 | Use Playwright on faculty listing pages, not individual bios |
+| Wrangler deploy path | `cd /c/Users/...` not `C:\...` |
+| Tailwind v4 | `@import` syntax, not `@tailwind` directives |
+| Hero cards don't navigate | Use `<a>` tags, not React Router Link (render loop with AnimatePresence) |
+| Sections blank on mobile | Content must be visible by default — `.fade-in-up` starts at opacity:1 |
+| useCountUp infinite loop | Use `useRef` for trigger flag, not `useState` in effect deps |
+| Ghost publications | Always validate against Scholar CSV before adding papers |
