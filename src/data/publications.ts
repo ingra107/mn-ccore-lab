@@ -41,6 +41,18 @@ export const publications: Publication[] = [
   },
 
   {
+    id: 'ingraham-2026-adhere-lpv',
+    authors: 'Ingraham NE, Potter J, Botsford C, Johnson T, Eddington C, Mesfin N, Kaur M, Hager N, Lindemann E, Beebe TJ.',
+    title: 'Advancing Delivery of High-Quality Evidence-Based Respiratory Efforts in Lung-Protective Ventilation (ADHERE-LPV): A Cluster-Randomized Controlled Trial Study Protocol',
+    journal: 'In preparation',
+    year: 2026,
+    status: 'In Preparation',
+    abstract: 'Protocol for a cluster-randomized controlled trial testing a precision practice assistance intervention to improve lung-protective ventilation adherence in the ICU.',
+    topics: ['ventilation', 'quality'],
+    authorSlugs: ['nick', 'nate'],
+  },
+
+  {
     id: 'ingraham-2026-gdms-lpv',
     authors: 'Ingraham NE, Bromley E, Eddington C, Collins C, Dudley RA, Chipman JG.',
     title: 'Association of General Decision-Making Style with Lung-Protective Ventilation Adherence',
@@ -192,18 +204,6 @@ export const publications: Publication[] = [
     abstract: 'Using multi-center CLIF data, this study quantifies the extent to which provider identity explains variation in lung-protective ventilation adherence beyond patient-level factors. We demonstrate substantial provider-level variation that persists after risk adjustment, suggesting targets for provider-focused quality improvement interventions.',
     topics: ['ventilation', 'clif'],
     featured: true,
-    authorSlugs: ['nick'],
-  },
-
-  {
-    id: 'ingraham-2025-ventmode',
-    authors: 'Ingraham NE, Tignanelli CJ, et al.',
-    title: 'Ventilation Mode Transitions and Outcomes in Mechanically Ventilated ICU Patients',
-    journal: 'Journal of the American Medical Informatics Association',
-    year: 2025,
-    status: 'In Review',
-    abstract: 'A multi-center observational study examining how transitions between ventilation modes relate to patient outcomes, leveraging granular CLIF respiratory data to characterize ventilation mode patterns and their prognostic significance.',
-    topics: ['ventilation', 'clif'],
     authorSlugs: ['nick'],
   },
 
