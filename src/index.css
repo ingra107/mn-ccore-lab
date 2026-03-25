@@ -106,13 +106,21 @@ a:hover {
 }
 
 /* ── Scroll Animations ── */
+/* Elements start VISIBLE by default. The JS observer adds .will-animate
+   only when the element is below the viewport, then .visible on intersect.
+   This ensures content always shows even if observers fail (mobile, filters, SPA nav). */
 .fade-in-up {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-in-up.will-animate {
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
-.fade-in-up.visible {
+.fade-in-up.will-animate.visible {
   opacity: 1;
   transform: translateY(0);
 }
@@ -126,7 +134,7 @@ a:hover {
     scroll-behavior: auto !important;
   }
 
-  .fade-in-up {
+  .fade-in-up, .fade-in-up.will-animate {
     opacity: 1;
     transform: none;
   }
