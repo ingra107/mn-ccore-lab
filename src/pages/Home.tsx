@@ -17,6 +17,7 @@ import NetworkBackground from '../components/NetworkBackground'
 import ImpactMetrics from '../components/ImpactMetrics'
 import FeaturedResearch from '../components/FeaturedResearch'
 import ResearchImpact from '../components/ResearchImpact'
+import CollaborationNetwork from '../components/CollaborationNetwork'
 import RecentActivity from '../components/RecentActivity'
 import CLIFMap from '../components/CLIFMap'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -348,6 +349,8 @@ export default function Home() {
       <ImpactMetrics />
 
       <ResearchImpact />
+
+      <CollaborationNetwork />
 
       <CLIFMap />
 
