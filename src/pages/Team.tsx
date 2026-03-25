@@ -3,17 +3,11 @@ import { Link } from 'react-router-dom'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import SectionDivider from '../components/SectionDivider'
 import Avatar from '../components/Avatar'
-import Button from '../components/Button'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { directors, seniorMentors, facultyCollaborators, researchTeam } from '../data/team'
 import { grants } from '../data/grants'
 import { publications } from '../data/publications'
 import { mentees } from '../data/mentees'
-
-const researchKeywords: Record<string, string[]> = {
-  nick: ['Provider Variation', 'Lung-Protective Ventilation', 'Clinical Decision-Making', 'CLIF Consortium'],
-  nate: ['Cardiac Arrest', 'Goals of Care', 'Chronic Critical Illness'],
-}
 
 function getDirectorStats(slug: string) {
   const grantCount = grants.filter((g) => g.pi === slug && !g.proposed).length
@@ -36,7 +30,7 @@ export default function Team() {
   return (
     <>
       {/* Hero */}
-      <section className="pt-12 pb-8 sm:pb-12 lg:pb-16 content-container">
+      <section className="pt-4 pb-6 sm:pb-8 content-container">
         <h1
           className="text-3xl sm:text-4xl lg:text-5xl mb-3 sm:mb-4"
           style={{
@@ -65,7 +59,7 @@ export default function Team() {
         ref={directorsRef}
       >
         <h2
-          className="fade-in-up text-xl sm:text-2xl lg:text-3xl mb-8 sm:mb-12"
+          className="fade-in-up text-xl sm:text-2xl lg:text-3xl mb-6 sm:mb-8"
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 600,
@@ -78,18 +72,17 @@ export default function Team() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {directors.map((director) => {
             const stats = getDirectorStats(director.slug)
-            const keywords = researchKeywords[director.slug] ?? []
             return (
-              <div
+              <Link
                 key={director.name}
-                className="fade-in-up card p-6 sm:p-8"
+                to={director.path}
+                className="fade-in-up card p-5 sm:p-6 group cursor-pointer"
                 style={{
                   borderTop: '3px solid var(--gold)',
                   textDecoration: 'none',
                 }}
               >
-                <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
-                  {/* Avatar */}
+                <div className="flex items-start gap-4 sm:gap-5">
                   <Avatar
                     name={director.name}
                     initials={director.initials}
@@ -99,87 +92,61 @@ export default function Team() {
                   />
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3
-                        className="text-xl sm:text-2xl"
-                        style={{
-                          fontFamily: 'var(--font-display)',
-                          fontWeight: 600,
-                          color: 'var(--ink)',
-                        }}
-                      >
-                        {director.name}, {director.credentials}
-                      </h3>
-                    </div>
+                    <h3
+                      className="text-lg sm:text-xl mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 600,
+                        color: 'var(--ink)',
+                      }}
+                    >
+                      {director.name}, {director.credentials}
+                    </h3>
                     <p
-                      className="mb-1"
+                      className="mb-0.5"
                       style={{
                         color: 'var(--gold)',
                         fontFamily: 'var(--font-mono)',
-                        fontSize: '12px',
+                        fontSize: '11px',
                       }}
                     >
                       {director.role}
                     </p>
                     <p
-                      className="text-sm mb-4"
+                      className="text-sm mb-2"
                       style={{ color: 'var(--slate)' }}
                     >
                       {director.title}
                     </p>
                     <p
-                      className="text-sm leading-relaxed mb-5"
+                      className="text-sm leading-relaxed mb-3"
                       style={{ color: 'var(--slate)' }}
                     >
                       {director.bio}
                     </p>
-
-                    {/* Stats */}
                     <p
-                      className="mb-4"
                       style={{
                         fontFamily: 'var(--font-mono)',
-                        fontSize: '13px',
+                        fontSize: '12px',
                         color: 'var(--gold)',
                       }}
                     >
-                      {stats.grantCount} Active Grant{stats.grantCount !== 1 ? 's' : ''}
+                      {stats.grantCount} Grant{stats.grantCount !== 1 ? 's' : ''}
                       {' \u00B7 '}
                       {stats.pubCount} Publication{stats.pubCount !== 1 ? 's' : ''}
                       {' \u00B7 '}
-                      {stats.menteeCount} MNCCORE Trainee{stats.menteeCount !== 1 ? 's' : ''}
+                      {stats.menteeCount} Trainee{stats.menteeCount !== 1 ? 's' : ''}
                     </p>
-
-                    {/* Research keyword pills */}
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {keywords.map((kw) => (
-                        <span
-                          key={kw}
-                          className="px-3 py-1 rounded-full text-xs"
-                          style={{
-                            fontFamily: 'var(--font-body)',
-                            color: 'var(--gold)',
-                            border: '1px solid rgba(201, 168, 76, 0.3)',
-                            background: 'rgba(201, 168, 76, 0.05)',
-                          }}
-                        >
-                          {kw}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* View Lab button */}
-                    <Button
-                      to={director.path}
-                      variant="ghost"
-                      size="sm"
-                      icon={<ArrowRight size={14} />}
-                    >
-                      View Lab
-                    </Button>
                   </div>
+
+                  <ArrowRight
+                    size={16}
+                    className="flex-shrink-0 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    style={{ color: 'var(--gold)' }}
+                    aria-hidden="true"
+                  />
                 </div>
-              </div>
+              </Link>
             )
           })}
         </div>
