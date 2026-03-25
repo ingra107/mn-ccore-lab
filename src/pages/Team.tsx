@@ -1,4 +1,5 @@
 import { ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import SectionDivider from '../components/SectionDivider'
 import Avatar from '../components/Avatar'
@@ -250,7 +251,12 @@ export default function Team() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 sm:gap-6">
           {facultyCollaborators.map((member) => (
-            <div key={member.name} className="fade-in-up text-center p-4 rounded-lg transition-all duration-200" style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)' }}>
+            <Link
+              key={member.name}
+              to={member.slug ? `/team/${member.slug}` : '#'}
+              className="fade-in-up text-center p-4 rounded-lg transition-all duration-200 cursor-pointer group"
+              style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)', textDecoration: 'none' }}
+            >
               <div className="flex justify-center mb-2">
                 <Avatar
                   name={member.name}
@@ -261,7 +267,7 @@ export default function Team() {
                 />
               </div>
               <h3
-                className="text-xs sm:text-sm font-semibold mb-0.5"
+                className="text-xs sm:text-sm font-semibold mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
                 style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
               >
                 {member.name}{member.credentials ? `, ${member.credentials}` : ''}
@@ -269,7 +275,7 @@ export default function Team() {
               <p className="text-xs" style={{ color: 'var(--slate)' }}>
                 {member.role}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -294,7 +300,12 @@ export default function Team() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
           {researchTeam.map((member) => (
-            <div key={member.name} className="fade-in-up text-center p-4 rounded-lg transition-all duration-200" style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)' }}>
+            <Link
+              key={member.name}
+              to={member.slug ? `/team/${member.slug}` : '#'}
+              className="fade-in-up text-center p-4 rounded-lg transition-all duration-200 cursor-pointer group"
+              style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)', textDecoration: 'none' }}
+            >
               <div className="flex justify-center mb-2">
                 <Avatar
                   name={member.name}
@@ -305,7 +316,7 @@ export default function Team() {
                 />
               </div>
               <h3
-                className="text-xs sm:text-sm font-semibold mb-0.5"
+                className="text-xs sm:text-sm font-semibold mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
                 style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
               >
                 {member.name}{member.credentials ? `, ${member.credentials}` : ''}
@@ -313,7 +324,7 @@ export default function Team() {
               <p className="text-xs" style={{ color: 'var(--slate)' }}>
                 {member.role}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>

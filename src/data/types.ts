@@ -17,6 +17,9 @@ export interface TeamMember {
   credentials?: string
   slug?: string
   photoUrl?: string
+  authorName?: string // PubMed-style name for matching in author strings, e.g. "Chipman JG"
+  bio?: string
+  links?: { label: string; href: string }[]
 }
 
 export interface Publication {

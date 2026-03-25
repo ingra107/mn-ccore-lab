@@ -6,6 +6,7 @@ import NickLab from './pages/NickLab'
 import NateLab from './pages/NateLab'
 import Publications from './pages/Publications'
 import Contact from './pages/Contact'
+import MemberPage from './pages/MemberPage'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/team" element={<Team />} />
           <Route path="/nick" element={<NickLab />} />
           <Route path="/nate" element={<NateLab />} />
+          <Route path="/team/:slug" element={<MemberPage />} />
           <Route path="/publications" element={<Publications />} />
           <Route path="/contact" element={<Contact />} />
         </Route>
