@@ -105,17 +105,20 @@ export default function TopicBubblesCard() {
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
+    // Fallback: always animate after 800ms even if observer doesn't fire
+    const fallback = setTimeout(() => setAnimated(true), 800)
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setAnimated(true)
+          clearTimeout(fallback)
           observer.disconnect()
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.1 }
     )
     observer.observe(el)
-    return () => observer.disconnect()
+    return () => { observer.disconnect(); clearTimeout(fallback) }
   }, [])
 
   const bubbles = useMemo(() => {

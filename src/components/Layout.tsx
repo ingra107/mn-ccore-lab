@@ -8,6 +8,7 @@ import PageTransition from './PageTransition'
 const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/dashboard', label: 'Dashboard' },
+  { to: '/projects', label: 'Projects' },
   { to: '/team', label: 'Team' },
   { to: '/nick', label: 'Ingraham Lab' },
   { to: '/nate', label: 'Mesfin Lab' },
@@ -191,7 +192,7 @@ export default function Layout() {
       </nav>
 
       {/* Main content — add top padding for non-home pages to clear sticky nav */}
-      <main id="main-content" className="flex-1" style={isHome ? undefined : { paddingTop: '90px' }}>
+      <main id="main-content" className="flex-1" style={isHome ? undefined : { paddingTop: '64px' }}>
         <AnimatePresence mode="sync">
           <PageTransition key={location.pathname}>
             <Outlet />
