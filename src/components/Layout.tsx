@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Menu, X, Sun, Moon, ChevronUp } from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
+import PageTransition from './PageTransition'
 
 const navLinks = [
   { to: '/', label: 'Home' },
@@ -187,8 +189,12 @@ export default function Layout() {
       </nav>
 
       {/* Main content — add top padding for non-home pages to clear sticky nav */}
-      <main id="main-content" className="flex-1" style={isHome ? undefined : { paddingTop: '90px' }} key={location.pathname}>
-        <Outlet />
+      <main id="main-content" className="flex-1" style={isHome ? undefined : { paddingTop: '90px' }}>
+        <AnimatePresence mode="sync">
+          <PageTransition key={location.pathname}>
+            <Outlet />
+          </PageTransition>
+        </AnimatePresence>
       </main>
 
       {/* Footer */}
