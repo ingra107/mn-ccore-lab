@@ -143,7 +143,7 @@ export default function Publications() {
   return (
     <>
       {/* Header */}
-      <section className="pt-12 pb-8 sm:pb-12 lg:pb-16 content-container">
+      <section className="pt-4 pb-6 sm:pb-8 content-container">
         <h1
           className="text-3xl sm:text-4xl lg:text-5xl mb-3 sm:mb-4"
           style={{
