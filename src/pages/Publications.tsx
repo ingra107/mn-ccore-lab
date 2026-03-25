@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { Award } from 'lucide-react'
 import { publications } from '../data/publications'
 import type { Publication } from '../data/types'
 import PublicationFilters from '../components/PublicationFilters'
@@ -8,6 +9,19 @@ import PublicationCard from '../components/PublicationCard'
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
+
+// High-impact journal names for the "Key Publications" section
+const KEY_JOURNALS = [
+  'New England Journal of Medicine',
+  'The Lancet Infectious Diseases',
+  'The Lancet Respiratory Medicine',
+  'Lancet Respiratory Medicine',
+  'Lancet Healthy Longevity',
+  'Intensive Care Medicine',
+  'JAMA Network Open',
+  'Annals of Surgery',
+  'Critical Care Medicine',
+]
 
 function parseYears(param: string | null): number[] {
   if (!param) return []
@@ -138,6 +152,16 @@ export default function Publications() {
     [filtered]
   )
 
+  const keyPubs = useMemo(
+    () =>
+      publications.filter(
+        (p) =>
+          p.status === 'Published' &&
+          KEY_JOURNALS.some((j) => p.journal.includes(j))
+      ),
+    []
+  )
+
   const pubsRef = useScrollRevealGroup('.fade-in-up', 80)
 
   return (
@@ -158,10 +182,69 @@ export default function Publications() {
           className="text-base sm:text-lg max-w-2xl"
           style={{ color: 'var(--slate)' }}
         >
-          Selected publications from MN-CCORE lab members. Click any paper to
-          view its abstract and links.
+          {publications.filter((p) => p.status === 'Published').length} published
+          papers from MN-CCORE lab members. Click any paper to view its abstract
+          and links.
         </p>
       </section>
+
+      {/* Key Publications */}
+      {keyPubs.length > 0 && (
+        <div className="section-ink">
+          <section className="py-6 sm:py-8 content-container">
+            <div className="flex items-center gap-2 mb-4">
+              <Award size={16} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <h2
+                className="text-sm"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  color: 'var(--gold)',
+                  fontSize: '12px',
+                }}
+              >
+                Key Publications in High-Impact Journals
+              </h2>
+            </div>
+            <div className="space-y-2">
+              {keyPubs.map((pub) => (
+                <div
+                  key={pub.id}
+                  className="flex items-start gap-3 py-2 px-3 rounded-lg transition-colors duration-200"
+                  style={{ background: 'rgba(201, 168, 76, 0.04)' }}
+                >
+                  <span
+                    className="flex-shrink-0 text-xs mt-0.5 px-1.5 py-0.5 rounded"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      background: 'rgba(201, 168, 76, 0.12)',
+                      color: 'var(--gold)',
+                      fontSize: '10px',
+                    }}
+                  >
+                    {pub.year}
+                  </span>
+                  <div className="min-w-0">
+                    <p
+                      className="text-sm font-medium leading-snug"
+                      style={{ color: '#faf8f3' }}
+                    >
+                      {pub.title}
+                    </p>
+                    <p
+                      className="text-xs mt-0.5"
+                      style={{ color: 'rgba(250, 248, 243, 0.5)', fontStyle: 'italic' }}
+                    >
+                      {pub.journal}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
 
       <SectionDivider />
 
