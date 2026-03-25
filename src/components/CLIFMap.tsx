@@ -25,17 +25,23 @@ const sites: CLIFSite[] = [
 ]
 
 // Simplified US mainland outline (viewBox 0 0 960 600)
+// More recognizable shape with key geographic features
 const US_OUTLINE =
-  'M 170 130 C 160 160, 140 200, 120 240 C 100 280, 90 320, 100 370 ' +
-  'C 110 400, 140 420, 180 430 C 220 440, 260 430, 300 420 ' +
-  'C 320 415, 340 425, 370 435 C 400 445, 430 430, 460 440 ' +
-  'C 490 450, 520 440, 550 435 C 580 430, 610 425, 640 410 ' +
-  'C 660 400, 680 380, 700 360 C 720 340, 740 320, 755 295 ' +
-  'C 770 270, 775 245, 770 220 C 765 200, 750 190, 730 185 ' +
-  'C 710 180, 690 190, 670 210 C 650 225, 630 230, 610 220 ' +
-  'C 590 210, 570 200, 540 190 C 510 180, 480 170, 450 160 ' +
-  'C 420 150, 390 145, 360 148 C 330 151, 300 158, 270 160 ' +
-  'C 240 162, 210 155, 185 145 Z'
+  'M 130 120 L 145 115 L 175 130 L 200 135 L 230 125 L 260 130 ' +
+  'L 280 140 L 310 140 L 340 145 L 370 135 L 400 130 L 430 135 ' +
+  'L 460 140 L 490 155 L 510 170 L 490 175 L 495 180 ' + // Top border to Great Lakes
+  'L 530 175 L 555 185 L 570 195 L 590 200 L 610 210 ' + // Great Lakes area
+  'L 640 210 L 660 205 L 680 210 L 710 200 L 730 195 ' + // Northeast
+  'L 755 185 L 770 195 L 780 210 L 775 230 L 765 250 ' + // New England down
+  'L 750 260 L 740 270 L 745 280 L 735 295 L 720 310 ' + // Mid-Atlantic
+  'L 700 325 L 680 340 L 665 355 L 650 370 L 640 380 ' + // Southeast coast
+  'L 620 390 L 600 395 L 575 400 L 555 410 L 530 415 ' + // Gulf coast
+  'L 500 420 L 470 430 L 440 440 L 410 445 L 380 445 ' + // Gulf to TX
+  'L 350 440 L 330 445 L 310 460 L 290 470 L 270 465 ' + // Texas
+  'L 260 440 L 250 420 L 240 400 L 230 380 ' + // Texas-Mexico border
+  'L 210 370 L 190 355 L 170 340 L 155 320 ' + // NM, AZ
+  'L 130 310 L 115 290 L 100 270 L 95 250 ' + // AZ, southern CA
+  'L 90 230 L 95 200 L 105 180 L 115 160 L 125 140 Z' // CA coast up
 
 export default function CLIFMap() {
   const [hoveredSite, setHoveredSite] = useState<CLIFSite | null>(null)

@@ -23,9 +23,9 @@ export default function Team() {
     'Meet the MN-CCORE research team: co-directors Nick Ingraham and Nathan Mesfin, and our research coordinators, fellows, analysts, and students.'
   )
   const directorsRef = useScrollRevealGroup('.fade-in-up', 200)
-  const mentorsRef = directorsRef  // share ref to avoid multiple observer conflicts
-  const facultyRef = directorsRef
-  const researchRef = directorsRef
+  const mentorsRef = useScrollRevealGroup('.fade-in-up', 100)
+  const facultyRef = useScrollRevealGroup('.fade-in-up', 100)
+  const researchRef = useScrollRevealGroup('.fade-in-up', 100)
 
   return (
     <>
