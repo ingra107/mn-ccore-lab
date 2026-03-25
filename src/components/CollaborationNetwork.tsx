@@ -74,20 +74,39 @@ export default function CollaborationNetwork() {
       .filter(([, count]) => count >= 2)
       .sort((a, b) => b[1] - a[1])
 
-    // Layout: circular with Ingraham at center
+    // Layout: core trio (Ingraham, Mesfin, Eddington) in center triangle, others in orbit
     const cx = 400
     const cy = 200
-    const radius = 150
-    const nodeList: Node[] = activeMembers.map(([name, papers], i) => {
-      const isCenter = name === 'Ingraham NE'
-      const angle = (i / activeMembers.length) * Math.PI * 2 - Math.PI / 2
+    const coreMembers = ['Ingraham NE', 'Mesfin N', 'Eddington C']
+    const corePositions: Record<string, { x: number; y: number }> = {
+      'Ingraham NE': { x: cx, y: cy - 40 },
+      'Mesfin N': { x: cx - 50, y: cy + 30 },
+      'Eddington C': { x: cx + 50, y: cy + 30 },
+    }
+    const radius = 155
+    const orbitMembers = activeMembers.filter(([name]) => !coreMembers.includes(name))
+    const nodeList: Node[] = activeMembers.map(([name, papers]) => {
+      const isCore = coreMembers.includes(name)
+      if (isCore) {
+        const pos = corePositions[name] ?? { x: cx, y: cy }
+        return {
+          id: name,
+          name: name.replace(/ [A-Z]+$/, ''),
+          papers,
+          isMnccore: true,
+          x: pos.x,
+          y: pos.y,
+        }
+      }
+      const orbitIdx = orbitMembers.findIndex(([n]) => n === name)
+      const angle = (orbitIdx / orbitMembers.length) * Math.PI * 2 - Math.PI / 2
       return {
         id: name,
-        name: name.replace(/ [A-Z]+$/, ''), // Shorten: "Ingraham NE" → "Ingraham"
+        name: name.replace(/ [A-Z]+$/, ''),
         papers,
         isMnccore: true,
-        x: isCenter ? cx : cx + Math.cos(angle) * radius,
-        y: isCenter ? cy : cy + Math.sin(angle) * radius,
+        x: cx + Math.cos(angle) * radius,
+        y: cy + Math.sin(angle) * radius,
       }
     })
 
@@ -153,12 +172,12 @@ export default function CollaborationNetwork() {
       const x = node.x * scaleX
       const y = node.y * scaleY
       const r = Math.max(4, Math.min(node.papers * 1.5, 16))
-      const isCenter = node.id === 'Ingraham NE'
+      const isCore = ['Ingraham NE', 'Mesfin N', 'Eddington C'].includes(node.id)
       const isHovered = hovered === node.id
 
       ctx.beginPath()
       ctx.arc(x, y, r, 0, Math.PI * 2)
-      ctx.fillStyle = isCenter
+      ctx.fillStyle = isCore
         ? '#c9a84c'
         : isHovered
           ? '#c9a84c'
@@ -166,8 +185,8 @@ export default function CollaborationNetwork() {
       ctx.fill()
 
       // Label
-      ctx.font = `${isCenter || isHovered ? '600' : '400'} ${isCenter ? '13' : '11'}px "DM Sans", sans-serif`
-      ctx.fillStyle = isCenter || isHovered
+      ctx.font = `${isCore || isHovered ? '600' : '400'} ${isCore ? '13' : '11'}px "DM Sans", sans-serif`
+      ctx.fillStyle = isCore || isHovered
         ? '#faf8f3'
         : 'rgba(250, 248, 243, 0.5)'
       ctx.textAlign = 'center'
