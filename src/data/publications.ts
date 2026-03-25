@@ -93,7 +93,7 @@ export const publications: Publication[] = [
   {
     id: 'shyu-2025-peripheral-vasopressors',
     authors: 'Shyu D, Ingraham NE, Linke CA, Siegel L, Larson JA, Benson AR, Pendleton KM.',
-    title: 'Incidence and Outcomes of Peripheral Vasopressor Use in Critically Ill Patients',
+    title: 'Overview of Peripheral Vasopressor Use in an Academic Health System',
     journal: 'Annals of the American Thoracic Society',
     year: 2025,
     status: 'Published',
@@ -180,17 +180,6 @@ export const publications: Publication[] = [
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/40080116/',
     topics: ['clif'],
     featured: true,
-    authorSlugs: ['nick'],
-  },
-
-  {
-    id: 'ingraham-2025-icu-readmissions',
-    authors: 'Ingraham NE, Eddington C, Collins C, Bromley E, Tignanelli CJ.',
-    title: 'Predictors and Outcomes of Early ICU Readmission: A Multi-Center Cohort Study',
-    journal: 'Critical Care Explorations',
-    year: 2025,
-    status: 'Published',
-    topics: ['quality', 'clif'],
     authorSlugs: ['nick'],
   },
 
@@ -528,17 +517,6 @@ export const publications: Publication[] = [
   },
 
   {
-    id: 'ingraham-2022-icu-trends',
-    authors: 'Ingraham NE, Eddington C, Tignanelli CJ.',
-    title: 'Trends in ICU Utilization and Patient Complexity Over the COVID-19 Pandemic',
-    journal: 'Journal of Intensive Care',
-    year: 2022,
-    status: 'Published',
-    topics: ['covid', 'quality'],
-    authorSlugs: ['nick'],
-  },
-
-  {
     id: 'ingraham-2022-disparities-covid',
     authors: 'Ingraham NE, Purcell LN, Karam BS, Dudley RA, Usher MG, Warlick CA, Allen ML, Melton GB, Charles A, Tignanelli CJ.',
     title: 'Racial and Ethnic Disparities in Hospital Admissions from COVID-19: Determining the Impact of Neighborhood Deprivation and Primary Language',
@@ -711,17 +689,6 @@ export const publications: Publication[] = [
   },
 
   {
-    id: 'ingraham-2021-omicron-therapeutics',
-    authors: 'Ingraham NE, Tignanelli CJ.',
-    title: 'Therapeutic Options for COVID-19 Variants: Evolving Evidence and Clinical Guidance',
-    journal: 'Clinical Therapeutics',
-    year: 2021,
-    status: 'Published',
-    topics: ['covid'],
-    authorSlugs: ['nick'],
-  },
-
-  {
     id: 'ingraham-2020-immunomod',
     authors: 'Ingraham NE, Lotfi-Emran S, Thielen BK, Techar K, Morris RS, Holtan SG, Dudley RA, Tignanelli CJ.',
     title: 'Immunomodulation in COVID-19',
@@ -799,17 +766,6 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1089/sur.2019.192',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/31618109/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
-  },
-
-  {
-    id: 'ingraham-2020-national-trends',
-    authors: 'Ingraham NE, Vakil A, Chipman JG, Tignanelli CJ.',
-    title: 'National Trends in Critical Illness and Non-Invasive Ventilation from 2010 to 2019',
-    journal: 'Critical Care Medicine',
-    year: 2020,
-    status: 'Published',
-    topics: ['quality', 'ventilation'],
     authorSlugs: ['nick'],
   },
 
