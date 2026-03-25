@@ -16,6 +16,7 @@ import { useCountUp } from '../hooks/useCountUp'
 import NetworkBackground from '../components/NetworkBackground'
 import ImpactMetrics from '../components/ImpactMetrics'
 import FeaturedResearch from '../components/FeaturedResearch'
+import ResearchImpact from '../components/ResearchImpact'
 import CLIFMap from '../components/CLIFMap'
 import { usePageMeta } from '../hooks/usePageMeta'
 
@@ -344,6 +345,8 @@ export default function Home() {
       <FeaturedResearch />
 
       <ImpactMetrics />
+
+      <ResearchImpact />
 
       <CLIFMap />
 
