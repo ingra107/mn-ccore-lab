@@ -11,10 +11,10 @@ export default function Dashboard() {
   const headerRef = useScrollReveal<HTMLDivElement>()
 
   return (
-    <div style={{ paddingTop: '90px', minHeight: '100vh' }}>
+    <div style={{ paddingTop: '64px', minHeight: '100vh' }}>
       <div className="content-container" style={{ paddingBottom: '4rem' }}>
         {/* Page Header */}
-        <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '2rem', paddingTop: '1.5rem' }}>
+        <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '2rem', paddingTop: '0.5rem' }}>
           <div className="flex items-center gap-3 mb-2">
             <div
               style={{

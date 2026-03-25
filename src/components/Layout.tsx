@@ -7,10 +7,12 @@ import PageTransition from './PageTransition'
 
 const navLinks = [
   { to: '/', label: 'Home' },
+  { to: '/dashboard', label: 'Dashboard' },
   { to: '/team', label: 'Team' },
   { to: '/nick', label: 'Ingraham Lab' },
   { to: '/nate', label: 'Mesfin Lab' },
   { to: '/publications', label: 'Publications' },
+  { to: '/network', label: 'Network' },
   { to: '/contact', label: 'Contact' },
 ]
 

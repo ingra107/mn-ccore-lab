@@ -61,6 +61,12 @@ export interface Project {
   pi: string
   slug?: string
   visibility?: 'public' | 'internal'
+  // Pipeline board fields
+  stage?: 'Idea' | 'Data Collection' | 'Analysis' | 'Writing' | 'Review' | 'Published'
+  team?: string[]  // slugs of team members working on this
+  googleDocUrl?: string
+  startDate?: string
+  lastActivity?: string
 }
 
 export interface Mentee {
