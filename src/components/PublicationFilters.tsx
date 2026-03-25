@@ -88,7 +88,7 @@ export default function PublicationFilters({
 
   return (
     <div
-      className="card p-5 sm:p-8"
+      className="card p-4 sm:p-5"
       style={{ border: '1px solid rgba(201, 168, 76, 0.12)' }}
     >
       {/* Year row */}
