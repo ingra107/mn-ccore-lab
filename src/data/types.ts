@@ -8,6 +8,7 @@ export interface Director {
   path: string
   bio: string
   photoUrl?: string
+  scholarId?: string // Google Scholar user ID (the ?user= parameter)
 }
 
 export interface TeamMember {
@@ -20,6 +21,7 @@ export interface TeamMember {
   authorName?: string // PubMed-style name for matching in author strings, e.g. "Chipman JG"
   bio?: string
   links?: { label: string; href: string }[]
+  scholarId?: string // Google Scholar user ID (the ?user= parameter)
 }
 
 export interface Publication {

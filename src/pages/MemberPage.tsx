@@ -21,6 +21,20 @@ export default function MemberPage() {
     ? publications.filter((p) => p.authors.includes(member.authorName!))
     : []
 
+  // Build links: include explicit links + auto-generate Scholar link from scholarId
+  const existingLinks = member.links ?? []
+  const hasScholarLink = existingLinks.some((l) => l.label === 'Scholar')
+  const memberLinks =
+    !hasScholarLink && member.scholarId
+      ? [
+          ...existingLinks,
+          {
+            label: 'Scholar',
+            href: `https://scholar.google.com/citations?user=${member.scholarId}&hl=en`,
+          },
+        ]
+      : existingLinks
+
   usePageMeta(
     `${member.name} | MN-CCORE Lab`,
     `${displayName} — ${member.role} at MN-CCORE Lab, University of Minnesota.`
@@ -34,7 +48,7 @@ export default function MemberPage() {
       role="MN-CCORE Team Member"
       initials={member.initials}
       bio={member.bio}
-      links={member.links ?? []}
+      links={memberLinks}
       photoUrl={member.photoUrl}
       sections={
         memberPubs.length > 0

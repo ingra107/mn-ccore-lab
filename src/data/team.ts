@@ -11,6 +11,7 @@ export const directors: Director[] = [
     path: '/nick',
     bio: 'Physician-scientist focused on provider variation, lung-protective ventilation, and clinical decision-making in the ICU. Founding member of the CLIF Consortium.',
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-06/Nick%20Picture_2022.jpg?itok=VEDKgpUN',
+    scholarId: 'ZKMVVHkAAAAJ', // Scholar stats (2026-03-24): citations 2626, h-index 24, i10-index 39
   },
   {
     name: 'Nathan Mesfin',
@@ -35,6 +36,7 @@ export const seniorMentors: TeamMember[] = [
     authorName: 'Dudley RA',
     bio: 'Professor of Medicine specializing in health services research, quality measurement, and healthcare policy. Senior mentor to MN-CCORE investigators.',
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/images/r._adams_dudley_0.png?itok=BykmoC6t',
+    scholarId: 'Aoq0YhcAAAAJ', // Scholar stats (2026-03-24): citations 15734, h-index 63, i10-index 170
     links: [{ label: 'Scholar', href: 'https://scholar.google.com/citations?user=Aoq0YhcAAAAJ&hl=en' }],
   },
   {
@@ -55,7 +57,7 @@ export const facultyCollaborators: TeamMember[] = [
   { name: 'Sami Safadi', initials: 'SS', role: 'Faculty Collaborator', slug: 'safadi', authorName: 'Safadi S', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0076_Layer-223.png' },
   { name: 'Abbie Begnaud', initials: 'AB', role: 'Faculty', credentials: 'MD', slug: 'begnaud', authorName: 'Begnaud A', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/begnaud-abbie.png?itok=gSTF7AGX' },
   { name: 'Ben Henkle', initials: 'BH', role: 'Faculty', credentials: 'MD, MPH', slug: 'henkle', authorName: 'Henkle BE', photoUrl: 'https://www.va.gov/MINNEAPOLISRESEARCH/images/staff/benjaminhenkle.jpg' },
-  { name: 'Dave MacDonald', initials: 'DM', role: 'Faculty', credentials: 'MD, MS', slug: 'macdonald', authorName: 'MacDonald DM', links: [{ label: 'Scholar', href: 'https://scholar.google.com/citations?user=EZt8qpMAAAAJ&hl=en' }] },
+  { name: 'Dave MacDonald', initials: 'DM', role: 'Faculty', credentials: 'MD, MS', slug: 'macdonald', authorName: 'MacDonald DM', scholarId: 'EZt8qpMAAAAJ', /* Scholar stats (2026-03-24): citations 257, h-index 11, i10-index 11 */ links: [{ label: 'Scholar', href: 'https://scholar.google.com/citations?user=EZt8qpMAAAAJ&hl=en' }] },
   { name: 'Josh Trujeque', initials: 'JT', role: 'Faculty', credentials: 'MD', slug: 'trujeque', authorName: 'Trujeque J', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/picture9.png' },
   { name: 'Katie Pendleton', initials: 'KP', role: 'Faculty', credentials: 'MD', slug: 'pendleton', authorName: 'Pendleton KM', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0112_Layer-187.png?itok=1xJq3yYt' },
   { name: 'Michael Kalinoski', initials: 'MK', role: 'Faculty', credentials: 'MD', slug: 'kalinoski', authorName: 'Kalinoski M' },
