@@ -4,6 +4,7 @@ export const projects: Project[] = [
   // Nick's CLIF projects
   {
     title: 'P1: Gender Disparities & Low Tidal Volume',
+    slug: 'p1-gender-disparities-low-tidal-volume',
     status: 'Active',
     category: 'clif',
     pi: 'nick',
@@ -13,6 +14,7 @@ export const projects: Project[] = [
   },
   {
     title: 'P4: ICU Quality Metrics',
+    slug: 'p4-icu-quality-metrics',
     status: 'Active',
     category: 'clif',
     pi: 'nick',
@@ -22,6 +24,7 @@ export const projects: Project[] = [
   },
   {
     title: 'IV Fluids Shortage',
+    slug: 'iv-fluids-shortage',
     status: 'Active',
     category: 'clif',
     pi: 'nick',
@@ -31,6 +34,7 @@ export const projects: Project[] = [
   },
   {
     title: 'PF-v-SF Oxygenation Severity',
+    slug: 'pf-v-sf-oxygenation-severity',
     status: 'In Review',
     category: 'clif',
     pi: 'nick',
@@ -40,6 +44,7 @@ export const projects: Project[] = [
   },
   {
     title: 'VentMode Waterfall Brief — JAMIA',
+    slug: 'ventmode-waterfall-brief-jamia',
     status: 'In Review',
     category: 'clif',
     pi: 'nick',
@@ -49,6 +54,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Volume vs Pressure Control Mortality',
+    slug: 'volume-vs-pressure-control-mortality',
     status: 'Active',
     category: 'clif',
     pi: 'nick',
@@ -58,6 +64,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Hypothermia Rewarming Rates',
+    slug: 'hypothermia-rewarming-rates',
     status: 'Active',
     category: 'clif',
     pi: 'nick',
@@ -66,6 +73,7 @@ export const projects: Project[] = [
   },
   {
     title: 'WBC & Temperature Thresholds for Sepsis',
+    slug: 'wbc-temperature-thresholds-for-sepsis',
     status: 'Active',
     category: 'clif',
     pi: 'nick',
@@ -74,6 +82,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Clinical Implications of Sepsis Definitions',
+    slug: 'clinical-implications-of-sepsis-definitions',
     status: 'Active',
     category: 'clif',
     pi: 'nick',
@@ -82,6 +91,7 @@ export const projects: Project[] = [
   },
   {
     title: 'FLAME',
+    slug: 'flame',
     status: 'Active',
     category: 'clif',
     pi: 'nick',
@@ -90,6 +100,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Proning Incidence in Severe ARF',
+    slug: 'proning-incidence-in-severe-arf',
     status: 'Active',
     category: 'clif',
     pi: 'nick',
@@ -101,6 +112,7 @@ export const projects: Project[] = [
   // Nick's lab projects
   {
     title: 'LPV Adherence Paper',
+    slug: 'lpv-adherence-paper',
     status: 'In Review',
     category: 'lab',
     pi: 'nick',
@@ -110,6 +122,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Decision-Making Survey / GDMS',
+    slug: 'decision-making-survey-gdms',
     status: 'Active',
     category: 'lab',
     pi: 'nick',
@@ -119,6 +132,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Provider EBP Research Program',
+    slug: 'provider-ebp-research-program',
     status: 'Active',
     category: 'lab',
     pi: 'nick',
@@ -128,6 +142,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Critical Care Quality Manuscript',
+    slug: 'critical-care-quality-manuscript',
     status: 'Active',
     category: 'lab',
     pi: 'nick',
@@ -136,6 +151,7 @@ export const projects: Project[] = [
   },
   {
     title: 'SGLT2 & Metformin in COPD Readmissions',
+    slug: 'sglt2-metformin-in-copd-readmissions',
     status: 'Active',
     category: 'lab',
     pi: 'nick',
@@ -147,6 +163,7 @@ export const projects: Project[] = [
   // Nate's projects
   {
     title: 'DNR Provider Variation',
+    slug: 'dnr-provider-variation',
     status: 'Active',
     category: 'nate',
     pi: 'nate',
@@ -156,6 +173,7 @@ export const projects: Project[] = [
   },
   {
     title: 'CCI in ARDS',
+    slug: 'cci-in-ards',
     status: 'Active',
     category: 'nate',
     pi: 'nate',

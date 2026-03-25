@@ -2,12 +2,12 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
-import { projects } from '../data/projects'
+import { useProjects } from '../hooks/useLocalData'
 import ProjectCard from '../components/ProjectCard'
 import type { Project } from '../data/types'
+import type { Stage } from '../components/StageSelector'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
-type Stage = (typeof STAGES)[number]
 
 const CATEGORY_FILTERS = [
   { key: 'all', label: 'All' },
@@ -26,19 +26,24 @@ export default function Projects() {
     'Track MN-CCORE research projects from idea to publication across CLIF, Lab, and Mesfin research groups.'
   )
 
+  const { projects, updateProject } = useProjects()
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [activeCategory, setActiveCategory] = useState<string>('all')
 
   const filtered = useMemo(() => {
     if (activeCategory === 'all') return projects
     return projects.filter((p) => p.category === activeCategory)
-  }, [activeCategory])
+  }, [activeCategory, projects])
 
   // Summary stats
   const totalCount = projects.length
   const clifCount = projects.filter((p) => p.category === 'clif').length
   const labCount = projects.filter((p) => p.category === 'lab').length
   const nateCount = projects.filter((p) => p.category === 'nate').length
+
+  function handleStageChange(slug: string, newStage: Stage) {
+    updateProject(slug, { stage: newStage })
+  }
 
   return (
     <div style={{ minHeight: '100vh' }}>
@@ -216,7 +221,11 @@ export default function Projects() {
                   <AnimatePresence mode="popLayout">
                     {stageProjects.length > 0 ? (
                       stageProjects.map((project) => (
-                        <ProjectCard key={project.title} project={project} />
+                        <ProjectCard
+                          key={project.slug}
+                          project={project}
+                          onStageChange={(newStage) => handleStageChange(project.slug, newStage)}
+                        />
                       ))
                     ) : (
                       <motion.div
@@ -274,6 +283,10 @@ export default function Projects() {
         }
         .dark .project-card:hover {
           background: #1a2a3a !important;
+        }
+        .dark .stage-dropdown {
+          background: #162535 !important;
+          border-color: rgba(201,168,76,0.3) !important;
         }
       `}</style>
     </div>

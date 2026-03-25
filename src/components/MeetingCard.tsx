@@ -29,9 +29,10 @@ function formatShortDate(dateStr: string): string {
 
 interface MeetingCardProps {
   meeting: Meeting
+  onToggleAction?: (meetingId: string, actionIndex: number) => void
 }
 
-export default function MeetingCard({ meeting }: MeetingCardProps) {
+export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProps) {
   const [expanded, setExpanded] = useState(false)
   const pendingActions = meeting.actionItems?.filter((a) => !a.completed).length ?? 0
   const totalActions = meeting.actionItems?.length ?? 0
@@ -294,11 +295,37 @@ export default function MeetingCard({ meeting }: MeetingCardProps) {
                           className="flex items-start gap-2 text-sm"
                           style={{ color: 'var(--ink)', fontFamily: 'var(--font-body)' }}
                         >
-                          {item.completed ? (
-                            <CheckCircle2 size={16} className="shrink-0 mt-0.5" style={{ color: 'var(--teal)' }} />
-                          ) : (
-                            <Circle size={16} className="shrink-0 mt-0.5" style={{ color: 'var(--gold)' }} />
-                          )}
+                          <button
+                            type="button"
+                            className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: '2px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '4px',
+                              transition: 'transform 0.15s ease',
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onToggleAction?.(meeting.id, i)
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.2)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)'
+                            }}
+                            title={item.completed ? 'Mark as pending' : 'Mark as completed'}
+                          >
+                            {item.completed ? (
+                              <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
+                            ) : (
+                              <Circle size={16} style={{ color: 'var(--gold)' }} />
+                            )}
+                          </button>
                           <div className="flex-1 min-w-0">
                             <span style={{ textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.6 : 1 }}>
                               {item.description}

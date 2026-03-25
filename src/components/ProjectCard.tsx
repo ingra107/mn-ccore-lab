@@ -1,8 +1,11 @@
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Avatar from './Avatar'
+import StageSelector from './StageSelector'
 import { directors } from '../data/team'
 import { getAllMembers } from '../data/team'
 import type { Project } from '../data/types'
+import type { Stage } from './StageSelector'
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   clif: { bg: 'var(--maroon)', text: '#faf8f3', label: 'CLIF' },
@@ -24,13 +27,14 @@ function getPiInfo(slug: string) {
 
 interface ProjectCardProps {
   project: Project
+  onStageChange?: (newStage: Stage) => void
 }
 
-export default function ProjectCard({ project }: ProjectCardProps) {
+export default function ProjectCard({ project, onStageChange }: ProjectCardProps) {
   const cat = CATEGORY_COLORS[project.category] ?? { bg: 'var(--slate)', text: '#faf8f3', label: project.category }
   const pi = getPiInfo(project.pi)
 
-  return (
+  const cardContent = (
     <motion.div
       layout
       initial={{ opacity: 0, y: 8 }}
@@ -43,7 +47,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         borderRadius: '12px',
         borderLeft: '2px solid var(--gold)',
         padding: '14px 16px',
-        cursor: 'default',
+        cursor: 'pointer',
         transition: 'box-shadow 0.2s ease, transform 0.2s ease',
       }}
       whileHover={{
@@ -51,7 +55,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
       }}
     >
-      {/* Header: category badge + PI avatar */}
+      {/* Header: category badge + stage move + PI avatar */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <span
           className="inline-block px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
@@ -65,15 +69,33 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         >
           {cat.label}
         </span>
-        <div className="flex-shrink-0" style={{ width: 28, height: 28 }}>
-          <Avatar
-            name={pi.name}
-            initials={pi.initials}
-            photoUrl={pi.photoUrl}
-            size="sm"
-            variant="ice"
-            className="!w-7 !h-7 !min-w-0 !min-h-0"
-          />
+        <div className="flex items-center gap-2">
+          {/* Stage change button */}
+          {onStageChange && project.stage && (
+            <div
+              onClick={(e) => {
+                // Prevent Link navigation when interacting with stage selector
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+            >
+              <StageSelector
+                currentStage={project.stage}
+                onChange={onStageChange}
+                mode="compact"
+              />
+            </div>
+          )}
+          <div className="flex-shrink-0" style={{ width: 28, height: 28 }}>
+            <Avatar
+              name={pi.name}
+              initials={pi.initials}
+              photoUrl={pi.photoUrl}
+              size="sm"
+              variant="ice"
+              className="!w-7 !h-7 !min-w-0 !min-h-0"
+            />
+          </div>
         </div>
       </div>
 
@@ -141,4 +163,18 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       )}
     </motion.div>
   )
+
+  // Wrap in Link if project has a slug
+  if (project.slug) {
+    return (
+      <Link
+        to={`/projects/${project.slug}`}
+        style={{ textDecoration: 'none', display: 'block' }}
+      >
+        {cardContent}
+      </Link>
+    )
+  }
+
+  return cardContent
 }

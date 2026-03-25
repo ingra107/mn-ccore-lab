@@ -10,26 +10,31 @@ import MemberPage from './pages/MemberPage'
 import Dashboard from './pages/Dashboard'
 import Network from './pages/Network'
 import Projects from './pages/Projects'
+import ProjectDetail from './pages/ProjectDetail'
 import Meetings from './pages/Meetings'
+import { DataProvider } from './hooks/useLocalData'
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/team" element={<Team />} />
-          <Route path="/nick" element={<NickLab />} />
-          <Route path="/nate" element={<NateLab />} />
-          <Route path="/team/:slug" element={<MemberPage />} />
-          <Route path="/publications" element={<Publications />} />
-          <Route path="/network" element={<Network />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/meetings" element={<Meetings />} />
-        </Route>
-      </Routes>
+      <DataProvider>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/team" element={<Team />} />
+            <Route path="/nick" element={<NickLab />} />
+            <Route path="/nate" element={<NateLab />} />
+            <Route path="/team/:slug" element={<MemberPage />} />
+            <Route path="/publications" element={<Publications />} />
+            <Route path="/network" element={<Network />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/projects/:slug" element={<ProjectDetail />} />
+            <Route path="/meetings" element={<Meetings />} />
+          </Route>
+        </Routes>
+      </DataProvider>
     </BrowserRouter>
   )
 }

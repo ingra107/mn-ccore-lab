@@ -53,13 +53,19 @@ export interface Grant {
 // Visibility: 'public' = show on website, 'internal' = team-only (future portal)
 // Default is 'public' — items only hidden when explicitly marked 'internal'
 
+export interface ProjectNote {
+  timestamp: string  // ISO datetime
+  content: string
+  author?: string
+}
+
 export interface Project {
   title: string
   status: 'Active' | 'In Review' | 'Published' | 'In Preparation'
   description?: string
   category: string
   pi: string
-  slug?: string
+  slug: string
   visibility?: 'public' | 'internal'
   // Pipeline board fields
   stage?: 'Idea' | 'Data Collection' | 'Analysis' | 'Writing' | 'Review' | 'Published'
@@ -67,6 +73,7 @@ export interface Project {
   googleDocUrl?: string
   startDate?: string
   lastActivity?: string
+  notes?: ProjectNote[]
 }
 
 export interface Mentee {
