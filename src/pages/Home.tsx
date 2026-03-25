@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+// Link removed — hero cards use <a> for reliable full-page navigation
 import {
   Stethoscope,
   BarChart3,
@@ -225,9 +225,9 @@ export default function Home() {
             ].map((item) => {
               const Icon = item.icon
               return (
-                <Link
+                <a
                   key={item.title}
-                  to={item.to}
+                  href={item.to}
                   className="cursor-pointer rounded-lg p-5 sm:p-6 text-center transition-all duration-200 flex flex-col items-center justify-center gap-2"
                   style={{
                     textDecoration: 'none',
@@ -261,7 +261,7 @@ export default function Home() {
                       {item.description}
                     </p>
                   </div>
-                </Link>
+                </a>
             )
           })}
           </div>
