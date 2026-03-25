@@ -37,6 +37,7 @@ export interface Publication {
   topics: string[]
   featured?: boolean
   authorSlugs?: string[]
+  visibility?: 'public' | 'internal'
 }
 
 export interface Grant {
@@ -45,7 +46,12 @@ export interface Grant {
   agency: string
   pi: string
   proposed?: boolean
+  status?: 'Active' | 'Pending' | 'Completed'
+  visibility?: 'public' | 'internal' // default: 'public'
 }
+
+// Visibility: 'public' = show on website, 'internal' = team-only (future portal)
+// Default is 'public' — items only hidden when explicitly marked 'internal'
 
 export interface Project {
   title: string
@@ -54,6 +60,7 @@ export interface Project {
   category: string
   pi: string
   slug?: string
+  visibility?: 'public' | 'internal'
 }
 
 export interface Mentee {

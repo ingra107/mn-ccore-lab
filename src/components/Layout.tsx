@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Menu, X, Sun, Moon, ChevronUp } from 'lucide-react'
-import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
-import PageTransition from './PageTransition'
 
 const navLinks = [
   { to: '/', label: 'Home' },
@@ -23,7 +21,9 @@ export default function Layout() {
 
   useEffect(() => {
     setMenuOpen(false)
-    window.scrollTo(0, 0)
+    // Delay scroll to avoid conflict with IntersectionObserver initialization
+    const timer = setTimeout(() => window.scrollTo(0, 0), 50)
+    return () => clearTimeout(timer)
   }, [location.pathname])
 
   useEffect(() => {
@@ -187,12 +187,8 @@ export default function Layout() {
       </nav>
 
       {/* Main content — add top padding for non-home pages to clear sticky nav */}
-      <main id="main-content" className="flex-1" style={isHome ? undefined : { paddingTop: '90px' }}>
-        <AnimatePresence mode="wait">
-          <PageTransition key={location.pathname}>
-            <Outlet />
-          </PageTransition>
-        </AnimatePresence>
+      <main id="main-content" className="flex-1" style={isHome ? undefined : { paddingTop: '90px' }} key={location.pathname}>
+        <Outlet />
       </main>
 
       {/* Footer */}

@@ -220,9 +220,13 @@ interface GrantRow {
   title: string
   agency: string
   proposed?: boolean
+  status?: 'Active' | 'Pending' | 'Completed'
 }
 
-export function GrantsSection({ grants, id, title = 'Active Grants' }: { grants: GrantRow[]; id?: string; title?: string }) {
+export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants: GrantRow[]; id?: string; title?: string }) {
+  const activeGrants = grants.filter((g) => !g.proposed)
+  const pendingGrants = grants.filter((g) => g.proposed)
+
   return (
     <section className="mb-16" id={id}>
       <h2
@@ -235,12 +239,11 @@ export function GrantsSection({ grants, id, title = 'Active Grants' }: { grants:
       >
         {title}
       </h2>
-      <div className="space-y-4">
-        {grants.map((grant) => (
+      <div className="space-y-3">
+        {activeGrants.map((grant) => (
           <div
             key={grant.title}
             className="card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-3"
-            style={grant.proposed ? { opacity: 0.75 } : undefined}
           >
             <span className="mechanism-pill flex-shrink-0">
               {grant.mechanism}
@@ -255,23 +258,64 @@ export function GrantsSection({ grants, id, title = 'Active Grants' }: { grants:
               >
                 {grant.title}
               </h3>
-              {grant.proposed && (
-                <p className="text-xs mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
-                  Under review
-                </p>
-              )}
             </div>
-            <span
-              className="text-xs flex-shrink-0"
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="badge badge-active">Active</span>
+              <span
+                className="text-xs"
+                style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}
+              >
+                {grant.agency}
+              </span>
+            </div>
+          </div>
+        ))}
+        {pendingGrants.length > 0 && (
+          <>
+            <p
+              className="text-xs mt-4 mb-2"
               style={{
                 fontFamily: 'var(--font-mono)',
                 color: 'var(--slate)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
               }}
             >
-              {grant.agency}
-            </span>
-          </div>
-        ))}
+              Pending Review
+            </p>
+            {pendingGrants.map((grant) => (
+              <div
+                key={grant.title}
+                className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3"
+                style={{ opacity: 0.7 }}
+              >
+                <span className="mechanism-pill flex-shrink-0">
+                  {grant.mechanism}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h3
+                    className="text-sm font-semibold"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      color: 'var(--ink)',
+                    }}
+                  >
+                    {grant.title}
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="badge badge-review">Pending</span>
+                  <span
+                    className="text-xs"
+                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}
+                  >
+                    {grant.agency}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </section>
   )

@@ -75,29 +75,29 @@ export default function NickLab() {
       ]}
       photoUrl="https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-06/Nick%20Picture_2022.jpg?itok=VEDKgpUN"
       sections={[
-        { id: 'publications', label: 'Publications' },
-        { id: 'grants', label: 'Active Grants' },
-        { id: 'clif-projects', label: 'CLIF Projects' },
+        { id: 'grants', label: 'Active Funding' },
         { id: 'lab-projects', label: 'Lab Projects' },
+        { id: 'clif-projects', label: 'CLIF Projects' },
         { id: 'mentees', label: 'Trainees' },
+        { id: 'publications', label: 'Publications' },
       ]}
     >
-      <PublicationsSection
-        publications={publications.filter((p) => p.authorSlugs?.includes('nick'))}
-        id="publications"
-      />
-      <SectionDivider />
-      <div className="py-4" />
-      <GrantsSection grants={grants} id="grants" />
-      <SectionDivider />
-      <div className="py-4" />
-      <ProjectsSection title="CLIF Projects" projects={clifProjects} id="clif-projects" />
+      <GrantsSection grants={grants} id="grants" title="Active Funding" />
       <SectionDivider />
       <div className="py-4" />
       <ProjectsSection title="Lab Projects" projects={labProjects} id="lab-projects" />
       <SectionDivider />
       <div className="py-4" />
+      <ProjectsSection title="CLIF Projects" projects={clifProjects} id="clif-projects" />
+      <SectionDivider />
+      <div className="py-4" />
       <MenteesSection mentees={mentees} id="mentees" />
+      <SectionDivider />
+      <div className="py-4" />
+      <PublicationsSection
+        publications={publications.filter((p) => p.authorSlugs?.includes('nick'))}
+        id="publications"
+      />
     </LabPageLayout>
   )
 }

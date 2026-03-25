@@ -178,19 +178,20 @@ function FilterRow({
   children: React.ReactNode
 }) {
   return (
-    <div className="mb-3 last:mb-0">
+    <div className="mb-2 last:mb-0 flex flex-wrap items-center gap-2">
       <span
-        className="block mb-1.5 text-xs uppercase"
+        className="text-xs uppercase flex-shrink-0"
         style={{
           fontFamily: 'var(--font-body)',
-          fontSize: '12px',
+          fontSize: '11px',
           letterSpacing: '0.05em',
           color: 'var(--slate)',
+          minWidth: '50px',
         }}
       >
         {label}
       </span>
-      <div className="flex flex-wrap gap-2">{children}</div>
+      {children}
     </div>
   )
 }
