@@ -13,14 +13,14 @@ const TOPIC_DISPLAY: Record<string, string> = {
   disparities: 'Disparities',
 }
 
-const TOPIC_COLORS: Record<string, { bg: string; color: string }> = {
-  clif: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' },
-  covid: { bg: 'rgba(239, 68, 68, 0.1)', color: '#dc2626' },
-  ventilation: { bg: 'rgba(34, 197, 94, 0.1)', color: '#16a34a' },
-  'decision-making': { bg: 'rgba(168, 85, 247, 0.1)', color: '#9333ea' },
-  quality: { bg: 'rgba(245, 158, 11, 0.1)', color: '#d97706' },
-  sepsis: { bg: 'rgba(236, 72, 153, 0.1)', color: '#db2777' },
-  disparities: { bg: 'rgba(14, 165, 233, 0.1)', color: '#0284c7' },
+const TOPIC_COLORS: Record<string, { bg: string; color: string; darkBg: string; darkColor: string }> = {
+  clif: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', darkBg: 'rgba(96, 165, 250, 0.15)', darkColor: '#60a5fa' },
+  covid: { bg: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', darkBg: 'rgba(248, 113, 113, 0.15)', darkColor: '#f87171' },
+  ventilation: { bg: 'rgba(34, 197, 94, 0.1)', color: '#16a34a', darkBg: 'rgba(74, 222, 128, 0.15)', darkColor: '#4ade80' },
+  'decision-making': { bg: 'rgba(168, 85, 247, 0.1)', color: '#9333ea', darkBg: 'rgba(192, 132, 252, 0.15)', darkColor: '#c084fc' },
+  quality: { bg: 'rgba(245, 158, 11, 0.1)', color: '#d97706', darkBg: 'rgba(251, 191, 36, 0.15)', darkColor: '#fbbf24' },
+  sepsis: { bg: 'rgba(236, 72, 153, 0.1)', color: '#db2777', darkBg: 'rgba(244, 114, 182, 0.15)', darkColor: '#f472b6' },
+  disparities: { bg: 'rgba(14, 165, 233, 0.1)', color: '#0284c7', darkBg: 'rgba(56, 189, 248, 0.15)', darkColor: '#38bdf8' },
 }
 
 const mnccoreMembers = [
@@ -57,13 +57,12 @@ function topicLabel(topic: string): string {
   return TOPIC_DISPLAY[topic] ?? topic.charAt(0).toUpperCase() + topic.slice(1)
 }
 
-function topicColor(topic: string) {
-  return (
-    TOPIC_COLORS[topic] ?? {
-      bg: 'rgba(201, 168, 76, 0.1)',
-      color: 'var(--gold)',
-    }
-  )
+function topicColor(topic: string, isDark: boolean) {
+  const tc = TOPIC_COLORS[topic]
+  if (!tc) return { bg: 'rgba(201, 168, 76, 0.1)', color: 'var(--gold)' }
+  return isDark
+    ? { bg: tc.darkBg, color: tc.darkColor }
+    : { bg: tc.bg, color: tc.color }
 }
 
 function formatCitation(pub: Publication): string {
@@ -136,21 +135,20 @@ function formatAuthors(authors: string): React.ReactNode[] {
 export default function PublicationCard({ pub }: { pub: Publication }) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
+  const isDark = document.documentElement.classList.contains('dark')
 
-  const statusColor = () => {
+  const statusBadgeClass = () => {
     switch (pub.status) {
       case 'Published':
-        return { bg: 'rgba(122, 0, 25, 0.1)', color: '#7a0019' }
+        return 'badge badge-published'
       case 'In Review':
-        return { bg: 'rgba(245, 158, 11, 0.12)', color: '#d97706' }
+        return 'badge badge-review'
       case 'In Preparation':
-        return { bg: 'rgba(100, 116, 139, 0.1)', color: 'var(--slate)' }
+        return 'badge badge-preparation'
       default:
-        return { bg: 'rgba(201, 168, 76, 0.15)', color: 'var(--gold)' }
+        return 'badge badge-active'
     }
   }
-
-  const sc = statusColor()
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -201,14 +199,9 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
             </span>
             {pub.status && (
               <span
-                className="text-xs font-medium px-2 py-0.5 rounded-full"
+                className={statusBadgeClass()}
                 style={{
-                  fontFamily: 'var(--font-mono)',
-                  background: sc.bg,
-                  color: sc.color,
                   fontSize: '10px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.03em',
                 }}
               >
                 {pub.status}
@@ -290,7 +283,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                 {pub.topics.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
                     {pub.topics.map((t) => {
-                      const tc = topicColor(t)
+                      const tc = topicColor(t, isDark)
                       return (
                         <span
                           key={t}
