@@ -19,6 +19,7 @@ const researchDropdownLinks = [
   { to: '/projects', label: 'Projects' },
   { to: '/network', label: 'Network' },
   { to: '/meetings', label: 'Meetings' },
+  { to: '/digest', label: 'Digest' },
 ]
 
 // All links for footer (flat list of all pages)
@@ -27,6 +28,7 @@ const footerLinks = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/projects', label: 'Projects' },
   { to: '/meetings', label: 'Meetings' },
+  { to: '/digest', label: 'Digest' },
   { to: '/team', label: 'Team' },
   { to: '/nick', label: 'Ingraham Lab' },
   { to: '/nate', label: 'Mesfin Lab' },
@@ -416,7 +418,7 @@ export default function Layout() {
             <div
               className="overflow-hidden transition-all duration-300"
               style={{
-                maxHeight: mobileResearchOpen ? '240px' : '0',
+                maxHeight: mobileResearchOpen ? '300px' : '0',
                 opacity: mobileResearchOpen ? 1 : 0,
               }}
             >
