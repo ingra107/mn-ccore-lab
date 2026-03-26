@@ -15,6 +15,7 @@
     "db:seed:remote": "wrangler d1 execute mnccore-lab --file=scripts/seed.sql --remote"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.95.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "reagraph": "^4.30.8"

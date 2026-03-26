@@ -1,9 +1,19 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import { DataProvider } from './hooks/useLocalData'
 import { AuthProvider } from './context/AuthContext'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 // Lazy-loaded pages — each becomes its own chunk
 const Team = lazy(() => import('./pages/Team'))
@@ -36,29 +46,31 @@ function PageLoader() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <DataProvider>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/team" element={<Team />} />
-              <Route path="/nick" element={<NickLab />} />
-              <Route path="/nate" element={<NateLab />} />
-              <Route path="/team/:slug" element={<MemberPage />} />
-              <Route path="/publications" element={<Publications />} />
-              <Route path="/network" element={<Network />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/projects/:slug" element={<ProjectDetail />} />
-              <Route path="/meetings" element={<Meetings />} />
-            </Route>
-            </Routes>
-          </Suspense>
-        </DataProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <DataProvider>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/team" element={<Team />} />
+                  <Route path="/nick" element={<NickLab />} />
+                  <Route path="/nate" element={<NateLab />} />
+                  <Route path="/team/:slug" element={<MemberPage />} />
+                  <Route path="/publications" element={<Publications />} />
+                  <Route path="/network" element={<Network />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/projects" element={<Projects />} />
+                  <Route path="/projects/:slug" element={<ProjectDetail />} />
+                  <Route path="/meetings" element={<Meetings />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </DataProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   )
 }
