@@ -1,6 +1,7 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, AlertCircle, ArrowRight } from 'lucide-react'
-import { useMeetingsApi } from '../../hooks/useApiData'
+import { Calendar, AlertCircle, ArrowRight, ListChecks, CalendarOff } from 'lucide-react'
+import { useMeetingsApi, useActionItems } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
 
 interface Deadline {
@@ -69,34 +70,94 @@ function typeColor(type: Deadline['type']): string {
 export default function UpcomingCard() {
   const deadlines = generateDeadlines()
   const { data: meetings = [] } = useMeetingsApi()
+  const { data: allActionItems = [] } = useActionItems()
 
-  // Find the most recent or upcoming meeting
-  const nextMeeting = meetings.length > 0 ? meetings[0] : null
+  // Find the next upcoming meeting (status='upcoming' or date > today)
+  const nextMeeting = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0]
+    // First try to find a meeting with 'upcoming' status
+    const upcoming = meetings.find((m) => m.status === 'upcoming')
+    if (upcoming) return upcoming
+    // Otherwise find the first meeting with date >= today
+    const future = [...meetings]
+      .filter((m) => m.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    return future[0] ?? null
+  }, [meetings])
+
+  // Count action items for the next meeting
+  const meetingActionCounts = useMemo(() => {
+    if (!nextMeeting) return { pending: 0, total: 0 }
+    const meetingActions = allActionItems.filter((a) => a.meeting_id === nextMeeting.id)
+    return {
+      pending: meetingActions.filter((a) => !a.completed).length,
+      total: meetingActions.length,
+    }
+  }, [nextMeeting, allActionItems])
 
   return (
     <BentoCard title="Upcoming" subtitle="Deadlines & milestones" size="span-1" icon={Calendar}>
       {/* Next Meeting banner */}
-      {nextMeeting && (
-        <Link
-          to={`/meetings/${nextMeeting.id}`}
-          className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg mb-3"
+      {nextMeeting ? (
+        <div
+          className="rounded-lg mb-3"
           style={{
             background: 'linear-gradient(135deg, rgba(201, 168, 76, 0.08), rgba(45, 138, 138, 0.06))',
             border: '1px solid rgba(201, 168, 76, 0.15)',
-            textDecoration: 'none',
-            transition: 'all 0.2s',
+            padding: '10px 12px',
           }}
         >
-          <div>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 600, color: 'var(--ink)', margin: 0, lineHeight: 1.3 }}>
-              Latest Meeting
-            </p>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--slate)', opacity: 0.7, margin: 0 }}>
-              {new Date(nextMeeting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {nextMeeting.title.split(':')[0]}
-            </p>
+          <div className="flex items-start justify-between gap-2 mb-1.5">
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 600, color: 'var(--ink)', margin: 0, lineHeight: 1.3 }}>
+                Next Meeting
+              </p>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', margin: '2px 0 0 0', lineHeight: 1.3 }}>
+                {nextMeeting.title.split(':')[0]}
+              </p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.7, margin: '2px 0 0 0' }}>
+                {new Date(nextMeeting.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </p>
+            </div>
           </div>
-          <ArrowRight size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-        </Link>
+          <div className="flex items-center justify-between mt-2">
+            {meetingActionCounts.total > 0 && (
+              <div className="flex items-center gap-1.5">
+                <ListChecks size={11} style={{ color: 'var(--teal)', opacity: 0.8 }} />
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>
+                  {meetingActionCounts.pending}/{meetingActionCounts.total} pending
+                </span>
+              </div>
+            )}
+            <Link
+              to={`/meetings/${nextMeeting.id}`}
+              className="inline-flex items-center gap-1"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10px',
+                color: 'var(--gold)',
+                textDecoration: 'none',
+                fontWeight: 500,
+                marginLeft: 'auto',
+              }}
+            >
+              View Meeting <ArrowRight size={10} />
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="flex items-center gap-2 rounded-lg mb-3 px-3 py-3"
+          style={{
+            background: 'rgba(100, 116, 139, 0.04)',
+            border: '1px solid rgba(100, 116, 139, 0.08)',
+          }}
+        >
+          <CalendarOff size={14} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+          <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.5 }}>
+            No meeting scheduled
+          </span>
+        </div>
       )}
 
       <div className="flex flex-col gap-1">

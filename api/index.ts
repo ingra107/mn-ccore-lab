@@ -113,6 +113,8 @@ export default {
             return await handleActionItems(url, env);
           case '/api/updates/recent':
             return await handleRecentUpdates(url, env);
+          case '/api/projects/health':
+            return await handleProjectHealth(env);
         }
       }
 
@@ -578,6 +580,102 @@ async function handleGetProjectUpdates(slug: string, env: Env): Promise<Response
     'SELECT * FROM project_updates WHERE project_id = ? ORDER BY created_at DESC'
   ).bind(slug).all();
   return json({ data: result.results, count: result.results.length });
+}
+
+// GET /api/projects/health — project health metrics
+async function handleProjectHealth(env: Env): Promise<Response> {
+  // Get all active projects
+  const projects = await env.DB.prepare(
+    "SELECT id, slug, title, stage, status, updated_at FROM projects WHERE status IN ('Active', 'In Review', 'In Preparation')"
+  ).all<{ id: string; slug: string; title: string; stage: string; status: string; updated_at: string }>();
+
+  const now = new Date();
+  const healthData = [];
+
+  for (const p of projects.results) {
+    // Find the most recent update timestamp across multiple tables
+    const [latestUpdate, latestAction, latestActivity] = await Promise.all([
+      env.DB.prepare(
+        'SELECT MAX(created_at) as latest FROM project_updates WHERE project_id = ?'
+      ).bind(p.slug).first<{ latest: string | null }>(),
+      env.DB.prepare(
+        'SELECT MAX(completed_at) as latest FROM action_items WHERE project_id = ? AND completed_at IS NOT NULL'
+      ).bind(p.slug).first<{ latest: string | null }>(),
+      env.DB.prepare(
+        "SELECT MAX(timestamp) as latest FROM activity_log WHERE related_id = ? AND related_type = 'project'"
+      ).bind(p.slug).first<{ latest: string | null }>(),
+    ]);
+
+    // Also consider the project's own updated_at
+    const dates = [
+      latestUpdate?.latest,
+      latestAction?.latest,
+      latestActivity?.latest,
+      p.updated_at,
+    ].filter(Boolean) as string[];
+
+    const lastUpdateDate = dates.length > 0
+      ? dates.reduce((a, b) => (a > b ? a : b))
+      : null;
+
+    const daysSinceUpdate = lastUpdateDate
+      ? Math.floor((now.getTime() - new Date(lastUpdateDate).getTime()) / (1000 * 60 * 60 * 24))
+      : 999;
+
+    // Count pending action items for this project
+    const pendingCount = await env.DB.prepare(
+      'SELECT COUNT(*) as c FROM action_items WHERE project_id = ? AND completed = 0'
+    ).bind(p.slug).first<{ c: number }>();
+
+    // Count recent updates (last 30 days)
+    const recentCount = await env.DB.prepare(
+      "SELECT COUNT(*) as c FROM project_updates WHERE project_id = ? AND created_at > datetime('now', '-30 days')"
+    ).bind(p.slug).first<{ c: number }>();
+
+    // Determine health
+    const pending = pendingCount?.c ?? 0;
+    let health: 'green' | 'yellow' | 'red';
+    if (daysSinceUpdate <= 14 || (pending > 0 && daysSinceUpdate <= 30)) {
+      health = 'green';
+    } else if (daysSinceUpdate <= 30) {
+      health = 'yellow';
+    } else {
+      health = 'red';
+    }
+
+    healthData.push({
+      slug: p.slug,
+      title: p.title,
+      stage: p.stage,
+      status: p.status,
+      days_since_update: daysSinceUpdate === 999 ? null : daysSinceUpdate,
+      health,
+      pending_actions: pending,
+      recent_updates: recentCount?.c ?? 0,
+      last_update_date: lastUpdateDate ? lastUpdateDate.split('T')[0] : null,
+    });
+  }
+
+  // Sort by health (red first, then yellow, then green)
+  const healthOrder: Record<string, number> = { red: 0, yellow: 1, green: 2 };
+  healthData.sort((a, b) => healthOrder[a.health] - healthOrder[b.health]);
+
+  const summary = {
+    total: healthData.length,
+    green: healthData.filter((h) => h.health === 'green').length,
+    yellow: healthData.filter((h) => h.health === 'yellow').length,
+    red: healthData.filter((h) => h.health === 'red').length,
+    avg_days_since_update: healthData.length > 0
+      ? Math.round(
+          healthData
+            .filter((h) => h.days_since_update !== null)
+            .reduce((sum, h) => sum + (h.days_since_update ?? 0), 0) /
+          Math.max(healthData.filter((h) => h.days_since_update !== null).length, 1)
+        )
+      : 0,
+  };
+
+  return json({ data: healthData, summary });
 }
 
 // GET /api/updates/recent?limit=20

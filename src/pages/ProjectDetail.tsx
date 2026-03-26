@@ -5,15 +5,20 @@ import {
   ArrowLeft,
   ExternalLink,
   Calendar,
+  CalendarPlus,
   Clock,
   CheckCircle2,
   Circle,
   FileText,
   Plus,
+  Send,
+  X,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useData } from '../hooks/useLocalData'
-import { useUpdateProject } from '../hooks/useMutations'
+import { useUpdateProject, useAddAgendaItem } from '../hooks/useMutations'
+import { useMeetingsApi } from '../hooks/useApiData'
+import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import { formatMediumDate, formatTimestamp } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
@@ -113,6 +118,8 @@ function ProjectDetailInner({
 }: InnerProps) {
   // D1 mutation — writes to cloud database (persists across browsers)
   const d1Update = useUpdateProject(project.slug)
+  const { isAuthenticated } = useAuth()
+  const { data: apiMeetings = [] } = useMeetingsApi()
 
   // Dual-write: localStorage (instant) + D1 (persistent)
   function updateProjectBoth(slug: string, updates: Partial<Project>) {
@@ -139,6 +146,20 @@ function ProjectDetailInner({
 
   // Note input
   const [noteText, setNoteText] = useState('')
+
+  // Add to meeting agenda
+  const [showAgendaForm, setShowAgendaForm] = useState(false)
+  const [agendaNote, setAgendaNote] = useState('')
+  const nextUpcomingMeeting = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0]
+    const upcoming = apiMeetings.find((m) => m.status === 'upcoming')
+    if (upcoming) return upcoming
+    const future = [...apiMeetings]
+      .filter((m) => m.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    return future[0] ?? null
+  }, [apiMeetings])
+  const addAgenda = useAddAgendaItem(nextUpcomingMeeting?.id ?? '')
 
   // Collect action items from meetings that reference this project
   const relatedActions = useMemo(() => {
@@ -234,7 +255,124 @@ function ProjectDetailInner({
             {cat.label}
           </span>
           <span className={`badge ${statusClass}`}>{project.status}</span>
+
+          {/* Add to meeting agenda button — only when authenticated and a meeting exists */}
+          {isAuthenticated && nextUpcomingMeeting && (
+            <motion.button
+              type="button"
+              onClick={() => setShowAgendaForm(!showAgendaForm)}
+              className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
+              style={{
+                background: showAgendaForm ? 'var(--gold)' : 'rgba(201, 168, 76, 0.1)',
+                color: showAgendaForm ? '#0f1923' : 'var(--gold)',
+                border: '1px solid rgba(201, 168, 76, 0.25)',
+                fontFamily: 'var(--font-body)',
+                fontSize: '11px',
+                fontWeight: 500,
+                marginLeft: '4px',
+                transition: 'all 0.2s',
+              }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <CalendarPlus size={12} />
+              Add to meeting agenda
+            </motion.button>
+          )}
         </div>
+
+        {/* Inline agenda form */}
+        <AnimatePresence>
+          {showAgendaForm && nextUpcomingMeeting && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+              style={{ marginBottom: '12px' }}
+            >
+              <div
+                style={{
+                  background: 'var(--ice)',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  border: '1px solid rgba(201, 168, 76, 0.15)',
+                }}
+                className="detail-card"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '10px',
+                      color: 'var(--slate)',
+                      opacity: 0.6,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                    }}
+                  >
+                    Add to: {nextUpcomingMeeting.title.split(':')[0]} ({new Date(nextUpcomingMeeting.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setShowAgendaForm(false); setAgendaNote('') }}
+                    className="cursor-pointer"
+                    style={{ background: 'none', border: 'none', color: 'var(--slate)', opacity: 0.5, padding: '2px' }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    if (!agendaNote.trim()) return
+                    addAgenda.mutate({
+                      content: `[${project.title}] ${agendaNote.trim()}`,
+                      project_id: project.slug,
+                      type: 'discussion',
+                    })
+                    setAgendaNote('')
+                    setShowAgendaForm(false)
+                  }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="text"
+                    value={agendaNote}
+                    onChange={(e) => setAgendaNote(e.target.value)}
+                    placeholder="What should we discuss?"
+                    autoFocus
+                    style={{
+                      flex: 1,
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '13px',
+                      color: 'var(--ink)',
+                      background: 'var(--cream)',
+                      border: '1px solid rgba(201, 168, 76, 0.15)',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      outline: 'none',
+                      transition: 'border-color 0.2s',
+                    }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}
+                  />
+                  {agendaNote.trim() && (
+                    <motion.button
+                      type="submit"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
+                      style={{ background: 'var(--gold)', color: '#0f1923', border: 'none' }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Send size={14} />
+                    </motion.button>
+                  )}
+                </form>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Title + PI */}
         <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-6">

@@ -7,6 +7,7 @@ import GrantTimelineCard from '../components/dashboard/GrantTimelineCard'
 import CLIFMiniCard from '../components/dashboard/CLIFMiniCard'
 import TopicBubblesCard from '../components/dashboard/TopicBubblesCard'
 import ActionBoardCard from '../components/dashboard/ActionBoardCard'
+import ProjectHealthCard from '../components/dashboard/ProjectHealthCard'
 
 export default function Dashboard() {
   const headerRef = useScrollReveal<HTMLDivElement>()
@@ -90,7 +91,10 @@ export default function Dashboard() {
           {/* Row 3: Grant Timeline (2x1) */}
           <GrantTimelineCard />
 
-          {/* Row 4: Action Board (2x1) */}
+          {/* Row 4: Project Health (2x1) */}
+          <ProjectHealthCard />
+
+          {/* Row 5: Action Board (2x1) */}
           <ActionBoardCard />
 
           {/* Row 5: CLIF (2x1) | Topics (1x1) */}

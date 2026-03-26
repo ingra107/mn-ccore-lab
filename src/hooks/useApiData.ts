@@ -411,6 +411,46 @@ export function useActionItems(filters?: { assignee?: string; completed?: string
   })
 }
 
+// ── Project Health ───────────────────────────────────────────
+
+export interface ProjectHealth {
+  slug: string
+  title: string
+  stage: string
+  status: string
+  days_since_update: number | null
+  health: 'green' | 'yellow' | 'red'
+  pending_actions: number
+  recent_updates: number
+  last_update_date: string | null
+}
+
+export interface HealthSummary {
+  total: number
+  green: number
+  yellow: number
+  red: number
+  avg_days_since_update: number
+}
+
+export function useProjectHealth() {
+  return useQuery({
+    queryKey: ['project-health'],
+    queryFn: async () => {
+      try {
+        const res = await fetch('/api/projects/health')
+        if (!res.ok) return { data: [] as ProjectHealth[], summary: { total: 0, green: 0, yellow: 0, red: 0, avg_days_since_update: 0 } }
+        return await res.json() as { data: ProjectHealth[], summary: HealthSummary }
+      } catch {
+        return { data: [] as ProjectHealth[], summary: { total: 0, green: 0, yellow: 0, red: 0, avg_days_since_update: 0 } }
+      }
+    },
+    staleTime: STALE_TIME,
+  })
+}
+
+// ── Project Updates ─────────────────────────────────────────
+
 export function useProjectUpdates(slug: string) {
   return useQuery({
     queryKey: ['project-updates', slug],
