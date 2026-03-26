@@ -39,7 +39,7 @@ Nick's CLI (brain.db)                      Team Members (browsers)
      +---- HTTP API / Wrangler -----+------- HTTP API ----+
                                     |
                                D1 (mnccore-lab)
-                               11 tables, 170+ rows
+                               12 tables, 350+ rows
 ```
 
 - **Data layer:** TanStack Query v5 hooks -> D1 API in production, static TS fallback in dev
@@ -89,6 +89,13 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 5. **Phase 5 -- DONE:** D1 API activation, mobile optimization, dark mode, edge cases
 6. **Phase 6 -- DONE:** Research Digest page, homepage enhancements, nav badges, SEO
 7. **Phase 7 -- NEXT:** Re-enable auth for team launch, PB Sector, real-time features
+
+## Meeting Cadence
+
+- **Biweekly Tuesdays at 3pm CT** (106 attendees on calendar)
+- Anchor: `date(2026, 4, 7)`, weekday=1 (Tuesday)
+- Sequence: ...Mar 10, Mar 24, **Apr 7**, Apr 21...
+- Meeting automation runs Monday mornings (creates D1 meeting + agenda from brain.db)
 
 ## Known Gotchas
 
