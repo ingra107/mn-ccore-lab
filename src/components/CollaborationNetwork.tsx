@@ -28,7 +28,7 @@ export default function CollaborationNetwork() {
   const sectionRef = useScrollReveal<HTMLElement>()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [hovered, setHovered] = useState<string | null>(null)
-  const [dimensions, setDimensions] = useState({ w: 800, h: 400 })
+  const dimensionsRef = useRef({ w: 800, h: 400 })
 
   const { nodes, edges } = useMemo(() => {
     const authorPaperCount: Record<string, number> = {}
@@ -132,7 +132,7 @@ export default function CollaborationNetwork() {
     if (container) {
       const w = container.clientWidth
       const h = Math.min(400, w * 0.5)
-      setDimensions({ w, h })
+      dimensionsRef.current = { w, h }
       canvas.width = w * 2
       canvas.height = h * 2
       canvas.style.width = `${w}px`
@@ -142,13 +142,14 @@ export default function CollaborationNetwork() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const scale = canvas.width / dimensions.w
+    const dims = dimensionsRef.current
+    const scale = canvas.width / dims.w
     ctx.scale(scale, scale)
-    ctx.clearRect(0, 0, dimensions.w, dimensions.h)
+    ctx.clearRect(0, 0, dims.w, dims.h)
 
     // Adjust node positions to actual dimensions
-    const scaleX = dimensions.w / 800
-    const scaleY = dimensions.h / 400
+    const scaleX = dims.w / 800
+    const scaleY = dims.h / 400
 
     // Draw edges
     edges.forEach((edge) => {
@@ -198,7 +199,7 @@ export default function CollaborationNetwork() {
         ctx.fillText(`${node.papers} papers`, x, y + r + 26)
       }
     })
-  }, [nodes, edges, hovered, dimensions])
+  }, [nodes, edges, hovered])
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -206,8 +207,9 @@ export default function CollaborationNetwork() {
     const rect = canvas.getBoundingClientRect()
     const mx = e.clientX - rect.left
     const my = e.clientY - rect.top
-    const scaleX = dimensions.w / 800
-    const scaleY = dimensions.h / 400
+    const dims = dimensionsRef.current
+    const scaleX = dims.w / 800
+    const scaleY = dims.h / 400
 
     let found: string | null = null
     for (const node of nodes) {
