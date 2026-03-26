@@ -77,6 +77,21 @@ export default {
           return await handleGetComments(commentsGet[1], env);
         }
 
+        const meetingGet = url.pathname.match(/^\/api\/meetings\/([^/]+)$/);
+        if (meetingGet) {
+          return await handleGetMeeting(meetingGet[1], env);
+        }
+
+        const agendaGet = url.pathname.match(/^\/api\/meetings\/([^/]+)\/agenda$/);
+        if (agendaGet) {
+          return await handleGetAgendaItems(agendaGet[1], env);
+        }
+
+        const projectUpdatesGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/updates$/);
+        if (projectUpdatesGet) {
+          return await handleGetProjectUpdates(projectUpdatesGet[1], env);
+        }
+
         switch (url.pathname) {
           case '/api/publications':
             return await handlePublications(url, env);
@@ -92,6 +107,12 @@ export default {
             return await handleStats(env);
           case '/api/activity':
             return await handleActivity(url, env);
+          case '/api/meetings':
+            return await handleMeetings(env);
+          case '/api/action-items':
+            return await handleActionItems(url, env);
+          case '/api/updates/recent':
+            return await handleRecentUpdates(url, env);
         }
       }
 
@@ -120,6 +141,34 @@ export default {
         const teamMatch = path.match(/^\/api\/team\/([^/]+)$/);
         if (request.method === 'PUT' && teamMatch) {
           return await handleUpdateTeamMember(teamMatch[1], request, user, env);
+        }
+
+        // POST /api/action-items/:id/toggle — toggle action item completion
+        const toggleMatch = path.match(/^\/api\/action-items\/([^/]+)\/toggle$/);
+        if (request.method === 'POST' && toggleMatch) {
+          return await handleToggleActionItem(toggleMatch[1], user, env);
+        }
+
+        // POST /api/action-items — create new action item
+        if (request.method === 'POST' && path === '/api/action-items') {
+          return await handleCreateActionItem(request, user, env);
+        }
+
+        // POST /api/meetings/:id/agenda — add agenda item
+        const agendaMatch = path.match(/^\/api\/meetings\/([^/]+)\/agenda$/);
+        if (request.method === 'POST' && agendaMatch) {
+          return await handleAddAgendaItem(agendaMatch[1], request, user, env);
+        }
+
+        // POST /api/projects/:slug/updates — post project update
+        const updateMatch = path.match(/^\/api\/projects\/([^/]+)\/updates$/);
+        if (request.method === 'POST' && updateMatch) {
+          return await handlePostProjectUpdate(updateMatch[1], request, user, env);
+        }
+
+        // POST /api/meetings — create meeting
+        if (request.method === 'POST' && path === '/api/meetings') {
+          return await handleCreateMeeting(request, user, env);
         }
 
         return error('Not found', 404);
@@ -465,4 +514,159 @@ async function handleUpdateTeamMember(
 
   const updated = await env.DB.prepare('SELECT * FROM team_members WHERE slug = ?').bind(slug).first();
   return json({ data: updated });
+}
+
+// ── Meeting & Team Portal Endpoints ─────────────────────────
+
+// GET /api/meetings — list all meetings
+async function handleMeetings(env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    'SELECT * FROM meetings ORDER BY date DESC'
+  ).all();
+  return json({ data: result.results, count: result.results.length });
+}
+
+// GET /api/meetings/:id — single meeting with action items + agenda items
+async function handleGetMeeting(id: string, env: Env): Promise<Response> {
+  const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
+  if (!meeting) return error('Meeting not found', 404);
+
+  const [actionItems, agendaItems] = await Promise.all([
+    env.DB.prepare('SELECT * FROM action_items WHERE meeting_id = ? ORDER BY created_at').bind(id).all(),
+    env.DB.prepare('SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at').bind(id).all(),
+  ]);
+
+  return json({
+    data: {
+      ...meeting,
+      action_items: actionItems.results,
+      agenda_items: agendaItems.results,
+    },
+  });
+}
+
+// GET /api/meetings/:id/agenda — agenda items for a meeting
+async function handleGetAgendaItems(meetingId: string, env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    'SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at'
+  ).bind(meetingId).all();
+  return json({ data: result.results, count: result.results.length });
+}
+
+// GET /api/action-items?assignee=&completed=&meeting_id=
+async function handleActionItems(url: URL, env: Env): Promise<Response> {
+  const assignee = url.searchParams.get('assignee');
+  const completed = url.searchParams.get('completed');
+  const meetingId = url.searchParams.get('meeting_id');
+
+  let query = 'SELECT ai.*, m.title as meeting_title, m.date as meeting_date FROM action_items ai LEFT JOIN meetings m ON ai.meeting_id = m.id WHERE 1=1';
+  const params: (string | number)[] = [];
+
+  if (assignee) { query += ' AND ai.assignee = ?'; params.push(assignee); }
+  if (completed !== null && completed !== undefined) { query += ' AND ai.completed = ?'; params.push(completed === 'true' ? 1 : 0); }
+  if (meetingId) { query += ' AND ai.meeting_id = ?'; params.push(meetingId); }
+
+  query += ' ORDER BY ai.completed ASC, ai.due_date ASC';
+
+  const result = await env.DB.prepare(query).bind(...params).all();
+  return json({ data: result.results, count: result.results.length });
+}
+
+// GET /api/projects/:slug/updates
+async function handleGetProjectUpdates(slug: string, env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    'SELECT * FROM project_updates WHERE project_id = ? ORDER BY created_at DESC'
+  ).bind(slug).all();
+  return json({ data: result.results, count: result.results.length });
+}
+
+// GET /api/updates/recent?limit=20
+async function handleRecentUpdates(url: URL, env: Env): Promise<Response> {
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 100);
+  const result = await env.DB.prepare(
+    'SELECT * FROM project_updates ORDER BY created_at DESC LIMIT ?'
+  ).bind(limit).all();
+  return json({ data: result.results, count: result.results.length });
+}
+
+// POST /api/action-items/:id/toggle — toggle completion
+async function handleToggleActionItem(id: string, user: AuthUser, env: Env): Promise<Response> {
+  const item = await env.DB.prepare('SELECT * FROM action_items WHERE id = ?').bind(id).first<{ completed: number; description: string }>();
+  if (!item) return error('Action item not found', 404);
+
+  const newCompleted = item.completed ? 0 : 1;
+  await env.DB.prepare(
+    'UPDATE action_items SET completed = ?, completed_at = ?, completed_by = ? WHERE id = ?'
+  ).bind(newCompleted, newCompleted ? new Date().toISOString() : null, newCompleted ? user.email : null, id).run();
+
+  await logActivity(env, 'action_item', `${newCompleted ? 'Completed' : 'Reopened'}: "${item.description}"`, user.email, id, 'action_item');
+
+  const updated = await env.DB.prepare('SELECT * FROM action_items WHERE id = ?').bind(id).first();
+  return json({ data: updated });
+}
+
+// POST /api/action-items — create new action item
+async function handleCreateActionItem(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { meeting_id?: string; project_id?: string; description: string; assignee: string; due_date?: string };
+  if (!body.description || !body.assignee) return error('description and assignee required', 400);
+
+  const id = generateId();
+  await env.DB.prepare(
+    'INSERT INTO action_items (id, meeting_id, project_id, description, assignee, due_date) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(id, body.meeting_id ?? null, body.project_id ?? null, body.description, body.assignee, body.due_date ?? null).run();
+
+  await logActivity(env, 'action_item', `Created action item: "${body.description}" → ${body.assignee}`, user.email, id, 'action_item');
+
+  const created = await env.DB.prepare('SELECT * FROM action_items WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
+}
+
+// POST /api/meetings/:id/agenda — add agenda item
+async function handleAddAgendaItem(meetingId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { content: string; project_id?: string; type?: string; document_url?: string };
+  if (!body.content) return error('content required', 400);
+
+  const id = generateId();
+  const maxOrder = await env.DB.prepare('SELECT MAX(sort_order) as m FROM agenda_items WHERE meeting_id = ?').bind(meetingId).first<{ m: number | null }>();
+
+  await env.DB.prepare(
+    'INSERT INTO agenda_items (id, meeting_id, content, added_by, project_id, type, document_url, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, meetingId, body.content, user.email, body.project_id ?? null, body.type ?? 'discussion', body.document_url ?? null, (maxOrder?.m ?? 0) + 1).run();
+
+  await logActivity(env, 'agenda', `Added agenda item: "${body.content}"`, user.email, meetingId, 'meeting');
+
+  const created = await env.DB.prepare('SELECT * FROM agenda_items WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
+}
+
+// POST /api/projects/:slug/updates — post project update
+async function handlePostProjectUpdate(slug: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { content: string; update_type?: string };
+  if (!body.content) return error('content required', 400);
+
+  const id = generateId();
+  await env.DB.prepare(
+    'INSERT INTO project_updates (id, project_id, author, content, update_type) VALUES (?, ?, ?, ?, ?)'
+  ).bind(id, slug, user.email, body.content, body.update_type ?? 'progress').run();
+
+  await logActivity(env, 'project_update', `Posted update on ${slug}: "${body.content.slice(0, 100)}"`, user.email, slug, 'project');
+
+  const created = await env.DB.prepare('SELECT * FROM project_updates WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
+}
+
+// POST /api/meetings — create meeting
+async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { date: string; title: string; type?: string; attendees?: string[] };
+  if (!body.date || !body.title) return error('date and title required', 400);
+
+  const id = `mtg-${body.date}`;
+  await env.DB.prepare(
+    'INSERT INTO meetings (id, date, title, type, attendees, status) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(id, body.date, body.title, body.type ?? 'biweekly', body.attendees ? JSON.stringify(body.attendees) : null, 'upcoming').run();
+
+  await logActivity(env, 'meeting', `Created meeting: "${body.title}" on ${body.date}`, user.email, id, 'meeting');
+
+  const created = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
 }
