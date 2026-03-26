@@ -72,15 +72,11 @@ export default function UpcomingCard() {
   const { data: meetings = [] } = useMeetingsApi()
   const { data: allActionItems = [] } = useActionItems()
 
-  // Find the next upcoming meeting (status='upcoming' or date > today)
+  // Find the next upcoming meeting — closest future date wins, regardless of status
   const nextMeeting = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
-    // First try to find a meeting with 'upcoming' status
-    const upcoming = meetings.find((m) => m.status === 'upcoming')
-    if (upcoming) return upcoming
-    // Otherwise find the first meeting with date >= today
     const future = [...meetings]
-      .filter((m) => m.date >= today)
+      .filter((m) => m.date >= today && m.status !== 'cancelled')
       .sort((a, b) => a.date.localeCompare(b.date))
     return future[0] ?? null
   }, [meetings])

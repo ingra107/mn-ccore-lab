@@ -2,6 +2,17 @@ import type { Meeting } from './types'
 
 export const meetings: Meeting[] = [
   {
+    id: 'mtg-2026-04-08-e4359890',
+    date: '2026-04-07',
+    title: 'MNCCORE Biweekly Meeting -- April 07, 2026',
+    type: 'biweekly',
+    attendees: ['nick', 'nate', 'eddington', 'bromley', 'shyu', 'arriaza'],
+    agenda: [],
+    actionItems: [],
+    decisions: [],
+    notes: '',
+  },
+  {
     id: 'mtg-2026-03-25',
     date: '2026-03-25',
     title: 'MNCCORE Biweekly: CLIF Manuscript Updates & GDMS Survey Launch',

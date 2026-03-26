@@ -13,7 +13,7 @@ const CATEGORY_FILTERS = [
   { key: 'all', label: 'All' },
   { key: 'clif', label: 'CLIF' },
   { key: 'lab', label: 'Lab' },
-  { key: 'nate', label: 'Mesfin' },
+  { key: 'nate', label: 'Mesfin Lab' },
 ] as const
 
 function getStageProjects(stage: Stage, filtered: Project[]): Project[] {

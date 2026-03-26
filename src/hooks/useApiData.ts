@@ -322,7 +322,7 @@ function staticToMeetingRows(): MeetingRow[] {
     agenda: JSON.stringify(m.agenda || []),
     notes: m.notes || null,
     decisions: JSON.stringify(m.decisions || []),
-    status: 'completed',
+    status: m.date >= new Date().toISOString().split('T')[0] ? 'upcoming' : 'completed',
     created_at: m.date,
     updated_at: m.date,
   }))
