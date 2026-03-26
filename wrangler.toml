@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "mnccore-lab"
-database_id = "PLACEHOLDER_REPLACE_WITH_ACTUAL_ID"
+database_id = "b8453e9b-7c5f-4029-b07d-dd89c05d00cf"
 
 [site]
 bucket = "./dist"
