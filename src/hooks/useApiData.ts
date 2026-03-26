@@ -411,6 +411,63 @@ export function useActionItems(filters?: { assignee?: string; completed?: string
   })
 }
 
+// ── Research Digest ──────────────────────────────────────────
+
+export interface DigestPaper {
+  id: string
+  title: string
+  authors: string | null
+  journal: string | null
+  pub_date: string | null
+  abstract: string | null
+  pmid: string | null
+  doi: string | null
+  relevance_score: number
+  relevance_reason: string | null
+  topics: string | null // JSON array
+  status: string
+  digest_date: string | null
+}
+
+export function useDigest(params?: { date?: string; status?: string; topic?: string; limit?: number }) {
+  return useQuery({
+    queryKey: ['digest', params],
+    queryFn: async () => {
+      try {
+        const qs = new URLSearchParams()
+        if (params?.date) qs.set('date', params.date)
+        if (params?.status) qs.set('status', params.status)
+        if (params?.topic) qs.set('topic', params.topic)
+        if (params?.limit) qs.set('limit', String(params.limit))
+        const res = await fetch(`/api/digest?${qs}`)
+        if (!res.ok) return []
+        const data = await res.json()
+        return (data.data || []) as DigestPaper[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: STALE_TIME,
+  })
+}
+
+export function useDigestDates() {
+  return useQuery({
+    queryKey: ['digest-dates'],
+    queryFn: async () => {
+      try {
+        const res = await fetch('/api/digest/dates')
+        if (!res.ok) return []
+        const data = await res.json()
+        return (data.data || []) as { date: string; count: number }[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: STALE_TIME,
+  })
+}
+
 // ── Project Health ───────────────────────────────────────────
 
 export interface ProjectHealth {

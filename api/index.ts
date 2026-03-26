@@ -71,6 +71,14 @@ export default {
 
       // Read endpoints (GET only)
       if (request.method === 'GET') {
+        // Digest endpoints (must come before parameterized catch-alls)
+        if (url.pathname === '/api/digest/dates') {
+          return await handleDigestDates(env);
+        }
+        if (url.pathname === '/api/digest') {
+          return await handleDigest(url, env);
+        }
+
         // Parameterized GET routes
         const commentsGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/comments$/);
         if (commentsGet) {
@@ -170,6 +178,17 @@ export default {
         // POST /api/meetings — create meeting
         if (request.method === 'POST' && path === '/api/meetings') {
           return await handleCreateMeeting(request, user, env);
+        }
+
+        // POST /api/digest — create/upsert digest paper
+        if (request.method === 'POST' && path === '/api/digest') {
+          return await handleCreateDigestPaper(request, env);
+        }
+
+        // POST /api/digest/:id/status — update paper status
+        const digestStatusMatch = path.match(/^\/api\/digest\/([^/]+)\/status$/);
+        if (request.method === 'POST' && digestStatusMatch) {
+          return await handleUpdateDigestStatus(digestStatusMatch[1], request, user, env);
         }
 
         return error('Not found', 404);
@@ -750,6 +769,107 @@ async function handlePostProjectUpdate(slug: string, request: Request, user: Aut
 
   const created = await env.DB.prepare('SELECT * FROM project_updates WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
+}
+
+// ── Research Digest Endpoints ─────────────────────────────
+
+// GET /api/digest?date=&status=&topic=&limit=
+async function handleDigest(url: URL, env: Env): Promise<Response> {
+  const date = url.searchParams.get('date');
+  const status = url.searchParams.get('status');
+  const topic = url.searchParams.get('topic');
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 100);
+
+  let query = 'SELECT * FROM research_digest WHERE 1=1';
+  const params: (string | number)[] = [];
+
+  if (date) {
+    query += ' AND digest_date = ?';
+    params.push(date);
+  }
+
+  if (status) {
+    query += ' AND status = ?';
+    params.push(status);
+  }
+
+  if (topic) {
+    query += ' AND topics LIKE ?';
+    params.push(`%"${topic}"%`);
+  }
+
+  query += ' ORDER BY relevance_score DESC, pub_date DESC LIMIT ?';
+  params.push(limit);
+
+  const result = await env.DB.prepare(query).bind(...params).all();
+  return json({ data: result.results, count: result.results.length });
+}
+
+// GET /api/digest/dates — list available digest dates with paper counts
+async function handleDigestDates(env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    `SELECT digest_date as date, COUNT(*) as count
+     FROM research_digest
+     WHERE digest_date IS NOT NULL
+     GROUP BY digest_date
+     ORDER BY digest_date DESC`
+  ).all();
+  return json({ data: result.results });
+}
+
+// POST /api/digest/:id/status — update paper status (save/dismiss)
+async function handleUpdateDigestStatus(
+  id: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const body = await request.json() as { status?: string };
+  const validStatuses = ['new', 'saved', 'dismissed'];
+
+  if (!body.status || !validStatuses.includes(body.status)) {
+    return error('Invalid status. Must be: new, saved, or dismissed', 400);
+  }
+
+  const result = await env.DB.prepare(
+    'UPDATE research_digest SET status = ?, saved_by = ? WHERE id = ?'
+  ).bind(body.status, body.status === 'saved' ? user.email : null, id).run();
+
+  if (result.meta.changes === 0) {
+    return error('Paper not found', 404);
+  }
+
+  await logActivity(env, 'digest', `${body.status === 'saved' ? 'Saved' : body.status === 'dismissed' ? 'Dismissed' : 'Reset'} digest paper`, user.email, id, 'digest');
+
+  const updated = await env.DB.prepare('SELECT * FROM research_digest WHERE id = ?').bind(id).first();
+  return json({ data: updated });
+}
+
+// POST /api/digest — create or upsert a digest paper
+async function handleCreateDigestPaper(request: Request, env: Env): Promise<Response> {
+  const body = await request.json() as Record<string, unknown>;
+  if (!body.id || !body.title) return error('id and title required', 400);
+
+  await env.DB.prepare(
+    `INSERT OR REPLACE INTO research_digest (id, title, authors, journal, pub_date, abstract, pmid, doi, relevance_score, relevance_reason, topics, status, digest_date)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    body.id as string,
+    body.title as string,
+    (body.authors as string) ?? null,
+    (body.journal as string) ?? null,
+    (body.pub_date as string) ?? null,
+    (body.abstract as string) ?? null,
+    (body.pmid as string) ?? null,
+    (body.doi as string) ?? null,
+    (body.relevance_score as number) ?? 0,
+    (body.relevance_reason as string) ?? null,
+    (body.topics as string) ?? null,
+    (body.status as string) ?? 'new',
+    (body.digest_date as string) ?? null,
+  ).run();
+
+  return json({ data: { id: body.id } }, 201);
 }
 
 // POST /api/meetings — create meeting

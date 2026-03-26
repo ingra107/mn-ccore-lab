@@ -230,6 +230,38 @@ export function useAddAgendaItem(meetingId: string) {
   })
 }
 
+// ── Digest Status mutation ───────────────────────────────────
+
+export function useUpdateDigestStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const res = await fetch(`/api/digest/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      return res.json()
+    },
+
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ['digest'] })
+      // Optimistic update across all digest queries
+      queryClient.setQueriesData({ queryKey: ['digest'] }, (old: unknown) => {
+        if (!Array.isArray(old)) return old
+        return old.map((p: Record<string, unknown>) => p.id === id ? { ...p, status } : p)
+      })
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['digest'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Project Update mutations ────────────────────────────────
 
 export function usePostProjectUpdate(projectSlug: string) {
