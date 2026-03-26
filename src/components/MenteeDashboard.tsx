@@ -8,9 +8,7 @@ import {
   Circle,
   ArrowRight,
 } from 'lucide-react'
-import { usePublications } from '../hooks/useApiData'
-import { useActionItems } from '../hooks/useApiData'
-import { useProjects } from '../hooks/useApiData'
+import { usePublications, useActionItems, useProjects } from '../hooks/useApiData'
 
 interface Props {
   slug: string

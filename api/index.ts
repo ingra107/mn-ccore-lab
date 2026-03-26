@@ -660,7 +660,7 @@ async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): 
   const body = await request.json() as { date: string; title: string; type?: string; attendees?: string[] };
   if (!body.date || !body.title) return error('date and title required', 400);
 
-  const id = `mtg-${body.date}`;
+  const id = `mtg-${body.date}-${generateId().slice(0, 8)}`;
   await env.DB.prepare(
     'INSERT INTO meetings (id, date, title, type, attendees, status) VALUES (?, ?, ?, ?, ?, ?)'
   ).bind(id, body.date, body.title, body.type ?? 'biweekly', body.attendees ? JSON.stringify(body.attendees) : null, 'upcoming').run();

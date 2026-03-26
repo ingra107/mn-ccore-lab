@@ -120,7 +120,7 @@ export function usePublications(params?: {
       const res = await fetchPublications(params)
       return res.data.map(rowToPublication)
     },
-    initialData: params ? undefined : staticPublications,
+    initialData: params ? undefined : () => staticPublications,
     staleTime: STALE_TIME,
     retry: false,
   })
@@ -133,7 +133,7 @@ export function useTeam() {
       const res = await fetchTeam()
       return res.data.map(rowToTeamMember)
     },
-    initialData: getAllMembers(),
+    initialData: () => getAllMembers(),
     staleTime: STALE_TIME,
     retry: false,
   })
@@ -146,7 +146,7 @@ export function useProjects(params?: { status?: string; category?: string }) {
       const res = await fetchProjects(params)
       return res.data.map(rowToProject)
     },
-    initialData: params ? undefined : staticProjects,
+    initialData: params ? undefined : () => staticProjects,
     staleTime: STALE_TIME,
     retry: false,
   })
@@ -159,7 +159,7 @@ export function useGrants() {
       const res = await fetchGrants()
       return res.data.map(rowToGrant)
     },
-    initialData: staticGrants,
+    initialData: () => staticGrants,
     staleTime: STALE_TIME,
     retry: false,
   })
@@ -337,41 +337,44 @@ export function useMeetingsApi() {
       const data = await res.json()
       return data.data as MeetingRow[]
     },
-    initialData: staticToMeetingRows(),
+    initialData: () => staticToMeetingRows(),
     staleTime: STALE_TIME,
     retry: false,
   })
 }
 
 export function useMeetingDetail(id: string) {
-  // Build dev fallback from static data
-  const staticMeeting = staticMeetings.find((m) => m.id === id)
-  const fallback: MeetingDetail | null = staticMeeting ? {
-    id: staticMeeting.id,
-    date: staticMeeting.date,
-    title: staticMeeting.title,
-    type: staticMeeting.type,
-    attendees: JSON.stringify(staticMeeting.attendees || []),
-    agenda: JSON.stringify(staticMeeting.agenda || []),
-    notes: staticMeeting.notes || null,
-    decisions: JSON.stringify(staticMeeting.decisions || []),
-    status: 'completed',
-    created_at: staticMeeting.date,
-    updated_at: staticMeeting.date,
-    action_items: (staticMeeting.actionItems || []).map((a, i) => ({
-      id: `static-ai-${i}`,
-      meeting_id: staticMeeting.id,
-      project_id: a.projectSlug || null,
-      description: a.description,
-      assignee: a.assignee,
-      due_date: a.dueDate || null,
-      completed: a.completed ? 1 : 0,
-      completed_at: null,
-      completed_by: null,
+  // Build dev fallback from static data — as factory to avoid re-computation
+  function buildFallback(): MeetingDetail | undefined {
+    const staticMeeting = staticMeetings.find((m) => m.id === id)
+    if (!staticMeeting) return undefined
+    return {
+      id: staticMeeting.id,
+      date: staticMeeting.date,
+      title: staticMeeting.title,
+      type: staticMeeting.type,
+      attendees: JSON.stringify(staticMeeting.attendees || []),
+      agenda: JSON.stringify(staticMeeting.agenda || []),
+      notes: staticMeeting.notes || null,
+      decisions: JSON.stringify(staticMeeting.decisions || []),
+      status: 'completed',
       created_at: staticMeeting.date,
-    })),
-    agenda_items: [],
-  } : null
+      updated_at: staticMeeting.date,
+      action_items: (staticMeeting.actionItems || []).map((a, i) => ({
+        id: `static-ai-${i}`,
+        meeting_id: staticMeeting.id,
+        project_id: a.projectSlug || null,
+        description: a.description,
+        assignee: a.assignee,
+        due_date: a.dueDate || null,
+        completed: a.completed ? 1 : 0,
+        completed_at: null,
+        completed_by: null,
+        created_at: staticMeeting.date,
+      })),
+      agenda_items: [],
+    }
+  }
 
   return useQuery({
     queryKey: ['meeting', id],
@@ -381,7 +384,7 @@ export function useMeetingDetail(id: string) {
       const data = await res.json()
       return data.data as MeetingDetail
     },
-    initialData: fallback ?? undefined,
+    initialData: buildFallback,
     staleTime: 60 * 1000,
     enabled: !!id,
     retry: false,
