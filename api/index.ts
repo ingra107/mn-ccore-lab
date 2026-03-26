@@ -118,12 +118,11 @@ export default {
         }
       }
 
-      // Write endpoints (POST/PUT, require auth)
+      // Write endpoints (POST/PUT)
+      // Auth is optional — when Cloudflare Access is configured, JWT provides identity.
+      // When Access is not configured, writes are open (public site mode).
       if (request.method === 'POST' || request.method === 'PUT') {
-        const user = getAuthUser(request);
-        if (!user) {
-          return error('Authentication required', 401);
-        }
+        const user = getAuthUser(request) || { email: 'anonymous', name: 'Team Member' };
 
         const path = url.pathname;
 
