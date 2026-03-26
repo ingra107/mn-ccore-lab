@@ -102,9 +102,10 @@ function rowToGrant(row: GrantRow): Grant {
 
 // ── Query hooks ─────────────────────────────────────────────
 //
-// Each queryFn catches API errors and falls back to static data.
-// This means in dev (no API), components always get data.
-// In production (Cloudflare Pages), the API works natively.
+// initialData: provides static data synchronously on first render (no flash).
+// queryFn: fetches from D1 API. In production, succeeds and updates.
+//          In dev, fails silently and initialData persists.
+// This gives instant rendering in dev AND live D1 data in production.
 
 const STALE_TIME = 5 * 60 * 1000 // 5 minutes
 
@@ -116,14 +117,12 @@ export function usePublications(params?: {
   return useQuery({
     queryKey: ['publications', params],
     queryFn: async () => {
-      try {
-        const res = await fetchPublications(params)
-        return res.data.map(rowToPublication)
-      } catch {
-        return staticPublications
-      }
+      const res = await fetchPublications(params)
+      return res.data.map(rowToPublication)
     },
+    initialData: params ? undefined : staticPublications,
     staleTime: STALE_TIME,
+    retry: false,
   })
 }
 
@@ -131,14 +130,12 @@ export function useTeam() {
   return useQuery({
     queryKey: ['team'],
     queryFn: async () => {
-      try {
-        const res = await fetchTeam()
-        return res.data.map(rowToTeamMember)
-      } catch {
-        return getAllMembers()
-      }
+      const res = await fetchTeam()
+      return res.data.map(rowToTeamMember)
     },
+    initialData: getAllMembers(),
     staleTime: STALE_TIME,
+    retry: false,
   })
 }
 
@@ -146,14 +143,12 @@ export function useProjects(params?: { status?: string; category?: string }) {
   return useQuery({
     queryKey: ['projects', params],
     queryFn: async () => {
-      try {
-        const res = await fetchProjects(params)
-        return res.data.map(rowToProject)
-      } catch {
-        return staticProjects
-      }
+      const res = await fetchProjects(params)
+      return res.data.map(rowToProject)
     },
+    initialData: params ? undefined : staticProjects,
     staleTime: STALE_TIME,
+    retry: false,
   })
 }
 
@@ -161,14 +156,12 @@ export function useGrants() {
   return useQuery({
     queryKey: ['grants'],
     queryFn: async () => {
-      try {
-        const res = await fetchGrants()
-        return res.data.map(rowToGrant)
-      } catch {
-        return staticGrants
-      }
+      const res = await fetchGrants()
+      return res.data.map(rowToGrant)
     },
+    initialData: staticGrants,
     staleTime: STALE_TIME,
+    retry: false,
   })
 }
 
