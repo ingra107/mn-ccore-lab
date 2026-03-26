@@ -1,91 +1,107 @@
-# MN-CCORE Lab Hub — Claude Operating Guide
+# MN-CCORE Lab Hub -- Claude Operating Guide
 
 ## Vision
 
-This is the **MN-CCORE Lab Hub** — not just a website, but the central project management and public face of the Minnesota Critical Care Outcomes & Research Effort. It will grow to include team management, project tracking, publications, and eventually a D1-backed data layer.
+The MN-CCORE Lab Hub is the **team's operating surface** -- not just a website, but where research gets managed, meetings get run, and information flows bidirectionally between Nick's CLI system and every team member's browser.
 
 ## Quick Reference
 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab |
-| Deploy | `cd /c/Users/ingra107/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
+| Repo | github.com/ingra107/mn-ccore-lab (93 commits) |
+| Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
-| Deploy mode | Manual via wrangler — NO auto-deploy |
-| Scholar CSV | `C:\Users\ingra107\Downloads\citations (3).csv` — ground truth for publications |
+| Data | TanStack Query v5 + Cloudflare D1 (11 tables, 27 API endpoints) |
+| Deploy mode | Manual via wrangler -- NO auto-deploy |
+| D1 database | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM) |
+| Living plan | `Projects/mnccore-minnesota-critical-care/ld-mnccore-hub-plan.md` (PB repo) |
 
 ## Design System
 
 - **Fonts:** Fraunces (display) / DM Sans (body) / JetBrains Mono (mono)
-- **Palette:** ink / gold / cream / maroon / teal (see `src/index.css`)
-- **Centering:** ALL containers use `.content-container` — no custom max-width
-- **Dark mode:** CSS variables invert via `.dark` class. Use CSS classes (not inline styles) for dark-mode-adaptive colors.
+- **Palette:** ink `#0f1923` / gold `#c9a84c` / cream `#faf8f3` / maroon `#7a0019` / teal `#2d8a8a`
+- **Centering:** ALL containers use `.content-container` -- no custom max-width
+- **Dark mode:** CSS variables invert via `.dark` class. Card dark bg: `#162535`.
+- **Shared utilities:** `src/lib/dateUtils.ts` (6 formatters), `src/data/team.ts:getPersonInfo()`, `src/lib/api.ts`
 
 ## Architecture
 
-- **Data layer:** TanStack Query v5 hooks → D1 API in production, static TS fallback in dev
-- **API:** Cloudflare Worker with 6 GET + 3 POST/PUT endpoints (auth-gated writes)
-- **Auth:** Cloudflare Access + Google OAuth (TODO: restrict to /dashboard, /projects, /meetings only)
-- **Visibility:** Types have `visibility?: 'public' | 'internal'` — use this to hide in-progress items from public site
+```
+Nick's CLI (brain.db)                      Team Members (browsers)
+     |                                           |
+     |  sync_d1_push.py (scheduled)              |  React + TanStack Query
+     |  brain.db -> D1                           |  (optimistic UI, initialData)
+     |                                           |
+     |  sync_d1_pull.py (scheduled)              |  POST /api/* (writes)
+     |  D1 updates -> brain.db                   |  (comments, toggles, stage edits)
+     |                                           |
+     +---- HTTP API / Wrangler -----+------- HTTP API ----+
+                                    |
+                               D1 (mnccore-lab)
+                               11 tables, 170+ rows
+```
+
+- **Data layer:** TanStack Query v5 hooks -> D1 API in production, static TS fallback in dev
+- **API:** Cloudflare Worker with 14 GET + 13 POST/PUT endpoints (auth-gated writes)
+- **Auth:** Cloudflare Access + Google OAuth (TODO: restrict to /dashboard, /projects, /meetings paths only)
+- **Sync:** Python scripts in Peripheral Brain (push + pull), scheduled in dispatcher
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/data/team.ts` | All team members + photos + slugs + authorNames + scholarIds |
-| `src/data/publications.ts` | 63 papers (56 published, PubMed-verified). Scholar CSV is ground truth. |
-| `src/data/grants.ts` | Active + Pending grants with status field |
-| `src/data/types.ts` | TypeScript interfaces (Publication, Grant, Project, TeamMember) |
-| `src/components/PublicationCard.tsx` | Author formatting + dark mode topic chips |
-| `src/components/LabPageLayout.tsx` | Shared lab page shell + section components |
-| `src/lib/api.ts` | Typed D1 API client — row types + fetch wrappers |
-| `src/hooks/useApiData.ts` | TanStack Query hooks with D1→frontend transforms + static fallback |
-| `src/components/CollaborationGraph.tsx` | Reagraph WebGL co-authorship graph (replaced canvas) |
-| `src/components/CollaborationNetwork.tsx` | Canvas co-authorship graph (homepage, lighter weight) |
-| `src/components/ResearchImpact.tsx` | Publication timeline + journal distribution |
-| `src/pages/MemberPage.tsx` | Dynamic `/team/:slug` for any team member |
-| `src/pages/NickLab.tsx` | Nick's page: Grants → Lab → CLIF → Trainees → Pubs |
-| `src/pages/NateLab.tsx` | Nate's page |
-| `src/hooks/useCountUp.ts` | Animated counters — uses ref (not state) for trigger flag |
-| `src/hooks/useScrollReveal.ts` | Scroll animations — visible by default, animation is enhancement |
-
-## Author Formatting Rules (PublicationCard.tsx)
-
-- ≤10 authors: show all, **bold** MNCCORE members (600), **semi-bold** CLIF members (500)
-- >10 authors: first 3 + last 3 + all MNCCORE/CLIF members in between
-- If >10 MNCCORE/CLIF in middle: focus on MNCCORE only
-- `mnccoreMembers` and `clifMembers` arrays maintained in PublicationCard.tsx
+| `src/lib/api.ts` | Typed D1 API client -- row types + fetch wrappers |
+| `src/hooks/useApiData.ts` | 12 TanStack Query hooks with D1->frontend transforms + static fallback |
+| `src/hooks/useMutations.ts` | 7 mutation hooks with optimistic cache updates + rollback |
+| `src/lib/dateUtils.ts` | Shared date formatters (6 exports) -- single source of truth |
+| `src/data/team.ts` | Team members + `getPersonInfo()` shared utility |
+| `src/components/Avatar.tsx` | Photo/initials avatar -- uses overflow-hidden + w-full h-full img |
+| `src/hooks/useCountUp.ts` | Animated counters -- StrictMode-safe, re-animates on async data |
+| `src/pages/MeetingDetail.tsx` | Meeting lifecycle: agenda, action items, decisions, notes |
+| `src/pages/ProjectDetail.tsx` | Two-way editing, comments, updates, action items, add-to-agenda |
+| `src/components/dashboard/ProjectHealthCard.tsx` | Health indicators from /api/projects/health |
+| `api/index.ts` | Cloudflare Worker -- all 27 API endpoints |
+| `api/schema-v2.sql` | D1 schema for meetings, action_items, agenda_items, project_updates |
 
 ## Critical Rules
 
-1. **Content visible by default.** The `.fade-in-up` class starts at opacity:1. The scroll hook adds `.will-animate` only to below-viewport elements. NEVER hide content behind animations.
-2. **Hero action cards use `<a>` tags** (full page load), not React Router `<Link>`. React Router v7 + AnimatePresence has a render loop bug with useCountUp.
-3. **In-progress items are internal only.** Publications with `status: 'In Review'` or `'In Preparation'` show on the site. But pending grants must be clearly labeled "Pending Review". Use `visibility: 'internal'` for team-only items when the portal is built.
-4. **PubMed is truth for publications.** Scholar CSV for completeness check, PubMed for exact titles/authors/DOIs.
-5. **Grants: Active vs Pending.** Active grants have funding. Pending grants are under review. Display them separately with clear labels — don't let visitors think we're claiming unfunded grants.
+1. **Content visible by default.** `.fade-in-up` starts at opacity:1. NEVER hide content behind animations.
+2. **Hero cards use `<a>` tags** (full page load), not React Router `<Link>`. AnimatePresence + useCountUp conflict.
+3. **initialData as factory functions.** Always `initialData: () => data`, never `initialData: data`.
+4. **Avatar overflow-hidden.** Container has `overflow-hidden` + img uses `w-full h-full object-cover`.
+5. **PubMed is truth for publications.** Scholar CSV for completeness check only.
+6. **Grants: Active vs Pending.** Display separately with clear labels.
+7. **`getPersonInfo()` from `src/data/team.ts`** -- never create local copies.
+8. **Date formatting from `src/lib/dateUtils.ts`** -- never create local formatters.
 
 ## Roadmap
 
-1. **Phase 1 — Done:** Public face, 63 publications, team pages, analytics, collaboration network
-2. **Phase 2 — Next:** D1 backend, dashboard, network page, bento grid
-3. **Phase 3:** Auth portal, project pipeline, grant tracker, meeting hub
-
-## Peripheral Brain Connection
-
-- **Project record:** `MN-CCORE Lab Hub` (type: Nick_Lab) in SQLite/Airtable
-- **Living plan:** `Scratch/plans/mnccore-lab-website.md` — READ FIRST every session
-- **Memory:** `memory/project_mnccore-website-redesign.md`
-- **Architecture:** `Context/Decisions/2026-03-23_mn-ccore-lab-architecture.md`
+1. **Phase 1 -- DONE:** Public website (11 pages, 50+ components)
+2. **Phase 2 -- DONE:** D1 backend + TanStack Query data layer (11 tables, 27 endpoints)
+3. **Phase 3 -- DONE:** Interactive team portal (meetings, action items, comments, updates)
+4. **Phase 4 -- DONE:** brain.db <-> D1 sync scripts, meeting automation
+5. **Phase 5 -- NEXT:** Fix Cloudflare Access paths, activate sync, mobile polish
 
 ## Known Gotchas
 
 | Problem | Fix |
 |---------|-----|
-| UMN bio photos 403 | Use Playwright on faculty listing pages, not individual bios |
-| Wrangler deploy path | `cd /c/Users/...` not `C:\...` |
+| Hero cards render loop | Use `<a>` tags, not React Router Link |
+| useCountUp StrictMode | Hook handles double-mount cleanly; brief flash in dev is expected |
+| initialData flash | Use factory functions: `initialData: () => data` |
+| Avatar pill shape | Container needs `overflow-hidden`, img needs `w-full h-full` |
+| Meeting ID collision | IDs include random suffix: `mtg-date-random` |
 | Tailwind v4 | `@import` syntax, not `@tailwind` directives |
-| Hero cards don't navigate | Use `<a>` tags, not React Router Link (render loop with AnimatePresence) |
-| Sections blank on mobile | Content must be visible by default — `.fade-in-up` starts at opacity:1 |
-| useCountUp infinite loop | Use `useRef` for trigger flag, not `useState` in effect deps |
-| Ghost publications | Always validate against Scholar CSV before adding papers |
+| Cloudflare Access blocks all | Fix: restrict to /dashboard, /projects, /meetings paths only |
+| Network chunk 1.3MB | Expected (three.js). Already code-split via React.lazy |
+
+## Peripheral Brain Connection
+
+- **Project record:** `MN-CCORE Lab Hub` (type: Nick_Lab) in brain.db
+- **Living plan:** `Projects/mnccore-minnesota-critical-care/ld-mnccore-hub-plan.md` -- READ FIRST
+- **Vision doc:** `Projects/mnccore-minnesota-critical-care/ld-mnccore-hub-vision.md`
+- **Memory:** `memory/project_mnccore-website-redesign.md`
+- **Sync push:** `scripts/db/sync_d1_push.py` (brain.db -> D1)
+- **Sync pull:** `scripts/db/sync_d1_pull.py` (D1 -> brain.db)
+- **Meeting automation:** `scripts/scheduled/meeting_automation.py`
