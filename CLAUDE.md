@@ -24,9 +24,9 @@ This is the **MN-CCORE Lab Hub** — not just a website, but the central project
 
 ## Architecture
 
-- **Now:** Static React SPA, all data in `src/data/*.ts` files
-- **Next:** Cloudflare D1 replaces static data files
-- **Auth future:** Cloudflare Access for team-facing features
+- **Data layer:** TanStack Query v5 hooks → D1 API in production, static TS fallback in dev
+- **API:** Cloudflare Worker with 6 GET + 3 POST/PUT endpoints (auth-gated writes)
+- **Auth:** Cloudflare Access + Google OAuth (TODO: restrict to /dashboard, /projects, /meetings only)
 - **Visibility:** Types have `visibility?: 'public' | 'internal'` — use this to hide in-progress items from public site
 
 ## Key Files
@@ -39,7 +39,10 @@ This is the **MN-CCORE Lab Hub** — not just a website, but the central project
 | `src/data/types.ts` | TypeScript interfaces (Publication, Grant, Project, TeamMember) |
 | `src/components/PublicationCard.tsx` | Author formatting + dark mode topic chips |
 | `src/components/LabPageLayout.tsx` | Shared lab page shell + section components |
-| `src/components/CollaborationNetwork.tsx` | Canvas co-authorship graph (core trio: Nick/Nate/Casey) |
+| `src/lib/api.ts` | Typed D1 API client — row types + fetch wrappers |
+| `src/hooks/useApiData.ts` | TanStack Query hooks with D1→frontend transforms + static fallback |
+| `src/components/CollaborationGraph.tsx` | Reagraph WebGL co-authorship graph (replaced canvas) |
+| `src/components/CollaborationNetwork.tsx` | Canvas co-authorship graph (homepage, lighter weight) |
 | `src/components/ResearchImpact.tsx` | Publication timeline + journal distribution |
 | `src/pages/MemberPage.tsx` | Dynamic `/team/:slug` for any team member |
 | `src/pages/NickLab.tsx` | Nick's page: Grants → Lab → CLIF → Trainees → Pubs |
