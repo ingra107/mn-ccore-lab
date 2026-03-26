@@ -213,4 +213,42 @@ export const projects: Project[] = [
     stage: 'Data Collection',
     team: ['collins', 'nick'],
   },
+
+  // Grant projects (proposed)
+  {
+    title: 'R01: LPV Precision Practice Assistance',
+    slug: 'lpv-precision-practice-assistance',
+    status: 'Active',
+    category: 'lab',
+    pi: 'nick',
+    description: 'R01 proposal for precision lung-protective ventilation assistance using real-time clinical decision support.',
+    stage: 'Idea',
+  },
+  {
+    title: 'R01: Provider Confounding in Observational Causal Inference',
+    slug: 'provider-confounding-causal-inference',
+    status: 'Active',
+    category: 'lab',
+    pi: 'nick',
+    description: 'R01 proposal addressing provider-level confounding in observational ICU studies using causal inference methods.',
+    stage: 'Idea',
+  },
+  {
+    title: 'R01: Provider Variation Across CLIF',
+    slug: 'provider-variation-across-clif',
+    status: 'Active',
+    category: 'lab',
+    pi: 'nick',
+    description: 'R01 proposal characterizing and explaining provider-level variation in ICU care across the CLIF consortium.',
+    stage: 'Idea',
+  },
+  {
+    title: 'R03: Decision-Making Styles of Medical Trainees',
+    slug: 'decision-making-styles-of-medical',
+    status: 'Active',
+    category: 'lab',
+    pi: 'nick',
+    description: 'R03 proposal investigating how cognitive decision-making styles develop during medical training and influence clinical practice.',
+    stage: 'Data Collection',
+  },
 ]
