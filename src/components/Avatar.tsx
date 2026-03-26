@@ -52,7 +52,7 @@ export default function Avatar({
 
   return (
     <div
-      className={`${container} rounded-full flex items-center justify-center shrink-0 ${className ?? ''}`}
+      className={`${container} rounded-full flex items-center justify-center shrink-0 overflow-hidden ${className ?? ''}`}
       style={{
         background: styles.background,
         border: styles.border,
@@ -70,8 +70,7 @@ export default function Avatar({
           src={photoUrl}
           alt={name}
           loading="lazy"
-          className={`${container} rounded-full object-cover`}
-          style={{ border: styles.border }}
+          className="w-full h-full rounded-full object-cover"
         />
       ) : (
         <span
