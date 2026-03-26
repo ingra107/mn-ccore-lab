@@ -5,32 +5,9 @@ import { useProjectUpdates } from '../hooks/useApiData'
 import type { ProjectUpdateRow } from '../hooks/useApiData'
 import { usePostProjectUpdate } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
+import { getPersonInfo } from '../data/team'
+import { formatRelativeTime } from '../lib/dateUtils'
 import Avatar from './Avatar'
-import { directors, getAllMembers } from '../data/team'
-
-function getPersonInfo(slug: string) {
-  const director = directors.find((d) => d.slug === slug)
-  if (director) return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
-  const member = getAllMembers().find((m) => m.slug === slug)
-  if (member) return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
-  // Handle email addresses
-  const name = slug.includes('@') ? slug.split('@')[0] : slug
-  return { name, initials: name.slice(0, 2).toUpperCase(), photoUrl: undefined }
-}
-
-function formatRelativeTime(iso: string): string {
-  const d = new Date(iso)
-  const now = new Date()
-  const diffMs = now.getTime() - d.getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  const diffHr = Math.floor(diffMin / 60)
-  const diffDay = Math.floor(diffHr / 24)
-  if (diffMin < 1) return 'just now'
-  if (diffMin < 60) return `${diffMin}m ago`
-  if (diffHr < 24) return `${diffHr}h ago`
-  if (diffDay < 7) return `${diffDay}d ago`
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
 
 const TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; label: string }> = {
   progress: { icon: TrendingUp, color: 'var(--teal)', label: 'Progress' },

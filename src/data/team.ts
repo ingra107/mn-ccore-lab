@@ -83,3 +83,14 @@ export function getAllMembers(): TeamMember[] {
 export function getMemberBySlug(slug: string): TeamMember | undefined {
   return getAllMembers().find((m) => m.slug === slug)
 }
+
+// Shared person lookup — used across MeetingDetail, ProjectDetail, MeetingCard, etc.
+export function getPersonInfo(slug: string): { name: string; initials: string; photoUrl: string | undefined } {
+  const director = directors.find((d) => d.slug === slug)
+  if (director) return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
+  const member = getMemberBySlug(slug)
+  if (member) return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
+  // Handle email addresses (from D1 auth)
+  const name = slug.includes('@') ? slug.split('@')[0] : slug
+  return { name, initials: name.slice(0, 2).toUpperCase(), photoUrl: undefined }
+}

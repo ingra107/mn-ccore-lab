@@ -3,30 +3,9 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, CheckCircle2, Circle, Users, ListChecks, ArrowRight } from 'lucide-react'
 import Avatar from './Avatar'
-import { directors, getAllMembers } from '../data/team'
+import { getPersonInfo } from '../data/team'
+import { formatFullDate, formatShortDate } from '../lib/dateUtils'
 import type { Meeting } from '../data/types'
-
-function getPersonInfo(slug: string) {
-  const director = directors.find((d) => d.slug === slug)
-  if (director) {
-    return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
-  }
-  const member = getAllMembers().find((m) => m.slug === slug)
-  if (member) {
-    return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
-  }
-  return { name: slug, initials: slug.slice(0, 2).toUpperCase(), photoUrl: undefined }
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
-}
-
-function formatShortDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
 
 interface MeetingCardProps {
   meeting: Meeting
@@ -186,7 +165,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 className="text-xs mt-3 mb-3"
                 style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-mono)' }}
               >
-                {formatDate(meeting.date)}
+                {formatFullDate(meeting.date)}
               </p>
 
               {/* Attendees (full list) */}

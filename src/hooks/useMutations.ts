@@ -10,6 +10,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject, addProjectComment } from '../lib/api'
 import type { Project } from '../data/types'
+import type { Comment } from './useApiData'
 
 // ── Project mutations ───────────────────────────────────────
 
@@ -60,14 +61,6 @@ export function useUpdateProject(projectId: string) {
 interface CommentInput {
   content: string
   author: string
-}
-
-interface Comment {
-  id: string
-  content: string
-  author_name: string | null
-  author_slug: string | null
-  created_at: string
 }
 
 export function useAddComment(projectId: string) {

@@ -4,15 +4,8 @@ import BentoCard from './BentoCard'
 import Avatar from '../Avatar'
 import { useActionItems } from '../../hooks/useApiData'
 import { useToggleActionItem } from '../../hooks/useMutations'
-import { directors, getAllMembers } from '../../data/team'
-
-function getPersonInfo(slug: string) {
-  const director = directors.find((d) => d.slug === slug)
-  if (director) return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
-  const member = getAllMembers().find((m) => m.slug === slug)
-  if (member) return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
-  return { name: slug, initials: slug.slice(0, 2).toUpperCase(), photoUrl: undefined }
-}
+import { getPersonInfo } from '../../data/team'
+import { formatShortDate } from '../../lib/dateUtils'
 
 export default function ActionBoardCard() {
   const { data: items = [] } = useActionItems()
@@ -69,7 +62,7 @@ export default function ActionBoardCard() {
                             <div className="flex items-center gap-2 mt-0.5">
                               {item.due_date && (
                                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
-                                  {isOverdue ? 'Overdue' : `Due ${new Date(item.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                                  {isOverdue ? 'Overdue' : `Due ${formatShortDate(item.due_date)}`}
                                 </span>
                               )}
                               {item.meeting_title && (

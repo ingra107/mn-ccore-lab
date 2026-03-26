@@ -14,7 +14,8 @@ import {
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useData } from '../hooks/useLocalData'
 import { useUpdateProject } from '../hooks/useMutations'
-import { directors, getAllMembers } from '../data/team'
+import { getPersonInfo } from '../data/team'
+import { formatMediumDate, formatTimestamp } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 import ProjectComments from '../components/ProjectComments'
 import ProjectUpdateFeed from '../components/ProjectUpdateFeed'
@@ -34,34 +35,6 @@ const STATUS_CLASSES: Record<string, string> = {
   'In Review': 'badge-review',
   Published: 'badge-published',
   'In Preparation': 'badge-preparation',
-}
-
-function getPersonInfo(slug: string) {
-  const director = directors.find((d) => d.slug === slug)
-  if (director) {
-    return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
-  }
-  const member = getAllMembers().find((m) => m.slug === slug)
-  if (member) {
-    return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
-  }
-  return { name: slug, initials: slug.slice(0, 2).toUpperCase(), photoUrl: undefined }
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
-function formatTimestamp(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
 }
 
 export default function ProjectDetail() {
@@ -679,7 +652,7 @@ function ProjectDetailInner({
                   }}
                 >
                   <Calendar size={13} />
-                  Started {formatDate(project.startDate)}
+                  Started {formatMediumDate(project.startDate)}
                 </span>
               )}
               {project.lastActivity && (
@@ -693,7 +666,7 @@ function ProjectDetailInner({
                   }}
                 >
                   <Clock size={13} />
-                  Last activity {formatDate(project.lastActivity)}
+                  Last activity {formatMediumDate(project.lastActivity)}
                 </span>
               )}
             </div>
@@ -942,7 +915,7 @@ function ProjectDetailInner({
                             opacity: 0.5,
                           }}
                         >
-                          Due {formatDate(item.action.dueDate)}
+                          Due {formatMediumDate(item.action.dueDate)}
                         </span>
                       )}
                       <span
@@ -953,7 +926,7 @@ function ProjectDetailInner({
                           opacity: 0.35,
                         }}
                       >
-                        from {formatDate(item.meetingDate)}
+                        from {formatMediumDate(item.meetingDate)}
                       </span>
                     </div>
                   </div>
