@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Menu, X, Sun, Moon, ChevronUp, ChevronDown } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
+import { useActionItems, useMeetingsApi } from '../hooks/useApiData'
 import PageTransition from './PageTransition'
 
 const navLinks: { to: string; label: string; isJoin?: boolean }[] = [
@@ -44,6 +45,25 @@ export default function Layout() {
   const researchRef = useRef<HTMLDivElement>(null)
   const researchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const location = useLocation()
+
+  // Action items badge count (pending only)
+  const { data: actionItems = [] } = useActionItems()
+  const pendingCount = useMemo(
+    () => actionItems.filter((item) => !item.completed).length,
+    [actionItems]
+  )
+
+  // Next upcoming meeting
+  const { data: meetings = [] } = useMeetingsApi()
+  const nextMeetingLabel = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    const upcoming = meetings
+      .filter((m) => m.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    if (upcoming.length === 0) return null
+    const d = new Date(upcoming[0].date + 'T12:00:00')
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }, [meetings])
 
   const isResearchActive = researchDropdownLinks.some(
     (link) => location.pathname === link.to
@@ -225,6 +245,10 @@ export default function Layout() {
                       background: location.pathname === link.to
                         ? 'rgba(201, 168, 76, 0.08)'
                         : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px',
                     }}
                     onMouseEnter={(e) => {
                       if (location.pathname !== link.to) {
@@ -239,7 +263,41 @@ export default function Layout() {
                       }
                     }}
                   >
-                    {link.label}
+                    <span>{link.label}</span>
+                    {link.label === 'Dashboard' && pendingCount > 0 && (
+                      <span
+                        style={{
+                          background: 'var(--maroon)',
+                          color: '#fff',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '9px',
+                          lineHeight: '16px',
+                          width: '16px',
+                          height: '16px',
+                          borderRadius: '50%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          animation: 'badge-pop 200ms ease-out',
+                        }}
+                      >
+                        {pendingCount}
+                      </span>
+                    )}
+                    {link.label === 'Meetings' && nextMeetingLabel && (
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '9px',
+                          color: 'var(--gold)',
+                          opacity: 0.8,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {nextMeetingLabel}
+                      </span>
+                    )}
                   </Link>
                 ))}
               </div>
@@ -375,14 +433,50 @@ export default function Layout() {
                     minHeight: '40px',
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: 'space-between',
                     paddingLeft: '24px',
+                    paddingRight: '16px',
                     marginLeft: '16px',
                     borderLeft: location.pathname === link.to
                       ? '3px solid var(--gold)'
                       : '3px solid rgba(201, 168, 76, 0.2)',
                   }}
                 >
-                  {link.label}
+                  <span>{link.label}</span>
+                  {link.label === 'Dashboard' && pendingCount > 0 && (
+                    <span
+                      style={{
+                        background: 'var(--maroon)',
+                        color: '#fff',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '9px',
+                        lineHeight: '16px',
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        animation: 'badge-pop 200ms ease-out',
+                      }}
+                    >
+                      {pendingCount}
+                    </span>
+                  )}
+                  {link.label === 'Meetings' && nextMeetingLabel && (
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '9px',
+                        color: 'var(--gold)',
+                        opacity: 0.8,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {nextMeetingLabel}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>
