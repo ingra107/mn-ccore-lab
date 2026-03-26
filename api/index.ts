@@ -90,6 +90,8 @@ export default {
             return await handleCollaborationGraph(env);
           case '/api/stats':
             return await handleStats(env);
+          case '/api/activity':
+            return await handleActivity(url, env);
         }
       }
 
@@ -304,6 +306,15 @@ async function handleStats(env: Env): Promise<Response> {
   };
 
   return json({ data: stats });
+}
+
+// GET /api/activity?limit=20
+async function handleActivity(url: URL, env: Env): Promise<Response> {
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 100);
+  const result = await env.DB.prepare(
+    'SELECT * FROM activity_log ORDER BY timestamp DESC LIMIT ?'
+  ).bind(limit).all();
+  return json({ data: result.results, count: result.results.length });
 }
 
 // GET /api/projects/:id/comments

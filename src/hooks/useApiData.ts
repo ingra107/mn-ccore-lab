@@ -201,3 +201,60 @@ export function useStats() {
     staleTime: STALE_TIME,
   })
 }
+
+// ── Comments ────────────────────────────────────────────────
+
+export interface Comment {
+  id: string
+  content: string
+  author_name: string | null
+  author_slug: string | null
+  created_at: string
+}
+
+export function useComments(projectId: string) {
+  return useQuery({
+    queryKey: ['comments', projectId],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/projects/${projectId}/comments`)
+        if (!res.ok) return []
+        const data = await res.json()
+        return (data.data || []) as Comment[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: 60 * 1000, // 1 minute for comments
+    enabled: !!projectId,
+  })
+}
+
+// ── Activity Feed ───────────────────────────────────────────
+
+export interface ActivityEntry {
+  id: string
+  type: string
+  description: string
+  actor: string | null
+  related_id: string | null
+  related_type: string | null
+  timestamp: string
+}
+
+export function useActivity(limit: number = 20) {
+  return useQuery({
+    queryKey: ['activity', limit],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/activity?limit=${limit}`)
+        if (!res.ok) return []
+        const data = await res.json()
+        return (data.data || []) as ActivityEntry[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: 60 * 1000,
+  })
+}
