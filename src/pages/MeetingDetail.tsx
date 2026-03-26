@@ -45,6 +45,9 @@ export default function MeetingDetail() {
   const { id } = useParams<{ id: string }>()
   const { data: meeting, isLoading } = useMeetingDetail(id || '')
   const { isAuthenticated } = useAuth()
+  // Hooks must be called unconditionally (before any conditional returns)
+  const toggleAction = useToggleActionItem()
+  const addAgenda = useAddAgendaItem(meeting?.id || '')
 
   usePageMeta(
     meeting ? `${meeting.title} | MN-CCORE` : 'Meeting | MN-CCORE',
@@ -78,8 +81,6 @@ export default function MeetingDetail() {
   const autoAgenda = parseJsonArray(meeting.agenda)
   const decisions = parseJsonArray(meeting.decisions)
   const statusStyle = STATUS_COLORS[meeting.status] || STATUS_COLORS.completed
-  const toggleAction = useToggleActionItem()
-  const addAgenda = useAddAgendaItem(meeting.id)
   const actionItems = meeting.action_items || []
   const teamAgendaItems = meeting.agenda_items || []
 
