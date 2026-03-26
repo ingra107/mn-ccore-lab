@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, CheckCircle2, Circle, Users, ListChecks } from 'lucide-react'
+import { ChevronDown, CheckCircle2, Circle, Users, ListChecks, ArrowRight } from 'lucide-react'
 import Avatar from './Avatar'
 import { directors, getAllMembers } from '../data/team'
 import type { Meeting } from '../data/types'
@@ -365,7 +366,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
 
               {/* Notes */}
               {meeting.notes && (
-                <div>
+                <div className="mb-4">
                   <h4
                     className="text-xs font-semibold uppercase tracking-wider mb-2"
                     style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}
@@ -380,6 +381,23 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                   </p>
                 </div>
               )}
+
+              {/* View Full Meeting link */}
+              <Link
+                to={`/meetings/${meeting.id}`}
+                className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md text-xs font-medium"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
+                  background: 'var(--gold)',
+                  color: '#0f1923',
+                  textDecoration: 'none',
+                  transition: 'opacity 0.2s',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                View Full Meeting <ArrowRight size={11} />
+              </Link>
             </div>
           </motion.div>
         )}

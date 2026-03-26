@@ -16,6 +16,7 @@ import { useData } from '../hooks/useLocalData'
 import { directors, getAllMembers } from '../data/team'
 import Avatar from '../components/Avatar'
 import ProjectComments from '../components/ProjectComments'
+import ProjectUpdateFeed from '../components/ProjectUpdateFeed'
 import type { Project, Meeting, ActionItem } from '../data/types'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
@@ -832,6 +833,9 @@ function ProjectDetailInner({
           </div>
         </motion.div>
       </div>
+
+      {/* Project Updates — async status posts */}
+      <ProjectUpdateFeed projectSlug={project.slug} />
 
       {/* Comments from D1 */}
       <ProjectComments projectSlug={project.slug} />
