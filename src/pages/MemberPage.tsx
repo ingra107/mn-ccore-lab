@@ -1,10 +1,13 @@
 import { useMemo } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
+import { FlaskConical, GraduationCap } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { publications } from '../data/publications'
 import { getMemberBySlug } from '../data/team'
+import { getMenteeBySlug } from '../data/mentees'
+import { projects } from '../data/projects'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -29,6 +32,12 @@ const TOPIC_COLORS: Record<string, string> = {
 export default function MemberPage() {
   const { slug } = useParams<{ slug: string }>()
   const member = slug ? getMemberBySlug(slug) : undefined
+
+  // Check if this member is also a mentee (trainee)
+  const mentee = slug ? getMenteeBySlug(slug) : undefined
+  const menteeProjects = mentee?.projectSlugs
+    ?.map((s) => projects.find((p) => p.slug === s))
+    .filter(Boolean) ?? []
 
   if (!member) {
     return <Navigate to="/team" replace />
@@ -92,10 +101,16 @@ export default function MemberPage() {
       title={member.role}
       role="MN-CCORE Team Member"
       initials={member.initials}
-      bio={member.bio}
+      bio={member.bio || mentee?.bio}
       links={memberLinks}
       photoUrl={member.photoUrl}
       sections={[
+        ...(mentee
+          ? [{ id: 'research-focus', label: 'Research Focus' }]
+          : []),
+        ...(menteeProjects.length > 0
+          ? [{ id: 'active-projects', label: 'Active Projects' }]
+          : []),
         ...(topicCounts.length > 0
           ? [{ id: 'research-areas', label: 'Research Areas' }]
           : []),
@@ -104,6 +119,127 @@ export default function MemberPage() {
           : []),
       ]}
     >
+      {/* Mentee: Research Focus (interests + mentor info) */}
+      {mentee && (
+        <>
+          <section className="mb-8" id="research-focus">
+            <div className="flex items-center gap-3 mb-4">
+              <GraduationCap size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <h2
+                className="text-xl sm:text-2xl"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  color: 'var(--ink)',
+                }}
+              >
+                Research Focus
+              </h2>
+            </div>
+            {mentee.researchInterests && mentee.researchInterests.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {mentee.researchInterests.map((interest) => (
+                  <span
+                    key={interest}
+                    className="inline-flex items-center px-3 py-1.5 rounded-full text-sm"
+                    style={{
+                      background: 'rgba(201, 168, 76, 0.1)',
+                      color: 'var(--gold)',
+                      fontFamily: 'var(--font-body)',
+                      fontWeight: 500,
+                      border: '1px solid rgba(201, 168, 76, 0.2)',
+                    }}
+                  >
+                    {interest}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-md"
+              style={{
+                background: 'var(--ice)',
+                border: '1px solid rgba(201, 168, 76, 0.1)',
+              }}
+            >
+              <span className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
+                {mentee.mentor === 'shared'
+                  ? 'Shared mentorship — Ingraham & Mesfin'
+                  : `Mentor: ${mentee.mentor === 'nick' ? 'Nick Ingraham, MD' : 'Nathan Mesfin, MD'}`}
+              </span>
+            </div>
+          </section>
+          <SectionDivider />
+          <div className="py-4" />
+        </>
+      )}
+
+      {/* Mentee: Active Projects */}
+      {menteeProjects.length > 0 && (
+        <>
+          <section className="mb-8" id="active-projects">
+            <div className="flex items-center gap-3 mb-4">
+              <FlaskConical size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <h2
+                className="text-xl sm:text-2xl"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  color: 'var(--ink)',
+                }}
+              >
+                Active Projects
+              </h2>
+            </div>
+            <div className="space-y-3">
+              {menteeProjects.map((project) => project && (
+                <div
+                  key={project.slug}
+                  className="card p-5 sm:p-6"
+                  style={{
+                    borderLeft: '3px solid var(--gold)',
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <h3
+                      className="text-sm sm:text-base font-semibold"
+                      style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
+                    >
+                      {project.title}
+                    </h3>
+                    <span
+                      className={`badge ${
+                        project.status === 'Active' ? 'badge-active'
+                          : project.status === 'In Review' ? 'badge-review'
+                          : project.status === 'Published' ? 'badge-published'
+                          : 'badge-preparation'
+                      }`}
+                    >
+                      {project.status}
+                    </span>
+                  </div>
+                  {project.description && (
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--slate)' }}>
+                      {project.description}
+                    </p>
+                  )}
+                  {project.stage && (
+                    <p
+                      className="text-xs mt-2"
+                      style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.7 }}
+                    >
+                      Stage: {project.stage}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+          <SectionDivider />
+          <div className="py-4" />
+        </>
+      )}
+
       {/* Research areas derived from publication topics */}
       {topicCounts.length > 0 && (
         <>

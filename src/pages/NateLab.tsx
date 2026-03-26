@@ -7,6 +7,7 @@ import LabPageLayout, {
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { publications } from '../data/publications'
+import { mentees as allMentees } from '../data/mentees'
 
 const grants = [
   {
@@ -44,12 +45,8 @@ const projects = [
   },
 ]
 
-const mentees = [
-  { name: 'Dan Shyu, MD', project: 'Critical Care Fellow' },
-  { name: 'Beret Fitzgerald, MD', project: 'Critical Care Fellow' },
-  { name: 'Emma Bromley', project: 'Research Coordinator — Pre-doctoral candidate' },
-  { name: 'Claire Collins', project: 'Medical Student Researcher' },
-]
+// Mentees: show all (Nate mentors + shared)
+const mentees = allMentees.filter((m) => m.mentor === 'nate' || m.mentor === 'shared')
 
 export default function NateLab() {
   usePageMeta(
@@ -88,7 +85,7 @@ export default function NateLab() {
       <ProjectsSection title="Research Projects" projects={projects} id="research-projects" />
       <SectionDivider />
       <div className="py-4" />
-      <MenteesSection mentees={mentees} id="trainees" />
+      <MenteesSection mentees={mentees} id="trainees" title="MNCCORE Trainees" />
     </LabPageLayout>
   )
 }

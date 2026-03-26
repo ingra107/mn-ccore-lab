@@ -7,6 +7,7 @@ import LabPageLayout, {
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { publications } from '../data/publications'
+import { mentees as allMentees } from '../data/mentees'
 
 const grants = [
   {
@@ -48,12 +49,8 @@ const labProjects = [
   { title: 'SGLT2 & Metformin in COPD Readmissions', status: 'Active' as const, description: 'Investigating whether SGLT2 inhibitors and metformin reduce 30-day readmission risk in COPD patients.' },
 ]
 
-const mentees = [
-  { name: 'Dan Shyu, MD', project: 'Critical Care Fellow' },
-  { name: 'Beret Fitzgerald, MD', project: 'Critical Care Fellow' },
-  { name: 'Emma Bromley', project: 'Research Coordinator — Pre-doctoral candidate' },
-  { name: 'Claire Collins', project: 'Medical Student Researcher' },
-]
+// Mentees: show all (Nick mentors + shared)
+const mentees = allMentees.filter((m) => m.mentor === 'nick' || m.mentor === 'shared')
 
 export default function NickLab() {
   usePageMeta(
@@ -91,7 +88,7 @@ export default function NickLab() {
       <ProjectsSection title="CLIF Projects" projects={clifProjects} id="clif-projects" />
       <SectionDivider />
       <div className="py-4" />
-      <MenteesSection mentees={mentees} id="mentees" />
+      <MenteesSection mentees={mentees} id="mentees" title="Trainees & Mentees" />
       <SectionDivider />
       <div className="py-4" />
       <PublicationsSection

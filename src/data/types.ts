@@ -78,8 +78,14 @@ export interface Project {
 
 export interface Mentee {
   name: string
-  project: string
-  mentor: string
+  slug: string            // links to TeamMember slug for photo/page
+  role: string            // "Critical Care Fellow", "Research Coordinator", etc.
+  credentials?: string
+  mentor: 'nick' | 'nate' | 'shared'
+  researchInterests?: string[]
+  bio?: string
+  projectSlugs?: string[] // links to Project slugs
+  yearStarted?: number
 }
 
 export interface Affiliate {

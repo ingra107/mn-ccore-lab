@@ -181,4 +181,36 @@ export const projects: Project[] = [
     stage: 'Analysis',
     team: ['nate', 'nick'],
   },
+
+  // Mentee-led / mentee-contributing projects
+  {
+    title: 'Fellow Project: ICU Handoff Communication Patterns',
+    slug: 'fellow-icu-handoff-communication',
+    status: 'Active',
+    category: 'mentee',
+    pi: 'nick',
+    description: 'Dan Shyu\'s fellowship project examining how ICU handoff quality varies by provider experience, shift timing, and patient acuity using structured observation and EHR data.',
+    stage: 'Data Collection',
+    team: ['shyu', 'nick'],
+  },
+  {
+    title: 'Fellow Project: Goals-of-Care Timing in Prolonged ICU Stays',
+    slug: 'fellow-goc-timing-prolonged-icu',
+    status: 'Active',
+    category: 'mentee',
+    pi: 'nate',
+    description: 'Beret Fitzgerald\'s fellowship project investigating optimal timing of goals-of-care conversations in patients with prolonged ICU stays, using CLIF data to identify actionable triggers.',
+    stage: 'Analysis',
+    team: ['fitzgerald', 'nate'],
+  },
+  {
+    title: 'Student Project: Cognitive Biases in ICU Triage Decisions',
+    slug: 'student-cognitive-biases-icu-triage',
+    status: 'Active',
+    category: 'mentee',
+    pi: 'nick',
+    description: 'Claire Collins\' medical student project exploring how anchoring and availability biases influence ICU admission decisions through a survey-based experimental design.',
+    stage: 'Data Collection',
+    team: ['collins', 'nick'],
+  },
 ]

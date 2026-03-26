@@ -1,8 +1,10 @@
 import { type ReactNode, useEffect, useState } from 'react'
-import { ArrowRight, ExternalLink } from 'lucide-react'
+import { ArrowRight, ExternalLink, GraduationCap, FlaskConical } from 'lucide-react'
 import Avatar from './Avatar'
 import PublicationCard from './PublicationCard'
-import type { Publication } from '../data/types'
+import type { Publication, Mentee } from '../data/types'
+import { getMemberBySlug } from '../data/team'
+import { projects } from '../data/projects'
 
 interface ProfileLink {
   label: string
@@ -425,11 +427,6 @@ export function ProjectsSection({
   )
 }
 
-interface MenteeCard {
-  name: string
-  project: string
-}
-
 export function PublicationsSection({
   publications,
   id,
@@ -461,48 +458,174 @@ export function PublicationsSection({
   )
 }
 
-export function MenteesSection({ mentees, id, title = 'MNCCORE Trainees' }: { mentees: MenteeCard[]; id?: string; title?: string }) {
+function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
+  const [hovered, setHovered] = useState(false)
+  const member = getMemberBySlug(mentee.slug)
+  const menteeProjects = mentee.projectSlugs
+    ?.map((slug) => projects.find((p) => p.slug === slug))
+    .filter(Boolean) ?? []
+
   return (
-    <section className="mb-16" id={id}>
-      <h2
-        className="text-xl sm:text-2xl mb-2"
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontWeight: 600,
-          color: 'var(--ink)',
-        }}
-      >
-        {title}
-      </h2>
-      <p className="text-sm mb-6" style={{ color: 'var(--slate)', fontFamily: 'var(--font-body)' }}>
-        Trainees are shared across MNCCORE — we mentor as a team.
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {mentees.map((mentee) => (
-          <div
-            key={mentee.name}
-            className="p-5 sm:p-6 rounded-lg"
-            style={{
-              background: 'var(--gold-light)',
-              border: '1px solid rgba(201, 168, 76, 0.15)',
-            }}
-          >
+    <a
+      href={mentee.slug ? `/team/${mentee.slug}` : undefined}
+      className="card p-0 overflow-hidden cursor-pointer block transition-all duration-300"
+      style={{
+        textDecoration: 'none',
+        borderLeft: hovered ? '4px solid var(--gold)' : '4px solid transparent',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div className="p-5 sm:p-6">
+        {/* Header: Photo + Name + Role */}
+        <div className="flex items-start gap-4 mb-4">
+          <Avatar
+            name={mentee.name}
+            initials={mentee.name.split(' ').map((n) => n[0]).join('')}
+            photoUrl={member?.photoUrl}
+            size="sm"
+            variant="gold"
+          />
+          <div className="flex-1 min-w-0">
             <h3
-              className="text-sm font-semibold mb-1"
+              className="text-base font-semibold leading-tight"
               style={{
                 fontFamily: 'var(--font-body)',
                 color: 'var(--ink)',
               }}
             >
-              {mentee.name}
+              {mentee.name}{mentee.credentials ? `, ${mentee.credentials}` : ''}
             </h3>
             <p
-              className="text-sm"
-              style={{ color: 'var(--slate)' }}
+              className="text-xs mt-0.5"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--gold)',
+                letterSpacing: '0.02em',
+              }}
             >
-              {mentee.project}
+              {mentee.role}
             </p>
+            {mentee.mentor !== 'shared' && (
+              <p className="text-xs mt-0.5" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+                Mentor: {mentee.mentor === 'nick' ? 'Nick Ingraham' : 'Nathan Mesfin'}
+              </p>
+            )}
           </div>
+        </div>
+
+        {/* Bio */}
+        {mentee.bio && (
+          <p
+            className="text-sm leading-relaxed mb-4"
+            style={{ color: 'var(--slate)' }}
+          >
+            {mentee.bio}
+          </p>
+        )}
+
+        {/* Research Interests */}
+        {mentee.researchInterests && mentee.researchInterests.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {mentee.researchInterests.map((interest) => (
+              <span
+                key={interest}
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '10px',
+                  letterSpacing: '0.02em',
+                  background: 'var(--ice)',
+                  color: 'var(--slate)',
+                  border: '1px solid rgba(201, 168, 76, 0.12)',
+                }}
+              >
+                {interest}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Linked Projects */}
+        {menteeProjects.length > 0 && (
+          <div
+            className="pt-3"
+            style={{ borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}
+          >
+            <div className="flex items-center gap-1.5 mb-2">
+              <FlaskConical size={12} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <span
+                className="text-xs uppercase"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '9px',
+                  letterSpacing: '0.08em',
+                  color: 'var(--slate)',
+                  opacity: 0.7,
+                }}
+              >
+                Active Projects
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {menteeProjects.map((project) => project && (
+                <div
+                  key={project.slug}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <span
+                    className="text-xs truncate"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      color: 'var(--ink)',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {project.title}
+                  </span>
+                  <span
+                    className={`badge ${
+                      project.status === 'Active' ? 'badge-active'
+                        : project.status === 'In Review' ? 'badge-review'
+                        : project.status === 'Published' ? 'badge-published'
+                        : 'badge-preparation'
+                    }`}
+                    style={{ fontSize: '9px', padding: '1px 6px' }}
+                  >
+                    {project.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </a>
+  )
+}
+
+export function MenteesSection({ mentees, id, title = 'MNCCORE Trainees' }: { mentees: Mentee[]; id?: string; title?: string }) {
+  return (
+    <section className="mb-16" id={id}>
+      <div className="flex items-center gap-3 mb-2">
+        <GraduationCap size={22} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+        <h2
+          className="text-xl sm:text-2xl"
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 600,
+            color: 'var(--ink)',
+          }}
+        >
+          {title}
+        </h2>
+      </div>
+      <p className="text-sm mb-6" style={{ color: 'var(--slate)', fontFamily: 'var(--font-body)' }}>
+        Trainees are shared across MNCCORE — we mentor as a team.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {mentees.map((mentee) => (
+          <MenteeProfileCard key={mentee.name} mentee={mentee} />
         ))}
       </div>
     </section>
