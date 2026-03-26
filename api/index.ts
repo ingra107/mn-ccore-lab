@@ -71,6 +71,12 @@ export default {
 
       // Read endpoints (GET only)
       if (request.method === 'GET') {
+        // Parameterized GET routes
+        const commentsGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/comments$/);
+        if (commentsGet) {
+          return await handleGetComments(commentsGet[1], env);
+        }
+
         switch (url.pathname) {
           case '/api/publications':
             return await handlePublications(url, env);
@@ -94,8 +100,26 @@ export default {
           return error('Authentication required', 401);
         }
 
-        // Future write endpoints go here
-        // case '/api/projects/:id': return handleUpdateProject(...)
+        const path = url.pathname;
+
+        // POST /api/projects/:id — update project fields
+        const projectMatch = path.match(/^\/api\/projects\/([^/]+)$/);
+        if (request.method === 'POST' && projectMatch) {
+          return await handleUpdateProject(projectMatch[1], request, user, env);
+        }
+
+        // POST /api/projects/:id/comments — add comment
+        const commentMatch = path.match(/^\/api\/projects\/([^/]+)\/comments$/);
+        if (request.method === 'POST' && commentMatch) {
+          return await handleAddComment(commentMatch[1], request, user, env);
+        }
+
+        // PUT /api/team/:slug — team member updates own profile
+        const teamMatch = path.match(/^\/api\/team\/([^/]+)$/);
+        if (request.method === 'PUT' && teamMatch) {
+          return await handleUpdateTeamMember(teamMatch[1], request, user, env);
+        }
+
         return error('Not found', 404);
       }
 
@@ -280,4 +304,154 @@ async function handleStats(env: Env): Promise<Response> {
   };
 
   return json({ data: stats });
+}
+
+// GET /api/projects/:id/comments
+async function handleGetComments(projectId: string, env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    `SELECT c.id, c.content, c.created_at, t.name as author_name, t.slug as author_slug
+     FROM comments c
+     LEFT JOIN team_members t ON c.author_id = t.id
+     WHERE c.project_id = ?
+     ORDER BY c.created_at DESC`
+  ).bind(projectId).all();
+  return json({ data: result.results, count: result.results.length });
+}
+
+// ── Write endpoints ─────────────────────────────────────────
+
+function generateId(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function logActivity(
+  env: Env,
+  type: string,
+  description: string,
+  actor: string,
+  relatedId?: string,
+  relatedType?: string,
+): Promise<void> {
+  await env.DB.prepare(
+    'INSERT INTO activity_log (id, type, description, actor, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(generateId(), type, description, actor, relatedId ?? null, relatedType ?? null).run();
+}
+
+// POST /api/projects/:id — update project fields
+async function handleUpdateProject(
+  id: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const body = await request.json() as Record<string, unknown>;
+
+  // Allowlisted fields that can be updated
+  const allowed = ['title', 'status', 'description', 'category', 'stage', 'pi', 'slug'];
+  const updates: string[] = [];
+  const values: (string | number | null)[] = [];
+
+  for (const [key, val] of Object.entries(body)) {
+    if (allowed.includes(key)) {
+      updates.push(`${key} = ?`);
+      values.push(val as string | number | null);
+    }
+  }
+
+  if (updates.length === 0) {
+    return error('No valid fields to update', 400);
+  }
+
+  updates.push("updated_at = datetime('now')");
+  values.push(id);
+
+  const result = await env.DB.prepare(
+    `UPDATE projects SET ${updates.join(', ')} WHERE id = ?`
+  ).bind(...values).run();
+
+  if (result.meta.changes === 0) {
+    return error('Project not found', 404);
+  }
+
+  await logActivity(env, 'project_update', `Updated project fields: ${Object.keys(body).join(', ')}`, user.email, id, 'project');
+
+  const updated = await env.DB.prepare('SELECT * FROM projects WHERE id = ?').bind(id).first();
+  return json({ data: updated });
+}
+
+// POST /api/projects/:id/comments — add comment
+async function handleAddComment(
+  projectId: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const body = await request.json() as { content?: string };
+
+  if (!body.content || body.content.trim().length === 0) {
+    return error('Comment content is required', 400);
+  }
+
+  // Verify project exists
+  const project = await env.DB.prepare('SELECT id, title FROM projects WHERE id = ?').bind(projectId).first<{ id: string; title: string }>();
+  if (!project) {
+    return error('Project not found', 404);
+  }
+
+  // Look up author by email → team member
+  const member = await env.DB.prepare('SELECT id FROM team_members WHERE slug = ?')
+    .bind(user.email.split('@')[0].toLowerCase())
+    .first<{ id: string }>();
+
+  const commentId = generateId();
+  await env.DB.prepare(
+    'INSERT INTO comments (id, project_id, author_id, content) VALUES (?, ?, ?, ?)'
+  ).bind(commentId, projectId, member?.id ?? null, body.content.trim()).run();
+
+  await logActivity(env, 'comment', `Commented on "${project.title}"`, user.email, projectId, 'project');
+
+  return json({ data: { id: commentId, project_id: projectId, content: body.content.trim(), author: user.email } }, 201);
+}
+
+// PUT /api/team/:slug — team member updates own profile
+async function handleUpdateTeamMember(
+  slug: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const body = await request.json() as Record<string, unknown>;
+
+  // Allowlisted fields that team members can update about themselves
+  const allowed = ['bio', 'photo_url', 'scholar_id', 'title', 'department'];
+  const updates: string[] = [];
+  const values: (string | null)[] = [];
+
+  for (const [key, val] of Object.entries(body)) {
+    if (allowed.includes(key)) {
+      updates.push(`${key} = ?`);
+      values.push(val as string | null);
+    }
+  }
+
+  if (updates.length === 0) {
+    return error('No valid fields to update', 400);
+  }
+
+  values.push(slug);
+
+  const result = await env.DB.prepare(
+    `UPDATE team_members SET ${updates.join(', ')} WHERE slug = ?`
+  ).bind(...values).run();
+
+  if (result.meta.changes === 0) {
+    return error('Team member not found', 404);
+  }
+
+  await logActivity(env, 'team_update', `Updated profile for ${slug}`, user.email, slug, 'team_member');
+
+  const updated = await env.DB.prepare('SELECT * FROM team_members WHERE slug = ?').bind(slug).first();
+  return json({ data: updated });
 }
