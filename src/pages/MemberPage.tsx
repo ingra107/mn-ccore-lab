@@ -3,6 +3,7 @@ import { useParams, Navigate } from 'react-router-dom'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
 import { FlaskConical, GraduationCap } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
+import MenteeDashboard from '../components/MenteeDashboard'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications } from '../hooks/useApiData'
 import { getMemberBySlug } from '../data/team'
@@ -295,6 +296,9 @@ export default function MemberPage() {
           <div className="py-4" />
         </>
       )}
+
+      {/* Dashboard — projects, action items, publication count, summary */}
+      {slug && <MenteeDashboard slug={slug} name={member.name} />}
 
       {memberPubs.length > 0 && (
         <PublicationsSection publications={memberPubs} id="publications" />

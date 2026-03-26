@@ -130,3 +130,129 @@ export function useUpdateProfile(slug: string) {
     },
   })
 }
+
+// ── Action Item mutations ───────────────────────────────────
+
+import type { ActionItemRow } from './useApiData'
+
+export function useToggleActionItem() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (itemId: string) =>
+      fetch(`/api/action-items/${itemId}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }).then((r) => r.json()),
+
+    onMutate: async (itemId) => {
+      // Optimistically toggle in all action-items caches
+      const queries = queryClient.getQueriesData<ActionItemRow[]>({ queryKey: ['action-items'] })
+      const snapshots: { key: readonly unknown[]; data: ActionItemRow[] | undefined }[] = []
+
+      for (const [key, data] of queries) {
+        snapshots.push({ key, data })
+        if (data) {
+          queryClient.setQueryData(
+            key,
+            data.map((item) =>
+              item.id === itemId
+                ? { ...item, completed: item.completed ? 0 : 1, completed_at: item.completed ? null : new Date().toISOString() }
+                : item
+            )
+          )
+        }
+      }
+
+      // Also update meeting detail caches
+      const meetingQueries = queryClient.getQueriesData<{ action_items?: ActionItemRow[] }>({ queryKey: ['meeting'] })
+      for (const [key, data] of meetingQueries) {
+        if (data?.action_items) {
+          queryClient.setQueryData(key, {
+            ...data,
+            action_items: data.action_items.map((item) =>
+              item.id === itemId
+                ? { ...item, completed: item.completed ? 0 : 1 }
+                : item
+            ),
+          })
+        }
+      }
+
+      return { snapshots }
+    },
+
+    onError: (_err, _itemId, context) => {
+      if (context?.snapshots) {
+        for (const { key, data } of context.snapshots) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-items'] })
+      queryClient.invalidateQueries({ queryKey: ['meeting'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useCreateActionItem() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { meeting_id?: string; project_id?: string; description: string; assignee: string; due_date?: string }) =>
+      fetch('/api/action-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then((r) => r.json()),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-items'] })
+      queryClient.invalidateQueries({ queryKey: ['meeting'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Agenda Item mutations ───────────────────────────────────
+
+export function useAddAgendaItem(meetingId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { content: string; project_id?: string; type?: string; document_url?: string }) =>
+      fetch(`/api/meetings/${meetingId}/agenda`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then((r) => r.json()),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Project Update mutations ────────────────────────────────
+
+export function usePostProjectUpdate(projectSlug: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { content: string; update_type?: string }) =>
+      fetch(`/api/projects/${projectSlug}/updates`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then((r) => r.json()),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-updates', projectSlug] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}

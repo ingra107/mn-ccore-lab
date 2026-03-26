@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, AlertTriangle, CheckCircle, HelpCircle, TrendingUp, Send } from 'lucide-react'
 import { useProjectUpdates } from '../hooks/useApiData'
 import type { ProjectUpdateRow } from '../hooks/useApiData'
+import { usePostProjectUpdate } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import Avatar from './Avatar'
 import { directors, getAllMembers } from '../data/team'
@@ -44,6 +45,7 @@ interface Props {
 
 export default function ProjectUpdateFeed({ projectSlug }: Props) {
   const { data: updates = [] } = useProjectUpdates(projectSlug)
+  const postUpdate = usePostProjectUpdate(projectSlug)
   const { isAuthenticated } = useAuth()
   const [text, setText] = useState('')
   const [updateType, setUpdateType] = useState<string>('progress')
@@ -51,7 +53,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    // Would call mutation — for now just show the form works
+    postUpdate.mutate({ content: text.trim(), update_type: updateType })
     setText('')
   }
 

@@ -17,6 +17,7 @@ import {
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMeetingDetail } from '../hooks/useApiData'
 import type { ActionItemRow as ActionItemRowType } from '../hooks/useApiData'
+import { useToggleActionItem, useAddAgendaItem } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import Avatar from '../components/Avatar'
 import { directors, getAllMembers } from '../data/team'
@@ -88,6 +89,8 @@ export default function MeetingDetail() {
   const autoAgenda = parseJsonArray(meeting.agenda)
   const decisions = parseJsonArray(meeting.decisions)
   const statusStyle = STATUS_COLORS[meeting.status] || STATUS_COLORS.completed
+  const toggleAction = useToggleActionItem()
+  const addAgenda = useAddAgendaItem(meeting.id)
   const actionItems = meeting.action_items || []
   const teamAgendaItems = meeting.agenda_items || []
 
@@ -200,7 +203,7 @@ export default function MeetingDetail() {
               )}
 
               {/* Add agenda item form */}
-              <AddAgendaForm isAuthenticated={isAuthenticated} />
+              <AddAgendaForm isAuthenticated={isAuthenticated} onAdd={(input) => addAgenda.mutate(input)} />
             </div>
           </motion.div>
 
@@ -221,7 +224,7 @@ export default function MeetingDetail() {
               {pendingActions.length > 0 && (
                 <div className="mb-3">
                   {pendingActions.map((item) => (
-                    <ActionItemRow key={item.id} item={item} />
+                    <ActionItemRow key={item.id} item={item} onToggle={(id) => toggleAction.mutate(id)} />
                   ))}
                 </div>
               )}
@@ -233,7 +236,7 @@ export default function MeetingDetail() {
                     Completed
                   </p>
                   {completedActions.map((item) => (
-                    <ActionItemRow key={item.id} item={item} />
+                    <ActionItemRow key={item.id} item={item} onToggle={(id) => toggleAction.mutate(id)} />
                   ))}
                 </div>
               )}
@@ -291,14 +294,18 @@ export default function MeetingDetail() {
 
 // ── Sub-components ──────────────────────────────────────────
 
-function ActionItemRow({ item }: { item: ActionItemRowType }) {
+function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?: (id: string) => void }) {
   const person = getPersonInfo(item.assignee)
   const isOverdue = item.due_date && !item.completed && new Date(item.due_date) < new Date()
 
   return (
     <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)' }}>
       <button type="button" className="cursor-pointer flex-shrink-0 mt-0.5"
-        style={{ background: 'none', border: 'none', padding: 0, color: item.completed ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: item.completed ? 1 : 0.5 }}>
+        onClick={() => onToggle?.(item.id)}
+        style={{ background: 'none', border: 'none', padding: 0, color: item.completed ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: item.completed ? 1 : 0.5, transition: 'transform 0.15s' }}
+        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.2)')}
+        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+        title={item.completed ? 'Mark as pending' : 'Mark as completed'}>
         {item.completed ? <CheckCircle2 size={18} /> : <Circle size={18} />}
       </button>
       <div style={{ flex: 1 }}>
@@ -328,7 +335,7 @@ function ActionItemRow({ item }: { item: ActionItemRowType }) {
   )
 }
 
-function AddAgendaForm({ isAuthenticated }: { isAuthenticated: boolean }) {
+function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; onAdd: (input: { content: string; document_url?: string }) => void }) {
   const [text, setText] = useState('')
   const [docUrl, setDocUrl] = useState('')
   const [showDocInput, setShowDocInput] = useState(false)
@@ -336,8 +343,7 @@ function AddAgendaForm({ isAuthenticated }: { isAuthenticated: boolean }) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    // In production, this would call the API
-    // For now, show the form is ready
+    onAdd({ content: text.trim(), document_url: docUrl.trim() || undefined })
     setText('')
     setDocUrl('')
     setShowDocInput(false)
