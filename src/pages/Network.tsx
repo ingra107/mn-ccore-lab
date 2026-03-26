@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { publications } from '../data/publications'
-import EnhancedCollaborationNetwork from '../components/EnhancedCollaborationNetwork'
+import CollaborationGraph from '../components/CollaborationGraph'
 import NetworkSidebar from '../components/NetworkSidebar'
 import NetworkFilters, { type NetworkFilterState } from '../components/NetworkFilters'
-import type { NetworkNode, NetworkEdge } from '../components/EnhancedCollaborationNetwork'
+import type { NetworkNode, NetworkEdge } from '../components/CollaborationGraph'
 
 export default function Network() {
   usePageMeta(
@@ -33,7 +33,7 @@ export default function Network() {
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null)
   const [selectedEdge, setSelectedEdge] = useState<NetworkEdge | null>(null)
 
-  // Track all nodes/edges for the sidebar (received from EnhancedCollaborationNetwork)
+  // Track all nodes/edges for the sidebar (received from CollaborationGraph)
   const [graphNodes, setGraphNodes] = useState<NetworkNode[]>([])
   const [graphEdges, setGraphEdges] = useState<NetworkEdge[]>([])
 
@@ -138,7 +138,7 @@ export default function Network() {
 
       {/* Graph area (fills remaining space) */}
       <div className="flex-1 relative min-h-0">
-        <EnhancedCollaborationNetwork
+        <CollaborationGraph
           publications={filteredPublications}
           fullPage
           onNodeClick={handleNodeClick}
