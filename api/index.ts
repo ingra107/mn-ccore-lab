@@ -447,12 +447,27 @@ async function handleUpdateProject(
   updates.push("updated_at = datetime('now')");
   values.push(id);
 
+  // Try update first
   const result = await env.DB.prepare(
-    `UPDATE projects SET ${updates.join(', ')} WHERE id = ?`
-  ).bind(...values).run();
+    `UPDATE projects SET ${updates.join(', ')} WHERE id = ? OR slug = ?`
+  ).bind(...values, id).run();
 
   if (result.meta.changes === 0) {
-    return error('Project not found', 404);
+    // Project doesn't exist — create it (upsert)
+    const slug = (body.slug as string) || id;
+    const newId = id.length === 32 ? id : generateId();
+    await env.DB.prepare(
+      `INSERT INTO projects (id, title, status, description, category, stage, pi, slug) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      newId,
+      (body.title as string) || 'Untitled',
+      (body.status as string) || 'Active',
+      (body.description as string) || '',
+      (body.category as string) || 'lab',
+      (body.stage as string) || 'Idea',
+      (body.pi as string) || 'nick',
+      slug,
+    ).run();
   }
 
   await logActivity(env, 'project_update', `Updated project fields: ${Object.keys(body).join(', ')}`, user.email, id, 'project');
@@ -778,7 +793,7 @@ async function handleDigest(url: URL, env: Env): Promise<Response> {
   const date = url.searchParams.get('date');
   const status = url.searchParams.get('status');
   const topic = url.searchParams.get('topic');
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 100);
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 300);
 
   let query = 'SELECT * FROM research_digest WHERE 1=1';
   const params: (string | number)[] = [];

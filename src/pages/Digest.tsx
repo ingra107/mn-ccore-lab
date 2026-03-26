@@ -384,20 +384,20 @@ export default function Digest() {
     date: activeDate,
     status: statusFilter === 'all' ? undefined : statusFilter,
     topic: topicFilter ?? undefined,
-    limit: 50,
+    limit: 200,
   })
 
-  // Gather all unique topics from current papers for filter pills
+  // Gather all unique topics from ALL papers for this date (not just filtered)
+  // Count papers by status for the active date
+  const { data: allPapersForDate = [] } = useDigest({ date: activeDate, limit: 200 })
+
   const allTopics = useMemo(() => {
     const topicSet = new Set<string>()
-    papers.forEach((p) => {
+    allPapersForDate.forEach((p) => {
       parseTopics(p.topics).forEach((t) => topicSet.add(t))
     })
     return Array.from(topicSet).sort()
-  }, [papers])
-
-  // Count papers by status for the active date (fetch all papers for this date to get counts)
-  const { data: allPapersForDate = [] } = useDigest({ date: activeDate, limit: 100 })
+  }, [allPapersForDate])
   const statusCounts = useMemo(() => {
     const counts = { all: allPapersForDate.length, new: 0, saved: 0 }
     allPapersForDate.forEach((p) => {
