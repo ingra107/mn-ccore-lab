@@ -1,4 +1,5 @@
 import { useScrollReveal } from '../hooks/useScrollReveal'
+import { usePageMeta } from '../hooks/usePageMeta'
 import PipelineCard from '../components/dashboard/PipelineCard'
 import StatsCard from '../components/dashboard/StatsCard'
 import UpcomingCard from '../components/dashboard/UpcomingCard'
@@ -10,6 +11,10 @@ import ActionBoardCard from '../components/dashboard/ActionBoardCard'
 import ProjectHealthCard from '../components/dashboard/ProjectHealthCard'
 
 export default function Dashboard() {
+  usePageMeta(
+    'Dashboard | MN-CCORE Lab',
+    'Research command center for MN-CCORE. Track active projects, grant timelines, action items, and collaboration metrics across the consortium.'
+  )
   const headerRef = useScrollReveal<HTMLDivElement>()
 
   return (

@@ -20,6 +20,8 @@ import ResearchImpact from '../components/ResearchImpact'
 import CollaborationNetwork from '../components/CollaborationNetwork'
 import RecentActivity from '../components/RecentActivity'
 import CLIFMap from '../components/CLIFMap'
+import UpcomingMeetingBanner from '../components/UpcomingMeetingBanner'
+import LatestDigest from '../components/LatestDigest'
 import { usePageMeta } from '../hooks/usePageMeta'
 
 const pillars = [
@@ -125,6 +127,36 @@ export default function Home() {
   const [heroVisible, setHeroVisible] = useState(false)
   const pillarsRef = useScrollRevealGroup('.fade-in-up', 150)
   const affiliatesRef = useScrollRevealGroup('.fade-in-up', 100)
+
+  // JSON-LD structured data for organization
+  useEffect(() => {
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'ResearchOrganization',
+      'name': 'MN-CCORE',
+      'alternateName': 'Minnesota Critical Care Outcomes & Research Effort',
+      'url': 'https://mn-ccore-lab.pages.dev',
+      'description': 'Multi-center ICU research lab at the University of Minnesota',
+      'parentOrganization': {
+        '@type': 'Organization',
+        'name': 'University of Minnesota',
+      },
+      'address': {
+        '@type': 'PostalAddress',
+        'streetAddress': '420 Delaware St SE',
+        'addressLocality': 'Minneapolis',
+        'addressRegion': 'MN',
+        'postalCode': '55455',
+      },
+    }
+    const script = document.createElement('script')
+    script.type = 'application/ld+json'
+    script.textContent = JSON.stringify(jsonLd)
+    document.head.appendChild(script)
+    return () => {
+      document.head.removeChild(script)
+    }
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => setHeroVisible(true), 100)
@@ -421,6 +453,8 @@ export default function Home() {
       </section>
       </div>
 
+      <UpcomingMeetingBanner />
+
       <FeaturedResearch />
 
       <ImpactMetrics />
@@ -432,6 +466,8 @@ export default function Home() {
       <CLIFMap />
 
       <RecentActivity />
+
+      <LatestDigest />
 
       {/* Funding */}
       <div className="section-cream">

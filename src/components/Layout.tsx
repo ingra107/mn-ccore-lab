@@ -22,13 +22,16 @@ const researchDropdownLinks = [
   { to: '/digest', label: 'Digest' },
 ]
 
-// All links for footer (flat list of all pages)
-const footerLinks = [
-  { to: '/', label: 'Home' },
+// Footer link groups
+const footerResearchLinks = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/projects', label: 'Projects' },
   { to: '/meetings', label: 'Meetings' },
   { to: '/digest', label: 'Digest' },
+]
+
+const footerQuickLinks = [
+  { to: '/', label: 'Home' },
   { to: '/team', label: 'Team' },
   { to: '/nick', label: 'Ingraham Lab' },
   { to: '/nate', label: 'Mesfin Lab' },
@@ -108,7 +111,7 @@ export default function Layout() {
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 40)
-      setShowScrollTop(window.scrollY > 600)
+      setShowScrollTop(window.scrollY > 400)
     }
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
@@ -530,9 +533,9 @@ export default function Layout() {
         }}
       >
         <div className="content-container py-8 md:py-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
             {/* Column 1: About */}
-            <div>
+            <div className="lg:col-span-2">
               <h3
                 className="text-lg font-bold mb-4 tracking-wider"
                 style={{
@@ -570,7 +573,39 @@ export default function Layout() {
               </p>
             </div>
 
-            {/* Column 2: Quick Links */}
+            {/* Column 2: Research Portal */}
+            <div>
+              <h3
+                className="text-lg font-bold mb-4"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  color: '#faf8f3',
+                }}
+              >
+                Research Portal
+              </h3>
+              <ul className="space-y-3">
+                {footerResearchLinks.map((link) => (
+                  <li key={`footer-research-${link.to}`}>
+                    <Link
+                      to={link.to}
+                      className="text-sm cursor-pointer transition-colors duration-200"
+                      style={{ color: 'rgba(250, 248, 243, 0.7)' }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.color = '#c9a84c')
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.color = 'rgba(250, 248, 243, 0.7)')
+                      }
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Column 3: Quick Links */}
             <div>
               <h3
                 className="text-lg font-bold mb-4"
@@ -582,7 +617,7 @@ export default function Layout() {
                 Quick Links
               </h3>
               <ul className="space-y-3">
-                {footerLinks.map((link) => (
+                {footerQuickLinks.map((link) => (
                   <li key={`footer-${link.to}-${link.label}`}>
                     <Link
                       to={link.to}
@@ -602,7 +637,7 @@ export default function Layout() {
               </ul>
             </div>
 
-            {/* Column 3: Affiliates */}
+            {/* Column 4: Affiliates & Social */}
             <div>
               <h3
                 className="text-lg font-bold mb-4"
@@ -648,12 +683,8 @@ export default function Layout() {
                   </li>
                 ))}
               </ul>
-            </div>
-
-            {/* Column 4: Social */}
-            <div>
               <h3
-                className="text-lg font-bold mb-4"
+                className="text-lg font-bold mb-4 mt-6"
                 style={{
                   fontFamily: 'var(--font-display)',
                   color: '#faf8f3',
@@ -699,6 +730,16 @@ export default function Layout() {
           >
             &copy; {new Date().getFullYear()} MN-CCORE Lab, University of
             Minnesota. All rights reserved.
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '9px',
+                opacity: 0.3,
+                marginTop: '6px',
+              }}
+            >
+              Built with React, Cloudflare, and Claude
+            </div>
           </div>
         </div>
       </footer>
