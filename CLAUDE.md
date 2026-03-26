@@ -9,10 +9,10 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- not just a website, 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (93 commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (108 commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
-| Data | TanStack Query v5 + Cloudflare D1 (11 tables, 27 API endpoints) |
+| Data | TanStack Query v5 + Cloudflare D1 (12 tables, 30 API endpoints) — ALL LIVE |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | D1 database | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM) |
 | Living plan | `Projects/mnccore-minnesota-critical-care/ld-mnccore-hub-plan.md` (PB repo) |
@@ -63,6 +63,11 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 | `src/components/dashboard/ProjectHealthCard.tsx` | Health indicators from /api/projects/health |
 | `api/index.ts` | Cloudflare Worker -- all 27 API endpoints |
 | `api/schema-v2.sql` | D1 schema for meetings, action_items, agenda_items, project_updates |
+| `api/schema-v3.sql` | D1 schema for research_digest table |
+| `functions/api/[[route]].ts` | Pages Function catch-all — proxies /api/* to Worker |
+| `src/pages/Digest.tsx` | Research Digest browser (152 papers, topic/date/status filters) |
+| `src/components/UpcomingMeetingBanner.tsx` | Homepage meeting banner with action item count |
+| `src/components/LatestDigest.tsx` | Homepage digest preview (top 4 papers) |
 
 ## Critical Rules
 
@@ -77,11 +82,13 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 
 ## Roadmap
 
-1. **Phase 1 -- DONE:** Public website (11 pages, 50+ components)
-2. **Phase 2 -- DONE:** D1 backend + TanStack Query data layer (11 tables, 27 endpoints)
+1. **Phase 1 -- DONE:** Public website (12 pages, 60+ components)
+2. **Phase 2 -- DONE:** D1 backend + TanStack Query data layer (12 tables, 30 endpoints)
 3. **Phase 3 -- DONE:** Interactive team portal (meetings, action items, comments, updates)
-4. **Phase 4 -- DONE:** brain.db <-> D1 sync scripts, meeting automation
-5. **Phase 5 -- NEXT:** Fix Cloudflare Access paths, activate sync, mobile polish
+4. **Phase 4 -- DONE:** brain.db <-> D1 sync, meeting automation, digest sync
+5. **Phase 5 -- DONE:** D1 API activation, mobile optimization, dark mode, edge cases
+6. **Phase 6 -- DONE:** Research Digest page, homepage enhancements, nav badges, SEO
+7. **Phase 7 -- NEXT:** Re-enable auth for team launch, PB Sector, real-time features
 
 ## Known Gotchas
 
