@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import { DataProvider } from './hooks/useLocalData'
+import { AuthProvider } from './context/AuthContext'
 
 // Lazy-loaded pages — each becomes its own chunk
 const Team = lazy(() => import('./pages/Team'))
@@ -36,9 +37,10 @@ function PageLoader() {
 export default function App() {
   return (
     <BrowserRouter>
-      <DataProvider>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
+      <AuthProvider>
+        <DataProvider>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
               <Route path="/team" element={<Team />} />
@@ -53,9 +55,10 @@ export default function App() {
               <Route path="/projects/:slug" element={<ProjectDetail />} />
               <Route path="/meetings" element={<Meetings />} />
             </Route>
-          </Routes>
-        </Suspense>
-      </DataProvider>
+            </Routes>
+          </Suspense>
+        </DataProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

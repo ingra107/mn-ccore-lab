@@ -2,8 +2,8 @@ import type { Env, PublicationRow, TeamMemberRow, CollaborationGraph, GraphNode,
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cf-Access-Jwt-Assertion',
 };
 
 function json(data: unknown, status = 200): Response {
@@ -20,6 +20,40 @@ function error(message: string, status = 500): Response {
   return json({ error: message }, status);
 }
 
+// Extract authenticated user from Cloudflare Access JWT
+// The JWT is in the Cf-Access-Jwt-Assertion header, set by Cloudflare Access
+interface AuthUser {
+  email: string
+  name?: string
+}
+
+function getAuthUser(request: Request): AuthUser | null {
+  const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
+  if (!jwt) return null;
+
+  try {
+    const parts = jwt.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1]));
+    if (!payload.email) return null;
+    return {
+      email: payload.email,
+      name: payload.name || payload.email.split('@')[0],
+    };
+  } catch {
+    return null;
+  }
+}
+
+// GET /api/auth/me — return current user or 401
+function handleAuthMe(request: Request): Response {
+  const user = getAuthUser(request);
+  if (!user) {
+    return json({ authenticated: false }, 200);
+  }
+  return json({ authenticated: true, ...user });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -29,28 +63,48 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
-    if (request.method !== 'GET') {
-      return error('Method not allowed', 405);
-    }
-
     try {
-      switch (url.pathname) {
-        case '/api/publications':
-          return await handlePublications(url, env);
-        case '/api/projects':
-          return await handleProjects(url, env);
-        case '/api/team':
-          return await handleTeam(env);
-        case '/api/grants':
-          return await handleGrants(env);
-        case '/api/graph/collaboration':
-          return await handleCollaborationGraph(env);
-        case '/api/stats':
-          return await handleStats(env);
-        default:
-          // Fall through to static site serving
-          return error('Not found', 404);
+      // Auth endpoint — returns current user from Cloudflare Access JWT
+      if (url.pathname === '/api/auth/me') {
+        return handleAuthMe(request);
       }
+
+      // Read endpoints (GET only)
+      if (request.method === 'GET') {
+        switch (url.pathname) {
+          case '/api/publications':
+            return await handlePublications(url, env);
+          case '/api/projects':
+            return await handleProjects(url, env);
+          case '/api/team':
+            return await handleTeam(env);
+          case '/api/grants':
+            return await handleGrants(env);
+          case '/api/graph/collaboration':
+            return await handleCollaborationGraph(env);
+          case '/api/stats':
+            return await handleStats(env);
+        }
+      }
+
+      // Write endpoints (POST/PUT, require auth)
+      if (request.method === 'POST' || request.method === 'PUT') {
+        const user = getAuthUser(request);
+        if (!user) {
+          return error('Authentication required', 401);
+        }
+
+        // Future write endpoints go here
+        // case '/api/projects/:id': return handleUpdateProject(...)
+        return error('Not found', 404);
+      }
+
+      if (request.method !== 'GET') {
+        return error('Method not allowed', 405);
+      }
+
+      // No matching route
+      return error('Not found', 404);
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Internal server error';
       return error(message, 500);
