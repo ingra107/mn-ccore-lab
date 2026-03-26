@@ -1,4 +1,6 @@
-import { Calendar, AlertCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Calendar, AlertCircle, ArrowRight } from 'lucide-react'
+import { useMeetingsApi } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
 
 interface Deadline {
@@ -66,9 +68,37 @@ function typeColor(type: Deadline['type']): string {
 
 export default function UpcomingCard() {
   const deadlines = generateDeadlines()
+  const { data: meetings = [] } = useMeetingsApi()
+
+  // Find the most recent or upcoming meeting
+  const nextMeeting = meetings.length > 0 ? meetings[0] : null
 
   return (
     <BentoCard title="Upcoming" subtitle="Deadlines & milestones" size="span-1" icon={Calendar}>
+      {/* Next Meeting banner */}
+      {nextMeeting && (
+        <Link
+          to={`/meetings/${nextMeeting.id}`}
+          className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg mb-3"
+          style={{
+            background: 'linear-gradient(135deg, rgba(201, 168, 76, 0.08), rgba(45, 138, 138, 0.06))',
+            border: '1px solid rgba(201, 168, 76, 0.15)',
+            textDecoration: 'none',
+            transition: 'all 0.2s',
+          }}
+        >
+          <div>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 600, color: 'var(--ink)', margin: 0, lineHeight: 1.3 }}>
+              Latest Meeting
+            </p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--slate)', opacity: 0.7, margin: 0 }}>
+              {new Date(nextMeeting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {nextMeeting.title.split(':')[0]}
+            </p>
+          </div>
+          <ArrowRight size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+        </Link>
+      )}
+
       <div className="flex flex-col gap-1">
         {deadlines.map((d, i) => {
           const isUrgent = d.daysUntil >= 0 && d.daysUntil <= 30
