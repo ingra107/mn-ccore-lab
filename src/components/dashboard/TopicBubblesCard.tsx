@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { Tags } from 'lucide-react'
 import BentoCard from './BentoCard'
-import { publications } from '../../data/publications'
+import { usePublications } from '../../hooks/useApiData'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -98,6 +98,7 @@ function packBubbles(data: BubbleData[], width: number, height: number): BubbleD
 }
 
 export default function TopicBubblesCard() {
+  const { data: publications = [] } = usePublications()
   const [hovered, setHovered] = useState<string | null>(null)
   const [animated, setAnimated] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -144,7 +145,7 @@ export default function TopicBubblesCard() {
     }))
 
     return packBubbles(data, WIDTH, HEIGHT)
-  }, [])
+  }, [publications])
 
   return (
     <BentoCard title="Research Topics" subtitle="By publication count" size="span-1" icon={Tags}>

@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { GitBranch } from 'lucide-react'
 import BentoCard from './BentoCard'
-import { publications } from '../../data/publications'
+import { usePublications } from '../../hooks/useApiData'
 
 interface Stage {
   label: string
@@ -13,6 +13,7 @@ interface Stage {
 }
 
 export default function PipelineCard() {
+  const { data: publications = [] } = usePublications()
   const [animated, setAnimated] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -41,7 +42,7 @@ export default function PipelineCard() {
       { label: 'In Review', status: 'In Review', count: review, color: '#c9a84c', colorEnd: '#b8943e' },
       { label: 'Published', status: 'Published', count: published, color: '#0f1923', colorEnd: '#1a2a3d' },
     ]
-  }, [])
+  }, [publications])
 
   const maxCount = Math.max(...stages.map((s) => s.count), 1)
 

@@ -1,9 +1,7 @@
 import { Users, FlaskConical, FileText, Award } from 'lucide-react'
 import { useCountUp } from '../../hooks/useCountUp'
 import BentoCard from './BentoCard'
-import { publications } from '../../data/publications'
-import { projects } from '../../data/projects'
-import { directors, seniorMentors, facultyCollaborators, researchTeam } from '../../data/team'
+import { usePublications, useProjects, useTeam } from '../../hooks/useApiData'
 import type { LucideIcon } from 'lucide-react'
 
 interface StatItem {
@@ -61,10 +59,13 @@ function MiniStat({ icon: Icon, value, label, suffix = '', delay }: StatItem & {
 }
 
 export default function StatsCard() {
-  const teamSize = directors.length + seniorMentors.length + facultyCollaborators.length + researchTeam.length
+  const { data: publications = [] } = usePublications()
+  const { data: projects = [] } = useProjects()
+  const { data: team = [] } = useTeam()
+
+  const teamSize = team.length
   const activeProjects = projects.filter((p) => p.status === 'Active').length
   const inReview = publications.filter((p) => p.status === 'In Review').length
-  // Scholar stats from team.ts comments: Nick 2626 citations
   const totalCitations = 2626
 
   const stats: StatItem[] = [

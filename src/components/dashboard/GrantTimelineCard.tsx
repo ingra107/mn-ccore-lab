@@ -1,6 +1,6 @@
 import { Banknote } from 'lucide-react'
 import BentoCard from './BentoCard'
-import { grants } from '../../data/grants'
+import { useGrants } from '../../hooks/useApiData'
 
 // Grant timeline data — supplement static grants with plausible year ranges
 const grantTimelines = [
@@ -26,6 +26,7 @@ function mechanismColor(mechanism: string): string {
 }
 
 export default function GrantTimelineCard() {
+  const { data: grants = [] } = useGrants()
   const activeCount = grants.filter((g) => g.status === 'Active').length
   const pendingCount = grants.filter((g) => g.proposed).length
 

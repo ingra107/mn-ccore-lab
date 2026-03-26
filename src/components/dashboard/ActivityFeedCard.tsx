@@ -2,8 +2,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Activity, BookOpen, FlaskConical, Users, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
-import { publications } from '../../data/publications'
-import { projects } from '../../data/projects'
+import { usePublications, useProjects } from '../../hooks/useApiData'
 import type { LucideIcon } from 'lucide-react'
 
 interface FeedItem {
@@ -24,6 +23,9 @@ function relativeTime(monthsAgo: number): string {
 }
 
 export default function ActivityFeedCard() {
+  const { data: publications = [] } = usePublications()
+  const { data: projects = [] } = useProjects()
+
   const items = useMemo<FeedItem[]>(() => {
     const now = new Date()
     const currentYear = now.getFullYear()
@@ -81,7 +83,7 @@ export default function ActivityFeedCard() {
     })
 
     return feed.slice(0, 8)
-  }, [])
+  }, [publications, projects])
 
   return (
     <BentoCard title="Recent Activity" subtitle="Lab updates" size="span-1x2" icon={Activity}>
