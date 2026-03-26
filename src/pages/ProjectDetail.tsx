@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useData } from '../hooks/useLocalData'
+import { useUpdateProject } from '../hooks/useMutations'
 import { directors, getAllMembers } from '../data/team'
 import Avatar from '../components/Avatar'
 import ProjectComments from '../components/ProjectComments'
@@ -137,6 +138,15 @@ function ProjectDetailInner({
   addProjectNote,
   toggleActionItem,
 }: InnerProps) {
+  // D1 mutation — writes to cloud database (persists across browsers)
+  const d1Update = useUpdateProject(project.slug)
+
+  // Dual-write: localStorage (instant) + D1 (persistent)
+  function updateProjectBoth(slug: string, updates: Partial<Project>) {
+    updateProject(slug, updates) // localStorage (instant feedback)
+    d1Update.mutate(updates)     // D1 (persistent, syncs to other users)
+  }
+
   const cat = CATEGORY_COLORS[project.category] ?? {
     bg: 'var(--slate)',
     text: '#faf8f3',
@@ -189,14 +199,14 @@ function ProjectDetailInner({
 
   function confirmStageChange() {
     if (!confirmStage) return
-    updateProject(project.slug, { stage: confirmStage })
+    updateProjectBoth(project.slug, { stage: confirmStage })
     setConfirmStage(null)
   }
 
   function handleDescSave() {
     setEditingDescription(false)
     if (descDraft.trim() !== (project.description ?? '').trim()) {
-      updateProject(project.slug, { description: descDraft.trim() || undefined })
+      updateProjectBoth(project.slug, { description: descDraft.trim() || undefined })
     }
   }
 
