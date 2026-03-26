@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Award } from 'lucide-react'
-import { publications } from '../data/publications'
+import { usePublications } from '../hooks/useApiData'
 import type { Publication } from '../data/types'
 import PublicationFilters from '../components/PublicationFilters'
 import PublicationSearch from '../components/PublicationSearch'
@@ -38,6 +38,9 @@ export default function Publications() {
     'Publications | MN-CCORE Lab',
     'Selected publications from MN-CCORE lab members including research on lung-protective ventilation, CLIF data standards, COVID-19 immunomodulation, and critical care outcomes.'
   )
+
+  // Live D1 data in production, static fallback in dev
+  const { data: publications = [] } = usePublications()
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -138,7 +141,7 @@ export default function Publications() {
     }
 
     return result
-  }, [activeYears, activeStatuses, activeTopics, searchTerm])
+  }, [publications, activeYears, activeStatuses, activeTopics, searchTerm])
 
   const hasFilters =
     activeYears.length > 0 ||
@@ -159,7 +162,7 @@ export default function Publications() {
           p.status === 'Published' &&
           KEY_JOURNALS.some((j) => p.journal.includes(j))
       ),
-    []
+    [publications]
   )
 
   const pubsRef = useScrollRevealGroup('.fade-in-up', 80)

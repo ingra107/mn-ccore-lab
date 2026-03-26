@@ -101,6 +101,10 @@ function rowToGrant(row: GrantRow): Grant {
 }
 
 // ── Query hooks ─────────────────────────────────────────────
+//
+// Each queryFn catches API errors and falls back to static data.
+// This means in dev (no API), components always get data.
+// In production (Cloudflare Pages), the API works natively.
 
 const STALE_TIME = 5 * 60 * 1000 // 5 minutes
 
@@ -112,12 +116,14 @@ export function usePublications(params?: {
   return useQuery({
     queryKey: ['publications', params],
     queryFn: async () => {
-      const res = await fetchPublications(params)
-      return res.data.map(rowToPublication)
+      try {
+        const res = await fetchPublications(params)
+        return res.data.map(rowToPublication)
+      } catch {
+        return staticPublications
+      }
     },
     staleTime: STALE_TIME,
-    placeholderData: staticPublications,
-    retry: false, // Don't retry in dev — fall back to static data
   })
 }
 
@@ -125,12 +131,14 @@ export function useTeam() {
   return useQuery({
     queryKey: ['team'],
     queryFn: async () => {
-      const res = await fetchTeam()
-      return res.data.map(rowToTeamMember)
+      try {
+        const res = await fetchTeam()
+        return res.data.map(rowToTeamMember)
+      } catch {
+        return getAllMembers()
+      }
     },
     staleTime: STALE_TIME,
-    placeholderData: getAllMembers(),
-    retry: false,
   })
 }
 
@@ -138,12 +146,14 @@ export function useProjects(params?: { status?: string; category?: string }) {
   return useQuery({
     queryKey: ['projects', params],
     queryFn: async () => {
-      const res = await fetchProjects(params)
-      return res.data.map(rowToProject)
+      try {
+        const res = await fetchProjects(params)
+        return res.data.map(rowToProject)
+      } catch {
+        return staticProjects
+      }
     },
     staleTime: STALE_TIME,
-    placeholderData: staticProjects,
-    retry: false,
   })
 }
 
@@ -151,12 +161,14 @@ export function useGrants() {
   return useQuery({
     queryKey: ['grants'],
     queryFn: async () => {
-      const res = await fetchGrants()
-      return res.data.map(rowToGrant)
+      try {
+        const res = await fetchGrants()
+        return res.data.map(rowToGrant)
+      } catch {
+        return staticGrants
+      }
     },
     staleTime: STALE_TIME,
-    placeholderData: staticGrants,
-    retry: false,
   })
 }
 
@@ -164,11 +176,14 @@ export function useCollaborationGraph() {
   return useQuery({
     queryKey: ['graph', 'collaboration'],
     queryFn: async () => {
-      const res = await fetchCollaborationGraph()
-      return res.data
+      try {
+        const res = await fetchCollaborationGraph()
+        return res.data
+      } catch {
+        return null
+      }
     },
     staleTime: STALE_TIME,
-    retry: false,
   })
 }
 
@@ -176,10 +191,13 @@ export function useStats() {
   return useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
-      const res = await fetchStats()
-      return res.data
+      try {
+        const res = await fetchStats()
+        return res.data
+      } catch {
+        return null
+      }
     },
     staleTime: STALE_TIME,
-    retry: false,
   })
 }
