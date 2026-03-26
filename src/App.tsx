@@ -27,6 +27,7 @@ const Network = lazy(() => import('./pages/Network'))
 const Projects = lazy(() => import('./pages/Projects'))
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'))
 const Meetings = lazy(() => import('./pages/Meetings'))
+const MeetingDetail = lazy(() => import('./pages/MeetingDetail'))
 
 function PageLoader() {
   return (
@@ -65,6 +66,7 @@ export default function App() {
                   <Route path="/projects" element={<Projects />} />
                   <Route path="/projects/:slug" element={<ProjectDetail />} />
                   <Route path="/meetings" element={<Meetings />} />
+                <Route path="/meetings/:id" element={<MeetingDetail />} />
                 </Route>
               </Routes>
             </Suspense>

@@ -251,3 +251,177 @@ export function useActivity(limit: number = 20) {
     staleTime: 60 * 1000,
   })
 }
+
+// ── Meetings & Team Portal ──────────────────────────────────
+
+export interface MeetingRow {
+  id: string
+  date: string
+  title: string
+  type: string
+  attendees: string | null
+  agenda: string | null
+  notes: string | null
+  decisions: string | null
+  status: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ActionItemRow {
+  id: string
+  meeting_id: string | null
+  project_id: string | null
+  description: string
+  assignee: string
+  due_date: string | null
+  completed: number
+  completed_at: string | null
+  completed_by: string | null
+  created_at: string
+  meeting_title?: string
+  meeting_date?: string
+}
+
+export interface AgendaItemRow {
+  id: string
+  meeting_id: string
+  content: string
+  added_by: string
+  project_id: string | null
+  type: string
+  document_url: string | null
+  sort_order: number
+  created_at: string
+}
+
+export interface ProjectUpdateRow {
+  id: string
+  project_id: string
+  author: string
+  content: string
+  update_type: string
+  created_at: string
+}
+
+export interface MeetingDetail extends MeetingRow {
+  action_items: ActionItemRow[]
+  agenda_items: AgendaItemRow[]
+}
+
+// Static meeting data for dev fallback
+import { meetings as staticMeetings } from '../data/meetings'
+
+function staticToMeetingRows(): MeetingRow[] {
+  return staticMeetings.map((m) => ({
+    id: m.id,
+    date: m.date,
+    title: m.title,
+    type: m.type,
+    attendees: JSON.stringify(m.attendees || []),
+    agenda: JSON.stringify(m.agenda || []),
+    notes: m.notes || null,
+    decisions: JSON.stringify(m.decisions || []),
+    status: 'completed',
+    created_at: m.date,
+    updated_at: m.date,
+  }))
+}
+
+export function useMeetingsApi() {
+  return useQuery({
+    queryKey: ['meetings'],
+    queryFn: async () => {
+      const res = await fetch('/api/meetings')
+      if (!res.ok) throw new Error('Failed')
+      const data = await res.json()
+      return data.data as MeetingRow[]
+    },
+    initialData: staticToMeetingRows(),
+    staleTime: STALE_TIME,
+    retry: false,
+  })
+}
+
+export function useMeetingDetail(id: string) {
+  // Build dev fallback from static data
+  const staticMeeting = staticMeetings.find((m) => m.id === id)
+  const fallback: MeetingDetail | null = staticMeeting ? {
+    id: staticMeeting.id,
+    date: staticMeeting.date,
+    title: staticMeeting.title,
+    type: staticMeeting.type,
+    attendees: JSON.stringify(staticMeeting.attendees || []),
+    agenda: JSON.stringify(staticMeeting.agenda || []),
+    notes: staticMeeting.notes || null,
+    decisions: JSON.stringify(staticMeeting.decisions || []),
+    status: 'completed',
+    created_at: staticMeeting.date,
+    updated_at: staticMeeting.date,
+    action_items: (staticMeeting.actionItems || []).map((a, i) => ({
+      id: `static-ai-${i}`,
+      meeting_id: staticMeeting.id,
+      project_id: a.projectSlug || null,
+      description: a.description,
+      assignee: a.assignee,
+      due_date: a.dueDate || null,
+      completed: a.completed ? 1 : 0,
+      completed_at: null,
+      completed_by: null,
+      created_at: staticMeeting.date,
+    })),
+    agenda_items: [],
+  } : null
+
+  return useQuery({
+    queryKey: ['meeting', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/meetings/${id}`)
+      if (!res.ok) throw new Error('Not found')
+      const data = await res.json()
+      return data.data as MeetingDetail
+    },
+    initialData: fallback ?? undefined,
+    staleTime: 60 * 1000,
+    enabled: !!id,
+    retry: false,
+  })
+}
+
+export function useActionItems(filters?: { assignee?: string; completed?: string }) {
+  return useQuery({
+    queryKey: ['action-items', filters],
+    queryFn: async () => {
+      try {
+        const qs = new URLSearchParams()
+        if (filters?.assignee) qs.set('assignee', filters.assignee)
+        if (filters?.completed) qs.set('completed', filters.completed)
+        const res = await fetch(`/api/action-items?${qs}`)
+        if (!res.ok) return []
+        const data = await res.json()
+        return data.data as ActionItemRow[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useProjectUpdates(slug: string) {
+  return useQuery({
+    queryKey: ['project-updates', slug],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/projects/${slug}/updates`)
+        if (!res.ok) return []
+        const data = await res.json()
+        return data.data as ProjectUpdateRow[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: 60 * 1000,
+    enabled: !!slug,
+  })
+}

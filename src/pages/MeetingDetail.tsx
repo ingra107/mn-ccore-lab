@@ -1,0 +1,399 @@
+import { useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+  Circle,
+  ListChecks,
+  MessageSquarePlus,
+  FileText,
+  Lightbulb,
+  Users,
+  Plus,
+  ExternalLink,
+} from 'lucide-react'
+import { usePageMeta } from '../hooks/usePageMeta'
+import { useMeetingDetail } from '../hooks/useApiData'
+import type { ActionItemRow as ActionItemRowType } from '../hooks/useApiData'
+import { useAuth } from '../hooks/useAuth'
+import Avatar from '../components/Avatar'
+import { directors, getAllMembers } from '../data/team'
+
+function getPersonInfo(slug: string) {
+  const director = directors.find((d) => d.slug === slug)
+  if (director) return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
+  const member = getAllMembers().find((m) => m.slug === slug)
+  if (member) return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
+  return { name: slug, initials: slug.slice(0, 2).toUpperCase(), photoUrl: undefined }
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+}
+
+function parseJsonArray(s: string | null): string[] {
+  if (!s) return []
+  try { return JSON.parse(s) } catch { return [] }
+}
+
+const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  upcoming: { bg: 'rgba(45, 138, 138, 0.15)', text: 'var(--teal)' },
+  'in-progress': { bg: 'rgba(201, 168, 76, 0.15)', text: 'var(--gold)' },
+  completed: { bg: 'rgba(34, 197, 94, 0.12)', text: '#22c55e' },
+}
+
+const AGENDA_TYPE_ICONS: Record<string, typeof Lightbulb> = {
+  discussion: MessageSquarePlus,
+  decision: Lightbulb,
+  update: FileText,
+  document: ExternalLink,
+}
+
+export default function MeetingDetail() {
+  const { id } = useParams<{ id: string }>()
+  const { data: meeting, isLoading } = useMeetingDetail(id || '')
+  const { isAuthenticated } = useAuth()
+
+  usePageMeta(
+    meeting ? `${meeting.title} | MN-CCORE` : 'Meeting | MN-CCORE',
+    'MNCCORE meeting details, agenda, action items, and decisions.'
+  )
+
+  if (isLoading) {
+    return (
+      <div className="content-container" style={{ paddingTop: '4rem', textAlign: 'center' }}>
+        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin mx-auto"
+          style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }} />
+      </div>
+    )
+  }
+
+  if (!meeting) {
+    return (
+      <div className="content-container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
+        <Link to="/meetings" className="inline-flex items-center gap-2 mb-6"
+          style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
+          <ArrowLeft size={16} /> Back to Meetings
+        </Link>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.75rem', color: 'var(--ink)' }}>
+          Meeting not found
+        </h1>
+      </div>
+    )
+  }
+
+  const attendees = parseJsonArray(meeting.attendees)
+  const autoAgenda = parseJsonArray(meeting.agenda)
+  const decisions = parseJsonArray(meeting.decisions)
+  const statusStyle = STATUS_COLORS[meeting.status] || STATUS_COLORS.completed
+  const actionItems = meeting.action_items || []
+  const teamAgendaItems = meeting.agenda_items || []
+
+  const pendingActions = actionItems.filter((a) => !a.completed)
+  const completedActions = actionItems.filter((a) => a.completed)
+
+  return (
+    <div style={{ minHeight: '100vh' }}>
+      <div className="content-container" style={{ paddingBottom: '4rem' }}>
+        {/* Back link */}
+        <div style={{ paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
+          <Link to="/meetings" className="inline-flex items-center gap-2"
+            style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)', textDecoration: 'none', opacity: 0.7 }}>
+            <ArrowLeft size={16} /> Back to Meetings
+          </Link>
+        </div>
+
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs"
+              style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', background: statusStyle.bg, color: statusStyle.text }}>
+              <Calendar size={12} /> {meeting.status}
+            </span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+              {meeting.type}
+            </span>
+          </div>
+
+          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
+            {meeting.title}
+          </h1>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--slate)', marginTop: '6px' }}>
+            {formatDate(meeting.date)}
+          </p>
+
+          {/* Attendees */}
+          {attendees.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mt-4">
+              <Users size={14} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+              {attendees.map((slug) => {
+                const p = getPersonInfo(slug)
+                return (
+                  <div key={slug} className="flex items-center gap-1.5" title={p.name}>
+                    <div style={{ width: 24, height: 24 }}>
+                      <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0" />
+                    </div>
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)' }}>{p.name.split(' ')[0]}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.3, marginTop: '1.5rem' }} />
+        </motion.div>
+
+        {/* Two-column: Agenda + Action Items */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+          {/* Left: Agenda */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+            <div className="flex items-center gap-2 mb-3">
+              <ListChecks size={16} style={{ color: 'var(--gold)' }} />
+              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+                Agenda
+              </h2>
+            </div>
+
+            <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px' }} className="detail-card">
+              {/* Auto-generated agenda items */}
+              {autoAgenda.length > 0 && (
+                <div className="mb-4">
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+                    Prepared agenda
+                  </p>
+                  <ol style={{ margin: 0, paddingLeft: '20px' }}>
+                    {autoAgenda.map((item, i) => (
+                      <li key={i} style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', lineHeight: 1.6, marginBottom: '4px' }}>
+                        {item}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* Team-added agenda items */}
+              {teamAgendaItems.length > 0 && (
+                <div className="mb-4">
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+                    Team-added items
+                  </p>
+                  {teamAgendaItems.map((item) => {
+                    const Icon = AGENDA_TYPE_ICONS[item.type] || MessageSquarePlus
+                    return (
+                      <div key={item.id} className="flex items-start gap-2 py-2" style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)' }}>
+                        <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                            Added by {item.added_by}
+                            {item.document_url && (
+                              <> · <a href={item.document_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)' }}>View document</a></>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Add agenda item form */}
+              <AddAgendaForm isAuthenticated={isAuthenticated} />
+            </div>
+          </motion.div>
+
+          {/* Right: Action Items */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }}>
+            <div className="flex items-center gap-2 mb-3">
+              <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
+              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+                Action Items
+              </h2>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                {completedActions.length}/{actionItems.length}
+              </span>
+            </div>
+
+            <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px' }} className="detail-card">
+              {/* Pending items */}
+              {pendingActions.length > 0 && (
+                <div className="mb-3">
+                  {pendingActions.map((item) => (
+                    <ActionItemRow key={item.id} item={item} />
+                  ))}
+                </div>
+              )}
+
+              {/* Completed items */}
+              {completedActions.length > 0 && (
+                <div>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.4, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+                    Completed
+                  </p>
+                  {completedActions.map((item) => (
+                    <ActionItemRow key={item.id} item={item} />
+                  ))}
+                </div>
+              )}
+
+              {actionItems.length === 0 && (
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                  No action items yet
+                </p>
+              )}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Decisions */}
+        {decisions.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }} className="mt-8">
+            <div className="flex items-center gap-2 mb-3">
+              <Lightbulb size={16} style={{ color: 'var(--gold)' }} />
+              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+                Decisions
+              </h2>
+            </div>
+            <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px' }} className="detail-card">
+              {decisions.map((d, i) => (
+                <div key={i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < decisions.length - 1 ? '1px solid rgba(201, 168, 76, 0.06)' : 'none' }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)', marginTop: '7px', flexShrink: 0 }} />
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>{d}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Notes */}
+        {meeting.notes && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.25 }} className="mt-8">
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: '0 0 12px 0' }}>
+              Meeting Notes
+            </h2>
+            <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '20px' }} className="detail-card">
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink)', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
+                {meeting.notes}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      <style>{`
+        .dark .detail-card { background: #162535 !important; }
+      `}</style>
+    </div>
+  )
+}
+
+// ── Sub-components ──────────────────────────────────────────
+
+function ActionItemRow({ item }: { item: ActionItemRowType }) {
+  const person = getPersonInfo(item.assignee)
+  const isOverdue = item.due_date && !item.completed && new Date(item.due_date) < new Date()
+
+  return (
+    <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)' }}>
+      <button type="button" className="cursor-pointer flex-shrink-0 mt-0.5"
+        style={{ background: 'none', border: 'none', padding: 0, color: item.completed ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: item.completed ? 1 : 0.5 }}>
+        {item.completed ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+      </button>
+      <div style={{ flex: 1 }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', margin: 0, lineHeight: 1.4, textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.5 : 1 }}>
+          {item.description}
+        </p>
+        <div className="flex flex-wrap items-center gap-3 mt-1">
+          <div className="flex items-center gap-1">
+            <div style={{ width: 16, height: 16 }}>
+              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[7px]" />
+            </div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{person.name.split(' ')[0]}</span>
+          </div>
+          {item.due_date && (
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
+              {isOverdue ? 'Overdue: ' : 'Due '}{new Date(item.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+          )}
+          {item.project_id && (
+            <Link to={`/projects/${item.project_id}`} style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
+              {item.project_id}
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AddAgendaForm({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const [text, setText] = useState('')
+  const [docUrl, setDocUrl] = useState('')
+  const [showDocInput, setShowDocInput] = useState(false)
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!text.trim()) return
+    // In production, this would call the API
+    // For now, show the form is ready
+    setText('')
+    setDocUrl('')
+    setShowDocInput(false)
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="flex gap-2 items-end">
+        <div style={{ flex: 1 }}>
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={isAuthenticated ? 'Add an agenda item...' : 'Sign in to add items'}
+            disabled={!isAuthenticated && import.meta.env.PROD}
+            style={{
+              width: '100%', fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+              background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: '8px',
+              padding: '8px 12px', outline: 'none', transition: 'border-color 0.2s',
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}
+          />
+        </div>
+        {text.trim() && (
+          <>
+            <motion.button type="button" onClick={() => setShowDocInput(!showDocInput)}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
+              style={{ background: 'transparent', border: '1px solid rgba(201, 168, 76, 0.2)', color: 'var(--slate)' }}
+              title="Attach document link">
+              <FileText size={14} />
+            </motion.button>
+            <motion.button type="submit" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+              className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
+              style={{ background: 'var(--gold)', color: '#0f1923', border: 'none' }}>
+              <Plus size={14} />
+            </motion.button>
+          </>
+        )}
+      </div>
+      <AnimatePresence>
+        {showDocInput && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+            <input
+              type="url" value={docUrl} onChange={(e) => setDocUrl(e.target.value)}
+              placeholder="Document URL (Google Doc, PDF, etc.)"
+              style={{
+                width: '100%', fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--ink)',
+                background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: '8px',
+                padding: '6px 10px', outline: 'none', marginTop: '6px',
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </form>
+  )
+}
