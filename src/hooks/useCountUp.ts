@@ -8,10 +8,13 @@ export function useCountUp(
   const [count, setCount] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number>(0)
+  const animatedRef = useRef(false)
   const prevTargetRef = useRef(target)
 
   const animate = useCallback((to: number) => {
     if (to === 0) return
+
+    animatedRef.current = true
 
     // Cancel any existing animation
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
@@ -75,5 +78,12 @@ export function useCountUp(
     // No cleanup here — the main effect handles RAF cleanup
   }, [target, animate])
 
-  return { count, ref }
+  // When startOnView is true, show the target value until the IntersectionObserver
+  // fires and the count-up animation begins. This prevents "0" from appearing in
+  // the DOM before the user scrolls the section into view (for SEO/accessibility).
+  // When startOnView is false (hero stats), the animation starts immediately so
+  // we always use the animated count.
+  const display = (startOnView && !animatedRef.current) ? target : count
+
+  return { count: display, ref }
 }
