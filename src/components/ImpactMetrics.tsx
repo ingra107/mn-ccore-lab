@@ -1,11 +1,22 @@
 import { useCountUp } from '../hooks/useCountUp'
+import { usePublications, useTeam, useGrants } from '../hooks/useApiData'
 
-const metrics = [
-  { value: 3, suffix: '', label: 'Active Grants' },
-  { value: 60, suffix: '+', label: 'Publications' },
-  { value: 13, suffix: '+', label: 'Research Sites' },
-  { value: 4, suffix: '', label: 'MNCCORE Trainees' },
-]
+function useImpactMetrics() {
+  const { data: publications = [] } = usePublications()
+  const { data: team = [] } = useTeam()
+  const { data: grants = [] } = useGrants()
+
+  const activeGrants = grants.filter((g) => !g.proposed).length || 2
+  const pubCount = publications.length || 63
+  const trainees = team.filter((m) => m.role?.toLowerCase().includes('fellow') || m.role?.toLowerCase().includes('trainee') || m.role?.toLowerCase().includes('coordinator') || m.role?.toLowerCase().includes('student')).length || 6
+
+  return [
+    { value: activeGrants, suffix: '', label: 'Active Grants' },
+    { value: pubCount, suffix: '+', label: 'Publications' },
+    { value: 13, suffix: '+', label: 'Research Sites' },
+    { value: trainees, suffix: '', label: 'MNCCORE Trainees' },
+  ]
+}
 
 function MetricCard({
   value,
@@ -49,6 +60,8 @@ function MetricCard({
 }
 
 export default function ImpactMetrics() {
+  const metrics = useImpactMetrics()
+
   return (
     <section
       className="section-ink relative py-10 sm:py-14"
