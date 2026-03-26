@@ -1093,6 +1093,7 @@ function ProjectDetailInner({
       <style>{`
         .dark .detail-card {
           background: #162535 !important;
+          border: 1px solid rgba(201, 168, 76, 0.12);
         }
       `}</style>
     </>

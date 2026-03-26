@@ -116,18 +116,18 @@ export default function MeetingDetail() {
             {formatLongDate(meeting.date)}
           </p>
 
-          {/* Attendees */}
+          {/* Attendees — horizontal scroll on mobile */}
           {attendees.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 mt-4">
-              <Users size={14} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+            <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-1 -mx-1 px-1 attendee-scroll">
+              <Users size={14} style={{ color: 'var(--slate)', opacity: 0.5, flexShrink: 0 }} />
               {attendees.map((slug) => {
                 const p = getPersonInfo(slug)
                 return (
-                  <div key={slug} className="flex items-center gap-1.5" title={p.name}>
+                  <div key={slug} className="flex items-center gap-1.5 flex-shrink-0" title={p.name}>
                     <div style={{ width: 24, height: 24 }}>
                       <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0" />
                     </div>
-                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)' }}>{p.name.split(' ')[0]}</span>
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{p.name.split(' ')[0]}</span>
                   </div>
                 )
               })}
@@ -137,10 +137,10 @@ export default function MeetingDetail() {
           <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.3, marginTop: '1.5rem' }} />
         </motion.div>
 
-        {/* Two-column: Agenda + Action Items */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-          {/* Left: Agenda */}
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+        {/* Two-column: Agenda + Action Items (action items first on mobile) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
+          {/* Left: Agenda (order-2 on mobile so actions show first) */}
+          <motion.div className="order-2 lg:order-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
             <div className="flex items-center gap-2 mb-3">
               <ListChecks size={16} style={{ color: 'var(--gold)' }} />
               <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
@@ -196,8 +196,8 @@ export default function MeetingDetail() {
             </div>
           </motion.div>
 
-          {/* Right: Action Items */}
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }}>
+          {/* Right: Action Items (order-1 on mobile so actions show first) */}
+          <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }}>
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
               <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
@@ -275,7 +275,16 @@ export default function MeetingDetail() {
       </div>
 
       <style>{`
-        .dark .detail-card { background: #162535 !important; }
+        .dark .detail-card { background: #162535 !important; border: 1px solid rgba(201, 168, 76, 0.12); }
+        .action-item-row:active { background: rgba(201, 168, 76, 0.06); }
+        .action-item-row:hover { background: rgba(201, 168, 76, 0.04); }
+        .dark .action-item-row:active { background: rgba(201, 168, 76, 0.1); }
+        .dark .action-item-row:hover { background: rgba(201, 168, 76, 0.06); }
+        .attendee-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+        .attendee-scroll::-webkit-scrollbar { display: none; }
+        @media (max-width: 640px) {
+          .attendee-scroll { -webkit-overflow-scrolling: touch; }
+        }
       `}</style>
     </div>
   )
@@ -288,16 +297,26 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
   const isOverdue = item.due_date && !item.completed && new Date(item.due_date) < new Date()
 
   return (
-    <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)' }}>
-      <button type="button" className="cursor-pointer flex-shrink-0 mt-0.5"
-        onClick={() => onToggle?.(item.id)}
-        style={{ background: 'none', border: 'none', padding: 0, color: item.completed ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: item.completed ? 1 : 0.5, transition: 'transform 0.15s' }}
-        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.2)')}
-        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-        title={item.completed ? 'Mark as pending' : 'Mark as completed'}>
-        {item.completed ? <CheckCircle2 size={18} /> : <Circle size={18} />}
-      </button>
-      <div style={{ flex: 1 }}>
+    <div
+      className="action-item-row flex items-start gap-3 py-2.5"
+      style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)', cursor: 'pointer', borderRadius: '6px', margin: '0 -8px', padding: '10px 8px', transition: 'background 0.15s' }}
+      onClick={() => onToggle?.(item.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle?.(item.id) } }}
+    >
+      {/* Touch target: 44px invisible hit area around the 20px circle */}
+      <div className="flex-shrink-0 relative" style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <button type="button" className="cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); onToggle?.(item.id) }}
+          style={{ background: 'none', border: 'none', padding: 0, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: item.completed ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: item.completed ? 1 : 0.5, transition: 'transform 0.15s' }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.15)')}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          title={item.completed ? 'Mark as pending' : 'Mark as completed'}>
+          {item.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+        </button>
+      </div>
+      <div style={{ flex: 1, paddingTop: '10px' }}>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', margin: 0, lineHeight: 1.4, textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.5 : 1 }}>
           {item.description}
         </p>
@@ -314,7 +333,7 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
             </span>
           )}
           {item.project_id && (
-            <Link to={`/projects/${item.project_id}`} style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
+            <Link to={`/projects/${item.project_id}`} onClick={(e) => e.stopPropagation()} style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
               {item.project_id}
             </Link>
           )}

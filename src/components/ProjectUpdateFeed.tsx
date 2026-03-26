@@ -9,11 +9,11 @@ import { getPersonInfo } from '../data/team'
 import { formatRelativeTime } from '../lib/dateUtils'
 import Avatar from './Avatar'
 
-const TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; label: string }> = {
-  progress: { icon: TrendingUp, color: 'var(--teal)', label: 'Progress' },
-  blocker: { icon: AlertTriangle, color: 'var(--maroon)', label: 'Blocker' },
-  result: { icon: CheckCircle, color: '#22c55e', label: 'Result' },
-  question: { icon: HelpCircle, color: 'var(--gold)', label: 'Question' },
+const TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; borderBg: string; label: string }> = {
+  progress: { icon: TrendingUp, color: 'var(--teal)', bg: 'rgba(45, 138, 138, 0.1)', borderBg: 'rgba(45, 138, 138, 0.25)', label: 'Progress' },
+  blocker: { icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122, 0, 25, 0.1)', borderBg: 'rgba(122, 0, 25, 0.25)', label: 'Blocker' },
+  result: { icon: CheckCircle, color: '#22c55e', bg: 'rgba(34, 197, 94, 0.1)', borderBg: 'rgba(34, 197, 94, 0.25)', label: 'Result' },
+  question: { icon: HelpCircle, color: 'var(--gold)', bg: 'rgba(201, 168, 76, 0.1)', borderBg: 'rgba(201, 168, 76, 0.25)', label: 'Question' },
 }
 
 interface Props {
@@ -70,10 +70,11 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
                   style={{
                     fontFamily: 'var(--font-mono)',
                     fontSize: '10px',
-                    background: isActive ? `${config.color}18` : 'transparent',
+                    background: isActive ? config.bg : 'transparent',
                     color: isActive ? config.color : 'var(--slate)',
-                    border: isActive ? `1px solid ${config.color}40` : '1px solid transparent',
+                    border: isActive ? `1px solid ${config.borderBg}` : '1px solid transparent',
                     opacity: isActive ? 1 : 0.5,
+                    minHeight: '32px',
                   }}
                 >
                   <Icon size={10} />
@@ -163,7 +164,7 @@ function UpdateCard({ update }: { update: ProjectUpdateRow }) {
               {person.name}
             </span>
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs"
-              style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', background: `${config.color}12`, color: config.color }}>
+              style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', background: config.bg, color: config.color }}>
               <Icon size={9} /> {config.label}
             </span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>

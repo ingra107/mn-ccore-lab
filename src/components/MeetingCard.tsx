@@ -281,12 +281,15 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                             style={{
                               background: 'none',
                               border: 'none',
-                              padding: '2px',
+                              padding: '12px',
+                              margin: '-10px',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               borderRadius: '4px',
                               transition: 'transform 0.15s ease',
+                              minWidth: '44px',
+                              minHeight: '44px',
                             }}
                             onClick={(e) => {
                               e.stopPropagation()

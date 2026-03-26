@@ -389,12 +389,15 @@ export default function Meetings() {
                         style={{
                           background: 'none',
                           border: 'none',
-                          padding: '2px',
+                          padding: '12px',
+                          margin: '-10px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           borderRadius: '4px',
                           transition: 'transform 0.15s ease',
+                          minWidth: '44px',
+                          minHeight: '44px',
                         }}
                         onClick={() => handleToggleAction(item.meetingId, item.actionIndex)}
                         onMouseEnter={(e) => {
@@ -625,12 +628,15 @@ export default function Meetings() {
                         style={{
                           background: 'none',
                           border: 'none',
-                          padding: '2px',
+                          padding: '12px',
+                          margin: '-10px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           borderRadius: '4px',
                           transition: 'transform 0.15s ease',
+                          minWidth: '44px',
+                          minHeight: '44px',
                         }}
                         onClick={() => handleToggleAction(item.meetingId, item.actionIndex)}
                         onMouseEnter={(e) => {
@@ -881,7 +887,7 @@ export default function Meetings() {
                   className="cursor-pointer inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
                   style={{
                     fontFamily: 'var(--font-mono)',
-                    minHeight: '32px',
+                    minHeight: '44px',
                     background: filter === f.key ? 'var(--gold)' : 'var(--ice)',
                     color: filter === f.key ? '#0f1923' : 'var(--slate)',
                     border: 'none',
@@ -916,6 +922,7 @@ export default function Meetings() {
                   color: 'var(--ink)',
                   fontFamily: 'var(--font-body)',
                   outline: 'none',
+                  minHeight: '44px',
                 }}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = 'var(--gold)'
@@ -975,6 +982,12 @@ export default function Meetings() {
         }
         .dark select, .dark input[type="date"] {
           color-scheme: dark;
+        }
+        .dark .action-item-card {
+          border-color: rgba(201, 168, 76, 0.12) !important;
+        }
+        .dark .meeting-card {
+          border-color: rgba(201, 168, 76, 0.12) !important;
         }
       `}</style>
     </div>

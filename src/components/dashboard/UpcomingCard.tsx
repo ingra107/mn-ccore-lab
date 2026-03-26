@@ -61,9 +61,9 @@ function formatDate(d: Date): string {
 
 function typeColor(type: Deadline['type']): string {
   switch (type) {
-    case 'grant': return '#c9a84c'
-    case 'review': return '#2d8a8a'
-    case 'milestone': return '#64748b'
+    case 'grant': return 'var(--gold)'
+    case 'review': return 'var(--teal)'
+    case 'milestone': return 'var(--slate)'
   }
 }
 

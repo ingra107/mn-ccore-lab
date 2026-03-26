@@ -156,6 +156,10 @@ export default function Dashboard() {
             grid-column: span 1;
             grid-row: span 1;
           }
+          .bento-card {
+            padding: 1rem 1rem !important;
+            border-radius: 12px !important;
+          }
         }
 
         /* Dark mode card overrides */

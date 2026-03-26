@@ -25,7 +25,7 @@ export default function ActionBoardCard() {
   return (
     <BentoCard title="Action Items" subtitle={`${pending.length} pending · ${completed.length} done`} size="span-2" icon={ClipboardList}>
       <div className="flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto -mx-1 px-1" style={{ maxHeight: '300px', scrollbarWidth: 'thin' }}>
+        <div className="flex-1 overflow-y-auto -mx-1 px-1" style={{ maxHeight: '300px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}>
           {pending.length > 0 ? (
             <div className="flex flex-col gap-3">
               {Array.from(byAssignee.entries()).map(([assignee, assigneeItems]) => {
@@ -46,11 +46,12 @@ export default function ActionBoardCard() {
                     {assigneeItems.map((item) => {
                       const isOverdue = item.due_date && new Date(item.due_date) < new Date()
                       return (
-                        <div key={item.id} className="flex items-start gap-2 py-1.5 pl-7"
-                          style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.04)' }}>
-                          <button type="button" className="cursor-pointer flex-shrink-0 mt-0.5"
-                            onClick={() => toggleAction.mutate(item.id)}
-                            style={{ background: 'none', border: 'none', padding: 0, color: 'var(--slate)', opacity: 0.4, transition: 'all 0.15s' }}
+                        <div key={item.id} className="flex items-start gap-2 py-1.5 pl-7 action-board-row"
+                          style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.04)', cursor: 'pointer', borderRadius: '4px', margin: '0 -4px', padding: '6px 4px 6px 28px', transition: 'background 0.15s' }}
+                          onClick={() => toggleAction.mutate(item.id)}>
+                          <button type="button" className="cursor-pointer flex-shrink-0"
+                            onClick={(e) => { e.stopPropagation(); toggleAction.mutate(item.id) }}
+                            style={{ background: 'none', border: 'none', padding: '8px', margin: '-8px', color: 'var(--slate)', opacity: 0.4, transition: 'all 0.15s', minWidth: '30px', minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--teal)' }}
                             onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.color = 'var(--slate)' }}>
                             <Circle size={14} />
@@ -95,6 +96,10 @@ export default function ActionBoardCard() {
           View meetings <ArrowRight size={11} />
         </Link>
       </div>
+      <style>{`
+        .action-board-row:active { background: rgba(201, 168, 76, 0.06); }
+        .action-board-row:hover { background: rgba(201, 168, 76, 0.03); }
+      `}</style>
     </BentoCard>
   )
 }

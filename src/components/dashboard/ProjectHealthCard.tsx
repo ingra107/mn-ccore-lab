@@ -16,7 +16,7 @@ const STAGE_BG: Record<string, { bg: string; text: string }> = {
   Analysis: { bg: 'rgba(201, 168, 76, 0.12)', text: 'var(--gold)' },
   Writing: { bg: 'rgba(122, 0, 25, 0.1)', text: 'var(--maroon)' },
   Review: { bg: 'rgba(201, 168, 76, 0.2)', text: 'var(--gold)' },
-  Published: { bg: 'rgba(15, 25, 35, 0.08)', text: 'var(--ink)' },
+  Published: { bg: 'rgba(100, 116, 139, 0.1)', text: 'var(--slate)' },
 }
 
 export default function ProjectHealthCard() {
@@ -88,7 +88,7 @@ export default function ProjectHealthCard() {
         {/* Scrollable project list */}
         <div
           className="flex-1 overflow-y-auto -mx-1 px-1"
-          style={{ maxHeight: '280px', scrollbarWidth: 'thin' }}
+          style={{ maxHeight: '280px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}
         >
           {/* Red projects */}
           {redProjects.map((p) => (
@@ -110,7 +110,8 @@ export default function ProjectHealthCard() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  padding: '6px 0',
+                  padding: '10px 0',
+                  minHeight: '44px',
                   fontFamily: 'var(--font-mono)',
                   fontSize: '11px',
                   color: 'var(--slate)',
@@ -183,8 +184,9 @@ function ProjectHealthRow({ project }: { project: { slug: string; title: string;
         borderBottom: '1px solid rgba(201, 168, 76, 0.04)',
         transition: 'background 0.15s',
         borderRadius: '4px',
-        padding: '6px 4px',
+        padding: '8px 4px',
         margin: '0 -4px',
+        minHeight: '44px',
       }}
       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201, 168, 76, 0.04)')}
       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
