@@ -1,11 +1,27 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Menu, X, Sun, Moon, ChevronUp } from 'lucide-react'
+import { Menu, X, Sun, Moon, ChevronUp, ChevronDown } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import PageTransition from './PageTransition'
 
-const navLinks = [
+const navLinks: { to: string; label: string; isJoin?: boolean }[] = [
+  { to: '/', label: 'Home' },
+  { to: '/team', label: 'Team' },
+  { to: '/publications', label: 'Publications' },
+  { to: '/contact', label: 'Join', isJoin: true },
+  { to: '/contact', label: 'Contact' },
+]
+
+const researchDropdownLinks = [
+  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/projects', label: 'Projects' },
+  { to: '/network', label: 'Network' },
+  { to: '/meetings', label: 'Meetings' },
+]
+
+// All links for footer (flat list of all pages)
+const footerLinks = [
   { to: '/', label: 'Home' },
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/projects', label: 'Projects' },
@@ -23,14 +39,49 @@ export default function Layout() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [researchOpen, setResearchOpen] = useState(false)
+  const [mobileResearchOpen, setMobileResearchOpen] = useState(false)
+  const researchRef = useRef<HTMLDivElement>(null)
+  const researchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const location = useLocation()
+
+  const isResearchActive = researchDropdownLinks.some(
+    (link) => location.pathname === link.to
+  )
+
+  const handleResearchEnter = useCallback(() => {
+    if (researchTimeoutRef.current) {
+      clearTimeout(researchTimeoutRef.current)
+      researchTimeoutRef.current = null
+    }
+    setResearchOpen(true)
+  }, [])
+
+  const handleResearchLeave = useCallback(() => {
+    researchTimeoutRef.current = setTimeout(() => {
+      setResearchOpen(false)
+    }, 150)
+  }, [])
 
   useEffect(() => {
     setMenuOpen(false)
+    setResearchOpen(false)
+    setMobileResearchOpen(false)
     // Delay scroll to avoid conflict with IntersectionObserver initialization
     const timer = setTimeout(() => window.scrollTo(0, 0), 50)
     return () => clearTimeout(timer)
   }, [location.pathname])
+
+  // Close desktop dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (researchRef.current && !researchRef.current.contains(e.target as Node)) {
+        setResearchOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -100,19 +151,114 @@ export default function Layout() {
 
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-6">
-            {navLinks.map((link) => (
+            {/* Home */}
+            <Link
+              to="/"
+              className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap"
+              style={{
+                fontFamily: 'var(--font-body)',
+                color: location.pathname === '/' ? 'var(--gold)' : 'var(--slate)',
+                borderBottom: location.pathname === '/' ? '2px solid var(--gold)' : '2px solid transparent',
+              }}
+            >
+              Home
+            </Link>
+
+            {/* Research Dropdown */}
+            <div
+              ref={researchRef}
+              className="relative"
+              onMouseEnter={handleResearchEnter}
+              onMouseLeave={handleResearchLeave}
+            >
+              <button
+                onClick={() => setResearchOpen(!researchOpen)}
+                className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap flex items-center gap-1"
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  color: isResearchActive ? 'var(--gold)' : 'var(--slate)',
+                  borderBottom: isResearchActive ? '2px solid var(--gold)' : '2px solid transparent',
+                  background: 'none',
+                  border: 'none',
+                  borderBottomStyle: 'solid',
+                  borderBottomWidth: '2px',
+                  padding: '8px 0',
+                }}
+              >
+                Research
+                <ChevronDown
+                  size={14}
+                  className="transition-transform duration-200"
+                  style={{
+                    transform: researchOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  }}
+                />
+              </button>
+
+              {/* Dropdown panel */}
+              <div
+                className="absolute top-full left-0 mt-1 py-2 rounded-lg"
+                style={{
+                  minWidth: '180px',
+                  background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(250, 248, 243, 0.98)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(201, 168, 76, 0.2)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                  opacity: researchOpen ? 1 : 0,
+                  transform: researchOpen ? 'translateY(0)' : 'translateY(-4px)',
+                  pointerEvents: researchOpen ? 'auto' : 'none',
+                  transition: 'opacity 200ms ease, transform 200ms ease',
+                }}
+              >
+                {researchDropdownLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className="block px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors duration-150"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      color: location.pathname === link.to ? 'var(--gold)' : 'var(--ink)',
+                      borderLeft: location.pathname === link.to
+                        ? '3px solid var(--gold)'
+                        : '3px solid transparent',
+                      background: location.pathname === link.to
+                        ? 'rgba(201, 168, 76, 0.08)'
+                        : 'transparent',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (location.pathname !== link.to) {
+                        e.currentTarget.style.background = 'rgba(201, 168, 76, 0.06)'
+                        e.currentTarget.style.borderLeftColor = 'rgba(201, 168, 76, 0.4)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (location.pathname !== link.to) {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.borderLeftColor = 'transparent'
+                      }
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Remaining top-level links */}
+            {navLinks.filter((link) => link.to !== '/').map((link) => (
               <Link
-                key={link.to}
+                key={`${link.to}-${link.label}`}
                 to={link.to}
                 className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap"
                 style={{
                   fontFamily: 'var(--font-body)',
                   color:
-                    location.pathname === link.to
+                    location.pathname === link.to && !link.isJoin
                       ? 'var(--gold)'
                       : 'var(--slate)',
                   borderBottom:
-                    location.pathname === link.to
+                    location.pathname === link.to && !link.isJoin
                       ? '2px solid var(--gold)'
                       : '2px solid transparent',
                 }}
@@ -155,7 +301,7 @@ export default function Layout() {
         <div
           className="lg:hidden overflow-hidden transition-all duration-300"
           style={{
-            maxHeight: menuOpen ? '400px' : '0',
+            maxHeight: menuOpen ? '600px' : '0',
             opacity: menuOpen ? 1 : 0,
             background: isDark
               ? 'rgba(15, 25, 35, 0.95)'
@@ -164,20 +310,98 @@ export default function Layout() {
           }}
         >
           <div className="px-4 py-4 space-y-1">
-            {navLinks.map((link) => (
+            {/* Home */}
+            <Link
+              to="/"
+              onClick={() => setMenuOpen(false)}
+              className="block px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
+              style={{
+                fontFamily: 'var(--font-body)',
+                color: location.pathname === '/' ? 'var(--gold)' : 'var(--ink)',
+                background: location.pathname === '/' ? 'rgba(201, 168, 76, 0.1)' : 'transparent',
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              Home
+            </Link>
+
+            {/* Research section (collapsible) */}
+            <button
+              onClick={() => setMobileResearchOpen(!mobileResearchOpen)}
+              className="w-full px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
+              style={{
+                fontFamily: 'var(--font-body)',
+                color: isResearchActive ? 'var(--gold)' : 'var(--ink)',
+                background: isResearchActive ? 'rgba(201, 168, 76, 0.1)' : 'transparent',
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                border: 'none',
+                textAlign: 'left',
+              }}
+            >
+              Research
+              <ChevronDown
+                size={16}
+                className="transition-transform duration-200"
+                style={{
+                  transform: mobileResearchOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  color: 'var(--slate)',
+                }}
+              />
+            </button>
+
+            {/* Research sub-items */}
+            <div
+              className="overflow-hidden transition-all duration-300"
+              style={{
+                maxHeight: mobileResearchOpen ? '240px' : '0',
+                opacity: mobileResearchOpen ? 1 : 0,
+              }}
+            >
+              {researchDropdownLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMenuOpen(false)}
+                  className="block py-2.5 rounded-md cursor-pointer text-sm font-medium transition-colors duration-200"
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    color: location.pathname === link.to ? 'var(--gold)' : 'var(--ink)',
+                    background: location.pathname === link.to ? 'rgba(201, 168, 76, 0.08)' : 'transparent',
+                    minHeight: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    paddingLeft: '24px',
+                    marginLeft: '16px',
+                    borderLeft: location.pathname === link.to
+                      ? '3px solid var(--gold)'
+                      : '3px solid rgba(201, 168, 76, 0.2)',
+                  }}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Remaining top-level links */}
+            {navLinks.filter((link) => link.to !== '/').map((link) => (
               <Link
-                key={link.to}
+                key={`mobile-${link.to}-${link.label}`}
                 to={link.to}
                 onClick={() => setMenuOpen(false)}
                 className="block px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
                 style={{
                   fontFamily: 'var(--font-body)',
                   color:
-                    location.pathname === link.to
+                    location.pathname === link.to && !link.isJoin
                       ? 'var(--gold)'
                       : 'var(--ink)',
                   background:
-                    location.pathname === link.to
+                    location.pathname === link.to && !link.isJoin
                       ? 'rgba(201, 168, 76, 0.1)'
                       : 'transparent',
                   minHeight: '44px',
@@ -262,8 +486,8 @@ export default function Layout() {
                 Quick Links
               </h3>
               <ul className="space-y-3">
-                {navLinks.map((link) => (
-                  <li key={link.to}>
+                {footerLinks.map((link) => (
+                  <li key={`footer-${link.to}-${link.label}`}>
                     <Link
                       to={link.to}
                       className="text-sm cursor-pointer transition-colors duration-200"
