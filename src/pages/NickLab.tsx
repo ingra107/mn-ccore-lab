@@ -6,7 +6,7 @@ import LabPageLayout, {
 } from '../components/LabPageLayout'
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { publications } from '../data/publications'
+import { usePublications } from '../hooks/useApiData'
 import { mentees as allMentees } from '../data/mentees'
 
 const grants = [
@@ -53,6 +53,7 @@ const labProjects = [
 const mentees = allMentees.filter((m) => m.mentor === 'nick' || m.mentor === 'shared')
 
 export default function NickLab() {
+  const { data: publications = [] } = usePublications()
   usePageMeta(
     'Nick Ingraham Lab | MN-CCORE',
     'Nick Ingraham, MD -- Assistant Professor of Pulmonary & Critical Care Medicine at the University of Minnesota. Research in provider variation, lung-protective ventilation, and CLIF Consortium data science.'

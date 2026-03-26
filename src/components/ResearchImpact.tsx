@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
-import { publications } from '../data/publications'
+import { usePublications } from '../hooks/useApiData'
 import PublicationTimeline from './PublicationTimeline'
 
 // Journals considered "high impact" for display
@@ -18,6 +18,7 @@ const HIGH_IMPACT_JOURNALS = [
 ]
 
 export default function ResearchImpact() {
+  const { data: publications = [] } = usePublications()
   const headingRef = useScrollReveal<HTMLDivElement>()
   const journalsRef = useScrollReveal<HTMLDivElement>()
 

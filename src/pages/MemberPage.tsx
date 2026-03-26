@@ -4,7 +4,7 @@ import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
 import { FlaskConical, GraduationCap } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { publications } from '../data/publications'
+import { usePublications } from '../hooks/useApiData'
 import { getMemberBySlug } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
 import { projects } from '../data/projects'
@@ -30,6 +30,7 @@ const TOPIC_COLORS: Record<string, string> = {
 }
 
 export default function MemberPage() {
+  const { data: publications = [] } = usePublications()
   const { slug } = useParams<{ slug: string }>()
   const member = slug ? getMemberBySlug(slug) : undefined
 

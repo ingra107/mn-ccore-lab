@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { BookOpen, Award, Users, ArrowRight } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
-import { publications } from '../data/publications'
+import { usePublications } from '../hooks/useApiData'
 
 interface ActivityItem {
   icon: typeof BookOpen
@@ -13,6 +13,7 @@ interface ActivityItem {
 }
 
 export default function RecentActivity() {
+  const { data: publications = [] } = usePublications()
   const ref = useScrollReveal<HTMLElement>()
 
   const activities: ActivityItem[] = useMemo(() => {
@@ -56,7 +57,7 @@ export default function RecentActivity() {
     })
 
     return items.slice(0, 5)
-  }, [])
+  }, [publications])
 
   return (
     <div className="section-cream">

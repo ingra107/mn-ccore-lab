@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { publications } from '../data/publications'
+import { usePublications } from '../hooks/useApiData'
 import CollaborationGraph from '../components/CollaborationGraph'
 import NetworkSidebar from '../components/NetworkSidebar'
 import NetworkFilters, { type NetworkFilterState } from '../components/NetworkFilters'
@@ -14,9 +14,11 @@ export default function Network() {
     'Interactive visualization of co-authorship connections across MNCCORE, CLIF, and collaborator publications.'
   )
 
+  const { data: publications = [] } = usePublications()
+
   const publishedPubs = useMemo(
     () => publications.filter((p) => p.status === 'Published'),
-    []
+    [publications]
   )
 
   const years = useMemo(() => {

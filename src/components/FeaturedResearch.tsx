@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
-import { publications } from '../data/publications'
+import { usePublications } from '../hooks/useApiData'
 
 function statusBadgeClass(status: string): string {
   switch (status) {
@@ -16,6 +16,7 @@ function statusBadgeClass(status: string): string {
 }
 
 export default function FeaturedResearch() {
+  const { data: publications = [] } = usePublications()
   const featured = publications.filter((p) => p.featured)
   const nonFeatured = publications.filter((p) => !p.featured)
 

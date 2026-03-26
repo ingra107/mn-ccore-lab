@@ -6,7 +6,7 @@ import LabPageLayout, {
 } from '../components/LabPageLayout'
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { publications } from '../data/publications'
+import { usePublications } from '../hooks/useApiData'
 import { mentees as allMentees } from '../data/mentees'
 
 const grants = [
@@ -49,6 +49,7 @@ const projects = [
 const mentees = allMentees.filter((m) => m.mentor === 'nate' || m.mentor === 'shared')
 
 export default function NateLab() {
+  const { data: publications = [] } = usePublications()
   usePageMeta(
     'Nathan Mesfin Lab | MN-CCORE',
     'Nathan Mesfin, MD — Assistant Professor of Critical Care Medicine at the University of Minnesota. Research in cardiac arrest survivability, DNR order variation, and chronic critical illness.'

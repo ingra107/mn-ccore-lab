@@ -6,18 +6,18 @@ import Avatar from '../components/Avatar'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { directors, seniorMentors, facultyCollaborators, researchTeam } from '../data/team'
 import { grants } from '../data/grants'
-import { publications } from '../data/publications'
+import { usePublications } from '../hooks/useApiData'
 import { mentees } from '../data/mentees'
 
-function getDirectorStats(slug: string) {
-  const grantCount = grants.filter((g) => g.pi === slug && !g.proposed).length
-  const pubCount = publications.filter((p) => p.authorSlugs?.includes(slug)).length
-  // Trainees are shared — show total MNCCORE trainees for both directors
-  const menteeCount = mentees.filter((m) => m.mentor === 'shared' || m.mentor === slug).length
-  return { grantCount, pubCount, menteeCount }
-}
-
 export default function Team() {
+  const { data: publications = [] } = usePublications()
+
+  function getDirectorStats(slug: string) {
+    const grantCount = grants.filter((g) => g.pi === slug && !g.proposed).length
+    const pubCount = publications.filter((p) => p.authorSlugs?.includes(slug)).length
+    const menteeCount = mentees.filter((m) => m.mentor === 'shared' || m.mentor === slug).length
+    return { grantCount, pubCount, menteeCount }
+  }
   usePageMeta(
     'Team | MN-CCORE Lab',
     'Meet the MN-CCORE research team: co-directors Nick Ingraham and Nathan Mesfin, and our research coordinators, fellows, analysts, and students.'

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useEffect, useState } from 'react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
-import { publications } from '../data/publications'
+import { usePublications } from '../hooks/useApiData'
 
 interface Node {
   id: string
@@ -25,6 +25,7 @@ const MNCCORE_NAMES = [
 ]
 
 export default function CollaborationNetwork() {
+  const { data: publications = [] } = usePublications()
   const sectionRef = useScrollReveal<HTMLElement>()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [hovered, setHovered] = useState<string | null>(null)
@@ -122,7 +123,7 @@ export default function CollaborationNetwork() {
       .sort((a, b) => b.weight - a.weight)
 
     return { nodes: nodeList, edges: edgeList }
-  }, [])
+  }, [publications])
 
   useEffect(() => {
     const canvas = canvasRef.current
