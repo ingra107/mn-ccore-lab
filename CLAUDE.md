@@ -140,3 +140,7 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 - **Sync push:** `scripts/db/sync_d1_push.py` (brain.db -> D1)
 - **Sync pull:** `scripts/db/sync_d1_pull.py` (D1 -> brain.db)
 - **Meeting automation:** `scripts/scheduled/meeting_automation.py`
+
+## Session Notes
+<!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
+
