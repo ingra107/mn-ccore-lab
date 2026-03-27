@@ -1,9 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   CheckSquare, Clock, FolderKanban, Bell, Calendar, Handshake,
   Activity, ArrowRight, Circle, AlertTriangle, TrendingUp,
-  Users,
+  Users, Send, Lightbulb,
 } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import BentoCard from '../../components/dashboard/BentoCard'
@@ -13,7 +13,7 @@ import { useProjectHealth, useActivity } from '../../hooks/useApiData'
 import { useNotifications } from '../../hooks/useNotifications'
 import { useCommitments } from '../../hooks/useCommitments'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
-import { useUpdateTaskStatus } from '../../hooks/useMutations'
+import { useUpdateTaskStatus, useCreateIdea } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
 import type { TaskRow } from '../../lib/api'
@@ -155,6 +155,9 @@ export default function Personal() {
         )}
       </div>
 
+      {/* Quick Capture */}
+      <QuickCapture />
+
       {/* Bento Grid */}
       <div className="bento-grid mt-5">
         {/* My Tasks — span 2 */}
@@ -205,6 +208,48 @@ export default function Personal() {
         }
       `}</style>
     </div>
+  )
+}
+
+// ── Quick Capture ────────────────────────────────────────────
+
+function QuickCapture() {
+  const [value, setValue] = useState('')
+  const createIdea = useCreateIdea()
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!value.trim()) return
+    createIdea.mutate({ title: value.trim() })
+    setValue('')
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-5 flex items-center gap-2">
+      <Lightbulb size={16} style={{ color: 'var(--gold)', opacity: 0.6, flexShrink: 0 }} />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="Quick capture — type an idea, thought, or note..."
+        className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:ring-1"
+        style={{
+          fontFamily: 'var(--font-sans)',
+          borderColor: 'var(--border-light)',
+          color: 'var(--ink)',
+          backgroundColor: 'white',
+        }}
+      />
+      {value.trim() && (
+        <button
+          type="submit"
+          className="p-2 rounded-lg transition-colors"
+          style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+        >
+          <Send size={14} />
+        </button>
+      )}
+    </form>
   )
 }
 

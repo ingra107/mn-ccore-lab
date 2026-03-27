@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { Calendar, List, ChevronLeft, ChevronRight, Users, CheckSquare, Diamond } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import { useCalendarEvents } from '../../hooks/useApiData'
@@ -211,15 +212,18 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
               <div className="flex flex-col gap-0.5 mt-0.5">
                 {dayEvents.slice(0, 3).map((e) => {
                   const config = eventColors[e.type] || eventColors.task
+                  const Wrapper = e.type === 'meeting' ? Link : 'div' as any
+                  const wrapperProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
                   return (
-                    <div
+                    <Wrapper
                       key={e.id}
-                      className="text-[8px] px-1 py-0.5 rounded truncate"
-                      style={{ fontFamily: 'var(--font-sans)', color: config.color, backgroundColor: config.bg }}
+                      {...wrapperProps}
+                      className="text-[8px] px-1 py-0.5 rounded truncate block"
+                      style={{ fontFamily: 'var(--font-sans)', color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }}
                       title={e.title}
                     >
                       {e.title.length > 18 ? e.title.slice(0, 18) + '...' : e.title}
-                    </div>
+                    </Wrapper>
                   )
                 })}
                 {dayEvents.length > 3 && (
@@ -282,8 +286,11 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                 const Icon = eventIcons[e.type] || Calendar
                 const assignee = e.meta?.assignee as string | undefined
 
+                const AgendaWrapper = e.type === 'meeting' ? Link : 'div' as any
+                const agendaProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
+
                 return (
-                  <div key={e.id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] transition-colors">
+                  <AgendaWrapper key={e.id} {...agendaProps} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] transition-colors" style={{ textDecoration: 'none' }}>
                     <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
                       <Icon size={12} style={{ color: config.color }} />
                     </div>
@@ -298,7 +305,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                     <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: config.color, backgroundColor: config.bg }}>
                       {e.type}
                     </span>
-                  </div>
+                  </AgendaWrapper>
                 )
               })}
             </div>
