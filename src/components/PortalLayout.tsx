@@ -1,13 +1,17 @@
 import { useState, useCallback } from 'react'
 import { Outlet } from 'react-router-dom'
-import { Menu, Sun, Moon } from 'lucide-react'
+import { Menu, Sun, Moon, Search } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import Sidebar from './Sidebar'
+import CommandPalette from './CommandPalette'
+import ShortcutHelp from './ShortcutHelp'
 import PageTransition from './PageTransition'
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 
 export default function PortalLayout() {
   const { isDark, toggle: toggleDark } = useDarkMode()
+  const { showHelp, setShowHelp, gPending } = useKeyboardShortcuts()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
     return localStorage.getItem('mn-ccore-sidebar-collapsed') === 'true'
@@ -65,6 +69,19 @@ export default function PortalLayout() {
             <Menu size={20} />
           </button>
 
+          {/* Search trigger */}
+          <button
+            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm transition-colors hover:bg-black/5"
+            style={{ borderColor: 'var(--border-light)', color: 'var(--slate)', fontFamily: 'var(--font-sans)', cursor: 'pointer', background: 'none', opacity: 0.6 }}
+          >
+            <Search size={14} />
+            <span>Search...</span>
+            <kbd className="text-[10px] px-1 py-0.5 rounded border ml-2" style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-light)' }}>
+              ⌘K
+            </kbd>
+          </button>
+
           {/* Spacer */}
           <div className="flex-1" />
 
@@ -88,6 +105,21 @@ export default function PortalLayout() {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Command Palette (global) */}
+      <CommandPalette />
+
+      {/* Shortcut Help */}
+      <ShortcutHelp open={showHelp} onClose={() => setShowHelp(false)} />
+
+      {/* G-key pending indicator */}
+      {gPending && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-full shadow-lg border" style={{ backgroundColor: 'white', borderColor: 'var(--teal)' }}>
+          <span className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)' }}>
+            G → press a key to navigate...
+          </span>
+        </div>
+      )}
     </div>
   )
 }
