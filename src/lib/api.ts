@@ -257,4 +257,64 @@ export function fetchTeamSlugs() {
   return fetchApi<{ slug: string; name: string }[]>('/api/team/slugs')
 }
 
+// ── Ideas endpoints ──────────────────────────────────────────
+
+export interface IdeaRow {
+  id: string
+  title: string
+  description: string | null
+  submitted_by: string
+  research_area: string | null
+  status: string // new, under_review, approved, parked, archived
+  votes: number
+  project_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export function fetchIdeas(params?: { status?: string; submitted_by?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.status) qs.set('status', params.status)
+  if (params?.submitted_by) qs.set('submitted_by', params.submitted_by)
+  const query = qs.toString()
+  return fetchApi<IdeaRow[]>(`/api/ideas${query ? `?${query}` : ''}`)
+}
+
+export function createIdea(input: { title: string; description?: string; research_area?: string }) {
+  return fetchApi<IdeaRow>('/api/ideas', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateIdea(id: string, fields: Record<string, unknown>) {
+  return fetchApi<IdeaRow>(`/api/ideas/${id}`, {
+    method: 'POST',
+    body: JSON.stringify(fields),
+  })
+}
+
+export function voteIdea(id: string) {
+  return fetchApi<IdeaRow>(`/api/ideas/${id}/vote`, { method: 'POST' })
+}
+
+// ── Calendar events ──────────────────────────────────────────
+
+export interface CalendarEvent {
+  id: string
+  date: string
+  title: string
+  type: string // meeting, task, milestone
+  category: string
+  meta?: Record<string, unknown>
+}
+
+export function fetchCalendarEvents(params?: { start?: string; end?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.start) qs.set('start', params.start)
+  if (params?.end) qs.set('end', params.end)
+  const query = qs.toString()
+  return fetchApi<CalendarEvent[]>(`/api/calendar/events${query ? `?${query}` : ''}`)
+}
+
 export { ApiError }

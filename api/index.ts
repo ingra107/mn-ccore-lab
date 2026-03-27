@@ -135,6 +135,10 @@ export default {
             return await handleCommitments(url, env);
           case '/api/team/slugs':
             return await handleTeamSlugs(env);
+          case '/api/ideas':
+            return await handleIdeas(url, env);
+          case '/api/calendar/events':
+            return await handleCalendarEvents(url, env);
         }
 
         // GET /api/team/:slug/cv-data
@@ -230,6 +234,23 @@ export default {
         if (request.method === 'POST' && path === '/api/notifications/read-all') {
           const body = await request.json() as Record<string, string>;
           return await handleMarkAllNotificationsRead(body.recipient || user.email.split('@')[0], env);
+        }
+
+        // POST /api/ideas — create idea
+        if (request.method === 'POST' && path === '/api/ideas') {
+          return await handleCreateIdea(request, user, env);
+        }
+
+        // POST /api/ideas/:id — update idea
+        const ideaUpdateMatch = path.match(/^\/api\/ideas\/([^/]+)$/);
+        if (request.method === 'POST' && ideaUpdateMatch) {
+          return await handleUpdateIdea(ideaUpdateMatch[1], request, user, env);
+        }
+
+        // POST /api/ideas/:id/vote — upvote idea
+        const ideaVoteMatch = path.match(/^\/api\/ideas\/([^/]+)\/vote$/);
+        if (request.method === 'POST' && ideaVoteMatch) {
+          return await handleVoteIdea(ideaVoteMatch[1], env);
         }
 
         // POST /api/digest — create/upsert digest paper
@@ -1419,4 +1440,130 @@ async function handleCommitments(url: URL, env: Env): Promise<Response> {
 
   const result = await env.DB.prepare(query).bind(...params).all();
   return json({ data: result.results || [] });
+}
+
+// ── Ideas ──────────────────────────────────────────────────
+
+// GET /api/ideas?status=&submitted_by=&research_area=
+async function handleIdeas(url: URL, env: Env): Promise<Response> {
+  const status = url.searchParams.get('status');
+  const submittedBy = url.searchParams.get('submitted_by');
+  const researchArea = url.searchParams.get('research_area');
+
+  let query = 'SELECT * FROM ideas WHERE 1=1';
+  const params: string[] = [];
+
+  if (status) { query += ' AND status = ?'; params.push(status); }
+  if (submittedBy) { query += ' AND submitted_by = ?'; params.push(submittedBy); }
+  if (researchArea) { query += ' AND research_area = ?'; params.push(researchArea); }
+
+  query += ' ORDER BY CASE status WHEN \'new\' THEN 0 WHEN \'under_review\' THEN 1 WHEN \'approved\' THEN 2 WHEN \'parked\' THEN 3 ELSE 4 END, votes DESC, created_at DESC';
+
+  const result = await env.DB.prepare(query).bind(...params).all();
+  return json({ data: result.results || [], count: result.results?.length || 0 });
+}
+
+// POST /api/ideas — create idea
+async function handleCreateIdea(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { title: string; description?: string; research_area?: string };
+  if (!body.title) return error('title required', 400);
+
+  const id = generateId();
+  const submittedBy = user.email.split('@')[0].toLowerCase();
+
+  await env.DB.prepare(
+    'INSERT INTO ideas (id, title, description, submitted_by, research_area) VALUES (?, ?, ?, ?, ?)'
+  ).bind(id, body.title, body.description || null, submittedBy, body.research_area || null).run();
+
+  await logActivity(env, 'idea', `New idea: "${body.title}"`, submittedBy, id, 'idea');
+
+  const created = await env.DB.prepare('SELECT * FROM ideas WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
+}
+
+// POST /api/ideas/:id — update idea fields
+async function handleUpdateIdea(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as Record<string, unknown>;
+  const allowedFields = ['title', 'description', 'research_area', 'status', 'project_id'];
+  const updates: string[] = [];
+  const params: unknown[] = [];
+
+  for (const field of allowedFields) {
+    if (field in body) {
+      updates.push(`${field} = ?`);
+      params.push(body[field]);
+    }
+  }
+
+  if (updates.length === 0) return error('No valid fields to update', 400);
+
+  updates.push("updated_at = datetime('now')");
+  params.push(id);
+  await env.DB.prepare(`UPDATE ideas SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+
+  const updated = await env.DB.prepare('SELECT * FROM ideas WHERE id = ?').bind(id).first();
+  if (!updated) return error('Idea not found', 404);
+  return json({ data: updated });
+}
+
+// POST /api/ideas/:id/vote — upvote
+async function handleVoteIdea(id: string, env: Env): Promise<Response> {
+  await env.DB.prepare('UPDATE ideas SET votes = votes + 1 WHERE id = ?').bind(id).run();
+  const updated = await env.DB.prepare('SELECT * FROM ideas WHERE id = ?').bind(id).first();
+  if (!updated) return error('Idea not found', 404);
+  return json({ data: updated });
+}
+
+// ── Calendar Events ─────────────────────────────────────────
+
+// GET /api/calendar/events?start=&end=
+async function handleCalendarEvents(url: URL, env: Env): Promise<Response> {
+  const startDate = url.searchParams.get('start') || new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
+  const endDate = url.searchParams.get('end') || new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0];
+
+  // Aggregate from multiple sources
+  const [meetings, tasks, milestones] = await Promise.all([
+    env.DB.prepare('SELECT id, date, title, type FROM meetings WHERE date >= ? AND date <= ? ORDER BY date')
+      .bind(startDate, endDate).all<{ id: string; date: string; title: string; type: string }>(),
+    env.DB.prepare('SELECT id, title, description, due_date, assignee, status, priority FROM tasks WHERE due_date IS NOT NULL AND due_date >= ? AND due_date <= ? AND completed = 0 ORDER BY due_date')
+      .bind(startDate, endDate).all<{ id: string; title: string; description: string; due_date: string; assignee: string; status: string; priority: string }>(),
+    env.DB.prepare('SELECT m.id, m.title, m.target_date, m.status, g.mechanism, g.title as grant_title FROM milestones m LEFT JOIN grants g ON m.grant_id = g.id WHERE m.target_date >= ? AND m.target_date <= ? ORDER BY m.target_date')
+      .bind(startDate, endDate).all<{ id: string; title: string; target_date: string; status: string; mechanism: string | null; grant_title: string | null }>(),
+  ]);
+
+  const events: { id: string; date: string; title: string; type: string; category: string; meta?: Record<string, unknown> }[] = [];
+
+  // Meetings
+  for (const m of meetings.results || []) {
+    events.push({ id: m.id, date: m.date, title: m.title, type: 'meeting', category: m.type });
+  }
+
+  // Task deadlines
+  for (const t of tasks.results || []) {
+    events.push({
+      id: t.id,
+      date: t.due_date,
+      title: t.title || t.description,
+      type: 'task',
+      category: t.priority,
+      meta: { assignee: t.assignee, status: t.status },
+    });
+  }
+
+  // Grant milestones
+  for (const m of milestones.results || []) {
+    events.push({
+      id: m.id,
+      date: m.target_date,
+      title: m.mechanism ? `${m.mechanism}: ${m.title}` : m.title,
+      type: 'milestone',
+      category: 'grant',
+      meta: { grant_title: m.grant_title },
+    });
+  }
+
+  // Sort by date
+  events.sort((a, b) => a.date.localeCompare(b.date));
+
+  return json({ data: events, count: events.length });
 }

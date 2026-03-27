@@ -20,6 +20,8 @@ import {
   fetchCollaborationGraph,
   fetchStats,
   fetchTasks,
+  fetchIdeas,
+  fetchCalendarEvents,
 } from '../lib/api'
 import type {
   PublicationRow,
@@ -29,10 +31,12 @@ import type {
   CollaborationGraph,
   Stats,
   TaskRow,
+  IdeaRow,
+  CalendarEvent,
 } from '../lib/api'
 
 // Re-export row types for components that need them
-export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow }
+export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent }
 
 // Static data imports (fallback for local dev)
 import { publications as staticPublications } from '../data/publications'
@@ -526,6 +530,32 @@ export function useProjectHealth() {
       }
     },
     staleTime: STALE_TIME,
+  })
+}
+
+// ── Ideas ────────────────────────────────────────────────────
+
+export function useIdeas(filters?: { status?: string; submitted_by?: string }) {
+  return useQuery({
+    queryKey: ['ideas', filters],
+    queryFn: async () => {
+      const res = await fetchIdeas(filters)
+      return res.data as IdeaRow[]
+    },
+    staleTime: 60 * 1000,
+  })
+}
+
+// ── Calendar Events ──────────────────────────────────────────
+
+export function useCalendarEvents(params?: { start?: string; end?: string }) {
+  return useQuery({
+    queryKey: ['calendar-events', params],
+    queryFn: async () => {
+      const res = await fetchCalendarEvents(params)
+      return res.data as CalendarEvent[]
+    },
+    staleTime: 5 * 60 * 1000,
   })
 }
 

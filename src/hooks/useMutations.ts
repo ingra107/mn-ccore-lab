@@ -8,8 +8,8 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateProject, addProjectComment, createTask, updateTaskStatus, updateTask } from '../lib/api'
-import type { TaskRow } from '../lib/api'
+import { updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea } from '../lib/api'
+import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
 import type { Comment } from './useApiData'
 
@@ -370,6 +370,58 @@ export function useUpdateTask() {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
       queryClient.invalidateQueries({ queryKey: ['action-items'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Idea mutations ──────────────────────────────────────────
+
+export function useCreateIdea() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { title: string; description?: string; research_area?: string }) =>
+      createIdea(input),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['ideas'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUpdateIdea() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, fields }: { id: string; fields: Record<string, unknown> }) =>
+      updateIdea(id, fields),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['ideas'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useVoteIdea() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => voteIdea(id),
+
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['ideas'] })
+      const queries = queryClient.getQueriesData<IdeaRow[]>({ queryKey: ['ideas'] })
+      for (const [key, data] of queries) {
+        if (data) {
+          queryClient.setQueryData(key, data.map((i) => i.id === id ? { ...i, votes: i.votes + 1 } : i))
+        }
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['ideas'] })
     },
   })
 }
