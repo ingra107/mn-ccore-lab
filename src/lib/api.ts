@@ -94,6 +94,26 @@ export interface Stats {
   featuredPublicationCount: number
 }
 
+export interface TaskRow {
+  id: string
+  meeting_id: string | null
+  project_id: string | null
+  title: string
+  description: string
+  assignee: string
+  assigned_by: string | null
+  due_date: string | null
+  priority: string // low, medium, high, urgent
+  status: string // todo, in_progress, done, blocked
+  source: string // manual, meeting, sync
+  completed: number
+  completed_at: string | null
+  completed_by: string | null
+  created_at: string
+  meeting_title?: string
+  meeting_date?: string
+}
+
 interface ApiResponse<T> {
   data: T
   count?: number
@@ -178,6 +198,63 @@ export function addProjectComment(id: string, comment: { content: string; author
     method: 'POST',
     body: JSON.stringify(comment),
   })
+}
+
+// ── Tasks endpoints ──────────────────────────────────────────
+
+export function fetchTasks(params?: {
+  assignee?: string
+  status?: string
+  priority?: string
+  project?: string
+  meeting?: string
+  source?: string
+  completed?: string
+}) {
+  const qs = new URLSearchParams()
+  if (params?.assignee) qs.set('assignee', params.assignee)
+  if (params?.status) qs.set('status', params.status)
+  if (params?.priority) qs.set('priority', params.priority)
+  if (params?.project) qs.set('project', params.project)
+  if (params?.meeting) qs.set('meeting', params.meeting)
+  if (params?.source) qs.set('source', params.source)
+  if (params?.completed) qs.set('completed', params.completed)
+  const query = qs.toString()
+  return fetchApi<TaskRow[]>(`/api/tasks${query ? `?${query}` : ''}`)
+}
+
+export function createTask(input: {
+  title?: string
+  description: string
+  assignee: string
+  meeting_id?: string
+  project_id?: string
+  due_date?: string
+  priority?: string
+  source?: string
+}) {
+  return fetchApi<TaskRow>('/api/tasks', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateTaskStatus(id: string, status: string) {
+  return fetchApi<TaskRow>(`/api/tasks/${id}/status`, {
+    method: 'POST',
+    body: JSON.stringify({ status }),
+  })
+}
+
+export function updateTask(id: string, fields: Record<string, unknown>) {
+  return fetchApi<TaskRow>(`/api/tasks/${id}`, {
+    method: 'POST',
+    body: JSON.stringify(fields),
+  })
+}
+
+export function fetchTeamSlugs() {
+  return fetchApi<{ slug: string; name: string }[]>('/api/team/slugs')
 }
 
 export { ApiError }

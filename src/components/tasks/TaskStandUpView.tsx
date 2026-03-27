@@ -1,0 +1,223 @@
+import { useMemo } from 'react'
+import { CheckCircle2, Circle, Clock, AlertTriangle } from 'lucide-react'
+import Avatar from '../Avatar'
+import { getPersonInfo } from '../../data/team'
+import { formatShortDate } from '../../lib/dateUtils'
+import type { TaskRow } from '../../lib/api'
+
+interface TaskStandUpViewProps {
+  tasks: TaskRow[]
+  onStatusChange: (id: string, status: string) => void
+}
+
+const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
+  todo: { icon: Circle, color: 'var(--slate)' },
+  in_progress: { icon: Clock, color: 'var(--teal)' },
+  done: { icon: CheckCircle2, color: 'var(--green, #22c55e)' },
+  blocked: { icon: AlertTriangle, color: 'var(--maroon)' },
+}
+
+const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
+
+export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpViewProps) {
+  // Group by assignee, excluding done tasks
+  const grouped = useMemo(() => {
+    const map = new Map<string, { todo: TaskRow[]; in_progress: TaskRow[]; blocked: TaskRow[]; done: TaskRow[] }>()
+
+    for (const task of tasks) {
+      if (!map.has(task.assignee)) {
+        map.set(task.assignee, { todo: [], in_progress: [], blocked: [], done: [] })
+      }
+      const bucket = map.get(task.assignee)!
+      const key = task.status as keyof typeof bucket
+      if (bucket[key]) {
+        bucket[key].push(task)
+      } else {
+        bucket.todo.push(task)
+      }
+    }
+
+    // Sort each person's tasks by priority
+    for (const group of map.values()) {
+      for (const arr of Object.values(group)) {
+        arr.sort((a, b) => (priorityOrder[a.priority] ?? 2) - (priorityOrder[b.priority] ?? 2))
+      }
+    }
+
+    // Sort people by count of active (non-done) tasks
+    return [...map.entries()].sort((a, b) => {
+      const aActive = a[1].todo.length + a[1].in_progress.length + a[1].blocked.length
+      const bActive = b[1].todo.length + b[1].in_progress.length + b[1].blocked.length
+      return bActive - aActive
+    })
+  }, [tasks])
+
+  return (
+    <div className="flex flex-col gap-6">
+      {grouped.map(([assignee, groups]) => {
+        const person = getPersonInfo(assignee)
+        const activeCount = groups.todo.length + groups.in_progress.length + groups.blocked.length
+
+        return (
+          <div
+            key={assignee}
+            className="rounded-xl border"
+            style={{ borderColor: 'var(--border-light)', backgroundColor: 'white' }}
+          >
+            {/* Person header */}
+            <div className="flex items-center gap-3 p-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
+              <div style={{ width: 36, height: 36 }}>
+                <Avatar
+                  name={person.name}
+                  initials={person.initials}
+                  photoUrl={person.photoUrl}
+                  size="sm"
+                  variant="ice"
+                  className="!w-9 !h-9 !min-w-0 !min-h-0 !text-[10px]"
+                />
+              </div>
+              <div>
+                <span
+                  className="text-sm font-semibold"
+                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+                >
+                  {person.name}
+                </span>
+                <span
+                  className="text-xs ml-2"
+                  style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.6 }}
+                >
+                  {activeCount} active
+                </span>
+              </div>
+            </div>
+
+            {/* Task sections */}
+            <div className="p-4 flex flex-col gap-3">
+              {/* In Progress */}
+              {groups.in_progress.length > 0 && (
+                <TaskSection
+                  label="Working On"
+                  tasks={groups.in_progress}
+                  status="in_progress"
+                  onStatusChange={onStatusChange}
+                />
+              )}
+
+              {/* Blocked */}
+              {groups.blocked.length > 0 && (
+                <TaskSection
+                  label="Blocked"
+                  tasks={groups.blocked}
+                  status="blocked"
+                  onStatusChange={onStatusChange}
+                />
+              )}
+
+              {/* To Do */}
+              {groups.todo.length > 0 && (
+                <TaskSection
+                  label="Up Next"
+                  tasks={groups.todo}
+                  status="todo"
+                  onStatusChange={onStatusChange}
+                />
+              )}
+
+              {/* Done (collapsed) */}
+              {groups.done.length > 0 && (
+                <div style={{ opacity: 0.5 }}>
+                  <span
+                    className="text-[10px] uppercase tracking-wider"
+                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}
+                  >
+                    Completed ({groups.done.length})
+                  </span>
+                </div>
+              )}
+
+              {activeCount === 0 && (
+                <div
+                  className="text-center py-4 text-sm"
+                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}
+                >
+                  All caught up
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })}
+
+      {grouped.length === 0 && (
+        <div
+          className="text-center py-12 text-sm"
+          style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}
+        >
+          No tasks match the current filters
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TaskSection({
+  label,
+  tasks,
+  status,
+  onStatusChange,
+}: {
+  label: string
+  tasks: TaskRow[]
+  status: string
+  onStatusChange: (id: string, status: string) => void
+}) {
+  const config = statusIcon[status] || statusIcon.todo
+  const Icon = config.icon
+
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <Icon size={12} style={{ color: config.color }} />
+        <span
+          className="text-[10px] uppercase tracking-wider font-semibold"
+          style={{ fontFamily: 'var(--font-mono)', color: config.color }}
+        >
+          {label}
+        </span>
+      </div>
+      <div className="flex flex-col gap-1 pl-4">
+        {tasks.map((task) => {
+          const isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
+          return (
+            <div
+              key={task.id}
+              className="flex items-center gap-2 py-1 group cursor-pointer"
+              onClick={() => onStatusChange(task.id, status === 'todo' ? 'in_progress' : status === 'in_progress' ? 'done' : 'todo')}
+            >
+              <span
+                className="text-sm flex-1"
+                style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+              >
+                {task.title || task.description}
+              </span>
+              {task.due_date && (
+                <span
+                  className="text-[10px] flex-shrink-0"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
+                    fontWeight: isOverdue ? 600 : 400,
+                    opacity: isOverdue ? 1 : 0.5,
+                  }}
+                >
+                  {isOverdue ? 'Overdue' : formatShortDate(task.due_date)}
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}

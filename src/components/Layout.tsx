@@ -4,7 +4,7 @@ import { Menu, X, Sun, Moon, ChevronUp, ChevronDown } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
-import { useActionItems, useMeetingsApi } from '../hooks/useApiData'
+import { useTasks, useMeetingsApi } from '../hooks/useApiData'
 import PageTransition from './PageTransition'
 
 const navLinks: { to: string; label: string; isJoin?: boolean }[] = [
@@ -55,14 +55,14 @@ export default function Layout() {
   const researchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const location = useLocation()
 
-  // Action items badge count (pending only, deduped)
-  const { data: actionItems = [] } = useActionItems()
+  // Task badge count (pending only, deduped)
+  const { data: tasks = [] } = useTasks()
   const pendingCount = useMemo(() => {
     const seen = new Map<string, boolean>()
     let count = 0
-    for (const item of actionItems) {
+    for (const item of tasks) {
       if (item.completed) continue
-      const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
+      const normalized = (item.title || item.description).replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
       const key = `${normalized}::${item.assignee}`
       if (!seen.has(key)) {
         seen.set(key, true)
@@ -70,7 +70,7 @@ export default function Layout() {
       }
     }
     return count
-  }, [actionItems])
+  }, [tasks])
 
   // Next upcoming meeting
   const { data: meetings = [] } = useMeetingsApi()

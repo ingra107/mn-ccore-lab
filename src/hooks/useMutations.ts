@@ -8,7 +8,8 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateProject, addProjectComment } from '../lib/api'
+import { updateProject, addProjectComment, createTask, updateTaskStatus, updateTask } from '../lib/api'
+import type { TaskRow } from '../lib/api'
 import type { Project } from '../data/types'
 import type { Comment } from './useApiData'
 
@@ -277,6 +278,97 @@ export function usePostProjectUpdate(projectSlug: string) {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['project-updates', projectSlug] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Task mutations ──────────────────────────────────────────
+
+export function useCreateTask() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      title?: string
+      description: string
+      assignee: string
+      meeting_id?: string
+      project_id?: string
+      due_date?: string
+      priority?: string
+    }) => createTask(input),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['action-items'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUpdateTaskStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      updateTaskStatus(id, status),
+
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+
+      const queries = queryClient.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
+      const snapshots: { key: readonly unknown[]; data: TaskRow[] | undefined }[] = []
+
+      for (const [key, data] of queries) {
+        snapshots.push({ key, data })
+        if (data) {
+          queryClient.setQueryData(
+            key,
+            data.map((t) =>
+              t.id === id
+                ? {
+                    ...t,
+                    status,
+                    completed: status === 'done' ? 1 : 0,
+                    completed_at: status === 'done' ? new Date().toISOString() : null,
+                  }
+                : t
+            )
+          )
+        }
+      }
+
+      return { snapshots }
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.snapshots) {
+        for (const { key, data } of context.snapshots) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['action-items'] })
+      queryClient.invalidateQueries({ queryKey: ['meeting'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUpdateTask() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, fields }: { id: string; fields: Record<string, unknown> }) =>
+      updateTask(id, fields),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['action-items'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })

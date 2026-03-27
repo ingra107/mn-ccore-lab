@@ -19,6 +19,7 @@ import {
   fetchGrants,
   fetchCollaborationGraph,
   fetchStats,
+  fetchTasks,
 } from '../lib/api'
 import type {
   PublicationRow,
@@ -27,10 +28,11 @@ import type {
   GrantRow,
   CollaborationGraph,
   Stats,
+  TaskRow,
 } from '../lib/api'
 
 // Re-export row types for components that need them
-export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats }
+export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow }
 
 // Static data imports (fallback for local dev)
 import { publications as staticPublications } from '../data/publications'
@@ -406,6 +408,27 @@ export function useActionItems(filters?: { assignee?: string; completed?: string
       } catch {
         return []
       }
+    },
+    staleTime: 60 * 1000,
+  })
+}
+
+// ── Tasks (unified task system) ──────────────────────────────
+
+export function useTasks(filters?: {
+  assignee?: string
+  status?: string
+  priority?: string
+  project?: string
+  meeting?: string
+  source?: string
+  completed?: string
+}) {
+  return useQuery({
+    queryKey: ['tasks', filters],
+    queryFn: async () => {
+      const res = await fetchTasks(filters)
+      return res.data as TaskRow[]
     },
     staleTime: 60 * 1000,
   })

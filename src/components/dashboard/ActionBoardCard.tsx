@@ -1,22 +1,28 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { CheckCircle2, Circle, ClipboardList, ArrowRight } from 'lucide-react'
+import { CheckCircle2, Circle, Clock, ClipboardList, ArrowRight, AlertTriangle } from 'lucide-react'
 import BentoCard from './BentoCard'
 import Avatar from '../Avatar'
-import { useActionItems } from '../../hooks/useApiData'
-import { useToggleActionItem } from '../../hooks/useMutations'
+import { useTasks } from '../../hooks/useApiData'
+import { useUpdateTaskStatus } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 
+const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
+  todo: { icon: Circle, color: 'var(--slate)' },
+  in_progress: { icon: Clock, color: 'var(--teal)' },
+  blocked: { icon: AlertTriangle, color: 'var(--maroon)' },
+}
+
 export default function ActionBoardCard() {
-  const { data: rawItems = [] } = useActionItems()
-  const toggleAction = useToggleActionItem()
+  const { data: rawItems = [] } = useTasks()
+  const updateStatus = useUpdateTaskStatus()
 
   // Deduplicate carried-forward items (keep most recent)
   const items = useMemo(() => {
     const seen = new Map<string, typeof rawItems[0]>()
     for (const item of rawItems) {
-      const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
+      const normalized = (item.title || item.description).replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
       const key = `${normalized}::${item.assignee}`
       const existing = seen.get(key)
       if (!existing || item.created_at > existing.created_at) {
@@ -38,7 +44,7 @@ export default function ActionBoardCard() {
   }
 
   return (
-    <BentoCard title="Action Items" subtitle={`${pending.length} pending · ${completed.length} done`} size="span-2" icon={ClipboardList}>
+    <BentoCard title="Tasks" subtitle={`${pending.length} pending · ${completed.length} done`} size="span-2" icon={ClipboardList}>
       <div className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto -mx-1 px-1" style={{ maxHeight: '300px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}>
           {pending.length > 0 ? (
@@ -60,20 +66,22 @@ export default function ActionBoardCard() {
                     </div>
                     {assigneeItems.map((item) => {
                       const isOverdue = item.due_date && new Date(item.due_date) < new Date()
+                      const si = statusIcon[item.status] || statusIcon.todo
+                      const StatusIcon = si.icon
                       return (
                         <div key={item.id} className="flex items-start gap-2 py-1.5 pl-7 action-board-row"
                           style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.04)', cursor: 'pointer', borderRadius: '4px', margin: '0 -4px', padding: '6px 4px 6px 28px', transition: 'background 0.15s' }}
-                          onClick={() => toggleAction.mutate(item.id)}>
+                          onClick={() => updateStatus.mutate({ id: item.id, status: item.status === 'todo' ? 'in_progress' : 'done' })}>
                           <button type="button" className="cursor-pointer flex-shrink-0"
-                            onClick={(e) => { e.stopPropagation(); toggleAction.mutate(item.id) }}
-                            style={{ background: 'none', border: 'none', padding: '8px', margin: '-8px', color: 'var(--slate)', opacity: 0.4, transition: 'all 0.15s', minWidth: '30px', minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: item.id, status: 'done' }) }}
+                            style={{ background: 'none', border: 'none', padding: '8px', margin: '-8px', color: si.color, opacity: 0.5, transition: 'all 0.15s', minWidth: '30px', minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--teal)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.color = 'var(--slate)' }}>
-                            <Circle size={14} />
+                            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; e.currentTarget.style.color = si.color }}>
+                            <StatusIcon size={14} />
                           </button>
                           <div style={{ flex: 1 }}>
                             <p style={{ fontFamily: 'var(--font-body)', fontSize: '11.5px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
-                              {item.description}
+                              {item.title || item.description}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               {item.due_date && (
@@ -81,9 +89,15 @@ export default function ActionBoardCard() {
                                   {isOverdue ? 'Overdue' : `Due ${formatShortDate(item.due_date)}`}
                                 </span>
                               )}
+                              {item.priority && item.priority !== 'medium' && (
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? '#c2410c' : 'var(--slate)', opacity: 0.7 }}>
+                                  {item.priority}
+                                </span>
+                              )}
                               {item.meeting_title && (
                                 <Link to={`/meetings/${item.meeting_id}`}
-                                  style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--gold)', textDecoration: 'none', opacity: 0.7 }}>
+                                  style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--gold)', textDecoration: 'none', opacity: 0.7 }}
+                                  onClick={(e) => e.stopPropagation()}>
                                   {item.meeting_title?.split(':')[0]}
                                 </Link>
                               )}
@@ -106,9 +120,9 @@ export default function ActionBoardCard() {
           )}
         </div>
 
-        <Link to="/meetings" className="flex items-center gap-1 mt-3 pt-2"
+        <Link to="/tasks" className="flex items-center gap-1 mt-3 pt-2"
           style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}>
-          View meetings <ArrowRight size={11} />
+          View all tasks <ArrowRight size={11} />
         </Link>
       </div>
       <style>{`
