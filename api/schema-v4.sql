@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX IF NOT EXISTS idx_notif_recipient ON notifications(recipient_slug, read);
 CREATE INDEX IF NOT EXISTS idx_notif_created ON notifications(created_at DESC);
 
+-- Extend milestones to support grant milestones
+ALTER TABLE milestones ADD COLUMN grant_id TEXT REFERENCES grants(id);
+
 -- Populate grant dates (these are the real dates from Nick's grants)
 UPDATE grants SET start_date = '2023-07-01', end_date = '2028-06-30'
   WHERE title LIKE '%Provider Practice Variation%' AND mechanism = 'K23';
