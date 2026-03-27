@@ -137,6 +137,10 @@ export default {
             return await handleTeamSlugs(env);
           case '/api/ideas':
             return await handleIdeas(url, env);
+          case '/api/settings':
+            return await handleGetSettings(env);
+          case '/api/workflow-templates':
+            return await handleGetWorkflowTemplates(env);
           case '/api/calendar/events':
             return await handleCalendarEvents(url, env);
         }
@@ -252,6 +256,16 @@ export default {
         const taskCommentMatch = path.match(/^\/api\/tasks\/([^/]+)\/comments$/);
         if (request.method === 'POST' && taskCommentMatch) {
           return await handleAddTaskComment(taskCommentMatch[1], request, user, env);
+        }
+
+        // POST /api/settings — update lab settings
+        if (request.method === 'POST' && path === '/api/settings') {
+          return await handleUpdateSettings(request, env);
+        }
+
+        // POST /api/workflow-templates — create/update template
+        if (request.method === 'POST' && path === '/api/workflow-templates') {
+          return await handleCreateWorkflowTemplate(request, env);
         }
 
         // POST /api/ideas — create idea
@@ -1639,4 +1653,45 @@ async function handleGetTaskActivity(taskId: string, env: Env): Promise<Response
     "SELECT * FROM activity_log WHERE related_id = ? AND related_type = 'task' ORDER BY timestamp DESC LIMIT 20"
   ).bind(taskId).all();
   return json({ data: result.results || [] });
+}
+
+// ── Lab Settings ────────────────────────────────────────────
+
+async function handleGetSettings(env: Env): Promise<Response> {
+  const result = await env.DB.prepare('SELECT key, value FROM lab_settings').all();
+  const settings: Record<string, string> = {};
+  for (const row of (result.results || []) as { key: string; value: string }[]) {
+    settings[row.key] = row.value;
+  }
+  return json({ data: settings });
+}
+
+async function handleUpdateSettings(request: Request, env: Env): Promise<Response> {
+  const body = await request.json() as Record<string, string>;
+  for (const [key, value] of Object.entries(body)) {
+    await env.DB.prepare(
+      "INSERT OR REPLACE INTO lab_settings (key, value, updated_at) VALUES (?, ?, datetime('now'))"
+    ).bind(key, value).run();
+  }
+  return await handleGetSettings(env);
+}
+
+// ── Workflow Templates ──────────────────────────────────────
+
+async function handleGetWorkflowTemplates(env: Env): Promise<Response> {
+  const result = await env.DB.prepare('SELECT * FROM workflow_templates ORDER BY is_default DESC, name ASC').all();
+  return json({ data: result.results || [] });
+}
+
+async function handleCreateWorkflowTemplate(request: Request, env: Env): Promise<Response> {
+  const body = await request.json() as { id?: string; name: string; stages: string[]; is_default?: boolean };
+  if (!body.name || !body.stages?.length) return error('name and stages required', 400);
+
+  const id = body.id || generateId();
+  await env.DB.prepare(
+    'INSERT OR REPLACE INTO workflow_templates (id, name, stages, is_default) VALUES (?, ?, ?, ?)'
+  ).bind(id, body.name, JSON.stringify(body.stages), body.is_default ? 1 : 0).run();
+
+  const created = await env.DB.prepare('SELECT * FROM workflow_templates WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
 }

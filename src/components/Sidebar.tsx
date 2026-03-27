@@ -15,6 +15,7 @@ import {
   Users as UsersIcon,
   Activity,
   BarChart3,
+  Settings,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -77,6 +78,7 @@ const navGroups: NavGroup[] = [
       { to: '/team', label: 'Team', icon: UsersIcon },
       { to: '/activity', label: 'Activity', icon: Activity },
       { to: '/analytics', label: 'Analytics', icon: BarChart3 },
+      { to: '/settings', label: 'Settings', icon: Settings },
     ],
   },
 ]
