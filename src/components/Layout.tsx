@@ -55,22 +55,9 @@ export default function Layout() {
   const researchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const location = useLocation()
 
-  // Task badge count (pending only, deduped)
+  // Task badge count (pending only, already deduped by useTasks hook)
   const { data: tasks = [] } = useTasks()
-  const pendingCount = useMemo(() => {
-    const seen = new Map<string, boolean>()
-    let count = 0
-    for (const item of tasks) {
-      if (item.completed) continue
-      const normalized = (item.title || item.description).replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
-      const key = `${normalized}::${item.assignee}`
-      if (!seen.has(key)) {
-        seen.set(key, true)
-        count++
-      }
-    }
-    return count
-  }, [tasks])
+  const pendingCount = useMemo(() => tasks.filter((t) => !t.completed).length, [tasks])
 
   // Next upcoming meeting
   const { data: meetings = [] } = useMeetingsApi()

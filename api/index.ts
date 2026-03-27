@@ -1523,7 +1523,7 @@ async function handleCalendarEvents(url: URL, env: Env): Promise<Response> {
 
   // Aggregate from multiple sources
   const [meetings, tasks, milestones] = await Promise.all([
-    env.DB.prepare('SELECT id, date, title, type FROM meetings WHERE date >= ? AND date <= ? ORDER BY date')
+    env.DB.prepare('SELECT DISTINCT id, date, title, type FROM meetings WHERE date >= ? AND date <= ? ORDER BY date')
       .bind(startDate, endDate).all<{ id: string; date: string; title: string; type: string }>(),
     env.DB.prepare('SELECT id, title, description, due_date, assignee, status, priority FROM tasks WHERE due_date IS NOT NULL AND due_date >= ? AND due_date <= ? AND completed = 0 ORDER BY due_date')
       .bind(startDate, endDate).all<{ id: string; title: string; description: string; due_date: string; assignee: string; status: string; priority: string }>(),
@@ -1562,8 +1562,17 @@ async function handleCalendarEvents(url: URL, env: Env): Promise<Response> {
     });
   }
 
-  // Sort by date
-  events.sort((a, b) => a.date.localeCompare(b.date));
+  // Dedup by title+date (meetings may have duplicates from multiple syncs with different IDs)
+  const seen = new Set<string>();
+  const deduped = events.filter((e) => {
+    const key = `${e.type}::${e.date}::${e.title}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
-  return json({ data: events, count: events.length });
+  // Sort by date
+  deduped.sort((a, b) => a.date.localeCompare(b.date));
+
+  return json({ data: deduped, count: deduped.length });
 }

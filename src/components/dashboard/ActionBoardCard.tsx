@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, Circle, Clock, ClipboardList, ArrowRight, AlertTriangle } from 'lucide-react'
 import BentoCard from './BentoCard'
@@ -15,22 +14,8 @@ const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
 }
 
 export default function ActionBoardCard() {
-  const { data: rawItems = [] } = useTasks()
+  const { data: items = [] } = useTasks() // Already deduped by useTasks hook
   const updateStatus = useUpdateTaskStatus()
-
-  // Deduplicate carried-forward items (keep most recent)
-  const items = useMemo(() => {
-    const seen = new Map<string, typeof rawItems[0]>()
-    for (const item of rawItems) {
-      const normalized = (item.title || item.description).replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
-      const key = `${normalized}::${item.assignee}`
-      const existing = seen.get(key)
-      if (!existing || item.created_at > existing.created_at) {
-        seen.set(key, item)
-      }
-    }
-    return [...seen.values()]
-  }, [rawItems])
 
   const pending = items.filter((i) => !i.completed)
   const completed = items.filter((i) => i.completed)

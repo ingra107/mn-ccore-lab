@@ -419,6 +419,20 @@ export function useActionItems(filters?: { assignee?: string; completed?: string
 
 // ── Tasks (unified task system) ──────────────────────────────
 
+// Dedup carried-forward items: normalize "[Carried forward]" prefix, keep most recent per description+assignee
+function dedupTasks(tasks: TaskRow[]): TaskRow[] {
+  const seen = new Map<string, TaskRow>()
+  for (const task of tasks) {
+    const normalized = (task.title || task.description).replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
+    const key = `${normalized}::${task.assignee}`
+    const existing = seen.get(key)
+    if (!existing || task.created_at > existing.created_at) {
+      seen.set(key, task)
+    }
+  }
+  return [...seen.values()]
+}
+
 export function useTasks(filters?: {
   assignee?: string
   status?: string
@@ -432,7 +446,7 @@ export function useTasks(filters?: {
     queryKey: ['tasks', filters],
     queryFn: async () => {
       const res = await fetchTasks(filters)
-      return res.data as TaskRow[]
+      return dedupTasks(res.data as TaskRow[])
     },
     staleTime: 60 * 1000,
   })
