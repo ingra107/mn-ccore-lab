@@ -88,7 +88,8 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 4. **Phase 4 -- DONE:** brain.db <-> D1 sync, meeting automation, digest sync
 5. **Phase 5 -- DONE:** D1 API activation, mobile optimization, dark mode, edge cases
 6. **Phase 6 -- DONE:** Research Digest page, homepage enhancements, nav badges, SEO
-7. **Phase 7 -- NEXT:** Re-enable auth for team launch, PB Sector, real-time features
+7. **Phase 7 -- DONE:** D1 migration (all pages), Grant Gantt page, CV Export, @mentions, notifications
+8. **Phase 8 -- NEXT:** Re-enable auth for team launch, SendGrid email, MyItems page, PB Sector
 
 ## Meeting Cadence
 
