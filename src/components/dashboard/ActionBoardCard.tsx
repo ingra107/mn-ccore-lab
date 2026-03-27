@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, Circle, ClipboardList, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
@@ -8,8 +9,22 @@ import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 
 export default function ActionBoardCard() {
-  const { data: items = [] } = useActionItems()
+  const { data: rawItems = [] } = useActionItems()
   const toggleAction = useToggleActionItem()
+
+  // Deduplicate carried-forward items (keep most recent)
+  const items = useMemo(() => {
+    const seen = new Map<string, typeof rawItems[0]>()
+    for (const item of rawItems) {
+      const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
+      const key = `${normalized}::${item.assignee}`
+      const existing = seen.get(key)
+      if (!existing || item.created_at > existing.created_at) {
+        seen.set(key, item)
+      }
+    }
+    return [...seen.values()]
+  }, [rawItems])
 
   const pending = items.filter((i) => !i.completed)
   const completed = items.filter((i) => i.completed)
