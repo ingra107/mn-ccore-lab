@@ -1031,7 +1031,7 @@ async function handleToggleTask(id: string, user: AuthUser, env: Env): Promise<R
 // POST /api/tasks/:id — update task fields
 async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
-  const allowedFields = ['title', 'description', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id'];
+  const allowedFields = ['title', 'description', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by'];
   const updates: string[] = [];
   const params: unknown[] = [];
 

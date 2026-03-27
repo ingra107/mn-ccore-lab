@@ -109,6 +109,7 @@ export interface TaskRow {
   completed: number
   completed_at: string | null
   completed_by: string | null
+  blocked_by: string | null
   created_at: string
   meeting_title?: string
   meeting_date?: string

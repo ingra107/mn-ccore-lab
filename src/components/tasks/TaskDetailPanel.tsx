@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   X, Circle, Clock, CheckCircle2, AlertTriangle, Send,
-  CalendarDays, FolderKanban, User, Flag, MessageSquare,
+  CalendarDays, FolderKanban, User, Flag, MessageSquare, Ban,
 } from 'lucide-react'
 import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
@@ -129,6 +129,13 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
           <FieldBlock label="Project" icon={FolderKanban}>
             <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
           </FieldBlock>
+
+          {/* Blocked By (only show when status is blocked) */}
+          {task.status === 'blocked' && (
+            <FieldBlock label="Blocked By" icon={Ban}>
+              <BlockedBySelect value={task.blocked_by || ''} onChange={(v) => handleFieldUpdate('blocked_by', v || null)} />
+            </FieldBlock>
+          )}
 
           {/* Description — editable */}
           <div>
@@ -390,6 +397,34 @@ function ProjectSelect({ value, onChange }: { value: string; onChange: (v: strin
         <option key={p.slug} value={p.slug}>{p.title}</option>
       ))}
     </select>
+  )
+}
+
+// ── Blocked By Select ────────────────────────────────────────
+
+function BlockedBySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { data: team = [] } = useTeam()
+  const members = team.filter((m) => m.slug).sort((a, b) => a.name.localeCompare(b.name))
+
+  return (
+    <div className="flex items-center gap-2">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex-1 rounded-md border px-3 py-2 text-sm cursor-pointer"
+        style={{ fontFamily: 'var(--font-sans)', color: value ? 'var(--maroon)' : 'var(--slate)', borderColor: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.03)' }}
+      >
+        <option value="">Select who is blocking...</option>
+        {members.map((m) => (
+          <option key={m.slug} value={m.slug}>{m.name}</option>
+        ))}
+      </select>
+      {value && (
+        <button onClick={() => onChange('')} className="text-xs px-2 py-1 rounded" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.5 }}>
+          Clear
+        </button>
+      )}
+    </div>
   )
 }
 

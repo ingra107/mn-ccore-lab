@@ -76,19 +76,41 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
                   className="!w-9 !h-9 !min-w-0 !min-h-0 !text-[10px]"
                 />
               </div>
-              <div>
+              <div className="flex-1">
                 <span
                   className="text-sm font-semibold"
                   style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
                 >
                   {person.name}
                 </span>
-                <span
-                  className="text-xs ml-2"
-                  style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.6 }}
-                >
-                  {activeCount} active
-                </span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded"
+                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}
+                  >
+                    {activeCount} active
+                  </span>
+                  {(() => {
+                    const overdueCount = [...groups.todo, ...groups.in_progress].filter(
+                      (t) => t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()
+                    ).length
+                    return overdueCount > 0 ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
+                        {overdueCount} overdue
+                      </span>
+                    ) : null
+                  })()}
+                  {groups.blocked.length > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.06)' }}>
+                      {groups.blocked.length} blocked
+                    </span>
+                  )}
+                  {activeCount >= 5 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: '#c2410c', backgroundColor: 'rgba(194,65,12,0.08)' }}>
+                      high load
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
