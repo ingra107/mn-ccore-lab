@@ -6,6 +6,7 @@ import type { TaskRow } from '../../lib/api'
 interface TaskBoardViewProps {
   tasks: TaskRow[]
   onStatusChange: (id: string, status: string) => void
+  onSelect?: (task: TaskRow) => void
 }
 
 const columns = [
@@ -17,7 +18,7 @@ const columns = [
 
 const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
 
-export default function TaskBoardView({ tasks, onStatusChange }: TaskBoardViewProps) {
+export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskBoardViewProps) {
   const tasksByStatus = useMemo(() => {
     const map: Record<string, TaskRow[]> = {}
     for (const col of columns) map[col.key] = []
@@ -70,7 +71,7 @@ export default function TaskBoardView({ tasks, onStatusChange }: TaskBoardViewPr
             {/* Cards */}
             <div className="flex flex-col gap-2 min-h-[200px]">
               {columnTasks.map((task) => (
-                <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} compact />
+                <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} compact onClick={onSelect ? () => onSelect(task) : undefined} />
               ))}
               {columnTasks.length === 0 && (
                 <div

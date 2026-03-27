@@ -146,6 +146,18 @@ export default {
         if (cvDataGet) {
           return await handleCVData(cvDataGet[1], env);
         }
+
+        // GET /api/tasks/:id/comments
+        const taskCommentsGet = url.pathname.match(/^\/api\/tasks\/([^/]+)\/comments$/);
+        if (taskCommentsGet) {
+          return await handleGetTaskComments(taskCommentsGet[1], env);
+        }
+
+        // GET /api/tasks/:id/activity
+        const taskActivityGet = url.pathname.match(/^\/api\/tasks\/([^/]+)\/activity$/);
+        if (taskActivityGet) {
+          return await handleGetTaskActivity(taskActivityGet[1], env);
+        }
       }
 
       // Write endpoints (POST/PUT)
@@ -234,6 +246,12 @@ export default {
         if (request.method === 'POST' && path === '/api/notifications/read-all') {
           const body = await request.json() as Record<string, string>;
           return await handleMarkAllNotificationsRead(body.recipient || user.email.split('@')[0], env);
+        }
+
+        // POST /api/tasks/:id/comments — add task comment
+        const taskCommentMatch = path.match(/^\/api\/tasks\/([^/]+)\/comments$/);
+        if (request.method === 'POST' && taskCommentMatch) {
+          return await handleAddTaskComment(taskCommentMatch[1], request, user, env);
         }
 
         // POST /api/ideas — create idea
@@ -1575,4 +1593,50 @@ async function handleCalendarEvents(url: URL, env: Env): Promise<Response> {
   deduped.sort((a, b) => a.date.localeCompare(b.date));
 
   return json({ data: deduped, count: deduped.length });
+}
+
+// ── Task Comments ───────────────────────────────────────────
+
+async function handleGetTaskComments(taskId: string, env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    'SELECT * FROM task_comments WHERE task_id = ? ORDER BY created_at DESC'
+  ).bind(taskId).all();
+  return json({ data: result.results || [] });
+}
+
+async function handleAddTaskComment(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { content: string };
+  if (!body.content?.trim()) return error('content required', 400);
+
+  const id = generateId();
+  const authorSlug = user.email.split('@')[0].toLowerCase();
+
+  await env.DB.prepare(
+    'INSERT INTO task_comments (id, task_id, author_slug, content) VALUES (?, ?, ?, ?)'
+  ).bind(id, taskId, authorSlug, body.content.trim()).run();
+
+  await logActivity(env, 'comment', `Commented on task`, authorSlug, taskId, 'task');
+
+  // Create notifications for @mentions
+  try {
+    const mentions = parseMentions(body.content);
+    for (const slug of mentions) {
+      if (slug === authorSlug) continue;
+      await env.DB.prepare(
+        'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(generateId(), slug, 'mention', 'task_comment', id, `${user.name || user.email} mentioned you`, body.content.trim().slice(0, 200), '/tasks').run();
+    }
+  } catch (e) { console.error('Failed to create task comment notifications:', e); }
+
+  const created = await env.DB.prepare('SELECT * FROM task_comments WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
+}
+
+// ── Task Activity ───────────────────────────────────────────
+
+async function handleGetTaskActivity(taskId: string, env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    "SELECT * FROM activity_log WHERE related_id = ? AND related_type = 'task' ORDER BY timestamp DESC LIMIT 20"
+  ).bind(taskId).all();
+  return json({ data: result.results || [] });
 }

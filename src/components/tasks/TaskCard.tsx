@@ -9,6 +9,7 @@ interface TaskCardProps {
   task: TaskRow
   onStatusChange: (id: string, status: string) => void
   compact?: boolean
+  onClick?: () => void
 }
 
 const statusOptions = [
@@ -25,7 +26,7 @@ const priorityConfig: Record<string, { label: string; color: string; bg: string 
   low: { label: 'Low', color: 'var(--slate)', bg: 'rgba(100, 116, 139, 0.1)' },
 }
 
-export default function TaskCard({ task, onStatusChange, compact = false }: TaskCardProps) {
+export default function TaskCard({ task, onStatusChange, compact = false, onClick }: TaskCardProps) {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const person = getPersonInfo(task.assignee)
   const priority = priorityConfig[task.priority] || priorityConfig.medium
@@ -39,11 +40,17 @@ export default function TaskCard({ task, onStatusChange, compact = false }: Task
         borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-light)',
         backgroundColor: isDone ? 'rgba(0,0,0,0.02)' : 'white',
         opacity: isDone ? 0.7 : 1,
+        cursor: onClick ? 'pointer' : 'default',
+      }}
+      onClick={(e) => {
+        // Don't trigger if clicking the status dropdown
+        if ((e.target as HTMLElement).closest('[data-status-dropdown]')) return
+        onClick?.()
       }}
     >
       <div className={`flex items-start gap-3 ${compact ? 'p-2.5' : 'p-3.5'}`}>
         {/* Status dropdown trigger */}
-        <div className="relative flex-shrink-0 mt-0.5">
+        <div className="relative flex-shrink-0 mt-0.5" data-status-dropdown>
           <button
             onClick={() => setShowStatusDropdown(!showStatusDropdown)}
             className="cursor-pointer"

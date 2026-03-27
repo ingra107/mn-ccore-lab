@@ -6,9 +6,11 @@ import TaskListView from '../../components/tasks/TaskListView'
 import TaskBoardView from '../../components/tasks/TaskBoardView'
 import TaskStandUpView from '../../components/tasks/TaskStandUpView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
+import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import { useTasks } from '../../hooks/useApiData'
 import { useCreateTask, useUpdateTaskStatus } from '../../hooks/useMutations'
+import type { TaskRow } from '../../lib/api'
 
 type ViewMode = 'list' | 'board' | 'standup' | 'timeline'
 
@@ -22,6 +24,7 @@ const views: { key: ViewMode; label: string; icon: typeof List }[] = [
 export default function Tasks() {
   const [view, setView] = useState<ViewMode>('list')
   const [showCreate, setShowCreate] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [filters, setFilters] = useState({
     assignee: '',
     status: '',
@@ -123,8 +126,8 @@ export default function Tasks() {
           </div>
         ) : (
           <>
-            {view === 'list' && <TaskListView tasks={tasks} onStatusChange={handleStatusChange} />}
-            {view === 'board' && <TaskBoardView tasks={tasks} onStatusChange={handleStatusChange} />}
+            {view === 'list' && <TaskListView tasks={tasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
+            {view === 'board' && <TaskBoardView tasks={tasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
             {view === 'standup' && <TaskStandUpView tasks={tasks} onStatusChange={handleStatusChange} />}
             {view === 'timeline' && <TaskTimelineView tasks={tasks} onStatusChange={handleStatusChange} />}
           </>
@@ -137,6 +140,14 @@ export default function Tasks() {
         onClose={() => setShowCreate(false)}
         onCreate={handleCreate}
       />
+
+      {/* Detail panel */}
+      {selectedTask && (
+        <TaskDetailPanel
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
     </div>
   )
 }

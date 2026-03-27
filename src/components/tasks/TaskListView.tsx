@@ -6,6 +6,7 @@ import type { TaskRow } from '../../lib/api'
 interface TaskListViewProps {
   tasks: TaskRow[]
   onStatusChange: (id: string, status: string) => void
+  onSelect?: (task: TaskRow) => void
 }
 
 type SortKey = 'priority' | 'due_date' | 'assignee' | 'created_at' | 'status'
@@ -13,7 +14,7 @@ type SortKey = 'priority' | 'due_date' | 'assignee' | 'created_at' | 'status'
 const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
 const statusOrder: Record<string, number> = { blocked: 0, in_progress: 1, todo: 2, done: 3 }
 
-export default function TaskListView({ tasks, onStatusChange }: TaskListViewProps) {
+export default function TaskListView({ tasks, onStatusChange, onSelect }: TaskListViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortAsc, setSortAsc] = useState(true)
 
@@ -91,7 +92,7 @@ export default function TaskListView({ tasks, onStatusChange }: TaskListViewProp
       {/* Task list */}
       <div className="flex flex-col gap-2">
         {sorted.map((task) => (
-          <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} />
+          <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} onClick={onSelect ? () => onSelect(task) : undefined} />
         ))}
         {sorted.length === 0 && (
           <div
