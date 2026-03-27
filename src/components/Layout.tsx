@@ -17,6 +17,7 @@ const navLinks: { to: string; label: string; isJoin?: boolean }[] = [
 const researchDropdownLinks = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/projects', label: 'Projects' },
+  { to: '/grants', label: 'Grants' },
   { to: '/network', label: 'Network' },
   { to: '/meetings', label: 'Meetings' },
   { to: '/digest', label: 'Digest' },
@@ -26,6 +27,7 @@ const researchDropdownLinks = [
 const footerResearchLinks = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/projects', label: 'Projects' },
+  { to: '/grants', label: 'Grants' },
   { to: '/meetings', label: 'Meetings' },
   { to: '/digest', label: 'Digest' },
 ]

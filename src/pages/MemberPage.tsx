@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { useParams, Navigate } from 'react-router-dom'
+import { useParams, Navigate, Link } from 'react-router-dom'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
-import { FlaskConical, GraduationCap } from 'lucide-react'
+import { FlaskConical, GraduationCap, FileText } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -121,6 +121,34 @@ export default function MemberPage() {
           : []),
       ]}
     >
+      {/* Export CV link */}
+      {slug && (
+        <div className="mb-6">
+          <Link
+            to={`/team/${slug}/cv`}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              background: 'var(--ice)',
+              color: 'var(--slate)',
+              border: '1px solid transparent',
+              textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--gold)'
+              e.currentTarget.style.color = 'var(--gold)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'transparent'
+              e.currentTarget.style.color = 'var(--slate)'
+            }}
+          >
+            <FileText size={12} />
+            Export CV
+          </Link>
+        </div>
+      )}
+
       {/* Mentee: Research Focus (interests + mentor info) */}
       {mentee && (
         <>

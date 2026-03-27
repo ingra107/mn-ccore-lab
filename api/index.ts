@@ -123,6 +123,20 @@ export default {
             return await handleRecentUpdates(url, env);
           case '/api/projects/health':
             return await handleProjectHealth(env);
+          case '/api/grants/timeline':
+            return await handleGrantsTimeline(env);
+          case '/api/notifications':
+            return await handleNotifications(url, request, env);
+          case '/api/notifications/count':
+            return await handleNotificationCount(url, request, env);
+          case '/api/team/slugs':
+            return await handleTeamSlugs(env);
+        }
+
+        // GET /api/team/:slug/cv-data
+        const cvDataGet = url.pathname.match(/^\/api\/team\/([^/]+)\/cv-data$/);
+        if (cvDataGet) {
+          return await handleCVData(cvDataGet[1], env);
         }
       }
 
@@ -178,6 +192,18 @@ export default {
         // POST /api/meetings — create meeting
         if (request.method === 'POST' && path === '/api/meetings') {
           return await handleCreateMeeting(request, user, env);
+        }
+
+        // POST /api/notifications/:id/read — mark notification as read
+        const notifReadMatch = path.match(/^\/api\/notifications\/([^/]+)\/read$/);
+        if (request.method === 'POST' && notifReadMatch) {
+          return await handleMarkNotificationRead(notifReadMatch[1], env);
+        }
+
+        // POST /api/notifications/read-all — mark all read
+        if (request.method === 'POST' && path === '/api/notifications/read-all') {
+          const body = await request.json() as Record<string, string>;
+          return await handleMarkAllNotificationsRead(body.recipient || user.email.split('@')[0], env);
         }
 
         // POST /api/digest — create/upsert digest paper
@@ -901,4 +927,113 @@ async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): 
 
   const created = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
+}
+
+// ── Grants Timeline ─────────────────────────────────────────
+
+async function handleGrantsTimeline(env: Env): Promise<Response> {
+  const grants = await env.DB.prepare(
+    'SELECT * FROM grants ORDER BY proposed ASC, start_date ASC'
+  ).all();
+
+  // Fetch milestones for each grant
+  const milestones = await env.DB.prepare(
+    'SELECT * FROM milestones WHERE grant_id IS NOT NULL ORDER BY target_date ASC'
+  ).all();
+
+  // Group milestones by grant_id
+  const milestonesByGrant: Record<string, unknown[]> = {};
+  for (const m of milestones.results || []) {
+    const gid = (m as Record<string, unknown>).grant_id as string;
+    if (!milestonesByGrant[gid]) milestonesByGrant[gid] = [];
+    milestonesByGrant[gid].push(m);
+  }
+
+  const data = (grants.results || []).map((g: Record<string, unknown>) => ({
+    ...g,
+    milestones: milestonesByGrant[g.id as string] || [],
+  }));
+
+  return json({ data });
+}
+
+// ── Notifications ───────────────────────────────────────────
+
+async function handleNotifications(url: URL, request: Request, env: Env): Promise<Response> {
+  const recipient = url.searchParams.get('recipient') || '';
+  const unread = url.searchParams.get('unread');
+
+  let query = 'SELECT * FROM notifications WHERE recipient_slug = ?';
+  const params: string[] = [recipient];
+
+  if (unread === '1') {
+    query += ' AND read = 0';
+  }
+  query += ' ORDER BY created_at DESC LIMIT 50';
+
+  try {
+    const result = await env.DB.prepare(query).bind(...params).all();
+    return json({ data: result.results || [] });
+  } catch {
+    return json({ data: [] });
+  }
+}
+
+async function handleNotificationCount(url: URL, request: Request, env: Env): Promise<Response> {
+  const recipient = url.searchParams.get('recipient') || '';
+  try {
+    const result = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM notifications WHERE recipient_slug = ? AND read = 0'
+    ).bind(recipient).first();
+    return json({ count: (result as Record<string, unknown>)?.count ?? 0 });
+  } catch {
+    return json({ count: 0 });
+  }
+}
+
+async function handleMarkNotificationRead(id: string, env: Env): Promise<Response> {
+  await env.DB.prepare('UPDATE notifications SET read = 1 WHERE id = ?').bind(id).run();
+  return json({ success: true });
+}
+
+async function handleMarkAllNotificationsRead(recipient: string, env: Env): Promise<Response> {
+  await env.DB.prepare('UPDATE notifications SET read = 1 WHERE recipient_slug = ? AND read = 0').bind(recipient).run();
+  return json({ success: true });
+}
+
+// ── Team Slugs (for @mention autocomplete) ──────────────────
+
+async function handleTeamSlugs(env: Env): Promise<Response> {
+  const result = await env.DB.prepare('SELECT slug, name FROM team_members WHERE slug IS NOT NULL ORDER BY name').all();
+  return json({ data: result.results || [] });
+}
+
+// ── CV Data ─────────────────────────────────────────────────
+
+async function handleCVData(slug: string, env: Env): Promise<Response> {
+  const [member, pubs, grants, mentees] = await Promise.all([
+    env.DB.prepare('SELECT * FROM team_members WHERE slug = ?').bind(slug).first(),
+    env.DB.prepare("SELECT * FROM publications WHERE author_slugs LIKE ? ORDER BY year DESC")
+      .bind(`%"${slug}"%`).all(),
+    env.DB.prepare('SELECT * FROM grants WHERE pi = ? ORDER BY proposed ASC, mechanism ASC').bind(slug).all(),
+    env.DB.prepare("SELECT * FROM team_members WHERE bio LIKE ?").bind(`%mentor%${slug}%`).all(),
+  ]);
+
+  if (!member) return error('Team member not found', 404);
+
+  return json({
+    data: {
+      member,
+      publications: pubs.results || [],
+      grants: grants.results || [],
+      mentees: mentees.results || [],
+    },
+  });
+}
+
+// ── @Mention parsing utility ────────────────────────────────
+
+function parseMentions(text: string): string[] {
+  const regex = /@([a-z][a-z0-9_-]*)/g;
+  return [...new Set(Array.from(text.matchAll(regex), m => m[1]))];
 }
