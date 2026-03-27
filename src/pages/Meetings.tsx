@@ -3,13 +3,15 @@ import { motion } from 'framer-motion'
 import { Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
-import { useMeetings } from '../hooks/useLocalData'
-import { directors, getAllMembers } from '../data/team'
+import { useMeetingsApi, useActionItems } from '../hooks/useApiData'
+import type { MeetingRow, ActionItemRow } from '../hooks/useApiData'
+import { useToggleActionItem, useCreateActionItem } from '../hooks/useMutations'
+import { directors, getAllMembers, getPersonInfo } from '../data/team'
 import { projects as projectOptions } from '../data/projects'
 import MeetingCard from '../components/MeetingCard'
 import QuickAddForm from '../components/QuickAddForm'
 import Avatar from '../components/Avatar'
-import type { ActionItem, Meeting } from '../data/types'
+import type { Meeting, ActionItem } from '../data/types'
 
 type FilterMode = 'all' | 'decisions' | 'actions'
 
@@ -23,20 +25,51 @@ const TEAM_OPTIONS = ALL_TEAM_MEMBERS.filter(
   (m, i, arr) => arr.findIndex((x) => x.slug === m.slug) === i
 )
 
-function getPersonInfo(slug: string) {
-  const director = directors.find((d) => d.slug === slug)
-  if (director) {
-    return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
+// ── Transform D1 rows → frontend Meeting type ──────────────
+
+function parseJsonArray(val: string | null): string[] {
+  if (!val) return []
+  try {
+    const parsed = JSON.parse(val)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
   }
-  const member = getAllMembers().find((m) => m.slug === slug)
-  if (member) {
-    return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
+}
+
+function meetingRowToMeeting(row: MeetingRow, actionItems: ActionItemRow[]): Meeting {
+  const meetingActions = actionItems.filter((ai) => ai.meeting_id === row.id)
+  return {
+    id: row.id,
+    date: row.date,
+    title: row.title,
+    type: row.type as Meeting['type'],
+    attendees: parseJsonArray(row.attendees),
+    agenda: parseJsonArray(row.agenda),
+    decisions: parseJsonArray(row.decisions),
+    notes: row.notes || undefined,
+    actionItems: meetingActions.map((ai) => ({
+      id: ai.id,
+      description: ai.description,
+      assignee: ai.assignee,
+      dueDate: ai.due_date || undefined,
+      completed: ai.completed === 1,
+      projectSlug: ai.project_id || undefined,
+    })),
   }
-  return { name: slug, initials: slug.slice(0, 2).toUpperCase(), photoUrl: undefined }
 }
 
 function getNextMeetingDate(meetingsList: Meeting[]): Date {
   const today = new Date()
+  // Find the next upcoming meeting
+  const upcoming = meetingsList
+    .map((m) => new Date(m.date + 'T12:00:00'))
+    .filter((d) => d >= today)
+    .sort((a, b) => a.getTime() - b.getTime())
+
+  if (upcoming.length > 0) return upcoming[0]
+
+  // Extrapolate from the most recent meeting + 14 days
   const sortedDates = meetingsList
     .map((m) => new Date(m.date + 'T12:00:00'))
     .sort((a, b) => b.getTime() - a.getTime())
@@ -74,7 +107,6 @@ interface ActionItemWithContext extends ActionItem {
   meetingDate: string
   meetingTitle: string
   meetingId: string
-  actionIndex: number
 }
 
 export default function Meetings() {
@@ -87,8 +119,17 @@ export default function Meetings() {
   const [filter, setFilter] = useState<FilterMode>('all')
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Use localStorage-backed meetings data
-  const { meetings, addMeeting, addActionItem, toggleActionItem } = useMeetings()
+  // D1 API data
+  const { data: meetingRows = [] } = useMeetingsApi()
+  const { data: actionItemRows = [] } = useActionItems()
+  const toggleMutation = useToggleActionItem()
+  const createActionMutation = useCreateActionItem()
+
+  // Transform D1 rows → Meeting objects
+  const meetings = useMemo(
+    () => meetingRows.map((row) => meetingRowToMeeting(row, actionItemRows)),
+    [meetingRows, actionItemRows]
+  )
 
   // Add action item form state
   const [showAddAction, setShowAddAction] = useState(false)
@@ -113,13 +154,12 @@ export default function Meetings() {
     const items: ActionItemWithContext[] = []
     for (const mtg of meetings) {
       if (mtg.actionItems) {
-        for (let ai = 0; ai < mtg.actionItems.length; ai++) {
+        for (const ai of mtg.actionItems) {
           items.push({
-            ...mtg.actionItems[ai],
+            ...ai,
             meetingDate: mtg.date,
             meetingTitle: mtg.title,
             meetingId: mtg.id,
-            actionIndex: ai,
           })
         }
       }
@@ -164,8 +204,8 @@ export default function Meetings() {
   ]
 
   // Handlers
-  function handleToggleAction(meetingId: string, actionIndex: number) {
-    toggleActionItem(meetingId, actionIndex)
+  function handleToggleAction(_meetingId: string, actionId: string) {
+    toggleMutation.mutate(actionId)
   }
 
   function handleAddActionItem() {
@@ -174,17 +214,14 @@ export default function Meetings() {
     // Find the most recent meeting to attach the action item to
     const sortedMeetings = [...meetings].sort((a, b) => b.date.localeCompare(a.date))
     const targetMeetingId = sortedMeetings[0]?.id
-    if (!targetMeetingId) return
 
-    const newItem: ActionItem = {
+    createActionMutation.mutate({
+      meeting_id: targetMeetingId,
       description: newActionDesc.trim(),
       assignee: newActionAssignee,
-      completed: false,
-      ...(newActionDueDate ? { dueDate: newActionDueDate } : {}),
-      ...(newActionProject ? { projectSlug: newActionProject } : {}),
-    }
-
-    addActionItem(targetMeetingId, newItem)
+      ...(newActionDueDate ? { due_date: newActionDueDate } : {}),
+      ...(newActionProject ? { project_id: newActionProject } : {}),
+    })
 
     // Reset form
     setNewActionDesc('')
@@ -197,18 +234,21 @@ export default function Meetings() {
   function handleAddMeeting() {
     if (!newMeetingDate || !newMeetingTitle.trim()) return
 
-    const newMeeting: Meeting = {
-      id: `mtg-${newMeetingDate}`,
-      date: newMeetingDate,
-      title: newMeetingTitle.trim(),
-      type: 'biweekly',
-      attendees: newMeetingAttendees,
-      agenda: newMeetingAgenda.filter((a) => a.trim()),
-      actionItems: [],
-      decisions: [],
-    }
-
-    addMeeting(newMeeting)
+    // POST to D1 API
+    fetch('/api/meetings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date: newMeetingDate,
+        title: newMeetingTitle.trim(),
+        type: 'biweekly',
+        attendees: newMeetingAttendees,
+        agenda: newMeetingAgenda.filter((a) => a.trim()),
+      }),
+    }).then(() => {
+      // Refetch meetings
+      window.location.reload()
+    })
 
     // Reset form
     setNewMeetingDate('')
@@ -371,11 +411,11 @@ export default function Meetings() {
                 Pending ({pendingActions.length})
               </h3>
               <div className="space-y-2">
-                {pendingActions.map((item, i) => {
+                {pendingActions.map((item) => {
                   const info = getPersonInfo(item.assignee)
                   return (
                     <div
-                      key={`pending-${i}`}
+                      key={item.id || item.description}
                       className="flex items-start gap-3 p-3 rounded-lg action-item-card"
                       style={{
                         background: 'var(--cream)',
@@ -399,7 +439,7 @@ export default function Meetings() {
                           minWidth: '44px',
                           minHeight: '44px',
                         }}
-                        onClick={() => handleToggleAction(item.meetingId, item.actionIndex)}
+                        onClick={() => item.id && toggleMutation.mutate(item.id)}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'scale(1.2)'
                         }}
@@ -611,11 +651,11 @@ export default function Meetings() {
                 Completed ({completedActions.length})
               </h3>
               <div className="space-y-1.5">
-                {completedActions.map((item, i) => {
+                {completedActions.map((item) => {
                   const info = getPersonInfo(item.assignee)
                   return (
                     <div
-                      key={`completed-${i}`}
+                      key={item.id || item.description}
                       className="flex items-start gap-3 p-2.5 rounded-lg action-item-card"
                       style={{
                         background: 'var(--cream)',
@@ -638,7 +678,7 @@ export default function Meetings() {
                           minWidth: '44px',
                           minHeight: '44px',
                         }}
-                        onClick={() => handleToggleAction(item.meetingId, item.actionIndex)}
+                        onClick={() => item.id && toggleMutation.mutate(item.id)}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'scale(1.2)'
                         }}

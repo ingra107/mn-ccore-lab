@@ -15,16 +15,15 @@ import {
   X,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useData } from '../hooks/useLocalData'
-import { useUpdateProject, useAddAgendaItem } from '../hooks/useMutations'
-import { useMeetingsApi } from '../hooks/useApiData'
+import { useProjects, useMeetingsApi, useActionItems } from '../hooks/useApiData'
+import { useUpdateProject, useAddAgendaItem, useToggleActionItem, usePostProjectUpdate } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import { formatMediumDate, formatTimestamp } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 import ProjectComments from '../components/ProjectComments'
 import ProjectUpdateFeed from '../components/ProjectUpdateFeed'
-import type { Project, Meeting, ActionItem } from '../data/types'
+import type { Project, ActionItem } from '../data/types'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
 type Stage = (typeof STAGES)[number]
@@ -44,7 +43,7 @@ const STATUS_CLASSES: Record<string, string> = {
 
 export default function ProjectDetail() {
   const { slug } = useParams<{ slug: string }>()
-  const { projects, meetings, updateProject, addProjectNote, toggleActionItem } = useData()
+  const { data: projects = [] } = useProjects()
 
   const project = projects.find((p) => p.slug === slug)
 
@@ -89,13 +88,7 @@ export default function ProjectDetail() {
   return (
     <div style={{ minHeight: '100vh' }}>
       <div className="content-container" style={{ paddingBottom: '4rem' }}>
-        <ProjectDetailInner
-          project={project}
-          meetings={meetings}
-          updateProject={updateProject}
-          addProjectNote={addProjectNote}
-          toggleActionItem={toggleActionItem}
-        />
+        <ProjectDetailInner project={project} />
       </div>
     </div>
   )
@@ -103,29 +96,16 @@ export default function ProjectDetail() {
 
 interface InnerProps {
   project: Project
-  meetings: Meeting[]
-  updateProject: (slug: string, updates: Partial<Project>) => void
-  addProjectNote: (slug: string, note: string, author?: string) => void
-  toggleActionItem: (meetingId: string, actionIndex: number) => void
 }
 
-function ProjectDetailInner({
-  project,
-  meetings,
-  updateProject,
-  addProjectNote,
-  toggleActionItem,
-}: InnerProps) {
-  // D1 mutation — writes to cloud database (persists across browsers)
+function ProjectDetailInner({ project }: InnerProps) {
+  // D1 mutations
   const d1Update = useUpdateProject(project.slug)
+  const toggleAction = useToggleActionItem()
+  const postUpdate = usePostProjectUpdate(project.slug)
   const { isAuthenticated } = useAuth()
   const { data: apiMeetings = [] } = useMeetingsApi()
-
-  // Dual-write: localStorage (instant) + D1 (persistent)
-  function updateProjectBoth(slug: string, updates: Partial<Project>) {
-    updateProject(slug, updates) // localStorage (instant feedback)
-    d1Update.mutate(updates)     // D1 (persistent, syncs to other users)
-  }
+  const { data: actionItemRows = [] } = useActionItems()
 
   const cat = CATEGORY_COLORS[project.category] ?? {
     bg: 'var(--slate)',
@@ -161,30 +141,30 @@ function ProjectDetailInner({
   }, [apiMeetings])
   const addAgenda = useAddAgendaItem(nextUpcomingMeeting?.id ?? '')
 
-  // Collect action items from meetings that reference this project
+  // Collect action items that reference this project (from D1)
   const relatedActions = useMemo(() => {
-    const items: { meetingId: string; meetingTitle: string; meetingDate: string; action: ActionItem; actionIndex: number }[] = []
-    for (const m of meetings) {
-      if (!m.actionItems) continue
-      m.actionItems.forEach((a: ActionItem, i: number) => {
-        if (a.projectSlug === project.title) {
-          items.push({
-            meetingId: m.id,
-            meetingTitle: m.title,
-            meetingDate: m.date,
-            action: a,
-            actionIndex: i,
-          })
-        }
-      })
-    }
+    const items = actionItemRows
+      .filter((ai) => ai.project_id === project.slug || ai.project_id === project.title)
+      .map((ai) => ({
+        meetingId: ai.meeting_id || '',
+        meetingTitle: ai.meeting_title || '',
+        meetingDate: ai.meeting_date || ai.created_at?.split('T')[0] || '',
+        action: {
+          id: ai.id,
+          description: ai.description,
+          assignee: ai.assignee,
+          dueDate: ai.due_date || undefined,
+          completed: ai.completed === 1,
+          projectSlug: ai.project_id || undefined,
+        } as ActionItem,
+      }))
     // Pending first, then completed
     items.sort((a, b) => {
       if (a.action.completed !== b.action.completed) return a.action.completed ? 1 : -1
       return b.meetingDate.localeCompare(a.meetingDate)
     })
     return items
-  }, [meetings, project.title])
+  }, [actionItemRows, project.slug, project.title])
 
   function handleStageClick(stage: Stage) {
     if (stage === project.stage) return
@@ -193,21 +173,21 @@ function ProjectDetailInner({
 
   function confirmStageChange() {
     if (!confirmStage) return
-    updateProjectBoth(project.slug, { stage: confirmStage })
+    d1Update.mutate({ stage: confirmStage })
     setConfirmStage(null)
   }
 
   function handleDescSave() {
     setEditingDescription(false)
     if (descDraft.trim() !== (project.description ?? '').trim()) {
-      updateProjectBoth(project.slug, { description: descDraft.trim() || undefined })
+      d1Update.mutate({ description: descDraft.trim() || undefined })
     }
   }
 
   function handleAddNote() {
     const text = noteText.trim()
     if (!text) return
-    addProjectNote(project.slug, text)
+    postUpdate.mutate({ content: text, update_type: 'progress' })
     setNoteText('')
   }
 
@@ -992,7 +972,7 @@ function ProjectDetailInner({
             <div className="flex flex-col gap-2">
               {relatedActions.map((item) => (
                 <motion.div
-                  key={`${item.meetingId}-${item.actionIndex}`}
+                  key={item.action.id || `${item.meetingId}-${item.action.description}`}
                   layout
                   className="flex items-start gap-3"
                   style={{
@@ -1002,7 +982,7 @@ function ProjectDetailInner({
                 >
                   <motion.button
                     type="button"
-                    onClick={() => toggleActionItem(item.meetingId, item.actionIndex)}
+                    onClick={() => item.action.id && toggleAction.mutate(item.action.id)}
                     className="cursor-pointer flex-shrink-0 mt-0.5"
                     style={{
                       background: 'none',

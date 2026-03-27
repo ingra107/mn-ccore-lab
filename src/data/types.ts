@@ -101,6 +101,7 @@ export interface ResearchPillar {
 }
 
 export interface ActionItem {
+  id?: string  // D1 action item ID (present when from API)
   description: string
   assignee: string  // team member slug
   dueDate?: string

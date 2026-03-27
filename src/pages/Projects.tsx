@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
-import { useProjects } from '../hooks/useLocalData'
+import { useProjects } from '../hooks/useApiData'
 import ProjectCard from '../components/ProjectCard'
 import type { Project } from '../data/types'
 import type { Stage } from '../components/StageSelector'
@@ -14,6 +14,7 @@ const CATEGORY_FILTERS = [
   { key: 'clif', label: 'CLIF' },
   { key: 'lab', label: 'Lab' },
   { key: 'nate', label: 'Mesfin Lab' },
+  { key: 'mentee', label: 'Mentees' },
 ] as const
 
 function getStageProjects(stage: Stage, filtered: Project[]): Project[] {
@@ -26,7 +27,7 @@ export default function Projects() {
     'Track MN-CCORE research projects from idea to publication across CLIF, Lab, and Mesfin research groups.'
   )
 
-  const { projects, updateProject } = useProjects()
+  const { data: projects = [] } = useProjects()
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [activeCategory, setActiveCategory] = useState<string>('all')
 
@@ -40,9 +41,16 @@ export default function Projects() {
   const clifCount = projects.filter((p) => p.category === 'clif').length
   const labCount = projects.filter((p) => p.category === 'lab').length
   const nateCount = projects.filter((p) => p.category === 'nate').length
+  const menteeCount = projects.filter((p) => p.category === 'mentee').length
 
+  // Stage change mutation — creates a fresh hook per call via slug
   function handleStageChange(slug: string, newStage: Stage) {
-    updateProject(slug, { stage: newStage })
+    // Direct API call since useUpdateProject needs to be called at component level
+    fetch(`/api/projects/${slug}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: newStage }),
+    })
   }
 
   return (
@@ -126,7 +134,7 @@ export default function Projects() {
               whiteSpace: 'nowrap',
             }}
           >
-            {totalCount} projects &middot; {clifCount} CLIF &middot; {labCount} Lab &middot; {nateCount} Mesfin
+            {totalCount} projects &middot; {clifCount} CLIF &middot; {labCount} Lab &middot; {nateCount} Mesfin{menteeCount > 0 ? ` \u00b7 ${menteeCount} Mentees` : ''}
           </span>
         </div>
 

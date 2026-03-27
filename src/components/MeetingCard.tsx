@@ -9,7 +9,7 @@ import type { Meeting } from '../data/types'
 
 interface MeetingCardProps {
   meeting: Meeting
-  onToggleAction?: (meetingId: string, actionIndex: number) => void
+  onToggleAction?: (meetingId: string, actionId: string) => void
 }
 
 export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProps) {
@@ -293,7 +293,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                             }}
                             onClick={(e) => {
                               e.stopPropagation()
-                              onToggleAction?.(meeting.id, i)
+                              if (item.id) onToggleAction?.(meeting.id, item.id)
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.transform = 'scale(1.2)'
