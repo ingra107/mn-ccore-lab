@@ -1,14 +1,18 @@
 import { useMemo } from 'react'
 import { useParams, Navigate, Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
-import { FlaskConical, GraduationCap, FileText } from 'lucide-react'
+import { FlaskConical, GraduationCap, FileText, Handshake, CheckCircle2 } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications } from '../hooks/useApiData'
+import { useCommitments } from '../hooks/useCommitments'
+import type { CommitmentRow } from '../hooks/useCommitments'
 import { getMemberBySlug } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
 import { projects } from '../data/projects'
+import { formatShortDate } from '../lib/dateUtils'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -30,6 +34,107 @@ const TOPIC_COLORS: Record<string, string> = {
   disparities: '#0284c7',
 }
 
+function isOverdue(dueDate: string | null): boolean {
+  if (!dueDate) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dueDate + 'T12:00:00')
+  return due < today
+}
+
+function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
+  const isDone = item.status === 'done'
+  const overdue = !isDone && isOverdue(item.due_date)
+  const borderColor = isDone ? 'var(--teal)' : overdue ? 'var(--maroon)' : 'var(--gold)'
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 8 }}
+      transition={{ duration: 0.2 }}
+      className="card"
+      style={{
+        padding: '1rem 1.25rem',
+        marginBottom: '0.5rem',
+        borderLeft: `3px solid ${borderColor}`,
+        cursor: 'default',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+        <div
+          style={{
+            color: isDone ? 'var(--teal)' : 'var(--slate)',
+            opacity: isDone ? 1 : 0.5,
+            flexShrink: 0,
+            marginTop: 2,
+          }}
+        >
+          {isDone ? <CheckCircle2 size={20} /> : <Handshake size={20} />}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '15px',
+              color: 'var(--ink)',
+              lineHeight: 1.4,
+              textDecoration: isDone ? 'line-through' : 'none',
+              opacity: isDone ? 0.5 : 1,
+            }}
+          >
+            {item.commitment}
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginTop: '0.4rem',
+            }}
+          >
+            {/* Due date */}
+            {item.due_date && (
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
+                  color: overdue ? 'var(--maroon)' : 'var(--slate)',
+                  opacity: overdue ? 1 : 0.7,
+                  fontWeight: overdue ? 600 : 400,
+                }}
+              >
+                {overdue ? 'overdue' : 'due'} {formatShortDate(item.due_date)}
+              </span>
+            )}
+
+            {/* Source */}
+            {item.source && (
+              <>
+                {item.due_date && <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>}
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    color: 'var(--slate)',
+                    opacity: 0.5,
+                  }}
+                >
+                  from {item.source.replace(/^meeting:\s*/i, '')}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 export default function MemberPage() {
   const { data: publications = [] } = usePublications()
   const { slug } = useParams<{ slug: string }>()
@@ -40,6 +145,35 @@ export default function MemberPage() {
   const menteeProjects = mentee?.projectSlugs
     ?.map((s) => projects.find((p) => p.slug === s))
     .filter(Boolean) ?? []
+
+  // Commitments to this person (slug does partial match on to_whom)
+  const { data: allCommitments = [] } = useCommitments(slug)
+  const { openCommitments, doneCommitments } = useMemo(() => {
+    const open: CommitmentRow[] = []
+    const done: CommitmentRow[] = []
+    for (const c of allCommitments) {
+      if (c.status === 'done') {
+        done.push(c)
+      } else {
+        open.push(c)
+      }
+    }
+    open.sort((a, b) => {
+      const aOver = isOverdue(a.due_date)
+      const bOver = isOverdue(b.due_date)
+      if (aOver !== bOver) return aOver ? -1 : 1
+      if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date)
+      if (a.due_date) return -1
+      if (b.due_date) return 1
+      return 0
+    })
+    done.sort((a, b) => {
+      if (a.completed_at && b.completed_at) return b.completed_at.localeCompare(a.completed_at)
+      return 0
+    })
+    return { openCommitments: open, doneCommitments: done }
+  }, [allCommitments])
+  const hasCommitments = openCommitments.length + doneCommitments.length > 0
 
   if (!member) {
     return <Navigate to="/team" replace />
@@ -115,6 +249,9 @@ export default function MemberPage() {
           : []),
         ...(topicCounts.length > 0
           ? [{ id: 'research-areas', label: 'Research Areas' }]
+          : []),
+        ...(hasCommitments
+          ? [{ id: 'commitments', label: `Commitments (${openCommitments.length})` }]
           : []),
         ...(memberPubs.length > 0
           ? [{ id: 'publications', label: `Publications (${memberPubs.length})` }]
@@ -327,6 +464,57 @@ export default function MemberPage() {
 
       {/* Dashboard — projects, action items, publication count, summary */}
       {slug && <MenteeDashboard slug={slug} name={member.name} />}
+
+      {/* Commitments to this person */}
+      {hasCommitments && (
+        <>
+          <SectionDivider />
+          <div className="py-4" />
+          <section className="mb-8" id="commitments">
+            <div className="flex items-center gap-3 mb-4">
+              <Handshake size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <h2
+                className="text-xl sm:text-2xl"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  color: 'var(--ink)',
+                }}
+              >
+                Commitments
+              </h2>
+              {openCommitments.length > 0 && (
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    color: 'var(--slate)',
+                    opacity: 0.6,
+                  }}
+                >
+                  {openCommitments.length} open
+                </span>
+              )}
+            </div>
+
+            <AnimatePresence mode="popLayout">
+              {openCommitments.map((c) => (
+                <MemberCommitmentCard key={c.id} item={c} />
+              ))}
+            </AnimatePresence>
+
+            {doneCommitments.length > 0 && (
+              <div style={{ marginTop: '0.75rem', opacity: 0.6 }}>
+                <AnimatePresence mode="popLayout">
+                  {doneCommitments.map((c) => (
+                    <MemberCommitmentCard key={c.id} item={c} />
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
       {memberPubs.length > 0 && (
         <PublicationsSection publications={memberPubs} id="publications" />

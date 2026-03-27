@@ -11,6 +11,7 @@ import {
   Clock,
   AlertTriangle,
   CheckCheck,
+  Handshake,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -20,6 +21,8 @@ import type { ActionItemRow } from '../hooks/useApiData'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import type { NotificationRow } from '../hooks/useNotifications'
 import { useToggleActionItem } from '../hooks/useMutations'
+import { useCommitments } from '../hooks/useCommitments'
+import type { CommitmentRow } from '../hooks/useCommitments'
 import { getPersonInfo } from '../data/team'
 import { formatRelativeTime, formatShortDate } from '../lib/dateUtils'
 
@@ -474,6 +477,150 @@ function NotificationCard({
   return content
 }
 
+// ── Commitment Card ─────────────────────────────────────────
+
+function CommitmentCard({ item }: { item: CommitmentRow }) {
+  const isDone = item.status === 'done'
+  const overdue = !isDone && isOverdue(item.due_date)
+  const person = getPersonInfo(
+    item.to_whom.split(' ').pop()?.toLowerCase() ?? ''
+  )
+
+  const borderColor = isDone ? 'var(--teal)' : overdue ? 'var(--maroon)' : 'var(--gold)'
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 8 }}
+      transition={{ duration: 0.2 }}
+      className="card"
+      style={{
+        padding: '1rem 1.25rem',
+        marginBottom: '0.5rem',
+        borderLeft: `3px solid ${borderColor}`,
+        cursor: 'default',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+        <div
+          style={{
+            color: isDone ? 'var(--teal)' : 'var(--slate)',
+            opacity: isDone ? 1 : 0.5,
+            flexShrink: 0,
+            marginTop: 2,
+          }}
+        >
+          {isDone ? <CheckCircle2 size={20} /> : <Handshake size={20} />}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '15px',
+              color: 'var(--ink)',
+              lineHeight: 1.4,
+              textDecoration: isDone ? 'line-through' : 'none',
+              opacity: isDone ? 0.5 : 1,
+            }}
+          >
+            {item.commitment}
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginTop: '0.4rem',
+            }}
+          >
+            {/* To whom */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  background: person.photoUrl ? undefined : 'var(--gold-light)',
+                  border: '1px solid var(--gold)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  fontSize: '8px',
+                  fontWeight: 700,
+                  color: 'var(--gold)',
+                  fontFamily: 'var(--font-mono)',
+                  flexShrink: 0,
+                }}
+              >
+                {person.photoUrl ? (
+                  <img
+                    src={person.photoUrl}
+                    alt={person.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  person.initials
+                )}
+              </div>
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
+                  color: 'var(--slate)',
+                  opacity: 0.7,
+                }}
+              >
+                To: {item.to_whom}
+              </span>
+            </div>
+
+            {/* Due date */}
+            {item.due_date && (
+              <>
+                <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    color: overdue ? 'var(--maroon)' : 'var(--slate)',
+                    opacity: overdue ? 1 : 0.7,
+                    fontWeight: overdue ? 600 : 400,
+                  }}
+                >
+                  {overdue ? 'overdue' : 'due'} {formatShortDate(item.due_date)}
+                </span>
+              </>
+            )}
+
+            {/* Source */}
+            {item.source && (
+              <>
+                <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    color: 'var(--slate)',
+                    opacity: 0.5,
+                  }}
+                >
+                  from {item.source.replace(/^meeting:\s*/i, '')}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 // ── Main Page ───────────────────────────────────────────────
 
 export default function MyItems() {
@@ -498,6 +645,34 @@ export default function MyItems() {
   const markRead = useMarkRead(userSlug)
   const markAllRead = useMarkAllRead(userSlug)
   const toggleAction = useToggleActionItem()
+  const { data: allCommitments = [] } = useCommitments()
+
+  // Split commitments into open vs done, sort open by due date (overdue first)
+  const { openCommitments, doneCommitments } = useMemo(() => {
+    const open: CommitmentRow[] = []
+    const done: CommitmentRow[] = []
+    for (const c of allCommitments) {
+      if (c.status === 'done') {
+        done.push(c)
+      } else {
+        open.push(c)
+      }
+    }
+    open.sort((a, b) => {
+      const aOver = isOverdue(a.due_date)
+      const bOver = isOverdue(b.due_date)
+      if (aOver !== bOver) return aOver ? -1 : 1
+      if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date)
+      if (a.due_date) return -1
+      if (b.due_date) return 1
+      return 0
+    })
+    done.sort((a, b) => {
+      if (a.completed_at && b.completed_at) return b.completed_at.localeCompare(a.completed_at)
+      return 0
+    })
+    return { openCommitments: open, doneCommitments: done }
+  }, [allCommitments])
 
   // Deduplicate carried-forward items (keep most recent version)
   const dedupedItems = useMemo(() => {
@@ -652,6 +827,12 @@ export default function MyItems() {
             icon={<BellDot size={20} />}
             accentColor="#2d8a8a"
           />
+          <StatCard
+            count={openCommitments.length}
+            label="Open Commitments"
+            icon={<Handshake size={20} />}
+            accentColor="#c9a84c"
+          />
         </div>
 
         {/* Pending Action Items */}
@@ -744,6 +925,45 @@ export default function MyItems() {
             </AnimatePresence>
           )}
         </div>
+
+        {/* Commitments */}
+        {openCommitments.length + doneCommitments.length > 0 && (
+          <div style={{ marginBottom: '2.5rem' }}>
+            <SectionHeader title="Commitments" />
+
+            {openCommitments.length === 0 ? (
+              <div
+                className="card"
+                style={{
+                  padding: '2rem',
+                  textAlign: 'center',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '14px',
+                  color: 'var(--slate)',
+                  opacity: 0.6,
+                }}
+              >
+                All commitments fulfilled.
+              </div>
+            ) : (
+              <AnimatePresence mode="popLayout">
+                {openCommitments.map((c) => (
+                  <CommitmentCard key={c.id} item={c} />
+                ))}
+              </AnimatePresence>
+            )}
+
+            {doneCommitments.length > 0 && (
+              <div style={{ marginTop: '1rem', opacity: 0.6 }}>
+                <AnimatePresence mode="popLayout">
+                  {doneCommitments.map((c) => (
+                    <CommitmentCard key={c.id} item={c} />
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Completed Section */}
         {completed.length > 0 && (
