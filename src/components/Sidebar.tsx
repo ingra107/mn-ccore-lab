@@ -70,6 +70,7 @@ const navGroups: NavGroup[] = [
     title: 'Meetings',
     items: [
       { to: '/meetings', label: 'Meetings', icon: UsersIcon },
+      { to: '/meeting-notes', label: 'AI Notes', icon: FileText },
     ],
   },
   {
