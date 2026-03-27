@@ -533,6 +533,40 @@ async function handleAddComment(
 
   await logActivity(env, 'comment', `Commented on "${project.title}"`, user.email, projectId, 'project');
 
+  // Create notifications for @mentions
+  try {
+    const mentions = parseMentions(body.content);
+    if (mentions.length > 0) {
+      const validSlugs = await env.DB.prepare(
+        'SELECT slug FROM team_members WHERE slug IN (' + mentions.map(() => '?').join(',') + ')'
+      ).bind(...mentions).all();
+
+      const validSet = new Set((validSlugs.results || []).map((r: any) => r.slug));
+      const authorSlug = user.email.split('@')[0].toLowerCase();
+
+      for (const slug of mentions) {
+        if (!validSet.has(slug)) continue;
+        if (slug === authorSlug) continue; // don't notify yourself
+
+        await env.DB.prepare(
+          'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        ).bind(
+          generateId(),
+          slug,
+          'mention',
+          'comment',
+          commentId,
+          `${user.name || user.email} mentioned you in a comment`,
+          body.content.trim().slice(0, 200),
+          `/projects/${projectId}`
+        ).run();
+      }
+    }
+  } catch (e) {
+    // Notification creation should not break the main comment operation
+    console.error('Failed to create mention notifications for comment:', e);
+  }
+
   return json({ data: { id: commentId, project_id: projectId, content: body.content.trim(), author: user.email } }, 201);
 }
 
@@ -774,6 +808,29 @@ async function handleCreateActionItem(request: Request, user: AuthUser, env: Env
 
   await logActivity(env, 'action_item', `Created action item: "${body.description}" → ${body.assignee}`, user.email, id, 'action_item');
 
+  // Notify assignee if it's someone else
+  try {
+    const assignee = body.assignee;
+    const authorSlug = user.email.split('@')[0].toLowerCase();
+    if (assignee && assignee !== authorSlug) {
+      await env.DB.prepare(
+        'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(
+        generateId(),
+        assignee,
+        'assignment',
+        'action_item',
+        id,
+        `${user.name || user.email} assigned you an action item`,
+        body.description.slice(0, 200),
+        body.meeting_id ? `/meetings/${body.meeting_id}` : '/dashboard'
+      ).run();
+    }
+  } catch (e) {
+    // Notification creation should not break the main action item operation
+    console.error('Failed to create assignment notification:', e);
+  }
+
   const created = await env.DB.prepare('SELECT * FROM action_items WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
 }
@@ -807,6 +864,40 @@ async function handlePostProjectUpdate(slug: string, request: Request, user: Aut
   ).bind(id, slug, user.email, body.content, body.update_type ?? 'progress').run();
 
   await logActivity(env, 'project_update', `Posted update on ${slug}: "${body.content.slice(0, 100)}"`, user.email, slug, 'project');
+
+  // Create notifications for @mentions
+  try {
+    const mentions = parseMentions(body.content);
+    if (mentions.length > 0) {
+      const validSlugs = await env.DB.prepare(
+        'SELECT slug FROM team_members WHERE slug IN (' + mentions.map(() => '?').join(',') + ')'
+      ).bind(...mentions).all();
+
+      const validSet = new Set((validSlugs.results || []).map((r: any) => r.slug));
+      const authorSlug = user.email.split('@')[0].toLowerCase();
+
+      for (const mentionSlug of mentions) {
+        if (!validSet.has(mentionSlug)) continue;
+        if (mentionSlug === authorSlug) continue; // don't notify yourself
+
+        await env.DB.prepare(
+          'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        ).bind(
+          generateId(),
+          mentionSlug,
+          'mention',
+          'project_update',
+          id,
+          `${user.name || user.email} mentioned you in a project update`,
+          body.content.slice(0, 200),
+          `/projects/${slug}`
+        ).run();
+      }
+    }
+  } catch (e) {
+    // Notification creation should not break the main update operation
+    console.error('Failed to create mention notifications for project update:', e);
+  }
 
   const created = await env.DB.prepare('SELECT * FROM project_updates WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);

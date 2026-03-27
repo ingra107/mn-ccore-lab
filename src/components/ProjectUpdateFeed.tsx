@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import { formatRelativeTime } from '../lib/dateUtils'
 import Avatar from './Avatar'
+import MentionInput from './MentionInput'
 
 const TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; borderBg: string; label: string }> = {
   progress: { icon: TrendingUp, color: 'var(--teal)', bg: 'rgba(45, 138, 138, 0.1)', borderBg: 'rgba(45, 138, 138, 0.25)', label: 'Progress' },
@@ -85,10 +86,10 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
           </div>
 
           <div className="flex gap-2 items-end">
-            <textarea
+            <MentionInput
               value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={isAuthenticated ? 'Post a project update...' : 'Sign in to post updates'}
+              onChange={setText}
+              placeholder={isAuthenticated ? 'Post a project update... (use @mention to tag team)' : 'Sign in to post updates'}
               disabled={!isAuthenticated && import.meta.env.PROD}
               rows={2}
               onKeyDown={(e) => {
@@ -98,10 +99,10 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
                 }
               }}
               style={{
-                flex: 1, fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+                fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
                 background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)',
                 borderRadius: '8px', padding: '10px 12px', resize: 'none', outline: 'none',
-                lineHeight: 1.5, transition: 'border-color 0.2s',
+                lineHeight: 1.5, transition: 'border-color 0.2s', width: '100%',
               }}
               onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
               onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}

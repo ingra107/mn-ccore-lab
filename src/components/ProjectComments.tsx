@@ -6,6 +6,7 @@ import { useAddComment } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import { formatRelativeTime } from '../lib/dateUtils'
 import Avatar from './Avatar'
+import MentionInput from './MentionInput'
 
 interface Props {
   projectSlug: string
@@ -74,37 +75,35 @@ export default function ProjectComments({ projectSlug }: Props) {
         {/* Comment input */}
         <form onSubmit={handleSubmit} style={{ marginBottom: comments.length > 0 ? '16px' : 0 }}>
           <div className="flex gap-2 items-end">
-            <div style={{ flex: 1 }}>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder={isAuthenticated ? 'Add a comment...' : 'Sign in to comment'}
-                disabled={!isAuthenticated && import.meta.env.PROD}
-                rows={2}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                    e.preventDefault()
-                    handleSubmit(e)
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '13px',
-                  color: 'var(--ink)',
-                  background: 'var(--cream)',
-                  border: '1px solid rgba(201, 168, 76, 0.15)',
-                  borderRadius: '8px',
-                  padding: '10px 12px',
-                  resize: 'none',
-                  outline: 'none',
-                  lineHeight: 1.5,
-                  transition: 'border-color 0.2s',
-                }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-                onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}
-              />
-            </div>
+            <MentionInput
+              value={text}
+              onChange={setText}
+              placeholder={isAuthenticated ? 'Add a comment... (use @mention to tag team)' : 'Sign in to comment'}
+              disabled={!isAuthenticated && import.meta.env.PROD}
+              rows={2}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault()
+                  handleSubmit(e)
+                }
+              }}
+              style={{
+                width: '100%',
+                fontFamily: 'var(--font-body)',
+                fontSize: '13px',
+                color: 'var(--ink)',
+                background: 'var(--cream)',
+                border: '1px solid rgba(201, 168, 76, 0.15)',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                resize: 'none',
+                outline: 'none',
+                lineHeight: 1.5,
+                transition: 'border-color 0.2s',
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}
+            />
             {text.trim() && (
               <motion.button
                 type="submit"

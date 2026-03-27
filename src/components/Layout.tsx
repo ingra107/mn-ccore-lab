@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Menu, X, Sun, Moon, ChevronUp, ChevronDown } from 'lucide-react'
+import NotificationBell from './NotificationBell'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { useActionItems, useMeetingsApi } from '../hooks/useApiData'
@@ -331,9 +332,10 @@ export default function Layout() {
                 {link.label}
               </Link>
             ))}
+            <NotificationBell />
             <button
               onClick={toggle}
-              className="ml-4 p-2 rounded-md cursor-pointer transition-colors duration-200"
+              className="ml-2 p-2 rounded-md cursor-pointer transition-colors duration-200"
               style={{ color: 'var(--slate)' }}
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -343,6 +345,7 @@ export default function Layout() {
 
           {/* Mobile menu button */}
           <div className="flex lg:hidden items-center gap-2">
+            <NotificationBell />
             <button
               onClick={toggle}
               className="p-2 rounded-md cursor-pointer"
