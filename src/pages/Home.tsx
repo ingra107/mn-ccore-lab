@@ -85,7 +85,7 @@ const affiliates = [
 const heroStats = [
   { value: 13, suffix: '+', label: 'ICU Centers', detail: 'in the CLIF Consortium' },
   { value: 80, suffix: '+', label: 'Researchers', detail: 'across institutions' },
-  { value: 56, suffix: '+', label: 'Publications', detail: 'in top journals' },
+  { value: 63, suffix: '+', label: 'Publications', detail: 'in top journals' },
 ]
 
 const pathways = [

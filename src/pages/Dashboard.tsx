@@ -9,6 +9,7 @@ import CLIFMiniCard from '../components/dashboard/CLIFMiniCard'
 import TopicBubblesCard from '../components/dashboard/TopicBubblesCard'
 import ActionBoardCard from '../components/dashboard/ActionBoardCard'
 import ProjectHealthCard from '../components/dashboard/ProjectHealthCard'
+import MyItemsCard from '../components/dashboard/MyItemsCard'
 
 export default function Dashboard() {
   usePageMeta(
@@ -101,6 +102,9 @@ export default function Dashboard() {
 
           {/* Row 5: Action Board (2x1) */}
           <ActionBoardCard />
+
+          {/* My Items */}
+          <MyItemsCard />
 
           {/* Row 5: CLIF (2x1) | Topics (1x1) */}
           <CLIFMiniCard />

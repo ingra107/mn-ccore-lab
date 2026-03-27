@@ -51,13 +51,13 @@ function CitationBlock({ pub, index }: { pub: CVData['publications'][0]; index: 
           <>
             {' '}
             <a
-              href={`https://doi.org/${pub.doi}`}
+              href={pub.doi.startsWith('http') ? pub.doi : `https://doi.org/${pub.doi}`}
               target="_blank"
               rel="noopener noreferrer"
               className="cv-doi-link"
               style={{ color: 'var(--teal)', textDecoration: 'none', fontSize: '12px', fontFamily: 'var(--font-mono)' }}
             >
-              DOI: {pub.doi}
+              DOI: {pub.doi.replace(/^https?:\/\/doi\.org\//, '')}
             </a>
           </>
         )}
