@@ -14,6 +14,7 @@ import {
   DollarSign,
   Users as UsersIcon,
   Activity,
+  BarChart3,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -75,6 +76,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: '/team', label: 'Team', icon: UsersIcon },
       { to: '/activity', label: 'Activity', icon: Activity },
+      { to: '/analytics', label: 'Analytics', icon: BarChart3 },
     ],
   },
 ]

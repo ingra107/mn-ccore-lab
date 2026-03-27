@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, List, ChevronLeft, ChevronRight, Users, CheckSquare, Diamond } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight, Users, CheckSquare, Diamond, Download } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import { useCalendarEvents } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
-import { formatLongDate } from '../../lib/dateUtils'
+import { formatLongDate, formatShortDate } from '../../lib/dateUtils'
 import type { CalendarEvent } from '../../lib/api'
 
-type ViewMode = 'month' | 'agenda'
+type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 
 const eventColors: Record<string, { color: string; bg: string }> = {
   meeting: { color: 'var(--teal)', bg: 'rgba(45,138,138,0.12)' },
@@ -25,7 +25,6 @@ export default function CalendarPage() {
   const [view, setView] = useState<ViewMode>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
 
-  // Get first/last of visible month range (with buffer)
   const { start, end } = useMemo(() => {
     const y = currentDate.getFullYear()
     const m = currentDate.getMonth()
@@ -41,13 +40,54 @@ export default function CalendarPage() {
 
   const monthLabel = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
-  const goToPrevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))
+  // Week label
+  const weekStart = useMemo(() => {
+    const d = new Date(currentDate)
+    const day = d.getDay()
+    d.setDate(d.getDate() - day)
+    return d
+  }, [currentDate])
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekEnd.getDate() + 6)
+  const weekLabel = `${formatShortDate(weekStart.toISOString().split('T')[0])} — ${formatShortDate(weekEnd.toISOString().split('T')[0])}, ${weekEnd.getFullYear()}`
+
+  // Day label
+  const dayLabel = formatLongDate(currentDate.toISOString().split('T')[0])
+
+  const goToPrev = () => {
+    const d = new Date(currentDate)
+    if (view === 'month') d.setMonth(d.getMonth() - 1)
+    else if (view === 'week') d.setDate(d.getDate() - 7)
+    else d.setDate(d.getDate() - 1)
+    setCurrentDate(d)
   }
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
+  const goToNext = () => {
+    const d = new Date(currentDate)
+    if (view === 'month') d.setMonth(d.getMonth() + 1)
+    else if (view === 'week') d.setDate(d.getDate() + 7)
+    else d.setDate(d.getDate() + 1)
+    setCurrentDate(d)
   }
   const goToToday = () => setCurrentDate(new Date())
+
+  const headerLabel = view === 'month' ? monthLabel : view === 'week' ? weekLabel : view === 'day' ? dayLabel : monthLabel
+
+  // iCal export
+  const exportICal = () => {
+    let ical = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MN-CCORE Lab//Hub//EN\nCALSCALE:GREGORIAN\n'
+    for (const e of events) {
+      const dateStr = e.date.replace(/-/g, '')
+      ical += `BEGIN:VEVENT\nDTSTART;VALUE=DATE:${dateStr}\nSUMMARY:${e.title.replace(/[,;\\]/g, ' ')}\nDESCRIPTION:${e.type}\nUID:${e.id}@mn-ccore-lab\nEND:VEVENT\n`
+    }
+    ical += 'END:VCALENDAR'
+    const blob = new Blob([ical], { type: 'text/calendar' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'mnccore-calendar.ics'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div>
@@ -55,18 +95,14 @@ export default function CalendarPage() {
 
       {/* Controls */}
       <div className="mt-5 flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          {([
-            { key: 'month' as ViewMode, label: 'Month', icon: Calendar },
-            { key: 'agenda' as ViewMode, label: 'Agenda', icon: List },
-          ]).map((v) => {
-            const Icon = v.icon
-            const active = view === v.key
+        <div className="flex items-center gap-1">
+          {(['month', 'week', 'day', 'agenda'] as ViewMode[]).map((v) => {
+            const active = view === v
             return (
               <button
-                key={v.key}
-                onClick={() => setView(v.key)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors"
+                key={v}
+                onClick={() => setView(v)}
+                className="px-3 py-1.5 rounded-md text-sm border transition-colors capitalize"
                 style={{
                   borderColor: active ? 'var(--teal)' : 'var(--border-light)',
                   backgroundColor: active ? 'rgba(45,138,138,0.1)' : 'transparent',
@@ -76,37 +112,44 @@ export default function CalendarPage() {
                   cursor: 'pointer',
                 }}
               >
-                <Icon size={14} />
-                {v.label}
+                {v}
               </button>
             )
           })}
         </div>
 
         <div className="flex items-center gap-2">
-          <button onClick={goToPrevMonth} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}>
+          <button onClick={goToPrev} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}>
             <ChevronLeft size={16} style={{ color: 'var(--ink)' }} />
           </button>
           <button
             onClick={goToToday}
-            className="px-3 py-1 rounded-md text-sm font-medium"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none', minWidth: 160, textAlign: 'center' }}
+            className="px-3 py-1 rounded-md text-sm font-medium min-w-[180px] text-center"
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
           >
-            {monthLabel}
+            {headerLabel}
           </button>
-          <button onClick={goToNextMonth} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}>
+          <button onClick={goToNext} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}>
             <ChevronRight size={16} style={{ color: 'var(--ink)' }} />
+          </button>
+
+          <button
+            onClick={exportICal}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors hover:bg-black/5 ml-2"
+            style={{ borderColor: 'var(--border-light)', color: 'var(--slate)', fontFamily: 'var(--font-sans)', cursor: 'pointer', background: 'none' }}
+          >
+            <Download size={14} />
+            Export
           </button>
         </div>
       </div>
 
       {/* Content */}
       <div className="mt-5">
-        {view === 'month' ? (
-          <MonthView currentDate={currentDate} events={events} />
-        ) : (
-          <AgendaView events={events} />
-        )}
+        {view === 'month' && <MonthView currentDate={currentDate} events={events} />}
+        {view === 'week' && <WeekView weekStart={weekStart} events={events} />}
+        {view === 'day' && <DayView date={currentDate} events={events} />}
+        {view === 'agenda' && <AgendaView events={events} />}
       </div>
 
       {/* Legend */}
@@ -131,21 +174,18 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
 
-  // Build calendar grid
   const { days, startOffset } = useMemo(() => {
     const firstDay = new Date(year, month, 1)
     const lastDay = new Date(year, month + 1, 0)
-    const offset = firstDay.getDay() // 0=Sun
+    const offset = firstDay.getDay()
     const numDays = lastDay.getDate()
     const dayList: string[] = []
     for (let d = 1; d <= numDays; d++) {
-      const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-      dayList.push(iso)
+      dayList.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
     }
     return { days: dayList, startOffset: offset }
   }, [year, month])
 
-  // Group events by date
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>()
     for (const e of events) {
@@ -156,80 +196,41 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
     return map
   }, [events])
 
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
   return (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-light)' }}>
-      {/* Week header */}
       <div className="grid grid-cols-7">
-        {weekDays.map((d) => (
-          <div
-            key={d}
-            className="px-2 py-2 text-center text-[10px] uppercase tracking-wider font-semibold border-b"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5, borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
-          >
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+          <div key={d} className="px-2 py-2 text-center text-[10px] uppercase tracking-wider font-semibold border-b" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5, borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}>
             {d}
           </div>
         ))}
       </div>
-
-      {/* Day grid */}
       <div className="grid grid-cols-7">
-        {/* Empty cells for offset */}
         {Array.from({ length: startOffset }).map((_, i) => (
           <div key={`empty-${i}`} className="min-h-[80px] border-b border-r" style={{ borderColor: 'var(--border-light)', backgroundColor: 'rgba(0,0,0,0.02)' }} />
         ))}
-
         {days.map((dateStr) => {
           const dayNum = parseInt(dateStr.split('-')[2])
           const isToday = dateStr === today
           const dayEvents = eventsByDate.get(dateStr) || []
-
           return (
-            <div
-              key={dateStr}
-              className="min-h-[80px] p-1.5 border-b border-r relative"
-              style={{
-                borderColor: 'var(--border-light)',
-                backgroundColor: isToday ? 'rgba(45,138,138,0.04)' : 'white',
-              }}
-            >
-              {/* Day number */}
-              <span
-                className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`}
-                style={{
-                  width: isToday ? 24 : 'auto',
-                  height: isToday ? 24 : 'auto',
-                  fontFamily: 'var(--font-mono)',
-                  color: isToday ? 'white' : 'var(--ink)',
-                  backgroundColor: isToday ? 'var(--teal)' : 'transparent',
-                }}
-              >
+            <div key={dateStr} className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.04)' : 'white' }}>
+              <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', fontFamily: 'var(--font-mono)', color: isToday ? 'white' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
                 {dayNum}
               </span>
-
-              {/* Event dots/pills */}
               <div className="flex flex-col gap-0.5 mt-0.5">
                 {dayEvents.slice(0, 3).map((e) => {
                   const config = eventColors[e.type] || eventColors.task
                   const Wrapper = e.type === 'meeting' ? Link : 'div' as any
                   const wrapperProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
                   return (
-                    <Wrapper
-                      key={e.id}
-                      {...wrapperProps}
-                      className="text-[8px] px-1 py-0.5 rounded truncate block"
-                      style={{ fontFamily: 'var(--font-sans)', color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }}
-                      title={e.title}
-                    >
+                    <Wrapper key={e.id} {...wrapperProps} className="text-[8px] px-1 py-0.5 rounded truncate block" style={{ fontFamily: 'var(--font-sans)', color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }} title={e.title}>
                       {e.title.length > 18 ? e.title.slice(0, 18) + '...' : e.title}
                     </Wrapper>
                   )
                 })}
                 {dayEvents.length > 3 && (
-                  <span className="text-[8px] px-1" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
-                    +{dayEvents.length - 3} more
-                  </span>
+                  <span className="text-[8px] px-1" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>+{dayEvents.length - 3} more</span>
                 )}
               </div>
             </div>
@@ -240,15 +241,137 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
   )
 }
 
+// ── Week View ────────────────────────────────────────────────
+
+function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEvent[] }) {
+  const today = new Date().toISOString().split('T')[0]
+
+  const days = useMemo(() => {
+    const result: string[] = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart)
+      d.setDate(d.getDate() + i)
+      result.push(d.toISOString().split('T')[0])
+    }
+    return result
+  }, [weekStart])
+
+  const eventsByDate = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>()
+    for (const e of events) {
+      const list = map.get(e.date) || []
+      list.push(e)
+      map.set(e.date, list)
+    }
+    return map
+  }, [events])
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+  return (
+    <div className="grid grid-cols-7 gap-3">
+      {days.map((dateStr, i) => {
+        const isToday = dateStr === today
+        const dayNum = parseInt(dateStr.split('-')[2])
+        const dayEvents = eventsByDate.get(dateStr) || []
+
+        return (
+          <div key={dateStr} className="rounded-lg border min-h-[300px]" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.02)' : 'white' }}>
+            {/* Day header */}
+            <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>{dayNames[i]}</div>
+              <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8' : ''}`} style={{ fontFamily: 'var(--font-display)', color: isToday ? 'white' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
+                {dayNum}
+              </div>
+            </div>
+
+            {/* Events */}
+            <div className="p-1.5 flex flex-col gap-1">
+              {dayEvents.map((e) => {
+                const config = eventColors[e.type] || eventColors.task
+                const Icon = eventIcons[e.type] || Calendar
+                return (
+                  <div key={e.id} className="flex items-start gap-1 p-1.5 rounded" style={{ backgroundColor: config.bg }}>
+                    <Icon size={10} style={{ color: config.color, marginTop: 2, flexShrink: 0 }} />
+                    <span className="text-[9px] leading-tight" style={{ fontFamily: 'var(--font-sans)', color: config.color }}>
+                      {e.title.length > 30 ? e.title.slice(0, 30) + '...' : e.title}
+                    </span>
+                  </div>
+                )
+              })}
+              {dayEvents.length === 0 && (
+                <div className="text-center py-4 text-[9px]" style={{ color: 'var(--slate)', opacity: 0.3, fontFamily: 'var(--font-sans)' }}>—</div>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Day View ─────────────────────────────────────────────────
+
+function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
+  const dateStr = date.toISOString().split('T')[0]
+  const dayEvents = events.filter((e) => e.date === dateStr)
+  const isToday = dateStr === new Date().toISOString().split('T')[0]
+
+  return (
+    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-light)' }}>
+      <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.04)' : 'var(--cream)' }}>
+        <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
+          {isToday ? 'Today' : formatLongDate(dateStr)}
+        </h3>
+        <span className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+          {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      <div className="p-4">
+        {dayEvents.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {dayEvents.map((e) => {
+              const config = eventColors[e.type] || eventColors.task
+              const Icon = eventIcons[e.type] || Calendar
+              const assignee = e.meta?.assignee as string | undefined
+              const Wrapper = e.type === 'meeting' ? Link : 'div' as any
+              const wrapperProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
+
+              return (
+                <Wrapper key={e.id} {...wrapperProps} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm" style={{ borderColor: 'var(--border-light)', textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
+                    <Icon size={18} style={{ color: config.color }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{e.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: config.color, backgroundColor: config.bg }}>{e.type}</span>
+                      {assignee && (
+                        <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>{getPersonInfo(assignee).name}</span>
+                      )}
+                    </div>
+                  </div>
+                </Wrapper>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+            No events on this day
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Agenda View ──────────────────────────────────────────────
 
 function AgendaView({ events }: { events: CalendarEvent[] }) {
   const today = new Date().toISOString().split('T')[0]
-
-  // Only show events from today forward
   const upcoming = events.filter((e) => e.date >= today)
 
-  // Group by date
   const grouped = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>()
     for (const e of upcoming) {
@@ -265,46 +388,29 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
         const isToday = date === today
         return (
           <div key={date}>
-            {/* Date header */}
             <div className="flex items-center gap-2 mb-2">
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: isToday ? 'var(--teal)' : 'var(--slate)', opacity: isToday ? 1 : 0.3 }}
-              />
-              <span
-                className="text-sm font-semibold"
-                style={{ fontFamily: 'var(--font-display)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}
-              >
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: isToday ? 'var(--teal)' : 'var(--slate)', opacity: isToday ? 1 : 0.3 }} />
+              <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-display)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
                 {isToday ? 'Today' : formatLongDate(date)}
               </span>
             </div>
-
-            {/* Events */}
             <div className="flex flex-col gap-1.5 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-light)' }}>
               {dayEvents.map((e) => {
                 const config = eventColors[e.type] || eventColors.task
                 const Icon = eventIcons[e.type] || Calendar
                 const assignee = e.meta?.assignee as string | undefined
-
                 const AgendaWrapper = e.type === 'meeting' ? Link : 'div' as any
                 const agendaProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
-
                 return (
                   <AgendaWrapper key={e.id} {...agendaProps} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] transition-colors" style={{ textDecoration: 'none' }}>
                     <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
                       <Icon size={12} style={{ color: config.color }} />
                     </div>
-                    <span className="flex-1 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-                      {e.title}
-                    </span>
+                    <span className="flex-1 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{e.title}</span>
                     {assignee && (
-                      <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
-                        {getPersonInfo(assignee).name.split(' ')[0]}
-                      </span>
+                      <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>{getPersonInfo(assignee).name.split(' ')[0]}</span>
                     )}
-                    <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: config.color, backgroundColor: config.bg }}>
-                      {e.type}
-                    </span>
+                    <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: config.color, backgroundColor: config.bg }}>{e.type}</span>
                   </AgendaWrapper>
                 )
               })}
@@ -312,11 +418,8 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
           </div>
         )
       })}
-
       {grouped.length === 0 && (
-        <div className="text-center py-16 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
-          No upcoming events
-        </div>
+        <div className="text-center py-16 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>No upcoming events</div>
       )}
     </div>
   )
