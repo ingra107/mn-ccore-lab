@@ -117,8 +117,10 @@ export default {
             return await handleActivity(url, env);
           case '/api/meetings':
             return await handleMeetings(env);
+          case '/api/tasks':
+            return await handleTasks(url, env);
           case '/api/action-items':
-            return await handleActionItems(url, env);
+            return await handleTasks(url, env);  // backward compat alias
           case '/api/updates/recent':
             return await handleRecentUpdates(url, env);
           case '/api/projects/health':
@@ -168,15 +170,32 @@ export default {
           return await handleUpdateTeamMember(teamMatch[1], request, user, env);
         }
 
-        // POST /api/action-items/:id/toggle — toggle action item completion
-        const toggleMatch = path.match(/^\/api\/action-items\/([^/]+)\/toggle$/);
-        if (request.method === 'POST' && toggleMatch) {
-          return await handleToggleActionItem(toggleMatch[1], user, env);
+        // POST /api/tasks/:id/status — change task status
+        const taskStatusMatch = path.match(/^\/api\/tasks\/([^/]+)\/status$/);
+        if (request.method === 'POST' && taskStatusMatch) {
+          return await handleUpdateTaskStatus(taskStatusMatch[1], request, user, env);
         }
 
-        // POST /api/action-items — create new action item
+        // POST /api/tasks/:id — update task fields
+        const taskUpdateMatch = path.match(/^\/api\/tasks\/([^/]+)$/);
+        if (request.method === 'POST' && taskUpdateMatch) {
+          return await handleUpdateTask(taskUpdateMatch[1], request, user, env);
+        }
+
+        // POST /api/tasks — create new task
+        if (request.method === 'POST' && path === '/api/tasks') {
+          return await handleCreateTask(request, user, env);
+        }
+
+        // POST /api/action-items/:id/toggle — backward compat alias
+        const toggleMatch = path.match(/^\/api\/action-items\/([^/]+)\/toggle$/);
+        if (request.method === 'POST' && toggleMatch) {
+          return await handleToggleTask(toggleMatch[1], user, env);
+        }
+
+        // POST /api/action-items — backward compat alias
         if (request.method === 'POST' && path === '/api/action-items') {
-          return await handleCreateActionItem(request, user, env);
+          return await handleCreateTask(request, user, env);
         }
 
         // POST /api/meetings/:id/agenda — add agenda item
@@ -265,7 +284,7 @@ export default {
 
       // Get their pending action items
       const actions = await env.DB.prepare(
-        'SELECT description, due_date FROM action_items WHERE assignee = ? AND completed = 0 ORDER BY due_date ASC'
+        'SELECT title, description, due_date, priority, status FROM tasks WHERE assignee = ? AND completed = 0 ORDER BY due_date ASC'
       ).bind(member.slug).all<{ description: string; due_date: string | null }>();
 
       // Get unread notifications
@@ -755,7 +774,7 @@ async function handleGetMeeting(id: string, env: Env): Promise<Response> {
   if (!meeting) return error('Meeting not found', 404);
 
   const [actionItems, agendaItems] = await Promise.all([
-    env.DB.prepare('SELECT * FROM action_items WHERE meeting_id = ? ORDER BY created_at').bind(id).all(),
+    env.DB.prepare('SELECT * FROM tasks WHERE meeting_id = ? ORDER BY created_at').bind(id).all(),
     env.DB.prepare('SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at').bind(id).all(),
   ]);
 
@@ -776,20 +795,31 @@ async function handleGetAgendaItems(meetingId: string, env: Env): Promise<Respon
   return json({ data: result.results, count: result.results.length });
 }
 
-// GET /api/action-items?assignee=&completed=&meeting_id=
-async function handleActionItems(url: URL, env: Env): Promise<Response> {
+// GET /api/tasks?assignee=&status=&priority=&project=&meeting=&completed=&source=
+async function handleTasks(url: URL, env: Env): Promise<Response> {
   const assignee = url.searchParams.get('assignee');
+  const status = url.searchParams.get('status');
+  const priority = url.searchParams.get('priority');
+  const project = url.searchParams.get('project');
+  const meetingId = url.searchParams.get('meeting') || url.searchParams.get('meeting_id');
   const completed = url.searchParams.get('completed');
-  const meetingId = url.searchParams.get('meeting_id');
+  const source = url.searchParams.get('source');
 
-  let query = 'SELECT ai.*, m.title as meeting_title, m.date as meeting_date FROM action_items ai LEFT JOIN meetings m ON ai.meeting_id = m.id WHERE 1=1';
+  let query = 'SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE 1=1';
   const params: (string | number)[] = [];
 
-  if (assignee) { query += ' AND ai.assignee = ?'; params.push(assignee); }
-  if (completed !== null && completed !== undefined) { query += ' AND ai.completed = ?'; params.push(completed === 'true' ? 1 : 0); }
-  if (meetingId) { query += ' AND ai.meeting_id = ?'; params.push(meetingId); }
+  if (assignee) { query += ' AND t.assignee = ?'; params.push(assignee); }
+  if (status) { query += ' AND t.status = ?'; params.push(status); }
+  if (priority) { query += ' AND t.priority = ?'; params.push(priority); }
+  if (project) { query += ' AND t.project_id = ?'; params.push(project); }
+  if (meetingId) { query += ' AND t.meeting_id = ?'; params.push(meetingId); }
+  if (source) { query += ' AND t.source = ?'; params.push(source); }
+  if (completed !== null && completed !== undefined) {
+    query += ' AND t.completed = ?';
+    params.push(completed === 'true' ? 1 : 0);
+  }
 
-  query += ' ORDER BY ai.completed ASC, ai.due_date ASC';
+  query += ' ORDER BY t.completed ASC, t.due_date ASC, t.created_at DESC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
   return json({ data: result.results, count: result.results.length });
@@ -820,7 +850,7 @@ async function handleProjectHealth(env: Env): Promise<Response> {
         'SELECT MAX(created_at) as latest FROM project_updates WHERE project_id = ?'
       ).bind(p.slug).first<{ latest: string | null }>(),
       env.DB.prepare(
-        'SELECT MAX(completed_at) as latest FROM action_items WHERE project_id = ? AND completed_at IS NOT NULL'
+        'SELECT MAX(completed_at) as latest FROM tasks WHERE project_id = ? AND completed_at IS NOT NULL'
       ).bind(p.slug).first<{ latest: string | null }>(),
       env.DB.prepare(
         "SELECT MAX(timestamp) as latest FROM activity_log WHERE related_id = ? AND related_type = 'project'"
@@ -845,7 +875,7 @@ async function handleProjectHealth(env: Env): Promise<Response> {
 
     // Count pending action items for this project
     const pendingCount = await env.DB.prepare(
-      'SELECT COUNT(*) as c FROM action_items WHERE project_id = ? AND completed = 0'
+      'SELECT COUNT(*) as c FROM tasks WHERE project_id = ? AND completed = 0'
     ).bind(p.slug).first<{ c: number }>();
 
     // Count recent updates (last 30 days)
@@ -908,33 +938,111 @@ async function handleRecentUpdates(url: URL, env: Env): Promise<Response> {
   return json({ data: result.results, count: result.results.length });
 }
 
-// POST /api/action-items/:id/toggle — toggle completion
-async function handleToggleActionItem(id: string, user: AuthUser, env: Env): Promise<Response> {
-  const item = await env.DB.prepare('SELECT * FROM action_items WHERE id = ?').bind(id).first<{ completed: number; description: string }>();
-  if (!item) return error('Action item not found', 404);
+// POST /api/tasks/:id/status — change task status (todo/in_progress/done/blocked)
+async function handleUpdateTaskStatus(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { status: string };
+  if (!body.status || !['todo', 'in_progress', 'done', 'blocked'].includes(body.status)) {
+    return error('status must be one of: todo, in_progress, done, blocked', 400);
+  }
 
-  const newCompleted = item.completed ? 0 : 1;
+  const item = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null }>();
+  if (!item) return error('Task not found', 404);
+
+  const completed = body.status === 'done' ? 1 : 0;
+  const completedAt = completed ? new Date().toISOString() : null;
+  const completedBy = completed ? user.email : null;
+
   await env.DB.prepare(
-    'UPDATE action_items SET completed = ?, completed_at = ?, completed_by = ? WHERE id = ?'
-  ).bind(newCompleted, newCompleted ? new Date().toISOString() : null, newCompleted ? user.email : null, id).run();
+    'UPDATE tasks SET status = ?, completed = ?, completed_at = ?, completed_by = ? WHERE id = ?'
+  ).bind(body.status, completed, completedAt, completedBy, id).run();
 
-  await logActivity(env, 'action_item', `${newCompleted ? 'Completed' : 'Reopened'}: "${item.description}"`, user.email, id, 'action_item');
+  await logActivity(env, 'task', `${body.status === 'done' ? 'Completed' : `Status → ${body.status}`}: "${item.title || item.description}"`, user.email, id, 'task');
 
-  const updated = await env.DB.prepare('SELECT * FROM action_items WHERE id = ?').bind(id).first();
+  // Notify assigner when task is completed
+  if (completed && item.assigned_by) {
+    try {
+      const assignerSlug = item.assigned_by.split('@')[0].toLowerCase();
+      await env.DB.prepare(
+        'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} completed a task`, (item.title || item.description).slice(0, 200), '/tasks').run();
+    } catch (e) { console.error('Failed to create completion notification:', e); }
+  }
+
+  const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
   return json({ data: updated });
 }
 
-// POST /api/action-items — create new action item
-async function handleCreateActionItem(request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { meeting_id?: string; project_id?: string; description: string; assignee: string; due_date?: string };
+// POST /api/action-items/:id/toggle — backward compat (toggles done/todo)
+async function handleToggleTask(id: string, user: AuthUser, env: Env): Promise<Response> {
+  const item = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ completed: number; title: string; description: string }>();
+  if (!item) return error('Task not found', 404);
+
+  const newCompleted = item.completed ? 0 : 1;
+  const newStatus = newCompleted ? 'done' : 'todo';
+  await env.DB.prepare(
+    'UPDATE tasks SET status = ?, completed = ?, completed_at = ?, completed_by = ? WHERE id = ?'
+  ).bind(newStatus, newCompleted, newCompleted ? new Date().toISOString() : null, newCompleted ? user.email : null, id).run();
+
+  await logActivity(env, 'task', `${newCompleted ? 'Completed' : 'Reopened'}: "${item.title || item.description}"`, user.email, id, 'task');
+
+  const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
+  return json({ data: updated });
+}
+
+// POST /api/tasks/:id — update task fields
+async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as Record<string, unknown>;
+  const allowedFields = ['title', 'description', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id'];
+  const updates: string[] = [];
+  const params: unknown[] = [];
+
+  for (const field of allowedFields) {
+    if (field in body) {
+      updates.push(`${field} = ?`);
+      params.push(body[field]);
+    }
+  }
+
+  // Handle status -> completed sync
+  if ('status' in body) {
+    const isDone = body.status === 'done';
+    updates.push('completed = ?');
+    params.push(isDone ? 1 : 0);
+    if (isDone) {
+      updates.push('completed_at = ?', 'completed_by = ?');
+      params.push(new Date().toISOString(), user.email);
+    }
+  }
+
+  if (updates.length === 0) return error('No valid fields to update', 400);
+
+  params.push(id);
+  await env.DB.prepare(`UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+
+  const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
+  if (!updated) return error('Task not found', 404);
+  return json({ data: updated });
+}
+
+// POST /api/tasks — create new task
+async function handleCreateTask(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    title?: string; description: string; assignee: string;
+    meeting_id?: string; project_id?: string; due_date?: string;
+    priority?: string; source?: string;
+  };
   if (!body.description || !body.assignee) return error('description and assignee required', 400);
 
   const id = generateId();
-  await env.DB.prepare(
-    'INSERT INTO action_items (id, meeting_id, project_id, description, assignee, due_date) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(id, body.meeting_id ?? null, body.project_id ?? null, body.description, body.assignee, body.due_date ?? null).run();
+  const title = body.title || body.description;
+  const source = body.source || (body.meeting_id ? 'meeting' : 'manual');
+  const priority = body.priority || 'medium';
 
-  await logActivity(env, 'action_item', `Created action item: "${body.description}" → ${body.assignee}`, user.email, id, 'action_item');
+  await env.DB.prepare(
+    'INSERT INTO tasks (id, title, description, assignee, assigned_by, meeting_id, project_id, due_date, priority, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, title, body.description, body.assignee, user.email, body.meeting_id ?? null, body.project_id ?? null, body.due_date ?? null, priority, source).run();
+
+  await logActivity(env, 'task', `Created task: "${title}" → ${body.assignee}`, user.email, id, 'task');
 
   // Notify assignee if it's someone else
   try {
@@ -947,19 +1055,18 @@ async function handleCreateActionItem(request: Request, user: AuthUser, env: Env
         generateId(),
         assignee,
         'assignment',
-        'action_item',
+        'task',
         id,
-        `${user.name || user.email} assigned you an action item`,
-        body.description.slice(0, 200),
-        body.meeting_id ? `/meetings/${body.meeting_id}` : '/dashboard'
+        `${user.name || user.email} assigned you a task`,
+        title.slice(0, 200),
+        '/tasks'
       ).run();
     }
   } catch (e) {
-    // Notification creation should not break the main action item operation
     console.error('Failed to create assignment notification:', e);
   }
 
-  const created = await env.DB.prepare('SELECT * FROM action_items WHERE id = ?').bind(id).first();
+  const created = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
 }
 
