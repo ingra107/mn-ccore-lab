@@ -310,6 +310,24 @@ export default function NotificationBell() {
                 })
               )}
             </div>
+
+            {/* View all link */}
+            <Link
+              to="/my-items"
+              onClick={() => setOpen(false)}
+              style={{
+                display: 'block',
+                padding: '10px 16px',
+                textAlign: 'center',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '11px',
+                color: 'var(--gold)',
+                textDecoration: 'none',
+                borderTop: '1px solid rgba(201, 168, 76, 0.15)',
+              }}
+            >
+              View all items
+            </Link>
           </motion.div>
         )}
       </AnimatePresence>

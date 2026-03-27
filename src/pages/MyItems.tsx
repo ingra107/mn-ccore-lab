@@ -499,11 +499,25 @@ export default function MyItems() {
   const markAllRead = useMarkAllRead(userSlug)
   const toggleAction = useToggleActionItem()
 
+  // Deduplicate carried-forward items (keep most recent version)
+  const dedupedItems = useMemo(() => {
+    const seen = new Map<string, ActionItemRow>()
+    for (const item of allActionItems) {
+      const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
+      const key = `${normalized}::${item.assignee}`
+      const existing = seen.get(key)
+      if (!existing || (item.created_at > existing.created_at)) {
+        seen.set(key, item)
+      }
+    }
+    return [...seen.values()]
+  }, [allActionItems])
+
   // Split action items into pending vs completed
   const { pending, completed } = useMemo(() => {
     const p: ActionItemRow[] = []
     const c: ActionItemRow[] = []
-    for (const item of allActionItems) {
+    for (const item of dedupedItems) {
       if (item.completed) {
         c.push(item)
       } else {
@@ -603,7 +617,7 @@ export default function MyItems() {
               marginTop: '4px',
             }}
           >
-            Welcome back, {displayName}
+            {displayName ? `Welcome back, ${displayName}` : 'Your action items and notifications'}
           </p>
 
           {/* Gold rule */}
