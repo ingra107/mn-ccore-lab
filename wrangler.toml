@@ -8,5 +8,10 @@ binding = "DB"
 database_name = "mnccore-lab"
 database_id = "b8453e9b-7c5f-4029-b07d-dd89c05d00cf"
 
+[triggers]
+# Morning pulse email: weekdays at 7 AM CT (13:00 UTC)
+# To activate: wrangler secret put SENDGRID_API_KEY
+crons = ["0 13 * * 1-5"]
+
 [site]
 bucket = "./dist"

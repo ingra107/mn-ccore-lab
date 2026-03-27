@@ -238,6 +238,127 @@ export default {
       return error(message, 500);
     }
   },
+
+  // ── Scheduled: Morning Pulse Email ─────────────────────────
+  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
+    if (!env.SENDGRID_API_KEY) {
+      console.log('[Pulse] No SENDGRID_API_KEY configured — skipping email send');
+      return;
+    }
+
+    console.log('[Pulse] Starting morning pulse email...');
+
+    // Get all team members with emails
+    const members = await env.DB.prepare(
+      'SELECT slug, name, email FROM team_members WHERE slug IS NOT NULL'
+    ).all<{ slug: string; name: string; email: string | null }>();
+
+    if (!members.results?.length) {
+      console.log('[Pulse] No team members found');
+      return;
+    }
+
+    let sent = 0;
+    for (const member of members.results) {
+      const email = member.email || `${member.slug}@umn.edu`;
+      const firstName = member.name.split(' ')[0];
+
+      // Get their pending action items
+      const actions = await env.DB.prepare(
+        'SELECT description, due_date FROM action_items WHERE assignee = ? AND completed = 0 ORDER BY due_date ASC'
+      ).bind(member.slug).all<{ description: string; due_date: string | null }>();
+
+      // Get unread notifications
+      const notifCount = await env.DB.prepare(
+        'SELECT COUNT(*) as c FROM notifications WHERE recipient_slug = ? AND read = 0'
+      ).bind(member.slug).first<{ c: number }>();
+
+      // Get recent team activity (last 24 hours)
+      const recentUpdates = await env.DB.prepare(
+        "SELECT author, content, project_id FROM project_updates WHERE created_at > datetime('now', '-1 day') AND author != ? ORDER BY created_at DESC LIMIT 5"
+      ).bind(member.slug).all<{ author: string; content: string; project_id: string }>();
+
+      // Only send if there's something to report
+      const pendingItems = actions.results || [];
+      const unread = notifCount?.c ?? 0;
+      const updates = recentUpdates.results || [];
+
+      if (pendingItems.length === 0 && unread === 0 && updates.length === 0) {
+        continue; // Nothing to report for this person
+      }
+
+      // Build email body
+      const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      let itemsHtml = '';
+
+      if (pendingItems.length > 0) {
+        itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;">Your Action Items</h3><ul style="padding-left:20px;">';
+        for (const item of pendingItems) {
+          const overdue = item.due_date && item.due_date < new Date().toISOString().slice(0, 10);
+          const dueLabel = item.due_date
+            ? `<span style="color:${overdue ? '#7a0019' : '#64748b'};font-size:12px;"> — ${overdue ? 'overdue' : 'due'} ${item.due_date}</span>`
+            : '';
+          itemsHtml += `<li style="margin-bottom:8px;font-size:14px;color:#0f1923;">${item.description.replace(/^\[Carried forward\]\s*/i, '')}${dueLabel}</li>`;
+        }
+        itemsHtml += '</ul>';
+      }
+
+      if (unread > 0) {
+        itemsHtml += `<p style="font-size:14px;color:#0f1923;margin-top:16px;">You have <strong style="color:#c9a84c;">${unread}</strong> unread notification${unread > 1 ? 's' : ''} on the Hub.</p>`;
+      }
+
+      if (updates.length > 0) {
+        itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;">Team Activity</h3><ul style="padding-left:20px;">';
+        for (const u of updates) {
+          itemsHtml += `<li style="margin-bottom:6px;font-size:13px;color:#2c3e50;">${u.author}: ${u.content.slice(0, 100)}${u.content.length > 100 ? '...' : ''}</li>`;
+        }
+        itemsHtml += '</ul>';
+      }
+
+      const html = `
+<!DOCTYPE html>
+<html>
+<body style="font-family:'DM Sans',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#faf8f3;">
+  <div style="border-bottom:2px solid #c9a84c;padding-bottom:12px;margin-bottom:20px;">
+    <h1 style="font-family:Georgia,serif;font-size:22px;color:#0f1923;margin:0;">Good morning, ${firstName}</h1>
+    <p style="font-size:13px;color:#64748b;margin:4px 0 0;">${today}</p>
+  </div>
+  ${itemsHtml}
+  <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e8eff5;">
+    <a href="https://mn-ccore-lab.pages.dev/my-items" style="display:inline-block;padding:10px 20px;background:#c9a84c;color:#0f1923;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;">View All Items</a>
+  </div>
+  <p style="font-size:11px;color:#64748b;margin-top:24px;">MN-CCORE Lab Hub — <a href="https://mn-ccore-lab.pages.dev" style="color:#c9a84c;">mn-ccore-lab.pages.dev</a></p>
+</body>
+</html>`;
+
+      // Send via SendGrid
+      try {
+        const sgResp = await fetch('https://api.sendgrid.com/v3/mail/send', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.SENDGRID_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            personalizations: [{ to: [{ email, name: member.name }] }],
+            from: { email: 'hub@mnccore.org', name: 'MN-CCORE Lab Hub' },
+            subject: `${firstName}, you have ${pendingItems.length} item${pendingItems.length !== 1 ? 's' : ''} today`,
+            content: [{ type: 'text/html', value: html }],
+          }),
+        });
+        if (sgResp.ok || sgResp.status === 202) {
+          sent++;
+          console.log(`[Pulse] Sent to ${email}`);
+        } else {
+          console.log(`[Pulse] Failed for ${email}: ${sgResp.status}`);
+        }
+      } catch (e) {
+        console.log(`[Pulse] Error sending to ${email}: ${e}`);
+      }
+    }
+
+    console.log(`[Pulse] Done — sent ${sent} emails`);
+  },
 };
 
 // GET /api/publications?year=&status=&topic=

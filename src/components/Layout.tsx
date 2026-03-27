@@ -55,12 +55,22 @@ export default function Layout() {
   const researchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const location = useLocation()
 
-  // Action items badge count (pending only)
+  // Action items badge count (pending only, deduped)
   const { data: actionItems = [] } = useActionItems()
-  const pendingCount = useMemo(
-    () => actionItems.filter((item) => !item.completed).length,
-    [actionItems]
-  )
+  const pendingCount = useMemo(() => {
+    const seen = new Map<string, boolean>()
+    let count = 0
+    for (const item of actionItems) {
+      if (item.completed) continue
+      const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
+      const key = `${normalized}::${item.assignee}`
+      if (!seen.has(key)) {
+        seen.set(key, true)
+        count++
+      }
+    }
+    return count
+  }, [actionItems])
 
   // Next upcoming meeting
   const { data: meetings = [] } = useMeetingsApi()

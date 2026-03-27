@@ -1,5 +1,6 @@
 export interface Env {
   DB: D1Database;
+  SENDGRID_API_KEY?: string;
 }
 
 export interface ApiResponse<T = unknown> {
