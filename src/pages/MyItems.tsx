@@ -1,0 +1,798 @@
+import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Circle,
+  Bell,
+  BellDot,
+  ChevronDown,
+  Clock,
+  AlertTriangle,
+  CheckCheck,
+} from 'lucide-react'
+import { usePageMeta } from '../hooks/usePageMeta'
+import { useScrollReveal } from '../hooks/useScrollReveal'
+import { useAuth } from '../hooks/useAuth'
+import { useActionItems } from '../hooks/useApiData'
+import type { ActionItemRow } from '../hooks/useApiData'
+import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
+import type { NotificationRow } from '../hooks/useNotifications'
+import { useToggleActionItem } from '../hooks/useMutations'
+import { getPersonInfo } from '../data/team'
+import { formatRelativeTime, formatShortDate } from '../lib/dateUtils'
+
+// ── Helpers ─────────────────────────────────────────────────
+
+function isOverdue(dueDate: string | null): boolean {
+  if (!dueDate) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dueDate + 'T12:00:00')
+  return due < today
+}
+
+function notificationIcon(type: string) {
+  switch (type) {
+    case 'mention':
+      return <BellDot size={16} />
+    case 'assignment':
+      return <Clock size={16} />
+    case 'deadline':
+      return <AlertTriangle size={16} />
+    default:
+      return <Bell size={16} />
+  }
+}
+
+// ── Unauthenticated State ───────────────────────────────────
+
+function SignInPrompt() {
+  return (
+    <div
+      className="content-container"
+      style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    >
+      <div style={{ textAlign: 'center', maxWidth: 400 }}>
+        <div
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
+            background: 'var(--gold-light)',
+            border: '2px solid var(--gold)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1.5rem',
+          }}
+        >
+          <Bell size={28} style={{ color: 'var(--gold)' }} />
+        </div>
+        <h2
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700,
+            fontSize: '1.5rem',
+            color: 'var(--ink)',
+            marginBottom: '0.75rem',
+          }}
+        >
+          Sign in to see your items
+        </h2>
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '15px',
+            color: 'var(--slate)',
+            lineHeight: 1.6,
+          }}
+        >
+          Your action items, notifications, and assignments will appear here once you authenticate
+          through Cloudflare Access.
+        </p>
+        <Link
+          to="/dashboard"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: '1.5rem',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '13px',
+            color: 'var(--gold)',
+          }}
+        >
+          <ArrowLeft size={14} />
+          Back to Dashboard
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+// ── Stat Card ───────────────────────────────────────────────
+
+function StatCard({
+  count,
+  label,
+  icon,
+  accentColor,
+}: {
+  count: number
+  label: string
+  icon: React.ReactNode
+  accentColor: string
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="card"
+      style={{
+        padding: '1.25rem 1.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem',
+        flex: '1 1 200px',
+        minWidth: 0,
+      }}
+    >
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 10,
+          background: `${accentColor}18`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: accentColor,
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700,
+            fontSize: '1.5rem',
+            color: 'var(--ink)',
+            lineHeight: 1,
+          }}
+        >
+          {count}
+        </div>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '11px',
+            color: 'var(--slate)',
+            opacity: 0.7,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            marginTop: 2,
+          }}
+        >
+          {label}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ── Section Header ──────────────────────────────────────────
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '11px',
+          color: 'var(--slate)',
+          opacity: 0.6,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {title}
+      </span>
+      <div className="section-header-line" />
+    </div>
+  )
+}
+
+// ── Action Item Row ─────────────────────────────────────────
+
+function ActionItemCard({
+  item,
+  onToggle,
+}: {
+  item: ActionItemRow
+  onToggle: (id: string) => void
+}) {
+  const person = getPersonInfo(item.assignee)
+  const overdue = !item.completed && isOverdue(item.due_date)
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 8 }}
+      transition={{ duration: 0.2 }}
+      className="card"
+      style={{
+        padding: '1rem 1.25rem',
+        marginBottom: '0.5rem',
+        borderLeft: overdue ? '3px solid var(--maroon)' : '3px solid transparent',
+        cursor: 'default',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+        <button
+          onClick={() => onToggle(item.id)}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 2,
+            cursor: 'pointer',
+            color: item.completed ? 'var(--teal)' : 'var(--slate)',
+            opacity: item.completed ? 1 : 0.5,
+            flexShrink: 0,
+            marginTop: 2,
+            transition: 'color 0.2s, opacity 0.2s',
+          }}
+          aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}
+        >
+          {item.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+        </button>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '15px',
+              color: 'var(--ink)',
+              lineHeight: 1.4,
+              textDecoration: item.completed ? 'line-through' : 'none',
+              opacity: item.completed ? 0.5 : 1,
+            }}
+          >
+            {item.description}
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginTop: '0.4rem',
+            }}
+          >
+            {/* Assignee */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  background: person.photoUrl ? undefined : 'var(--gold-light)',
+                  border: '1px solid var(--gold)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  fontSize: '8px',
+                  fontWeight: 700,
+                  color: 'var(--gold)',
+                  fontFamily: 'var(--font-mono)',
+                  flexShrink: 0,
+                }}
+              >
+                {person.photoUrl ? (
+                  <img
+                    src={person.photoUrl}
+                    alt={person.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  person.initials
+                )}
+              </div>
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
+                  color: 'var(--slate)',
+                  opacity: 0.7,
+                }}
+              >
+                {item.assignee}
+              </span>
+            </div>
+
+            {/* Due date */}
+            {item.due_date && (
+              <>
+                <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    color: overdue ? 'var(--maroon)' : 'var(--slate)',
+                    opacity: overdue ? 1 : 0.7,
+                    fontWeight: overdue ? 600 : 400,
+                  }}
+                >
+                  {overdue ? 'overdue' : 'due'} {formatShortDate(item.due_date)}
+                </span>
+              </>
+            )}
+
+            {/* Source meeting */}
+            {item.meeting_title && (
+              <>
+                <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    color: 'var(--slate)',
+                    opacity: 0.5,
+                  }}
+                >
+                  from {item.meeting_title}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ── Notification Row ────────────────────────────────────────
+
+function NotificationCard({
+  notification,
+  onMarkRead,
+}: {
+  notification: NotificationRow
+  onMarkRead: (id: string) => void
+}) {
+  const isUnread = !notification.read
+
+  const content = (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 8 }}
+      transition={{ duration: 0.2 }}
+      className="card"
+      onClick={() => {
+        if (isUnread) onMarkRead(notification.id)
+      }}
+      style={{
+        padding: '1rem 1.25rem',
+        marginBottom: '0.5rem',
+        cursor: notification.link ? 'pointer' : 'default',
+        borderLeft: isUnread ? '3px solid var(--gold)' : '3px solid transparent',
+        opacity: isUnread ? 1 : 0.7,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            background: isUnread ? 'rgba(201, 168, 76, 0.15)' : 'var(--ice)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: isUnread ? 'var(--gold)' : 'var(--slate)',
+            flexShrink: 0,
+          }}
+        >
+          {notificationIcon(notification.type)}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '14px',
+              fontWeight: isUnread ? 600 : 400,
+              color: 'var(--ink)',
+              lineHeight: 1.4,
+            }}
+          >
+            {notification.title}
+          </div>
+          {notification.body && (
+            <div
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '13px',
+                color: 'var(--slate)',
+                opacity: 0.7,
+                marginTop: 2,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {notification.body}
+            </div>
+          )}
+          <div
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              color: 'var(--slate)',
+              opacity: 0.5,
+              marginTop: 4,
+            }}
+          >
+            {formatRelativeTime(notification.created_at)}
+          </div>
+        </div>
+
+        {isUnread && (
+          <div
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: 'var(--gold)',
+              flexShrink: 0,
+              marginTop: 6,
+            }}
+          />
+        )}
+      </div>
+    </motion.div>
+  )
+
+  if (notification.link) {
+    return (
+      <Link to={notification.link} style={{ textDecoration: 'none', color: 'inherit' }}>
+        {content}
+      </Link>
+    )
+  }
+  return content
+}
+
+// ── Main Page ───────────────────────────────────────────────
+
+export default function MyItems() {
+  usePageMeta(
+    'My Items | MN-CCORE Lab',
+    'Personal dashboard showing your action items, notifications, and assignments.'
+  )
+  const headerRef = useScrollReveal<HTMLDivElement>()
+  const { user, isAuthenticated, isLoading } = useAuth()
+
+  const [showCompleted, setShowCompleted] = useState(false)
+
+  // Derive user slug from email
+  const userSlug = user.email ? user.email.split('@')[0] : ''
+
+  // Data hooks
+  const { data: allActionItems = [] } = useActionItems(
+    userSlug ? { assignee: userSlug } : undefined
+  )
+  const { data: notifications = [] } = useNotifications(userSlug)
+  const { data: unreadCount = 0 } = useUnreadCount(userSlug)
+  const markRead = useMarkRead(userSlug)
+  const markAllRead = useMarkAllRead(userSlug)
+  const toggleAction = useToggleActionItem()
+
+  // Split action items into pending vs completed
+  const { pending, completed } = useMemo(() => {
+    const p: ActionItemRow[] = []
+    const c: ActionItemRow[] = []
+    for (const item of allActionItems) {
+      if (item.completed) {
+        c.push(item)
+      } else {
+        p.push(item)
+      }
+    }
+    // Sort pending: overdue first, then by due date
+    p.sort((a, b) => {
+      const aOverdue = isOverdue(a.due_date)
+      const bOverdue = isOverdue(b.due_date)
+      if (aOverdue !== bOverdue) return aOverdue ? -1 : 1
+      if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date)
+      if (a.due_date) return -1
+      if (b.due_date) return 1
+      return 0
+    })
+    // Sort completed: most recently completed first
+    c.sort((a, b) => {
+      if (a.completed_at && b.completed_at) return b.completed_at.localeCompare(a.completed_at)
+      return 0
+    })
+    return { pending: p, completed: c }
+  }, [allActionItems])
+
+  // Unread notifications first, then by date
+  const sortedNotifications = useMemo(() => {
+    return [...notifications].sort((a, b) => {
+      if (a.read !== b.read) return a.read - b.read
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+  }, [notifications])
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
+        <div
+          className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
+          style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
+        />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <SignInPrompt />
+  }
+
+  const displayName = user.name || userSlug
+
+  return (
+    <div style={{ minHeight: '100vh' }}>
+      <div className="content-container" style={{ paddingBottom: '4rem' }}>
+        {/* Back link */}
+        <div style={{ paddingTop: '0.25rem', marginBottom: '0.5rem' }}>
+          <Link
+            to="/dashboard"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontFamily: 'var(--font-mono)',
+              fontSize: '12px',
+              color: 'var(--slate)',
+              opacity: 0.6,
+              textDecoration: 'none',
+              transition: 'opacity 0.2s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6' }}
+          >
+            <ArrowLeft size={14} />
+            Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Page Header */}
+        <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1.5rem' }}>
+          <h1
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 800,
+              fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
+              color: 'var(--ink)',
+              margin: 0,
+              lineHeight: 1.15,
+            }}
+          >
+            My Items
+          </h1>
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '15px',
+              color: 'var(--slate)',
+              opacity: 0.7,
+              marginTop: '4px',
+            }}
+          >
+            Welcome back, {displayName}
+          </p>
+
+          {/* Gold rule */}
+          <div
+            style={{
+              height: '1px',
+              background: 'linear-gradient(to right, var(--gold), transparent)',
+              opacity: 0.3,
+              marginTop: '1rem',
+            }}
+          />
+        </div>
+
+        {/* Summary Stats */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            marginBottom: '2rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <StatCard
+            count={pending.length}
+            label="Pending Action Items"
+            icon={<Circle size={20} />}
+            accentColor="#c9a84c"
+          />
+          <StatCard
+            count={unreadCount}
+            label="Unread Notifications"
+            icon={<BellDot size={20} />}
+            accentColor="#2d8a8a"
+          />
+        </div>
+
+        {/* Pending Action Items */}
+        <div style={{ marginBottom: '2.5rem' }}>
+          <SectionHeader title="Pending Action Items" />
+
+          {pending.length === 0 ? (
+            <div
+              className="card"
+              style={{
+                padding: '2rem',
+                textAlign: 'center',
+                fontFamily: 'var(--font-body)',
+                fontSize: '14px',
+                color: 'var(--slate)',
+                opacity: 0.6,
+              }}
+            >
+              No pending action items. You're all caught up.
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {pending.map((item) => (
+                <ActionItemCard
+                  key={item.id}
+                  item={item}
+                  onToggle={(id) => toggleAction.mutate(id)}
+                />
+              ))}
+            </AnimatePresence>
+          )}
+        </div>
+
+        {/* Notifications */}
+        <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <SectionHeader title="Notifications" />
+            {unreadCount > 0 && (
+              <button
+                onClick={() => markAllRead.mutate()}
+                disabled={markAllRead.isPending}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
+                  color: 'var(--teal)',
+                  opacity: markAllRead.isPending ? 0.5 : 0.8,
+                  transition: 'opacity 0.2s',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  padding: '4px 0',
+                }}
+                onMouseEnter={(e) => { if (!markAllRead.isPending) e.currentTarget.style.opacity = '1' }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.8' }}
+              >
+                <CheckCheck size={14} />
+                Mark all read
+              </button>
+            )}
+          </div>
+
+          {sortedNotifications.length === 0 ? (
+            <div
+              className="card"
+              style={{
+                padding: '2rem',
+                textAlign: 'center',
+                fontFamily: 'var(--font-body)',
+                fontSize: '14px',
+                color: 'var(--slate)',
+                opacity: 0.6,
+              }}
+            >
+              No notifications yet.
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {sortedNotifications.map((n) => (
+                <NotificationCard
+                  key={n.id}
+                  notification={n}
+                  onMarkRead={(id) => markRead.mutate(id)}
+                />
+              ))}
+            </AnimatePresence>
+          )}
+        </div>
+
+        {/* Completed Section */}
+        {completed.length > 0 && (
+          <div>
+            <button
+              onClick={() => setShowCompleted((s) => !s)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '0.5rem 0',
+                marginBottom: '0.75rem',
+                width: '100%',
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
+                  color: 'var(--slate)',
+                  opacity: 0.6,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Completed ({completed.length})
+              </span>
+              <div className="section-header-line" />
+              <motion.span
+                animate={{ rotate: showCompleted ? 0 : -90 }}
+                transition={{ duration: 0.2 }}
+                style={{ color: 'var(--slate)', opacity: 0.4, flexShrink: 0 }}
+              >
+                <ChevronDown size={16} />
+              </motion.span>
+            </button>
+
+            <AnimatePresence>
+              {showCompleted && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  {completed.map((item) => (
+                    <ActionItemCard
+                      key={item.id}
+                      item={item}
+                      onToggle={(id) => toggleAction.mutate(id)}
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

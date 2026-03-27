@@ -30,6 +30,7 @@ const MeetingDetail = lazy(() => import('./pages/MeetingDetail'))
 const Digest = lazy(() => import('./pages/Digest'))
 const CVPage = lazy(() => import('./pages/CVPage'))
 const Grants = lazy(() => import('./pages/Grants'))
+const MyItems = lazy(() => import('./pages/MyItems'))
 
 function PageLoader() {
   return (
@@ -71,6 +72,7 @@ export default function App() {
                   <Route path="/digest" element={<Digest />} />
                   <Route path="/grants" element={<Grants />} />
                   <Route path="/team/:slug/cv" element={<CVPage />} />
+                  <Route path="/my-items" element={<MyItems />} />
                 </Route>
               </Routes>
             </Suspense>

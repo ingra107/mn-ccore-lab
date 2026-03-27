@@ -150,6 +150,7 @@ export default function Meetings() {
   const daysUntil = getDaysUntil(nextMeeting)
 
   // Collect all action items across all meetings with context
+  // Deduplicate: if a "[Carried forward]" version exists, prefer it over the original
   const allActionItems = useMemo(() => {
     const items: ActionItemWithContext[] = []
     for (const mtg of meetings) {
@@ -164,7 +165,17 @@ export default function Meetings() {
         }
       }
     }
-    return items
+    // Deduplicate by normalized description + assignee
+    const seen = new Map<string, ActionItemWithContext>()
+    for (const item of items) {
+      const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
+      const key = `${normalized}::${item.assignee}`
+      const existing = seen.get(key)
+      if (!existing || item.meetingDate > existing.meetingDate) {
+        seen.set(key, item)
+      }
+    }
+    return [...seen.values()]
   }, [meetings])
 
   const pendingActions = allActionItems.filter((a) => !a.completed)
