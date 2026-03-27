@@ -89,7 +89,8 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 5. **Phase 5 -- DONE:** D1 API activation, mobile optimization, dark mode, edge cases
 6. **Phase 6 -- DONE:** Research Digest page, homepage enhancements, nav badges, SEO
 7. **Phase 7 -- DONE:** D1 migration (all pages), Grant Gantt page, CV Export, @mentions, notifications
-8. **Phase 8 -- NEXT:** Re-enable auth for team launch, SendGrid email, MyItems page, PB Sector
+8. **Phase 8 -- DONE:** MyItems page, commitments sync, @mentions, NotificationBell, Grant Gantt, CV Export
+9. **Phase 9 -- NEXT:** SendGrid morning pulse email, Cloudflare Access auth, team onboarding for April 7
 
 ## Meeting Cadence
 
