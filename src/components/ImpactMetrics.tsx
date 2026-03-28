@@ -14,7 +14,7 @@ function useImpactMetrics() {
     { value: activeGrants, suffix: '', label: 'Active Grants' },
     { value: pubCount, suffix: '+', label: 'Publications' },
     { value: 13, suffix: '+', label: 'Research Sites' },
-    { value: trainees, suffix: '', label: 'MNCCORE Trainees' },
+    { value: trainees, suffix: '', label: 'MN-CCORE Trainees' },
   ]
 }
 

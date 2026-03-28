@@ -86,7 +86,7 @@ export default function NateLab() {
       <ProjectsSection title="Research Projects" projects={projects} id="research-projects" />
       <SectionDivider />
       <div className="py-4" />
-      <MenteesSection mentees={mentees} id="trainees" title="MNCCORE Trainees" />
+      <MenteesSection mentees={mentees} id="trainees" title="MN-CCORE Trainees" />
     </LabPageLayout>
   )
 }

@@ -105,19 +105,18 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo area */}
       <div className="flex items-center h-14 px-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
         <Link to="/" className="flex items-center gap-2 min-w-0">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: 'var(--teal)', color: 'white' }}
-          >
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '14px' }}>M</span>
-          </div>
+          <img
+            src="/logos/mnccore-logo-mark.svg"
+            alt="MN-CCORE"
+            className="flex-shrink-0"
+            style={{ width: 32, height: 32 }}
+          />
           {!collapsed && (
-            <span
-              className="text-sm font-semibold truncate"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}
-            >
-              MN-CCORE
-            </span>
+            <img
+              src="/logos/mnccore-logo-primary.svg"
+              alt="MN-CCORE"
+              style={{ height: 24 }}
+            />
           )}
         </Link>
       </div>
