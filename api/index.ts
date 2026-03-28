@@ -139,6 +139,8 @@ export default {
             return await handleIdeas(url, env);
           case '/api/search':
             return await handleSearch(url, env);
+          case '/api/activity/heatmap':
+            return await handleActivityHeatmap(url, env);
           case '/api/settings':
             return await handleGetSettings(env);
           case '/api/workflow-templates':
@@ -1731,6 +1733,46 @@ async function handleSearch(url: URL, env: Env): Promise<Response> {
   }
 
   return json({ data: results, count: results.length, query: q });
+}
+
+// ── Activity Heatmap ────────────────────────────────────────
+
+async function handleActivityHeatmap(url: URL, env: Env): Promise<Response> {
+  const slug = url.searchParams.get('slug');
+  const days = parseInt(url.searchParams.get('days') || '90');
+  const since = new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
+
+  let query = "SELECT DATE(timestamp) as date, COUNT(*) as count FROM activity_log WHERE timestamp >= ? ";
+  const params: string[] = [since];
+
+  if (slug) {
+    query += "AND actor = ? ";
+    params.push(slug);
+  }
+
+  query += "GROUP BY DATE(timestamp) ORDER BY date";
+
+  const result = await env.DB.prepare(query).bind(...params).all();
+  const data: Record<string, number> = {};
+  for (const row of (result.results || []) as { date: string; count: number }[]) {
+    data[row.date] = row.count;
+  }
+
+  // Also count task completions
+  let taskQuery = "SELECT DATE(completed_at) as date, COUNT(*) as count FROM tasks WHERE completed_at IS NOT NULL AND completed_at >= ? ";
+  const taskParams: string[] = [since];
+  if (slug) {
+    taskQuery += "AND (assignee = ? OR completed_by LIKE ?) ";
+    taskParams.push(slug, `%${slug}%`);
+  }
+  taskQuery += "GROUP BY DATE(completed_at)";
+
+  const taskResult = await env.DB.prepare(taskQuery).bind(...taskParams).all();
+  for (const row of (taskResult.results || []) as { date: string; count: number }[]) {
+    data[row.date] = (data[row.date] || 0) + row.count;
+  }
+
+  return json({ data, days, slug: slug || 'all' });
 }
 
 async function handleCreateWorkflowTemplate(request: Request, env: Env): Promise<Response> {

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import MetricCard from '../../components/MetricCard'
+import ActivityHeatmap from '../../components/ActivityHeatmap'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
@@ -175,8 +176,14 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
+
+      {/* Lab-wide Activity Heatmap */}
+      <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+        <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+          Lab Activity
+        </h3>
+        <ActivityHeatmap days={90} />
+      </div>
     </div>
   )
 }
-
-// StatCard removed — uses shared MetricCard component
