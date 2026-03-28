@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
-import { useTasks, useProjects, useIdeas, useActivity } from '../../hooks/useApiData'
-import { useProjectHealth } from '../../hooks/useApiData'
+import MetricCard from '../../components/MetricCard'
+import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
 
@@ -73,18 +73,18 @@ export default function AnalyticsPage() {
 
       {/* Weekly Summary Cards */}
       <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard icon={CheckCircle2} label="Completed This Week" value={thisWeek.completedThisWeek} color="var(--green, #22c55e)" />
-        <StatCard icon={Plus} label="Created This Week" value={thisWeek.createdThisWeek} color="var(--teal)" />
-        <StatCard icon={AlertTriangle} label="Overdue Tasks" value={thisWeek.overdue} color="var(--maroon)" />
-        <StatCard icon={TrendingUp} label="Activity Events" value={thisWeek.activityThisWeek} color="var(--gold)" />
+        <MetricCard icon={CheckCircle2} label="Completed This Week" value={thisWeek.completedThisWeek} color="var(--green, #22c55e)" />
+        <MetricCard icon={Plus} label="Created This Week" value={thisWeek.createdThisWeek} color="var(--teal)" />
+        <MetricCard icon={AlertTriangle} label="Overdue Tasks" value={thisWeek.overdue} color="var(--maroon)" />
+        <MetricCard icon={TrendingUp} label="Activity Events" value={thisWeek.activityThisWeek} color="var(--gold)" />
       </div>
 
       {/* Second row: summary stats */}
       <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard icon={FolderKanban} label="Active Projects" value={projects.filter((p) => p.status === 'Active').length} color="var(--teal)" subtitle={`${projects.length} total`} />
-        <StatCard icon={Lightbulb} label="Research Ideas" value={activeIdeas} color="var(--gold)" subtitle={`${ideas.length} total`} />
-        <StatCard icon={FileText} label="Pending Tasks" value={pendingTasks} color="var(--ink)" subtitle={`${tasks.length} total`} />
-        <StatCard icon={Users} label="Project Health" value={health?.green || 0} color="var(--green, #22c55e)" subtitle={`${health?.yellow || 0} attention · ${health?.red || 0} stale`} />
+        <MetricCard icon={FolderKanban} label="Active Projects" value={projects.filter((p) => p.status === 'Active').length} color="var(--teal)" subtitle={`${projects.length} total`} />
+        <MetricCard icon={Lightbulb} label="Research Ideas" value={activeIdeas} color="var(--gold)" subtitle={`${ideas.length} total`} />
+        <MetricCard icon={FileText} label="Pending Tasks" value={pendingTasks} color="var(--ink)" subtitle={`${tasks.length} total`} />
+        <MetricCard icon={Users} label="Project Health" value={health?.green || 0} color="var(--green, #22c55e)" subtitle={`${health?.yellow || 0} attention · ${health?.red || 0} stale`} />
       </div>
 
       {/* Team Performance */}
@@ -179,19 +179,4 @@ export default function AnalyticsPage() {
   )
 }
 
-// ── Stat Card ────────────────────────────────────────────────
-
-function StatCard({ icon: Icon, label, value, color, subtitle }: { icon: typeof CheckCircle2; label: string; value: number; color: string; subtitle?: string }) {
-  return (
-    <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>{label}</span>
-        <Icon size={16} style={{ color, opacity: 0.6 }} />
-      </div>
-      <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{value}</div>
-      {subtitle && (
-        <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>{subtitle}</span>
-      )}
-    </div>
-  )
-}
+// StatCard removed — uses shared MetricCard component

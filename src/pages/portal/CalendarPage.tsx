@@ -226,7 +226,7 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
                   const wrapperProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
                   return (
                     <Wrapper key={e.id} {...wrapperProps} className="text-[8px] px-1 py-0.5 rounded truncate block" style={{ fontFamily: 'var(--font-sans)', color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
-                      {formatBrandName(e.title.length > 18 ? e.title.slice(0, 18) + '...' : e.title)}
+                      {(() => { const t = formatBrandName(e.title); return t.length > 20 ? t.slice(0, 20) + '...' : t })()}
                     </Wrapper>
                   )
                 })}
@@ -295,7 +295,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
                   <div key={e.id} className="flex items-start gap-1 p-1.5 rounded" style={{ backgroundColor: config.bg }}>
                     <Icon size={10} style={{ color: config.color, marginTop: 2, flexShrink: 0 }} />
                     <span className="text-[9px] leading-tight" style={{ fontFamily: 'var(--font-sans)', color: config.color }}>
-                      {formatBrandName(e.title.length > 30 ? e.title.slice(0, 30) + '...' : e.title)}
+                      {(() => { const t = formatBrandName(e.title); return t.length > 32 ? t.slice(0, 32) + '...' : t })()}
                     </span>
                   </div>
                 )

@@ -48,6 +48,7 @@ export default function SettingsPage() {
       })
       return res.json()
     },
+    onSuccess: () => { setSaved(true); setTimeout(() => setSaved(false), 2000) },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['settings'] }),
   })
 
@@ -76,7 +77,7 @@ export default function SettingsPage() {
           <SettingsField label="Lab Name">
             <SettingsInput
               value={settings.lab_name || ''}
-              onSave={(v) => { updateSettings.mutate({ lab_name: v }); setSaved(true); setTimeout(() => setSaved(false), 2000) }}
+              onSave={(v) => updateSettings.mutate({ lab_name: v })}
               placeholder="Enter lab name"
             />
           </SettingsField>

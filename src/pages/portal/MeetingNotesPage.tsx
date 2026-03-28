@@ -5,6 +5,7 @@ import {
   Sparkles, Users,
 } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
+import MetricCard from '../../components/MetricCard'
 import { useMeetingsApi } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
 
@@ -37,10 +38,10 @@ export default function MeetingNotesPage() {
 
       {/* Stats */}
       <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MiniStat icon={Sparkles} label="Processed Meetings" value={processedCount} color="var(--gold)" />
-        <MiniStat icon={CheckCircle2} label="With Notes" value={processedCount} color="var(--green, #22c55e)" />
-        <MiniStat icon={Clock} label="Pending" value={totalCount - processedCount} color="var(--slate)" />
-        <MiniStat icon={Users} label="Total Meetings" value={totalCount} color="var(--teal)" />
+        <MetricCard icon={Sparkles} label="Processed Meetings" value={processedCount} color="var(--gold)" />
+        <MetricCard icon={CheckCircle2} label="With Notes" value={processedCount} color="var(--green, #22c55e)" />
+        <MetricCard icon={Clock} label="Pending" value={totalCount - processedCount} color="var(--slate)" />
+        <MetricCard icon={Users} label="Total Meetings" value={totalCount} color="var(--teal)" />
       </div>
 
       {/* How it works */}
@@ -118,19 +119,7 @@ export default function MeetingNotesPage() {
   )
 }
 
-// ── Mini Stat Card ───────────────────────────────────────────
-
-function MiniStat({ icon: Icon, label, value, color }: { icon: typeof Sparkles; label: string; value: number; color: string }) {
-  return (
-    <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border-light)' }}>
-      <div className="flex items-center justify-between mb-1">
-        <Icon size={14} style={{ color, opacity: 0.6 }} />
-        <span className="text-lg font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{value}</span>
-      </div>
-      <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>{label}</span>
-    </div>
-  )
-}
+// MiniStat removed — uses shared MetricCard component
 
 // ── Transcript Modal ─────────────────────────────────────────
 
