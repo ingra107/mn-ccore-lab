@@ -48,6 +48,7 @@ const ActivityPage = lazy(() => import('./pages/portal/ActivityPage'))
 const AnalyticsPage = lazy(() => import('./pages/portal/AnalyticsPage'))
 const SettingsPage = lazy(() => import('./pages/portal/SettingsPage'))
 const MeetingNotesPage = lazy(() => import('./pages/portal/MeetingNotesPage'))
+const Pulse = lazy(() => import('./pages/Pulse'))
 // GrantsPortal placeholder available when existing Grants page is fully migrated
 // const GrantsPortal = lazy(() => import('./pages/portal/Grants'))
 
@@ -74,6 +75,9 @@ export default function App() {
         <AuthProvider>
             <Suspense fallback={<PageLoader />}>
               <Routes>
+                {/* Standalone pages (no layout wrapper) */}
+                <Route path="/pulse" element={<Pulse />} />
+
                 {/* Public pages: top nav layout */}
                 <Route element={<Layout />}>
                   <Route path="/" element={<Home />} />
