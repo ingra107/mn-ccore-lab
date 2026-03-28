@@ -4,10 +4,15 @@ import SectionHeader from '../../components/SectionHeader'
 import MetricCard from '../../components/MetricCard'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
+import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
 
+const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
+
 export default function AnalyticsPage() {
+  const { user } = useAuth()
+  const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
   const { data: tasks = [] } = useTasks()
   const { data: projects = [] } = useProjects()
   const { data: ideas = [] } = useIdeas()
@@ -90,42 +95,66 @@ export default function AnalyticsPage() {
 
       {/* Team Performance */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Completion by person */}
-        <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
-          <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
-            Team Task Overview
-          </h3>
-          <div className="flex flex-col gap-3">
-            {completionByPerson.map(({ slug, total, done, overdue, rate }) => {
-              const person = getPersonInfo(slug)
-              return (
-                <div key={slug} className="flex items-center gap-3">
-                  <div style={{ width: 28, height: 28 }}>
-                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
-                  </div>
-                  <span className="text-sm w-28 truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-                    {person.name}
-                  </span>
-                  {/* Progress bar */}
-                  <div className="flex-1 h-4 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
-                    <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, backgroundColor: rate > 70 ? 'var(--green, #22c55e)' : rate > 40 ? 'var(--gold)' : 'var(--maroon)' }} />
-                  </div>
-                  <span className="text-[11px] w-16 text-right" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
-                    {done}/{total}
-                  </span>
-                  {overdue > 0 && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
-                      {overdue} overdue
+        {/* Completion by person — PI-only for psychological safety (SDT research) */}
+        {isPi ? (
+          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <h3 className="text-sm font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+                Team Task Overview
+              </h3>
+              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', backgroundColor: 'var(--border-light)' }}>
+                PI only
+              </span>
+            </div>
+            <div className="flex flex-col gap-3">
+              {completionByPerson.map(({ slug, total, done, overdue, rate }) => {
+                const person = getPersonInfo(slug)
+                return (
+                  <div key={slug} className="flex items-center gap-3">
+                    <div style={{ width: 28, height: 28 }}>
+                      <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
+                    </div>
+                    <span className="text-sm w-28 truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                      {person.name}
                     </span>
-                  )}
-                </div>
-              )
-            })}
-            {completionByPerson.length === 0 && (
-              <p className="text-center py-6 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>No task data yet</p>
-            )}
+                    {/* Progress bar */}
+                    <div className="flex-1 h-4 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
+                      <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, backgroundColor: rate > 70 ? 'var(--green, #22c55e)' : rate > 40 ? 'var(--gold)' : 'var(--maroon)' }} />
+                    </div>
+                    <span className="text-[11px] w-16 text-right" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
+                      {done}/{total}
+                    </span>
+                    {overdue > 0 && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
+                        {overdue} overdue
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+              {completionByPerson.length === 0 && (
+                <p className="text-center py-6 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>No task data yet</p>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+            <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+              Lab Progress This Week
+            </h3>
+            <div className="text-center py-6">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--teal)' }}>
+                  {tasks.filter(t => t.completed_at && t.completed_at >= new Date(Date.now() - 7 * 86400000).toISOString()).length}
+                </span>
+                <span className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>tasks completed</span>
+              </div>
+              <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+                {pendingTasks} still pending across the lab
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Projects by stage */}
         <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>

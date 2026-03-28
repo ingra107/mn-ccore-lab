@@ -69,19 +69,19 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <SectionHeader title="Settings" subtitle="Customize your lab workspace" />
+      <SectionHeader title="Settings" subtitle="Configure your lab workspace — changes are saved automatically" />
 
       <div className="mt-6 flex flex-col gap-8 max-w-2xl">
         {/* Basic Information */}
-        <SettingsSection title="Basic Information" subtitle="Your lab name and description" icon={Type}>
-          <SettingsField label="Lab Name">
+        <SettingsSection title="Basic Information" subtitle="These appear in the sidebar header and dashboard" icon={Type}>
+          <SettingsField label="Lab Name" hint="Shown in the sidebar and page titles">
             <SettingsInput
               value={settings.lab_name || ''}
               onSave={(v) => updateSettings.mutate({ lab_name: v })}
               placeholder="Enter lab name"
             />
           </SettingsField>
-          <SettingsField label="Description">
+          <SettingsField label="Description" hint="Brief summary of your lab's research focus">
             <SettingsInput
               value={settings.lab_description || ''}
               onSave={(v) => updateSettings.mutate({ lab_description: v })}
@@ -89,7 +89,7 @@ export default function SettingsPage() {
               multiline
             />
           </SettingsField>
-          <SettingsField label="Lab Icon (Emoji)">
+          <SettingsField label="Lab Icon (Emoji)" hint="Displayed next to your lab name">
             <SettingsInput
               value={settings.lab_icon || ''}
               onSave={(v) => updateSettings.mutate({ lab_icon: v })}
@@ -113,7 +113,7 @@ export default function SettingsPage() {
         </SettingsSection>
 
         {/* Workflow Templates */}
-        <SettingsSection title="Workflow Templates" subtitle="Define custom project stages for different project types" icon={Layers}>
+        <SettingsSection title="Workflow Templates" subtitle="Define the stages your projects move through (e.g., Idea → Analysis → Writing → Published)" icon={Layers}>
           <div className="flex flex-col gap-4">
             {templates.map((template) => {
               const stages: string[] = JSON.parse(template.stages)
@@ -186,12 +186,17 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
 
 // ── Settings Field ───────────────────────────────────────────
 
-function SettingsField({ label, children }: { label: string; children: React.ReactNode }) {
+function SettingsField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+      <label className="block text-xs font-medium mb-0.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
         {label}
       </label>
+      {hint && (
+        <p className="text-[11px] mb-1.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+          {hint}
+        </p>
+      )}
       {children}
     </div>
   )

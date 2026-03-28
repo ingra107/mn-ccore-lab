@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { Plus, List, LayoutGrid, GanttChartSquare } from 'lucide-react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { Plus, List, LayoutGrid, GanttChartSquare, ChevronDown, CheckCircle2 } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import ToggleButton from '../../components/ToggleButton'
 import TaskListView from '../../components/tasks/TaskListView'
@@ -12,10 +12,9 @@ import { getPersonInfo } from '../../data/team'
 
 type ViewMode = 'list' | 'board' | 'timeline'
 
-const views: { key: ViewMode; label: string; icon: typeof List }[] = [
-  { key: 'list', label: 'List', icon: List },
-  { key: 'board', label: 'Board', icon: LayoutGrid },
-  { key: 'timeline', label: 'Timeline', icon: GanttChartSquare },
+const alternateViews: { key: ViewMode; label: string; icon: typeof List; description: string }[] = [
+  { key: 'board', label: 'Board', icon: LayoutGrid, description: 'Kanban columns by status' },
+  { key: 'timeline', label: 'Timeline', icon: GanttChartSquare, description: 'Tasks on a time axis' },
 ]
 
 export default function MyTasks() {
@@ -106,22 +105,15 @@ export default function MyTasks() {
         </div>
       )}
 
-      {/* View tabs */}
+      {/* View selector */}
       <div className="mt-5 flex items-center gap-2">
-        {views.map((v) => {
-          const Icon = v.icon
-          const active = view === v.key
-          return (
-            <ToggleButton
-              key={v.key}
-              active={active}
-              onClick={() => setView(v.key)}
-            >
-              <Icon size={14} />
-              {v.label}
-            </ToggleButton>
-          )
-        })}
+        <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
+          <List size={14} />
+          List
+        </ToggleButton>
+
+        {/* Alternate views dropdown */}
+        <ViewDropdown view={view} setView={setView} views={alternateViews} />
       </div>
 
       {/* Content */}
@@ -132,6 +124,18 @@ export default function MyTasks() {
             style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}
           >
             Loading tasks...
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="text-center py-16">
+            <CheckCircle2 size={40} style={{ color: 'var(--border-light)', margin: '0 auto 12px' }} />
+            <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+              {currentUser ? 'No tasks assigned to you' : 'No tasks yet'}
+            </p>
+            <p className="text-xs mt-1 max-w-xs mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+              {currentUser
+                ? 'Tasks assigned to you in meetings or by PIs will show up here.'
+                : 'Sign in to see your personal tasks, or create one below.'}
+            </p>
           </div>
         ) : (
           <>
@@ -148,6 +152,72 @@ export default function MyTasks() {
         onClose={() => setShowCreate(false)}
         onCreate={handleCreate}
       />
+    </div>
+  )
+}
+
+// Reusable view dropdown
+function ViewDropdown({ view, setView, views }: { view: ViewMode; setView: (v: ViewMode) => void; views: typeof alternateViews }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    if (open) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  const currentView = views.find(v => v.key === view)
+  const CurrentIcon = currentView?.icon || List
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
+        style={{
+          fontFamily: 'var(--font-sans)',
+          color: currentView ? 'var(--teal)' : 'var(--slate)',
+          backgroundColor: currentView ? 'rgba(45,138,138,0.08)' : 'transparent',
+          borderColor: currentView ? 'var(--teal)' : 'var(--border-light)',
+          cursor: 'pointer',
+        }}
+      >
+        {currentView && <CurrentIcon size={13} />}
+        {currentView ? currentView.label : 'More views'}
+        <ChevronDown size={12} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute top-full left-0 mt-1 rounded-lg border shadow-lg z-50 py-1 min-w-[200px]"
+          style={{ backgroundColor: 'var(--card-bg, #fff)', borderColor: 'var(--border-light)' }}
+        >
+          {views.map((v) => {
+            const Icon = v.icon
+            return (
+              <button
+                key={v.key}
+                onClick={() => { setView(v.key); setOpen(false) }}
+                className="w-full flex items-start gap-3 px-3 py-2.5 text-left transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                style={{ cursor: 'pointer', border: 'none', background: 'none' }}
+              >
+                <Icon size={16} style={{ color: view === v.key ? 'var(--teal)' : 'var(--slate)', marginTop: 1, flexShrink: 0 }} />
+                <div>
+                  <div className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: view === v.key ? 'var(--teal)' : 'var(--ink)' }}>
+                    {v.label}
+                  </div>
+                  <div className="text-[11px] mt-0.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+                    {v.description}
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
