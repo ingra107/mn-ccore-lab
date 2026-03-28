@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -400,17 +400,26 @@ function ProjectDetailInner({ project }: InnerProps) {
             height: '1px',
             background: 'linear-gradient(to right, var(--gold), transparent)',
             opacity: 0.3,
-            marginBottom: '2rem',
+            marginBottom: '1rem',
           }}
         />
       </motion.div>
 
+      {/* Section navigation */}
+      <SectionNav sections={[
+        { id: 'overview', label: 'Overview' },
+        { id: 'updates', label: 'Updates' },
+        { id: 'action-items', label: 'Action Items' },
+        { id: 'comments', label: 'Comments' },
+      ]} />
+
       {/* Stage indicator */}
       <motion.div
+        id="overview"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
-        style={{ marginBottom: '2.5rem' }}
+        style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
       >
         <h2
           style={{
@@ -936,17 +945,22 @@ function ProjectDetailInner({ project }: InnerProps) {
       </div>
 
       {/* Project Updates — async status posts */}
-      <ProjectUpdateFeed projectSlug={project.slug} />
+      <div id="updates" style={{ scrollMarginTop: '60px' }}>
+        <ProjectUpdateFeed projectSlug={project.slug} />
+      </div>
 
       {/* Comments from D1 */}
-      <ProjectComments projectSlug={project.slug} />
+      <div id="comments" style={{ scrollMarginTop: '60px' }}>
+        <ProjectComments projectSlug={project.slug} />
+      </div>
 
       {/* Action items from meetings */}
       <motion.div
+        id="action-items"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.25 }}
-        style={{ marginBottom: '2.5rem' }}
+        style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
       >
         <h2
           style={{
@@ -1077,5 +1091,58 @@ function ProjectDetailInner({ project }: InnerProps) {
         }
       `}</style>
     </>
+  )
+}
+
+// ── Section Navigation ──────────────────────────────────────────
+function SectionNav({ sections }: { sections: { id: string; label: string }[] }) {
+  const [active, setActive] = useState(sections[0]?.id)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActive(entry.target.id)
+          }
+        }
+      },
+      { rootMargin: '-80px 0px -60% 0px', threshold: 0 }
+    )
+
+    for (const section of sections) {
+      const el = document.getElementById(section.id)
+      if (el) observer.observe(el)
+    }
+
+    return () => observer.disconnect()
+  }, [sections])
+
+  return (
+    <div
+      className="flex items-center gap-1 mb-6 pb-2 overflow-x-auto"
+      style={{ borderBottom: '1px solid var(--border-light)' }}
+    >
+      {sections.map((s) => (
+        <button
+          key={s.id}
+          onClick={() => {
+            const el = document.getElementById(s.id)
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}
+          className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            color: active === s.id ? 'var(--teal)' : 'var(--slate)',
+            backgroundColor: active === s.id ? 'rgba(45,138,138,0.08)' : 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            opacity: active === s.id ? 1 : 0.6,
+          }}
+        >
+          {s.label}
+        </button>
+      ))}
+    </div>
   )
 }
