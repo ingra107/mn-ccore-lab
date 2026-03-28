@@ -113,7 +113,7 @@ export default function MeetingNotesPage() {
       </div>
 
       {/* Upload/Paste Modal */}
-      {showCreate && <TranscriptModal onClose={() => setShowCreate(false)} />}
+      {showCreate && <TranscriptModal onClose={() => setShowCreate(false)} meetings={meetings} />}
     </div>
   )
 }
@@ -134,13 +134,12 @@ function MiniStat({ icon: Icon, label, value, color }: { icon: typeof Sparkles; 
 
 // ── Transcript Modal ─────────────────────────────────────────
 
-function TranscriptModal({ onClose }: { onClose: () => void }) {
+function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings: { id: string; title: string; date: string }[] }) {
   const [mode, setMode] = useState<'audio' | 'transcript'>('transcript')
   const [transcript, setTranscript] = useState('')
   const [meetingId, setMeetingId] = useState('')
   const [processing, setProcessing] = useState(false)
   const [result, setResult] = useState<{ summary: string; actions: string[]; decisions: string[] } | null>(null)
-  const { data: meetings = [] } = useMeetingsApi()
 
   const handleProcess = async () => {
     if (!transcript.trim()) return

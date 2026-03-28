@@ -371,17 +371,17 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
 
 function AgendaView({ events }: { events: CalendarEvent[] }) {
   const today = new Date().toISOString().split('T')[0]
-  const upcoming = events.filter((e) => e.date >= today)
 
   const grouped = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>()
-    for (const e of upcoming) {
+    for (const e of events) {
+      if (e.date < today) continue
       const list = map.get(e.date) || []
       list.push(e)
       map.set(e.date, list)
     }
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-  }, [upcoming])
+  }, [events, today])
 
   return (
     <div className="flex flex-col gap-5">

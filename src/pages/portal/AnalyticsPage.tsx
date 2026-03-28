@@ -29,12 +29,13 @@ export default function AnalyticsPage() {
 
   // Task completion by person
   const completionByPerson = useMemo(() => {
+    const now = new Date()
     const map = new Map<string, { total: number; done: number; overdue: number }>()
     for (const t of tasks) {
       const entry = map.get(t.assignee) || { total: 0, done: 0, overdue: 0 }
       entry.total++
       if (t.completed) entry.done++
-      if (!t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()) entry.overdue++
+      if (!t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < now) entry.overdue++
       map.set(t.assignee, entry)
     }
     return [...map.entries()]

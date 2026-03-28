@@ -1668,11 +1668,10 @@ async function handleGetSettings(env: Env): Promise<Response> {
 
 async function handleUpdateSettings(request: Request, env: Env): Promise<Response> {
   const body = await request.json() as Record<string, string>;
-  for (const [key, value] of Object.entries(body)) {
-    await env.DB.prepare(
-      "INSERT OR REPLACE INTO lab_settings (key, value, updated_at) VALUES (?, ?, datetime('now'))"
-    ).bind(key, value).run();
-  }
+  const stmts = Object.entries(body).map(([key, value]) =>
+    env.DB.prepare("INSERT OR REPLACE INTO lab_settings (key, value, updated_at) VALUES (?, ?, datetime('now'))").bind(key, value)
+  );
+  if (stmts.length > 0) await env.DB.batch(stmts);
   return await handleGetSettings(env);
 }
 
