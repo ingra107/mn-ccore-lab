@@ -3,6 +3,7 @@ import { CheckCircle2, Circle, Clock, ClipboardList, ArrowRight, AlertTriangle }
 import BentoCard from './BentoCard'
 import Avatar from '../Avatar'
 import { useTasks } from '../../hooks/useApiData'
+import { formatBrandName } from '../BrandName'
 import { useUpdateTaskStatus } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
@@ -83,7 +84,7 @@ export default function ActionBoardCard() {
                                 <Link to={`/meetings/${item.meeting_id}`}
                                   style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--gold)', textDecoration: 'none', opacity: 0.7 }}
                                   onClick={(e) => e.stopPropagation()}>
-                                  {item.meeting_title?.split(':')[0]}
+                                  {formatBrandName(item.meeting_title?.split(':')[0] || '')}
                                 </Link>
                               )}
                             </div>

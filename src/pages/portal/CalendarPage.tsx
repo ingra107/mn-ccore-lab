@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, ChevronLeft, ChevronRight, Users, CheckSquare, Diamond, Download } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
+import { formatBrandName } from '../../components/BrandName'
 import { useCalendarEvents } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import { formatLongDate, formatShortDate } from '../../lib/dateUtils'
@@ -224,8 +225,8 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
                   const Wrapper = e.type === 'meeting' ? Link : 'div' as any
                   const wrapperProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
                   return (
-                    <Wrapper key={e.id} {...wrapperProps} className="text-[8px] px-1 py-0.5 rounded truncate block" style={{ fontFamily: 'var(--font-sans)', color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }} title={e.title}>
-                      {e.title.length > 18 ? e.title.slice(0, 18) + '...' : e.title}
+                    <Wrapper key={e.id} {...wrapperProps} className="text-[8px] px-1 py-0.5 rounded truncate block" style={{ fontFamily: 'var(--font-sans)', color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
+                      {formatBrandName(e.title.length > 18 ? e.title.slice(0, 18) + '...' : e.title)}
                     </Wrapper>
                   )
                 })}
@@ -294,7 +295,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
                   <div key={e.id} className="flex items-start gap-1 p-1.5 rounded" style={{ backgroundColor: config.bg }}>
                     <Icon size={10} style={{ color: config.color, marginTop: 2, flexShrink: 0 }} />
                     <span className="text-[9px] leading-tight" style={{ fontFamily: 'var(--font-sans)', color: config.color }}>
-                      {e.title.length > 30 ? e.title.slice(0, 30) + '...' : e.title}
+                      {formatBrandName(e.title.length > 30 ? e.title.slice(0, 30) + '...' : e.title)}
                     </span>
                   </div>
                 )
@@ -344,7 +345,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
                     <Icon size={18} style={{ color: config.color }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{e.title}</p>
+                    <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{formatBrandName(e.title)}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: config.color, backgroundColor: config.bg }}>{e.type}</span>
                       {assignee && (
@@ -406,7 +407,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                     <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
                       <Icon size={12} style={{ color: config.color }} />
                     </div>
-                    <span className="flex-1 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{e.title}</span>
+                    <span className="flex-1 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{formatBrandName(e.title)}</span>
                     {assignee && (
                       <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>{getPersonInfo(assignee).name.split(' ')[0]}</span>
                     )}

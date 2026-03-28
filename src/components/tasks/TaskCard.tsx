@@ -3,6 +3,7 @@ import { Circle, CheckCircle2, Clock, AlertTriangle, CalendarDays, FolderKanban 
 import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
+import { formatBrandName } from '../BrandName'
 import type { TaskRow } from '../../lib/api'
 
 interface TaskCardProps {
@@ -102,7 +103,7 @@ export default function TaskCard({ task, onStatusChange, compact = false, onClic
               textDecoration: isDone ? 'line-through' : 'none',
             }}
           >
-            {task.title || task.description}
+            {formatBrandName(task.title || task.description)}
           </p>
 
           {/* Meta row */}
@@ -151,7 +152,7 @@ export default function TaskCard({ task, onStatusChange, compact = false, onClic
                 className="text-[10px]"
                 style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', opacity: 0.7 }}
               >
-                {task.meeting_title.split(':')[0]}
+                {formatBrandName(task.meeting_title.split(':')[0])}
               </span>
             )}
           </div>
