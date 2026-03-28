@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Plus, List, LayoutGrid, GanttChartSquare } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
+import ToggleButton from '../../components/ToggleButton'
 import TaskListView from '../../components/tasks/TaskListView'
 import TaskBoardView from '../../components/tasks/TaskBoardView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
@@ -111,22 +112,14 @@ export default function MyTasks() {
           const Icon = v.icon
           const active = view === v.key
           return (
-            <button
+            <ToggleButton
               key={v.key}
+              active={active}
               onClick={() => setView(v.key)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors"
-              style={{
-                borderColor: active ? 'var(--teal)' : 'var(--border-light)',
-                backgroundColor: active ? 'rgba(45,138,138,0.1)' : 'transparent',
-                color: active ? 'var(--teal)' : 'var(--slate)',
-                fontFamily: 'var(--font-sans)',
-                fontWeight: active ? 600 : 400,
-                cursor: 'pointer',
-              }}
             >
               <Icon size={14} />
               {v.label}
-            </button>
+            </ToggleButton>
           )
         })}
       </div>

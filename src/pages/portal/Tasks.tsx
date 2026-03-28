@@ -8,6 +8,7 @@ import TaskStandUpView from '../../components/tasks/TaskStandUpView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
+import ToggleButton from '../../components/ToggleButton'
 import { useTasks } from '../../hooks/useApiData'
 import { useCreateTask, useUpdateTaskStatus } from '../../hooks/useMutations'
 import type { TaskRow } from '../../lib/api'
@@ -90,24 +91,11 @@ export default function Tasks() {
         <div className="flex items-center gap-2 flex-wrap">
           {views.map((v) => {
             const Icon = v.icon
-            const active = view === v.key
             return (
-              <button
-                key={v.key}
-                onClick={() => setView(v.key)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors"
-                style={{
-                  borderColor: active ? 'var(--teal)' : 'var(--border-light)',
-                  backgroundColor: active ? 'rgba(45,138,138,0.1)' : 'transparent',
-                  color: active ? 'var(--teal)' : 'var(--slate)',
-                  fontFamily: 'var(--font-sans)',
-                  fontWeight: active ? 600 : 400,
-                  cursor: 'pointer',
-                }}
-              >
+              <ToggleButton key={v.key} active={view === v.key} onClick={() => setView(v.key)}>
                 <Icon size={14} />
                 {v.label}
-              </button>
+              </ToggleButton>
             )
           })}
         </div>

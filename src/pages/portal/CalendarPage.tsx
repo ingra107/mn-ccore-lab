@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, ChevronLeft, ChevronRight, Users, CheckSquare, Diamond, Download } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
+import ToggleButton from '../../components/ToggleButton'
 import { formatBrandName } from '../../components/BrandName'
 import { useCalendarEvents } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
@@ -100,21 +101,14 @@ export default function CalendarPage() {
           {(['month', 'week', 'day', 'agenda'] as ViewMode[]).map((v) => {
             const active = view === v
             return (
-              <button
+              <ToggleButton
                 key={v}
+                active={active}
                 onClick={() => setView(v)}
-                className="px-3 py-1.5 rounded-md text-sm border transition-colors capitalize"
-                style={{
-                  borderColor: active ? 'var(--teal)' : 'var(--border-light)',
-                  backgroundColor: active ? 'rgba(45,138,138,0.1)' : 'transparent',
-                  color: active ? 'var(--teal)' : 'var(--slate)',
-                  fontFamily: 'var(--font-sans)',
-                  fontWeight: active ? 600 : 400,
-                  cursor: 'pointer',
-                }}
+                className="capitalize"
               >
                 {v}
-              </button>
+              </ToggleButton>
             )
           })}
         </div>

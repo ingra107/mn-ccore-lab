@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { LayoutGrid, List, ArrowRight } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
+import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import { useProjects, useTasks } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
@@ -82,22 +83,14 @@ export default function Manuscripts() {
             const Icon = v.icon
             const active = view === v.key
             return (
-              <button
+              <ToggleButton
                 key={v.key}
+                active={active}
                 onClick={() => setView(v.key)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors"
-                style={{
-                  borderColor: active ? 'var(--teal)' : 'var(--border-light)',
-                  backgroundColor: active ? 'rgba(45,138,138,0.1)' : 'transparent',
-                  color: active ? 'var(--teal)' : 'var(--slate)',
-                  fontFamily: 'var(--font-sans)',
-                  fontWeight: active ? 600 : 400,
-                  cursor: 'pointer',
-                }}
               >
                 <Icon size={14} />
                 {v.label}
-              </button>
+              </ToggleButton>
             )
           })}
         </div>

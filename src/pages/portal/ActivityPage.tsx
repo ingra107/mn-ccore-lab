@@ -4,6 +4,7 @@ import Avatar from '../../components/Avatar'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime, formatMediumDate } from '../../lib/dateUtils'
 import SectionHeader from '../../components/SectionHeader'
+import ToggleButton from '../../components/ToggleButton'
 
 const typeOptions = [
   { value: '', label: 'All Types' },
@@ -44,21 +45,13 @@ export default function ActivityPage() {
         {typeOptions.map((opt) => {
           const active = filterType === opt.value
           return (
-            <button
+            <ToggleButton
               key={opt.value}
+              active={active}
               onClick={() => setFilterType(opt.value)}
-              className="px-3 py-1.5 rounded-md text-sm border transition-colors"
-              style={{
-                borderColor: active ? 'var(--teal)' : 'var(--border-light)',
-                backgroundColor: active ? 'rgba(45,138,138,0.1)' : 'transparent',
-                color: active ? 'var(--teal)' : 'var(--slate)',
-                fontFamily: 'var(--font-sans)',
-                fontWeight: active ? 600 : 400,
-                cursor: 'pointer',
-              }}
             >
               {opt.label}
-            </button>
+            </ToggleButton>
           )
         })}
       </div>
