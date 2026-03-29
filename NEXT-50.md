@@ -120,18 +120,18 @@
 
 *Top 15 items executed autonomously. Each marked DONE when shipped.*
 
-- [ ] 1. Extract FilterChip component
+- [x] 1. Extract FilterChip component — `src/components/FilterChip.tsx` created
 - [ ] 2. Skeleton loading states
-- [ ] 3. Remove dead code (EnhancedCollaborationNetwork)
-- [ ] 4. Publications page inline search
-- [ ] 5. Page subtitle consistency (Meetings, Team)
+- [ ] 3. Remove dead code — SKIPPED (NetworkSidebar imports types from it, needs refactor)
+- [x] 4. Publications page inline search — ALREADY EXISTS (PublicationSearch component)
+- [x] 5. Page subtitle consistency — Meetings now shows "{count} meetings tracked"
 - [ ] 6. Breadcrumbs on detail pages
-- [ ] 7. Task priority color dots
-- [ ] 8. Keyboard shortcut [ to toggle sidebar
+- [ ] 7. Task priority color dots — ALREADY EXISTS in TaskCard (priorityConfig)
+- [x] 8. Keyboard shortcut [ to toggle sidebar — DONE (custom event dispatch)
 - [ ] 9. Deduplicate ViewDropdown
-- [ ] 10. "Copy link" on ProjectDetail
+- [x] 10. "Copy link" on ProjectDetail — DONE (clipboard + check feedback)
 - [ ] 11. Notification grouping by day
 - [ ] 12. Empty states audit
-- [ ] 13. Mobile sidebar auto-close
+- [x] 13. Mobile sidebar auto-close — DONE (onNavigate prop)
 - [ ] 14. Print-friendly Dashboard
-- [ ] 15. Tooltip on Quick Stats
+- [x] 15. Tooltip on Quick Stats — DONE (title attributes with explanations)
