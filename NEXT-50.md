@@ -125,13 +125,15 @@
 - [ ] 3. Remove dead code — SKIPPED (NetworkSidebar imports types from it, needs refactor)
 - [x] 4. Publications page inline search — ALREADY EXISTS (PublicationSearch component)
 - [x] 5. Page subtitle consistency — Meetings now shows "{count} meetings tracked"
-- [ ] 6. Breadcrumbs on detail pages
-- [ ] 7. Task priority color dots — ALREADY EXISTS in TaskCard (priorityConfig)
+- [x] 6. Breadcrumbs on detail pages — DONE (Projects / [Name] breadcrumb)
+- [x] 7. Task priority color dots — ALREADY EXISTS in TaskCard (priorityConfig)
 - [x] 8. Keyboard shortcut [ to toggle sidebar — DONE (custom event dispatch)
-- [ ] 9. Deduplicate ViewDropdown
+- [x] 9. Deduplicate ViewDropdown — DONE (src/components/ViewDropdown.tsx created)
 - [x] 10. "Copy link" on ProjectDetail — DONE (clipboard + check feedback)
-- [ ] 11. Notification grouping by day
-- [ ] 12. Empty states audit
+- [ ] 11. Notification grouping by day — DEFERRED (relative timestamps already provide context)
+- [ ] 12. Empty states audit — PARTIALLY DONE (key pages covered in main session)
 - [x] 13. Mobile sidebar auto-close — DONE (onNavigate prop)
-- [ ] 14. Print-friendly Dashboard
+- [x] 14. Print-friendly Dashboard — DONE (comprehensive @media print CSS)
 - [x] 15. Tooltip on Quick Stats — DONE (title attributes with explanations)
+
+### Summary: 12/15 items completed or confirmed existing. 2 deferred. 1 partially done.
