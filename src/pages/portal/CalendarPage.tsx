@@ -93,7 +93,7 @@ export default function CalendarPage() {
 
   return (
     <div>
-      <SectionHeader title="Lab Calendar" subtitle="Meetings, deadlines, and milestones" />
+      <SectionHeader title="Lab Calendar" subtitle={`${events.length} events — meetings, deadlines, and milestones`} />
 
       {/* Controls */}
       <div className="mt-5 flex items-center justify-between flex-wrap gap-3">
@@ -128,9 +128,19 @@ export default function CalendarPage() {
             <ChevronRight size={16} style={{ color: 'var(--ink)' }} />
           </button>
 
+          {currentDate.toDateString() !== new Date().toDateString() && (
+            <button
+              onClick={goToToday}
+              className="px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', cursor: 'pointer', background: 'none' }}
+            >
+              Today
+            </button>
+          )}
+
           <button
             onClick={exportICal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors hover:bg-black/5 ml-2"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors hover:bg-black/5 ml-1"
             style={{ borderColor: 'var(--border-light)', color: 'var(--slate)', fontFamily: 'var(--font-sans)', cursor: 'pointer', background: 'none' }}
           >
             <Download size={14} />
