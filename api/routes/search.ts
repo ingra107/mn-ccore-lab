@@ -19,7 +19,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       .bind(like, limit).all(),
     env.DB.prepare('SELECT id, title, description, submitted_by, status FROM ideas WHERE (title LIKE ? OR description LIKE ?) LIMIT ?')
       .bind(like, like, limit).all(),
-    env.DB.prepare("SELECT c.id, c.content, c.author, c.created_at, p.title as project_title, p.slug as project_slug FROM comments c JOIN projects p ON c.project_id = p.slug WHERE c.content LIKE ? LIMIT ?")
+    env.DB.prepare("SELECT c.id, c.content, c.author_id, c.created_at, p.title as project_title, p.slug as project_slug FROM comments c JOIN projects p ON c.project_id = p.slug WHERE c.content LIKE ? LIMIT ?")
       .bind(like, limit).all(),
     env.DB.prepare("SELECT id, type, description, actor, timestamp FROM activity_log WHERE description LIKE ? ORDER BY timestamp DESC LIMIT ?")
       .bind(like, limit).all(),
