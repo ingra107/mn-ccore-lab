@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import {
   Search, LayoutDashboard, User, CheckSquare, ListTodo, Calendar,
   Clock, FolderKanban, FileText, Lightbulb, BookOpen, DollarSign,
-  Users, Plus, ArrowRight, Command,
+  Users, Plus, ArrowRight, Command, CalendarPlus,
+  CheckCircle2, AlertTriangle, Flag, CircleDot,
 } from 'lucide-react'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { getPersonInfo } from '../data/team'
@@ -14,7 +15,7 @@ interface CommandItem {
   sublabel?: string
   icon: typeof Search
   action: () => void
-  category: 'navigation' | 'task' | 'project' | 'person' | 'meeting' | 'action'
+  category: 'navigation' | 'task' | 'project' | 'person' | 'meeting' | 'action' | 'filter'
   shortcut?: string
 }
 
@@ -102,6 +103,49 @@ export default function CommandPalette() {
       action: () => { navigate('/ideas?create=true'); setOpen(false) },
       category: 'action',
     })
+    items.push({
+      id: 'action-create-meeting',
+      label: 'Schedule Meeting',
+      sublabel: 'Create a new meeting',
+      icon: CalendarPlus,
+      action: () => { navigate('/meetings?create=true'); setOpen(false) },
+      category: 'action',
+      shortcut: 'M',
+    })
+
+    // Quick Filters
+    items.push({
+      id: 'filter-completed',
+      label: 'Completed Tasks',
+      sublabel: `${tasks.filter(t => t.completed).length} tasks done`,
+      icon: CheckCircle2,
+      action: () => { navigate('/tasks?status=done'); setOpen(false) },
+      category: 'filter',
+    })
+    items.push({
+      id: 'filter-in-progress',
+      label: 'In Progress Tasks',
+      sublabel: `${tasks.filter(t => t.status === 'in_progress').length} tasks active`,
+      icon: CircleDot,
+      action: () => { navigate('/tasks?status=in_progress'); setOpen(false) },
+      category: 'filter',
+    })
+    items.push({
+      id: 'filter-high-priority',
+      label: 'High Priority',
+      sublabel: `${tasks.filter(t => !t.completed && (t.priority === 'high' || t.priority === 'urgent')).length} high/urgent tasks`,
+      icon: Flag,
+      action: () => { navigate('/tasks?priority=high'); setOpen(false) },
+      category: 'filter',
+    })
+    items.push({
+      id: 'filter-overdue',
+      label: 'Overdue Tasks',
+      sublabel: `${tasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()).length} tasks past due`,
+      icon: AlertTriangle,
+      action: () => { navigate('/tasks?status=todo'); setOpen(false) },
+      category: 'filter',
+    })
 
     // Tasks (pending only)
     for (const task of tasks.filter((t) => !t.completed).slice(0, 20)) {
@@ -158,8 +202,8 @@ export default function CommandPalette() {
   // Filter by query (fuzzy)
   const filtered = useMemo(() => {
     if (!query.trim()) {
-      // Show navigation + actions when no query
-      return allItems.filter((i) => i.category === 'navigation' || i.category === 'action')
+      // Show actions + filters + navigation when no query
+      return allItems.filter((i) => i.category === 'action' || i.category === 'filter' || i.category === 'navigation')
     }
     const q = query.toLowerCase()
     return allItems
@@ -208,7 +252,7 @@ export default function CommandPalette() {
 
   if (!open) return null
 
-  const categoryOrder: Record<string, number> = { action: 0, navigation: 1, task: 2, project: 3, person: 4, meeting: 5 }
+  const categoryOrder: Record<string, number> = { action: 0, filter: 1, navigation: 2, task: 3, project: 4, person: 5, meeting: 6 }
   const grouped = filtered.reduce((acc, item) => {
     if (!acc[item.category]) acc[item.category] = []
     acc[item.category].push(item)
@@ -217,7 +261,8 @@ export default function CommandPalette() {
 
   const categoryLabels: Record<string, string> = {
     action: 'Actions',
-    navigation: 'Navigation',
+    filter: 'Quick Filters',
+    navigation: 'Go To',
     task: 'Tasks',
     project: 'Projects',
     person: 'People',
@@ -234,7 +279,7 @@ export default function CommandPalette() {
     >
       <div
         className="w-full max-w-lg rounded-xl shadow-2xl border overflow-hidden"
-        style={{ backgroundColor: 'white', borderColor: 'var(--border-light)' }}
+        style={{ backgroundColor: 'var(--cream, white)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
