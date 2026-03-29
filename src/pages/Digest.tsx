@@ -372,6 +372,7 @@ export default function Digest() {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [topicFilter, setTopicFilter] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Fetch available dates
   const { data: dates = [] } = useDigestDates()
@@ -406,6 +407,17 @@ export default function Digest() {
     })
     return counts
   }, [allPapersForDate])
+
+  // Text search within papers
+  const filteredPapers = useMemo(() => {
+    if (!searchQuery.trim()) return papers
+    const q = searchQuery.toLowerCase()
+    return papers.filter(p =>
+      (p.title || '').toLowerCase().includes(q) ||
+      (p.authors || '').toLowerCase().includes(q) ||
+      (p.journal || '').toLowerCase().includes(q)
+    )
+  }, [papers, searchQuery])
 
   const isEmpty = dates.length === 0 && !isLoading
 
@@ -494,6 +506,19 @@ export default function Digest() {
               </div>
             </div>
           )}
+
+          {/* Search within papers */}
+          <div className="mb-4 relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title, author, or journal..."
+              className="w-full max-w-md rounded-full border px-3 py-2 pl-9 text-xs outline-none"
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream, white)' }}
+            />
+          </div>
 
           {/* Status filter tabs */}
           <div className="flex flex-wrap items-center gap-4 mb-4">
@@ -608,15 +633,27 @@ export default function Digest() {
                 </span>
               </div>
             </div>
-          ) : papers.length === 0 ? (
-            statusFilter !== 'all' || topicFilter ? (
+          ) : filteredPapers.length === 0 ? (
+            searchQuery ? (
+              <div className="text-center py-12">
+                <Search size={32} style={{ color: 'var(--slate)', opacity: 0.2, margin: '0 auto 8px' }} />
+                <p className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+                  No papers matching "{searchQuery}"
+                </p>
+              </div>
+            ) : statusFilter !== 'all' || topicFilter ? (
               <NoResults />
             ) : (
               <EmptyState />
             )
           ) : (
             <div className="space-y-3 sm:space-y-4">
-              {papers.map((paper) => (
+              {searchQuery && (
+                <p className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+                  {filteredPapers.length} of {papers.length} papers matching "{searchQuery}"
+                </p>
+              )}
+              {filteredPapers.map((paper) => (
                 <PaperCard key={paper.id} paper={paper} />
               ))}
             </div>
