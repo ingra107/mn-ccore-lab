@@ -210,11 +210,16 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   return (
     <>
-      {/* Back link */}
+      {/* Breadcrumb */}
       <div style={{ paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
+        <nav className="flex items-center gap-1.5 text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
+          <Link to="/projects" style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.5 }}>Projects</Link>
+          <span style={{ opacity: 0.3 }}>/</span>
+          <span style={{ color: 'var(--ink)', opacity: 0.8 }}>{project.title.length > 40 ? project.title.slice(0, 40) + '...' : project.title}</span>
+        </nav>
         <Link
           to="/projects"
-          className="inline-flex items-center gap-2"
+          className="inline-flex items-center gap-2 mt-1"
           style={{
             fontFamily: 'var(--font-body)',
             fontSize: '14px',
