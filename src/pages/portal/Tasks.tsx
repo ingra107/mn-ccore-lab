@@ -222,13 +222,12 @@ export default function Tasks() {
               <div key={i} className="flex items-center gap-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
                 <div className="w-5 h-5 rounded-full" style={{ backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
                 <div className="flex-1">
-                  <div className="h-3.5 rounded" style={{ width: `${50 + Math.random() * 40}%`, backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+                  <div className="h-3.5 rounded" style={{ width: `${55 + (i * 17) % 35}%`, backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
                   <div className="h-2.5 rounded mt-1.5" style={{ width: '30%', backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite', opacity: 0.5 }} />
                 </div>
                 <div className="w-7 h-7 rounded-full" style={{ backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
               </div>
             ))}
-            <style>{`@keyframes skeleton-pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.15; } }`}</style>
           </div>
         ) : displayTasks.length === 0 ? (
           <div className="text-center py-16">

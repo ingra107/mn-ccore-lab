@@ -140,7 +140,6 @@ export default function Ideas() {
                 <div className="h-3 rounded" style={{ width: '60%', backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite', opacity: 0.3 }} />
               </div>
             ))}
-            <style>{`@keyframes skeleton-pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.15; } }`}</style>
           </div>
         ) : view === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

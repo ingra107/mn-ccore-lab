@@ -327,12 +327,20 @@ a:hover {
 .dark .funding-nhlbi { color: #ef6c57; }
 .dark .funding-nlm { color: #66bb6a; }
 
+/* ── Skeleton loading animation ── */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.15; }
+}
+
 /* ── Print styles ── */
 @media print {
   /* Hide non-essential UI */
-  aside, nav, header, footer,
-  button, .bento-card:hover,
-  [class*="sidebar"], [class*="Sidebar"] {
+  aside, footer,
+  [class*="sidebar"], [class*="Sidebar"],
+  .bento-card:hover,
+  button[aria-label],
+  [role="navigation"] {
     display: none !important;
   }
 

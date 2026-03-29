@@ -14,17 +14,7 @@ export default function Skeleton({ variant = 'text', width, height, className }:
     height: height || (variant === 'card' ? '120px' : variant === 'circle' ? '40px' : '14px'),
   }
 
-  return (
-    <>
-      <div className={className} style={baseStyle} />
-      <style>{`
-        @keyframes skeleton-pulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.15; }
-        }
-      `}</style>
-    </>
-  )
+  return <div className={className} style={baseStyle} />
 }
 
 export function SkeletonCard() {
@@ -50,7 +40,7 @@ export function SkeletonList({ count = 3 }: { count?: number }) {
         <div key={i} className="flex items-center gap-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
           <Skeleton variant="circle" width={28} height={28} />
           <div className="flex-1">
-            <Skeleton width={`${60 + Math.random() * 30}%`} height={13} />
+            <Skeleton width={`${60 + (i * 13) % 30}%`} height={13} />
             <Skeleton width="40%" height={10} className="mt-1.5" />
           </div>
         </div>
