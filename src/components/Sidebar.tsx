@@ -20,6 +20,9 @@ import {
   ChevronRight,
   ExternalLink,
 } from 'lucide-react'
+import { useAuth } from '../hooks/useAuth'
+import Avatar from './Avatar'
+import { getPersonInfo } from '../data/team'
 
 interface SidebarProps {
   collapsed: boolean
@@ -86,6 +89,9 @@ const navGroups: NavGroup[] = [
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation()
+  const { user } = useAuth()
+  const userSlug = user?.email?.split('@')[0]?.toLowerCase()
+  const person = userSlug ? getPersonInfo(userSlug) : null
 
   const isActive = (path: string) => {
     if (path === '/dashboard') return location.pathname === '/dashboard'
@@ -198,11 +204,28 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           {!collapsed && <span>Back to Website</span>}
         </Link>
 
+        {/* User profile */}
+        {person && !collapsed && (
+          <Link
+            to={`/team/${userSlug}`}
+            className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+            style={{ color: 'var(--ink)', fontFamily: 'var(--font-sans)', textDecoration: 'none' }}
+          >
+            <div style={{ width: 24, height: 24, flexShrink: 0 }}>
+              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="gold" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[8px]" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-medium truncate">{person.name}</div>
+              <div className="text-[10px] truncate" style={{ color: 'var(--slate)', opacity: 0.6 }}>{user?.email}</div>
+            </div>
+          </Link>
+        )}
+
         {/* Collapse toggle */}
         <button
           onClick={onToggle}
           className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm w-full transition-colors"
-          style={{ color: 'var(--slate)' }}
+          style={{ color: 'var(--slate)', background: 'none', border: 'none', cursor: 'pointer' }}
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           {!collapsed && <span style={{ fontFamily: 'var(--font-sans)' }}>Collapse</span>}
