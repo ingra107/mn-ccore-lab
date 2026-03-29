@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import Breadcrumb from '../components/Breadcrumb'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
@@ -91,12 +92,7 @@ export default function MeetingDetail() {
     <div style={{ minHeight: '100vh' }}>
       <div className="content-container" style={{ paddingBottom: '4rem' }}>
         {/* Back link */}
-        <div style={{ paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
-          <Link to="/meetings" className="inline-flex items-center gap-2"
-            style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)', textDecoration: 'none', opacity: 0.7 }}>
-            <ArrowLeft size={16} /> Back to Meetings
-          </Link>
-        </div>
+        <Breadcrumb backTo="/meetings" backLabel="Meetings" current={meeting?.title} />
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>

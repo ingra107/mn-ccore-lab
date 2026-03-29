@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Plus, LayoutGrid, List, ThumbsUp, X } from 'lucide-react'
+import { SkeletonCard } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
@@ -133,13 +134,7 @@ export default function Ideas() {
       <div className="mt-5">
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1,2,3].map(i => (
-              <div key={i} className="rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
-                <div className="h-4 rounded mb-3" style={{ width: '70%', backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
-                <div className="h-3 rounded mb-2" style={{ width: '100%', backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite', opacity: 0.5 }} />
-                <div className="h-3 rounded" style={{ width: '60%', backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite', opacity: 0.3 }} />
-              </div>
-            ))}
+            {[1,2,3].map(i => <SkeletonCard key={i} />)}
           </div>
         ) : view === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

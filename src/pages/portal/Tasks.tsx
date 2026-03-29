@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Plus, List, LayoutGrid, Users, GanttChartSquare, ChevronDown, Filter, FileText, CheckCircle2 } from 'lucide-react'
+import { SkeletonList } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import TaskFilters from '../../components/tasks/TaskFilters'
 import TaskListView from '../../components/tasks/TaskListView'
@@ -217,18 +218,7 @@ export default function Tasks() {
       {/* Content */}
       <div className="mt-5">
         {isLoading ? (
-          <div className="flex flex-col gap-3 mt-2">
-            {[1,2,3,4,5].map(i => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
-                <div className="w-5 h-5 rounded-full" style={{ backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
-                <div className="flex-1">
-                  <div className="h-3.5 rounded" style={{ width: `${55 + (i * 17) % 35}%`, backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
-                  <div className="h-2.5 rounded mt-1.5" style={{ width: '30%', backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite', opacity: 0.5 }} />
-                </div>
-                <div className="w-7 h-7 rounded-full" style={{ backgroundColor: 'var(--border-light)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
-              </div>
-            ))}
-          </div>
+          <SkeletonList count={5} />
         ) : displayTasks.length === 0 ? (
           <div className="text-center py-16">
             <FileText size={40} style={{ color: 'var(--border-light)', margin: '0 auto 12px' }} />

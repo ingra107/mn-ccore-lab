@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import Breadcrumb from '../components/Breadcrumb'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
@@ -210,31 +211,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   return (
     <>
-      {/* Breadcrumb */}
-      <div style={{ paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
-        <nav className="flex items-center gap-1.5 text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
-          <Link to="/projects" style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.5 }}>Projects</Link>
-          <span style={{ opacity: 0.3 }}>/</span>
-          <span style={{ color: 'var(--ink)', opacity: 0.8 }}>{project.title.length > 40 ? project.title.slice(0, 40) + '...' : project.title}</span>
-        </nav>
-        <Link
-          to="/projects"
-          className="inline-flex items-center gap-2 mt-1"
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '14px',
-            color: 'var(--slate)',
-            textDecoration: 'none',
-            opacity: 0.7,
-            transition: 'opacity 0.2s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
-        >
-          <ArrowLeft size={16} />
-          Back to Pipeline
-        </Link>
-      </div>
+      <Breadcrumb backTo="/projects" backLabel="Projects" current={project.title} />
 
       {/* Header section */}
       <motion.div
