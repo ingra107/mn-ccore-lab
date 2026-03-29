@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, List, LayoutGrid, Users, GanttChartSquare, ChevronDown, Filter, FileText } from 'lucide-react'
+import { Plus, List, LayoutGrid, Users, GanttChartSquare, ChevronDown, Filter, FileText, CheckCircle2 } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import TaskFilters from '../../components/tasks/TaskFilters'
 import TaskListView from '../../components/tasks/TaskListView'
@@ -28,6 +28,7 @@ export default function Tasks() {
   const [showCreate, setShowCreate] = useState(false)
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [showViewMenu, setShowViewMenu] = useState(false)
+  const [showCompleted, setShowCompleted] = useState(false)
   const viewMenuRef = useRef<HTMLDivElement>(null)
 
   // Auto-open create modal from URL params (keyboard shortcut C)
@@ -86,6 +87,8 @@ export default function Tasks() {
   }
 
   const pendingCount = tasks.filter((t) => !t.completed).length
+  const completedCount = tasks.filter((t) => t.completed).length
+  const displayTasks = showCompleted ? tasks : tasks.filter((t) => !t.completed)
   const currentViewLabel = view === 'list' ? 'List' : view === 'board' ? 'Board' : view === 'standup' ? 'By Person' : 'Timeline'
   const CurrentViewIcon = view === 'list' ? List : view === 'board' ? LayoutGrid : view === 'standup' ? Users : GanttChartSquare
 
@@ -179,6 +182,25 @@ export default function Tasks() {
           {/* Spacer */}
           <div className="flex-1" />
 
+          {/* Show completed toggle */}
+          {completedCount > 0 && (
+            <button
+              onClick={() => setShowCompleted(!showCompleted)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                backgroundColor: showCompleted ? 'rgba(34,197,94,0.1)' : 'transparent',
+                color: showCompleted ? '#16a34a' : 'var(--slate)',
+                border: `1px solid ${showCompleted ? 'rgba(34,197,94,0.3)' : 'var(--border-light)'}`,
+                cursor: 'pointer',
+                opacity: showCompleted ? 1 : 0.5,
+              }}
+            >
+              <CheckCircle2 size={10} />
+              {showCompleted ? `Hide ${completedCount} done` : `Show ${completedCount} done`}
+            </button>
+          )}
+
           {/* Active filter indicator */}
           {activeFilterCount > 0 && (
             <span
@@ -201,7 +223,7 @@ export default function Tasks() {
           >
             Loading tasks...
           </div>
-        ) : tasks.length === 0 ? (
+        ) : displayTasks.length === 0 ? (
           <div className="text-center py-16">
             <FileText size={40} style={{ color: 'var(--border-light)', margin: '0 auto 12px' }} />
             <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
@@ -221,10 +243,10 @@ export default function Tasks() {
           </div>
         ) : (
           <>
-            {view === 'list' && <TaskListView tasks={tasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
-            {view === 'board' && <TaskBoardView tasks={tasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
-            {view === 'standup' && <TaskStandUpView tasks={tasks} onStatusChange={handleStatusChange} />}
-            {view === 'timeline' && <TaskTimelineView tasks={tasks} onStatusChange={handleStatusChange} />}
+            {view === 'list' && <TaskListView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
+            {view === 'board' && <TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
+            {view === 'standup' && <TaskStandUpView tasks={displayTasks} onStatusChange={handleStatusChange} />}
+            {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} />}
           </>
         )}
       </div>
