@@ -59,31 +59,78 @@ export default function SearchPage() {
 
   const typeOrder = ['task', 'project', 'meeting', 'idea', 'comment', 'activity']
 
+  const hasResults = results.length > 0 || (debouncedQuery.length >= 2 && isLoading)
+  const showCentered = !hasResults && debouncedQuery.length < 2
+
   return (
     <div>
-      <SectionHeader title="Search" subtitle="Find anything across the lab" />
-
-      <div className="mt-5 relative">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search tasks, projects, meetings, ideas, comments..."
-          className="w-full rounded-xl border px-4 py-3 pl-11 text-sm outline-none focus:ring-2"
-          style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'white' }}
-        />
-        {query && (
-          <button
-            onClick={() => { setQuery(''); inputRef.current?.focus() }}
-            className="absolute right-4 top-1/2 -translate-y-1/2"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.4 }}
+      {/* Centered hero when no query */}
+      {showCentered ? (
+        <div className="flex flex-col items-center justify-center" style={{ minHeight: '50vh', paddingTop: '8vh' }}>
+          <h1
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 800,
+              fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
+              color: 'var(--ink)',
+              margin: '0 0 8px',
+              textAlign: 'center',
+            }}
           >
-            <X size={16} />
-          </button>
-        )}
-      </div>
+            Search Everything
+          </h1>
+          <p className="text-sm mb-6" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+            Full-text search across tasks, projects, meetings, ideas, and more
+          </p>
+          <div className="w-full max-w-lg relative">
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search tasks, projects, meetings, ideas..."
+              className="w-full rounded-xl border px-4 py-3.5 pl-11 text-sm outline-none"
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream, white)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+            />
+          </div>
+          <div className="flex items-center justify-center gap-3 mt-5 flex-wrap">
+            {['tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity'].map((t) => (
+              <span key={t} className="text-[10px] px-2.5 py-1 rounded-full border capitalize" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.4 }}>
+                {t}
+              </span>
+            ))}
+          </div>
+          <p className="text-[10px] mt-4" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.3 }}>
+            Powered by D1 full-text search
+          </p>
+        </div>
+      ) : (
+        <>
+          <SectionHeader title="Search" subtitle="Find anything across the lab" />
+          <div className="mt-5 relative">
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search tasks, projects, meetings, ideas..."
+              className="w-full rounded-xl border px-4 py-3 pl-11 text-sm outline-none"
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream, white)' }}
+            />
+            {query && (
+              <button
+                onClick={() => { setQuery(''); inputRef.current?.focus() }}
+                className="absolute right-4 top-1/2 -translate-y-1/2"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.4 }}
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="mt-6">
         {isLoading && debouncedQuery.length >= 2 && (
@@ -152,21 +199,7 @@ export default function SearchPage() {
           </div>
         )}
 
-        {debouncedQuery.length < 2 && (
-          <div className="text-center py-16">
-            <Search size={48} style={{ color: 'var(--teal)', opacity: 0.15, margin: '0 auto 16px' }} />
-            <p className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
-              Search across all lab data
-            </p>
-            <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
-              {['tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity'].map((t) => (
-                <span key={t} className="text-[10px] px-2 py-1 rounded-full border capitalize" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.5 }}>
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Empty state handled by centered hero above */}
       </div>
     </div>
   )
