@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Bug,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import Avatar from './Avatar'
@@ -175,6 +176,18 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* Bottom section */}
       <div className="border-t px-2 py-2" style={{ borderColor: 'var(--border-light)' }}>
+        {/* Report a Bug */}
+        {!collapsed && (
+          <a
+            href="mailto:ningraha@umn.edu?subject=MN-CCORE%20Hub%20Bug%20Report"
+            className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+            style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)', textDecoration: 'none', opacity: 0.6 }}
+          >
+            <Bug size={16} />
+            <span>Report a Bug</span>
+          </a>
+        )}
+
         {/* Search hint */}
         {!collapsed && (
           <Link
