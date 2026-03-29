@@ -22,6 +22,8 @@ import {
   Bug,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { useUnreadCount } from '../hooks/useNotifications'
+import { useTasks } from '../hooks/useApiData'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
 
@@ -94,6 +96,24 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const userSlug = user?.email?.split('@')[0]?.toLowerCase()
   const person = userSlug ? getPersonInfo(userSlug) : null
 
+  // Badge counts
+  const { data: unreadCount = 0 } = useUnreadCount(userSlug || '')
+  const { data: allTasks = [] } = useTasks()
+  const myOverdue = allTasks.filter(t =>
+    !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date() &&
+    (!userSlug || t.assignee === userSlug)
+  ).length
+
+  // Inject badge counts into nav items
+  const navWithBadges = navGroups.map(group => ({
+    ...group,
+    items: group.items.map(item => {
+      if (item.to === '/personal' && unreadCount > 0) return { ...item, badge: unreadCount }
+      if (item.to === '/my-tasks' && myOverdue > 0) return { ...item, badge: myOverdue }
+      return item
+    }),
+  }))
+
   const isActive = (path: string) => {
     if (path === '/dashboard') return location.pathname === '/dashboard'
     return location.pathname.startsWith(path)
@@ -130,7 +150,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* Nav groups */}
       <nav className="flex-1 overflow-y-auto py-2 px-2">
-        {navGroups.map((group) => (
+        {navWithBadges.map((group) => (
           <div key={group.title} className="mb-3">
             {!collapsed && (
               <div
