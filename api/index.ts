@@ -155,6 +155,11 @@ export default {
           return await handleCVData(cvDataGet[1], env);
         }
 
+        // GET /api/reactions?target_type=...&target_id=...
+        if (url.pathname === '/api/reactions') {
+          return await handleGetReactions(url, env);
+        }
+
         // GET /api/tasks/:id/comments
         const taskCommentsGet = url.pathname.match(/^\/api\/tasks\/([^/]+)\/comments$/);
         if (taskCommentsGet) {
@@ -254,6 +259,11 @@ export default {
         if (request.method === 'POST' && path === '/api/notifications/read-all') {
           const body = await request.json() as Record<string, string>;
           return await handleMarkAllNotificationsRead(body.recipient || user.email.split('@')[0], env);
+        }
+
+        // POST /api/reactions — toggle reaction (add or remove)
+        if (request.method === 'POST' && path === '/api/reactions') {
+          return await handleToggleReaction(request, user, env);
         }
 
         // POST /api/tasks/:id/comments — add task comment
@@ -1786,4 +1796,67 @@ async function handleCreateWorkflowTemplate(request: Request, env: Env): Promise
 
   const created = await env.DB.prepare('SELECT * FROM workflow_templates WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
+}
+
+// ── Reactions ─────────────────────────────────────────────────
+
+interface ReactionRow {
+  id: string
+  target_type: string
+  target_id: string
+  user_slug: string
+  emoji: string
+  created_at: string
+}
+
+// GET /api/reactions?target_type=project_update&target_id=...
+async function handleGetReactions(url: URL, env: Env): Promise<Response> {
+  const targetType = url.searchParams.get('target_type');
+  const targetId = url.searchParams.get('target_id');
+
+  if (!targetType || !targetId) {
+    return error('target_type and target_id required', 400);
+  }
+
+  const result = await env.DB.prepare(
+    'SELECT * FROM reactions WHERE target_type = ? AND target_id = ?'
+  ).bind(targetType, targetId).all<ReactionRow>();
+
+  return json({ data: result.results });
+}
+
+// POST /api/reactions — toggle: add if not present, remove if already exists
+async function handleToggleReaction(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    target_type: string
+    target_id: string
+    emoji?: string
+  };
+
+  if (!body.target_type || !body.target_id) {
+    return error('target_type and target_id required', 400);
+  }
+
+  const emoji = body.emoji || '👍';
+  const userSlug = user.email.split('@')[0].toLowerCase();
+
+  // Check if reaction already exists
+  const existing = await env.DB.prepare(
+    'SELECT id FROM reactions WHERE target_type = ? AND target_id = ? AND user_slug = ? AND emoji = ?'
+  ).bind(body.target_type, body.target_id, userSlug, emoji).first<{ id: string }>();
+
+  if (existing) {
+    // Remove reaction
+    await env.DB.prepare('DELETE FROM reactions WHERE id = ?').bind(existing.id).run();
+    return json({ data: null, action: 'removed' });
+  } else {
+    // Add reaction
+    const id = generateId();
+    await env.DB.prepare(
+      'INSERT INTO reactions (id, target_type, target_id, user_slug, emoji) VALUES (?, ?, ?, ?, ?)'
+    ).bind(id, body.target_type, body.target_id, userSlug, emoji).run();
+
+    const created = await env.DB.prepare('SELECT * FROM reactions WHERE id = ?').bind(id).first();
+    return json({ data: created, action: 'added' }, 201);
+  }
 }

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, AlertTriangle, CheckCircle, HelpCircle, TrendingUp, Send } from 'lucide-react'
+import { MessageCircle, AlertTriangle, CheckCircle, HelpCircle, TrendingUp, Send, ThumbsUp, Eye, Heart } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useProjectUpdates } from '../hooks/useApiData'
 import type { ProjectUpdateRow } from '../hooks/useApiData'
 import { usePostProjectUpdate } from '../hooks/useMutations'
@@ -9,6 +10,13 @@ import { getPersonInfo } from '../data/team'
 import { formatRelativeTime } from '../lib/dateUtils'
 import Avatar from './Avatar'
 import MentionInput from './MentionInput'
+
+// Available reaction emojis
+const REACTION_OPTIONS = [
+  { emoji: '👍', icon: ThumbsUp, label: 'Thumbs up' },
+  { emoji: '👀', icon: Eye, label: 'Seen' },
+  { emoji: '❤️', icon: Heart, label: 'Love' },
+] as const
 
 const TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; borderBg: string; label: string }> = {
   progress: { icon: TrendingUp, color: 'var(--teal)', bg: 'rgba(45, 138, 138, 0.1)', borderBg: 'rgba(45, 138, 138, 0.25)', label: 'Progress' },
@@ -175,8 +183,141 @@ function UpdateCard({ update }: { update: ProjectUpdateRow }) {
           <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
             {update.content}
           </p>
+
+          {/* Reactions */}
+          <ReactionBar targetType="project_update" targetId={update.id} />
         </div>
       </div>
     </motion.div>
+  )
+}
+
+// ── Reaction Bar ──────────────────────────────────────────────
+interface Reaction {
+  id: string
+  target_type: string
+  target_id: string
+  user_slug: string
+  emoji: string
+}
+
+function ReactionBar({ targetType, targetId }: { targetType: string; targetId: string }) {
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const currentSlug = user?.email?.split('@')[0]?.toLowerCase() || ''
+  const [showPicker, setShowPicker] = useState(false)
+
+  const { data: reactions = [] } = useQuery({
+    queryKey: ['reactions', targetType, targetId],
+    queryFn: async () => {
+      const res = await fetch(`/api/reactions?target_type=${targetType}&target_id=${targetId}`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as Reaction[]
+    },
+    staleTime: 30 * 1000,
+  })
+
+  const toggle = useMutation({
+    mutationFn: async (emoji: string) => {
+      const res = await fetch('/api/reactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_type: targetType, target_id: targetId, emoji }),
+      })
+      return res.json()
+    },
+    onMutate: async (emoji) => {
+      await queryClient.cancelQueries({ queryKey: ['reactions', targetType, targetId] })
+      const prev = queryClient.getQueryData<Reaction[]>(['reactions', targetType, targetId]) || []
+      const existing = prev.find(r => r.user_slug === currentSlug && r.emoji === emoji)
+      const next = existing
+        ? prev.filter(r => r.id !== existing.id)
+        : [...prev, { id: 'optimistic', target_type: targetType, target_id: targetId, user_slug: currentSlug, emoji }]
+      queryClient.setQueryData(['reactions', targetType, targetId], next)
+      return { prev }
+    },
+    onError: (_err, _emoji, context) => {
+      if (context?.prev) queryClient.setQueryData(['reactions', targetType, targetId], context.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['reactions', targetType, targetId] })
+    },
+  })
+
+  // Group reactions by emoji
+  const grouped = useMemo(() => {
+    const map = new Map<string, { count: number; userReacted: boolean; users: string[] }>()
+    for (const r of reactions) {
+      const entry = map.get(r.emoji) || { count: 0, userReacted: false, users: [] }
+      entry.count++
+      entry.users.push(r.user_slug)
+      if (r.user_slug === currentSlug) entry.userReacted = true
+      map.set(r.emoji, entry)
+    }
+    return map
+  }, [reactions, currentSlug])
+
+  return (
+    <div className="flex items-center gap-1 mt-2 flex-wrap">
+      {/* Existing reactions */}
+      {[...grouped.entries()].map(([emoji, { count, userReacted, users }]) => (
+        <button
+          key={emoji}
+          onClick={() => toggle.mutate(emoji)}
+          title={users.map(s => getPersonInfo(s).name).join(', ')}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-colors"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '11px',
+            background: userReacted ? 'rgba(45,138,138,0.1)' : 'rgba(0,0,0,0.03)',
+            color: userReacted ? 'var(--teal)' : 'var(--slate)',
+            border: `1px solid ${userReacted ? 'rgba(45,138,138,0.3)' : 'transparent'}`,
+            cursor: 'pointer',
+          }}
+        >
+          <span>{emoji}</span>
+          <span>{count}</span>
+        </button>
+      ))}
+
+      {/* Add reaction button */}
+      <div className="relative">
+        <button
+          onClick={() => setShowPicker(!showPicker)}
+          className="inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors"
+          style={{
+            background: 'transparent',
+            border: '1px dashed var(--border-light)',
+            cursor: 'pointer',
+            color: 'var(--slate)',
+            opacity: 0.4,
+            fontSize: '12px',
+          }}
+          title="Add reaction"
+        >
+          +
+        </button>
+
+        {showPicker && (
+          <div
+            className="absolute bottom-full left-0 mb-1 flex items-center gap-1 px-2 py-1.5 rounded-lg border shadow-md z-50"
+            style={{ backgroundColor: 'var(--card-bg, #fff)', borderColor: 'var(--border-light)' }}
+          >
+            {REACTION_OPTIONS.map(({ emoji, label }) => (
+              <button
+                key={emoji}
+                onClick={() => { toggle.mutate(emoji); setShowPicker(false) }}
+                title={label}
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                style={{ fontSize: '14px', cursor: 'pointer', border: 'none', background: 'none' }}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
