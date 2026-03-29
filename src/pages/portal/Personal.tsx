@@ -103,7 +103,11 @@ export default function Personal() {
         )}
         <SectionHeader
           title={person ? `${person.name.split(' ')[0]}'s Hub` : 'My Hub'}
-          subtitle="Your personal command center"
+          subtitle={overdueTasks.length > 0
+            ? `${overdueTasks.length} overdue — your personal command center`
+            : pendingTasks.length > 0
+              ? `${pendingTasks.length} active task${pendingTasks.length !== 1 ? 's' : ''} — your personal command center`
+              : 'All caught up — your personal command center'}
         />
       </div>
 
