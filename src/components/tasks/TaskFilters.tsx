@@ -1,4 +1,4 @@
-import { Filter, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useTeam } from '../../hooks/useApiData'
 import { useProjects } from '../../hooks/useApiData'
 
@@ -28,15 +28,6 @@ const priorityOptions = [
   { value: 'low', label: 'Low' },
 ]
 
-const selectStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-sans)',
-  fontSize: '13px',
-  color: 'var(--ink)',
-  backgroundColor: 'white',
-  borderColor: 'var(--border-light)',
-  cursor: 'pointer',
-}
-
 export default function TaskFilters({ filters, onChange }: TaskFiltersProps) {
   const { data: team = [] } = useTeam()
   const { data: projects = [] } = useProjects()
@@ -47,26 +38,40 @@ export default function TaskFilters({ filters, onChange }: TaskFiltersProps) {
     .filter((m) => m.slug)
     .sort((a, b) => a.name.localeCompare(b.name))
 
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <Filter size={14} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+  const chipStyle = (active: boolean): React.CSSProperties => ({
+    fontFamily: 'var(--font-sans)',
+    fontSize: '12px',
+    color: active ? 'var(--teal)' : 'var(--slate)',
+    backgroundColor: active ? 'rgba(45,138,138,0.06)' : 'transparent',
+    borderColor: active ? 'var(--teal)' : 'var(--border-light)',
+    cursor: 'pointer',
+    appearance: 'none' as const,
+    WebkitAppearance: 'none' as const,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 8px center',
+    paddingRight: '24px',
+  })
 
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
       <select
-        value={filters.status}
-        onChange={(e) => onChange({ ...filters, status: e.target.value })}
-        className="rounded-md border px-2.5 py-1.5 text-sm"
-        style={selectStyle}
+        value={filters.project}
+        onChange={(e) => onChange({ ...filters, project: e.target.value })}
+        className="rounded-full border px-3 py-1.5"
+        style={chipStyle(!!filters.project)}
       >
-        {statusOptions.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
+        <option value="">All Projects</option>
+        {projects.map((p) => (
+          <option key={p.slug} value={p.slug}>{p.title}</option>
         ))}
       </select>
 
       <select
         value={filters.assignee}
         onChange={(e) => onChange({ ...filters, assignee: e.target.value })}
-        className="rounded-md border px-2.5 py-1.5 text-sm"
-        style={selectStyle}
+        className="rounded-full border px-3 py-1.5"
+        style={chipStyle(!!filters.assignee)}
       >
         <option value="">All Members</option>
         {memberOptions.map((m) => (
@@ -75,32 +80,31 @@ export default function TaskFilters({ filters, onChange }: TaskFiltersProps) {
       </select>
 
       <select
+        value={filters.status}
+        onChange={(e) => onChange({ ...filters, status: e.target.value })}
+        className="rounded-full border px-3 py-1.5"
+        style={chipStyle(!!filters.status)}
+      >
+        {statusOptions.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+
+      <select
         value={filters.priority}
         onChange={(e) => onChange({ ...filters, priority: e.target.value })}
-        className="rounded-md border px-2.5 py-1.5 text-sm"
-        style={selectStyle}
+        className="rounded-full border px-3 py-1.5"
+        style={chipStyle(!!filters.priority)}
       >
         {priorityOptions.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
 
-      <select
-        value={filters.project}
-        onChange={(e) => onChange({ ...filters, project: e.target.value })}
-        className="rounded-md border px-2.5 py-1.5 text-sm"
-        style={selectStyle}
-      >
-        <option value="">All Projects</option>
-        {projects.map((p) => (
-          <option key={p.slug} value={p.slug}>{p.title}</option>
-        ))}
-      </select>
-
       {hasFilters && (
         <button
           onClick={() => onChange({ assignee: '', status: '', priority: '', project: '' })}
-          className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs transition-colors hover:bg-black/5"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] transition-colors hover:bg-black/5"
           style={{
             fontFamily: 'var(--font-mono)',
             color: 'var(--maroon)',
@@ -109,7 +113,7 @@ export default function TaskFilters({ filters, onChange }: TaskFiltersProps) {
             border: 'none',
           }}
         >
-          <X size={12} /> Clear
+          <X size={11} /> Clear
         </button>
       )}
     </div>
