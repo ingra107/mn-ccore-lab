@@ -114,35 +114,52 @@ export default function SettingsPage() {
 
         {/* Workflow Templates */}
         <SettingsSection title="Workflow Templates" subtitle="Define the stages your projects move through (e.g., Idea → Analysis → Writing → Published)" icon={Layers}>
-          <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {templates.map((template) => {
               const stages: string[] = JSON.parse(template.stages)
               return (
                 <div key={template.id} className="rounded-lg border p-4" style={{ borderColor: 'var(--border-light)' }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-                        {template.name}
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+                      {template.name}
+                    </span>
+                    {template.is_default === 1 && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
+                        Default
                       </span>
-                      {template.is_default === 1 && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
-                          Default
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {stages.map((stage, i) => (
-                      <div key={i} className="flex items-center gap-1">
-                        <span className="text-xs px-2 py-1 rounded-full border" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--border-light)' }}>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {stages.map((stage, i) => {
+                      // Cycle through palette colors for each stage
+                      const colors = [
+                        { bg: 'rgba(45,138,138,0.1)', text: 'var(--teal)', border: 'rgba(45,138,138,0.3)' },
+                        { bg: 'rgba(201,168,76,0.1)', text: 'var(--gold)', border: 'rgba(201,168,76,0.3)' },
+                        { bg: 'rgba(122,0,25,0.08)', text: 'var(--maroon)', border: 'rgba(122,0,25,0.2)' },
+                        { bg: 'rgba(34,197,94,0.1)', text: '#16a34a', border: 'rgba(34,197,94,0.3)' },
+                        { bg: 'rgba(59,130,246,0.1)', text: '#2563eb', border: 'rgba(59,130,246,0.3)' },
+                        { bg: 'rgba(168,85,247,0.1)', text: '#7c3aed', border: 'rgba(168,85,247,0.3)' },
+                      ]
+                      const c = colors[i % colors.length]
+                      return (
+                        <span
+                          key={i}
+                          className="text-[11px] px-2.5 py-1 rounded-full border font-medium"
+                          style={{
+                            fontFamily: 'var(--font-sans)',
+                            color: c.text,
+                            backgroundColor: c.bg,
+                            borderColor: c.border,
+                          }}
+                        >
                           {stage}
                         </span>
-                        {i < stages.length - 1 && (
-                          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.3 }}>→</span>
-                        )}
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
+                  <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+                    {stages.length} stage{stages.length !== 1 ? 's' : ''}
+                  </span>
                 </div>
               )
             })}
