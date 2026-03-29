@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import MetricCard from '../../components/MetricCard'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
@@ -10,6 +10,23 @@ import Avatar from '../../components/Avatar'
 
 const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
 
+// Get Monday of the week containing the given date
+function getWeekStart(d: Date): Date {
+  const date = new Date(d)
+  const day = date.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  date.setDate(date.getDate() + diff)
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
+function formatWeekRange(start: Date): string {
+  const end = new Date(start)
+  end.setDate(end.getDate() + 6)
+  const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return `${fmt(start)} - ${fmt(end)}, ${end.getFullYear()}`
+}
+
 export default function AnalyticsPage() {
   const { user } = useAuth()
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
@@ -19,19 +36,34 @@ export default function AnalyticsPage() {
   const { data: activity = [] } = useActivity(100)
   const { data: healthData } = useProjectHealth()
 
-  // This week's stats
-  const thisWeek = useMemo(() => {
+  // Week navigation
+  const [weekOffset, setWeekOffset] = useState(0)
+  const currentWeekStart = useMemo(() => getWeekStart(new Date()), [])
+  const selectedWeekStart = useMemo(() => {
+    const d = new Date(currentWeekStart)
+    d.setDate(d.getDate() + weekOffset * 7)
+    return d
+  }, [currentWeekStart, weekOffset])
+  const selectedWeekEnd = useMemo(() => {
+    const d = new Date(selectedWeekStart)
+    d.setDate(d.getDate() + 7)
+    return d
+  }, [selectedWeekStart])
+  const isCurrentWeek = weekOffset === 0
+
+  // Week stats — relative to selected week
+  const weekStats = useMemo(() => {
+    const startStr = selectedWeekStart.toISOString()
+    const endStr = selectedWeekEnd.toISOString()
     const now = new Date()
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const weekStr = weekAgo.toISOString()
 
-    const completedThisWeek = tasks.filter((t) => t.completed_at && t.completed_at >= weekStr).length
-    const createdThisWeek = tasks.filter((t) => t.created_at >= weekStr).length
+    const completed = tasks.filter((t) => t.completed_at && t.completed_at >= startStr && t.completed_at < endStr).length
+    const created = tasks.filter((t) => t.created_at >= startStr && t.created_at < endStr).length
     const overdue = tasks.filter((t) => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < now).length
-    const activityThisWeek = activity.filter((a) => a.timestamp >= weekStr).length
+    const activityCount = activity.filter((a) => a.timestamp >= startStr && a.timestamp < endStr).length
 
-    return { completedThisWeek, createdThisWeek, overdue, activityThisWeek }
-  }, [tasks, activity])
+    return { completed, created, overdue, activityCount }
+  }, [tasks, activity, selectedWeekStart, selectedWeekEnd])
 
   // Task completion by person
   const completionByPerson = useMemo(() => {
@@ -77,16 +109,80 @@ export default function AnalyticsPage() {
     <div>
       <SectionHeader title="Lab Analytics" subtitle="Performance metrics and activity reports" />
 
-      {/* Weekly Summary Cards */}
-      <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MetricCard icon={CheckCircle2} label="Completed This Week" value={thisWeek.completedThisWeek} color="var(--green, #22c55e)" />
-        <MetricCard icon={Plus} label="Created This Week" value={thisWeek.createdThisWeek} color="var(--teal)" />
-        <MetricCard icon={AlertTriangle} label="Overdue Tasks" value={thisWeek.overdue} color="var(--maroon)" />
-        <MetricCard icon={TrendingUp} label="Activity Events" value={thisWeek.activityThisWeek} color="var(--gold)" />
+      {/* Week Navigator */}
+      <div className="mt-5 flex items-center gap-3 flex-wrap">
+        <button
+          onClick={() => setWeekOffset(weekOffset - 1)}
+          className="w-8 h-8 flex items-center justify-center rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+          style={{ borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer', color: 'var(--slate)' }}
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <div className="flex items-center gap-2">
+          <Calendar size={14} style={{ color: 'var(--teal)' }} />
+          <span className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+            {formatWeekRange(selectedWeekStart)}
+          </span>
+        </div>
+        <button
+          onClick={() => setWeekOffset(weekOffset + 1)}
+          disabled={isCurrentWeek}
+          className="w-8 h-8 flex items-center justify-center rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+          style={{ borderColor: 'var(--border-light)', background: 'none', cursor: isCurrentWeek ? 'default' : 'pointer', color: 'var(--slate)', opacity: isCurrentWeek ? 0.3 : 1 }}
+        >
+          <ChevronRight size={16} />
+        </button>
+        {!isCurrentWeek && (
+          <button
+            onClick={() => setWeekOffset(0)}
+            className="px-3 py-1 rounded-lg text-xs font-medium border transition-colors"
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', background: 'none', cursor: 'pointer' }}
+          >
+            This Week
+          </button>
+        )}
       </div>
 
+      {/* Weekly Summary Cards */}
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} color="var(--green, #22c55e)" />
+        <MetricCard icon={Plus} label="Created" value={weekStats.created} color="var(--teal)" />
+        <MetricCard icon={AlertTriangle} label="Overdue" value={weekStats.overdue} color="var(--maroon)" />
+        <MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} color="var(--gold)" />
+      </div>
+
+      {/* Attention Required — positive empty state when clear */}
+      {weekStats.overdue > 0 ? (
+        <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'var(--maroon)', borderLeftWidth: 3 }}>
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle size={14} style={{ color: 'var(--maroon)' }} />
+            <h3 className="text-sm font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--maroon)' }}>
+              Attention Required
+            </h3>
+            <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+              {weekStats.overdue} overdue task{weekStats.overdue > 1 ? 's' : ''} need attention
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            {tasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()).slice(0, 5).map(t => (
+              <div key={t.id} className="flex items-center gap-2 text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                <Circle size={10} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+                <span className="truncate">{t.title}</span>
+                {t.due_date && <span style={{ color: 'var(--maroon)', fontFamily: 'var(--font-mono)', fontSize: '10px', flexShrink: 0 }}>Due {new Date(t.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-xl border p-4 text-center" style={{ borderColor: 'var(--border-light)' }}>
+          <CheckCircle2 size={24} style={{ color: 'var(--green, #22c55e)', margin: '0 auto 6px' }} />
+          <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>All caught up!</p>
+          <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>No overdue tasks. Keep up the momentum.</p>
+        </div>
+      )}
+
       {/* Second row: summary stats */}
-      <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
         <MetricCard icon={FolderKanban} label="Active Projects" value={projects.filter((p) => p.status === 'Active').length} color="var(--teal)" subtitle={`${projects.length} total`} />
         <MetricCard icon={Lightbulb} label="Research Ideas" value={activeIdeas} color="var(--gold)" subtitle={`${ideas.length} total`} />
         <MetricCard icon={FileText} label="Pending Tasks" value={pendingTasks} color="var(--ink)" subtitle={`${tasks.length} total`} />
