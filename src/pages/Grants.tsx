@@ -699,6 +699,8 @@ export default function Grants() {
 
   const activeCount = grants.filter((g) => !g.proposed).length
   const proposedCount = grants.filter((g) => !!g.proposed).length
+  const totalFunding = grants.reduce((sum, g) => sum + (g.total_funding || 0), 0)
+  const mechanisms = [...new Set(grants.map(g => g.mechanism).filter(Boolean))]
 
   return (
     <>
@@ -712,20 +714,44 @@ export default function Grants() {
             color: 'var(--ink)',
           }}
         >
-          Grant Timeline
+          Grants & Funding
         </h1>
         <p
           className="text-base sm:text-lg max-w-2xl"
           style={{ color: 'var(--slate)' }}
         >
-          {activeCount > 0
-            ? `${activeCount} active award${activeCount !== 1 ? 's' : ''}`
-            : 'No active awards'}
-          {proposedCount > 0
-            ? ` and ${proposedCount} proposed grant${proposedCount !== 1 ? 's' : ''}`
-            : ''}
-          {' '}tracking MN-CCORE's research funding portfolio.
+          Track research grants, funding, and milestone timelines
         </p>
+
+        {/* Funding summary stats */}
+        {!isLoading && grants.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+            <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>Active Awards</div>
+              <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--teal)' }}>{activeCount}</div>
+            </div>
+            <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>Proposed</div>
+              <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)' }}>{proposedCount}</div>
+            </div>
+            {totalFunding > 0 && (
+              <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
+                <div className="text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>Total Funding</div>
+                <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{formatFunding(totalFunding)}</div>
+              </div>
+            )}
+            <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>Mechanisms</div>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {mechanisms.map(m => (
+                  <span key={m} className="text-[10px] px-2 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: mechanismColor(m, false), backgroundColor: mechanismColor(m, false) + '14' }}>
+                    {m}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       <SectionDivider />
