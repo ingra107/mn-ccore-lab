@@ -133,7 +133,7 @@ export default function Dashboard() {
               maxWidth: '520px',
             }}
           >
-            Lab health at a glance — publications, grants, team activity, and research momentum.
+            Lab health at a glance — {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
 
           {/* Gold rule */}
@@ -181,7 +181,7 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <Link
-            to="/tasks"
+            to="/tasks?create=true"
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
             style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--border-light)', textDecoration: 'none' }}
           >
@@ -197,7 +197,7 @@ export default function Dashboard() {
             Schedule Meeting
           </Link>
           <Link
-            to="/ideas"
+            to="/ideas?create=true"
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
             style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', textDecoration: 'none' }}
           >
