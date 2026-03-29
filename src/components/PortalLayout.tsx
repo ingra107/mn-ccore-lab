@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Menu, Sun, Moon, Monitor, Search } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
@@ -26,6 +26,13 @@ export default function PortalLayout() {
       return next
     })
   }, [])
+
+  // Listen for keyboard shortcut [ to toggle sidebar
+  useEffect(() => {
+    const handler = () => toggleSidebar()
+    document.addEventListener('toggle-sidebar', handler)
+    return () => document.removeEventListener('toggle-sidebar', handler)
+  }, [toggleSidebar])
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg)' }}>

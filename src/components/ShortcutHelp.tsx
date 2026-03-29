@@ -33,6 +33,7 @@ const shortcuts = [
     items: [
       { keys: '⌘ K', action: 'Command palette' },
       { keys: '/', action: 'Search' },
+      { keys: '[', action: 'Toggle sidebar' },
       { keys: '?', action: 'This help' },
     ],
   },

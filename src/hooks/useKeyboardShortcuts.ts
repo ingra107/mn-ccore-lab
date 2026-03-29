@@ -75,6 +75,11 @@ export function useKeyboardShortcuts() {
           navigate('/ideas?create=true')
           break
 
+        case '[':
+          e.preventDefault()
+          document.dispatchEvent(new CustomEvent('toggle-sidebar'))
+          break
+
         case '?':
           e.preventDefault()
           setShowHelp((prev) => !prev)
