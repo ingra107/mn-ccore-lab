@@ -83,7 +83,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             className="text-lg"
             style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--ink)' }}
           >
-            New Task
+            Create New Task
           </h3>
           <button
             onClick={onClose}
@@ -107,7 +107,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="What needs to be done?"
+              placeholder="e.g., Complete BMI subgroup analysis for AJRCCM revision"
               className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1"
               style={{
                 ...selectStyle,
@@ -135,14 +135,14 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             />
           </div>
 
-          {/* Assignee + Priority row */}
+          {/* Owner + Priority row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label
                 className="block text-xs font-medium mb-1"
                 style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
               >
-                Assignee *
+                Owner * <span style={{ fontWeight: 400, opacity: 0.5 }}>(responsible)</span>
               </label>
               <select
                 value={assignee}
@@ -150,7 +150,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                 className="w-full rounded-md border px-2.5 py-2 text-sm"
                 style={selectStyle}
               >
-                <option value="">Select member</option>
+                <option value="">Select owner...</option>
                 {memberOptions.map((m) => (
                   <option key={m.slug} value={m.slug}>{m.name}</option>
                 ))}
@@ -184,7 +184,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                 className="block text-xs font-medium mb-1"
                 style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
               >
-                Project
+                Project <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span>
               </label>
               <select
                 value={projectId}
@@ -192,7 +192,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                 className="w-full rounded-md border px-2.5 py-2 text-sm"
                 style={selectStyle}
               >
-                <option value="">None</option>
+                <option value="">No Project</option>
                 {projects.map((p) => (
                   <option key={p.slug} value={p.slug}>{p.title}</option>
                 ))}
@@ -216,7 +216,12 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           </div>
 
           {/* Submit */}
-          <div className="flex justify-end gap-2 mt-2">
+          <div className="flex items-center justify-between gap-2 mt-2">
+            <p className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+              Tasks can also be created from meetings and project pages
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
