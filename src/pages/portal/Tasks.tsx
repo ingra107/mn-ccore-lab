@@ -81,12 +81,17 @@ export default function Tasks() {
 
   return (
     <div>
+      {/* Header: Title + Filter chips + New Task button */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
+        <div className="flex items-center gap-3 flex-wrap flex-1 min-w-0">
           <SectionHeader
             title="All Tasks"
-            subtitle={`${pendingCount} active across the lab — track, assign, and manage work`}
+            subtitle={`${pendingCount} active across the lab`}
           />
+          {/* Inline filter chips */}
+          <div className="mt-1">
+            <TaskFilters filters={filters} onChange={setFilters} />
+          </div>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -104,8 +109,8 @@ export default function Tasks() {
         </button>
       </div>
 
-      {/* View selector + Filters */}
-      <div className="mt-5 flex flex-col gap-3">
+      {/* View selector */}
+      <div className="mt-4 flex flex-col gap-3">
         <div className="flex items-center gap-2 flex-wrap">
           {/* Primary: List view */}
           <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
@@ -175,8 +180,6 @@ export default function Tasks() {
             </span>
           )}
         </div>
-
-        <TaskFilters filters={filters} onChange={setFilters} />
       </div>
 
       {/* Content */}
