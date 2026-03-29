@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, List, LayoutGrid, Users, GanttChartSquare, ChevronDown, Filter, FileText } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import TaskFilters from '../../components/tasks/TaskFilters'
@@ -22,11 +23,20 @@ const alternateViews: { key: ViewMode; label: string; icon: typeof List; descrip
 ]
 
 export default function Tasks() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [view, setView] = useState<ViewMode>('list')
   const [showCreate, setShowCreate] = useState(false)
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [showViewMenu, setShowViewMenu] = useState(false)
   const viewMenuRef = useRef<HTMLDivElement>(null)
+
+  // Auto-open create modal from URL params (keyboard shortcut C)
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') {
+      setShowCreate(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
   const [filters, setFilters] = useState({
     assignee: '',
     status: '',

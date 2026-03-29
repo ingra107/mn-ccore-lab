@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, LayoutGrid, List, ThumbsUp, X } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import ToggleButton from '../../components/ToggleButton'
@@ -32,9 +33,18 @@ const researchAreas = [
 ]
 
 export default function Ideas() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [view, setView] = useState<ViewMode>('grid')
   const [showCreate, setShowCreate] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('')
+
+  // Auto-open create modal from URL params (keyboard shortcut N)
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') {
+      setShowCreate(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const { data: ideas = [], isLoading } = useIdeas(filterStatus ? { status: filterStatus } : undefined)
   const vote = useVoteIdea()
