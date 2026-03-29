@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Settings, Type, Layers, Plus, X, GripVertical, Check } from 'lucide-react'
+import { Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
+import { useTeam } from '../../hooks/useApiData'
+import Avatar from '../../components/Avatar'
+import { getPersonInfo } from '../../data/team'
 
 interface WorkflowTemplate {
   id: string
@@ -13,6 +16,7 @@ interface WorkflowTemplate {
 
 export default function SettingsPage() {
   const queryClient = useQueryClient()
+  const { data: team = [] } = useTeam()
 
   // Load settings
   const { data: settings = {} } = useQuery({
@@ -166,6 +170,39 @@ export default function SettingsPage() {
           </div>
 
           <CreateTemplateForm onSubmit={(name, stages) => createTemplate.mutate({ name, stages })} />
+        </SettingsSection>
+
+        {/* AI Meeting Context */}
+        <SettingsSection title="AI Meeting Context" subtitle="Help AI recognize speakers and assign tasks accurately during meeting note analysis" icon={Bot}>
+          <div className="flex flex-col gap-3">
+            {team.filter(m => m.slug).slice(0, 20).map((member) => {
+              const person = getPersonInfo(member.slug!)
+              return (
+                <div key={member.slug} className="flex items-center gap-3 py-2 border-b last:border-b-0" style={{ borderColor: 'var(--border-light)' }}>
+                  <div style={{ width: 32, height: 32, flexShrink: 0 }}>
+                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-8 !h-8 !min-w-0 !min-h-0 !text-[9px]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{person.name}</div>
+                    <div className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>{member.role}</div>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="e.g., stats expert, IRB contact, data lead"
+                    className="w-48 rounded-md border px-2 py-1 text-xs outline-none"
+                    style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', borderColor: 'var(--border-light)', color: 'var(--ink)' }}
+                    defaultValue=""
+                  />
+                </div>
+              )
+            })}
+          </div>
+          <div className="flex items-start gap-2 mt-3 px-1">
+            <Info size={12} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0 }} />
+            <p className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6, lineHeight: 1.5 }}>
+              Expertise notes help AI meeting notes recognize who should be assigned which tasks. These are used when AI processes meeting transcripts.
+            </p>
+          </div>
         </SettingsSection>
 
         {/* Save indicator */}

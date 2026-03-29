@@ -1,15 +1,16 @@
 import { useState, useMemo } from 'react'
+import { Activity as ActivityIcon } from 'lucide-react'
 import { useActivity } from '../../hooks/useApiData'
 import Avatar from '../../components/Avatar'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime, formatMediumDate } from '../../lib/dateUtils'
 import SectionHeader from '../../components/SectionHeader'
-import ToggleButton from '../../components/ToggleButton'
 
 const typeOptions = [
   { value: '', label: 'All Types' },
   { value: 'task', label: 'Tasks' },
   { value: 'comment', label: 'Comments' },
+  { value: 'project_update', label: 'Updates' },
   { value: 'project', label: 'Projects' },
   { value: 'meeting', label: 'Meetings' },
   { value: 'idea', label: 'Ideas' },
@@ -17,7 +18,7 @@ const typeOptions = [
 
 export default function ActivityPage() {
   const [filterType, setFilterType] = useState('')
-  const { data: allActivity = [] } = useActivity(100)
+  const { data: allActivity = [] } = useActivity(200)
 
   const filtered = useMemo(() => {
     if (!filterType) return allActivity
@@ -38,22 +39,29 @@ export default function ActivityPage() {
 
   return (
     <div>
-      <SectionHeader title="Activity" subtitle="Recent actions across the lab" />
-
-      {/* Filters */}
-      <div className="mt-5 flex items-center gap-3">
-        {typeOptions.map((opt) => {
-          const active = filterType === opt.value
-          return (
-            <ToggleButton
-              key={opt.value}
-              active={active}
-              onClick={() => setFilterType(opt.value)}
-            >
-              {opt.label}
-            </ToggleButton>
-          )
-        })}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <SectionHeader title="Activity" subtitle="Recent actions across the lab" />
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="rounded-full border px-3 py-1.5 text-xs mt-2"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '12px',
+            color: filterType ? 'var(--teal)' : 'var(--slate)',
+            backgroundColor: filterType ? 'rgba(45,138,138,0.06)' : 'transparent',
+            borderColor: filterType ? 'var(--teal)' : 'var(--border-light)',
+            cursor: 'pointer',
+            appearance: 'none' as const,
+            WebkitAppearance: 'none' as const,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 8px center',
+            paddingRight: '24px',
+          }}
+        >
+          {typeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
       </div>
 
       {/* Activity feed */}
@@ -101,8 +109,16 @@ export default function ActivityPage() {
           )
         })}
         {grouped.length === 0 && (
-          <div className="text-center py-16 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
-            No activity yet
+          <div className="text-center py-16">
+            <ActivityIcon size={40} style={{ color: 'var(--border-light)', margin: '0 auto 12px' }} />
+            <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+              {filterType ? 'No matching activity' : 'No activity yet'}
+            </p>
+            <p className="text-xs mt-1 max-w-xs mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+              {filterType
+                ? `No ${typeOptions.find(o => o.value === filterType)?.label.toLowerCase()} activity found. Try a different filter.`
+                : 'Activity from tasks, meetings, project updates, and ideas will appear here.'}
+            </p>
           </div>
         )}
       </div>
