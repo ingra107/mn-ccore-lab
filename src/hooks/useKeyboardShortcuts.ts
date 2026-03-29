@@ -65,6 +65,16 @@ export function useKeyboardShortcuts() {
           gTimer = setTimeout(() => setGPending(false), 1000)
           break
 
+        case 'c':
+          e.preventDefault()
+          navigate('/tasks?create=true')
+          break
+
+        case 'n':
+          e.preventDefault()
+          navigate('/ideas?create=true')
+          break
+
         case '?':
           e.preventDefault()
           setShowHelp((prev) => !prev)

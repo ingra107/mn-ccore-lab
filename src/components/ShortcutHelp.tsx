@@ -22,6 +22,13 @@ const shortcuts = [
     ],
   },
   {
+    category: 'Actions',
+    items: [
+      { keys: 'C', action: 'Create new task' },
+      { keys: 'N', action: 'Submit new idea' },
+    ],
+  },
+  {
     category: 'Global',
     items: [
       { keys: '⌘ K', action: 'Command palette' },
