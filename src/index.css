@@ -326,3 +326,64 @@ a:hover {
 .dark .funding-nih { color: #5b9bd5; }
 .dark .funding-nhlbi { color: #ef6c57; }
 .dark .funding-nlm { color: #66bb6a; }
+
+/* ── Print styles ── */
+@media print {
+  /* Hide non-essential UI */
+  aside, nav, header, footer,
+  button, .bento-card:hover,
+  [class*="sidebar"], [class*="Sidebar"] {
+    display: none !important;
+  }
+
+  /* Full-width content */
+  main, [class*="content-container"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Force light mode colors */
+  :root {
+    --ink: #0f1923 !important;
+    --cream: #fff !important;
+    --bg: #fff !important;
+    color-scheme: light !important;
+  }
+
+  .dark {
+    --ink: #0f1923 !important;
+    --cream: #fff !important;
+    --bg: #fff !important;
+  }
+
+  /* Show page content at full width */
+  body {
+    background: white !important;
+    color: #0f1923 !important;
+  }
+
+  /* Remove animations */
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Bento cards: clean borders for print */
+  .bento-card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  /* Page breaks */
+  h1, h2, h3 { break-after: avoid; }
+  .bento-grid { display: block !important; }
+  .bento-grid > * {
+    display: block !important;
+    margin-bottom: 1rem !important;
+    grid-column: span 1 !important;
+    grid-row: span 1 !important;
+  }
+}
