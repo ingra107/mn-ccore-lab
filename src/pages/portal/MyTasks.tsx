@@ -17,9 +17,30 @@ const alternateViews: { key: ViewMode; label: string; icon: typeof List; descrip
   { key: 'timeline', label: 'Timeline', icon: GanttChartSquare, description: 'Tasks on a time axis' },
 ]
 
+type GroupBy = 'none' | 'due_date' | 'priority' | 'project' | 'status'
+type SortBy = 'priority' | 'due_date' | 'title'
+
+const groupByOptions: { key: GroupBy; label: string }[] = [
+  { key: 'none', label: 'No Grouping' },
+  { key: 'due_date', label: 'Due Date' },
+  { key: 'priority', label: 'Priority' },
+  { key: 'project', label: 'Project' },
+  { key: 'status', label: 'Status' },
+]
+
+const sortByOptions: { key: SortBy; label: string }[] = [
+  { key: 'priority', label: 'Priority' },
+  { key: 'due_date', label: 'Due Date' },
+  { key: 'title', label: 'Title' },
+]
+
+const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
+
 export default function MyTasks() {
   const [view, setView] = useState<ViewMode>('list')
   const [showCreate, setShowCreate] = useState(false)
+  const [groupBy, setGroupBy] = useState<GroupBy>('due_date')
+  const [sortBy, setSortBy] = useState<SortBy>('priority')
 
   // For now, show all tasks (no auth = no current user detection)
   // When Cloudflare Access is enabled, this will filter to the authenticated user's slug
@@ -105,15 +126,66 @@ export default function MyTasks() {
         </div>
       )}
 
-      {/* View selector */}
-      <div className="mt-5 flex items-center gap-2">
+      {/* Controls: View + Group By + Sort By */}
+      <div className="mt-5 flex items-center gap-3 flex-wrap">
         <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
           <List size={14} />
           List
         </ToggleButton>
-
-        {/* Alternate views dropdown */}
         <ViewDropdown view={view} setView={setView} views={alternateViews} />
+
+        <div className="flex-1" />
+
+        {/* Group By */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>Group by:</span>
+          <select
+            value={groupBy}
+            onChange={(e) => setGroupBy(e.target.value as GroupBy)}
+            className="rounded-full border px-2.5 py-1 text-xs"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: '12px',
+              color: groupBy !== 'none' ? 'var(--teal)' : 'var(--slate)',
+              backgroundColor: groupBy !== 'none' ? 'rgba(45,138,138,0.06)' : 'transparent',
+              borderColor: groupBy !== 'none' ? 'var(--teal)' : 'var(--border-light)',
+              cursor: 'pointer',
+              appearance: 'none' as const,
+              WebkitAppearance: 'none' as const,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 6px center',
+              paddingRight: '20px',
+            }}
+          >
+            {groupByOptions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+          </select>
+        </div>
+
+        {/* Sort By */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>Sort:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortBy)}
+            className="rounded-full border px-2.5 py-1 text-xs"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: '12px',
+              color: 'var(--slate)',
+              borderColor: 'var(--border-light)',
+              cursor: 'pointer',
+              appearance: 'none' as const,
+              WebkitAppearance: 'none' as const,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 6px center',
+              paddingRight: '20px',
+            }}
+          >
+            {sortByOptions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+          </select>
+        </div>
       </div>
 
       {/* Content */}
@@ -129,20 +201,23 @@ export default function MyTasks() {
           <div className="text-center py-16">
             <CheckCircle2 size={40} style={{ color: 'var(--border-light)', margin: '0 auto 12px' }} />
             <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-              {currentUser ? 'No tasks assigned to you' : 'No tasks yet'}
+              {currentUser ? 'All caught up!' : 'No tasks yet'}
             </p>
             <p className="text-xs mt-1 max-w-xs mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
               {currentUser
-                ? 'Tasks assigned to you in meetings or by PIs will show up here.'
+                ? 'You have no active tasks assigned to you.'
                 : 'Sign in to see your personal tasks, or create one below.'}
             </p>
           </div>
-        ) : (
+        ) : view !== 'list' ? (
           <>
-            {view === 'list' && <TaskListView tasks={tasks} onStatusChange={handleStatusChange} />}
             {view === 'board' && <TaskBoardView tasks={tasks} onStatusChange={handleStatusChange} />}
             {view === 'timeline' && <TaskTimelineView tasks={tasks} onStatusChange={handleStatusChange} />}
           </>
+        ) : groupBy === 'none' ? (
+          <TaskListView tasks={sortTasks(tasks, sortBy)} onStatusChange={handleStatusChange} />
+        ) : (
+          <GroupedTaskList tasks={tasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} />
         )}
       </div>
 
@@ -152,6 +227,93 @@ export default function MyTasks() {
         onClose={() => setShowCreate(false)}
         onCreate={handleCreate}
       />
+    </div>
+  )
+}
+
+// ── Sort helper ──────────────────────────────────────────────
+function sortTasks(tasks: any[], sortBy: SortBy) {
+  return [...tasks].sort((a, b) => {
+    if (sortBy === 'priority') return (PRIORITY_ORDER[a.priority] ?? 3) - (PRIORITY_ORDER[b.priority] ?? 3)
+    if (sortBy === 'due_date') return (a.due_date || '9999').localeCompare(b.due_date || '9999')
+    return (a.title || '').localeCompare(b.title || '')
+  })
+}
+
+// ── Grouped Task List ──────────────────────────────────────────
+function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange }: {
+  tasks: any[]
+  groupBy: GroupBy
+  sortBy: SortBy
+  onStatusChange: (id: string, status: string) => void
+}) {
+  const groups = useMemo(() => {
+    const map = new Map<string, any[]>()
+    for (const task of tasks) {
+      let key: string
+      if (groupBy === 'due_date') {
+        if (!task.due_date) key = 'No Due Date'
+        else {
+          const d = new Date(task.due_date + 'T12:00:00')
+          const now = new Date()
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+          const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
+          const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7)
+          if (d < today) key = 'Overdue'
+          else if (d < tomorrow) key = 'Today'
+          else if (d < weekEnd) key = 'This Week'
+          else key = 'Later'
+        }
+      } else if (groupBy === 'priority') {
+        key = (task.priority || 'medium').charAt(0).toUpperCase() + (task.priority || 'medium').slice(1)
+      } else if (groupBy === 'project') {
+        key = task.project_id || 'No Project'
+      } else {
+        key = (task.status || 'todo').replace('_', ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+      }
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(task)
+    }
+
+    // Sort groups by a sensible order
+    const entries = [...map.entries()]
+    if (groupBy === 'due_date') {
+      const order = ['Overdue', 'Today', 'This Week', 'Later', 'No Due Date']
+      entries.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))
+    } else if (groupBy === 'priority') {
+      const order = ['Urgent', 'High', 'Medium', 'Low']
+      entries.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))
+    }
+
+    return entries.map(([label, items]) => ({ label, items: sortTasks(items, sortBy) }))
+  }, [tasks, groupBy, sortBy])
+
+  const groupColors: Record<string, string> = {
+    'Overdue': 'var(--maroon)',
+    'Today': 'var(--teal)',
+    'This Week': 'var(--gold)',
+    'Urgent': 'var(--maroon)',
+    'High': '#c2410c',
+    'In Progress': 'var(--teal)',
+    'Blocked': 'var(--maroon)',
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      {groups.map(({ label, items }) => (
+        <div key={label}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: groupColors[label] || 'var(--slate)', opacity: groupColors[label] ? 1 : 0.3 }} />
+            <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)', color: groupColors[label] || 'var(--ink)' }}>
+              {label}
+            </h3>
+            <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+              {items.length}
+            </span>
+          </div>
+          <TaskListView tasks={items} onStatusChange={onStatusChange} />
+        </div>
+      ))}
     </div>
   )
 }
