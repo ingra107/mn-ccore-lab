@@ -94,7 +94,10 @@ export default function Deadlines() {
     <div>
       <SectionHeader
         title="Deadlines & Milestones"
-        subtitle={`${overdue.length} overdue · ${thisWeek.length + nextWeek.length} upcoming`}
+        subtitle={overdue.length > 0
+          ? `${overdue.length} overdue · ${thisWeek.length + nextWeek.length} upcoming — track important dates`
+          : `${thisWeek.length + nextWeek.length} upcoming — track important dates and time-sensitive deliverables`
+        }
       />
 
       {/* View tabs + filter */}
@@ -122,8 +125,21 @@ export default function Deadlines() {
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="rounded-md border px-2.5 py-1.5 text-sm"
-          style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', backgroundColor: 'white', borderColor: 'var(--border-light)', cursor: 'pointer' }}
+          className="rounded-full border px-3 py-1.5 text-xs"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '12px',
+            color: filterType ? 'var(--teal)' : 'var(--slate)',
+            backgroundColor: filterType ? 'rgba(45,138,138,0.06)' : 'transparent',
+            borderColor: filterType ? 'var(--teal)' : 'var(--border-light)',
+            cursor: 'pointer',
+            appearance: 'none' as const,
+            WebkitAppearance: 'none' as const,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 8px center',
+            paddingRight: '24px',
+          }}
         >
           <option value="">All Types</option>
           <option value="task">Tasks</option>

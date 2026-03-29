@@ -64,14 +64,32 @@ export default function Manuscripts() {
 
   // Stats
   const activeCount = manuscripts.filter((p) => p.stage !== 'Published').length
-  const writingCount = manuscripts.filter((p) => p.stage === 'Writing' || p.stage === 'Review').length
 
   return (
     <div>
-      <SectionHeader
-        title="Manuscript Pipeline"
-        subtitle={`${activeCount} active · ${writingCount} in writing/review`}
-      />
+      <div>
+        <SectionHeader
+          title="Manuscript Pipeline"
+          subtitle={`${activeCount} active manuscripts — track from idea to publication`}
+        />
+        {/* Stage flow summary */}
+        <div className="flex items-center gap-1 mt-2 flex-wrap">
+          {stages.map((s, i) => {
+            const count = byStage[s.key]?.length || 0
+            return (
+              <span key={s.key} className="flex items-center gap-1">
+                <span
+                  className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                  style={{ fontFamily: 'var(--font-mono)', color: s.color, backgroundColor: s.bg, border: `1px solid ${s.color}20` }}
+                >
+                  {s.label} {count}
+                </span>
+                {i < stages.length - 1 && <span className="text-[8px]" style={{ color: 'var(--slate)', opacity: 0.3 }}>→</span>}
+              </span>
+            )
+          })}
+        </div>
+      </div>
 
       {/* Controls */}
       <div className="mt-5 flex items-center gap-3 flex-wrap">
