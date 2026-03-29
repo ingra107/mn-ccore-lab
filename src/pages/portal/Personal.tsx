@@ -259,9 +259,20 @@ function QuickCapture() {
 
 // ── Quick Stat Pill ──────────────────────────────────────────
 
+const quickStatTooltips: Record<string, string> = {
+  'Active Tasks': 'Tasks assigned to you that are not yet completed',
+  'Overdue': 'Tasks past their due date that still need attention',
+  'High Priority': 'Tasks marked as high or urgent priority',
+  'Unread': 'Notifications you haven\'t read yet (@mentions, assignments)',
+}
+
 function QuickStat({ label, value, color, icon: Icon }: { label: string; value: number; color: string; icon: typeof CheckSquare }) {
   return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border" style={{ borderColor: color + '33', backgroundColor: color + '0a' }}>
+    <div
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-default"
+      style={{ borderColor: color + '33', backgroundColor: color + '0a' }}
+      title={quickStatTooltips[label] || label}
+    >
       <Icon size={13} style={{ color }} />
       <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, color }}>{value}</span>
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{label}</span>

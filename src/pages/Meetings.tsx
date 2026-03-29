@@ -338,7 +338,7 @@ export default function Meetings() {
               maxWidth: '520px',
             }}
           >
-            MNCCORE biweekly meetings, decisions, and action items
+            {meetings.length} meetings tracked — decisions, action items, and notes
           </p>
 
           {/* Gold rule */}
