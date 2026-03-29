@@ -1,0 +1,71 @@
+import type { AuthUser, Env } from '../helpers';
+import { json, error, generateId, logActivity } from '../helpers';
+
+// GET /api/meetings — list all meetings
+export async function handleMeetings(env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    'SELECT * FROM meetings ORDER BY date DESC'
+  ).all();
+  return json({ data: result.results, count: result.results.length });
+}
+
+// GET /api/meetings/:id — single meeting with action items + agenda items
+export async function handleGetMeeting(id: string, env: Env): Promise<Response> {
+  const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
+  if (!meeting) return error('Meeting not found', 404);
+
+  const [actionItems, agendaItems] = await Promise.all([
+    env.DB.prepare('SELECT * FROM tasks WHERE meeting_id = ? ORDER BY created_at').bind(id).all(),
+    env.DB.prepare('SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at').bind(id).all(),
+  ]);
+
+  return json({
+    data: {
+      ...meeting,
+      action_items: actionItems.results,
+      agenda_items: agendaItems.results,
+    },
+  });
+}
+
+// GET /api/meetings/:id/agenda — agenda items for a meeting
+export async function handleGetAgendaItems(meetingId: string, env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    'SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at'
+  ).bind(meetingId).all();
+  return json({ data: result.results, count: result.results.length });
+}
+
+// POST /api/meetings/:id/agenda — add agenda item
+export async function handleAddAgendaItem(meetingId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { content: string; project_id?: string; type?: string; document_url?: string };
+  if (!body.content) return error('content required', 400);
+
+  const id = generateId();
+  const maxOrder = await env.DB.prepare('SELECT MAX(sort_order) as m FROM agenda_items WHERE meeting_id = ?').bind(meetingId).first<{ m: number | null }>();
+
+  await env.DB.prepare(
+    'INSERT INTO agenda_items (id, meeting_id, content, added_by, project_id, type, document_url, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, meetingId, body.content, user.email, body.project_id ?? null, body.type ?? 'discussion', body.document_url ?? null, (maxOrder?.m ?? 0) + 1).run();
+
+  await logActivity(env, 'agenda', `Added agenda item: "${body.content}"`, user.email, meetingId, 'meeting');
+
+  const created = await env.DB.prepare('SELECT * FROM agenda_items WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
+}
+
+// POST /api/meetings — create meeting
+export async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { date: string; title: string; type?: string; attendees?: string[] };
+  if (!body.date || !body.title) return error('date and title required', 400);
+
+  const id = `mtg-${body.date}-${generateId().slice(0, 8)}`;
+  await env.DB.prepare(
+    'INSERT INTO meetings (id, date, title, type, attendees, status) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(id, body.date, body.title, body.type ?? 'biweekly', body.attendees ? JSON.stringify(body.attendees) : null, 'upcoming').run();
+
+  await logActivity(env, 'meeting', `Created meeting: "${body.title}" on ${body.date}`, user.email, id, 'meeting');
+
+  const created = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
+}
