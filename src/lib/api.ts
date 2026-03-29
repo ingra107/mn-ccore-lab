@@ -49,6 +49,7 @@ export interface ProjectRow {
   pi: string | null
   slug: string | null
   stage: string
+  pi_context: string | null
   created_at: string
   updated_at: string
 }

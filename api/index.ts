@@ -659,7 +659,7 @@ async function handleUpdateProject(
   const body = await request.json() as Record<string, unknown>;
 
   // Allowlisted fields that can be updated
-  const allowed = ['title', 'status', 'description', 'category', 'stage', 'pi', 'slug'];
+  const allowed = ['title', 'status', 'description', 'category', 'stage', 'pi', 'slug', 'pi_context'];
   const updates: string[] = [];
   const values: (string | number | null)[] = [];
 

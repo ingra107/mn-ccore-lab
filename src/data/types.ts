@@ -74,6 +74,7 @@ export interface Project {
   startDate?: string
   lastActivity?: string
   notes?: ProjectNote[]
+  pi_context?: string
 }
 
 export interface Mentee {
