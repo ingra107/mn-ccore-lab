@@ -49,7 +49,7 @@ export default function PortalLayout() {
             onClick={() => setMobileOpen(false)}
           />
           <div className="lg:hidden fixed top-0 left-0 z-40">
-            <Sidebar collapsed={false} onToggle={() => setMobileOpen(false)} />
+            <Sidebar collapsed={false} onToggle={() => setMobileOpen(false)} onNavigate={() => setMobileOpen(false)} />
           </div>
         </>
       )}

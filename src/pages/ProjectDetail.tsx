@@ -13,6 +13,8 @@ import {
   Plus,
   Send,
   X,
+  Link2,
+  Check,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useMeetingsApi, useActionItems } from '../hooks/useApiData'
@@ -107,6 +109,14 @@ function ProjectDetailInner({ project }: InnerProps) {
   const postUpdate = usePostProjectUpdate(project.slug)
   const { isAuthenticated, user } = useAuth()
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
+
+  // Copy link
+  const [copied, setCopied] = useState(false)
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   // PI Context editing
   const [editingContext, setEditingContext] = useState(false)
@@ -364,18 +374,28 @@ function ProjectDetailInner({ project }: InnerProps) {
         {/* Title + PI */}
         <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-6">
           <div style={{ flex: 1 }}>
-            <h1
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 800,
-                fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)',
-                color: 'var(--ink)',
+            <div className="flex items-start gap-2">
+              <h1
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 800,
+                  fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)',
+                  color: 'var(--ink)',
                 margin: 0,
                 lineHeight: 1.15,
               }}
             >
               {project.title}
             </h1>
+              <button
+                onClick={handleCopyLink}
+                className="mt-2 p-1.5 rounded-md transition-colors hover:bg-black/5 flex-shrink-0"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--teal)' : 'var(--slate)', opacity: copied ? 1 : 0.3 }}
+                title={copied ? 'Link copied!' : 'Copy link to this project'}
+              >
+                {copied ? <Check size={16} /> : <Link2 size={16} />}
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <div style={{ width: 36, height: 36 }}>

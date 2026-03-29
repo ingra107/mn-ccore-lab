@@ -30,6 +30,7 @@ import { getPersonInfo } from '../data/team'
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
+  onNavigate?: () => void
 }
 
 interface NavItem {
@@ -90,7 +91,7 @@ const navGroups: NavGroup[] = [
   },
 ]
 
-export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
   const location = useLocation()
   const { user } = useAuth()
   const userSlug = user?.email?.split('@')[0]?.toLowerCase()
@@ -167,6 +168,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <Link
                   key={item.to}
                   to={item.to}
+                  onClick={onNavigate}
                   className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors mb-0.5 ${
                     active ? 'font-medium' : ''
                   }`}
