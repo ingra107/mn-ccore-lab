@@ -67,11 +67,15 @@ export default function ActivityPage() {
       {/* Activity feed */}
       <div className="mt-5 flex flex-col gap-6">
         {grouped.map(([date, items]) => {
-          const isToday = date === new Date().toISOString().split('T')[0]
+          const today = new Date().toISOString().split('T')[0]
+          const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+          const isToday = date === today
+          const isYesterday = date === yesterday
+          const label = isToday ? 'Today' : isYesterday ? 'Yesterday' : formatMediumDate(date)
           return (
             <div key={date}>
               <h3 className="text-sm font-semibold mb-2" style={{ fontFamily: 'var(--font-display)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
-                {isToday ? 'Today' : formatMediumDate(date)}
+                {label}
               </h3>
               <div className="flex flex-col gap-1 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-light)' }}>
                 {items.map((item) => {

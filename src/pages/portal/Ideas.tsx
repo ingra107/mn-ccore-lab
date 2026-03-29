@@ -45,10 +45,26 @@ export default function Ideas() {
   return (
     <div>
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <SectionHeader
-          title="Ideas Board"
-          subtitle={`${activeCount} active ideas from the lab`}
-        />
+        <div>
+          <SectionHeader
+            title="Ideas Board"
+            subtitle={`${activeCount} active ideas — capture and organize innovative research ideas`}
+          />
+          {/* Status flow legend */}
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            {['new', 'under_review', 'approved', 'parked'].map((s, i) => {
+              const cfg = statusConfig[s]
+              return (
+                <span key={s} className="flex items-center gap-1">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: cfg.color, backgroundColor: cfg.bg }}>
+                    {cfg.label}
+                  </span>
+                  {i < 3 && <span className="text-[8px]" style={{ color: 'var(--slate)', opacity: 0.3 }}>→</span>}
+                </span>
+              )
+            })}
+          </div>
+        </div>
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors mt-1"
