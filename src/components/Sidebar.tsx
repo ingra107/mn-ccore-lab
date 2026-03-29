@@ -169,6 +169,24 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* Bottom section */}
       <div className="border-t px-2 py-2" style={{ borderColor: 'var(--border-light)' }}>
+        {/* Search hint */}
+        {!collapsed && (
+          <Link
+            to="/search"
+            className="flex items-center gap-2.5 px-2.5 py-2 mb-1 rounded-md text-sm transition-colors"
+            style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)', opacity: 0.6 }}
+          >
+            <Search size={16} />
+            <span className="flex-1">Search</span>
+            <kbd
+              className="text-[9px] px-1.5 py-0.5 rounded border"
+              style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-light)', color: 'var(--slate)', opacity: 0.5 }}
+            >
+              {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+K
+            </kbd>
+          </Link>
+        )}
+
         {/* Back to website */}
         <Link
           to="/"
