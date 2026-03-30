@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { Calendar, ArrowRight, CheckCircle2, UserCheck } from 'lucide-react'
 import { useMeetingsApi, useActionItems } from '../hooks/useApiData'
+import { getMeetingFacilitator } from '../lib/facilitator'
+import { getPersonInfo } from '../data/team'
 
 export default function UpcomingMeetingBanner() {
   const { data: meetings = [] } = useMeetingsApi()
@@ -107,6 +109,19 @@ export default function UpcomingMeetingBanner() {
                 >
                   {formattedDate}
                 </p>
+                {(() => {
+                  const fSlug = getMeetingFacilitator(nextMeeting.date)
+                  const fInfo = fSlug ? getPersonInfo(fSlug) : null
+                  return fInfo ? (
+                    <p
+                      className="flex items-center gap-1.5 text-xs mt-1"
+                      style={{ color: 'var(--teal)', fontFamily: 'var(--font-mono)', margin: '4px 0 0 0' }}
+                    >
+                      <UserCheck size={13} strokeWidth={1.5} aria-hidden="true" />
+                      Facilitated by {fInfo.name}
+                    </p>
+                  ) : null
+                })()}
               </div>
             </div>
 

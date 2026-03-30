@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, AlertCircle, ArrowRight, ListChecks, CalendarOff } from 'lucide-react'
+import { Calendar, AlertCircle, ArrowRight, ListChecks, CalendarOff, UserCheck } from 'lucide-react'
 import { useMeetingsApi, useActionItems } from '../../hooks/useApiData'
+import { getMeetingFacilitator } from '../../lib/facilitator'
+import { getPersonInfo } from '../../data/team'
 import BentoCard from './BentoCard'
 
 interface Deadline {
@@ -114,6 +116,16 @@ export default function UpcomingCard() {
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.7, margin: '2px 0 0 0' }}>
                 {new Date(nextMeeting.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
               </p>
+              {(() => {
+                const fSlug = getMeetingFacilitator(nextMeeting.date)
+                const fInfo = fSlug ? getPersonInfo(fSlug) : null
+                return fInfo ? (
+                  <p className="flex items-center gap-1" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--teal)', margin: '2px 0 0 0' }}>
+                    <UserCheck size={10} />
+                    {fInfo.name.split(' ')[0]}
+                  </p>
+                ) : null
+              })()}
             </div>
           </div>
           <div className="flex items-center justify-between mt-2">
