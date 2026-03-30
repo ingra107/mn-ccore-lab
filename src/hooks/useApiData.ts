@@ -805,6 +805,85 @@ export function useTrajectory(slug: string) {
   })
 }
 
+// ── Contribution Portfolio ────────────────────────────────
+
+export interface ContributionSummary {
+  tasks_completed: number
+  updates_posted: number
+  comments_made: number
+  decisions_made: number
+  meetings_contributed: number
+  publications: number
+}
+
+export interface ContributionTask {
+  id: string
+  title: string
+  description: string | null
+  project_id: string | null
+  completed_at: string
+  priority: string | null
+}
+
+export interface ContributionUpdate {
+  id: string
+  project_id: string
+  content: string
+  update_type: string | null
+  created_at: string
+}
+
+export interface ContributionComment {
+  id: string
+  content: string
+  created_at: string
+}
+
+export interface ContributionDecision {
+  id: string
+  title: string
+  rationale: string | null
+  outcome_status: string | null
+  created_at: string
+}
+
+export interface ContributionMeeting {
+  id: string
+  title: string
+  date: string
+}
+
+export interface ContributionPublication {
+  id: string
+  title: string
+  journal: string | null
+  pub_date: string | null
+}
+
+export interface ContributionsData {
+  tasks: ContributionTask[]
+  updates: ContributionUpdate[]
+  comments: ContributionComment[]
+  decisions: ContributionDecision[]
+  meetings: ContributionMeeting[]
+  publications: ContributionPublication[]
+  summary: ContributionSummary
+}
+
+export function useContributions(slug: string, period: number) {
+  return useQuery({
+    queryKey: ['contributions', slug, period],
+    queryFn: async () => {
+      const res = await fetch(`/api/team/${slug}/contributions?period=${period}`)
+      if (!res.ok) return null
+      const data = await res.json()
+      return data.data as ContributionsData
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!slug,
+  })
+}
+
 // ── Grant Intelligence (NIH RePORTER) ──────────────────────
 
 export interface SimilarGrant {
