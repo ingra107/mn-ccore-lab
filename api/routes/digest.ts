@@ -1,11 +1,12 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, logActivity } from '../helpers';
 
-// GET /api/digest?date=&status=&topic=&limit=
+// GET /api/digest?date=&status=&topic=&limit=&with_relevance=true
 export async function handleDigest(url: URL, env: Env): Promise<Response> {
   const date = url.searchParams.get('date');
   const status = url.searchParams.get('status');
   const topic = url.searchParams.get('topic');
+  const withRelevance = url.searchParams.get('with_relevance') === 'true';
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 300);
 
   let query = 'SELECT * FROM research_digest WHERE 1=1';
@@ -30,7 +31,45 @@ export async function handleDigest(url: URL, env: Env): Promise<Response> {
   params.push(limit);
 
   const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results, count: result.results.length });
+  const papers = result.results as Record<string, unknown>[];
+
+  if (!withRelevance) {
+    return json({ data: papers, count: papers.length });
+  }
+
+  // Match paper topics against expertise_tags (cap at 20 for performance)
+  const papersToEnrich = papers.slice(0, 20);
+  const enriched = await Promise.all(
+    papersToEnrich.map(async (paper) => {
+      const topicsRaw = paper.topics as string | null;
+      if (!topicsRaw) return { ...paper, relevant_members: [] };
+
+      try {
+        const topics = JSON.parse(topicsRaw) as string[];
+        if (!topics.length) return { ...paper, relevant_members: [] };
+
+        const likeClauses = topics.map(() => 'LOWER(tag) LIKE ?').join(' OR ');
+        const params = topics.map((t) => `%${t.toLowerCase()}%`);
+
+        const experts = await env.DB.prepare(
+          `SELECT DISTINCT member_slug FROM expertise_tags WHERE ${likeClauses}`
+        ).bind(...params).all();
+
+        return {
+          ...paper,
+          relevant_members: (experts.results || []).map((e: Record<string, unknown>) => e.member_slug as string),
+        };
+      } catch {
+        return { ...paper, relevant_members: [] };
+      }
+    })
+  );
+
+  // Remaining papers beyond the first 20 get empty relevant_members
+  const remaining = papers.slice(20).map((p) => ({ ...p, relevant_members: [] }));
+
+  const allPapers = [...enriched, ...remaining];
+  return json({ data: allPapers, count: allPapers.length });
 }
 
 // GET /api/digest/dates — list available digest dates with paper counts
