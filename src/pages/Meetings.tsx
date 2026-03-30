@@ -316,18 +316,23 @@ export default function Meetings() {
       <div className="content-container" style={{ paddingBottom: '4rem' }}>
         {/* Page Header */}
         <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '2rem', paddingTop: '1.5rem' }}>
-          <h1
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 800,
-              fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
-              color: 'var(--ink)',
-              margin: 0,
-              lineHeight: 1.15,
-            }}
-          >
-            Meeting Hub
-          </h1>
+          <div className="flex items-center gap-3">
+            <div style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.1)', flexShrink: 0 }}>
+              <Users size={19} style={{ color: 'var(--teal)' }} />
+            </div>
+            <h1
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 800,
+                fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
+                color: 'var(--ink)',
+                margin: 0,
+                lineHeight: 1.15,
+              }}
+            >
+              Meeting Hub
+            </h1>
+          </div>
           <p
             style={{
               fontFamily: 'var(--font-body)',

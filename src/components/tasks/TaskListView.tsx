@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, CheckCircle2 } from 'lucide-react'
 import TaskCard from './TaskCard'
 import type { TaskRow } from '../../lib/api'
 
@@ -95,11 +95,19 @@ export default function TaskListView({ tasks, onStatusChange, onSelect }: TaskLi
           <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} onClick={onSelect ? () => onSelect(task) : undefined} />
         ))}
         {sorted.length === 0 && (
-          <div
-            className="text-center py-12 text-sm"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}
-          >
-            No tasks match the current filters
+          <div className="text-center py-16">
+            <div
+              className="mx-auto mb-3"
+              style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.06)' }}
+            >
+              <CheckCircle2 size={24} style={{ color: 'var(--teal)', opacity: 0.5 }} />
+            </div>
+            <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+              No tasks match the current filters
+            </p>
+            <p className="text-xs mt-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+              Try adjusting your sort or filter settings
+            </p>
           </div>
         )}
       </div>

@@ -36,13 +36,15 @@ export default function TaskCard({ task, onStatusChange, compact = false, onClic
 
   return (
     <div
-      className="group rounded-lg border transition-all"
+      className="group rounded-lg border transition-all duration-200 hover:shadow-md"
       style={{
         borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-light)',
         backgroundColor: isDone ? 'rgba(0,0,0,0.02)' : 'white',
         opacity: isDone ? 0.7 : 1,
         cursor: onClick ? 'pointer' : 'default',
       }}
+      onMouseEnter={(e) => { if (!isDone) e.currentTarget.style.transform = 'translateY(-1px)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
       onClick={(e) => {
         // Don't trigger if clicking the status dropdown
         if ((e.target as HTMLElement).closest('[data-status-dropdown]')) return

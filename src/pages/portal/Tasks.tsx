@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, FileText, ListTodo } from 'lucide-react'
+import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, ListTodo } from 'lucide-react'
 import { SkeletonList } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import TaskFilters from '../../components/tasks/TaskFilters'
@@ -167,20 +167,25 @@ export default function Tasks() {
         {isLoading ? (
           <SkeletonList count={5} />
         ) : displayTasks.length === 0 ? (
-          <div className="text-center py-16">
-            <FileText size={40} style={{ color: 'var(--border-light)', margin: '0 auto 12px' }} />
-            <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+          <div className="text-center py-20">
+            <div
+              className="mx-auto mb-4"
+              style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
+            >
+              <CheckCircle2 size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
+            </div>
+            <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
               No tasks yet
             </p>
-            <p className="text-xs mt-1 max-w-xs mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+            <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
               Tasks created in meetings, assigned by PIs, or added by team members will appear here.
             </p>
             <button
               onClick={() => setShowCreate(true)}
-              className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-              style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'rgba(45,138,138,0.08)', color: 'var(--teal)', border: 'none', cursor: 'pointer' }}
+              className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', background: 'none', cursor: 'pointer' }}
             >
-              <Plus size={14} />
+              <Plus size={15} />
               Create first task
             </button>
           </div>
