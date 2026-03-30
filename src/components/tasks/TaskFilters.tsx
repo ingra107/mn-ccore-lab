@@ -40,7 +40,7 @@ export default function TaskFilters({ filters, onChange }: TaskFiltersProps) {
 
   const chipStyle = (active: boolean): React.CSSProperties => ({
     fontFamily: 'var(--font-sans)',
-    fontSize: '12px',
+    fontSize: '13px',
     color: active ? 'var(--teal)' : 'var(--slate)',
     backgroundColor: active ? 'rgba(45,138,138,0.06)' : 'transparent',
     borderColor: active ? 'var(--teal)' : 'var(--border-light)',

@@ -40,7 +40,7 @@ export default function BentoCard({
         className="bento-card h-full"
         style={{
           borderRadius: '16px',
-          padding: '1.25rem 1.5rem',
+          padding: '1.5rem',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',

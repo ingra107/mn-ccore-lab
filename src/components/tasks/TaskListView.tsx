@@ -60,7 +60,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect }: TaskLi
   const SortButton = ({ label, field }: { label: string; field: SortKey }) => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 text-[11px] px-2 py-1 rounded transition-colors"
+      className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-colors"
       style={{
         fontFamily: 'var(--font-mono)',
         color: sortKey === field ? 'var(--teal)' : 'var(--slate)',
@@ -79,7 +79,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect }: TaskLi
     <div>
       {/* Sort bar */}
       <div className="flex items-center gap-1 mb-3 pb-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
-        <span className="text-[10px] uppercase tracking-wider mr-1" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+        <span className="text-[11px] uppercase tracking-wider mr-1" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
           Sort:
         </span>
         <SortButton label="Priority" field="priority" />
@@ -90,7 +90,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect }: TaskLi
       </div>
 
       {/* Task list */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         {sorted.map((task) => (
           <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} onClick={onSelect ? () => onSelect(task) : undefined} />
         ))}

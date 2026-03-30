@@ -155,7 +155,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           <div key={group.title} className="mb-3">
             {!collapsed && (
               <div
-                className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider"
+                className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider"
                 style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)' }}
               >
                 {group.title}
@@ -169,7 +169,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   key={item.to}
                   to={item.to}
                   onClick={onNavigate}
-                  className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors mb-0.5 ${
+                  className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors mb-1 ${
                     active ? 'font-medium' : ''
                   }`}
                   style={{

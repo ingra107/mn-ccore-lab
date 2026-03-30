@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, List, LayoutGrid, Users, GanttChartSquare, ChevronDown, Filter, FileText, CheckCircle2 } from 'lucide-react'
+import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, FileText } from 'lucide-react'
 import { SkeletonList } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import TaskFilters from '../../components/tasks/TaskFilters'
@@ -28,9 +28,7 @@ export default function Tasks() {
   const [view, setView] = useState<ViewMode>('list')
   const [showCreate, setShowCreate] = useState(false)
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
-  const [showViewMenu, setShowViewMenu] = useState(false)
   const [showCompleted, setShowCompleted] = useState(false)
-  const viewMenuRef = useRef<HTMLDivElement>(null)
 
   // Auto-open create modal from URL params (keyboard shortcut C)
   useEffect(() => {
@@ -45,17 +43,6 @@ export default function Tasks() {
     priority: '',
     project: '',
   })
-
-  // Close view menu on outside click
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (viewMenuRef.current && !viewMenuRef.current.contains(e.target as Node)) {
-        setShowViewMenu(false)
-      }
-    }
-    if (showViewMenu) document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [showViewMenu])
 
   // Build query params from filters
   const queryFilters: Record<string, string> = {}
@@ -90,8 +77,6 @@ export default function Tasks() {
   const pendingCount = tasks.filter((t) => !t.completed).length
   const completedCount = tasks.filter((t) => t.completed).length
   const displayTasks = showCompleted ? tasks : tasks.filter((t) => !t.completed)
-  const currentViewLabel = view === 'list' ? 'List' : view === 'board' ? 'Board' : view === 'standup' ? 'By Person' : 'Timeline'
-  const CurrentViewIcon = view === 'list' ? List : view === 'board' ? LayoutGrid : view === 'standup' ? Users : GanttChartSquare
 
   return (
     <div>
@@ -125,60 +110,21 @@ export default function Tasks() {
 
       {/* View selector */}
       <div className="mt-4 flex flex-col gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Primary: List view */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* All views inline */}
           <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
             <List size={14} />
             List
           </ToggleButton>
-
-          {/* Views dropdown for alternate views */}
-          <div className="relative" ref={viewMenuRef}>
-            <button
-              onClick={() => setShowViewMenu(!showViewMenu)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
-              style={{
-                fontFamily: 'var(--font-sans)',
-                color: view !== 'list' ? 'var(--teal)' : 'var(--slate)',
-                backgroundColor: view !== 'list' ? 'rgba(45,138,138,0.08)' : 'transparent',
-                borderColor: view !== 'list' ? 'var(--teal)' : 'var(--border-light)',
-                cursor: 'pointer',
-              }}
-            >
-              {view !== 'list' && <CurrentViewIcon size={13} />}
-              {view !== 'list' ? currentViewLabel : 'More views'}
-              <ChevronDown size={12} />
-            </button>
-
-            {showViewMenu && (
-              <div
-                className="absolute top-full left-0 mt-1 rounded-lg border shadow-lg z-50 py-1 min-w-[200px]"
-                style={{ backgroundColor: 'var(--card-bg, #fff)', borderColor: 'var(--border-light)' }}
-              >
-                {alternateViews.map((v) => {
-                  const Icon = v.icon
-                  return (
-                    <button
-                      key={v.key}
-                      onClick={() => { setView(v.key); setShowViewMenu(false) }}
-                      className="w-full flex items-start gap-3 px-3 py-2.5 text-left transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-                      style={{ cursor: 'pointer', border: 'none', background: 'none' }}
-                    >
-                      <Icon size={16} style={{ color: view === v.key ? 'var(--teal)' : 'var(--slate)', marginTop: 1, flexShrink: 0 }} />
-                      <div>
-                        <div className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: view === v.key ? 'var(--teal)' : 'var(--ink)' }}>
-                          {v.label}
-                        </div>
-                        <div className="text-[11px] mt-0.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
-                          {v.description}
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
+          {alternateViews.map((v) => {
+            const Icon = v.icon
+            return (
+              <ToggleButton key={v.key} active={view === v.key} onClick={() => setView(v.key)}>
+                <Icon size={14} />
+                {v.label}
+              </ToggleButton>
+            )
+          })}
 
           {/* Spacer */}
           <div className="flex-1" />

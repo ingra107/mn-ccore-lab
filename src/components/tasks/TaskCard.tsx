@@ -49,7 +49,7 @@ export default function TaskCard({ task, onStatusChange, compact = false, onClic
         onClick?.()
       }}
     >
-      <div className={`flex items-start gap-3 ${compact ? 'p-2.5' : 'p-3.5'}`}>
+      <div className={`flex items-start gap-3 ${compact ? 'p-3' : 'p-4'}`}>
         {/* Status dropdown trigger */}
         <div className="relative flex-shrink-0 mt-0.5" data-status-dropdown>
           <button
@@ -110,7 +110,7 @@ export default function TaskCard({ task, onStatusChange, compact = false, onClic
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {/* Priority badge */}
             <span
-              className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+              className="text-[11px] px-1.5 py-0.5 rounded font-medium"
               style={{
                 fontFamily: 'var(--font-mono)',
                 color: priority.color,
@@ -123,7 +123,7 @@ export default function TaskCard({ task, onStatusChange, compact = false, onClic
             {/* Due date */}
             {task.due_date && (
               <span
-                className="flex items-center gap-1 text-[10px]"
+                className="flex items-center gap-1 text-[11px]"
                 style={{
                   fontFamily: 'var(--font-mono)',
                   color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
@@ -138,7 +138,7 @@ export default function TaskCard({ task, onStatusChange, compact = false, onClic
             {/* Project */}
             {task.project_id && !compact && (
               <span
-                className="flex items-center gap-1 text-[10px]"
+                className="flex items-center gap-1 text-[11px]"
                 style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', opacity: 0.8 }}
               >
                 <FolderKanban size={10} />
@@ -149,7 +149,7 @@ export default function TaskCard({ task, onStatusChange, compact = false, onClic
             {/* Source badge */}
             {task.source === 'meeting' && task.meeting_title && !compact && (
               <span
-                className="text-[10px]"
+                className="text-[11px]"
                 style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', opacity: 0.7 }}
               >
                 {formatBrandName(task.meeting_title.split(':')[0])}

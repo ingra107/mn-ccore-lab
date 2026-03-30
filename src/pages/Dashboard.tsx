@@ -280,7 +280,7 @@ export default function Dashboard() {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
           grid-auto-rows: minmax(200px, auto);
-          gap: 1rem;
+          gap: 1.25rem;
         }
 
         .bento-span-2 {
