@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ExternalLink, ChevronDown, ClipboardCopy, Check } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ExternalLink, ChevronDown, ClipboardCopy, Check, ArrowRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Publication } from '../data/types'
 
@@ -363,6 +364,21 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                       </>
                     )}
                   </button>
+                  <Link
+                    to={`/publications/${encodeURIComponent(pub.id)}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      background: 'transparent',
+                      color: 'var(--teal)',
+                      border: '1px solid rgba(45, 138, 138, 0.15)',
+                      textDecoration: 'none',
+                      minHeight: '32px',
+                    }}
+                  >
+                    View details <ArrowRight size={10} aria-hidden="true" />
+                  </Link>
                 </div>
               </div>
             </div>

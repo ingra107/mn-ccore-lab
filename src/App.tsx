@@ -88,6 +88,7 @@ const NickLab = lazy(() => import('./pages/NickLab'))
 const NateLab = lazy(() => import('./pages/NateLab'))
 const MemberPage = lazy(() => import('./pages/MemberPage'))
 const Publications = lazy(() => import('./pages/Publications'))
+const PublicationDetail = lazy(() => import('./pages/PublicationDetail'))
 const Contact = lazy(() => import('./pages/Contact'))
 const Network = lazy(() => import('./pages/Network'))
 
@@ -154,6 +155,7 @@ export default function App() {
                   <Route path="/team/:slug" element={<ErrorBoundary><MemberPage /></ErrorBoundary>} />
                   <Route path="/team/:slug/cv" element={<ErrorBoundary><CVPage /></ErrorBoundary>} />
                   <Route path="/publications" element={<ErrorBoundary><Publications /></ErrorBoundary>} />
+                  <Route path="/publications/:id" element={<ErrorBoundary><PublicationDetail /></ErrorBoundary>} />
                   <Route path="/network" element={<ErrorBoundary><Network /></ErrorBoundary>} />
                   <Route path="/contact" element={<ErrorBoundary><Contact /></ErrorBoundary>} />
                 </Route>
