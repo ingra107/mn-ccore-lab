@@ -185,8 +185,8 @@ export default function Dashboard() {
         {/* Customize panel */}
         {showCustomize && (
           <div
-            className="rounded-xl border p-4 mb-4"
-            style={{ borderColor: 'var(--border-light)', backgroundColor: 'rgba(45,138,138,0.02)' }}
+            className="rounded-xl border p-4 mb-4 customize-panel"
+            style={{ borderColor: 'var(--border-light)' }}
           >
             <p className="text-xs font-medium mb-3" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
               Toggle cards visible on your dashboard
@@ -313,9 +313,8 @@ export default function Dashboard() {
                   <Card />
                   <button
                     onClick={() => togglePin(card.id)}
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
                     style={{
-                      background: 'rgba(15,25,35,0.05)',
                       border: 'none',
                       borderRadius: 6,
                       padding: '4px',
@@ -364,9 +363,8 @@ export default function Dashboard() {
                         <Card />
                         <button
                           onClick={() => togglePin(card.id)}
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
                           style={{
-                            background: 'rgba(15,25,35,0.05)',
                             border: 'none',
                             borderRadius: 6,
                             padding: '4px',
@@ -481,6 +479,14 @@ export default function Dashboard() {
         .dark .bento-card:hover {
           background: #1e3048 !important;
         }
+
+        /* Pin button background — light/dark */
+        .pin-btn { background: rgba(15,25,35,0.05); }
+        .dark .pin-btn { background: rgba(255,255,255,0.08); }
+
+        /* Customize panel — light/dark */
+        .customize-panel { background-color: rgba(45,138,138,0.02); }
+        .dark .customize-panel { background-color: rgba(45,138,138,0.06); }
 
         /* Status pulse for header */
         @keyframes status-pulse {

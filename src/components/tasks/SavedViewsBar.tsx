@@ -123,6 +123,7 @@ export default function SavedViewsBar({
         overflowX: 'auto',
         scrollbarWidth: 'none',
         paddingBottom: 2,
+        WebkitOverflowScrolling: 'touch',
       }}
     >
       <AnimatePresence mode="popLayout">

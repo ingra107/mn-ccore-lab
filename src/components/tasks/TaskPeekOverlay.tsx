@@ -125,7 +125,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
               className="peek-dialog"
               style={{
                 width: '100%',
-                maxWidth: 540,
+                maxWidth: 'min(540px, calc(100vw - 2rem))',
                 margin: '0 16px',
                 borderRadius: 12,
                 background: 'var(--cream)',
