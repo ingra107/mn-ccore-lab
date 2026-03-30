@@ -26,6 +26,7 @@ import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, 
 import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSuggestExperts } from './routes/expertise';
 import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
+import { handleCheckImpact } from './routes/impact-trace';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -486,6 +487,9 @@ export default {
         const answerAcceptMatch = path.match(/^\/api\/answers\/([^/]+)\/accept$/);
         if (request.method === 'POST' && answerAcceptMatch) {
           return await handleAcceptAnswer(answerAcceptMatch[1], user, env);
+        // POST /api/impact/check — scan for impact events and create notifications
+        if (request.method === 'POST' && path === '/api/impact/check') {
+          return await handleCheckImpact(env);
         }
 
         return error('Not found', 404);
@@ -511,6 +515,17 @@ export default {
     }
 
     console.log('[Pulse] Starting morning pulse email...');
+
+    // Check for impact events first — creates notifications before we count unread
+    try {
+      const impactResult = await handleCheckImpact(env);
+      const impactData = await impactResult.json() as { data: { notifications_created: number } };
+      if (impactData.data.notifications_created > 0) {
+        console.log(`[Pulse] Impact check created ${impactData.data.notifications_created} notifications`);
+      }
+    } catch (e) {
+      console.log(`[Pulse] Impact check failed (non-fatal): ${e}`);
+    }
 
     // Get all team members with emails
     const members = await env.DB.prepare(
