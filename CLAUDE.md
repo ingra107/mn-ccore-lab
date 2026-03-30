@@ -280,25 +280,25 @@ notification grouping, empty state consistency, dark mode fixes, OG meta tags.
 
 ## Phase 11 Backlog — Infrastructure & Hard Problems
 
-**START HERE next session.** These are high-value items requiring dedicated effort.
+**NOTE:** Tier 1 file size estimates from code dump were wrong (3000+ → 419 actual for api/index.ts). api/index.ts was already split into 12 route modules. useApiData is 594 lines, useMutations is 427 lines — manageable as-is.
 
-### Tier 1: Code Quality (worktree refactors — do first)
+### Tier 1: Code Quality — ALREADY DONE
+api/index.ts already split into `api/routes/{tasks,projects,meetings,publications,team,digest,ideas,notifications,search,settings,reactions,calendar,activity,subtasks}.ts`. No further splitting needed.
+
+### Tier 2: Features — DONE (Phase 11 Session 1)
+| # | Item | Status |
+|---|------|--------|
+| 4 | **Task peek overlay** | DONE — Space bar preview, TaskRow types, keyboard nav |
+| 5 | **Task subtasks** | DONE — D1 table, 5 API endpoints, checklist UI in TaskDetailPanel |
+| 6 | **Bulk task actions** | DONE — Batch API (5 actions), floating toolbar, multi-select checkboxes |
+| 10 | **SavedViewsBar** | DONE — 3 default views, custom views, localStorage, pill bar UI |
+
+### Tier 2: Features — Remaining
 | # | Item | Why | Approach |
 |---|------|-----|----------|
-| 1 | **Split api/index.ts** | 3000+ lines, single Worker file. Unmaintainable. | Extract into `api/routes/{tasks,projects,meetings,search,settings}.ts`. Use worktree. |
-| 2 | **Split useApiData.ts** | 12+ hooks in 17K lines. | Split into `hooks/use{Tasks,Projects,Meetings,...}.ts`. Re-export from index. |
-| 3 | **Split useMutations.ts** | 7 mutations in 14K lines. | Same domain-split pattern. |
-
-### Tier 2: Features (API + frontend — highest user value)
-| # | Item | Why | Approach |
-|---|------|-----|----------|
-| 4 | **Task peek overlay** | Space bar preview without navigation. | Code in dump line 18347. Refactor `ActionItemRow` → current task types. |
-| 5 | **Task subtasks** | Complex tasks need breakdown. | New D1 table `task_subtasks` + 3 API endpoints + TaskDetailPanel UI. |
-| 6 | **Bulk task actions** | Multi-select + batch operations. | Checkbox column + floating toolbar. API batch endpoint. |
 | 7 | **Agenda item reordering** | Can't reorder after creation. | @dnd-kit sortable. API POST for `sort_order`. |
 | 8 | **Search ranking** | FTS returns by type, not relevance. | Weight by recency + type priority in API. |
 | 9 | **Dashboard card pinning** | Can't pin favorites to top. | Customize modal rework + localStorage sort state. |
-| 10 | **SavedViewsBar** | Named filter+sort configs. | Code in dump line 19757. localStorage only, no API. |
 
 ### Tier 3: Infrastructure
 | # | Item | Why | Approach |
@@ -316,19 +316,30 @@ notification grouping, empty state consistency, dark mode fixes, OG meta tags.
 
 | Component | Line | Status |
 |-----------|------|--------|
-| TaskPeekOverlay | 18347 | Needs type refactor |
-| SavedViewsBar | 19757 | Self-contained, ready |
-| BulkActionToolbar | 19283 | Needs API batch endpoint |
+| TaskPeekOverlay | 18347 | RECOVERED — refactored to TaskRow |
+| SavedViewsBar | 19757 | RECOVERED |
+| BulkActionToolbar | 19283 | RECOVERED — with batch API |
 | ProjectDependencyGraph | 21631 | Needs data source |
 | TeamPulseCard | 20916 | Needs useTeamPulse hook |
 
 ## Session Notes
 
+### 2026-03-30: Phase 11 Session 1 (Spring Break Day 1, Evening)
+**4 features shipped in parallel** via worktree agents:
+1. **Task Peek Overlay** — Space bar quick preview, centered modal, focus management
+2. **Task Subtasks** — schema-v10.sql, 5 API endpoints, checklist UI with progress bar
+3. **Bulk Task Actions** — batch API (complete/uncomplete/assign/priority/delete), floating toolbar, multi-select
+4. **SavedViewsBar** — 3 default views + custom named presets, localStorage, pill bar
+
+**7 new files, 10 modified, +1897 lines.** All 4 branches merged cleanly (2 conflicts resolved). Build verified.
+
+**Correction:** Phase 11 Tier 1 (file splitting) was already done — api/index.ts has 12 route modules (1985 total lines). Memory estimates of 3000+/17K/14K lines were from the code dump, not actual files. Updated backlog.
+
 ### 2026-03-30: Phase 10 Complete (Spring Break Day 1)
 **Morning:** Recovered from dispatch worktree incident (4 rogue deploys). Added Rule 11 guardrail. Preserved 33K-line code dump.
 
-**Afternoon (this session):** 22 commits, 9 rounds of UX polish + feature work.
-- Rounds 1-3 (prior session): Spacing rhythm, visual identity, interactivity
+**Afternoon (prior session):** 22 commits, 9 rounds of UX polish + feature work.
+- Rounds 1-3: Spacing rhythm, visual identity, interactivity
 - Round 4: Empty states (8 pages), subtitle counts, GlobalQuickAdd, PublicationDetail
 - Round 5: ShortcutHelp, OG meta, dark mode (7 files), Grants portal (real data)
 - Round 6: Notification groups, CSV export, RoundPrompt icebreakers
@@ -336,6 +347,6 @@ notification grouping, empty state consistency, dark mode fixes, OG meta tags.
 - Round 8: Focus mode (F key), density toggle
 - Round 9: Dynamic emoji favicons
 
-**13 new files created.** All frontend-only NEXT-50 items exhausted. Phase 11 backlog written with priority tiers. Next session should start with api/index.ts split (worktree).
+**13 new files created.** All frontend-only NEXT-50 items exhausted.
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
 
