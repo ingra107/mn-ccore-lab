@@ -315,10 +315,17 @@ Nick's CLI (brain.db)                      Team Members (browsers)
   - Applied to BentoCard padding and bento-grid gap
 - F and density toggle added to ShortcutHelp
 
+### Done (2026-03-30, round 9)
+- Dynamic emoji favicon: 18 section-specific emojis in browser tab (canvas-rendered)
+- Cmd+K dark mode: confirmed already safe
+- Project card hover: confirmed already implemented
+- Dashboard card pinning: deferred to dedicated effort (needs customize modal rework)
+
 ### Remaining — Quick Wins
 - Launch prep: SendGrid API key, Cloudflare Access auth, 7 headshots, Nate Scholar ID
 
 ### Remaining — Dedicated Effort Required
+- Dashboard card pinning — needs customize modal + sort logic rework
 - Split api/index.ts (3000+ lines → route modules) — worktree refactor
 - Split useApiData.ts (12+ hooks in one file) — worktree refactor
 - Split useMutations.ts (7 mutations in one file) — worktree refactor
