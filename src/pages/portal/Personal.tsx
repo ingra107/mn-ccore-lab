@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   CheckSquare, Clock, FolderKanban, Bell, Calendar, Handshake,
   Activity, ArrowRight, Circle, AlertTriangle, TrendingUp,
-  Users, Send, Lightbulb, User,
+  Users, Send, Lightbulb, User, History,
 } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import BentoCard from '../../components/dashboard/BentoCard'
@@ -16,6 +16,7 @@ import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { useUpdateTaskStatus, useCreateIdea } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
+import { useRecentlyViewed } from '../../hooks/useRecentlyViewed'
 import type { TaskRow } from '../../lib/api'
 
 // Try to get current user from CF Access JWT
@@ -38,6 +39,7 @@ function isPI(slug: string | null): boolean {
 }
 
 export default function Personal() {
+  const { recent } = useRecentlyViewed()
   const currentUser = useMemo(() => getCurrentUser(), [])
   const person = currentUser ? getPersonInfo(currentUser) : null
 
@@ -159,6 +161,28 @@ export default function Personal() {
           />
         )}
       </div>
+
+      {/* Recently Viewed */}
+      {recent.length > 1 && (
+        <div className="flex items-center gap-2 mt-4 flex-wrap">
+          <History size={12} style={{ color: 'var(--slate)', opacity: 0.4, flexShrink: 0 }} />
+          {recent.slice(0, 5).map((page) => (
+            <Link
+              key={page.path}
+              to={page.path}
+              className="text-[11px] px-2.5 py-1 rounded-full border transition-colors hover:bg-[rgba(45,138,138,0.06)]"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--slate)',
+                borderColor: 'var(--border-light)',
+                textDecoration: 'none',
+              }}
+            >
+              {page.label}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Quick Capture */}
       <QuickCapture />

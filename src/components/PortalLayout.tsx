@@ -8,6 +8,7 @@ import CommandPalette from './CommandPalette'
 import ShortcutHelp from './ShortcutHelp'
 import PageTransition from './PageTransition'
 import GlobalQuickAddModal, { useQuickAddShortcut } from './GlobalQuickAdd'
+import RouteProgressBar from './RouteProgressBar'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 
 export default function PortalLayout() {
@@ -39,6 +40,8 @@ export default function PortalLayout() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg)' }}>
+      <RouteProgressBar />
+
       {/* Desktop sidebar */}
       <div className="hidden lg:block">
         <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
