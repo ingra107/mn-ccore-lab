@@ -12,7 +12,10 @@
     "db:schema": "wrangler d1 execute mnccore-lab --file=api/schema.sql",
     "db:seed": "wrangler d1 execute mnccore-lab --file=scripts/seed.sql",
     "db:schema:remote": "wrangler d1 execute mnccore-lab --file=api/schema.sql --remote",
-    "db:seed:remote": "wrangler d1 execute mnccore-lab --file=scripts/seed.sql --remote"
+    "db:seed:remote": "wrangler d1 execute mnccore-lab --file=scripts/seed.sql --remote",
+    "test": "npx playwright test",
+    "test:smoke": "npx playwright test tests/smoke.spec.ts",
+    "test:headed": "npx playwright test --headed"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
