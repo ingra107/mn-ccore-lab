@@ -6,6 +6,7 @@ import {
   Users, Send, Lightbulb, User, History,
 } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
+import OnboardingChecklist from '../../components/OnboardingChecklist'
 import BentoCard from '../../components/dashboard/BentoCard'
 import Avatar from '../../components/Avatar'
 import { useTasks } from '../../hooks/useApiData'
@@ -127,6 +128,11 @@ export default function Personal() {
           Sign in with @umn.edu to see your personalized dashboard.
         </div>
       )}
+
+      {/* Onboarding Checklist */}
+      <div className="mt-5">
+        <OnboardingChecklist />
+      </div>
 
       {/* Quick Stats Bar */}
       <div className="flex items-center gap-4 mt-5 flex-wrap">
