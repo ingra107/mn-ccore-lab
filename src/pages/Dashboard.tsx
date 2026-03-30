@@ -13,6 +13,7 @@ import TopicBubblesCard from '../components/dashboard/TopicBubblesCard'
 import ActionBoardCard from '../components/dashboard/ActionBoardCard'
 import ProjectHealthCard from '../components/dashboard/ProjectHealthCard'
 import MyItemsCard from '../components/dashboard/MyItemsCard'
+import TeamPulseCard from '../components/dashboard/TeamPulseCard'
 
 // Card registry — order matters for default layout
 const CARD_REGISTRY = [
@@ -22,6 +23,7 @@ const CARD_REGISTRY = [
   { id: 'pipeline', label: 'Research Pipeline', component: PipelineCard, defaultVisible: true },
   { id: 'activity', label: 'Activity Feed', component: ActivityFeedCard, defaultVisible: true },
   { id: 'stats', label: 'Quick Stats', component: StatsCard, defaultVisible: true },
+  { id: 'team-pulse', label: 'Team Pulse', component: TeamPulseCard, defaultVisible: false },
   { id: 'grants', label: 'Grant Timeline', component: GrantTimelineCard, defaultVisible: false },
   { id: 'my-items', label: 'My Items', component: MyItemsCard, defaultVisible: false },
   { id: 'clif', label: 'CLIF Network', component: CLIFMiniCard, defaultVisible: false },

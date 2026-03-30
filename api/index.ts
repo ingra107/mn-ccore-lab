@@ -16,6 +16,7 @@ import { handleGetReactions, handleToggleReaction } from './routes/reactions';
 import { handleCalendarEvents } from './routes/calendar';
 import { handleActivity, handleActivityHeatmap } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
+import { handleTeamPulse } from './routes/team-pulse';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -107,6 +108,8 @@ export default {
             return await handleCommitments(url, env);
           case '/api/team/slugs':
             return await handleTeamSlugs(env);
+          case '/api/team/pulse':
+            return await handleTeamPulse(url, env);
           case '/api/ideas':
             return await handleIdeas(url, env);
           case '/api/search':

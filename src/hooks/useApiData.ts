@@ -619,3 +619,28 @@ export function useProjectUpdates(slug: string) {
     enabled: !!slug,
   })
 }
+
+// ── Team Pulse ──────────────────────────────────────────────
+
+export interface TeamPulseData {
+  activity: { slug: string; updates: number; completions: number }[]
+  active_this_week: number
+  totals: { updates: number; completions: number }
+}
+
+export function useTeamPulse(hours: number = 48) {
+  return useQuery({
+    queryKey: ['team-pulse', hours],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/team/pulse?hours=${hours}`)
+        if (!res.ok) return null
+        const data = await res.json()
+        return data.data as TeamPulseData
+      } catch {
+        return null
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
