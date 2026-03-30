@@ -573,6 +573,33 @@ export function useCalendarEvents(params?: { start?: string; end?: string }) {
   })
 }
 
+// ── Subtasks ────────────────────────────────────────────────
+
+export interface SubtaskRow {
+  id: string
+  task_id: string
+  title: string
+  completed: number
+  completed_at: string | null
+  completed_by: string | null
+  sort_order: number
+  created_at: string
+}
+
+export function useSubtasks(taskId: string) {
+  return useQuery({
+    queryKey: ['subtasks', taskId],
+    queryFn: async () => {
+      const res = await fetch(`/api/tasks/${taskId}/subtasks`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as SubtaskRow[]
+    },
+    staleTime: 30 * 1000,
+    enabled: !!taskId,
+  })
+}
+
 // ── Project Updates ─────────────────────────────────────────
 
 export function useProjectUpdates(slug: string) {

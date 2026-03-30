@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   X, Circle, Clock, CheckCircle2, AlertTriangle, Send,
   CalendarDays, FolderKanban, User, Flag, MessageSquare, Ban,
+  ListChecks, Plus, Trash2,
 } from 'lucide-react'
 import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
-import { useTeam } from '../../hooks/useApiData'
-import { useUpdateTask, useUpdateTaskStatus } from '../../hooks/useMutations'
+import { useTeam, useSubtasks } from '../../hooks/useApiData'
+import { useUpdateTask, useUpdateTaskStatus, useCreateSubtask, useToggleSubtask, useDeleteSubtask } from '../../hooks/useMutations'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { TaskRow } from '../../lib/api'
 
@@ -148,6 +150,9 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
               placeholder="Add a description..."
             />
           </div>
+
+          {/* Subtasks / Checklist */}
+          <SubtaskChecklist taskId={task.id} />
 
           {/* Meta info */}
           <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-light)', fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
@@ -424,6 +429,110 @@ function BlockedBySelect({ value, onChange }: { value: string; onChange: (v: str
           Clear
         </button>
       )}
+    </div>
+  )
+}
+
+// ── Subtask Checklist ────────────────────────────────────────
+
+function SubtaskChecklist({ taskId }: { taskId: string }) {
+  const { data: subtasks = [] } = useSubtasks(taskId)
+  const createSubtask = useCreateSubtask(taskId)
+  const toggleSubtask = useToggleSubtask(taskId)
+  const deleteSubtask = useDeleteSubtask(taskId)
+  const [newTitle, setNewTitle] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const completed = subtasks.filter((s) => s.completed).length
+  const total = subtasks.length
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+  const allDone = total > 0 && completed === total
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newTitle.trim()) return
+    createSubtask.mutate(newTitle.trim())
+    setNewTitle('')
+    inputRef.current?.focus()
+  }
+
+  return (
+    <div>
+      <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+        <ListChecks size={10} />
+        Subtasks ({completed}/{total})
+      </label>
+
+      {/* Progress bar */}
+      {total > 0 && (
+        <div style={{ width: '100%', height: 4, borderRadius: 2, background: 'rgba(201, 168, 76, 0.15)', overflow: 'hidden', marginBottom: '0.75rem' }}>
+          <div style={{ width: `${pct}%`, height: '100%', background: allDone ? 'var(--teal)' : 'var(--gold)', borderRadius: 2, transition: 'width 0.3s ease' }} />
+        </div>
+      )}
+
+      {/* Subtask list */}
+      <div className="flex flex-col gap-0.5 mb-2">
+        <AnimatePresence initial={false}>
+          {subtasks.map((s) => (
+            <motion.div
+              key={s.id}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.15 }}
+              className="group flex items-center gap-2 py-1.5 px-1 -mx-1 rounded hover:bg-black/[0.02] transition-colors"
+            >
+              {/* Toggle button */}
+              <button
+                onClick={() => toggleSubtask.mutate(s.id)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
+              >
+                {s.completed ? (
+                  <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
+                ) : (
+                  <Circle size={16} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+                )}
+              </button>
+
+              {/* Title */}
+              <span
+                className="flex-1 text-sm min-w-0 truncate"
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  color: s.completed ? 'var(--slate)' : 'var(--ink)',
+                  textDecoration: s.completed ? 'line-through' : 'none',
+                  opacity: s.completed ? 0.5 : 1,
+                }}
+              >
+                {s.title}
+              </span>
+
+              {/* Delete button (visible on hover) */}
+              <button
+                onClick={() => deleteSubtask.mutate(s.id)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--slate)', flexShrink: 0 }}
+              >
+                <Trash2 size={12} />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* Add subtask input */}
+      <form onSubmit={handleAdd} className="flex items-center gap-2">
+        <Plus size={14} style={{ color: 'var(--slate)', opacity: 0.3, flexShrink: 0 }} />
+        <input
+          ref={inputRef}
+          type="text"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          placeholder="Add subtask..."
+          className="flex-1 text-sm outline-none bg-transparent py-1"
+          style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', border: 'none' }}
+        />
+      </form>
     </div>
   )
 }

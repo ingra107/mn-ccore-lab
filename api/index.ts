@@ -15,6 +15,7 @@ import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, ha
 import { handleGetReactions, handleToggleReaction } from './routes/reactions';
 import { handleCalendarEvents } from './routes/calendar';
 import { handleActivity, handleActivityHeatmap } from './routes/activity';
+import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -142,6 +143,12 @@ export default {
         if (taskActivityGet) {
           return await handleGetTaskActivity(taskActivityGet[1], env);
         }
+
+        // GET /api/tasks/:id/subtasks
+        const taskSubtasksGet = url.pathname.match(/^\/api\/tasks\/([^/]+)\/subtasks$/);
+        if (taskSubtasksGet) {
+          return await handleGetSubtasks(taskSubtasksGet[1], env);
+        }
       }
 
       // Write endpoints (POST/PUT)
@@ -241,6 +248,30 @@ export default {
         const taskCommentMatch = path.match(/^\/api\/tasks\/([^/]+)\/comments$/);
         if (request.method === 'POST' && taskCommentMatch) {
           return await handleAddTaskComment(taskCommentMatch[1], request, user, env);
+        }
+
+        // POST /api/tasks/:id/subtasks — create subtask
+        const subtaskCreateMatch = path.match(/^\/api\/tasks\/([^/]+)\/subtasks$/);
+        if (request.method === 'POST' && subtaskCreateMatch) {
+          return await handleCreateSubtask(subtaskCreateMatch[1], request, user, env);
+        }
+
+        // POST /api/subtasks/:id/toggle — toggle subtask completion
+        const subtaskToggleMatch = path.match(/^\/api\/subtasks\/([^/]+)\/toggle$/);
+        if (request.method === 'POST' && subtaskToggleMatch) {
+          return await handleToggleSubtask(subtaskToggleMatch[1], user, env);
+        }
+
+        // POST /api/subtasks/:id/delete — delete subtask
+        const subtaskDeleteMatch = path.match(/^\/api\/subtasks\/([^/]+)\/delete$/);
+        if (request.method === 'POST' && subtaskDeleteMatch) {
+          return await handleDeleteSubtask(subtaskDeleteMatch[1], env);
+        }
+
+        // POST /api/tasks/:id/subtasks/reorder — reorder subtasks
+        const subtaskReorderMatch = path.match(/^\/api\/tasks\/([^/]+)\/subtasks\/reorder$/);
+        if (request.method === 'POST' && subtaskReorderMatch) {
+          return await handleReorderSubtasks(subtaskReorderMatch[1], request, env);
         }
 
         // POST /api/settings — update lab settings
