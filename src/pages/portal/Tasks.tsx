@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, ListTodo } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
+import { getUserRole, ROLE_DEFAULTS } from '../../lib/roleDefaults'
 import { SkeletonList } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import TaskFilters from '../../components/tasks/TaskFilters'
@@ -28,8 +30,12 @@ const alternateViews: { key: ViewMode; label: string; icon: typeof List; descrip
 ]
 
 export default function Tasks() {
+  const { user } = useAuth()
+  const role = getUserRole(user?.email)
+  const defaultView = useMemo(() => ROLE_DEFAULTS[role].taskView as ViewMode, [role])
+
   const [searchParams, setSearchParams] = useSearchParams()
-  const [view, setView] = useState<ViewMode>('list')
+  const [view, setView] = useState<ViewMode>(defaultView)
   const [showCreate, setShowCreate] = useState(false)
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)

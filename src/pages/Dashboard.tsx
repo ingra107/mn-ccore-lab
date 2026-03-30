@@ -1,8 +1,10 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useAuth } from '../hooks/useAuth'
+import { getUserRole, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import PipelineCard from '../components/dashboard/PipelineCard'
 import StatsCard from '../components/dashboard/StatsCard'
 import UpcomingCard from '../components/dashboard/UpcomingCard'
@@ -41,11 +43,13 @@ function getPinnedCards(): Set<string> {
   return new Set()
 }
 
-function getVisibleCards(): Set<string> {
+function getVisibleCards(roleCards?: string[]): Set<string> {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) return new Set(JSON.parse(stored))
   } catch { /* use defaults */ }
+  // Role-based defaults when no localStorage preferences exist
+  if (roleCards) return new Set(roleCards)
   return new Set(CARD_REGISTRY.filter(c => c.defaultVisible).map(c => c.id))
 }
 
@@ -54,10 +58,14 @@ export default function Dashboard() {
     'Dashboard | MN-CCORE Lab',
     'Research command center for MN-CCORE. Track active projects, grant timelines, action items, and collaboration metrics across the consortium.'
   )
+  const { user } = useAuth()
+  const role = getUserRole(user?.email)
+  const roleCards = useMemo(() => ROLE_DEFAULTS[role].dashboardCards, [role])
+
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [showMore, setShowMore] = useState(false)
   const [showCustomize, setShowCustomize] = useState(false)
-  const [visibleCards, setVisibleCards] = useState<Set<string>>(getVisibleCards)
+  const [visibleCards, setVisibleCards] = useState<Set<string>>(() => getVisibleCards(roleCards))
   const [pinnedCards, setPinnedCards] = useState<Set<string>>(getPinnedCards)
 
   const toggleCard = useCallback((id: string) => {
