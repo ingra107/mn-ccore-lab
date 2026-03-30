@@ -1,11 +1,12 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Wallet, Calendar, Banknote, Diamond, ArrowRight, Clock } from 'lucide-react'
+import { Wallet, Calendar, Banknote, Diamond, ArrowRight, Clock, Telescope } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import MetricCard from '../../components/MetricCard'
 import Avatar from '../../components/Avatar'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import type { GrantTimelineItem } from '../../hooks/useGrantTimeline'
+import { useSimilarGrants } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import { formatMediumDate } from '../../lib/dateUtils'
 
@@ -26,6 +27,9 @@ function mechanismColor(mechanism: string): { bg: string; color: string } {
 
 export default function Grants() {
   const { data: grants = [], isLoading } = useGrantTimeline()
+  const [searchKeywords, setSearchKeywords] = useState('')
+  const [activeSearch, setActiveSearch] = useState('')
+  const similarGrants = useSimilarGrants(activeSearch)
 
   const active = useMemo(() => grants.filter((g) => !g.proposed), [grants])
   const proposed = useMemo(() => grants.filter((g) => g.proposed), [grants])
@@ -161,6 +165,104 @@ export default function Grants() {
           </Link>
         </div>
       )}
+
+      {/* Grant Landscape — NIH RePORTER */}
+      <div className="mt-6 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <Telescope size={16} style={{ color: 'var(--gold)' }} />
+          <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+            Grant Landscape (NIH RePORTER)
+          </h3>
+        </div>
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text"
+            placeholder="Search keywords (e.g., critical care, mechanical ventilation, ARDS)"
+            value={searchKeywords}
+            onChange={(e) => setSearchKeywords(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') setActiveSearch(searchKeywords) }}
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              borderRadius: 8,
+              border: '1px solid var(--border-light)',
+              fontFamily: 'var(--font-body)',
+              fontSize: '13px',
+              background: 'var(--cream)',
+              color: 'var(--ink)',
+            }}
+          />
+          <button
+            onClick={() => setActiveSearch(searchKeywords)}
+            style={{
+              background: 'var(--gold)',
+              color: 'var(--ink)',
+              border: 'none',
+              borderRadius: 8,
+              padding: '8px 16px',
+              fontFamily: 'var(--font-sans)',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Search
+          </button>
+        </div>
+
+        {/* Loading state */}
+        {similarGrants.isLoading && (
+          <div className="text-center py-6">
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.6 }}>
+              Searching NIH RePORTER...
+            </p>
+          </div>
+        )}
+
+        {/* Results */}
+        {similarGrants.data?.data?.map((grant) => (
+          <div
+            key={grant.project_num}
+            className="p-3 rounded-lg mb-2"
+            style={{ background: 'rgba(201,168,76,0.03)', border: '1px solid rgba(201,168,76,0.08)' }}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
+                  {grant.title}
+                </p>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)' }}>
+                  {grant.project_num} &middot; {grant.pi} &middot; {grant.organization} &middot; FY{grant.fiscal_year}
+                </span>
+              </div>
+              {grant.award_amount > 0 && (
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--teal)', whiteSpace: 'nowrap' }}>
+                  ${(grant.award_amount / 1000).toFixed(0)}K
+                </span>
+              )}
+            </div>
+            {grant.abstract && (
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.7, marginTop: '4px', lineHeight: 1.4, marginBottom: 0 }}>
+                {grant.abstract}...
+              </p>
+            )}
+          </div>
+        ))}
+
+        {/* Total count */}
+        {similarGrants.data && similarGrants.data.total > 0 && !similarGrants.isLoading && (
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5, marginTop: '8px' }}>
+            Showing {similarGrants.data.data.length} of {similarGrants.data.total.toLocaleString()} results
+          </p>
+        )}
+
+        {/* Empty state after search */}
+        {activeSearch && similarGrants.data?.data?.length === 0 && !similarGrants.isLoading && (
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.6, textAlign: 'center', padding: '16px 0' }}>
+            No funded grants found for "{activeSearch}"
+          </p>
+        )}
+      </div>
     </div>
   )
 }
