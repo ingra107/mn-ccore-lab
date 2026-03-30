@@ -1,6 +1,60 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions } from '../helpers';
 
+// GET /api/milestones?project_id=&grant_id=
+export async function handleGetMilestones(url: URL, env: Env): Promise<Response> {
+  const projectId = url.searchParams.get('project_id');
+  const grantId = url.searchParams.get('grant_id');
+
+  let query = 'SELECT * FROM milestones WHERE 1=1';
+  const params: string[] = [];
+
+  if (projectId) {
+    query += ' AND project_id = ?';
+    params.push(projectId);
+  }
+
+  if (grantId) {
+    query += ' AND grant_id = ?';
+    params.push(grantId);
+  }
+
+  query += ' ORDER BY target_date ASC';
+
+  const result = await env.DB.prepare(query).bind(...params).all();
+  return json({ data: result.results, count: result.results.length });
+}
+
+// POST /api/milestones/:id/note — add/update "Future Me" note
+export async function handleUpdateMilestoneNote(
+  id: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const body = await request.json() as { note: string };
+
+  if (typeof body.note !== 'string') {
+    return error('note field is required', 400);
+  }
+
+  // Allow clearing a note by setting to empty string
+  const noteValue = body.note.trim() || null;
+
+  await env.DB.prepare(
+    'UPDATE milestones SET future_note = ?, future_note_author = ? WHERE id = ?'
+  ).bind(noteValue, user.email, id).run();
+
+  const updated = await env.DB.prepare('SELECT * FROM milestones WHERE id = ?').bind(id).first();
+  if (!updated) {
+    return error('Milestone not found', 404);
+  }
+
+  await logActivity(env, 'milestone_note', `${noteValue ? 'Added' : 'Cleared'} Future Me note on milestone`, user.email, id, 'milestone');
+
+  return json({ data: updated });
+}
+
 // GET /api/projects?status=&category=
 export async function handleProjects(url: URL, env: Env): Promise<Response> {
   const status = url.searchParams.get('status');

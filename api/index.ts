@@ -3,7 +3,7 @@ import { corsHeaders, json, error, getAuthUser } from './helpers';
 
 // ── Route modules ──────────────────────────────────────────
 import { handleTasks, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleBatchUpdateTasks } from './routes/tasks';
-import { handleProjects, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleAddComment, handlePostProjectUpdate } from './routes/projects';
+import { handleProjects, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
 import { handleMeetings, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline } from './routes/publications';
 import { handleTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
@@ -136,6 +136,11 @@ export default {
           return await handleCVData(cvDataGet[1], env);
         }
 
+        // GET /api/milestones?project_id=...&grant_id=...
+        if (url.pathname === '/api/milestones') {
+          return await handleGetMilestones(url, env);
+        }
+
         // GET /api/reactions?target_type=...&target_id=...
         if (url.pathname === '/api/reactions') {
           return await handleGetReactions(url, env);
@@ -229,6 +234,12 @@ export default {
         const agendaMatch = path.match(/^\/api\/meetings\/([^/]+)\/agenda$/);
         if (request.method === 'POST' && agendaMatch) {
           return await handleAddAgendaItem(agendaMatch[1], request, user, env);
+        }
+
+        // POST /api/milestones/:id/note — add/update "Future Me" note
+        const milestoneNoteMatch = path.match(/^\/api\/milestones\/([^/]+)\/note$/);
+        if (request.method === 'POST' && milestoneNoteMatch) {
+          return await handleUpdateMilestoneNote(milestoneNoteMatch[1], request, user, env);
         }
 
         // POST /api/projects/:slug/updates — post project update
@@ -397,12 +408,24 @@ export default {
         "SELECT author, content, project_id FROM project_updates WHERE created_at > datetime('now', '-1 day') AND author != ? ORDER BY created_at DESC LIMIT 5"
       ).bind(member.slug).all<{ author: string; content: string; project_id: string }>();
 
+      // Get milestones with Future Me notes due within 3 days
+      const futureNotes = await env.DB.prepare(
+        `SELECT m.title, m.target_date, m.future_note, m.future_note_author, g.mechanism
+         FROM milestones m
+         LEFT JOIN grants g ON m.grant_id = g.id
+         WHERE m.future_note IS NOT NULL
+           AND m.status != 'completed'
+           AND m.target_date BETWEEN date('now') AND date('now', '+3 days')
+         ORDER BY m.target_date ASC`
+      ).all<{ title: string; target_date: string; future_note: string; future_note_author: string; mechanism: string | null }>();
+      const futureNoteItems = futureNotes.results || [];
+
       // Only send if there's something to report
       const pendingItems = actions.results || [];
       const unread = notifCount?.c ?? 0;
       const updates = recentUpdates.results || [];
 
-      if (pendingItems.length === 0 && unread === 0 && updates.length === 0) {
+      if (pendingItems.length === 0 && unread === 0 && updates.length === 0 && futureNoteItems.length === 0) {
         continue; // Nothing to report for this person
       }
 
@@ -420,6 +443,17 @@ export default {
           itemsHtml += `<li style="margin-bottom:8px;font-size:14px;color:#0f1923;">${item.description.replace(/^\[Carried forward\]\s*/i, '')}${dueLabel}</li>`;
         }
         itemsHtml += '</ul>';
+      }
+
+      if (futureNoteItems.length > 0) {
+        itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;border-left:3px solid #c9a84c;padding-left:8px;">Notes From Past You</h3>';
+        for (const fn of futureNoteItems) {
+          const label = fn.mechanism ? `${fn.mechanism}: ${fn.title}` : fn.title;
+          itemsHtml += `<div style="margin:12px 0;padding:12px 14px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-left:3px solid #c9a84c;border-radius:8px;">`;
+          itemsHtml += `<p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#0f1923;">${label} <span style="font-size:11px;font-weight:400;color:#64748b;">— due ${fn.target_date}</span></p>`;
+          itemsHtml += `<p style="margin:0;font-size:13px;color:#0f1923;font-style:italic;line-height:1.5;">${fn.future_note}</p>`;
+          itemsHtml += `</div>`;
+        }
       }
 
       if (unread > 0) {
