@@ -262,12 +262,16 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 - ToggleButton larger touch targets
 - Deploy guardrail (Rule 11: never deploy from worktrees)
 
-### Remaining (from LabSync audit)
-- Filter dropdown icons (folder for Projects, person for Members, etc.)
-- Page title icons (subtle colored icon next to heading)
+### Done (2026-03-30, round 2)
+- Filter dropdown icons (FolderKanban, Users, CircleDot, Flag inside pills)
+- Page title icons on all 12 portal pages (teal icon in rounded square)
+- Sidebar active state: 3px left teal accent bar
+- Quick Action button hierarchy ("New Task" primary teal fill, others outlined)
+
+### Remaining
 - Empty state proportions (icon 40→48px, better text balance)
-- Sidebar active state contrast (increase bg opacity or add left accent)
-- Quick Action button hierarchy (primary vs secondary visual weight)
+- Task card hover micro-animations
+- Consistent page subtitle counts across all portal pages
 - Rebuild dispatch features: MemberPage (/nick, /nate), PublicationDetail, GlobalQuickAdd
   - Source: `Scratch/plans/mnccore-hub-session-code-dump-2026-03-30.md` (33K lines)
 
