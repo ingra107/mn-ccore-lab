@@ -25,7 +25,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMeetingDetail } from '../hooks/useApiData'
 import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks/useApiData'
-import { useToggleActionItem, useAddAgendaItem } from '../hooks/useMutations'
+import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import Avatar from '../components/Avatar'
 import { getPersonInfo } from '../data/team'
@@ -57,6 +57,9 @@ export default function MeetingDetail() {
   // Hooks must be called unconditionally (before any conditional returns)
   const toggleAction = useToggleActionItem()
   const addAgenda = useAddAgendaItem(meeting?.id || '')
+  const updateNotes = useUpdateMeetingNotes(meeting?.id || '')
+  const [editingNotes, setEditingNotes] = useState(false)
+  const [notesDraft, setNotesDraft] = useState(meeting?.notes || '')
 
   usePageMeta(
     meeting ? `${meeting.title} | MN-CCORE` : 'Meeting | MN-CCORE',
@@ -298,18 +301,86 @@ export default function MeetingDetail() {
         )}
 
         {/* Notes */}
-        {meeting.notes && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.25 }} className="mt-8">
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: '0 0 12px 0' }}>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.25 }} className="mt-8">
+          <div className="flex items-center gap-2 mb-3">
+            <FileText size={16} style={{ color: 'var(--gold)' }} />
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
               Meeting Notes
-            </h2>
-            <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '20px' }} className="detail-card">
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink)', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
-                {meeting.notes}
-              </p>
-            </div>
-          </motion.div>
-        )}
+            </h3>
+          </div>
+          <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '20px' }} className="detail-card">
+            {editingNotes ? (
+              <div>
+                <textarea
+                  value={notesDraft}
+                  onChange={(e) => setNotesDraft(e.target.value)}
+                  rows={12}
+                  style={{
+                    width: '100%',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '14px',
+                    lineHeight: 1.7,
+                    color: 'var(--ink)',
+                    background: 'var(--cream)',
+                    border: '1px solid rgba(201,168,76,0.2)',
+                    borderRadius: 8,
+                    padding: '12px 16px',
+                    resize: 'vertical',
+                    boxSizing: 'border-box',
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      updateNotes.mutate(notesDraft)
+                      setEditingNotes(false)
+                    }
+                    if (e.key === 'Escape') {
+                      setNotesDraft(meeting?.notes || '')
+                      setEditingNotes(false)
+                    }
+                  }}
+                  autoFocus
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    onClick={() => { updateNotes.mutate(notesDraft); setEditingNotes(false) }}
+                    style={{ background: 'var(--gold)', color: 'var(--ink)', border: 'none', borderRadius: 6, padding: '6px 16px', fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Save Notes
+                  </button>
+                  <button
+                    onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(false) }}
+                    style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 6, padding: '6px 16px', fontFamily: 'var(--font-sans)', fontSize: '13px', cursor: 'pointer', color: 'var(--slate)' }}
+                  >
+                    Cancel
+                  </button>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                    Ctrl+Enter to save · Esc to cancel
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="relative group">
+                {meeting?.notes ? (
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: '14px', lineHeight: 1.7, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
+                    {meeting.notes}
+                  </div>
+                ) : (
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--slate)', opacity: 0.5, fontStyle: 'italic', margin: 0, cursor: 'pointer' }}
+                    onClick={() => { setNotesDraft(''); setEditingNotes(true) }}>
+                    No notes yet. Click to add.
+                  </p>
+                )}
+                <button
+                  onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
+                  className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: 'var(--gold)', fontFamily: 'var(--font-mono)', fontSize: '11px' }}
+                >
+                  Edit
+                </button>
+              </div>
+            )}
+          </div>
+        </motion.div>
       </div>
 
       <style>{`

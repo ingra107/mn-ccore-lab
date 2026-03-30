@@ -67,6 +67,19 @@ export async function handleReorderAgenda(meetingId: string, request: Request, e
   return json({ data: { ok: true } })
 }
 
+// POST /api/meetings/:id/notes — update meeting notes
+export async function handleUpdateMeetingNotes(meetingId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { notes: string };
+  await env.DB.prepare(
+    'UPDATE meetings SET notes = ?, updated_at = datetime(\'now\') WHERE id = ?'
+  ).bind(body.notes, meetingId).run();
+
+  await logActivity(env, 'meeting', `Updated notes for meeting`, user.email, meetingId, 'meeting');
+
+  const updated = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first();
+  return json({ data: updated });
+}
+
 // POST /api/meetings — create meeting
 export async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { date: string; title: string; type?: string; attendees?: string[] };

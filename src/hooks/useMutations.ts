@@ -232,6 +232,24 @@ export function useAddAgendaItem(meetingId: string) {
   })
 }
 
+// ── Meeting Notes mutation ──────────────────────────────────
+
+export function useUpdateMeetingNotes(meetingId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (notes: string) =>
+      fetch(`/api/meetings/${meetingId}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes }),
+      }).then((r) => r.json()),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Digest Status mutation ───────────────────────────────────
 
 export function useUpdateDigestStatus() {
