@@ -5,6 +5,8 @@ export interface GrantMilestone {
   title: string
   target_date: string
   status: string
+  future_note?: string | null
+  future_note_author?: string | null
 }
 
 export interface GrantTimelineItem {

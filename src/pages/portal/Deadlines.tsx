@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban } from 'lucide-react'
+import { useState, useMemo, useCallback } from 'react'
+import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
@@ -7,6 +7,7 @@ import { useTasks } from '../../hooks/useApiData'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface DeadlineItem {
   id: string
@@ -19,6 +20,8 @@ interface DeadlineItem {
   priority?: string
   isOverdue: boolean
   daysUntil: number
+  future_note?: string | null
+  future_note_author?: string | null
 }
 
 type ViewMode = 'list' | 'timeline'
@@ -70,6 +73,8 @@ export default function Deadlines() {
           status: milestone.status,
           isOverdue: milestone.status !== 'completed' && dueDate < now,
           daysUntil,
+          future_note: milestone.future_note,
+          future_note_author: milestone.future_note_author,
         })
       }
     }
@@ -229,66 +234,218 @@ function DeadlineSection({ title, items, color, collapsed = false }: { title: st
 function DeadlineRow({ item }: { item: DeadlineItem }) {
   const person = item.assignee ? getPersonInfo(item.assignee) : null
   const isDone = item.status === 'done' || item.status === 'completed'
+  const isDueSoon = item.daysUntil >= 0 && item.daysUntil <= 7
+  const isMilestone = item.type === 'milestone'
+
+  const [editingNote, setEditingNote] = useState(false)
+  const [noteText, setNoteText] = useState(item.future_note || '')
+  const [saving, setSaving] = useState(false)
+  const queryClient = useQueryClient()
+
+  const handleSaveNote = useCallback(async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/milestones/${item.id}/note`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: noteText }),
+      })
+      if (res.ok) {
+        setEditingNote(false)
+        queryClient.invalidateQueries({ queryKey: ['grants-timeline'] })
+      }
+    } finally {
+      setSaving(false)
+    }
+  }, [item.id, noteText, queryClient])
 
   return (
-    <div
-      className="flex items-center gap-3 py-2 px-3 rounded-lg transition-colors hover:bg-black/[0.02]"
-      style={{ opacity: isDone ? 0.5 : 1 }}
-    >
-      {/* Type icon */}
-      {item.type === 'milestone' ? (
-        <FolderKanban size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-      ) : item.isOverdue ? (
-        <AlertTriangle size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
-      ) : (
-        <Clock size={14} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.6 }} />
-      )}
-
-      {/* Title */}
-      <span
-        className="flex-1 text-sm truncate"
-        style={{
-          fontFamily: 'var(--font-sans)',
-          color: 'var(--ink)',
-          textDecoration: isDone ? 'line-through' : 'none',
-        }}
+    <div>
+      <div
+        className="flex items-center gap-3 py-2 px-3 rounded-lg transition-colors hover:bg-black/[0.02]"
+        style={{ opacity: isDone ? 0.5 : 1 }}
       >
-        {item.title}
-      </span>
+        {/* Type icon */}
+        {isMilestone ? (
+          <FolderKanban size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+        ) : item.isOverdue ? (
+          <AlertTriangle size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+        ) : (
+          <Clock size={14} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.6 }} />
+        )}
 
-      {/* Project */}
-      {item.project && (
-        <span className="text-[10px] hidden sm:block" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', opacity: 0.6 }}>
-          {item.project}
+        {/* Title */}
+        <span
+          className="flex-1 text-sm truncate"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            color: 'var(--ink)',
+            textDecoration: isDone ? 'line-through' : 'none',
+          }}
+        >
+          {item.title}
         </span>
-      )}
 
-      {/* Priority */}
-      {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
-        <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ fontFamily: 'var(--font-mono)', color: item.priority === 'urgent' ? 'var(--maroon)' : '#c2410c', backgroundColor: item.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
-          {item.priority}
+        {/* Add note link (milestones only, no existing note) */}
+        {isMilestone && !item.future_note && !isDone && !editingNote && (
+          <button
+            onClick={() => setEditingNote(true)}
+            className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-colors hover:bg-black/[0.03]"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--gold)',
+              opacity: 0.6,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            <Pencil size={9} />
+            Note to future me
+          </button>
+        )}
+
+        {/* Project */}
+        {item.project && (
+          <span className="text-[10px] hidden sm:block" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', opacity: 0.6 }}>
+            {item.project}
+          </span>
+        )}
+
+        {/* Priority */}
+        {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
+          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ fontFamily: 'var(--font-mono)', color: item.priority === 'urgent' ? 'var(--maroon)' : '#c2410c', backgroundColor: item.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
+            {item.priority}
+          </span>
+        )}
+
+        {/* Assignee */}
+        {person && (
+          <div style={{ width: 22, height: 22 }}>
+            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
+          </div>
+        )}
+
+        {/* Date */}
+        <span
+          className="text-[11px] flex-shrink-0 w-16 text-right"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
+            fontWeight: item.isOverdue ? 600 : 400,
+            opacity: item.isOverdue ? 1 : 0.6,
+          }}
+        >
+          {item.daysUntil === 0 ? 'Today' : item.daysUntil === 1 ? 'Tomorrow' : formatShortDate(item.due_date)}
         </span>
-      )}
+      </div>
 
-      {/* Assignee */}
-      {person && (
-        <div style={{ width: 22, height: 22 }}>
-          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
+      {/* Future Me note callout — shown when milestone is due within 7 days */}
+      {isMilestone && item.future_note && isDueSoon && !isDone && (
+        <div className="ml-8 mr-3 mt-1 mb-2 p-3 rounded-lg" style={{
+          background: 'rgba(201,168,76,0.06)',
+          border: '1px solid rgba(201,168,76,0.15)',
+          borderLeft: '3px solid var(--gold)',
+        }}>
+          <div className="flex items-center justify-between gap-1.5 mb-1">
+            <div className="flex items-center gap-1.5">
+              <Clock size={10} style={{ color: 'var(--gold)' }} />
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gold)' }}>
+                Note from past you
+              </span>
+            </div>
+            <button
+              onClick={() => { setNoteText(item.future_note || ''); setEditingNote(true) }}
+              className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] rounded px-1"
+              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              <Pencil size={9} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            </button>
+          </div>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', margin: 0 }}>
+            {item.future_note}
+          </p>
         </div>
       )}
 
-      {/* Date */}
-      <span
-        className="text-[11px] flex-shrink-0 w-16 text-right"
-        style={{
-          fontFamily: 'var(--font-mono)',
-          color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
-          fontWeight: item.isOverdue ? 600 : 400,
-          opacity: item.isOverdue ? 1 : 0.6,
-        }}
-      >
-        {item.daysUntil === 0 ? 'Today' : item.daysUntil === 1 ? 'Tomorrow' : formatShortDate(item.due_date)}
-      </span>
+      {/* Future Me note — compact indicator when not due soon */}
+      {isMilestone && item.future_note && !isDueSoon && !isDone && (
+        <div className="ml-8 mr-3 mt-0.5 mb-1 flex items-center gap-1.5">
+          <Clock size={9} style={{ color: 'var(--gold)', opacity: 0.4 }} />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--slate)', opacity: 0.4 }}>
+            Future Me note attached
+          </span>
+          <button
+            onClick={() => { setNoteText(item.future_note || ''); setEditingNote(true) }}
+            className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] rounded px-1"
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            <Pencil size={8} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+          </button>
+        </div>
+      )}
+
+      {/* Inline note editor */}
+      {isMilestone && editingNote && (
+        <div className="ml-8 mr-3 mt-1 mb-2 p-3 rounded-lg" style={{
+          background: 'rgba(201,168,76,0.04)',
+          border: '1px solid rgba(201,168,76,0.2)',
+        }}>
+          <div className="flex items-center gap-1.5 mb-2">
+            <Pencil size={10} style={{ color: 'var(--gold)' }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gold)' }}>
+              Note to future me
+            </span>
+          </div>
+          <textarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="What should you remember when this milestone arrives? Context, decisions, things to watch for..."
+            rows={3}
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '12px',
+              color: 'var(--ink)',
+              lineHeight: 1.5,
+              width: '100%',
+              resize: 'vertical',
+              border: '1px solid rgba(201,168,76,0.15)',
+              borderRadius: '6px',
+              padding: '8px 10px',
+              background: 'white',
+              outline: 'none',
+            }}
+            autoFocus
+          />
+          <div className="flex items-center gap-2 mt-2 justify-end">
+            <button
+              onClick={() => { setEditingNote(false); setNoteText(item.future_note || '') }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] transition-colors hover:bg-black/[0.04]"
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              <X size={11} />
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveNote}
+              disabled={saving}
+              className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
+              style={{
+                fontFamily: 'var(--font-sans)',
+                color: 'var(--gold)',
+                background: 'rgba(201,168,76,0.1)',
+                border: '1px solid rgba(201,168,76,0.2)',
+                cursor: saving ? 'wait' : 'pointer',
+                opacity: saving ? 0.6 : 1,
+              }}
+            >
+              <Check size={11} />
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
