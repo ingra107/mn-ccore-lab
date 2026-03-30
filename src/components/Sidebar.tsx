@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Bug,
   Scale,
+  Shield,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useUnreadCount } from '../hooks/useNotifications'
@@ -95,11 +96,14 @@ const navGroups: NavGroup[] = [
   },
 ]
 
+const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
+
 export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
   const location = useLocation()
   const { user } = useAuth()
   const userSlug = user?.email?.split('@')[0]?.toLowerCase()
   const person = userSlug ? getPersonInfo(userSlug) : null
+  const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
 
   // Badge counts
   const { data: unreadCount = 0 } = useUnreadCount(userSlug || '')
@@ -109,8 +113,13 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
     (!userSlug || t.assignee === userSlug)
   ).length
 
+  // Conditionally include PI Tools section
+  const allGroups: NavGroup[] = isPi
+    ? [...navGroups, { title: 'PI Tools', items: [{ to: '/pi/analytics', label: 'PI Dashboard', icon: Shield }] }]
+    : navGroups
+
   // Inject badge counts into nav items
-  const navWithBadges = navGroups.map(group => ({
+  const navWithBadges = allGroups.map(group => ({
     ...group,
     items: group.items.map(item => {
       if (item.to === '/personal' && unreadCount > 0) return { ...item, badge: unreadCount }

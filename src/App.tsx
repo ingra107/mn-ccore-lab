@@ -119,6 +119,7 @@ const SettingsPage = lazy(() => import('./pages/portal/SettingsPage'))
 const MeetingNotesPage = lazy(() => import('./pages/portal/MeetingNotesPage'))
 const DecisionsPage = lazy(() => import('./pages/portal/DecisionsPage'))
 const AskTheLab = lazy(() => import('./pages/portal/AskTheLab'))
+const PIAnalytics = lazy(() => import('./pages/portal/PIAnalytics'))
 const Pulse = lazy(() => import('./pages/Pulse'))
 // GrantsPortal placeholder available when existing Grants page is fully migrated
 // const GrantsPortal = lazy(() => import('./pages/portal/Grants'))
@@ -196,6 +197,7 @@ export default function App() {
                   {/* Lab */}
                   <Route path="/activity" element={<ErrorBoundary><ActivityPage /></ErrorBoundary>} />
                   <Route path="/analytics" element={<ErrorBoundary><AnalyticsPage /></ErrorBoundary>} />
+                  <Route path="/pi/analytics" element={<ErrorBoundary><PIAnalytics /></ErrorBoundary>} />
                   <Route path="/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
                 </Route>
               </Routes>

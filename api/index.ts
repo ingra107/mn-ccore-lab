@@ -28,6 +28,7 @@ import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSu
 import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
 import { handleCheckImpact } from './routes/impact-trace';
+import { handlePIAnalytics } from './routes/pi-analytics';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -55,6 +56,11 @@ export default {
 
       // Read endpoints (GET only)
       if (request.method === 'GET') {
+        // PI Analytics — leadership dashboard data
+        if (url.pathname === '/api/pi/analytics') {
+          return await handlePIAnalytics(env);
+        }
+
         // Digest endpoints (must come before parameterized catch-alls)
         if (url.pathname === '/api/digest/dates') {
           return await handleDigestDates(env);
