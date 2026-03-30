@@ -11,6 +11,8 @@ interface TaskCardProps {
   onStatusChange: (id: string, status: string) => void
   compact?: boolean
   onClick?: () => void
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
 }
 
 const statusOptions = [
@@ -27,7 +29,7 @@ const priorityConfig: Record<string, { label: string; color: string; bg: string 
   low: { label: 'Low', color: 'var(--slate)', bg: 'rgba(100, 116, 139, 0.1)' },
 }
 
-export default function TaskCard({ task, onStatusChange, compact = false, onClick }: TaskCardProps) {
+export default function TaskCard({ task, onStatusChange, compact = false, onClick, onMouseEnter, onMouseLeave }: TaskCardProps) {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const person = getPersonInfo(task.assignee)
   const priority = priorityConfig[task.priority] || priorityConfig.medium
@@ -43,8 +45,14 @@ export default function TaskCard({ task, onStatusChange, compact = false, onClic
         opacity: isDone ? 0.7 : 1,
         cursor: onClick ? 'pointer' : 'default',
       }}
-      onMouseEnter={(e) => { if (!isDone) e.currentTarget.style.transform = 'translateY(-1px)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
+      onMouseEnter={(e) => {
+        if (!isDone) e.currentTarget.style.transform = 'translateY(-1px)'
+        onMouseEnter?.()
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)'
+        onMouseLeave?.()
+      }}
       onClick={(e) => {
         // Don't trigger if clicking the status dropdown
         if ((e.target as HTMLElement).closest('[data-status-dropdown]')) return

@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { ArrowUpDown, CheckCircle2 } from 'lucide-react'
 import TaskCard from './TaskCard'
+import TaskPeekOverlay from './TaskPeekOverlay'
 import type { TaskRow } from '../../lib/api'
 
 interface TaskListViewProps {
@@ -17,6 +18,24 @@ const statusOrder: Record<string, number> = { blocked: 0, in_progress: 1, todo: 
 export default function TaskListView({ tasks, onStatusChange, onSelect }: TaskListViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortAsc, setSortAsc] = useState(true)
+  const [hoveredTask, setHoveredTask] = useState<TaskRow | null>(null)
+  const [peekTask, setPeekTask] = useState<TaskRow | null>(null)
+
+  const handleSpaceKey = useCallback((e: KeyboardEvent) => {
+    // Only activate if no peek is open and a task is hovered
+    if (e.key === ' ' && hoveredTask && !peekTask) {
+      // Don't intercept if user is typing in an input
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      e.preventDefault()
+      setPeekTask(hoveredTask)
+    }
+  }, [hoveredTask, peekTask])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleSpaceKey)
+    return () => window.removeEventListener('keydown', handleSpaceKey)
+  }, [handleSpaceKey])
 
   const sorted = useMemo(() => {
     return [...tasks].sort((a, b) => {
@@ -92,7 +111,14 @@ export default function TaskListView({ tasks, onStatusChange, onSelect }: TaskLi
       {/* Task list */}
       <div className="flex flex-col gap-3">
         {sorted.map((task) => (
-          <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} onClick={onSelect ? () => onSelect(task) : undefined} />
+          <TaskCard
+            key={task.id}
+            task={task}
+            onStatusChange={onStatusChange}
+            onClick={onSelect ? () => onSelect(task) : undefined}
+            onMouseEnter={() => setHoveredTask(task)}
+            onMouseLeave={() => setHoveredTask((prev) => (prev?.id === task.id ? null : prev))}
+          />
         ))}
         {sorted.length === 0 && (
           <div className="text-center py-16">
@@ -111,6 +137,8 @@ export default function TaskListView({ tasks, onStatusChange, onSelect }: TaskLi
           </div>
         )}
       </div>
+
+      <TaskPeekOverlay task={peekTask} onClose={() => setPeekTask(null)} />
     </div>
   )
 }
