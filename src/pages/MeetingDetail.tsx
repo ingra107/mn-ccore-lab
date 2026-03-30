@@ -15,10 +15,15 @@ import {
   Users,
   Plus,
   ExternalLink,
+  GripVertical,
 } from 'lucide-react'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMeetingDetail } from '../hooks/useApiData'
-import type { ActionItemRow as ActionItemRowType } from '../hooks/useApiData'
+import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks/useApiData'
 import { useToggleActionItem, useAddAgendaItem } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import Avatar from '../components/Avatar'
@@ -85,6 +90,24 @@ export default function MeetingDetail() {
   const statusStyle = STATUS_COLORS[meeting.status] || STATUS_COLORS.completed
   const actionItems = meeting.action_items || []
   const teamAgendaItems = meeting.agenda_items || []
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  async function handleAgendaDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = teamAgendaItems.findIndex(i => i.id === active.id)
+    const newIndex = teamAgendaItems.findIndex(i => i.id === over.id)
+    const reordered = arrayMove(teamAgendaItems, oldIndex, newIndex)
+
+    // Persist to API
+    fetch(`/api/meetings/${meeting.id}/agenda/reorder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: reordered.map(i => i.id) }),
+    })
+  }
 
   const pendingActions = actionItems.filter((a) => !a.completed)
   const completedActions = actionItems.filter((a) => a.completed)
@@ -166,29 +189,19 @@ export default function MeetingDetail() {
                 </div>
               )}
 
-              {/* Team-added agenda items */}
+              {/* Team-added agenda items (drag-to-reorder) */}
               {teamAgendaItems.length > 0 && (
                 <div className="mb-4">
                   <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
                     Team-added items
                   </p>
-                  {teamAgendaItems.map((item) => {
-                    const Icon = AGENDA_TYPE_ICONS[item.type] || MessageSquarePlus
-                    return (
-                      <div key={item.id} className="flex items-start gap-2 py-2" style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)' }}>
-                        <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
-                        <div style={{ flex: 1 }}>
-                          <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
-                            Added by {item.added_by}
-                            {item.document_url && (
-                              <> · <a href={item.document_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)' }}>View document</a></>
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })}
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAgendaDragEnd}>
+                    <SortableContext items={teamAgendaItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                      {teamAgendaItems.map((item) => (
+                        <SortableAgendaItem key={item.id} item={item} AGENDA_TYPE_ICONS={AGENDA_TYPE_ICONS} />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
                 </div>
               )}
 
@@ -292,6 +305,35 @@ export default function MeetingDetail() {
 }
 
 // ── Sub-components ──────────────────────────────────────────
+
+function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; AGENDA_TYPE_ICONS: Record<string, typeof MessageSquarePlus> }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : ('auto' as const),
+  }
+  const Icon = AGENDA_TYPE_ICONS[item.type] || MessageSquarePlus
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-start gap-2 py-2" {...attributes}>
+      <button {...listeners} className="cursor-grab active:cursor-grabbing mt-1 flex-shrink-0" style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.3 }}>
+        <GripVertical size={14} />
+      </button>
+      <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
+      <div style={{ flex: 1 }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+          Added by {item.added_by}
+          {item.document_url && (
+            <> · <a href={item.document_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)' }}>View document</a></>
+          )}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?: (id: string) => void }) {
   const person = getPersonInfo(item.assignee)

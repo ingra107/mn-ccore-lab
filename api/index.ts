@@ -4,7 +4,7 @@ import { corsHeaders, json, error, getAuthUser } from './helpers';
 // ── Route modules ──────────────────────────────────────────
 import { handleTasks, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleBatchUpdateTasks } from './routes/tasks';
 import { handleProjects, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleAddComment, handlePostProjectUpdate } from './routes/projects';
-import { handleMeetings, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleCreateMeeting } from './routes/meetings';
+import { handleMeetings, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline } from './routes/publications';
 import { handleTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
 import { handleDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper } from './routes/digest';
@@ -208,6 +208,12 @@ export default {
         // POST /api/action-items — backward compat alias
         if (request.method === 'POST' && path === '/api/action-items') {
           return await handleCreateTask(request, user, env);
+        }
+
+        // POST /api/meetings/:id/agenda/reorder — reorder agenda items
+        const agendaReorderMatch = path.match(/^\/api\/meetings\/([^/]+)\/agenda\/reorder$/);
+        if (request.method === 'POST' && agendaReorderMatch) {
+          return await handleReorderAgenda(agendaReorderMatch[1], request, env);
         }
 
         // POST /api/meetings/:id/agenda — add agenda item

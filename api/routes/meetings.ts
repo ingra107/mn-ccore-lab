@@ -54,6 +54,19 @@ export async function handleAddAgendaItem(meetingId: string, request: Request, u
   return json({ data: created }, 201);
 }
 
+// POST /api/meetings/:id/agenda/reorder — reorder agenda items
+export async function handleReorderAgenda(meetingId: string, request: Request, env: Env): Promise<Response> {
+  const body = await request.json() as { ids: string[] }
+  if (!body.ids?.length) return error('ids array required', 400)
+
+  // Update sort_order based on array position
+  const stmt = env.DB.prepare('UPDATE agenda_items SET sort_order = ? WHERE id = ? AND meeting_id = ?')
+  const batch = body.ids.map((id, i) => stmt.bind(i + 1, id, meetingId))
+  await env.DB.batch(batch)
+
+  return json({ data: { ok: true } })
+}
+
 // POST /api/meetings — create meeting
 export async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { date: string; title: string; type?: string; attendees?: string[] };
