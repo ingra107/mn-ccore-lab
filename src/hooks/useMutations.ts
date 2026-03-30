@@ -8,7 +8,8 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea } from '../lib/api'
+import { updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency } from '../lib/api'
+import type { DependencyRow } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
 import type { Comment, SubtaskRow } from './useApiData'
@@ -542,6 +543,70 @@ export function useBulkUpdateTasks() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
       queryClient.invalidateQueries({ queryKey: ['action-items'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Dependency mutations ──────────────────────────────────
+
+export function useCreateDependency() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { from_slug: string; to_slug: string; relationship_type?: string; note?: string }) =>
+      createDependency(input),
+
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: ['dependencies'] })
+      const prev = queryClient.getQueryData<DependencyRow[]>(['dependencies'])
+      if (prev) {
+        const optimistic: DependencyRow = {
+          id: `temp-${Date.now()}`,
+          from_slug: input.from_slug,
+          to_slug: input.to_slug,
+          relationship_type: input.relationship_type || 'feeds_into',
+          note: input.note || null,
+          created_by: null,
+          created_at: new Date().toISOString(),
+        }
+        queryClient.setQueryData(['dependencies'], [optimistic, ...prev])
+      }
+      return { prev }
+    },
+
+    onError: (_err, _input, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(['dependencies'], ctx.prev)
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['dependencies'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useDeleteDependency() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => deleteDependency(id),
+
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['dependencies'] })
+      const prev = queryClient.getQueryData<DependencyRow[]>(['dependencies'])
+      if (prev) {
+        queryClient.setQueryData(['dependencies'], prev.filter((d) => d.id !== id))
+      }
+      return { prev }
+    },
+
+    onError: (_err, _id, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(['dependencies'], ctx.prev)
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['dependencies'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })

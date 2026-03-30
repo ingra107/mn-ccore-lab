@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FolderKanban } from 'lucide-react'
+import { FolderKanban, GitBranch } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
-import { useProjects } from '../hooks/useApiData'
+import { useProjects, useDependencies } from '../hooks/useApiData'
 import ProjectCard from '../components/ProjectCard'
+import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import type { Project } from '../data/types'
 import type { Stage } from '../components/StageSelector'
 
@@ -29,8 +30,10 @@ export default function Projects() {
   )
 
   const { data: projects = [] } = useProjects()
+  const { data: dependencies = [] } = useDependencies()
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [activeCategory, setActiveCategory] = useState<string>('all')
+  const [showDeps, setShowDeps] = useState(false)
 
   const filtered = useMemo(() => {
     if (activeCategory === 'all') return projects
@@ -130,19 +133,54 @@ export default function Projects() {
             ))}
           </div>
 
-          {/* Summary stats */}
-          <span
-            className="text-xs"
-            style={{
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--slate)',
-              opacity: 0.6,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {totalCount} projects &middot; {clifCount} CLIF &middot; {labCount} Lab &middot; {nateCount} Mesfin{menteeCount > 0 ? ` \u00b7 ${menteeCount} Mentees` : ''}
-          </span>
+          {/* Summary stats + dependency toggle */}
+          <div className="flex items-center gap-3">
+            <span
+              className="text-xs"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--slate)',
+                opacity: 0.6,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {totalCount} projects &middot; {clifCount} CLIF &middot; {labCount} Lab &middot; {nateCount} Mesfin{menteeCount > 0 ? ` \u00b7 ${menteeCount} Mentees` : ''}
+            </span>
+            <motion.button
+              type="button"
+              onClick={() => setShowDeps(!showDeps)}
+              className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '11px',
+                background: showDeps ? 'var(--teal)' : 'rgba(45, 138, 138, 0.08)',
+                color: showDeps ? '#faf8f3' : 'var(--teal)',
+                border: '1px solid rgba(45, 138, 138, 0.2)',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap',
+              }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <GitBranch size={12} />
+              {showDeps ? 'Hide' : 'Show'} Dependencies
+            </motion.button>
+          </div>
         </div>
+
+        {/* Dependency map (collapsible) */}
+        <AnimatePresence>
+          {showDeps && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden', marginBottom: '1.5rem', position: 'relative' }}
+            >
+              <ProjectDependencyMap projects={filtered} dependencies={dependencies} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Stage progression line (desktop) */}
         <div

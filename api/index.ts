@@ -18,6 +18,7 @@ import { handleActivity, handleActivityHeatmap } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper } from './routes/paper-links';
+import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -77,6 +78,15 @@ export default {
         const projectPapersGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/papers$/);
         if (projectPapersGet) {
           return await handleGetPaperLinks(projectPapersGet[1], env);
+        }
+
+        const projectDepsGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/dependencies$/);
+        if (projectDepsGet) {
+          return await handleGetProjectDependencies(projectDepsGet[1], env);
+        }
+
+        if (url.pathname === '/api/dependencies') {
+          return await handleGetDependencies(env);
         }
 
         switch (url.pathname) {
@@ -348,10 +358,22 @@ export default {
           return await handleLinkPaper(request, user, env);
         }
 
-        // POST /api/paper-links/:id/delete — unlink a paper from a project
+        // POST /api/paper-links/:id/delete
         const paperLinkDeleteMatch = path.match(/^\/api\/paper-links\/([^/]+)\/delete$/);
         if (request.method === 'POST' && paperLinkDeleteMatch) {
           return await handleUnlinkPaper(paperLinkDeleteMatch[1], env);
+        }
+
+        // POST /api/dependencies — create dependency
+        if (request.method === 'POST' && path === '/api/dependencies') {
+          return await handleCreateDependency(request, user, env);
+        }
+
+        // POST /api/dependencies/:id/delete
+        const depDeleteMatch = path.match(/^\/api\/dependencies\/([^/]+)\/delete$/);
+        if (request.method === 'POST' && depDeleteMatch) {
+          return await handleDeleteDependency(depDeleteMatch[1], env);
+>>>>>>> feat/project-deps
         }
 
         return error('Not found', 404);
