@@ -705,6 +705,50 @@ export function useTeamPulse(hours: number = 48) {
   })
 }
 
+// ── Decisions ──────────────────────────────────────────────
+
+export interface DecisionRow {
+  id: string
+  title: string
+  rationale: string | null
+  context: string | null
+  project_slug: string | null
+  meeting_id: string | null
+  decided_by: string | null
+  outcome: string | null
+  outcome_date: string | null
+  outcome_status: string
+  tags: string | null
+  created_at: string
+}
+
+export function useDecisions(projectSlug?: string) {
+  return useQuery({
+    queryKey: ['decisions', projectSlug || 'all'],
+    queryFn: async () => {
+      const url = projectSlug ? `/api/decisions?project_slug=${projectSlug}` : '/api/decisions'
+      const res = await fetch(url)
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as DecisionRow[]
+    },
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useDecisionsForReview() {
+  return useQuery({
+    queryKey: ['decisions', 'review'],
+    queryFn: async () => {
+      const res = await fetch('/api/decisions/review')
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as DecisionRow[]
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 // ── Dependencies ───────────────────────────────────────────
 
 export function useDependencies() {

@@ -21,6 +21,7 @@ import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper } from './route
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 import { handleTrajectory } from './routes/trajectory';
 import { handleSimilarGrants } from './routes/grant-intelligence';
+import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview } from './routes/decisions';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -94,6 +95,14 @@ export default {
         // Grant intelligence — NIH RePORTER proxy
         if (url.pathname === '/api/grants/similar') {
           return await handleSimilarGrants(url, env);
+        }
+
+        // Decisions endpoints
+        if (url.pathname === '/api/decisions/review') {
+          return await handleGetDecisionsNeedingReview(env);
+        }
+        if (url.pathname === '/api/decisions') {
+          return await handleGetDecisions(url, env);
         }
 
         switch (url.pathname) {
@@ -397,6 +406,17 @@ export default {
         const depDeleteMatch = path.match(/^\/api\/dependencies\/([^/]+)\/delete$/);
         if (request.method === 'POST' && depDeleteMatch) {
           return await handleDeleteDependency(depDeleteMatch[1], env);
+        }
+
+        // POST /api/decisions — create decision
+        if (request.method === 'POST' && path === '/api/decisions') {
+          return await handleCreateDecision(request, user, env);
+        }
+
+        // POST /api/decisions/:id/outcome — update outcome
+        const decisionOutcomeMatch = path.match(/^\/api\/decisions\/([^/]+)\/outcome$/);
+        if (request.method === 'POST' && decisionOutcomeMatch) {
+          return await handleUpdateDecisionOutcome(decisionOutcomeMatch[1], request, user, env);
         }
 
         return error('Not found', 404);
