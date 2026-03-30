@@ -82,16 +82,16 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
       {/* Panel */}
       <div
         ref={panelRef}
-        className="fixed right-0 top-0 h-full z-50 overflow-y-auto shadow-2xl"
+        className="fixed right-0 top-0 h-full z-50 overflow-y-auto shadow-2xl task-detail-panel"
         style={{
           width: 'min(480px, 90vw)',
-          backgroundColor: 'white',
+          backgroundColor: 'var(--cream)',
           borderLeft: '1px solid var(--border-light)',
           animation: 'slideIn 200ms ease-out',
         }}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b" style={{ backgroundColor: 'white', borderColor: 'var(--border-light)' }}>
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
           <span className="text-xs uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
             Task Detail
           </span>
@@ -173,6 +173,19 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
             from { transform: translateX(100%); }
             to { transform: translateX(0); }
           }
+          .dark .task-detail-panel {
+            background-color: #162535 !important;
+            border-color: rgba(201, 168, 76, 0.12) !important;
+          }
+          .dark .task-detail-panel select,
+          .dark .task-detail-panel input[type="date"] {
+            color-scheme: dark;
+          }
+          @media (max-width: 640px) {
+            .task-detail-panel .p-5 {
+              padding: 1rem !important;
+            }
+          }
         `}</style>
       </div>
     </>
@@ -225,7 +238,7 @@ function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) =
   return (
     <h3
       onClick={() => setEditing(true)}
-      className="text-lg font-semibold cursor-text hover:bg-black/[0.02] rounded px-1 -mx-1 py-0.5 transition-colors"
+      className="text-lg font-semibold cursor-text hover:bg-black/[0.02] dark:hover:bg-white/[0.04] rounded px-1 -mx-1 py-0.5 transition-colors"
       style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
     >
       {value}
@@ -266,7 +279,7 @@ function EditableTextarea({ value, onSave, placeholder }: { value: string; onSav
   return (
     <div
       onClick={() => setEditing(true)}
-      className="text-sm cursor-text hover:bg-black/[0.02] rounded px-3 py-2 -mx-1 transition-colors min-h-[60px]"
+      className="text-sm cursor-text hover:bg-black/[0.02] dark:hover:bg-white/[0.04] rounded px-3 py-2 -mx-1 transition-colors min-h-[60px]"
       style={{ fontFamily: 'var(--font-sans)', color: value ? 'var(--ink)' : 'var(--slate)', opacity: value ? 1 : 0.5, whiteSpace: 'pre-wrap' }}
     >
       {value || placeholder}
@@ -286,7 +299,7 @@ function StatusSelect({ value, onChange }: { value: string; onChange: (v: string
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full appearance-none rounded-md border px-3 py-2 text-sm pl-8 cursor-pointer"
-        style={{ fontFamily: 'var(--font-sans)', color: current.color, borderColor: 'var(--border-light)', backgroundColor: 'white', fontWeight: 500 }}
+        style={{ fontFamily: 'var(--font-sans)', color: current.color, borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)', fontWeight: 500 }}
       >
         {statusOptions.map((s) => (
           <option key={s.value} value={s.value}>{s.label}</option>
@@ -307,7 +320,7 @@ function PrioritySelect({ value, onChange }: { value: string; onChange: (v: stri
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="w-full rounded-md border px-3 py-2 text-sm cursor-pointer"
-      style={{ fontFamily: 'var(--font-sans)', color: current.color, borderColor: 'var(--border-light)', backgroundColor: 'white', fontWeight: 500 }}
+      style={{ fontFamily: 'var(--font-sans)', color: current.color, borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)', fontWeight: 500 }}
     >
       {priorityOptions.map((p) => (
         <option key={p.value} value={p.value}>{p.label}</option>
@@ -332,7 +345,7 @@ function AssigneeSelect({ value, onChange }: { value: string; onChange: (v: stri
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="flex-1 rounded-md border px-2.5 py-2 text-sm cursor-pointer"
-        style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'white' }}
+        style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
       >
         {members.map((m) => (
           <option key={m.slug} value={m.slug}>{m.name}</option>
@@ -359,7 +372,7 @@ function DateInput({ value, onChange }: { value: string; onChange: (v: string) =
           color: isOverdue ? 'var(--maroon)' : 'var(--ink)',
           fontWeight: isOverdue ? 600 : 400,
           borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-light)',
-          backgroundColor: 'white',
+          backgroundColor: 'var(--cream)',
           cursor: 'pointer',
         }}
       />
@@ -395,7 +408,7 @@ function ProjectSelect({ value, onChange }: { value: string; onChange: (v: strin
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="w-full rounded-md border px-3 py-2 text-sm cursor-pointer"
-      style={{ fontFamily: 'var(--font-sans)', color: value ? 'var(--ink)' : 'var(--slate)', borderColor: 'var(--border-light)', backgroundColor: 'white' }}
+      style={{ fontFamily: 'var(--font-sans)', color: value ? 'var(--ink)' : 'var(--slate)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
     >
       <option value="">No project</option>
       {projectList.map((p) => (
@@ -480,7 +493,7 @@ function SubtaskChecklist({ taskId }: { taskId: string }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: -16 }}
               transition={{ duration: 0.15 }}
-              className="group flex items-center gap-2 py-1.5 px-1 -mx-1 rounded hover:bg-black/[0.02] transition-colors"
+              className="group flex items-center gap-2 py-1.5 px-1 -mx-1 rounded hover:bg-black/[0.02] dark:hover:bg-white/[0.04] transition-colors"
             >
               {/* Toggle button */}
               <button
@@ -621,7 +634,7 @@ function TaskComments({ taskId }: { taskId: string }) {
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Add a comment..."
           className="flex-1 rounded-md border px-3 py-1.5 text-sm outline-none"
-          style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)' }}
+          style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)', color: 'var(--ink)' }}
         />
         {newComment.trim() && (
           <button type="submit" className="p-1.5 rounded-md" style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}>
