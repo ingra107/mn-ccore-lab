@@ -373,7 +373,6 @@ export default {
         const depDeleteMatch = path.match(/^\/api\/dependencies\/([^/]+)\/delete$/);
         if (request.method === 'POST' && depDeleteMatch) {
           return await handleDeleteDependency(depDeleteMatch[1], env);
->>>>>>> feat/project-deps
         }
 
         return error('Not found', 404);
