@@ -296,6 +296,13 @@ Nick's CLI (brain.db)                      Team Members (browsers)
   - Grant cards with PI avatar, agency, dates, progress bar, milestone chips
   - Link to full Gantt timeline at /grants
 
+### Done (2026-03-30, round 6)
+- Notification bell: grouped by day (Today/Yesterday/date headers with teal accent)
+- CSV export: download button on Analytics page exports all task data
+- RoundPrompt: 28 icebreaker prompts across 5 categories, deterministic per meeting
+  - Shuffle, customize, reset controls. Persisted per meeting in localStorage
+  - Wired into MeetingDetail above agenda section
+
 ### Remaining
 - Launch prep: SendGrid API key, Cloudflare Access auth, 7 headshots, Nate Scholar ID
 
