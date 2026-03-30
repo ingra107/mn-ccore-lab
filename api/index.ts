@@ -23,6 +23,7 @@ import { handleTrajectory } from './routes/trajectory';
 import { handleContributions } from './routes/contributions';
 import { handleSimilarGrants } from './routes/grant-intelligence';
 import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview } from './routes/decisions';
+import { handleSimilarDecisions } from './routes/decision-replay';
 import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSuggestExperts } from './routes/expertise';
 import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
@@ -103,6 +104,9 @@ export default {
         }
 
         // Decisions endpoints
+        if (url.pathname === '/api/decisions/similar') {
+          return await handleSimilarDecisions(url, env);
+        }
         if (url.pathname === '/api/decisions/review') {
           return await handleGetDecisionsNeedingReview(env);
         }

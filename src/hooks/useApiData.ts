@@ -787,6 +787,20 @@ export function useDecisionsForReview() {
   })
 }
 
+export function useSimilarDecisions(query: string) {
+  return useQuery({
+    queryKey: ['decisions', 'similar', query],
+    queryFn: async () => {
+      const res = await fetch(`/api/decisions/similar?q=${encodeURIComponent(query)}`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as DecisionRow[]
+    },
+    staleTime: 30 * 1000,
+    enabled: !!query && query.length >= 2,
+  })
+}
+
 // ── Dependencies ───────────────────────────────────────────
 
 export function useDependencies() {

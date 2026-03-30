@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Scale, Plus, X, Clock, AlertTriangle, FolderKanban } from 'lucide-react'
+import { Scale, Plus, X, Clock, AlertTriangle, FolderKanban, History } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SectionHeader from '../../components/SectionHeader'
 import Avatar from '../../components/Avatar'
-import { useDecisions, useDecisionsForReview } from '../../hooks/useApiData'
+import { useDecisions, useDecisionsForReview, useSimilarDecisions } from '../../hooks/useApiData'
 import { useCreateDecision, useUpdateDecisionOutcome } from '../../hooks/useMutations'
 import { useProjects } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
+import { useDebounce } from '../../hooks/useDebounce'
 import type { DecisionRow } from '../../hooks/useApiData'
 
 function daysAgo(dateStr: string): number {
@@ -418,6 +419,10 @@ function CreateDecisionModal({
   const [projectSlug, setProjectSlug] = useState('')
   const [tags, setTags] = useState('')
 
+  // Decision replay — search for similar past decisions as user types
+  const debouncedTitle = useDebounce(title, 500)
+  const { data: similarDecisions = [] } = useSimilarDecisions(debouncedTitle)
+
   function handleSubmit() {
     if (!title.trim()) return
     onCreate.mutate({
@@ -497,6 +502,31 @@ function CreateDecisionModal({
               style={inputStyle}
               autoFocus
             />
+            {similarDecisions.length > 0 && (
+              <div className="mt-3 p-3 rounded-lg" style={{ background: 'rgba(201,168,76,0.04)', border: '1px dashed rgba(201,168,76,0.2)' }}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <History size={12} style={{ color: 'var(--gold)' }} />
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gold)' }}>
+                    Similar past decisions
+                  </span>
+                </div>
+                {similarDecisions.map(d => (
+                  <div key={d.id} className="py-2" style={{ borderBottom: '1px solid rgba(201,168,76,0.06)' }}>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
+                      {d.title}
+                    </p>
+                    {d.outcome && (
+                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--teal)', marginTop: 2, marginBottom: 0 }}>
+                        Outcome: {d.outcome}
+                      </p>
+                    )}
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                      {new Date(d.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
