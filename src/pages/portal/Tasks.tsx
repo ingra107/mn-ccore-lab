@@ -10,9 +10,10 @@ import TaskStandUpView from '../../components/tasks/TaskStandUpView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
+import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import ToggleButton from '../../components/ToggleButton'
 import { useTasks } from '../../hooks/useApiData'
-import { useCreateTask, useUpdateTaskStatus } from '../../hooks/useMutations'
+import { useCreateTask, useUpdateTaskStatus, useBulkUpdateTasks } from '../../hooks/useMutations'
 import type { TaskRow } from '../../lib/api'
 
 type ViewMode = 'list' | 'board' | 'standup' | 'timeline'
@@ -29,6 +30,8 @@ export default function Tasks() {
   const [showCreate, setShowCreate] = useState(false)
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const bulkUpdate = useBulkUpdateTasks()
 
   // Auto-open create modal from URL params (keyboard shortcut C)
   useEffect(() => {
@@ -73,6 +76,26 @@ export default function Tasks() {
   }) => {
     createTask.mutate(task)
   }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete', value?: string) => {
+    bulkUpdate.mutate({ ids: [...selectedIds], action, value }, {
+      onSuccess: () => setSelectedIds(new Set()),
+    })
+  }
+
+  // Clear selection when filters change
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [filters.assignee, filters.status, filters.priority, filters.project, showCompleted])
 
   const pendingCount = tasks.filter((t) => !t.completed).length
   const completedCount = tasks.filter((t) => t.completed).length
@@ -191,7 +214,7 @@ export default function Tasks() {
           </div>
         ) : (
           <>
-            {view === 'list' && <TaskListView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
+            {view === 'list' && <TaskListView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} selectedIds={selectedIds} onToggleSelect={toggleSelect} />}
             {view === 'board' && <TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
             {view === 'standup' && <TaskStandUpView tasks={displayTasks} onStatusChange={handleStatusChange} />}
             {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} />}
@@ -213,6 +236,15 @@ export default function Tasks() {
           onClose={() => setSelectedTask(null)}
         />
       )}
+
+      {/* Bulk action toolbar */}
+      <BulkActionToolbar
+        selectedIds={selectedIds}
+        selectedTasks={tasks.filter((t) => selectedIds.has(t.id))}
+        onClear={() => setSelectedIds(new Set())}
+        onBulkAction={handleBulkAction}
+        isUpdating={bulkUpdate.isPending}
+      />
     </div>
   )
 }

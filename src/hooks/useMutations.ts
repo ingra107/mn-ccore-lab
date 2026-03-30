@@ -478,3 +478,24 @@ export function useVoteIdea() {
     },
   })
 }
+
+// ── Bulk task mutations ────────────────────────────────────
+
+export function useBulkUpdateTasks() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { ids: string[]; action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete'; value?: string }) =>
+      fetch('/api/tasks/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then((r) => r.json()),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['action-items'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
