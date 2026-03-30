@@ -1,18 +1,21 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
-import { Menu, Sun, Moon, Monitor, Search } from 'lucide-react'
+import { Menu, Sun, Moon, Monitor, Search, Plus } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import Sidebar from './Sidebar'
 import CommandPalette from './CommandPalette'
 import ShortcutHelp from './ShortcutHelp'
 import PageTransition from './PageTransition'
+import GlobalQuickAddModal, { useQuickAddShortcut } from './GlobalQuickAdd'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 
 export default function PortalLayout() {
   const { mode, setTheme } = useDarkMode()
   const [showThemeMenu, setShowThemeMenu] = useState(false)
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
   const { showHelp, setShowHelp, gPending } = useKeyboardShortcuts()
+  useQuickAddShortcut(useCallback(() => setQuickAddOpen(true), []))
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
     return localStorage.getItem('mn-ccore-sidebar-collapsed') === 'true'
@@ -154,6 +157,26 @@ export default function PortalLayout() {
 
       {/* Shortcut Help */}
       <ShortcutHelp open={showHelp} onClose={() => setShowHelp(false)} />
+
+      {/* Global Quick Add */}
+      <GlobalQuickAddModal isOpen={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
+
+      {/* Floating quick-add button */}
+      <button
+        onClick={() => setQuickAddOpen(true)}
+        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+        style={{
+          background: 'var(--teal)',
+          color: 'white',
+          border: 'none',
+          cursor: 'pointer',
+          boxShadow: '0 4px 12px rgba(45,138,138,0.35)',
+        }}
+        aria-label="Quick add task (Ctrl+N)"
+        title="Quick add task (Ctrl+N)"
+      >
+        <Plus size={22} strokeWidth={2.5} />
+      </button>
 
       {/* G-key pending indicator */}
       {gPending && (
