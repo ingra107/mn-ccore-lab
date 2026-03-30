@@ -303,8 +303,25 @@ Nick's CLI (brain.db)                      Team Members (browsers)
   - Shuffle, customize, reset controls. Persisted per meeting in localStorage
   - Wired into MeetingDetail above agenda section
 
-### Remaining
+### Done (2026-03-30, round 7)
+- Recently viewed: useRecentlyViewed hook + chips on Personal Hub (localStorage, 6 items max)
+- Route progress bar: thin teal NProgress-style bar at top during route transitions
+- Cmd+K dark mode: audited — already safe (var(--cream) throughout)
+- Project card hover: audited — already implemented (Framer Motion whileHover)
+
+### Remaining — Quick Wins
 - Launch prep: SendGrid API key, Cloudflare Access auth, 7 headshots, Nate Scholar ID
+
+### Remaining — Dedicated Effort Required
+- Split api/index.ts (3000+ lines → route modules) — worktree refactor
+- Split useApiData.ts (12+ hooks in one file) — worktree refactor
+- Split useMutations.ts (7 mutations in one file) — worktree refactor
+- Playwright smoke tests (18 portal routes) — test infrastructure
+- Agenda item reordering (@dnd-kit sortable) — API changes needed
+- Search results ranking (weight by recency/type) — API endpoint changes
+- Task peek overlay (Space bar preview) — type refactoring from legacy ActionItemRow
+- Task subtasks/checklists — new D1 table + API endpoints
+- Bulk task actions (multi-select + batch) — API changes needed
 
 ## Session Notes
 
