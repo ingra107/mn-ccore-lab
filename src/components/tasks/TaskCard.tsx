@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { Circle, CheckCircle2, Clock, AlertTriangle, CalendarDays, FolderKanban } from 'lucide-react'
+import { Circle, CheckCircle2, Clock, AlertTriangle, CalendarDays, FolderKanban, Flag, RotateCcw, Eye } from 'lucide-react'
 import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 import { formatBrandName } from '../BrandName'
+import { updateTask } from '../../lib/api'
 import type { TaskRow } from '../../lib/api'
 
 interface TaskCardProps {
   task: TaskRow
   onStatusChange: (id: string, status: string) => void
+  onPriorityChange?: (id: string, priority: string) => void
   compact?: boolean
   onClick?: () => void
   onMouseEnter?: () => void
@@ -29,16 +31,34 @@ const priorityConfig: Record<string, { label: string; color: string; bg: string 
   low: { label: 'Low', color: 'var(--slate)', bg: 'rgba(100, 116, 139, 0.1)' },
 }
 
-export default function TaskCard({ task, onStatusChange, compact = false, onClick, onMouseEnter, onMouseLeave }: TaskCardProps) {
+const PRIORITY_ORDER = ['low', 'medium', 'high', 'urgent'] as const
+const PRIORITY_COLORS: Record<string, string> = {
+  low: 'var(--slate)',
+  medium: 'var(--gold)',
+  high: '#f97316',
+  urgent: 'var(--maroon)',
+}
+
+export default function TaskCard({ task, onStatusChange, onPriorityChange, compact = false, onClick, onMouseEnter, onMouseLeave }: TaskCardProps) {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const person = getPersonInfo(task.assignee)
   const priority = priorityConfig[task.priority] || priorityConfig.medium
   const isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
   const isDone = task.status === 'done'
 
+  const cyclePriority = () => {
+    const idx = PRIORITY_ORDER.indexOf(task.priority as typeof PRIORITY_ORDER[number])
+    const next = PRIORITY_ORDER[(idx + 1) % PRIORITY_ORDER.length]
+    if (onPriorityChange) {
+      onPriorityChange(task.id, next)
+    } else {
+      updateTask(task.id, { priority: next })
+    }
+  }
+
   return (
     <div
-      className="group rounded-lg border transition-all duration-200 hover:shadow-md"
+      className="group relative rounded-lg border transition-all duration-200 hover:shadow-md"
       style={{
         borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-light)',
         backgroundColor: isDone ? 'rgba(0,0,0,0.02)' : 'white',
@@ -54,8 +74,9 @@ export default function TaskCard({ task, onStatusChange, compact = false, onClic
         onMouseLeave?.()
       }}
       onClick={(e) => {
-        // Don't trigger if clicking the status dropdown
+        // Don't trigger if clicking the status dropdown or hover actions
         if ((e.target as HTMLElement).closest('[data-status-dropdown]')) return
+        if ((e.target as HTMLElement).closest('[data-hover-actions]')) return
         onClick?.()
       }}
     >
@@ -179,6 +200,69 @@ export default function TaskCard({ task, onStatusChange, compact = false, onClic
             className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]"
           />
         </div>
+      </div>
+
+      {/* Hover action buttons */}
+      <div data-hover-actions className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Priority cycle: click to advance low→medium→high→urgent→low */}
+        <button
+          onClick={(e) => { e.stopPropagation(); cyclePriority() }}
+          title={`Priority: ${task.priority}`}
+          className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
+          style={{
+            background: 'rgba(15,25,35,0.04)',
+            border: 'none',
+            borderRadius: 4,
+            padding: '3px',
+            cursor: 'pointer',
+            color: 'var(--slate)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Flag size={13} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)' }} />
+        </button>
+
+        {/* Quick complete/uncomplete toggle */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onStatusChange(task.id, task.completed ? 'todo' : 'done') }}
+          title={task.completed ? 'Reopen' : 'Complete'}
+          className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
+          style={{
+            background: 'rgba(15,25,35,0.04)',
+            border: 'none',
+            borderRadius: 4,
+            padding: '3px',
+            cursor: 'pointer',
+            color: 'var(--slate)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {task.completed ? <RotateCcw size={13} /> : <CheckCircle2 size={13} />}
+        </button>
+
+        {/* Peek (view details) */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onClick?.() }}
+          title="View details"
+          className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
+          style={{
+            background: 'rgba(15,25,35,0.04)',
+            border: 'none',
+            borderRadius: 4,
+            padding: '3px',
+            cursor: 'pointer',
+            color: 'var(--slate)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Eye size={13} />
+        </button>
       </div>
     </div>
   )
