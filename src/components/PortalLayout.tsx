@@ -11,10 +11,12 @@ import GlobalQuickAddModal, { useQuickAddShortcut } from './GlobalQuickAdd'
 import RouteProgressBar from './RouteProgressBar'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useDensity } from '../hooks/useDensity'
+import { useFavicon } from '../hooks/useFavicon'
 
 export default function PortalLayout() {
   const { mode, setTheme } = useDarkMode()
   const { density, toggle: toggleDensity } = useDensity()
+  useFavicon()
   const [showThemeMenu, setShowThemeMenu] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const { showHelp, setShowHelp, gPending } = useKeyboardShortcuts()
