@@ -371,4 +371,46 @@ export function deleteDependency(id: string) {
   })
 }
 
+// ── Expertise endpoints ─────────────────────────────────────
+
+export interface ExpertiseTag {
+  id: string
+  member_slug: string
+  tag: string
+  source: string
+  confidence: number
+  created_at: string
+}
+
+export interface ExpertSuggestion {
+  slug: string
+  sources: string[]
+  confidence: number
+}
+
+export function fetchExpertise(params?: { slug?: string; tag?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.slug) qs.set('slug', params.slug)
+  if (params?.tag) qs.set('tag', params.tag)
+  const query = qs.toString()
+  return fetchApi<ExpertiseTag[]>(`/api/expertise${query ? `?${query}` : ''}`)
+}
+
+export function addExpertise(input: { member_slug: string; tag: string; source?: string; confidence?: number }) {
+  return fetchApi<ExpertiseTag>('/api/expertise', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function removeExpertise(id: string) {
+  return fetchApi<{ deleted: boolean; id: string }>(`/api/expertise/${id}/delete`, {
+    method: 'POST',
+  })
+}
+
+export function fetchExpertSuggestions(topic: string) {
+  return fetchApi<ExpertSuggestion[]>(`/api/expertise/suggest?topic=${encodeURIComponent(topic)}`)
+}
+
 export { ApiError }

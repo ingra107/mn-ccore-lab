@@ -24,6 +24,8 @@ import {
   fetchCalendarEvents,
   fetchDependencies,
   fetchProjectDependencies,
+  fetchExpertise,
+  fetchExpertSuggestions,
 } from '../lib/api'
 import type {
   PublicationRow,
@@ -36,10 +38,12 @@ import type {
   IdeaRow,
   CalendarEvent,
   DependencyRow,
+  ExpertiseTag,
+  ExpertSuggestion,
 } from '../lib/api'
 
 // Re-export row types for components that need them
-export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow }
+export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion }
 
 // Static data imports (fallback for local dev)
 import { publications as staticPublications } from '../data/publications'
@@ -831,5 +835,39 @@ export function useSimilarGrants(keywords: string, ic?: string) {
     },
     staleTime: 30 * 60 * 1000,
     enabled: !!keywords && keywords.length > 2,
+  })
+}
+
+// ── Expertise Tags ───────────────────────────────────────────
+
+export function useExpertise(slug?: string) {
+  return useQuery({
+    queryKey: ['expertise', slug || 'all'],
+    queryFn: async () => {
+      try {
+        const res = await fetchExpertise(slug ? { slug } : undefined)
+        return res.data as ExpertiseTag[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: STALE_TIME,
+    enabled: slug !== undefined ? !!slug : true,
+  })
+}
+
+export function useExpertSuggestions(topic: string) {
+  return useQuery({
+    queryKey: ['expertise', 'suggest', topic],
+    queryFn: async () => {
+      try {
+        const res = await fetchExpertSuggestions(topic)
+        return res.data as ExpertSuggestion[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: 60 * 1000,
+    enabled: !!topic && topic.length >= 2,
   })
 }

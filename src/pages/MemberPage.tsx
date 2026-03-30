@@ -1,13 +1,15 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, Navigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
-import { FlaskConical, GraduationCap, FileText, Handshake, CheckCircle2, TrendingUp } from 'lucide-react'
+import { FlaskConical, GraduationCap, FileText, Handshake, CheckCircle2, TrendingUp, Sparkles, X, Plus } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { usePublications } from '../hooks/useApiData'
+import { usePublications, useExpertise } from '../hooks/useApiData'
 import { useCommitments } from '../hooks/useCommitments'
+import { useAddExpertise, useRemoveExpertise } from '../hooks/useMutations'
+import { useAuth } from '../hooks/useAuth'
 import type { CommitmentRow } from '../hooks/useCommitments'
 import { getMemberBySlug } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
@@ -146,8 +148,15 @@ export default function MemberPage() {
     ?.map((s) => projects.find((p) => p.slug === s))
     .filter(Boolean) ?? []
 
+  // Expertise tags for this member
+  const { data: expertiseTags = [] } = useExpertise(slug)
+  const addExpertiseMut = useAddExpertise(slug || '')
+  const removeExpertiseMut = useRemoveExpertise(slug || '')
+  const [newTag, setNewTag] = useState('')
+  const [showAddTag, setShowAddTag] = useState(false)
+  const { isAuthenticated } = useAuth()
+
   // Commitments to this person (slug does partial match on to_whom)
-  const { data: allCommitments = [] } = useCommitments(slug)
   const { openCommitments, doneCommitments } = useMemo(() => {
     const open: CommitmentRow[] = []
     const done: CommitmentRow[] = []
@@ -246,6 +255,9 @@ export default function MemberPage() {
           : []),
         ...(menteeProjects.length > 0
           ? [{ id: 'active-projects', label: 'Active Projects' }]
+          : []),
+        ...(expertiseTags.length > 0 || isAuthenticated
+          ? [{ id: 'expertise', label: `Expertise${expertiseTags.length > 0 ? ` (${expertiseTags.length})` : ''}` }]
           : []),
         ...(topicCounts.length > 0
           ? [{ id: 'research-areas', label: 'Research Areas' }]
@@ -423,6 +435,176 @@ export default function MemberPage() {
                 </div>
               ))}
             </div>
+          </section>
+          <SectionDivider />
+          <div className="py-4" />
+        </>
+      )}
+
+      {/* Expertise tags */}
+      {(expertiseTags.length > 0 || isAuthenticated) && (
+        <>
+          <section className="mb-8" id="expertise">
+            <div className="flex items-center gap-3 mb-4">
+              <Sparkles size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <h2
+                className="text-xl sm:text-2xl"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  color: 'var(--ink)',
+                }}
+              >
+                Expertise
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              <AnimatePresence mode="popLayout">
+                {expertiseTags.map((t) => (
+                  <motion.span
+                    key={t.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.15 }}
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      background: 'rgba(201,168,76,0.12)',
+                      color: 'var(--gold)',
+                      border: '1px solid rgba(201,168,76,0.2)',
+                    }}
+                  >
+                    {t.tag}
+                    {t.source !== 'manual' && (
+                      <span
+                        style={{
+                          fontSize: '9px',
+                          opacity: 0.5,
+                          marginLeft: '2px',
+                        }}
+                        title={`Source: ${t.source}, confidence: ${t.confidence}`}
+                      >
+                        {t.source === 'publication' ? 'pub' : t.source}
+                      </span>
+                    )}
+                    {isAuthenticated && (
+                      <button
+                        onClick={() => removeExpertiseMut.mutate(t.id)}
+                        className="ml-0.5 hover:opacity-100 opacity-40 transition-opacity"
+                        style={{ lineHeight: 1 }}
+                        title="Remove tag"
+                      >
+                        <X size={10} />
+                      </button>
+                    )}
+                  </motion.span>
+                ))}
+              </AnimatePresence>
+
+              {isAuthenticated && !showAddTag && (
+                <button
+                  onClick={() => setShowAddTag(true)}
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all duration-200"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    background: 'transparent',
+                    color: 'var(--slate)',
+                    border: '1px dashed rgba(100,116,139,0.3)',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--gold)'
+                    e.currentTarget.style.color = 'var(--gold)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(100,116,139,0.3)'
+                    e.currentTarget.style.color = 'var(--slate)'
+                  }}
+                >
+                  <Plus size={10} />
+                  Add
+                </button>
+              )}
+            </div>
+
+            {showAddTag && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 mb-4"
+              >
+                <input
+                  type="text"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newTag.trim()) {
+                      addExpertiseMut.mutate({ tag: newTag.trim() }, {
+                        onSuccess: () => {
+                          setNewTag('')
+                          setShowAddTag(false)
+                        },
+                      })
+                    }
+                    if (e.key === 'Escape') {
+                      setNewTag('')
+                      setShowAddTag(false)
+                    }
+                  }}
+                  placeholder="e.g. mechanical ventilation, sepsis..."
+                  autoFocus
+                  className="px-3 py-1.5 rounded-md text-sm"
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    background: 'var(--ice)',
+                    color: 'var(--ink)',
+                    border: '1px solid rgba(201,168,76,0.2)',
+                    outline: 'none',
+                    width: '240px',
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    if (newTag.trim()) {
+                      addExpertiseMut.mutate({ tag: newTag.trim() }, {
+                        onSuccess: () => {
+                          setNewTag('')
+                          setShowAddTag(false)
+                        },
+                      })
+                    }
+                  }}
+                  disabled={!newTag.trim() || addExpertiseMut.isPending}
+                  className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    background: newTag.trim() ? 'var(--gold)' : 'var(--ice)',
+                    color: newTag.trim() ? 'var(--ink)' : 'var(--slate)',
+                    border: 'none',
+                    cursor: newTag.trim() ? 'pointer' : 'default',
+                    opacity: newTag.trim() ? 1 : 0.5,
+                  }}
+                >
+                  {addExpertiseMut.isPending ? 'Adding...' : 'Add'}
+                </button>
+                <button
+                  onClick={() => { setNewTag(''); setShowAddTag(false) }}
+                  className="px-2 py-1.5 rounded-md text-xs transition-opacity hover:opacity-100 opacity-50"
+                  style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none' }}
+                >
+                  Cancel
+                </button>
+              </motion.div>
+            )}
+
+            {expertiseTags.length === 0 && !showAddTag && (
+              <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-body)' }}>
+                No expertise tags yet.{isAuthenticated ? ' Click + Add to tag areas of expertise.' : ''}
+              </p>
+            )}
           </section>
           <SectionDivider />
           <div className="py-4" />
