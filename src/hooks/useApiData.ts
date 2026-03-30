@@ -737,3 +737,26 @@ export function useProjectDependencies(slug: string) {
     enabled: !!slug,
   })
 }
+
+// ── Trainee Trajectory ────────────────────────────────────
+
+export interface TrajectoryData {
+  publications: { id: string; title: string; journal: string; pub_date: string; doi: string }[]
+  taskStats: { month: string; completed: number }[]
+  projects: { id: string; title: string; slug: string; stage: string; status: string; category: string }[]
+  milestones: { id: string; title: string; due_date: string; status: string; project_id: string; project_title: string }[]
+}
+
+export function useTrajectory(slug: string) {
+  return useQuery({
+    queryKey: ['trajectory', slug],
+    queryFn: async () => {
+      const res = await fetch(`/api/team/${slug}/trajectory`)
+      if (!res.ok) return null
+      const data = await res.json()
+      return data.data as TrajectoryData
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!slug,
+  })
+}

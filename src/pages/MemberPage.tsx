@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useParams, Navigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
-import { FlaskConical, GraduationCap, FileText, Handshake, CheckCircle2 } from 'lucide-react'
+import { FlaskConical, GraduationCap, FileText, Handshake, CheckCircle2, TrendingUp } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -258,9 +258,9 @@ export default function MemberPage() {
           : []),
       ]}
     >
-      {/* Export CV link */}
+      {/* Export CV + View Trajectory links */}
       {slug && (
-        <div className="mb-6">
+        <div className="mb-6 flex flex-wrap gap-2">
           <Link
             to={`/team/${slug}/cv`}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
@@ -282,6 +282,28 @@ export default function MemberPage() {
           >
             <FileText size={12} />
             Export CV
+          </Link>
+          <Link
+            to={`/team/${slug}/trajectory`}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              background: 'var(--ice)',
+              color: 'var(--slate)',
+              border: '1px solid transparent',
+              textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--teal)'
+              e.currentTarget.style.color = 'var(--teal)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'transparent'
+              e.currentTarget.style.color = 'var(--slate)'
+            }}
+          >
+            <TrendingUp size={12} />
+            View Trajectory
           </Link>
         </div>
       )}

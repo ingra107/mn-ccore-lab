@@ -100,6 +100,7 @@ const Meetings = lazy(() => import('./pages/Meetings'))
 const MeetingDetail = lazy(() => import('./pages/MeetingDetail'))
 const Digest = lazy(() => import('./pages/Digest'))
 const CVPage = lazy(() => import('./pages/CVPage'))
+const TrajectoryPage = lazy(() => import('./pages/TrajectoryPage'))
 const GrantsPage = lazy(() => import('./pages/Grants'))
 const MyItems = lazy(() => import('./pages/MyItems'))
 
@@ -154,6 +155,7 @@ export default function App() {
                   <Route path="/nate" element={<ErrorBoundary><NateLab /></ErrorBoundary>} />
                   <Route path="/team/:slug" element={<ErrorBoundary><MemberPage /></ErrorBoundary>} />
                   <Route path="/team/:slug/cv" element={<ErrorBoundary><CVPage /></ErrorBoundary>} />
+                  <Route path="/team/:slug/trajectory" element={<ErrorBoundary><TrajectoryPage /></ErrorBoundary>} />
                   <Route path="/publications" element={<ErrorBoundary><Publications /></ErrorBoundary>} />
                   <Route path="/publications/:id" element={<ErrorBoundary><PublicationDetail /></ErrorBoundary>} />
                   <Route path="/network" element={<ErrorBoundary><Network /></ErrorBoundary>} />

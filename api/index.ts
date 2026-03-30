@@ -19,6 +19,7 @@ import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDele
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper } from './routes/paper-links';
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
+import { handleTrajectory } from './routes/trajectory';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -144,6 +145,12 @@ export default {
         const cvDataGet = url.pathname.match(/^\/api\/team\/([^/]+)\/cv-data$/);
         if (cvDataGet) {
           return await handleCVData(cvDataGet[1], env);
+        }
+
+        // GET /api/team/:slug/trajectory
+        const trajectoryGet = url.pathname.match(/^\/api\/team\/([^/]+)\/trajectory$/);
+        if (trajectoryGet) {
+          return await handleTrajectory(trajectoryGet[1], env);
         }
 
         // GET /api/milestones?project_id=...&grant_id=...
