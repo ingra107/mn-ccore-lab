@@ -8,11 +8,13 @@ import {
   ChevronUp,
   Link2,
   Search,
+  FolderPlus,
+  Check,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useDigest, useDigestDates } from '../hooks/useApiData'
+import { useDigest, useDigestDates, useProjects } from '../hooks/useApiData'
 import type { DigestPaper } from '../hooks/useApiData'
-import { useUpdateDigestStatus } from '../hooks/useMutations'
+import { useUpdateDigestStatus, useLinkPaper } from '../hooks/useMutations'
 
 type StatusFilter = 'all' | 'new' | 'saved'
 
@@ -58,9 +60,17 @@ function relevanceColorDark(score: number): { bg: string; text: string } {
 
 // ── Paper Card ───────────────────────────────────────────────
 
-function PaperCard({ paper }: { paper: DigestPaper }) {
+interface ProjectOption {
+  slug: string
+  title: string
+}
+
+function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectOption[] }) {
   const [expanded, setExpanded] = useState(false)
+  const [showLinkPicker, setShowLinkPicker] = useState(false)
+  const [linkSuccess, setLinkSuccess] = useState<string | null>(null)
   const updateStatus = useUpdateDigestStatus()
+  const linkPaper = useLinkPaper()
   const topics = parseTopics(paper.topics)
   const rel = relevanceColor(paper.relevance_score)
   const relDark = relevanceColorDark(paper.relevance_score)
@@ -304,6 +314,84 @@ function PaperCard({ paper }: { paper: DigestPaper }) {
           >
             <X size={18} />
           </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowLinkPicker(!showLinkPicker) }}
+              className="cursor-pointer p-2 rounded-md transition-colors duration-200"
+              style={{
+                background: showLinkPicker ? 'rgba(201, 168, 76, 0.15)' : 'transparent',
+                color: linkSuccess ? 'var(--teal)' : showLinkPicker ? 'var(--gold)' : 'var(--slate)',
+                border: 'none',
+                minWidth: '36px',
+                minHeight: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              title="Link to project"
+              aria-label="Link paper to a project"
+            >
+              {linkSuccess ? <Check size={18} /> : <FolderPlus size={18} />}
+            </button>
+            {showLinkPicker && projects.length > 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '100%',
+                  marginTop: '4px',
+                  background: 'var(--cream)',
+                  border: '1px solid rgba(201, 168, 76, 0.2)',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  minWidth: '220px',
+                  maxHeight: '240px',
+                  overflowY: 'auto',
+                  zIndex: 50,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div
+                  style={{
+                    padding: '8px 12px 4px',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '9px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: 'var(--slate)',
+                    opacity: 0.5,
+                  }}
+                >
+                  Link to project
+                </div>
+                {projects.map((proj) => (
+                  <button
+                    key={proj.slug}
+                    onClick={() => {
+                      linkPaper.mutate({ paper_id: paper.id, project_slug: proj.slug })
+                      setShowLinkPicker(false)
+                      setLinkSuccess(proj.title)
+                      setTimeout(() => setLinkSuccess(null), 2000)
+                    }}
+                    className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '12px',
+                      color: 'var(--ink)',
+                      background: 'none',
+                      border: 'none',
+                      borderTop: '1px solid rgba(201, 168, 76, 0.06)',
+                      display: 'block',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201, 168, 76, 0.08)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                  >
+                    {proj.title}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -373,6 +461,16 @@ export default function Digest() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [topicFilter, setTopicFilter] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Fetch projects for the "Link to Project" picker
+  const { data: allProjects = [] } = useProjects()
+  const projectOptions = useMemo(() =>
+    allProjects
+      .filter((p) => p.slug)
+      .map((p) => ({ slug: p.slug, title: p.title }))
+      .sort((a, b) => a.title.localeCompare(b.title)),
+    [allProjects]
+  )
 
   // Fetch available dates
   const { data: dates = [] } = useDigestDates()
@@ -654,7 +752,7 @@ export default function Digest() {
                 </p>
               )}
               {filteredPapers.map((paper) => (
-                <PaperCard key={paper.id} paper={paper} />
+                <PaperCard key={paper.id} paper={paper} projects={projectOptions} />
               ))}
             </div>
           )}

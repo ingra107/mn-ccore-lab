@@ -600,6 +600,38 @@ export function useSubtasks(taskId: string) {
   })
 }
 
+// ── Paper-Project Links ────────────────────────────────────
+
+export interface PaperProjectLink {
+  id: string
+  paper_id: string
+  project_slug: string
+  linked_by: string | null
+  note: string | null
+  created_at: string
+  // Joined from research_digest:
+  title?: string
+  journal?: string
+  pub_date?: string
+  doi?: string
+  authors?: string
+  relevance_score?: number
+}
+
+export function useProjectPapers(slug: string) {
+  return useQuery({
+    queryKey: ['project-papers', slug],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${slug}/papers`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as PaperProjectLink[]
+    },
+    staleTime: 60 * 1000,
+    enabled: !!slug,
+  })
+}
+
 // ── Project Updates ─────────────────────────────────────────
 
 export function useProjectUpdates(slug: string) {

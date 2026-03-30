@@ -479,6 +479,36 @@ export function useVoteIdea() {
   })
 }
 
+// ── Paper-Project link mutations ──────────────────────────
+
+export function useLinkPaper() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { paper_id: string; project_slug: string; note?: string }) =>
+      fetch('/api/paper-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then((r) => r.json()),
+    onSettled: (_data, _err, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['project-papers', variables.project_slug] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUnlinkPaper() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, project_slug }: { id: string; project_slug: string }) =>
+      fetch(`/api/paper-links/${id}/delete`, { method: 'POST' }).then((r) => r.json()),
+    onSettled: (_data, _err, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['project-papers', variables.project_slug] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Bulk task mutations ────────────────────────────────────
 
 export function useBulkUpdateTasks() {
