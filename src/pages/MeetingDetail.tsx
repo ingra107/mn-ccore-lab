@@ -102,7 +102,7 @@ export default function MeetingDetail() {
     const reordered = arrayMove(teamAgendaItems, oldIndex, newIndex)
 
     // Persist to API
-    fetch(`/api/meetings/${meeting.id}/agenda/reorder`, {
+    fetch(`/api/meetings/${meeting!.id}/agenda/reorder`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: reordered.map(i => i.id) }),
