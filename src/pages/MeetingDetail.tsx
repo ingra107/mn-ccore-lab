@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
+import RoundPrompt from '../components/RoundPrompt'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
@@ -145,7 +146,10 @@ export default function MeetingDetail() {
               </h2>
             </div>
 
-            <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px' }} className="detail-card">
+            {/* Opening Round icebreaker prompt */}
+            <RoundPrompt meetingId={meeting.id} />
+
+            <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px', marginTop: '1rem' }} className="detail-card">
               {/* Auto-generated agenda items */}
               {autoAgenda.length > 0 && (
                 <div className="mb-4">

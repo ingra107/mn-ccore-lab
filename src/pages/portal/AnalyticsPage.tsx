@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3 } from 'lucide-react'
+import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import MetricCard from '../../components/MetricCard'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
@@ -105,9 +105,43 @@ export default function AnalyticsPage() {
   const pendingTasks = tasks.filter((t) => !t.completed).length
   const activeIdeas = ideas.filter((i) => i.status !== 'archived').length
 
+  const exportCSV = () => {
+    const rows = [
+      ['Task', 'Assignee', 'Status', 'Priority', 'Due Date', 'Project', 'Created', 'Completed'],
+      ...tasks.map((t) => [
+        (t.title || t.description || '').replace(/,/g, ';'),
+        t.assignee || '',
+        t.completed ? 'Done' : t.status || 'todo',
+        t.priority || 'medium',
+        t.due_date || '',
+        t.project_id || '',
+        t.created_at?.split('T')[0] || '',
+        t.completed_at?.split('T')[0] || '',
+      ]),
+    ]
+    const csv = rows.map((r) => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `mnccore-tasks-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div>
-      <SectionHeader icon={BarChart3} title="Lab Analytics" subtitle={`${projects.length} projects · ${pendingTasks} active tasks — performance metrics and reports`} />
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <SectionHeader icon={BarChart3} title="Lab Analytics" subtitle={`${projects.length} projects · ${pendingTasks} active tasks — performance metrics and reports`} />
+        <button
+          onClick={exportCSV}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors mt-1"
+          style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
+        >
+          <Download size={14} />
+          Export CSV
+        </button>
+      </div>
 
       {/* Week Navigator */}
       <div className="mt-5 flex items-center gap-3 flex-wrap">
