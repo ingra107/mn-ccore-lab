@@ -168,8 +168,19 @@ export default function Deadlines() {
               <DeadlineSection title={`Completed (${completed.length})`} items={completed.slice(0, 5)} color="var(--green, #22c55e)" collapsed />
             )}
             {deadlines.length === 0 && (
-              <div className="text-center py-16 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
-                No deadlines found
+              <div className="text-center py-20">
+                <div
+                  className="mx-auto mb-4"
+                  style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
+                >
+                  <Clock size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
+                </div>
+                <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                  No deadlines found
+                </p>
+                <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+                  Task due dates and grant milestones will appear here as they're created.
+                </p>
               </div>
             )}
           </div>
@@ -287,8 +298,19 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="text-center py-16 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
-        No upcoming deadlines
+      <div className="text-center py-20">
+        <div
+          className="mx-auto mb-4"
+          style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
+        >
+          <GanttChartSquare size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
+        </div>
+        <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+          No upcoming deadlines
+        </p>
+        <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+          Deadlines will appear on the timeline as tasks and milestones are scheduled.
+        </p>
       </div>
     )
   }

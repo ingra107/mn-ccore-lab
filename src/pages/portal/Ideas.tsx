@@ -143,8 +143,27 @@ export default function Ideas() {
               <IdeaCard key={idea.id} idea={idea} onVote={() => vote.mutate(idea.id)} onStatusChange={(status) => updateIdea.mutate({ id: idea.id, fields: { status } })} />
             ))}
             {ideas.length === 0 && (
-              <div className="col-span-3 text-center py-16 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
-                No ideas yet. Be the first to submit one!
+              <div className="col-span-3 text-center py-20">
+                <div
+                  className="mx-auto mb-4"
+                  style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
+                >
+                  <Lightbulb size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
+                </div>
+                <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                  No ideas yet
+                </p>
+                <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+                  Be the first to submit a research idea for the lab to explore.
+                </p>
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', background: 'none', cursor: 'pointer' }}
+                >
+                  <Plus size={15} />
+                  Submit an idea
+                </button>
               </div>
             )}
           </div>
@@ -270,8 +289,19 @@ function IdeaListView({ ideas, onVote, onStatusChange }: { ideas: IdeaRow[]; onV
         )
       })}
       {ideas.length === 0 && (
-        <div className="text-center py-16 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
-          No ideas yet
+        <div className="text-center py-20">
+          <div
+            className="mx-auto mb-4"
+            style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
+          >
+            <Lightbulb size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
+          </div>
+          <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+            No ideas yet
+          </p>
+          <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+            Be the first to submit a research idea for the lab to explore.
+          </p>
         </div>
       )}
     </div>

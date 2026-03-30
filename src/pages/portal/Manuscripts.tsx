@@ -294,8 +294,19 @@ function ListView({ manuscripts, taskCounts }: { manuscripts: Project[]; taskCou
       })}
 
       {sorted.length === 0 && (
-        <div className="text-center py-12 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
-          No manuscripts found
+        <div className="text-center py-20">
+          <div
+            className="mx-auto mb-4"
+            style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
+          >
+            <FileText size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
+          </div>
+          <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+            No manuscripts found
+          </p>
+          <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+            Manuscripts at every stage from idea to publication will appear here.
+          </p>
         </div>
       )}
     </div>

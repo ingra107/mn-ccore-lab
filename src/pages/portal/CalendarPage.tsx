@@ -362,8 +362,19 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
             })}
           </div>
         ) : (
-          <div className="text-center py-12 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
-            No events on this day
+          <div className="text-center py-20">
+            <div
+              className="mx-auto mb-4"
+              style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
+            >
+              <Calendar size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
+            </div>
+            <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+              No events on this day
+            </p>
+            <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+              Meetings, task deadlines, and milestones will appear here.
+            </p>
           </div>
         )}
       </div>
@@ -424,7 +435,20 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
         )
       })}
       {grouped.length === 0 && (
-        <div className="text-center py-16 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>No upcoming events</div>
+        <div className="text-center py-20">
+          <div
+            className="mx-auto mb-4"
+            style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
+          >
+            <Calendar size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
+          </div>
+          <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+            No upcoming events
+          </p>
+          <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+            Scheduled meetings, task deadlines, and milestones will appear in the agenda.
+          </p>
+        </div>
       )}
     </div>
   )

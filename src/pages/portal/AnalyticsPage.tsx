@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
 
   return (
     <div>
-      <SectionHeader icon={BarChart3} title="Lab Analytics" subtitle="Performance metrics and activity reports" />
+      <SectionHeader icon={BarChart3} title="Lab Analytics" subtitle={`${projects.length} projects · ${pendingTasks} active tasks — performance metrics and reports`} />
 
       {/* Week Navigator */}
       <div className="mt-5 flex items-center gap-3 flex-wrap">

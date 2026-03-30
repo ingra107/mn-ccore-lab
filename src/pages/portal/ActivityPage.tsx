@@ -40,7 +40,7 @@ export default function ActivityPage() {
   return (
     <div>
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <SectionHeader icon={ActivityIcon} title="Activity" subtitle="Recent actions across the lab" />
+        <SectionHeader icon={ActivityIcon} title="Activity" subtitle={`${allActivity.length} recent actions across the lab`} />
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
@@ -113,12 +113,17 @@ export default function ActivityPage() {
           )
         })}
         {grouped.length === 0 && (
-          <div className="text-center py-16">
-            <ActivityIcon size={40} style={{ color: 'var(--border-light)', margin: '0 auto 12px' }} />
-            <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+          <div className="text-center py-20">
+            <div
+              className="mx-auto mb-4"
+              style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
+            >
+              <ActivityIcon size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
+            </div>
+            <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
               {filterType ? 'No matching activity' : 'No activity yet'}
             </p>
-            <p className="text-xs mt-1 max-w-xs mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+            <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
               {filterType
                 ? `No ${typeOptions.find(o => o.value === filterType)?.label.toLowerCase()} activity found. Try a different filter.`
                 : 'Activity from tasks, meetings, project updates, and ideas will appear here.'}

@@ -195,16 +195,29 @@ export default function MyTasks() {
         {isLoading ? (
           <SkeletonList count={3} />
         ) : tasks.length === 0 ? (
-          <div className="text-center py-16">
-            <CheckCircle2 size={40} style={{ color: 'var(--border-light)', margin: '0 auto 12px' }} />
-            <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+          <div className="text-center py-20">
+            <div
+              className="mx-auto mb-4"
+              style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
+            >
+              <CheckCircle2 size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
+            </div>
+            <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
               {currentUser ? 'All caught up!' : 'No tasks yet'}
             </p>
-            <p className="text-xs mt-1 max-w-xs mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+            <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
               {currentUser
                 ? 'You have no active tasks assigned to you.'
                 : 'Sign in to see your personal tasks, or create one below.'}
             </p>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', background: 'none', cursor: 'pointer' }}
+            >
+              <Plus size={15} />
+              Create a task
+            </button>
           </div>
         ) : view !== 'list' ? (
           <>
