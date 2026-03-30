@@ -8,10 +8,8 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise } from '../lib/api'
+import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer } from '../lib/api'
 import type { DependencyRow, ExpertiseTag } from '../lib/api'
-import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, createQuestion, createAnswer, acceptAnswer } from '../lib/api'
-import type { DependencyRow, QuestionRow } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
 import type { Comment, SubtaskRow } from './useApiData'
@@ -709,18 +707,6 @@ export function useAddExpertise(memberSlug: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['expertise', memberSlug] })
       queryClient.invalidateQueries({ queryKey: ['expertise', 'all'] })
-// ── Question mutations (Ask the Lab) ─────────────────────────
-
-export function useCreateQuestion() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (input: { question: string; context?: string; project_slug?: string }) =>
-      createQuestion(input),
-
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions'] })
-      queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
 }
@@ -747,6 +733,26 @@ export function useRemoveExpertise(memberSlug: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['expertise', memberSlug] })
       queryClient.invalidateQueries({ queryKey: ['expertise', 'all'] })
+    },
+  })
+}
+
+// ── Question mutations (Ask the Lab) ─────────────────────────
+
+export function useCreateQuestion() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { question: string; context?: string; project_slug?: string }) =>
+      createQuestion(input),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['questions'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 export function useCreateAnswer(questionId: string) {
   const queryClient = useQueryClient()
 

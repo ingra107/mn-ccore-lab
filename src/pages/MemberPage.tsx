@@ -156,6 +156,7 @@ export default function MemberPage() {
   const [newTag, setNewTag] = useState('')
   const [showAddTag, setShowAddTag] = useState(false)
   const { isAuthenticated } = useAuth()
+  const { data: allCommitments = [] } = useCommitments(slug)
 
   // Commitments to this person (slug does partial match on to_whom)
   const { openCommitments, doneCommitments } = useMemo(() => {
