@@ -600,6 +600,31 @@ export function useSubtasks(taskId: string) {
   })
 }
 
+// ── Reactions ──────────────────────────────────────────────
+
+export interface Reaction {
+  id: string
+  target_type: string  // 'project_update' | 'comment' | 'task_comment'
+  target_id: string
+  emoji: string
+  user_slug: string
+  created_at: string
+}
+
+export function useReactions(targetType: string, targetId: string) {
+  return useQuery({
+    queryKey: ['reactions', targetType, targetId],
+    queryFn: async () => {
+      const res = await fetch(`/api/reactions?target_type=${targetType}&target_id=${targetId}`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as Reaction[]
+    },
+    staleTime: 30 * 1000,
+    enabled: !!targetId,
+  })
+}
+
 // ── Project Updates ─────────────────────────────────────────
 
 export function useProjectUpdates(slug: string) {

@@ -7,6 +7,7 @@ import {
   ListChecks, Plus, Trash2,
 } from 'lucide-react'
 import Avatar from '../Avatar'
+import ReactionBar from '../ReactionBar'
 import { getPersonInfo } from '../../data/team'
 import { useTeam, useSubtasks } from '../../hooks/useApiData'
 import { useUpdateTask, useUpdateTaskStatus, useCreateSubtask, useToggleSubtask, useDeleteSubtask } from '../../hooks/useMutations'
@@ -620,6 +621,7 @@ function TaskComments({ taskId }: { taskId: string }) {
                   <span className="text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>{formatRelativeTime(c.created_at)}</span>
                 </div>
                 <p className="text-sm mt-0.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>{c.content}</p>
+                <ReactionBar targetType="task_comment" targetId={c.id} compact />
               </div>
             </div>
           )
