@@ -17,6 +17,7 @@ import { handleCalendarEvents } from './routes/calendar';
 import { handleActivity, handleActivityHeatmap } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
+import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper } from './routes/paper-links';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -71,6 +72,11 @@ export default {
         const projectUpdatesGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/updates$/);
         if (projectUpdatesGet) {
           return await handleGetProjectUpdates(projectUpdatesGet[1], env);
+        }
+
+        const projectPapersGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/papers$/);
+        if (projectPapersGet) {
+          return await handleGetPaperLinks(projectPapersGet[1], env);
         }
 
         switch (url.pathname) {
@@ -324,6 +330,17 @@ export default {
         const digestStatusMatch = path.match(/^\/api\/digest\/([^/]+)\/status$/);
         if (request.method === 'POST' && digestStatusMatch) {
           return await handleUpdateDigestStatus(digestStatusMatch[1], request, user, env);
+        }
+
+        // POST /api/paper-links — link a paper to a project
+        if (request.method === 'POST' && path === '/api/paper-links') {
+          return await handleLinkPaper(request, user, env);
+        }
+
+        // POST /api/paper-links/:id/delete — unlink a paper from a project
+        const paperLinkDeleteMatch = path.match(/^\/api\/paper-links\/([^/]+)\/delete$/);
+        if (request.method === 'POST' && paperLinkDeleteMatch) {
+          return await handleUnlinkPaper(paperLinkDeleteMatch[1], env);
         }
 
         return error('Not found', 404);
