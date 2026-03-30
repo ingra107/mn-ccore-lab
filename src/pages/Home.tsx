@@ -222,7 +222,7 @@ export default function Home() {
             </p>
 
             <h1
-              className="transition-all duration-700"
+              className="transition-all duration-700 inline-flex items-baseline gap-1"
               style={{
                 fontFamily: 'var(--font-display)',
                 fontWeight: 800,
@@ -235,7 +235,18 @@ export default function Home() {
                 transitionDelay: '100ms',
               }}
             >
-              MN-CCORE
+              MN
+              <svg viewBox="0 0 44 22" style={{ width: 'clamp(2rem, 5vw, 4rem)', height: 'auto', display: 'inline-block', verticalAlign: 'baseline', marginBottom: '0.08em' }}>
+                <path
+                  d="M 2 11 L 8 11 L 12 3 L 17 19 L 22 7 L 27 13 L 32 9 L 42 9"
+                  stroke="var(--gold)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+              </svg>
+              CCORE
             </h1>
 
             <p
