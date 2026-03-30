@@ -285,6 +285,17 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 - PublicationDetail page: /publications/:id route with title, authors (team avatars), abstract, topics, DOI/PubMed links
   - "View details" link added to PublicationCard expanded section
 
+### Done (2026-03-30, round 5)
+- Keyboard shortcuts: Cmd+N added to ShortcutHelp modal (Global section)
+- SEO: usePageMeta now creates OG tags if missing (og:title, og:description, og:site_name, og:type)
+  - PublicationDetail passes og:type=article for shareable links
+- Dark mode: replaced hardcoded 'white' with var(--cream) in PortalLayout, Ideas, Manuscripts, Calendar, Deadlines, ShortcutHelp
+- Grants portal page: full data-driven view from useGrantTimeline
+  - Summary metrics (active/proposed/funding/milestones)
+  - Upcoming milestones section
+  - Grant cards with PI avatar, agency, dates, progress bar, milestone chips
+  - Link to full Gantt timeline at /grants
+
 ### Remaining
 - Launch prep: SendGrid API key, Cloudflare Access auth, 7 headshots, Nate Scholar ID
 
