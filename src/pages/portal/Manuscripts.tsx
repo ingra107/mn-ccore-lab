@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { LayoutGrid, List, ArrowRight, FileText } from 'lucide-react'
+import { LayoutGrid, List, ArrowRight, FileText, Plus } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
+import CreateProjectModal from '../../components/CreateProjectModal'
 import { useProjects, useTasks } from '../../hooks/useApiData'
+import { useCreateProject } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import type { Project } from '../../data/types'
 
@@ -23,9 +25,11 @@ type ViewMode = 'pipeline' | 'list'
 export default function Manuscripts() {
   const [view, setView] = useState<ViewMode>('pipeline')
   const [filterPI, setFilterPI] = useState<string>('')
+  const [showCreate, setShowCreate] = useState(false)
 
   const { data: projects = [] } = useProjects()
   const { data: tasks = [] } = useTasks()
+  const createProject = useCreateProject()
 
   // Filter to manuscript-like projects (all projects are potential manuscripts)
   const manuscripts = useMemo(() => {
@@ -94,6 +98,22 @@ export default function Manuscripts() {
 
       {/* Controls */}
       <div className="mt-5 flex items-center gap-3 flex-wrap">
+        <button
+          onClick={() => setShowCreate(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
+          style={{
+            background: 'var(--gold)',
+            color: 'var(--ink)',
+            fontFamily: 'var(--font-sans)',
+            fontSize: '13px',
+            fontWeight: 600,
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          <Plus size={14} />
+          New Project
+        </button>
         <div className="flex items-center gap-2">
           {([
             { key: 'pipeline' as ViewMode, label: 'Pipeline', icon: LayoutGrid },
@@ -142,6 +162,13 @@ export default function Manuscripts() {
           <ListView manuscripts={manuscripts} taskCounts={taskCounts} />
         )}
       </div>
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreate={(input) => createProject.mutate(input)}
+      />
     </div>
   )
 }

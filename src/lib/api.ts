@@ -189,6 +189,19 @@ export function fetchStats() {
 
 // ── Write endpoints (require auth) ──────────────────────────
 
+export function createProject(input: {
+  title: string
+  category?: string
+  stage?: string
+  description?: string
+  pi?: string
+}) {
+  return fetchApi<ProjectRow>('/api/projects', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
 export function updateProject(id: string, fields: Record<string, unknown>) {
   return fetchApi<ProjectRow>(`/api/projects/${id}`, {
     method: 'POST',
