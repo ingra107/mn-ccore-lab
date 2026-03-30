@@ -4,6 +4,7 @@ import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, 
 import { SkeletonList } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import TaskFilters from '../../components/tasks/TaskFilters'
+import SavedViewsBar from '../../components/tasks/SavedViewsBar'
 import TaskListView from '../../components/tasks/TaskListView'
 import TaskBoardView from '../../components/tasks/TaskBoardView'
 import TaskStandUpView from '../../components/tasks/TaskStandUpView'
@@ -14,6 +15,8 @@ import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import ToggleButton from '../../components/ToggleButton'
 import { useTasks } from '../../hooks/useApiData'
 import { useCreateTask, useUpdateTaskStatus, useBulkUpdateTasks } from '../../hooks/useMutations'
+import { useSavedViews } from '../../hooks/useSavedViews'
+import type { ViewFilters } from '../../hooks/useSavedViews'
 import type { TaskRow } from '../../lib/api'
 
 type ViewMode = 'list' | 'board' | 'standup' | 'timeline'
@@ -46,6 +49,23 @@ export default function Tasks() {
     priority: '',
     project: '',
   })
+
+  const {
+    views,
+    activeViewId,
+    activeViewFilters,
+    setActiveViewId,
+    saveView,
+    renameView,
+    deleteView,
+  } = useSavedViews('nick')
+
+  const currentViewFilters: ViewFilters = {
+    assignee: filters.assignee || '',
+    status: (filters.status || 'all') as ViewFilters['status'],
+    search: '',
+    sort: 'due_asc',
+  }
 
   // Build query params from filters
   const queryFilters: Record<string, string> = {}
@@ -130,6 +150,35 @@ export default function Tasks() {
           <Plus size={16} />
           New Task
         </button>
+      </div>
+
+      {/* Saved view presets */}
+      <div className="mt-3">
+        <SavedViewsBar
+          views={views}
+          activeViewId={activeViewId}
+          currentFilters={currentViewFilters}
+          activeViewFilters={activeViewFilters}
+          onSelectView={(id) => {
+            setActiveViewId(id)
+            const view = views.find(v => v.id === id)
+            if (view) {
+              const resolved = {
+                ...view.filters,
+                assignee: view.filters.assignee === '__me__' ? 'nick' : view.filters.assignee,
+              }
+              setFilters({
+                assignee: resolved.assignee,
+                status: resolved.status === 'all' ? '' : resolved.status,
+                priority: '',
+                project: '',
+              })
+            }
+          }}
+          onSaveView={saveView}
+          onRenameView={renameView}
+          onDeleteView={deleteView}
+        />
       </div>
 
       {/* View selector */}
