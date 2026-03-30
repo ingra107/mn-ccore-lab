@@ -26,6 +26,8 @@ import {
   fetchProjectDependencies,
   fetchExpertise,
   fetchExpertSuggestions,
+  fetchQuestions,
+  fetchQuestionDetail,
 } from '../lib/api'
 import type {
   PublicationRow,
@@ -44,6 +46,12 @@ import type {
 
 // Re-export row types for components that need them
 export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion }
+  QuestionRow,
+  QuestionDetail,
+} from '../lib/api'
+
+// Re-export row types for components that need them
+export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, QuestionRow, QuestionDetail }
 
 // Static data imports (fallback for local dev)
 import { publications as staticPublications } from '../data/publications'
@@ -869,5 +877,27 @@ export function useExpertSuggestions(topic: string) {
     },
     staleTime: 60 * 1000,
     enabled: !!topic && topic.length >= 2,
+// ── Questions (Ask the Lab) ──────────────────────────────────
+
+export function useQuestions(filters?: { status?: string; project_slug?: string }) {
+  return useQuery({
+    queryKey: ['questions', filters],
+    queryFn: async () => {
+      const res = await fetchQuestions(filters)
+      return res.data as QuestionRow[]
+    },
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useQuestionDetail(id: string) {
+  return useQuery({
+    queryKey: ['question', id],
+    queryFn: async () => {
+      const res = await fetchQuestionDetail(id)
+      return res.data as QuestionDetail
+    },
+    staleTime: 30 * 1000,
+    enabled: !!id,
   })
 }
