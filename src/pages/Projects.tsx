@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FolderKanban, GitBranch } from 'lucide-react'
+import { FolderKanban, GitBranch, Plus } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useProjects, useDependencies } from '../hooks/useApiData'
+import { useCreateProject } from '../hooks/useMutations'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
+import CreateProjectModal from '../components/CreateProjectModal'
 import type { Project } from '../data/types'
 import type { Stage } from '../components/StageSelector'
 
@@ -31,9 +33,11 @@ export default function Projects() {
 
   const { data: projects = [] } = useProjects()
   const { data: dependencies = [] } = useDependencies()
+  const createProject = useCreateProject()
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [showDeps, setShowDeps] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
 
   const filtered = useMemo(() => {
     if (activeCategory === 'all') return projects
@@ -78,6 +82,22 @@ export default function Projects() {
             >
               Research Pipeline
             </h1>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg ml-auto"
+              style={{
+                background: 'var(--gold)',
+                color: 'var(--ink)',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '13px',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <Plus size={14} />
+              New Project
+            </button>
           </div>
           <p
             style={{
@@ -307,6 +327,13 @@ export default function Projects() {
           })}
         </div>
       </div>
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreate={(input) => createProject.mutate(input)}
+      />
 
       {/* Scoped styles */}
       <style>{`

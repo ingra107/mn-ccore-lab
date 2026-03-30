@@ -55,6 +55,47 @@ export async function handleUpdateMilestoneNote(
   return json({ data: updated });
 }
 
+// POST /api/projects — create new project
+export async function handleCreateProject(
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const body = await request.json() as {
+    title: string
+    slug?: string
+    category?: string
+    stage?: string
+    description?: string
+    pi?: string
+  };
+
+  if (!body.title?.trim()) {
+    return error('title required', 400);
+  }
+
+  const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const id = generateId();
+
+  await env.DB.prepare(
+    `INSERT INTO projects (id, title, slug, category, stage, description, pi, status, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'Active', datetime('now'), datetime('now'))`
+  ).bind(
+    id,
+    body.title.trim(),
+    slug,
+    body.category || 'research',
+    body.stage || 'Idea',
+    body.description || '',
+    body.pi || user.email.split('@')[0],
+  ).run();
+
+  await logActivity(env, 'project', `Created project: ${body.title.trim()}`, user.email, id, null);
+
+  const created = await env.DB.prepare('SELECT * FROM projects WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
+}
+
 // GET /api/projects?status=&category=
 export async function handleProjects(url: URL, env: Env): Promise<Response> {
   const status = url.searchParams.get('status');

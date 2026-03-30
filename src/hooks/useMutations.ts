@@ -8,13 +8,33 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency } from '../lib/api'
+import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency } from '../lib/api'
 import type { DependencyRow } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
 import type { Comment, SubtaskRow } from './useApiData'
 
 // ── Project mutations ───────────────────────────────────────
+
+export function useCreateProject() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      title: string
+      category?: string
+      stage?: string
+      description?: string
+      pi?: string
+    }) => createProject(input),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
 
 export function useUpdateProject(projectId: string) {
   const queryClient = useQueryClient()
