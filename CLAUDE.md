@@ -9,7 +9,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- not just a website, 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (160+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (220+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Data | TanStack Query v5 + Cloudflare D1 (19 tables, 60+ API endpoints) -- ALL LIVE |
@@ -160,6 +160,17 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 | `src/pages/Digest.tsx` | Research Digest browser (152 papers, topic/date/status filters) |
 | `src/components/UpcomingMeetingBanner.tsx` | Homepage meeting banner with action item count |
 | `src/components/LatestDigest.tsx` | Homepage digest preview (top 4 papers) |
+| `src/components/GlobalQuickAdd.tsx` | Todoist-style task creation modal (Cmd+N) |
+| `src/components/QuickAddTaskInput.tsx` | Token-highlighted input with mirror overlay |
+| `src/lib/parseQuickAdd.ts` | NLP parser: @person, #project, p1-p3, date expressions |
+| `src/pages/PublicationDetail.tsx` | Individual publication view with OG meta tags |
+| `src/pages/portal/Grants.tsx` | Grant cards, progress bars, milestones from useGrantTimeline |
+| `src/components/RoundPrompt.tsx` | Meeting icebreaker prompts (shuffle, customize, persist) |
+| `src/data/roundPrompts.ts` | 28 prompts across 5 categories + deterministic hash |
+| `src/hooks/useRecentlyViewed.ts` | Track page visits in localStorage (6 max) |
+| `src/components/RouteProgressBar.tsx` | NProgress-style teal bar during route transitions |
+| `src/hooks/useDensity.ts` | Comfortable/compact spacing toggle (CSS variables) |
+| `src/hooks/useFavicon.ts` | Dynamic emoji favicon per portal section |
 
 ## Portal Features
 
@@ -183,6 +194,16 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 | Drag-Drop Board | TaskBoardView.tsx | @dnd-kit kanban with optimistic status changes |
 | Activity Heatmap | ActivityHeatmap.tsx | GitHub-style contribution heatmap |
 | Quick Capture | Personal.tsx | Lightbulb input -> creates Idea |
+| GlobalQuickAdd | GlobalQuickAdd.tsx, QuickAddTaskInput.tsx, parseQuickAdd.ts | Todoist-style NLP task creation (Cmd+N, floating +) |
+| Publication Detail | PublicationDetail.tsx | /publications/:id with OG meta, author avatars, topic links |
+| Grants Portal | portal/Grants.tsx | Grant cards, progress bars, milestones, link to Gantt |
+| RoundPrompt | RoundPrompt.tsx, roundPrompts.ts | 28 meeting icebreakers, shuffle/customize, localStorage |
+| Recently Viewed | useRecentlyViewed.ts | Chips on Personal Hub tracking last 6 pages |
+| Focus Mode | PortalLayout.tsx | F key hides sidebar + header for distraction-free work |
+| Density Toggle | useDensity.ts | Comfortable/compact spacing via CSS variables |
+| Route Progress | RouteProgressBar.tsx | NProgress-style teal bar during navigation |
+| Dynamic Favicons | useFavicon.ts | Section-specific emoji in browser tab |
+| CSV Export | AnalyticsPage.tsx | Download task data as CSV |
 
 ## Critical Rules
 
@@ -209,7 +230,8 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 7. **Phase 7 -- DONE:** D1 migration (all pages off localStorage), Grant Gantt page, CV Export, schema v4
 8. **Phase 8 -- DONE:** NotificationBell, MentionInput, MyItems page, commitment sync, morning pulse email cron, meeting automation D1 integration
 9. **Phase 9 -- DONE (Sessions 1-4):** LabSync parity -- Task system (4 views, drag-drop, detail panel), Personal Hub, Deadlines, Manuscripts, Ideas, Calendar, Analytics, Activity, Settings, AI Meeting Notes, Lab Pulse, Cmd+K, keyboard shortcuts, Smart Search, Quick Capture
-10. **Phase 10 -- IN PROGRESS:** UX polish pass (LabSync benchmark), launch prep (SendGrid + Cloudflare Access), data quality (7 headshots, Nate Scholar ID)
+10. **Phase 10 -- DONE (9 rounds, 22 commits):** UX polish (LabSync benchmark). GlobalQuickAdd, PublicationDetail, Grants portal, empty state consistency, RoundPrompt, focus mode, density toggle, favicons, recently viewed, route progress bar, CSV export, notification grouping, dark mode fixes, OG meta tags.
+11. **Phase 11 -- NEXT:** Infrastructure refactors (split api/index.ts, useApiData, useMutations), hard features (task peek, subtasks, bulk actions, agenda reorder, search ranking), launch prep
 
 ## Meeting Cadence
 
@@ -249,94 +271,71 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 - **Sync pull:** `scripts/db/sync_d1_pull.py` (D1 -> brain.db)
 - **Meeting automation:** `scripts/scheduled/meeting_automation.py`
 
-## UX Polish Tracker (Phase 10)
+## Phase 10 Summary (COMPLETE — 2026-03-30, 22 commits, 9 rounds)
 
-### Done (2026-03-30)
-- Hero EKG pulse inline SVG (brand consistency with nav logo)
-- Sidebar item gap 2px→4px, section labels 10→11px
-- Bento grid gap 16→20px, card padding normalized 24px
-- Task card padding 14→16px, list gap 8→12px, meta text 10→11px
-- Sort buttons 11→12px, filter dropdowns 12→13px
-- View switcher: all 4 views inline (removed "More views" dropdown)
-- Search bar pill-shaped (rounded-full)
-- ToggleButton larger touch targets
-- Deploy guardrail (Rule 11: never deploy from worktrees)
+All frontend-only improvements from NEXT-50 Tiers 1-2 shipped. 13 new files, 25+ modified.
+Key additions: GlobalQuickAdd (NLP parser), PublicationDetail, Grants portal, RoundPrompt,
+focus mode, density toggle, favicons, recently viewed, route progress bar, CSV export,
+notification grouping, empty state consistency, dark mode fixes, OG meta tags.
 
-### Done (2026-03-30, round 2)
-- Filter dropdown icons (FolderKanban, Users, CircleDot, Flag inside pills)
-- Page title icons on all 14 portal pages (teal icon in rounded square)
-- Sidebar active state: 3px left teal accent bar
-- Quick Action button hierarchy ("New Task" primary teal fill, others outlined)
+## Phase 11 Backlog — Infrastructure & Hard Problems
 
-### Done (2026-03-30, round 3)
-- Task card hover: subtle lift (-1px) + shadow on hover
-- Empty states: icon in teal rounded box (56px), text-base headings, outlined CTA buttons
-- Meetings + Projects custom headers: added teal page icons
+**START HERE next session.** These are high-value items requiring dedicated effort.
 
-### Done (2026-03-30, round 4)
-- Empty state consistency: all portal pages now use 56px teal icon box + text-base heading + descriptive subtitle + outlined CTA
-  - Updated: Grants, Manuscripts, Deadlines (list+timeline), MyTasks, Ideas (grid+list), Activity, Calendar (day+agenda)
-- Dynamic subtitle counts: Activity ("X recent actions") and Analytics ("X projects · Y tasks") now show live counts
-- GlobalQuickAdd: Todoist-style task creation from any portal page
-  - parseQuickAdd.ts: NLP parser for @person, #project, p1-p3, date expressions
-  - QuickAddTaskInput.tsx: Token-highlighted input with mirror overlay
-  - GlobalQuickAdd.tsx: Animated modal (Cmd+N / Ctrl+N shortcut)
-  - Floating teal "+" button (bottom-right) on all portal pages
-- PublicationDetail page: /publications/:id route with title, authors (team avatars), abstract, topics, DOI/PubMed links
-  - "View details" link added to PublicationCard expanded section
+### Tier 1: Code Quality (worktree refactors — do first)
+| # | Item | Why | Approach |
+|---|------|-----|----------|
+| 1 | **Split api/index.ts** | 3000+ lines, single Worker file. Unmaintainable. | Extract into `api/routes/{tasks,projects,meetings,search,settings}.ts`. Use worktree. |
+| 2 | **Split useApiData.ts** | 12+ hooks in 17K lines. | Split into `hooks/use{Tasks,Projects,Meetings,...}.ts`. Re-export from index. |
+| 3 | **Split useMutations.ts** | 7 mutations in 14K lines. | Same domain-split pattern. |
 
-### Done (2026-03-30, round 5)
-- Keyboard shortcuts: Cmd+N added to ShortcutHelp modal (Global section)
-- SEO: usePageMeta now creates OG tags if missing (og:title, og:description, og:site_name, og:type)
-  - PublicationDetail passes og:type=article for shareable links
-- Dark mode: replaced hardcoded 'white' with var(--cream) in PortalLayout, Ideas, Manuscripts, Calendar, Deadlines, ShortcutHelp
-- Grants portal page: full data-driven view from useGrantTimeline
-  - Summary metrics (active/proposed/funding/milestones)
-  - Upcoming milestones section
-  - Grant cards with PI avatar, agency, dates, progress bar, milestone chips
-  - Link to full Gantt timeline at /grants
+### Tier 2: Features (API + frontend — highest user value)
+| # | Item | Why | Approach |
+|---|------|-----|----------|
+| 4 | **Task peek overlay** | Space bar preview without navigation. | Code in dump line 18347. Refactor `ActionItemRow` → current task types. |
+| 5 | **Task subtasks** | Complex tasks need breakdown. | New D1 table `task_subtasks` + 3 API endpoints + TaskDetailPanel UI. |
+| 6 | **Bulk task actions** | Multi-select + batch operations. | Checkbox column + floating toolbar. API batch endpoint. |
+| 7 | **Agenda item reordering** | Can't reorder after creation. | @dnd-kit sortable. API POST for `sort_order`. |
+| 8 | **Search ranking** | FTS returns by type, not relevance. | Weight by recency + type priority in API. |
+| 9 | **Dashboard card pinning** | Can't pin favorites to top. | Customize modal rework + localStorage sort state. |
+| 10 | **SavedViewsBar** | Named filter+sort configs. | Code in dump line 19757. localStorage only, no API. |
 
-### Done (2026-03-30, round 6)
-- Notification bell: grouped by day (Today/Yesterday/date headers with teal accent)
-- CSV export: download button on Analytics page exports all task data
-- RoundPrompt: 28 icebreaker prompts across 5 categories, deterministic per meeting
-  - Shuffle, customize, reset controls. Persisted per meeting in localStorage
-  - Wired into MeetingDetail above agenda section
+### Tier 3: Infrastructure
+| # | Item | Why | Approach |
+|---|------|-----|----------|
+| 11 | **Playwright smoke tests** | No automated testing. | Script hitting 18 portal routes, verify page titles. |
 
-### Done (2026-03-30, round 7)
-- Recently viewed: useRecentlyViewed hook + chips on Personal Hub (localStorage, 6 items max)
-- Route progress bar: thin teal NProgress-style bar at top during route transitions
-- Cmd+K dark mode: audited — already safe (var(--cream) throughout)
-- Project card hover: audited — already implemented (Framer Motion whileHover)
+### Launch Blockers (External)
+- SendGrid API key → `wrangler secret put SENDGRID_API_KEY`
+- Cloudflare Access → restrict to portal paths with @umn.edu
+- 7 missing team headshots
+- Nate Mesfin Google Scholar ID
 
-### Done (2026-03-30, round 8)
-- Focus mode: F key hides sidebar + header, full-width content, "Focus · F to exit" pill
-- Density toggle: comfortable/compact via CSS variables, icon in header, localStorage persist
-  - Applied to BentoCard padding and bento-grid gap
-- F and density toggle added to ShortcutHelp
+### Code Dump Recovery Reference
+`Scratch/plans/mnccore-hub-session-code-dump-2026-03-30.md` (33K lines)
 
-### Done (2026-03-30, round 9)
-- Dynamic emoji favicon: 18 section-specific emojis in browser tab (canvas-rendered)
-- Cmd+K dark mode: confirmed already safe
-- Project card hover: confirmed already implemented
-- Dashboard card pinning: deferred to dedicated effort (needs customize modal rework)
-
-### Remaining — Quick Wins
-- Launch prep: SendGrid API key, Cloudflare Access auth, 7 headshots, Nate Scholar ID
-
-### Remaining — Dedicated Effort Required
-- Dashboard card pinning — needs customize modal + sort logic rework
-- Split api/index.ts (3000+ lines → route modules) — worktree refactor
-- Split useApiData.ts (12+ hooks in one file) — worktree refactor
-- Split useMutations.ts (7 mutations in one file) — worktree refactor
-- Playwright smoke tests (18 portal routes) — test infrastructure
-- Agenda item reordering (@dnd-kit sortable) — API changes needed
-- Search results ranking (weight by recency/type) — API endpoint changes
-- Task peek overlay (Space bar preview) — type refactoring from legacy ActionItemRow
-- Task subtasks/checklists — new D1 table + API endpoints
-- Bulk task actions (multi-select + batch) — API changes needed
+| Component | Line | Status |
+|-----------|------|--------|
+| TaskPeekOverlay | 18347 | Needs type refactor |
+| SavedViewsBar | 19757 | Self-contained, ready |
+| BulkActionToolbar | 19283 | Needs API batch endpoint |
+| ProjectDependencyGraph | 21631 | Needs data source |
+| TeamPulseCard | 20916 | Needs useTeamPulse hook |
 
 ## Session Notes
 
+### 2026-03-30: Phase 10 Complete (Spring Break Day 1)
+**Morning:** Recovered from dispatch worktree incident (4 rogue deploys). Added Rule 11 guardrail. Preserved 33K-line code dump.
+
+**Afternoon (this session):** 22 commits, 9 rounds of UX polish + feature work.
+- Rounds 1-3 (prior session): Spacing rhythm, visual identity, interactivity
+- Round 4: Empty states (8 pages), subtitle counts, GlobalQuickAdd, PublicationDetail
+- Round 5: ShortcutHelp, OG meta, dark mode (7 files), Grants portal (real data)
+- Round 6: Notification groups, CSV export, RoundPrompt icebreakers
+- Round 7: Recently viewed, route progress bar
+- Round 8: Focus mode (F key), density toggle
+- Round 9: Dynamic emoji favicons
+
+**13 new files created.** All frontend-only NEXT-50 items exhausted. Phase 11 backlog written with priority tiers. Next session should start with api/index.ts split (worktree).
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
 
