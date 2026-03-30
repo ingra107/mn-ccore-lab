@@ -75,6 +75,7 @@ export interface Project {
   lastActivity?: string
   notes?: ProjectNote[]
   pi_context?: string
+  strategic_context?: string
 }
 
 export interface Mentee {

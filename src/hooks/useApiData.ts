@@ -92,6 +92,7 @@ function rowToProject(row: ProjectRow): Project {
     pi: row.pi || '',
     slug: row.slug || '',
     stage: row.stage as Project['stage'],
+    strategic_context: row.strategic_context || undefined,
   }
 }
 

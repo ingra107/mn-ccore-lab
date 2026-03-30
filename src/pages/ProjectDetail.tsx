@@ -10,6 +10,7 @@ import {
   Clock,
   CheckCircle2,
   Circle,
+  Compass,
   FileText,
   Plus,
   Send,
@@ -122,6 +123,10 @@ function ProjectDetailInner({ project }: InnerProps) {
   // PI Context editing
   const [editingContext, setEditingContext] = useState(false)
   const [contextDraft, setContextDraft] = useState(project.pi_context ?? '')
+
+  // Strategic Context ("Why This Matters Now") editing
+  const [editingStrategic, setEditingStrategic] = useState(false)
+  const [strategicDraft, setStrategicDraft] = useState(project.strategic_context ?? '')
   const { data: apiMeetings = [] } = useMeetingsApi()
   const { data: actionItemRows = [] } = useActionItems()
 
@@ -422,34 +427,35 @@ function ProjectDetailInner({ project }: InnerProps) {
         { id: 'comments', label: 'Comments' },
       ]} />
 
-      {/* "Why This Matters Now" — PI strategic context */}
-      {(project.pi_context || isPi) && (
+      {/* Strategic Context — Why This Matters Now */}
+      {(project.strategic_context || isPi) && (
         <div
+          className="mt-6 p-4 rounded-xl"
           style={{
+            background: 'rgba(201, 168, 76, 0.06)',
+            border: '1px solid rgba(201, 168, 76, 0.15)',
             marginBottom: '1.5rem',
-            padding: '14px 18px',
-            borderRadius: '10px',
-            borderLeft: '3px solid var(--gold)',
-            backgroundColor: 'rgba(201, 168, 76, 0.04)',
           }}
-          className="detail-card"
         >
-          <div className="flex items-center justify-between mb-1">
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10px',
-                color: 'var(--gold)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                fontWeight: 600,
-              }}
-            >
-              Why This Matters Now
-            </span>
-            {isPi && !editingContext && (
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Compass size={14} style={{ color: 'var(--gold)' }} />
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '10px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: 'var(--gold)',
+                  fontWeight: 600,
+                }}
+              >
+                Why This Matters Now
+              </span>
+            </div>
+            {isPi && !editingStrategic && (
               <button
-                onClick={() => { setContextDraft(project.pi_context ?? ''); setEditingContext(true) }}
+                onClick={() => { setStrategicDraft(project.strategic_context ?? ''); setEditingStrategic(true) }}
                 className="text-[10px] px-2 py-0.5 rounded"
                 style={{
                   fontFamily: 'var(--font-mono)',
@@ -460,15 +466,15 @@ function ProjectDetailInner({ project }: InnerProps) {
                   cursor: 'pointer',
                 }}
               >
-                {project.pi_context ? 'Edit' : 'Add context'}
+                {project.strategic_context ? 'Edit' : 'Add context'}
               </button>
             )}
           </div>
-          {editingContext ? (
+          {editingStrategic ? (
             <div>
               <textarea
-                value={contextDraft}
-                onChange={(e) => setContextDraft(e.target.value)}
+                value={strategicDraft}
+                onChange={(e) => setStrategicDraft(e.target.value)}
                 placeholder="2-3 sentences: What's the strategic context? Why is this project important right now? What should the team know?"
                 rows={3}
                 autoFocus
@@ -479,35 +485,35 @@ function ProjectDetailInner({ project }: InnerProps) {
                   color: 'var(--ink)',
                   background: 'var(--cream)',
                   border: '1px solid var(--gold)',
-                  borderRadius: '6px',
-                  padding: '8px 10px',
-                  lineHeight: 1.5,
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  lineHeight: 1.6,
                   resize: 'vertical',
                   outline: 'none',
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                     e.preventDefault()
-                    d1Update.mutate({ pi_context: contextDraft.trim() || undefined })
-                    setEditingContext(false)
+                    d1Update.mutate({ strategic_context: strategicDraft.trim() || undefined })
+                    setEditingStrategic(false)
                   }
                   if (e.key === 'Escape') {
-                    setEditingContext(false)
+                    setEditingStrategic(false)
                   }
                 }}
               />
               <div className="flex items-center gap-2 mt-2">
                 <button
-                  onClick={() => { d1Update.mutate({ pi_context: contextDraft.trim() || undefined }); setEditingContext(false) }}
+                  onClick={() => { d1Update.mutate({ strategic_context: strategicDraft.trim() || undefined }); setEditingStrategic(false) }}
                   className="px-3 py-1 rounded-md text-xs font-medium"
-                  style={{ fontFamily: 'var(--font-sans)', background: 'var(--gold)', color: '#0f1923', border: 'none', cursor: 'pointer' }}
+                  style={{ fontFamily: 'var(--font-body)', background: 'var(--gold)', color: '#0f1923', border: 'none', cursor: 'pointer' }}
                 >
                   Save
                 </button>
                 <button
-                  onClick={() => setEditingContext(false)}
+                  onClick={() => setEditingStrategic(false)}
                   className="px-3 py-1 rounded-md text-xs"
-                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer' }}
+                  style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>
@@ -516,7 +522,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 </span>
               </div>
             </div>
-          ) : project.pi_context ? (
+          ) : project.strategic_context ? (
             <p
               style={{
                 fontFamily: 'var(--font-body)',
@@ -526,7 +532,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 margin: 0,
               }}
             >
-              {project.pi_context}
+              {project.strategic_context}
             </p>
           ) : isPi ? (
             <p

@@ -12,3 +12,6 @@ CREATE TABLE IF NOT EXISTS reactions (
 
 CREATE INDEX IF NOT EXISTS idx_reactions_target ON reactions(target_type, target_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_reactions_unique ON reactions(target_type, target_id, user_slug, emoji);
+
+-- Strategic context: PI-editable "Why This Matters Now" field on projects
+ALTER TABLE projects ADD COLUMN strategic_context TEXT;

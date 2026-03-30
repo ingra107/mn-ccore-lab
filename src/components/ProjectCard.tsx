@@ -128,6 +128,25 @@ export default function ProjectCard({ project, onStageChange }: ProjectCardProps
         </p>
       )}
 
+      {/* Strategic context preview */}
+      {project.strategic_context && (
+        <p
+          className="text-xs leading-relaxed mt-1.5"
+          style={{
+            fontFamily: 'var(--font-body)',
+            color: 'var(--gold)',
+            fontStyle: 'italic',
+            display: '-webkit-box',
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            opacity: 0.85,
+          }}
+        >
+          {project.strategic_context}
+        </p>
+      )}
+
       {/* Team avatars row */}
       {project.team && project.team.length > 1 && (
         <div className="flex items-center gap-1 mt-2">
