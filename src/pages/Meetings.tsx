@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users } from 'lucide-react'
+import { Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useMeetingsApi, useActionItems } from '../hooks/useApiData'
@@ -11,6 +11,7 @@ import { projects as projectOptions } from '../data/projects'
 import MeetingCard from '../components/MeetingCard'
 import QuickAddForm from '../components/QuickAddForm'
 import Avatar from '../components/Avatar'
+import { getMeetingFacilitator } from '../lib/facilitator'
 import type { Meeting, ActionItem } from '../data/types'
 
 type FilterMode = 'all' | 'decisions' | 'actions'
@@ -389,6 +390,17 @@ export default function Meetings() {
               >
                 {nextMeeting.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
+              {(() => {
+                const dateStr = nextMeeting.toISOString().slice(0, 10)
+                const fSlug = getMeetingFacilitator(dateStr)
+                const fInfo = fSlug ? getPersonInfo(fSlug) : null
+                return fInfo ? (
+                  <p className="flex items-center gap-1.5 text-xs mt-1" style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', margin: '4px 0 0 0' }}>
+                    <UserCheck size={12} />
+                    Facilitated by {fInfo.name}
+                  </p>
+                ) : null
+              })()}
             </div>
             <div className="ml-auto text-right">
               <div className="flex items-center gap-1.5">

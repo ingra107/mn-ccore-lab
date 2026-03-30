@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, CheckCircle2, Circle, Users, ListChecks, ArrowRight } from 'lucide-react'
+import { ChevronDown, CheckCircle2, Circle, Users, ListChecks, ArrowRight, UserCheck } from 'lucide-react'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
 import { formatFullDate, formatShortDate } from '../lib/dateUtils'
+import { getMeetingFacilitator } from '../lib/facilitator'
 import type { Meeting } from '../data/types'
 
 interface MeetingCardProps {
@@ -104,6 +105,16 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 {pendingActions > 0 ? `${pendingActions} pending` : `${totalActions} done`}
               </span>
             )}
+            {(() => {
+              const fSlug = getMeetingFacilitator(meeting.date)
+              const fInfo = fSlug ? getPersonInfo(fSlug) : null
+              return fInfo ? (
+                <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--teal)', fontFamily: 'var(--font-mono)' }}>
+                  <UserCheck size={12} />
+                  {fInfo.name.split(' ')[0]}
+                </span>
+              ) : null
+            })()}
           </div>
         </div>
 

@@ -16,6 +16,7 @@ import {
   Plus,
   ExternalLink,
   GripVertical,
+  UserCheck,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -29,6 +30,7 @@ import { useAuth } from '../hooks/useAuth'
 import Avatar from '../components/Avatar'
 import { getPersonInfo } from '../data/team'
 import { formatLongDate, formatShortDate } from '../lib/dateUtils'
+import { getMeetingFacilitator } from '../lib/facilitator'
 
 function parseJsonArray(s: string | null): string[] {
   if (!s) return []
@@ -136,6 +138,28 @@ export default function MeetingDetail() {
           <p style={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--slate)', marginTop: '6px' }}>
             {formatLongDate(meeting.date)}
           </p>
+
+          {/* Facilitator badge */}
+          {(() => {
+            const facilitatorSlug = getMeetingFacilitator(meeting.date)
+            const facilitatorInfo = facilitatorSlug ? getPersonInfo(facilitatorSlug) : null
+            return facilitatorInfo ? (
+              <div className="flex items-center gap-2 mt-2">
+                <UserCheck size={14} style={{ color: 'var(--teal)' }} />
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--teal)' }}>
+                  Facilitator:
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <div style={{ width: 20, height: 20 }}>
+                    <Avatar name={facilitatorInfo.name} initials={facilitatorInfo.initials} photoUrl={facilitatorInfo.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+                  </div>
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)' }}>
+                    {facilitatorInfo.name}
+                  </span>
+                </div>
+              </div>
+            ) : null
+          })()}
 
           {/* Attendees — horizontal scroll on mobile */}
           {attendees.length > 0 && (
