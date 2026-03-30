@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, Send } from 'lucide-react'
+import { MessageSquare, Send, Sparkles } from 'lucide-react'
 import { useComments } from '../hooks/useApiData'
 import { useAddComment } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
@@ -147,64 +147,121 @@ export default function ProjectComments({ projectSlug }: Props) {
         ) : comments.length > 0 ? (
           <div className="flex flex-col gap-3">
             <AnimatePresence mode="popLayout">
-              {comments.map((comment) => (
-                <motion.div
-                  key={comment.id}
-                  layout
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex gap-3"
-                >
-                  <div className="flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
-                    <Avatar
-                      name={comment.author_name || 'User'}
-                      initials={(comment.author_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}
-                      size="sm"
-                      variant="ice"
-                      className="!w-7 !h-7 !min-w-0 !min-h-0"
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div className="flex items-baseline gap-2">
-                      <span
-                        style={{
-                          fontFamily: 'var(--font-body)',
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          color: 'var(--ink)',
-                        }}
-                      >
-                        {comment.author_name || 'Team Member'}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '10px',
-                          color: 'var(--slate)',
-                          opacity: 0.5,
-                        }}
-                      >
-                        {formatRelativeTime(comment.created_at)}
-                      </span>
-                    </div>
-                    <p
-                      style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '13px',
-                        color: 'var(--ink)',
-                        lineHeight: 1.5,
-                        margin: '2px 0 0',
-                        whiteSpace: 'pre-wrap',
-                      }}
-                    >
-                      {comment.content}
-                    </p>
-                    <ReactionBar targetType="comment" targetId={comment.id} />
-                  </div>
-                </motion.div>
-              ))}
+              {comments.map((comment) => {
+                const isAI = comment.author_slug === 'claude-ai'
+
+                return (
+                  <motion.div
+                    key={comment.id}
+                    layout
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex gap-3"
+                  >
+                    {isAI ? (
+                      /* AI Co-Scientist comment */
+                      <div style={{ flex: 1 }}>
+                        <div
+                          style={{
+                            background: 'rgba(201,168,76,0.04)',
+                            border: '1px solid rgba(201,168,76,0.15)',
+                            borderRadius: 8,
+                            padding: '8px 12px',
+                          }}
+                        >
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Sparkles size={12} style={{ color: 'var(--gold)' }} />
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: '10px',
+                                color: 'var(--gold)',
+                              }}
+                            >
+                              AI Co-Scientist
+                            </span>
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: '10px',
+                                color: 'var(--slate)',
+                                opacity: 0.5,
+                                marginLeft: 'auto',
+                              }}
+                            >
+                              {formatRelativeTime(comment.created_at)}
+                            </span>
+                          </div>
+                          <p
+                            style={{
+                              fontFamily: 'var(--font-body)',
+                              fontSize: '13px',
+                              color: 'var(--ink)',
+                              lineHeight: 1.5,
+                              margin: 0,
+                            }}
+                          >
+                            {comment.content}
+                          </p>
+                        </div>
+                        <ReactionBar targetType="comment" targetId={comment.id} />
+                      </div>
+                    ) : (
+                      /* Regular human comment */
+                      <>
+                        <div className="flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
+                          <Avatar
+                            name={comment.author_name || 'User'}
+                            initials={(comment.author_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}
+                            size="sm"
+                            variant="ice"
+                            className="!w-7 !h-7 !min-w-0 !min-h-0"
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div className="flex items-baseline gap-2">
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-body)',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: 'var(--ink)',
+                              }}
+                            >
+                              {comment.author_name || 'Team Member'}
+                            </span>
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: '10px',
+                                color: 'var(--slate)',
+                                opacity: 0.5,
+                              }}
+                            >
+                              {formatRelativeTime(comment.created_at)}
+                            </span>
+                          </div>
+                          <p
+                            style={{
+                              fontFamily: 'var(--font-body)',
+                              fontSize: '13px',
+                              color: 'var(--ink)',
+                              lineHeight: 1.5,
+                              margin: '2px 0 0',
+                              whiteSpace: 'pre-wrap',
+                            }}
+                          >
+                            {comment.content}
+                          </p>
+                          <ReactionBar targetType="comment" targetId={comment.id} />
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                )
+              })}
             </AnimatePresence>
           </div>
         ) : (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Send } from 'lucide-react'
+import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Send, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SkeletonCard } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
@@ -291,7 +291,35 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
             {detail.answers.length} Answer{detail.answers.length !== 1 ? 's' : ''}
           </p>
           {detail.answers.map((answer) => {
+            const isAI = answer.author_slug === 'claude-ai'
             const answerPerson = getPersonInfo(answer.author_slug)
+
+            if (isAI) {
+              return (
+                <div
+                  key={answer.id}
+                  className="p-3 rounded-lg"
+                  style={{
+                    background: 'rgba(201,168,76,0.04)',
+                    border: '1px solid rgba(201,168,76,0.15)',
+                  }}
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Sparkles size={12} style={{ color: 'var(--gold)' }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--gold)' }}>
+                      AI Co-Scientist
+                    </span>
+                    <span className="ml-auto" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                      {formatRelativeTime(answer.created_at)}
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', margin: 0 }}>
+                    {answer.content}
+                  </p>
+                </div>
+              )
+            }
+
             return (
               <div
                 key={answer.id}
