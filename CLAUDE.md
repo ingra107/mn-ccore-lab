@@ -309,6 +309,12 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 - Cmd+K dark mode: audited — already safe (var(--cream) throughout)
 - Project card hover: audited — already implemented (Framer Motion whileHover)
 
+### Done (2026-03-30, round 8)
+- Focus mode: F key hides sidebar + header, full-width content, "Focus · F to exit" pill
+- Density toggle: comfortable/compact via CSS variables, icon in header, localStorage persist
+  - Applied to BentoCard padding and bento-grid gap
+- F and density toggle added to ShortcutHelp
+
 ### Remaining — Quick Wins
 - Launch prep: SendGrid API key, Cloudflare Access auth, 7 headshots, Nate Scholar ID
 
