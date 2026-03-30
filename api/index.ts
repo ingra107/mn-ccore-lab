@@ -22,6 +22,7 @@ import { handleGetDependencies, handleGetProjectDependencies, handleCreateDepend
 import { handleTrajectory } from './routes/trajectory';
 import { handleSimilarGrants } from './routes/grant-intelligence';
 import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview } from './routes/decisions';
+import { handleCheckImpact } from './routes/impact-trace';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -419,6 +420,11 @@ export default {
           return await handleUpdateDecisionOutcome(decisionOutcomeMatch[1], request, user, env);
         }
 
+        // POST /api/impact/check — scan for impact events and create notifications
+        if (request.method === 'POST' && path === '/api/impact/check') {
+          return await handleCheckImpact(env);
+        }
+
         return error('Not found', 404);
       }
 
@@ -442,6 +448,17 @@ export default {
     }
 
     console.log('[Pulse] Starting morning pulse email...');
+
+    // Check for impact events first — creates notifications before we count unread
+    try {
+      const impactResult = await handleCheckImpact(env);
+      const impactData = await impactResult.json() as { data: { notifications_created: number } };
+      if (impactData.data.notifications_created > 0) {
+        console.log(`[Pulse] Impact check created ${impactData.data.notifications_created} notifications`);
+      }
+    } catch (e) {
+      console.log(`[Pulse] Impact check failed (non-fatal): ${e}`);
+    }
 
     // Get all team members with emails
     const members = await env.DB.prepare(

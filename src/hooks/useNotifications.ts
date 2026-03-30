@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 export interface NotificationRow {
   id: string
   recipient_slug: string
-  type: string        // 'mention', 'assignment', 'deadline', 'update'
-  source_type: string // 'comment', 'project_update', 'action_item'
+  type: string        // 'mention', 'assignment', 'deadline', 'update', 'impact'
+  source_type: string // 'comment', 'project_update', 'action_item', 'project', 'publication'
   source_id: string
   title: string
   body: string | null

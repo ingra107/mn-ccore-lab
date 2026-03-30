@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, AtSign, UserPlus, Clock, RefreshCw, CheckCheck } from 'lucide-react'
+import { Bell, AtSign, UserPlus, Clock, RefreshCw, CheckCheck, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
@@ -11,6 +11,7 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   assignment: UserPlus,
   deadline: Clock,
   update: RefreshCw,
+  impact: Sparkles,
 }
 
 export default function NotificationBell() {
@@ -223,6 +224,7 @@ export default function NotificationBell() {
                     {group.items.map((notification) => {
                       const Icon = TYPE_ICONS[notification.type] || Bell
                       const isUnread = !notification.read
+                      const isImpact = notification.type === 'impact'
 
                       const content = (
                         <div
@@ -231,16 +233,24 @@ export default function NotificationBell() {
                             padding: '10px 16px',
                             cursor: 'pointer',
                             transition: 'background 0.15s',
-                            background: isUnread ? 'rgba(201, 168, 76, 0.04)' : 'transparent',
-                            borderLeft: isUnread ? '3px solid var(--gold)' : '3px solid transparent',
+                            background: isImpact
+                              ? 'rgba(201, 168, 76, 0.07)'
+                              : isUnread ? 'rgba(201, 168, 76, 0.04)' : 'transparent',
+                            borderLeft: isImpact
+                              ? '3px solid var(--gold)'
+                              : isUnread ? '3px solid var(--gold)' : '3px solid transparent',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(201, 168, 76, 0.08)'
+                            e.currentTarget.style.background = isImpact
+                              ? 'rgba(201, 168, 76, 0.12)'
+                              : 'rgba(201, 168, 76, 0.08)'
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.background = isUnread
-                              ? 'rgba(201, 168, 76, 0.04)'
-                              : 'transparent'
+                            e.currentTarget.style.background = isImpact
+                              ? 'rgba(201, 168, 76, 0.07)'
+                              : isUnread
+                                ? 'rgba(201, 168, 76, 0.04)'
+                                : 'transparent'
                           }}
                         >
                           <div
@@ -249,13 +259,15 @@ export default function NotificationBell() {
                               width: '28px',
                               height: '28px',
                               borderRadius: '50%',
-                              background: isUnread ? 'rgba(201, 168, 76, 0.12)' : 'var(--ice)',
+                              background: isImpact
+                                ? 'rgba(201, 168, 76, 0.2)'
+                                : isUnread ? 'rgba(201, 168, 76, 0.12)' : 'var(--ice)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
                           >
-                            <Icon size={14} style={{ color: isUnread ? 'var(--gold)' : 'var(--slate)' }} />
+                            <Icon size={14} style={{ color: isImpact ? 'var(--gold)' : isUnread ? 'var(--gold)' : 'var(--slate)' }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div
