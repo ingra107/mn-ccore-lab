@@ -20,6 +20,7 @@ import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper } from './routes/paper-links';
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 import { handleTrajectory } from './routes/trajectory';
+import { handleContributions } from './routes/contributions';
 import { handleSimilarGrants } from './routes/grant-intelligence';
 import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview } from './routes/decisions';
 import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSuggestExperts } from './routes/expertise';
@@ -184,6 +185,12 @@ export default {
         const trajectoryGet = url.pathname.match(/^\/api\/team\/([^/]+)\/trajectory$/);
         if (trajectoryGet) {
           return await handleTrajectory(trajectoryGet[1], env);
+        }
+
+        // GET /api/team/:slug/contributions?period=90
+        const contributionsGet = url.pathname.match(/^\/api\/team\/([^/]+)\/contributions$/);
+        if (contributionsGet) {
+          return await handleContributions(contributionsGet[1], url, env);
         }
 
         // GET /api/milestones?project_id=...&grant_id=...
