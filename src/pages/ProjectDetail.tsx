@@ -121,10 +121,6 @@ function ProjectDetailInner({ project }: InnerProps) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // PI Context editing
-  const [editingContext, setEditingContext] = useState(false)
-  const [contextDraft, setContextDraft] = useState(project.pi_context ?? '')
-
   // Strategic Context ("Why This Matters Now") editing
   const [editingStrategic, setEditingStrategic] = useState(false)
   const [strategicDraft, setStrategicDraft] = useState(project.strategic_context ?? '')
