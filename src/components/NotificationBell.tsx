@@ -4,7 +4,7 @@ import { Bell, AtSign, UserPlus, Clock, RefreshCw, CheckCheck } from 'lucide-rea
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
-import { formatRelativeTime } from '../lib/dateUtils'
+import { formatRelativeTime, formatMediumDate } from '../lib/dateUtils'
 
 const TYPE_ICONS: Record<string, typeof Bell> = {
   mention: AtSign,
@@ -49,8 +49,28 @@ export default function NotificationBell() {
 
   if (!isAuthenticated) return null
 
-  // Show up to 20 most recent notifications in the dropdown
+  // Show up to 20 most recent notifications, grouped by day
   const displayNotifications = notifications.slice(0, 20)
+
+  const groupedByDay = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0]
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+    const groups: { label: string; items: typeof displayNotifications }[] = []
+    const map = new Map<string, typeof displayNotifications>()
+
+    for (const n of displayNotifications) {
+      const date = (n.created_at || '').split('T')[0] || 'unknown'
+      if (!map.has(date)) map.set(date, [])
+      map.get(date)!.push(n)
+    }
+
+    for (const [date, items] of map) {
+      const label = date === today ? 'Today' : date === yesterday ? 'Yesterday' : formatMediumDate(date)
+      groups.push({ label, items })
+    }
+
+    return groups
+  }, [displayNotifications])
 
   return (
     <div ref={ref} className="relative" style={{ display: 'inline-flex' }}>
@@ -183,131 +203,133 @@ export default function NotificationBell() {
                   </p>
                 </div>
               ) : (
-                displayNotifications.map((notification) => {
-                  const Icon = TYPE_ICONS[notification.type] || Bell
-                  const isUnread = !notification.read
-
-                  const content = (
+                groupedByDay.map((group) => (
+                  <div key={group.label}>
+                    {/* Day header */}
                     <div
-                      className="flex items-start gap-3"
                       style={{
-                        padding: '10px 16px',
-                        cursor: 'pointer',
-                        transition: 'background 0.15s',
-                        background: isUnread ? 'rgba(201, 168, 76, 0.04)' : 'transparent',
-                        borderLeft: isUnread ? '3px solid var(--gold)' : '3px solid transparent',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(201, 168, 76, 0.08)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = isUnread
-                          ? 'rgba(201, 168, 76, 0.04)'
-                          : 'transparent'
+                        padding: '6px 16px 4px',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '10px',
+                        color: group.label === 'Today' ? 'var(--teal)' : 'var(--slate)',
+                        opacity: group.label === 'Today' ? 1 : 0.5,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        fontWeight: 600,
                       }}
                     >
-                      <div
-                        className="flex-shrink-0 mt-0.5"
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          background: isUnread ? 'rgba(201, 168, 76, 0.12)' : 'var(--ice)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Icon
-                          size={14}
-                          style={{
-                            color: isUnread ? 'var(--gold)' : 'var(--slate)',
-                          }}
-                        />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      {group.label}
+                    </div>
+                    {group.items.map((notification) => {
+                      const Icon = TYPE_ICONS[notification.type] || Bell
+                      const isUnread = !notification.read
+
+                      const content = (
                         <div
+                          className="flex items-start gap-3"
                           style={{
-                            fontFamily: 'var(--font-body)',
-                            fontSize: '13px',
-                            fontWeight: isUnread ? 600 : 400,
-                            color: 'var(--ink)',
-                            lineHeight: 1.4,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
+                            padding: '10px 16px',
+                            cursor: 'pointer',
+                            transition: 'background 0.15s',
+                            background: isUnread ? 'rgba(201, 168, 76, 0.04)' : 'transparent',
+                            borderLeft: isUnread ? '3px solid var(--gold)' : '3px solid transparent',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(201, 168, 76, 0.08)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = isUnread
+                              ? 'rgba(201, 168, 76, 0.04)'
+                              : 'transparent'
                           }}
                         >
-                          {notification.title}
-                        </div>
-                        {notification.body && (
                           <div
+                            className="flex-shrink-0 mt-0.5"
                             style={{
-                              fontFamily: 'var(--font-body)',
-                              fontSize: '12px',
-                              color: 'var(--slate)',
-                              lineHeight: 1.4,
-                              marginTop: '2px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '50%',
+                              background: isUnread ? 'rgba(201, 168, 76, 0.12)' : 'var(--ice)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
                             }}
                           >
-                            {notification.body}
+                            <Icon size={14} style={{ color: isUnread ? 'var(--gold)' : 'var(--slate)' }} />
                           </div>
-                        )}
-                        <div
-                          style={{
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '10px',
-                            color: 'var(--slate)',
-                            opacity: 0.5,
-                            marginTop: '2px',
-                          }}
-                        >
-                          {formatRelativeTime(notification.created_at)}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontFamily: 'var(--font-body)',
+                                fontSize: '13px',
+                                fontWeight: isUnread ? 600 : 400,
+                                color: 'var(--ink)',
+                                lineHeight: 1.4,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {notification.title}
+                            </div>
+                            {notification.body && (
+                              <div
+                                style={{
+                                  fontFamily: 'var(--font-body)',
+                                  fontSize: '12px',
+                                  color: 'var(--slate)',
+                                  lineHeight: 1.4,
+                                  marginTop: '2px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {notification.body}
+                              </div>
+                            )}
+                            <div
+                              style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: '10px',
+                                color: 'var(--slate)',
+                                opacity: 0.5,
+                                marginTop: '2px',
+                              }}
+                            >
+                              {formatRelativeTime(notification.created_at)}
+                            </div>
+                          </div>
+                          {isUnread && (
+                            <div
+                              className="flex-shrink-0 mt-2"
+                              style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--gold)' }}
+                            />
+                          )}
                         </div>
-                      </div>
-                      {isUnread && (
-                        <div
-                          className="flex-shrink-0 mt-2"
-                          style={{
-                            width: '6px',
-                            height: '6px',
-                            borderRadius: '50%',
-                            background: 'var(--gold)',
-                          }}
-                        />
-                      )}
-                    </div>
-                  )
+                      )
 
-                  function handleClick() {
-                    if (isUnread) {
-                      markRead.mutate(notification.id)
-                    }
-                    setOpen(false)
-                  }
+                      function handleClick() {
+                        if (isUnread) markRead.mutate(notification.id)
+                        setOpen(false)
+                      }
 
-                  if (notification.link) {
-                    return (
-                      <Link
-                        key={notification.id}
-                        to={notification.link}
-                        onClick={handleClick}
-                        style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-                      >
-                        {content}
-                      </Link>
-                    )
-                  }
+                      if (notification.link) {
+                        return (
+                          <Link key={notification.id} to={notification.link} onClick={handleClick} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                            {content}
+                          </Link>
+                        )
+                      }
 
-                  return (
-                    <div key={notification.id} onClick={handleClick}>
-                      {content}
-                    </div>
-                  )
-                })
+                      return (
+                        <div key={notification.id} onClick={handleClick}>
+                          {content}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))
               )}
             </div>
 
