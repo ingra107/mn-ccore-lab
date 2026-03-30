@@ -22,6 +22,7 @@ import { handleGetDependencies, handleGetProjectDependencies, handleCreateDepend
 import { handleTrajectory } from './routes/trajectory';
 import { handleSimilarGrants } from './routes/grant-intelligence';
 import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview } from './routes/decisions';
+import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSuggestExperts } from './routes/expertise';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -103,6 +104,14 @@ export default {
         }
         if (url.pathname === '/api/decisions') {
           return await handleGetDecisions(url, env);
+        }
+
+        // Expertise endpoints
+        if (url.pathname === '/api/expertise/suggest') {
+          return await handleSuggestExperts(url, env);
+        }
+        if (url.pathname === '/api/expertise') {
+          return await handleGetExpertise(url, env);
         }
 
         switch (url.pathname) {
@@ -417,6 +426,17 @@ export default {
         const decisionOutcomeMatch = path.match(/^\/api\/decisions\/([^/]+)\/outcome$/);
         if (request.method === 'POST' && decisionOutcomeMatch) {
           return await handleUpdateDecisionOutcome(decisionOutcomeMatch[1], request, user, env);
+        }
+
+        // POST /api/expertise — add expertise tag
+        if (request.method === 'POST' && path === '/api/expertise') {
+          return await handleAddExpertise(request, user, env);
+        }
+
+        // POST /api/expertise/:id/delete — remove expertise tag
+        const expertiseDeleteMatch = path.match(/^\/api\/expertise\/([^/]+)\/delete$/);
+        if (request.method === 'POST' && expertiseDeleteMatch) {
+          return await handleRemoveExpertise(expertiseDeleteMatch[1], env);
         }
 
         return error('Not found', 404);

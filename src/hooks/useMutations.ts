@@ -8,8 +8,8 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency } from '../lib/api'
-import type { DependencyRow } from '../lib/api'
+import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise } from '../lib/api'
+import type { DependencyRow, ExpertiseTag } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
 import type { Comment, SubtaskRow } from './useApiData'
@@ -691,6 +691,48 @@ export function useDeleteDependency() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['dependencies'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Expertise mutations ────────────────────────────────────
+
+export function useAddExpertise(memberSlug: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { tag: string; source?: string; confidence?: number }) =>
+      addExpertise({ member_slug: memberSlug, ...input }),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['expertise', memberSlug] })
+      queryClient.invalidateQueries({ queryKey: ['expertise', 'all'] })
+    },
+  })
+}
+
+export function useRemoveExpertise(memberSlug: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => removeExpertise(id),
+
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['expertise', memberSlug] })
+      const prev = queryClient.getQueryData<ExpertiseTag[]>(['expertise', memberSlug])
+      if (prev) {
+        queryClient.setQueryData(['expertise', memberSlug], prev.filter((t) => t.id !== id))
+      }
+      return { prev }
+    },
+
+    onError: (_err, _id, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(['expertise', memberSlug], ctx.prev)
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['expertise', memberSlug] })
+      queryClient.invalidateQueries({ queryKey: ['expertise', 'all'] })
     },
   })
 }
