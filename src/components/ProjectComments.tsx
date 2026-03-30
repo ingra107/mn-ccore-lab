@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth'
 import { formatRelativeTime } from '../lib/dateUtils'
 import Avatar from './Avatar'
 import MentionInput from './MentionInput'
+import ReactionBar from './ReactionBar'
 
 interface Props {
   projectSlug: string
@@ -200,6 +201,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                     >
                       {comment.content}
                     </p>
+                    <ReactionBar targetType="comment" targetId={comment.id} />
                   </div>
                 </motion.div>
               ))}

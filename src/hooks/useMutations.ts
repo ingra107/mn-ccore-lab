@@ -509,6 +509,23 @@ export function useUnlinkPaper() {
   })
 }
 
+// ── Reaction mutations ─────────────────────────────────────
+
+export function useToggleReaction() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { target_type: string; target_id: string; emoji: string }) =>
+      fetch('/api/reactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then((r) => r.json()),
+    onSettled: (_data, _err, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['reactions', variables.target_type, variables.target_id] })
+    },
+  })
+}
+
 // ── Bulk task mutations ────────────────────────────────────
 
 export function useBulkUpdateTasks() {

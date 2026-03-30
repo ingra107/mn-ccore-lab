@@ -610,7 +610,6 @@ export interface PaperProjectLink {
   linked_by: string | null
   note: string | null
   created_at: string
-  // Joined from research_digest:
   title?: string
   journal?: string
   pub_date?: string
@@ -630,6 +629,31 @@ export function useProjectPapers(slug: string) {
     },
     staleTime: 60 * 1000,
     enabled: !!slug,
+  })
+}
+
+// ── Reactions ──────────────────────────────────────────────
+
+export interface Reaction {
+  id: string
+  target_type: string
+  target_id: string
+  emoji: string
+  user_slug: string
+  created_at: string
+}
+
+export function useReactions(targetType: string, targetId: string) {
+  return useQuery({
+    queryKey: ['reactions', targetType, targetId],
+    queryFn: async () => {
+      const res = await fetch(`/api/reactions?target_type=${targetType}&target_id=${targetId}`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as Reaction[]
+    },
+    staleTime: 30 * 1000,
+    enabled: !!targetId,
   })
 }
 
