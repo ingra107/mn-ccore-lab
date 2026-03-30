@@ -218,6 +218,7 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 9. **@mentions use `MentionInput`** -- replace any `<textarea>` that accepts team member references.
 10. **Dedup action items** -- normalize "[Carried forward]" prefix when counting or displaying pending items.
 11. **NEVER deploy from a worktree.** Only deploy from the primary main branch working copy. Worktree agents must commit code to a branch and create a PR -- never build or deploy directly. This prevents orphaned deployments that can't be traced back to source code.
+12. **ONE deploy per session.** Cloudflare Pages uses Workers KV for static asset serving (free tier: 100K reads, 1K writes/day). Each deploy uploads ~44 files to KV. Batch all work and deploy ONCE at the end of a session. Multiple deploys in one session risk hitting KV limits. (Learned 2026-03-30: 4 deploys hit 50% of daily KV limit.)
 
 ## Roadmap
 
