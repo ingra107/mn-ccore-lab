@@ -34,6 +34,7 @@ const shortcuts = [
       { keys: '⌘ K', action: 'Command palette' },
       { keys: '⌘ N', action: 'Quick add task' },
       { keys: '/', action: 'Search' },
+      { keys: 'F', action: 'Focus mode (hide sidebar + header)' },
       { keys: '[', action: 'Toggle sidebar' },
       { keys: '?', action: 'This help' },
     ],

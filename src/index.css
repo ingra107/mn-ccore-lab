@@ -36,6 +36,23 @@
   --shadow-card-hover: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
+/* ── Density modes ── */
+:root {
+  --density-card-padding: 20px;
+  --density-gap: 20px;
+  --density-card-gap: 12px;
+  --density-text-sm: 14px;
+  --density-text-xs: 12px;
+}
+
+.density-compact {
+  --density-card-padding: 12px;
+  --density-gap: 12px;
+  --density-card-gap: 6px;
+  --density-text-sm: 13px;
+  --density-text-xs: 11px;
+}
+
 /* ── Base Styles ── */
 /* Note: margin/padding/box-sizing reset is handled by Tailwind's @layer base preflight */
 

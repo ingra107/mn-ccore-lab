@@ -224,7 +224,7 @@ export default function Personal() {
         .bento-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 1rem;
+          gap: var(--density-gap, 1rem);
         }
         .bento-span-2 { grid-column: span 2; }
         .bento-span-1x2 { grid-row: span 2; }

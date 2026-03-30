@@ -75,6 +75,11 @@ export function useKeyboardShortcuts() {
           navigate('/ideas?create=true')
           break
 
+        case 'f':
+          e.preventDefault()
+          document.dispatchEvent(new CustomEvent('toggle-focus'))
+          break
+
         case '[':
           e.preventDefault()
           document.dispatchEvent(new CustomEvent('toggle-sidebar'))

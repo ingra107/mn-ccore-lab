@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
-import { Menu, Sun, Moon, Monitor, Search, Plus } from 'lucide-react'
+import { Menu, Sun, Moon, Monitor, Search, Plus, AlignJustify, AlignLeft } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import Sidebar from './Sidebar'
@@ -10,9 +10,11 @@ import PageTransition from './PageTransition'
 import GlobalQuickAddModal, { useQuickAddShortcut } from './GlobalQuickAdd'
 import RouteProgressBar from './RouteProgressBar'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
+import { useDensity } from '../hooks/useDensity'
 
 export default function PortalLayout() {
   const { mode, setTheme } = useDarkMode()
+  const { density, toggle: toggleDensity } = useDensity()
   const [showThemeMenu, setShowThemeMenu] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const { showHelp, setShowHelp, gPending } = useKeyboardShortcuts()
@@ -22,6 +24,7 @@ export default function PortalLayout() {
     return localStorage.getItem('mn-ccore-sidebar-collapsed') === 'true'
   })
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [focusMode, setFocusMode] = useState(false)
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed((prev) => {
@@ -38,14 +41,23 @@ export default function PortalLayout() {
     return () => document.removeEventListener('toggle-sidebar', handler)
   }, [toggleSidebar])
 
+  // Listen for F key to toggle focus mode
+  useEffect(() => {
+    const handler = () => setFocusMode((prev) => !prev)
+    document.addEventListener('toggle-focus', handler)
+    return () => document.removeEventListener('toggle-focus', handler)
+  }, [])
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg)' }}>
       <RouteProgressBar />
 
-      {/* Desktop sidebar */}
-      <div className="hidden lg:block">
-        <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
-      </div>
+      {/* Desktop sidebar (hidden in focus mode) */}
+      {!focusMode && (
+        <div className="hidden lg:block">
+          <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+        </div>
+      )}
 
       {/* Mobile sidebar overlay */}
       {mobileOpen && (
@@ -63,12 +75,12 @@ export default function PortalLayout() {
       {/* Main content area */}
       <div
         className={`transition-all duration-200 ${
-          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'
+          focusMode ? '' : sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'
         }`}
       >
-        {/* Top bar */}
+        {/* Top bar (hidden in focus mode) */}
         <header
-          className="sticky top-0 z-20 h-14 flex items-center px-4 border-b backdrop-blur-sm"
+          className={`sticky top-0 z-20 flex items-center px-4 border-b backdrop-blur-sm transition-all duration-200 ${focusMode ? 'h-0 overflow-hidden opacity-0 border-none' : 'h-14'}`}
           style={{
             backgroundColor: 'rgba(var(--bg-rgb, 250,248,243), 0.9)',
             borderColor: 'var(--border-light)',
@@ -98,6 +110,17 @@ export default function PortalLayout() {
 
           {/* Spacer */}
           <div className="flex-1" />
+
+          {/* Density toggle */}
+          <button
+            onClick={toggleDensity}
+            className="p-2 rounded-md transition-colors"
+            style={{ color: 'var(--slate)' }}
+            aria-label={`Switch to ${density === 'comfortable' ? 'compact' : 'comfortable'} view`}
+            title={`${density === 'comfortable' ? 'Compact' : 'Comfortable'} view`}
+          >
+            {density === 'comfortable' ? <AlignJustify size={18} /> : <AlignLeft size={18} />}
+          </button>
 
           {/* Theme picker */}
           <div className="relative">
@@ -160,6 +183,17 @@ export default function PortalLayout() {
 
       {/* Shortcut Help */}
       <ShortcutHelp open={showHelp} onClose={() => setShowHelp(false)} />
+
+      {/* Focus mode indicator */}
+      {focusMode && (
+        <button
+          onClick={() => setFocusMode(false)}
+          className="fixed top-3 right-3 z-50 px-2.5 py-1 rounded-full text-[10px] font-medium border transition-opacity opacity-30 hover:opacity-100"
+          style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', borderColor: 'var(--teal)', background: 'var(--cream)', cursor: 'pointer' }}
+        >
+          Focus · F to exit
+        </button>
+      )}
 
       {/* Global Quick Add */}
       <GlobalQuickAddModal isOpen={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
