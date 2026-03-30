@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck } from 'lucide-react'
+import { Activity, Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
-import { useMeetingsApi, useActionItems } from '../hooks/useApiData'
+import { useMeetingsApi, useActionItems, useMeetingCadence } from '../hooks/useApiData'
 import type { MeetingRow, ActionItemRow } from '../hooks/useApiData'
 import { useToggleActionItem, useCreateActionItem } from '../hooks/useMutations'
 import { directors, getAllMembers, getPersonInfo } from '../data/team'
@@ -123,6 +123,7 @@ export default function Meetings() {
   // D1 API data
   const { data: meetingRows = [] } = useMeetingsApi()
   const { data: actionItemRows = [] } = useActionItems()
+  const { data: cadence } = useMeetingCadence()
   const toggleMutation = useToggleActionItem()
   const createActionMutation = useCreateActionItem()
 
@@ -419,6 +420,28 @@ export default function Meetings() {
             </div>
           </div>
         </div>
+
+        {/* Meeting Cadence */}
+        {cadence && cadence.recommendation !== 'no_upcoming' && (
+          <div className="p-4 rounded-xl mb-4" style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.12)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Activity size={14} style={{ color: 'var(--gold)' }} />
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gold)' }}>
+                Meeting Cadence
+              </span>
+            </div>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink)', fontWeight: 600 }}>
+              {cadence.emoji} {cadence.recommendation}
+            </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {cadence.reasons.map((r, i) => (
+                <span key={i} style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
+                  {'\u2022'} {r}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Action Items Summary */}
         <div className="mb-8">

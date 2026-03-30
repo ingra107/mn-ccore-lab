@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, AlertCircle, ArrowRight, ListChecks, CalendarOff, UserCheck } from 'lucide-react'
-import { useMeetingsApi, useActionItems } from '../../hooks/useApiData'
+import { useMeetingsApi, useActionItems, useMeetingCadence } from '../../hooks/useApiData'
 import { getMeetingFacilitator } from '../../lib/facilitator'
 import { getPersonInfo } from '../../data/team'
 import BentoCard from './BentoCard'
@@ -73,6 +73,7 @@ export default function UpcomingCard() {
   const deadlines = generateDeadlines()
   const { data: meetings = [] } = useMeetingsApi()
   const { data: allActionItems = [] } = useActionItems()
+  const { data: cadence } = useMeetingCadence()
 
   // Find the next upcoming meeting — closest future date wins, regardless of status
   const nextMeeting = useMemo(() => {
@@ -128,6 +129,42 @@ export default function UpcomingCard() {
               })()}
             </div>
           </div>
+          {/* Cadence pill */}
+          {cadence && cadence.recommendation !== 'no_upcoming' && (
+            <div
+              className="flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-full"
+              style={{
+                background: cadence.score >= 40
+                  ? 'rgba(34, 197, 94, 0.08)'
+                  : cadence.score >= 20
+                    ? 'rgba(234, 179, 8, 0.08)'
+                    : cadence.score >= 0
+                      ? 'rgba(249, 115, 22, 0.08)'
+                      : 'rgba(239, 68, 68, 0.08)',
+                border: `1px solid ${
+                  cadence.score >= 40
+                    ? 'rgba(34, 197, 94, 0.2)'
+                    : cadence.score >= 20
+                      ? 'rgba(234, 179, 8, 0.2)'
+                      : cadence.score >= 0
+                        ? 'rgba(249, 115, 22, 0.2)'
+                        : 'rgba(239, 68, 68, 0.2)'
+                }`,
+                width: 'fit-content',
+              }}
+            >
+              <span style={{ fontSize: '10px', lineHeight: 1 }}>{cadence.emoji}</span>
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '9px',
+                color: 'var(--slate)',
+                opacity: 0.8,
+              }}>
+                {cadence.recommendation}
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mt-2">
             {meetingActionCounts.total > 0 && (
               <div className="flex items-center gap-1.5">
