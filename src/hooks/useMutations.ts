@@ -8,8 +8,8 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency } from '../lib/api'
-import type { DependencyRow } from '../lib/api'
+import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, createQuestion, createAnswer, acceptAnswer } from '../lib/api'
+import type { DependencyRow, QuestionRow } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
 import type { Comment, SubtaskRow } from './useApiData'
@@ -690,6 +690,50 @@ export function useDeleteDependency() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['dependencies'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Question mutations (Ask the Lab) ─────────────────────────
+
+export function useCreateQuestion() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { question: string; context?: string; project_slug?: string }) =>
+      createQuestion(input),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['questions'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useCreateAnswer(questionId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (content: string) => createAnswer(questionId, content),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['questions'] })
+      queryClient.invalidateQueries({ queryKey: ['question', questionId] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useAcceptAnswer(questionId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (answerId: string) => acceptAnswer(answerId),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['questions'] })
+      queryClient.invalidateQueries({ queryKey: ['question', questionId] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })

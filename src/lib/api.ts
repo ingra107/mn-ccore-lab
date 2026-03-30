@@ -371,4 +371,63 @@ export function deleteDependency(id: string) {
   })
 }
 
+// ── Questions (Ask the Lab) ─────────────────────────────────
+
+export interface QuestionRow {
+  id: string
+  question: string
+  context: string | null
+  asked_by: string
+  project_slug: string | null
+  status: string
+  created_at: string
+  answer_count?: number
+}
+
+export interface AnswerRow {
+  id: string
+  question_id: string
+  content: string
+  author_slug: string
+  is_accepted: number
+  created_at: string
+}
+
+export interface QuestionDetail extends QuestionRow {
+  answers: AnswerRow[]
+}
+
+export function fetchQuestions(params?: { status?: string; project_slug?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.status) qs.set('status', params.status)
+  if (params?.project_slug) qs.set('project_slug', params.project_slug)
+  const query = qs.toString()
+  return fetchApi<QuestionRow[]>(`/api/questions${query ? `?${query}` : ''}`)
+}
+
+export function fetchQuestionDetail(id: string) {
+  return fetchApi<QuestionDetail>(`/api/questions/${id}`)
+}
+
+export function createQuestion(input: { question: string; context?: string; project_slug?: string }) {
+  return fetchApi<QuestionRow>('/api/questions', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function createAnswer(questionId: string, content: string) {
+  return fetchApi<AnswerRow>(`/api/questions/${questionId}/answers`, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  })
+}
+
+export function acceptAnswer(answerId: string) {
+  return fetchApi<{ accepted: boolean; answer_id: string; question_id: string }>(
+    `/api/answers/${answerId}/accept`,
+    { method: 'POST' },
+  )
+}
+
 export { ApiError }

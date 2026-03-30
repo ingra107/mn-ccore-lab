@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, LayoutDashboard, User, CheckSquare, ListTodo, Calendar,
-  Clock, FolderKanban, FileText, Lightbulb, BookOpen, DollarSign,
+  Clock, FolderKanban, FileText, Lightbulb, HelpCircle, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
   CheckCircle2, AlertTriangle, Flag, CircleDot, Scale,
 } from 'lucide-react'
@@ -69,6 +69,7 @@ export default function CommandPalette() {
       { path: '/projects', label: 'Projects', icon: FolderKanban, shortcut: 'G P' },
       { path: '/manuscripts', label: 'Manuscripts', icon: FileText },
       { path: '/ideas', label: 'Ideas', icon: Lightbulb },
+      { path: '/ask', label: 'Ask the Lab', icon: HelpCircle },
       { path: '/decisions', label: 'Decisions', icon: Scale },
       { path: '/digest', label: 'Literature', icon: BookOpen },
       { path: '/grants', label: 'Grants', icon: DollarSign },
@@ -102,6 +103,14 @@ export default function CommandPalette() {
       sublabel: 'Add a new research idea',
       icon: Lightbulb,
       action: () => { navigate('/ideas?create=true'); setOpen(false) },
+      category: 'action',
+    })
+    items.push({
+      id: 'action-ask-question',
+      label: 'Ask the Lab',
+      sublabel: 'Post a question for anyone to answer',
+      icon: HelpCircle,
+      action: () => { navigate('/ask?create=true'); setOpen(false) },
       category: 'action',
     })
     items.push({

@@ -22,6 +22,7 @@ import { handleGetDependencies, handleGetProjectDependencies, handleCreateDepend
 import { handleTrajectory } from './routes/trajectory';
 import { handleSimilarGrants } from './routes/grant-intelligence';
 import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview } from './routes/decisions';
+import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -103,6 +104,15 @@ export default {
         }
         if (url.pathname === '/api/decisions') {
           return await handleGetDecisions(url, env);
+        }
+
+        // Questions (Ask the Lab)
+        if (url.pathname === '/api/questions') {
+          return await handleGetQuestions(url, env);
+        }
+        const questionDetailGet = url.pathname.match(/^\/api\/questions\/([^/]+)$/);
+        if (questionDetailGet) {
+          return await handleGetQuestionDetail(questionDetailGet[1], env);
         }
 
         switch (url.pathname) {
@@ -417,6 +427,23 @@ export default {
         const decisionOutcomeMatch = path.match(/^\/api\/decisions\/([^/]+)\/outcome$/);
         if (request.method === 'POST' && decisionOutcomeMatch) {
           return await handleUpdateDecisionOutcome(decisionOutcomeMatch[1], request, user, env);
+        }
+
+        // POST /api/questions — create question
+        if (request.method === 'POST' && path === '/api/questions') {
+          return await handleCreateQuestion(request, user, env);
+        }
+
+        // POST /api/questions/:id/answers — add answer
+        const questionAnswerMatch = path.match(/^\/api\/questions\/([^/]+)\/answers$/);
+        if (request.method === 'POST' && questionAnswerMatch) {
+          return await handleCreateAnswer(questionAnswerMatch[1], request, user, env);
+        }
+
+        // POST /api/answers/:id/accept — accept answer
+        const answerAcceptMatch = path.match(/^\/api\/answers\/([^/]+)\/accept$/);
+        if (request.method === 'POST' && answerAcceptMatch) {
+          return await handleAcceptAnswer(answerAcceptMatch[1], user, env);
         }
 
         return error('Not found', 404);
