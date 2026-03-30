@@ -273,26 +273,22 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 - Empty states: icon in teal rounded box (56px), text-base headings, outlined CTA buttons
 - Meetings + Projects custom headers: added teal page icons
 
+### Done (2026-03-30, round 4)
+- Empty state consistency: all portal pages now use 56px teal icon box + text-base heading + descriptive subtitle + outlined CTA
+  - Updated: Grants, Manuscripts, Deadlines (list+timeline), MyTasks, Ideas (grid+list), Activity, Calendar (day+agenda)
+- Dynamic subtitle counts: Activity ("X recent actions") and Analytics ("X projects · Y tasks") now show live counts
+- GlobalQuickAdd: Todoist-style task creation from any portal page
+  - parseQuickAdd.ts: NLP parser for @person, #project, p1-p3, date expressions
+  - QuickAddTaskInput.tsx: Token-highlighted input with mirror overlay
+  - GlobalQuickAdd.tsx: Animated modal (Cmd+N / Ctrl+N shortcut)
+  - Floating teal "+" button (bottom-right) on all portal pages
+- PublicationDetail page: /publications/:id route with title, authors (team avatars), abstract, topics, DOI/PubMed links
+  - "View details" link added to PublicationCard expanded section
+
 ### Remaining
-- Empty state consistency audit on remaining pages (Grants, Manuscripts, Calendar, etc.)
-- Consistent page subtitle counts across all portal pages (some have dynamic counts, some don't)
-- Publication detail pages (/publications/:id) — individual paper view for sharing/SEO
-- Rebuild dispatch features: GlobalQuickAdd (quick task creation from anywhere)
-  - Source: `Scratch/plans/mnccore-hub-session-code-dump-2026-03-30.md` (33K lines)
 - Launch prep: SendGrid API key, Cloudflare Access auth, 7 headshots, Nate Scholar ID
 
 ## Session Notes
 
-### 2026-03-30: Dispatch Recovery + UX Polish (Spring Break Day 1)
-**What happened:** 4 dispatch worktree agents deployed rogue code to Cloudflare Pages over 11 hours, overwriting production. Diagnosed root cause (CLAUDE.md had deploy command without guardrail), recovered by redeploying from main (all 188 commits intact), added Rule 11 (never deploy from worktrees), logged mistake pattern + mechanic_knowledge.
-
-**UX Polish (3 rounds, benchmarked against LabSync):**
-- Round 1: Spacing rhythm — sidebar, cards, grids, sort/filter sizes, view switcher inline, search bar pill, toggle touch targets
-- Round 2: Visual identity — page icons on all 14 pages, filter icons (folder/person/status/flag), sidebar left accent bar, button hierarchy
-- Round 3: Interactivity — task card hover lift, empty state redesign (icon boxes, proportions), Meetings+Projects page icons
-- Hero: Added EKG pulse inline SVG
-
-**Commits:** 037e518, a0f774a, 4bb3787, 56d8183, 1dc3a7b, 2275ae8, 34d086c (7 commits, ~200 lines changed across 20+ files)
-**Dispatch code dump preserved:** `Scratch/plans/mnccore-hub-session-code-dump-2026-03-30.md` (33K lines)
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
 
