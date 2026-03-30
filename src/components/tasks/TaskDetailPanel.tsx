@@ -4,13 +4,13 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   X, Circle, Clock, CheckCircle2, AlertTriangle, Send,
   CalendarDays, FolderKanban, User, Flag, MessageSquare, Ban,
-  ListChecks, Plus, Trash2,
+  ListChecks, Plus, Trash2, ArrowRightLeft, Check,
 } from 'lucide-react'
 import Avatar from '../Avatar'
 import ReactionBar from '../ReactionBar'
 import { getPersonInfo } from '../../data/team'
-import { useTeam, useSubtasks } from '../../hooks/useApiData'
-import { useUpdateTask, useUpdateTaskStatus, useCreateSubtask, useToggleSubtask, useDeleteSubtask } from '../../hooks/useMutations'
+import { useTeam, useSubtasks, useHandoffs } from '../../hooks/useApiData'
+import { useUpdateTask, useUpdateTaskStatus, useCreateSubtask, useToggleSubtask, useDeleteSubtask, useCreateHandoff, useAcknowledgeHandoff } from '../../hooks/useMutations'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { TaskRow } from '../../lib/api'
 
@@ -122,6 +122,9 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
           <FieldBlock label="Assignee" icon={User}>
             <AssigneeSelect value={task.assignee} onChange={(v) => handleFieldUpdate('assignee', v)} />
           </FieldBlock>
+
+          {/* Handoff */}
+          <HandoffSection taskId={task.id} currentAssignee={task.assignee} />
 
           {/* Due Date */}
           <FieldBlock label="Due Date" icon={CalendarDays}>
@@ -547,6 +550,256 @@ function SubtaskChecklist({ taskId }: { taskId: string }) {
           style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', border: 'none' }}
         />
       </form>
+    </div>
+  )
+}
+
+// ── Handoff Section ─────────────────────────────────────────
+
+function HandoffSection({ taskId, currentAssignee }: { taskId: string; currentAssignee: string }) {
+  const [showForm, setShowForm] = useState(false)
+  const [toSlug, setToSlug] = useState('')
+  const [situation, setSituation] = useState('')
+  const [background, setBackground] = useState('')
+  const [assessment, setAssessment] = useState('')
+  const [recommendation, setRecommendation] = useState('')
+
+  const { data: team = [] } = useTeam()
+  const { data: handoffs = [] } = useHandoffs(taskId)
+  const createHandoff = useCreateHandoff(taskId)
+  const acknowledgeHandoff = useAcknowledgeHandoff(taskId)
+
+  const members = team.filter((m) => m.slug && m.slug !== currentAssignee).sort((a, b) => a.name.localeCompare(b.name))
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!toSlug || !situation.trim()) return
+    createHandoff.mutate({
+      to_slug: toSlug,
+      situation: situation.trim(),
+      background: background.trim() || undefined,
+      assessment: assessment.trim() || undefined,
+      recommendation: recommendation.trim() || undefined,
+    })
+    setShowForm(false)
+    setToSlug('')
+    setSituation('')
+    setBackground('')
+    setAssessment('')
+    setRecommendation('')
+  }
+
+  const inputStyle = {
+    fontFamily: 'var(--font-sans)',
+    color: 'var(--ink)',
+    borderColor: 'var(--border-light)',
+    backgroundColor: 'var(--cream)',
+    fontSize: '13px',
+  }
+
+  const labelStyle = {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '10px' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.06em',
+    color: 'var(--slate)',
+    opacity: 0.6,
+    marginBottom: '4px',
+    display: 'block' as const,
+  }
+
+  return (
+    <div>
+      {showForm ? (
+        <form onSubmit={handleSubmit}>
+          <div className="p-4 rounded-xl" style={{ background: 'rgba(45,138,138,0.04)', border: '1px solid rgba(45,138,138,0.15)' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <ArrowRightLeft size={14} style={{ color: 'var(--teal)' }} />
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--teal)' }}>
+                Handoff to...
+              </span>
+            </div>
+
+            {/* To: team member dropdown */}
+            <div className="mb-3">
+              <label style={labelStyle}>To</label>
+              <select
+                value={toSlug}
+                onChange={(e) => setToSlug(e.target.value)}
+                required
+                className="w-full rounded-md border px-3 py-2 cursor-pointer"
+                style={inputStyle}
+              >
+                <option value="">Select team member...</option>
+                {members.map((m) => (
+                  <option key={m.slug} value={m.slug}>{m.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Situation (required) */}
+            <div className="mb-3">
+              <label style={labelStyle}>Situation <span style={{ color: 'var(--maroon)' }}>*</span></label>
+              <textarea
+                value={situation}
+                onChange={(e) => setSituation(e.target.value)}
+                placeholder="What is the current state of this task?"
+                required
+                rows={2}
+                className="w-full rounded-md border px-3 py-2 resize-none outline-none"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Background (optional) */}
+            <div className="mb-3">
+              <label style={labelStyle}>Background</label>
+              <textarea
+                value={background}
+                onChange={(e) => setBackground(e.target.value)}
+                placeholder="What context does the next person need?"
+                rows={2}
+                className="w-full rounded-md border px-3 py-2 resize-none outline-none"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Assessment (optional) */}
+            <div className="mb-3">
+              <label style={labelStyle}>Assessment</label>
+              <textarea
+                value={assessment}
+                onChange={(e) => setAssessment(e.target.value)}
+                placeholder="What's your assessment of where things stand?"
+                rows={2}
+                className="w-full rounded-md border px-3 py-2 resize-none outline-none"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Recommendation (optional) */}
+            <div className="mb-3">
+              <label style={labelStyle}>Recommendation</label>
+              <textarea
+                value={recommendation}
+                onChange={(e) => setRecommendation(e.target.value)}
+                placeholder="What do you recommend as next steps?"
+                rows={2}
+                className="w-full rounded-md border px-3 py-2 resize-none outline-none"
+                style={inputStyle}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="submit"
+                disabled={!toSlug || !situation.trim() || createHandoff.isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium"
+                style={{
+                  backgroundColor: (!toSlug || !situation.trim()) ? 'var(--border-light)' : 'var(--teal)',
+                  color: (!toSlug || !situation.trim()) ? 'var(--slate)' : 'white',
+                  border: 'none',
+                  cursor: (!toSlug || !situation.trim()) ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  opacity: createHandoff.isPending ? 0.6 : 1,
+                }}
+              >
+                <ArrowRightLeft size={12} />
+                {createHandoff.isPending ? 'Sending...' : 'Send Handoff'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-3 py-1.5 rounded-md text-xs"
+                style={{ background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer', color: 'var(--slate)', fontFamily: 'var(--font-sans)' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </form>
+      ) : (
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            color: 'var(--teal)',
+            background: 'rgba(45,138,138,0.06)',
+            border: '1px solid rgba(45,138,138,0.15)',
+            cursor: 'pointer',
+            fontWeight: 500,
+          }}
+        >
+          <ArrowRightLeft size={12} />
+          Hand Off
+        </button>
+      )}
+
+      {/* Handoff History Timeline */}
+      {handoffs.length > 0 && (
+        <div className="mt-3">
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+            <ArrowRightLeft size={10} />
+            Handoff History ({handoffs.length})
+          </label>
+          <div className="flex flex-col gap-2">
+            {handoffs.map((h) => {
+              const from = getPersonInfo(h.from_slug)
+              const to = getPersonInfo(h.to_slug)
+              return (
+                <div key={h.id} className="p-3 rounded-lg" style={{ background: 'rgba(45,138,138,0.03)', borderLeft: '3px solid var(--teal)' }}>
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <div className="flex items-center gap-1">
+                      <div style={{ width: 20, height: 20 }}>
+                        <Avatar name={from.name} initials={from.initials} photoUrl={from.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]" />
+                      </div>
+                      <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{from.name}</span>
+                    </div>
+                    <ArrowRightLeft size={10} style={{ color: 'var(--teal)', opacity: 0.5 }} />
+                    <div className="flex items-center gap-1">
+                      <div style={{ width: 20, height: 20 }}>
+                        <Avatar name={to.name} initials={to.initials} photoUrl={to.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]" />
+                      </div>
+                      <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{to.name}</span>
+                    </div>
+                    <span className="text-[9px] ml-auto" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
+                      {formatRelativeTime(h.created_at)}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1 text-[12px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                    <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>S:</span> {h.situation}</p>
+                    {h.background && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>B:</span> {h.background}</p>}
+                    {h.assessment && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>A:</span> {h.assessment}</p>}
+                    {h.recommendation && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>R:</span> {h.recommendation}</p>}
+                  </div>
+                  <div className="mt-2">
+                    {h.acknowledged ? (
+                      <span className="flex items-center gap-1 text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', opacity: 0.6 }}>
+                        <Check size={10} /> Acknowledged {h.acknowledged_at ? formatRelativeTime(h.acknowledged_at) : ''}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => acknowledgeHandoff.mutate(h.id)}
+                        className="flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors"
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          color: 'var(--gold)',
+                          background: 'rgba(201,168,76,0.08)',
+                          border: '1px solid rgba(201,168,76,0.2)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Check size={10} /> Acknowledge
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
