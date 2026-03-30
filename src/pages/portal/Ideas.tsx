@@ -185,7 +185,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
   const status = statusConfig[idea.status] || statusConfig.new
 
   return (
-    <div className="rounded-xl border p-4 flex flex-col" style={{ borderColor: 'var(--border-light)', backgroundColor: 'white' }}>
+    <div className="rounded-xl border p-4 flex flex-col" style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}>
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ fontFamily: 'var(--font-mono)', color: status.color, backgroundColor: status.bg }}>
@@ -340,7 +340,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
     >
       <div
         className="rounded-xl shadow-xl border w-full max-w-md mx-4"
-        style={{ backgroundColor: 'white', borderColor: 'var(--border-light)' }}
+        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-light)' }}>

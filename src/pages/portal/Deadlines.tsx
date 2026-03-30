@@ -350,7 +350,7 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
             {/* Week dot */}
             <div
               className="absolute -left-4 top-0.5 w-3 h-3 rounded-full border-2"
-              style={{ backgroundColor: 'white', borderColor: 'var(--teal)' }}
+              style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--teal)' }}
             />
 
             {/* Week label */}

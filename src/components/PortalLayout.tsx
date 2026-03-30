@@ -180,7 +180,7 @@ export default function PortalLayout() {
 
       {/* G-key pending indicator */}
       {gPending && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-full shadow-lg border" style={{ backgroundColor: 'white', borderColor: 'var(--teal)' }}>
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-full shadow-lg border" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--teal)' }}>
           <span className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)' }}>
             G → press a key to navigate...
           </span>

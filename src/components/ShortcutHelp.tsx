@@ -32,6 +32,7 @@ const shortcuts = [
     category: 'Global',
     items: [
       { keys: '⌘ K', action: 'Command palette' },
+      { keys: '⌘ N', action: 'Quick add task' },
       { keys: '/', action: 'Search' },
       { keys: '[', action: 'Toggle sidebar' },
       { keys: '?', action: 'This help' },
@@ -57,7 +58,7 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
     >
       <div
         className="w-full max-w-md rounded-xl shadow-2xl border overflow-hidden mx-4"
-        style={{ backgroundColor: 'white', borderColor: 'var(--border-light)' }}
+        style={{ backgroundColor: 'var(--card-bg, #fff)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>

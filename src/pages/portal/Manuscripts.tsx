@@ -201,7 +201,7 @@ function ManuscriptMiniCard({ project, taskCount }: { project: Project; taskCoun
     <Link
       to={`/projects/${project.slug}`}
       className="block rounded-lg border p-2.5 transition-all hover:shadow-sm"
-      style={{ borderColor: 'var(--border-light)', backgroundColor: 'white', textDecoration: 'none' }}
+      style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)', textDecoration: 'none' }}
     >
       <p className="text-xs font-medium leading-tight" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
         {project.title}

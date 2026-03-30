@@ -219,7 +219,7 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
           const isToday = dateStr === today
           const dayEvents = eventsByDate.get(dateStr) || []
           return (
-            <div key={dateStr} className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.04)' : 'white' }}>
+            <div key={dateStr} className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.04)' : 'var(--cream)' }}>
               <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', fontFamily: 'var(--font-mono)', color: isToday ? 'white' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
                 {dayNum}
               </span>
@@ -281,7 +281,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
         const dayEvents = eventsByDate.get(dateStr) || []
 
         return (
-          <div key={dateStr} className="rounded-lg border min-h-[300px]" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.02)' : 'white' }}>
+          <div key={dateStr} className="rounded-lg border min-h-[300px]" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.02)' : 'var(--cream)' }}>
             {/* Day header */}
             <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-light)' }}>
               <div className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>{dayNames[i]}</div>

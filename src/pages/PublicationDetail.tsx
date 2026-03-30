@@ -29,7 +29,8 @@ export default function PublicationDetail() {
 
   usePageMeta(
     pub ? `${pub.title} | MN-CCORE` : 'Publication | MN-CCORE',
-    pub?.abstract ?? 'MN-CCORE publication details.'
+    pub?.abstract ?? 'MN-CCORE publication details.',
+    'article'
   )
 
   if (!pub) {
