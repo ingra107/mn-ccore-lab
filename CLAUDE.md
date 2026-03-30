@@ -209,7 +209,7 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 7. **Phase 7 -- DONE:** D1 migration (all pages off localStorage), Grant Gantt page, CV Export, schema v4
 8. **Phase 8 -- DONE:** NotificationBell, MentionInput, MyItems page, commitment sync, morning pulse email cron, meeting automation D1 integration
 9. **Phase 9 -- DONE (Sessions 1-4):** LabSync parity -- Task system (4 views, drag-drop, detail panel), Personal Hub, Deadlines, Manuscripts, Ideas, Calendar, Analytics, Activity, Settings, AI Meeting Notes, Lab Pulse, Cmd+K, keyboard shortcuts, Smart Search, Quick Capture
-10. **Phase 10 -- NEXT:** All features built, pending launch (SendGrid activation + Cloudflare Access auth), data quality (7 headshots, Nate Scholar ID)
+10. **Phase 10 -- IN PROGRESS:** UX polish pass (LabSync benchmark), launch prep (SendGrid + Cloudflare Access), data quality (7 headshots, Nate Scholar ID)
 
 ## Meeting Cadence
 
@@ -248,6 +248,28 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 - **Sync push:** `scripts/db/sync_d1_push.py` (brain.db -> D1)
 - **Sync pull:** `scripts/db/sync_d1_pull.py` (D1 -> brain.db)
 - **Meeting automation:** `scripts/scheduled/meeting_automation.py`
+
+## UX Polish Tracker (Phase 10)
+
+### Done (2026-03-30)
+- Hero EKG pulse inline SVG (brand consistency with nav logo)
+- Sidebar item gap 2px→4px, section labels 10→11px
+- Bento grid gap 16→20px, card padding normalized 24px
+- Task card padding 14→16px, list gap 8→12px, meta text 10→11px
+- Sort buttons 11→12px, filter dropdowns 12→13px
+- View switcher: all 4 views inline (removed "More views" dropdown)
+- Search bar pill-shaped (rounded-full)
+- ToggleButton larger touch targets
+- Deploy guardrail (Rule 11: never deploy from worktrees)
+
+### Remaining (from LabSync audit)
+- Filter dropdown icons (folder for Projects, person for Members, etc.)
+- Page title icons (subtle colored icon next to heading)
+- Empty state proportions (icon 40→48px, better text balance)
+- Sidebar active state contrast (increase bg opacity or add left accent)
+- Quick Action button hierarchy (primary vs secondary visual weight)
+- Rebuild dispatch features: MemberPage (/nick, /nate), PublicationDetail, GlobalQuickAdd
+  - Source: `Scratch/plans/mnccore-hub-session-code-dump-2026-03-30.md` (33K lines)
 
 ## Session Notes
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
