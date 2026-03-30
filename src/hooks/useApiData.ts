@@ -760,3 +760,32 @@ export function useTrajectory(slug: string) {
     enabled: !!slug,
   })
 }
+
+// ── Grant Intelligence (NIH RePORTER) ──────────────────────
+
+export interface SimilarGrant {
+  project_num: string
+  title: string
+  pi: string
+  organization: string
+  fiscal_year: number
+  award_amount: number
+  start_date: string
+  end_date: string
+  abstract: string
+}
+
+export function useSimilarGrants(keywords: string, ic?: string) {
+  return useQuery({
+    queryKey: ['similar-grants', keywords, ic],
+    queryFn: async () => {
+      const params = new URLSearchParams({ keywords })
+      if (ic) params.set('ic', ic)
+      const res = await fetch(`/api/grants/similar?${params}`)
+      if (!res.ok) return { data: [] as SimilarGrant[], total: 0 }
+      return await res.json() as { data: SimilarGrant[]; total: number }
+    },
+    staleTime: 30 * 60 * 1000,
+    enabled: !!keywords && keywords.length > 2,
+  })
+}

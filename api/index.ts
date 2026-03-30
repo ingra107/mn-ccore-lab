@@ -20,6 +20,7 @@ import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper } from './routes/paper-links';
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 import { handleTrajectory } from './routes/trajectory';
+import { handleSimilarGrants } from './routes/grant-intelligence';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -88,6 +89,11 @@ export default {
 
         if (url.pathname === '/api/dependencies') {
           return await handleGetDependencies(env);
+        }
+
+        // Grant intelligence — NIH RePORTER proxy
+        if (url.pathname === '/api/grants/similar') {
+          return await handleSimilarGrants(url, env);
         }
 
         switch (url.pathname) {

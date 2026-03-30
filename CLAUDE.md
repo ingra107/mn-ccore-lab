@@ -325,37 +325,5 @@ api/index.ts already split into `api/routes/{tasks,projects,meetings,publication
 
 ## Session Notes
 
-### 2026-03-30: Phase 11 COMPLETE (Spring Break Day 1)
-**All 11 Phase 11 items shipped in 2 rounds of parallel worktree agents (8 total).**
-
-**Round 1 (4 agents):**
-1. Task Peek Overlay — Space bar quick preview, centered modal, focus management
-2. Task Subtasks — schema-v10.sql, 5 API endpoints, checklist UI with progress bar
-3. Bulk Task Actions — batch API (5 actions), floating toolbar, multi-select
-4. SavedViewsBar — 3 default views + custom named presets, localStorage, pill bar
-
-**Round 2 (4 agents):**
-5. Agenda Item Reordering — @dnd-kit drag-drop, API batch reorder, grip handle
-6. Search Ranking — Relevance scoring (type priority + recency + title/word match + status)
-7. Dashboard Card Pinning — Gold pinned section, hover pin buttons, Customize panel integration
-8. Playwright Smoke Tests — Config + 23 route tests + 9 API health checks
-
-**15 commits, 12 new files, ~2500+ lines added.** Zero conflicts in Round 2.
-
-**Correction:** Phase 11 Tier 1 (file splitting) was already done — api/index.ts has 14 route modules. Memory estimates were from the code dump, not actual files.
-
-### 2026-03-30: Phase 10 Complete (Spring Break Day 1)
-**Morning:** Recovered from dispatch worktree incident (4 rogue deploys). Added Rule 11 guardrail. Preserved 33K-line code dump.
-
-**Afternoon (prior session):** 22 commits, 9 rounds of UX polish + feature work.
-- Rounds 1-3: Spacing rhythm, visual identity, interactivity
-- Round 4: Empty states (8 pages), subtitle counts, GlobalQuickAdd, PublicationDetail
-- Round 5: ShortcutHelp, OG meta, dark mode (7 files), Grants portal (real data)
-- Round 6: Notification groups, CSV export, RoundPrompt icebreakers
-- Round 7: Recently viewed, route progress bar
-- Round 8: Focus mode (F key), density toggle
-- Round 9: Dynamic emoji favicons
-
-**13 new files created.** All frontend-only NEXT-50 items exhausted.
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
 
