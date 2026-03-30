@@ -17,6 +17,7 @@ import { handleCalendarEvents } from './routes/calendar';
 import { handleActivity, handleActivityHeatmap } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
+import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -71,6 +72,17 @@ export default {
         const projectUpdatesGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/updates$/);
         if (projectUpdatesGet) {
           return await handleGetProjectUpdates(projectUpdatesGet[1], env);
+        }
+
+        // GET /api/projects/:slug/dependencies — per-project dependencies
+        const projectDepsGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/dependencies$/);
+        if (projectDepsGet) {
+          return await handleGetProjectDependencies(projectDepsGet[1], env);
+        }
+
+        // GET /api/dependencies — all dependencies
+        if (url.pathname === '/api/dependencies') {
+          return await handleGetDependencies(env);
         }
 
         switch (url.pathname) {
@@ -324,6 +336,17 @@ export default {
         const digestStatusMatch = path.match(/^\/api\/digest\/([^/]+)\/status$/);
         if (request.method === 'POST' && digestStatusMatch) {
           return await handleUpdateDigestStatus(digestStatusMatch[1], request, user, env);
+        }
+
+        // POST /api/dependencies — create dependency
+        if (request.method === 'POST' && path === '/api/dependencies') {
+          return await handleCreateDependency(request, user, env);
+        }
+
+        // POST /api/dependencies/:id/delete — delete dependency
+        const depDeleteMatch = path.match(/^\/api\/dependencies\/([^/]+)\/delete$/);
+        if (request.method === 'POST' && depDeleteMatch) {
+          return await handleDeleteDependency(depDeleteMatch[1], env);
         }
 
         return error('Not found', 404);

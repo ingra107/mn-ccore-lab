@@ -22,6 +22,8 @@ import {
   fetchTasks,
   fetchIdeas,
   fetchCalendarEvents,
+  fetchDependencies,
+  fetchProjectDependencies,
 } from '../lib/api'
 import type {
   PublicationRow,
@@ -33,10 +35,11 @@ import type {
   TaskRow,
   IdeaRow,
   CalendarEvent,
+  DependencyRow,
 } from '../lib/api'
 
 // Re-export row types for components that need them
-export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent }
+export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow }
 
 // Static data imports (fallback for local dev)
 import { publications as staticPublications } from '../data/publications'
@@ -642,5 +645,38 @@ export function useTeamPulse(hours: number = 48) {
       }
     },
     staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ── Dependencies ───────────────────────────────────────────
+
+export function useDependencies() {
+  return useQuery({
+    queryKey: ['dependencies'],
+    queryFn: async () => {
+      try {
+        const res = await fetchDependencies()
+        return res.data as DependencyRow[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: STALE_TIME,
+  })
+}
+
+export function useProjectDependencies(slug: string) {
+  return useQuery({
+    queryKey: ['dependencies', slug],
+    queryFn: async () => {
+      try {
+        const res = await fetchProjectDependencies(slug)
+        return res.data as DependencyRow[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: 60 * 1000,
+    enabled: !!slug,
   })
 }

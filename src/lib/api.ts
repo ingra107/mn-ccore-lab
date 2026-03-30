@@ -319,4 +319,42 @@ export function fetchCalendarEvents(params?: { start?: string; end?: string }) {
   return fetchApi<CalendarEvent[]>(`/api/calendar/events${query ? `?${query}` : ''}`)
 }
 
+// ── Dependencies endpoints ──────────────────────────────────
+
+export interface DependencyRow {
+  id: string
+  from_slug: string
+  to_slug: string
+  relationship_type: string
+  note: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export function fetchDependencies() {
+  return fetchApi<DependencyRow[]>('/api/dependencies')
+}
+
+export function fetchProjectDependencies(slug: string) {
+  return fetchApi<DependencyRow[]>(`/api/projects/${slug}/dependencies`)
+}
+
+export function createDependency(input: {
+  from_slug: string
+  to_slug: string
+  relationship_type?: string
+  note?: string
+}) {
+  return fetchApi<DependencyRow>('/api/dependencies', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteDependency(id: string) {
+  return fetchApi<{ deleted: boolean; id: string }>(`/api/dependencies/${id}/delete`, {
+    method: 'POST',
+  })
+}
+
 export { ApiError }
