@@ -361,6 +361,31 @@ export function useMeetingsApi() {
   })
 }
 
+// ── Meeting Cadence ──────────────────────────────────────────
+
+export interface CadenceData {
+  nextMeeting?: { id: string; date: string; title: string }
+  score: number
+  recommendation: string
+  emoji: string
+  reasons: string[]
+  metrics: { activity: number; pending: number; updates: number; agenda: number; blocked: number }
+}
+
+export function useMeetingCadence() {
+  return useQuery({
+    queryKey: ['meeting-cadence'],
+    queryFn: async () => {
+      const res = await fetch('/api/meetings/cadence-check')
+      if (!res.ok) throw new Error('Failed')
+      const json = await res.json()
+      return json.data as CadenceData
+    },
+    staleTime: STALE_TIME,
+    retry: false,
+  })
+}
+
 export function useMeetingDetail(id: string) {
   // Build dev fallback from static data — as factory to avoid re-computation
   function buildFallback(): MeetingDetail | undefined {

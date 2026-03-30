@@ -27,6 +27,7 @@ import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSu
 import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
 import { handleCheckImpact } from './routes/impact-trace';
+import { handleCadenceCheck } from './routes/meeting-cadence';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -66,6 +67,11 @@ export default {
         const commentsGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/comments$/);
         if (commentsGet) {
           return await handleGetComments(commentsGet[1], env);
+        }
+
+        // Meeting cadence check (must come before parameterized /api/meetings/:id)
+        if (url.pathname === '/api/meetings/cadence-check') {
+          return await handleCadenceCheck(env);
         }
 
         const meetingGet = url.pathname.match(/^\/api\/meetings\/([^/]+)$/);
