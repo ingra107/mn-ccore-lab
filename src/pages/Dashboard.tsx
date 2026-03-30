@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus } from 'lucide-react'
+import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import PipelineCard from '../components/dashboard/PipelineCard'
@@ -29,6 +29,15 @@ const CARD_REGISTRY = [
 ] as const
 
 const STORAGE_KEY = 'mnccore-dashboard-cards'
+const PINNED_KEY = 'mnccore-dashboard-pinned'
+
+function getPinnedCards(): Set<string> {
+  try {
+    const stored = localStorage.getItem(PINNED_KEY)
+    if (stored) return new Set(JSON.parse(stored))
+  } catch { /* use defaults */ }
+  return new Set()
+}
 
 function getVisibleCards(): Set<string> {
   try {
@@ -47,6 +56,7 @@ export default function Dashboard() {
   const [showMore, setShowMore] = useState(false)
   const [showCustomize, setShowCustomize] = useState(false)
   const [visibleCards, setVisibleCards] = useState<Set<string>>(getVisibleCards)
+  const [pinnedCards, setPinnedCards] = useState<Set<string>>(getPinnedCards)
 
   const toggleCard = useCallback((id: string) => {
     setVisibleCards(prev => {
@@ -56,10 +66,33 @@ export default function Dashboard() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]))
       return next
     })
+    // Also unpin if hiding a card
+    setPinnedCards(prev => {
+      if (prev.has(id) && visibleCards.has(id)) {
+        // Card is being toggled off — remove from pinned
+        const next = new Set(prev)
+        next.delete(id)
+        localStorage.setItem(PINNED_KEY, JSON.stringify([...next]))
+        return next
+      }
+      return prev
+    })
+  }, [visibleCards])
+
+  const togglePin = useCallback((id: string) => {
+    setPinnedCards(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      localStorage.setItem(PINNED_KEY, JSON.stringify([...next]))
+      return next
+    })
   }, [])
 
-  const primaryCards = CARD_REGISTRY.filter(c => c.defaultVisible && visibleCards.has(c.id))
-  const secondaryCards = CARD_REGISTRY.filter(c => !c.defaultVisible && visibleCards.has(c.id))
+  const allVisibleCards = CARD_REGISTRY.filter(c => visibleCards.has(c.id))
+  const pinnedVisibleCards = allVisibleCards.filter(c => pinnedCards.has(c.id))
+  const unpinnedPrimaryCards = CARD_REGISTRY.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id))
+  const unpinnedSecondaryCards = CARD_REGISTRY.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id))
 
   return (
     <div style={{ minHeight: '100vh' }}>
@@ -158,21 +191,38 @@ export default function Dashboard() {
             </p>
             <div className="flex flex-wrap gap-2">
               {CARD_REGISTRY.map(card => (
-                <button
-                  key={card.id}
-                  onClick={() => toggleCard(card.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
-                  style={{
-                    fontFamily: 'var(--font-sans)',
-                    color: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--slate)',
-                    backgroundColor: visibleCards.has(card.id) ? 'rgba(45,138,138,0.08)' : 'transparent',
-                    borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-light)',
-                    cursor: 'pointer',
-                    opacity: visibleCards.has(card.id) ? 1 : 0.5,
-                  }}
-                >
-                  {visibleCards.has(card.id) ? '✓' : '+'} {card.label}
-                </button>
+                <div key={card.id} className="flex items-center gap-1">
+                  <button
+                    onClick={() => toggleCard(card.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
+                    style={{
+                      fontFamily: 'var(--font-sans)',
+                      color: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--slate)',
+                      backgroundColor: visibleCards.has(card.id) ? 'rgba(45,138,138,0.08)' : 'transparent',
+                      borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-light)',
+                      cursor: 'pointer',
+                      opacity: visibleCards.has(card.id) ? 1 : 0.5,
+                    }}
+                  >
+                    {visibleCards.has(card.id) ? '\u2713' : '+'} {card.label}
+                  </button>
+                  {visibleCards.has(card.id) && (
+                    <button
+                      onClick={() => togglePin(card.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        color: pinnedCards.has(card.id) ? 'var(--gold)' : 'var(--slate)',
+                        opacity: pinnedCards.has(card.id) ? 1 : 0.3,
+                      }}
+                      title={pinnedCards.has(card.id) ? 'Unpin' : 'Pin to top'}
+                    >
+                      <Pin size={12} />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           </div>
@@ -206,16 +256,83 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {/* Primary Cards — always visible */}
-        <div className="bento-grid">
-          {primaryCards.map(card => {
-            const Card = card.component
-            return <Card key={card.id} />
-          })}
-        </div>
+        {/* Pinned Cards — always at the top */}
+        {pinnedVisibleCards.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Pin size={14} style={{ color: 'var(--gold)' }} />
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '10px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: 'var(--gold)',
+                }}
+              >
+                Pinned
+              </span>
+            </div>
+            <div className="bento-grid">
+              {pinnedVisibleCards.map(card => {
+                const Card = card.component
+                return (
+                  <div key={card.id} className="relative group">
+                    <Card />
+                    <button
+                      onClick={() => togglePin(card.id)}
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{
+                        background: 'rgba(201,168,76,0.15)',
+                        border: 'none',
+                        borderRadius: 6,
+                        padding: '4px',
+                        cursor: 'pointer',
+                        color: 'var(--gold)',
+                      }}
+                      title="Unpin"
+                    >
+                      <Pin size={12} />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
-        {/* Secondary Cards — behind "Show more" */}
-        {secondaryCards.length > 0 && (
+        {/* Primary Cards — always visible (unpinned) */}
+        {unpinnedPrimaryCards.length > 0 && (
+          <div className="bento-grid">
+            {unpinnedPrimaryCards.map(card => {
+              const Card = card.component
+              return (
+                <div key={card.id} className="relative group">
+                  <Card />
+                  <button
+                    onClick={() => togglePin(card.id)}
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{
+                      background: 'rgba(15,25,35,0.05)',
+                      border: 'none',
+                      borderRadius: 6,
+                      padding: '4px',
+                      cursor: 'pointer',
+                      color: 'var(--slate)',
+                      opacity: 0.5,
+                    }}
+                    title="Pin to top"
+                  >
+                    <Pin size={12} />
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Secondary Cards — behind "Show more" (unpinned) */}
+        {unpinnedSecondaryCards.length > 0 && (
           <>
             {!showMore && (
               <button
@@ -231,16 +348,36 @@ export default function Dashboard() {
                 }}
               >
                 <ChevronDown size={14} />
-                Show {secondaryCards.length} more card{secondaryCards.length > 1 ? 's' : ''}
+                Show {unpinnedSecondaryCards.length} more card{unpinnedSecondaryCards.length > 1 ? 's' : ''}
               </button>
             )}
 
             {showMore && (
               <>
                 <div className="bento-grid mt-4">
-                  {secondaryCards.map(card => {
+                  {unpinnedSecondaryCards.map(card => {
                     const Card = card.component
-                    return <Card key={card.id} />
+                    return (
+                      <div key={card.id} className="relative group">
+                        <Card />
+                        <button
+                          onClick={() => togglePin(card.id)}
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          style={{
+                            background: 'rgba(15,25,35,0.05)',
+                            border: 'none',
+                            borderRadius: 6,
+                            padding: '4px',
+                            cursor: 'pointer',
+                            color: 'var(--slate)',
+                            opacity: 0.5,
+                          }}
+                          title="Pin to top"
+                        >
+                          <Pin size={12} />
+                        </button>
+                      </div>
+                    )
                   })}
                 </div>
 
@@ -265,7 +402,7 @@ export default function Dashboard() {
         )}
 
         {/* Empty state if all cards hidden */}
-        {primaryCards.length === 0 && secondaryCards.length === 0 && (
+        {pinnedVisibleCards.length === 0 && unpinnedPrimaryCards.length === 0 && unpinnedSecondaryCards.length === 0 && (
           <div className="text-center py-16">
             <p className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
               All cards are hidden. Click "Customize" to add cards back.
