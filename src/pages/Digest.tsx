@@ -10,11 +10,15 @@ import {
   Search,
   FolderPlus,
   Check,
+  User,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useAuth } from '../hooks/useAuth'
 import { useDigest, useDigestDates, useProjects } from '../hooks/useApiData'
 import type { DigestPaper } from '../hooks/useApiData'
 import { useUpdateDigestStatus, useLinkPaper } from '../hooks/useMutations'
+import { getPersonInfo } from '../data/team'
+import Avatar from '../components/Avatar'
 
 type StatusFilter = 'all' | 'new' | 'saved'
 
@@ -244,6 +248,55 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
             </div>
           )}
 
+          {/* Relevant members */}
+          {paper.relevant_members && paper.relevant_members.length > 0 && (
+            <div className="flex items-center gap-1.5 mb-2">
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '9px',
+                  color: 'var(--slate)',
+                  opacity: 0.5,
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Relevant for
+              </span>
+              <div className="flex -space-x-1">
+                {paper.relevant_members.slice(0, 5).map((slug: string) => {
+                  const p = getPersonInfo(slug)
+                  return (
+                    <div key={slug} title={p.name} style={{ width: 20, height: 20 }}>
+                      <Avatar
+                        name={p.name}
+                        initials={p.initials}
+                        photoUrl={p.photoUrl}
+                        size="sm"
+                        variant="ice"
+                        className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]"
+                      />
+                    </div>
+                  )
+                })}
+                {paper.relevant_members.length > 5 && (
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '9px',
+                      color: 'var(--slate)',
+                      opacity: 0.5,
+                      marginLeft: '4px',
+                      alignSelf: 'center',
+                    }}
+                  >
+                    +{paper.relevant_members.length - 5}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Abstract (collapsible) */}
           {paper.abstract && (
             <div>
@@ -457,10 +510,14 @@ export default function Digest() {
     'Daily PubMed papers relevant to MNCCORE research including critical care, lung-protective ventilation, clinical decision-making, and CLIF data standards.'
   )
 
+  const { user } = useAuth()
+  const userSlug = user?.email?.split('@')[0]?.toLowerCase() || ''
+
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [topicFilter, setTopicFilter] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [forYouFilter, setForYouFilter] = useState(false)
 
   // Fetch projects for the "Link to Project" picker
   const { data: allProjects = [] } = useProjects()
@@ -478,17 +535,18 @@ export default function Digest() {
   // Auto-select most recent date when dates load
   const activeDate = selectedDate ?? (dates.length > 0 ? dates[0].date : undefined)
 
-  // Fetch papers for the active date
+  // Fetch papers for the active date (with relevance matching)
   const { data: papers = [], isLoading } = useDigest({
     date: activeDate,
     status: statusFilter === 'all' ? undefined : statusFilter,
     topic: topicFilter ?? undefined,
     limit: 200,
+    with_relevance: true,
   })
 
   // Gather all unique topics from ALL papers for this date (not just filtered)
   // Count papers by status for the active date
-  const { data: allPapersForDate = [] } = useDigest({ date: activeDate, limit: 200 })
+  const { data: allPapersForDate = [] } = useDigest({ date: activeDate, limit: 200, with_relevance: true })
 
   const allTopics = useMemo(() => {
     const topicSet = new Set<string>()
@@ -506,16 +564,28 @@ export default function Digest() {
     return counts
   }, [allPapersForDate])
 
-  // Text search within papers
+  // "For You" count (across all papers for this date)
+  const forYouCount = useMemo(() => {
+    if (!userSlug) return 0
+    return allPapersForDate.filter((p) => p.relevant_members?.includes(userSlug)).length
+  }, [allPapersForDate, userSlug])
+
+  // Text search + "For You" filter within papers
   const filteredPapers = useMemo(() => {
-    if (!searchQuery.trim()) return papers
-    const q = searchQuery.toLowerCase()
-    return papers.filter(p =>
-      (p.title || '').toLowerCase().includes(q) ||
-      (p.authors || '').toLowerCase().includes(q) ||
-      (p.journal || '').toLowerCase().includes(q)
-    )
-  }, [papers, searchQuery])
+    let result = papers
+    if (forYouFilter && userSlug) {
+      result = result.filter((p) => p.relevant_members?.includes(userSlug))
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(p =>
+        (p.title || '').toLowerCase().includes(q) ||
+        (p.authors || '').toLowerCase().includes(q) ||
+        (p.journal || '').toLowerCase().includes(q)
+      )
+    }
+    return result
+  }, [papers, searchQuery, forYouFilter, userSlug])
 
   const isEmpty = dates.length === 0 && !isLoading
 
@@ -661,6 +731,35 @@ export default function Digest() {
               })}
             </div>
 
+            {/* "For You" filter */}
+            {userSlug && forYouCount > 0 && (
+              <button
+                onClick={() => setForYouFilter(!forYouFilter)}
+                className="cursor-pointer rounded-full px-3 py-1.5 text-sm transition-all duration-200 flex items-center gap-1.5"
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontWeight: forYouFilter ? 600 : 400,
+                  background: forYouFilter ? 'var(--teal)' : 'rgba(0, 128, 128, 0.06)',
+                  color: forYouFilter ? 'var(--cream)' : 'var(--teal)',
+                  border: forYouFilter
+                    ? '1px solid var(--teal)'
+                    : '1px solid rgba(0, 128, 128, 0.2)',
+                }}
+              >
+                <User size={12} />
+                For You
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '10px',
+                    opacity: 0.7,
+                  }}
+                >
+                  ({forYouCount})
+                </span>
+              </button>
+            )}
+
             {/* Paper count */}
             <span
               className="text-xs"
@@ -670,7 +769,7 @@ export default function Digest() {
                 opacity: 0.7,
               }}
             >
-              {papers.length} paper{papers.length !== 1 ? 's' : ''}
+              {filteredPapers.length} paper{filteredPapers.length !== 1 ? 's' : ''}
             </span>
           </div>
 
@@ -739,7 +838,7 @@ export default function Digest() {
                   No papers matching "{searchQuery}"
                 </p>
               </div>
-            ) : statusFilter !== 'all' || topicFilter ? (
+            ) : statusFilter !== 'all' || topicFilter || forYouFilter ? (
               <NoResults />
             ) : (
               <EmptyState />

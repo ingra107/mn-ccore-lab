@@ -480,9 +480,10 @@ export interface DigestPaper {
   topics: string | null // JSON array
   status: string
   digest_date: string | null
+  relevant_members?: string[] // slugs matched via expertise_tags
 }
 
-export function useDigest(params?: { date?: string; status?: string; topic?: string; limit?: number }) {
+export function useDigest(params?: { date?: string; status?: string; topic?: string; limit?: number; with_relevance?: boolean }) {
   return useQuery({
     queryKey: ['digest', params],
     queryFn: async () => {
@@ -492,6 +493,7 @@ export function useDigest(params?: { date?: string; status?: string; topic?: str
         if (params?.status) qs.set('status', params.status)
         if (params?.topic) qs.set('topic', params.topic)
         if (params?.limit) qs.set('limit', String(params.limit))
+        if (params?.with_relevance) qs.set('with_relevance', 'true')
         const res = await fetch(`/api/digest?${qs}`)
         if (!res.ok) return []
         const data = await res.json()
