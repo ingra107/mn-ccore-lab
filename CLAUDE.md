@@ -196,6 +196,7 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 8. **Date formatting from `src/lib/dateUtils.ts`** -- never create local formatters.
 9. **@mentions use `MentionInput`** -- replace any `<textarea>` that accepts team member references.
 10. **Dedup action items** -- normalize "[Carried forward]" prefix when counting or displaying pending items.
+11. **NEVER deploy from a worktree.** Only deploy from the primary main branch working copy. Worktree agents must commit code to a branch and create a PR -- never build or deploy directly. This prevents orphaned deployments that can't be traced back to source code.
 
 ## Roadmap
 
