@@ -548,6 +548,51 @@ export function useBulkUpdateTasks() {
   })
 }
 
+// ── Decision mutations ────────────────────────────────────
+
+export function useCreateDecision() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      title: string
+      rationale?: string
+      context?: string
+      project_slug?: string
+      meeting_id?: string
+      tags?: string
+    }) =>
+      fetch('/api/decisions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then((r) => r.json()),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['decisions'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUpdateDecisionOutcome() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, outcome, outcome_status }: { id: string; outcome: string; outcome_status: string }) =>
+      fetch(`/api/decisions/${id}/outcome`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outcome, outcome_status }),
+      }).then((r) => r.json()),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['decisions'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Dependency mutations ──────────────────────────────────
 
 export function useCreateDependency() {

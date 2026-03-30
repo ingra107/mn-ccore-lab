@@ -4,7 +4,7 @@ import {
   Search, LayoutDashboard, User, CheckSquare, ListTodo, Calendar,
   Clock, FolderKanban, FileText, Lightbulb, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
-  CheckCircle2, AlertTriangle, Flag, CircleDot,
+  CheckCircle2, AlertTriangle, Flag, CircleDot, Scale,
 } from 'lucide-react'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { getPersonInfo } from '../data/team'
@@ -69,6 +69,7 @@ export default function CommandPalette() {
       { path: '/projects', label: 'Projects', icon: FolderKanban, shortcut: 'G P' },
       { path: '/manuscripts', label: 'Manuscripts', icon: FileText },
       { path: '/ideas', label: 'Ideas', icon: Lightbulb },
+      { path: '/decisions', label: 'Decisions', icon: Scale },
       { path: '/digest', label: 'Literature', icon: BookOpen },
       { path: '/grants', label: 'Grants', icon: DollarSign },
       { path: '/meetings', label: 'Meetings', icon: Users, shortcut: 'G M' },

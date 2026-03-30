@@ -19,6 +19,7 @@ import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDele
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper } from './routes/paper-links';
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
+import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview } from './routes/decisions';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -87,6 +88,14 @@ export default {
 
         if (url.pathname === '/api/dependencies') {
           return await handleGetDependencies(env);
+        }
+
+        // Decisions endpoints (review must come before parameterized catches)
+        if (url.pathname === '/api/decisions/review') {
+          return await handleGetDecisionsNeedingReview(env);
+        }
+        if (url.pathname === '/api/decisions') {
+          return await handleGetDecisions(url, env);
         }
 
         switch (url.pathname) {
@@ -373,6 +382,17 @@ export default {
         const depDeleteMatch = path.match(/^\/api\/dependencies\/([^/]+)\/delete$/);
         if (request.method === 'POST' && depDeleteMatch) {
           return await handleDeleteDependency(depDeleteMatch[1], env);
+        }
+
+        // POST /api/decisions — create decision
+        if (request.method === 'POST' && path === '/api/decisions') {
+          return await handleCreateDecision(request, user, env);
+        }
+
+        // POST /api/decisions/:id/outcome — update outcome
+        const decisionOutcomeMatch = path.match(/^\/api\/decisions\/([^/]+)\/outcome$/);
+        if (request.method === 'POST' && decisionOutcomeMatch) {
+          return await handleUpdateDecisionOutcome(decisionOutcomeMatch[1], request, user, env);
         }
 
         return error('Not found', 404);

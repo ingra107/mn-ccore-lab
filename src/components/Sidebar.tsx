@@ -20,6 +20,7 @@ import {
   ChevronRight,
   ExternalLink,
   Bug,
+  Scale,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useUnreadCount } from '../hooks/useNotifications'
@@ -68,6 +69,7 @@ const navGroups: NavGroup[] = [
       { to: '/projects', label: 'Projects', icon: FolderKanban },
       { to: '/manuscripts', label: 'Manuscripts', icon: FileText },
       { to: '/ideas', label: 'Ideas', icon: Lightbulb },
+      { to: '/decisions', label: 'Decisions', icon: Scale },
       { to: '/digest', label: 'Literature', icon: BookOpen },
       { to: '/search', label: 'Search', icon: Search },
       { to: '/grants', label: 'Grants', icon: DollarSign },
