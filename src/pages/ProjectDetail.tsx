@@ -31,6 +31,7 @@ import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import { formatMediumDate, formatTimestamp } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
+import WatchButton from '../components/WatchButton'
 import ProjectComments from '../components/ProjectComments'
 import ProjectUpdateFeed from '../components/ProjectUpdateFeed'
 import type { Project, ActionItem } from '../data/types'
@@ -386,6 +387,9 @@ function ProjectDetailInner({ project }: InnerProps) {
               >
                 {copied ? <Check size={16} /> : <Link2 size={16} />}
               </button>
+              <div className="mt-2 flex-shrink-0">
+                <WatchButton id={project.slug} type="project" label={project.title} slug={project.slug} />
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">

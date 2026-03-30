@@ -13,6 +13,7 @@ import { getMemberBySlug } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
 import { projects } from '../data/projects'
 import { formatShortDate } from '../lib/dateUtils'
+import WatchButton from '../components/WatchButton'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -305,6 +306,7 @@ export default function MemberPage() {
             <TrendingUp size={12} />
             View Trajectory
           </Link>
+          <WatchButton id={slug} type="person" label={member.name} slug={slug} />
         </div>
       )}
 

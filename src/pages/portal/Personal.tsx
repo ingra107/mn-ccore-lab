@@ -4,6 +4,7 @@ import {
   CheckSquare, Clock, FolderKanban, Bell, Calendar, Handshake,
   Activity, ArrowRight, Circle, AlertTriangle, TrendingUp,
   Users, Send, Lightbulb, User, History,
+  Eye, EyeOff, FlaskConical, CalendarDays, UserCircle,
 } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import BentoCard from '../../components/dashboard/BentoCard'
@@ -17,6 +18,8 @@ import { useUpdateTaskStatus, useCreateIdea } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed'
+import { useWatchlist } from '../../hooks/useWatchlist'
+import type { WatchItem } from '../../hooks/useWatchlist'
 import type { TaskRow } from '../../lib/api'
 
 // Try to get current user from CF Access JWT
@@ -40,6 +43,7 @@ function isPI(slug: string | null): boolean {
 
 export default function Personal() {
   const { recent } = useRecentlyViewed()
+  const watchlist = useWatchlist()
   const currentUser = useMemo(() => getCurrentUser(), [])
   const person = currentUser ? getPersonInfo(currentUser) : null
 
@@ -210,6 +214,11 @@ export default function Personal() {
 
         {/* Recent Activity */}
         <ActivityCard activity={activity} />
+
+        {/* Watching */}
+        {watchlist.items.length > 0 && (
+          <WatchingCard items={watchlist.items} onUnwatch={watchlist.unwatch} />
+        )}
 
         {/* PI-only cards */}
         {isPI(currentUser) && health && (
@@ -557,6 +566,46 @@ function GrantMiniCard({ grants }: { grants: { title: string; mechanism: string;
       <Link to="/grants" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         Grant timeline <ArrowRight size={11} />
       </Link>
+    </BentoCard>
+  )
+}
+
+// ── Watching Card ───────────────────────────────────────────
+
+function getWatchTypeIcon(type: WatchItem['type']) {
+  switch (type) {
+    case 'project': return <FlaskConical size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+    case 'task': return <CheckSquare size={12} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+    case 'person': return <UserCircle size={12} style={{ color: 'var(--slate)', flexShrink: 0 }} />
+    case 'meeting': return <CalendarDays size={12} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+  }
+}
+
+function getWatchItemUrl(item: WatchItem): string {
+  switch (item.type) {
+    case 'project': return `/projects/${item.slug || item.id}`
+    case 'task': return `/my-tasks`
+    case 'person': return `/team/${item.slug || item.id}`
+    case 'meeting': return `/meetings/${item.id}`
+  }
+}
+
+function WatchingCard({ items, onUnwatch }: { items: WatchItem[]; onUnwatch: (id: string, type: string) => void }) {
+  return (
+    <BentoCard title="Watching" subtitle={`${items.length} item${items.length !== 1 ? 's' : ''}`} icon={Eye}>
+      <div className="flex flex-col gap-0.5">
+        {items.map(item => (
+          <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.06)' }}>
+            {getWatchTypeIcon(item.type)}
+            <Link to={getWatchItemUrl(item)} style={{ flex: 1, fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', textDecoration: 'none' }}>
+              {item.label}
+            </Link>
+            <button onClick={() => onUnwatch(item.id, item.type)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.3, padding: 2 }}>
+              <EyeOff size={12} />
+            </button>
+          </div>
+        ))}
+      </div>
     </BentoCard>
   )
 }

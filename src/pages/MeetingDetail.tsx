@@ -28,6 +28,7 @@ import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks
 import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import Avatar from '../components/Avatar'
+import WatchButton from '../components/WatchButton'
 import { getPersonInfo } from '../data/team'
 import { formatLongDate, formatShortDate } from '../lib/dateUtils'
 import { getMeetingFacilitator } from '../lib/facilitator'
@@ -133,6 +134,7 @@ export default function MeetingDetail() {
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
               {meeting.type}
             </span>
+            <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
           </div>
 
           <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
