@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, List, LayoutGrid, GanttChartSquare, ChevronDown, CheckCircle2 } from 'lucide-react'
+import { Plus, List, LayoutGrid, GanttChartSquare, ChevronDown, CheckCircle2, CheckSquare } from 'lucide-react'
 import { SkeletonList } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import ToggleButton from '../../components/ToggleButton'
@@ -94,6 +94,7 @@ export default function MyTasks() {
     <div>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <SectionHeader
+          icon={CheckSquare}
           title={person ? `${person.name.split(' ')[0]}'s Tasks` : 'My Tasks'}
           subtitle={`${pendingCount} active task${pendingCount !== 1 ? 's' : ''}`}
         />

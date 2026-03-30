@@ -1,6 +1,7 @@
-import { X } from 'lucide-react'
+import { X, FolderKanban, Users, CircleDot, Flag } from 'lucide-react'
 import { useTeam } from '../../hooks/useApiData'
 import { useProjects } from '../../hooks/useApiData'
+import type { LucideIcon } from 'lucide-react'
 
 interface TaskFiltersProps {
   filters: {
@@ -28,6 +29,52 @@ const priorityOptions = [
   { value: 'low', label: 'Low' },
 ]
 
+function FilterChipSelect({
+  icon: Icon,
+  value,
+  onChange,
+  active,
+  children,
+}: {
+  icon: LucideIcon
+  value: string
+  onChange: (val: string) => void
+  active: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <div className="relative flex items-center">
+      <Icon
+        size={13}
+        className="absolute left-3 pointer-events-none"
+        style={{ color: active ? 'var(--teal)' : 'var(--slate)', opacity: 0.7 }}
+      />
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-full border py-1.5"
+        style={{
+          fontFamily: 'var(--font-sans)',
+          fontSize: '13px',
+          color: active ? 'var(--teal)' : 'var(--slate)',
+          backgroundColor: active ? 'rgba(45,138,138,0.06)' : 'transparent',
+          borderColor: active ? 'var(--teal)' : 'var(--border-light)',
+          cursor: 'pointer',
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'right 8px center',
+          paddingLeft: '28px',
+          paddingRight: '24px',
+        }}
+      >
+        {children}
+      </select>
+    </div>
+  )
+}
+
 export default function TaskFilters({ filters, onChange }: TaskFiltersProps) {
   const { data: team = [] } = useTeam()
   const { data: projects = [] } = useProjects()
@@ -38,68 +85,53 @@ export default function TaskFilters({ filters, onChange }: TaskFiltersProps) {
     .filter((m) => m.slug)
     .sort((a, b) => a.name.localeCompare(b.name))
 
-  const chipStyle = (active: boolean): React.CSSProperties => ({
-    fontFamily: 'var(--font-sans)',
-    fontSize: '13px',
-    color: active ? 'var(--teal)' : 'var(--slate)',
-    backgroundColor: active ? 'rgba(45,138,138,0.06)' : 'transparent',
-    borderColor: active ? 'var(--teal)' : 'var(--border-light)',
-    cursor: 'pointer',
-    appearance: 'none' as const,
-    WebkitAppearance: 'none' as const,
-    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 8px center',
-    paddingRight: '24px',
-  })
-
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
-      <select
+      <FilterChipSelect
+        icon={FolderKanban}
         value={filters.project}
-        onChange={(e) => onChange({ ...filters, project: e.target.value })}
-        className="rounded-full border px-3 py-1.5"
-        style={chipStyle(!!filters.project)}
+        onChange={(val) => onChange({ ...filters, project: val })}
+        active={!!filters.project}
       >
         <option value="">All Projects</option>
         {projects.map((p) => (
           <option key={p.slug} value={p.slug}>{p.title}</option>
         ))}
-      </select>
+      </FilterChipSelect>
 
-      <select
+      <FilterChipSelect
+        icon={Users}
         value={filters.assignee}
-        onChange={(e) => onChange({ ...filters, assignee: e.target.value })}
-        className="rounded-full border px-3 py-1.5"
-        style={chipStyle(!!filters.assignee)}
+        onChange={(val) => onChange({ ...filters, assignee: val })}
+        active={!!filters.assignee}
       >
         <option value="">All Members</option>
         {memberOptions.map((m) => (
           <option key={m.slug} value={m.slug}>{m.name}</option>
         ))}
-      </select>
+      </FilterChipSelect>
 
-      <select
+      <FilterChipSelect
+        icon={CircleDot}
         value={filters.status}
-        onChange={(e) => onChange({ ...filters, status: e.target.value })}
-        className="rounded-full border px-3 py-1.5"
-        style={chipStyle(!!filters.status)}
+        onChange={(val) => onChange({ ...filters, status: val })}
+        active={!!filters.status}
       >
         {statusOptions.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
-      </select>
+      </FilterChipSelect>
 
-      <select
+      <FilterChipSelect
+        icon={Flag}
         value={filters.priority}
-        onChange={(e) => onChange({ ...filters, priority: e.target.value })}
-        className="rounded-full border px-3 py-1.5"
-        style={chipStyle(!!filters.priority)}
+        onChange={(val) => onChange({ ...filters, priority: val })}
+        active={!!filters.priority}
       >
         {priorityOptions.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
-      </select>
+      </FilterChipSelect>
 
       {hasFilters && (
         <button

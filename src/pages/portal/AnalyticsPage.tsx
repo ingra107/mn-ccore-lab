@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle } from 'lucide-react'
+import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3 } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import MetricCard from '../../components/MetricCard'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
 
   return (
     <div>
-      <SectionHeader title="Lab Analytics" subtitle="Performance metrics and activity reports" />
+      <SectionHeader icon={BarChart3} title="Lab Analytics" subtitle="Performance metrics and activity reports" />
 
       {/* Week Navigator */}
       <div className="mt-5 flex items-center gap-3 flex-wrap">

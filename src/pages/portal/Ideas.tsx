@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, LayoutGrid, List, ThumbsUp, X } from 'lucide-react'
+import { Plus, LayoutGrid, List, ThumbsUp, X, Lightbulb } from 'lucide-react'
 import { SkeletonCard } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import ToggleButton from '../../components/ToggleButton'
@@ -58,6 +58,7 @@ export default function Ideas() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <SectionHeader
+            icon={Lightbulb}
             title="Ideas Board"
             subtitle={`${activeCount} active ideas — capture and organize innovative research ideas`}
           />

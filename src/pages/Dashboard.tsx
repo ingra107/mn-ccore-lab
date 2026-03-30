@@ -179,18 +179,18 @@ export default function Dashboard() {
         )}
 
         {/* Quick Actions */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <div className="flex items-center gap-2.5 mb-4 flex-wrap">
           <Link
             to="/tasks?create=true"
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--border-light)', textDecoration: 'none' }}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
+            style={{ fontFamily: 'var(--font-sans)', color: 'white', backgroundColor: 'var(--teal)', textDecoration: 'none' }}
           >
             <Plus size={14} />
             New Task
           </Link>
           <Link
             to="/meetings"
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
             style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', textDecoration: 'none' }}
           >
             <CalendarPlus size={14} />
@@ -198,7 +198,7 @@ export default function Dashboard() {
           </Link>
           <Link
             to="/ideas?create=true"
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
             style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', textDecoration: 'none' }}
           >
             <FolderPlus size={14} />

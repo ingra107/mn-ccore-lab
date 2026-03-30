@@ -173,9 +173,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                     active ? 'font-medium' : ''
                   }`}
                   style={{
-                    backgroundColor: active ? 'var(--teal-light, rgba(45,138,138,0.1))' : 'transparent',
+                    backgroundColor: active ? 'var(--teal-light, rgba(45,138,138,0.12))' : 'transparent',
                     color: active ? 'var(--teal)' : 'var(--ink-light, #4a5568)',
                     fontFamily: 'var(--font-sans)',
+                    borderLeft: active ? '3px solid var(--teal)' : '3px solid transparent',
+                    borderRadius: active ? '2px 6px 6px 2px' : undefined,
                   }}
                   title={collapsed ? item.label : undefined}
                 >

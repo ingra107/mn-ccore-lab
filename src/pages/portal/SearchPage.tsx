@@ -107,7 +107,7 @@ export default function SearchPage() {
         </div>
       ) : (
         <>
-          <SectionHeader title="Search" subtitle="Find anything across the lab" />
+          <SectionHeader icon={Search} title="Search" subtitle="Find anything across the lab" />
           <div className="mt-5 relative">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
             <input

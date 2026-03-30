@@ -93,7 +93,7 @@ export default function CalendarPage() {
 
   return (
     <div>
-      <SectionHeader title="Lab Calendar" subtitle={`${events.length} events — meetings, deadlines, and milestones`} />
+      <SectionHeader icon={Calendar} title="Lab Calendar" subtitle={`${events.length} events — meetings, deadlines, and milestones`} />
 
       {/* Controls */}
       <div className="mt-5 flex items-center justify-between flex-wrap gap-3">

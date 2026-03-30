@@ -93,6 +93,7 @@ export default function Deadlines() {
   return (
     <div>
       <SectionHeader
+        icon={Clock}
         title="Deadlines & Milestones"
         subtitle={overdue.length > 0
           ? `${overdue.length} overdue · ${thisWeek.length + nextWeek.length} upcoming — track important dates`

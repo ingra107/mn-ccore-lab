@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, FileText } from 'lucide-react'
+import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, FileText, ListTodo } from 'lucide-react'
 import { SkeletonList } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import TaskFilters from '../../components/tasks/TaskFilters'
@@ -86,6 +86,7 @@ export default function Tasks() {
           <SectionHeader
             title="All Tasks"
             subtitle={`${pendingCount} active across the lab`}
+            icon={ListTodo}
           />
           {/* Inline filter chips */}
           <div className="mt-1">

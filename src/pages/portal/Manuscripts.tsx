@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { LayoutGrid, List, ArrowRight } from 'lucide-react'
+import { LayoutGrid, List, ArrowRight, FileText } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
@@ -69,6 +69,7 @@ export default function Manuscripts() {
     <div>
       <div>
         <SectionHeader
+          icon={FileText}
           title="Manuscript Pipeline"
           subtitle={`${activeCount} active manuscripts — track from idea to publication`}
         />

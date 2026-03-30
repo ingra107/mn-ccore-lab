@@ -73,7 +73,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <SectionHeader title="Settings" subtitle="Configure your lab workspace — changes are saved automatically" />
+      <SectionHeader icon={Settings} title="Settings" subtitle="Configure your lab workspace — changes are saved automatically" />
 
       <div className="mt-6 flex flex-col gap-8 max-w-2xl">
         {/* Basic Information */}

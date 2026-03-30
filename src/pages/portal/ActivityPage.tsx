@@ -40,7 +40,7 @@ export default function ActivityPage() {
   return (
     <div>
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <SectionHeader title="Activity" subtitle="Recent actions across the lab" />
+        <SectionHeader icon={ActivityIcon} title="Activity" subtitle="Recent actions across the lab" />
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}

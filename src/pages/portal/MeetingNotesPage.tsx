@@ -21,6 +21,7 @@ export default function MeetingNotesPage() {
     <div>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <SectionHeader
+          icon={FileText}
           title="AI Meeting Notes"
           subtitle="AI-powered transcription, summaries, and action items"
         />

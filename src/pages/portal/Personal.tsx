@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   CheckSquare, Clock, FolderKanban, Bell, Calendar, Handshake,
   Activity, ArrowRight, Circle, AlertTriangle, TrendingUp,
-  Users, Send, Lightbulb,
+  Users, Send, Lightbulb, User,
 } from 'lucide-react'
 import SectionHeader from '../../components/SectionHeader'
 import BentoCard from '../../components/dashboard/BentoCard'
@@ -102,6 +102,7 @@ export default function Personal() {
           </div>
         )}
         <SectionHeader
+          icon={User}
           title={person ? `${person.name.split(' ')[0]}'s Hub` : 'My Hub'}
           subtitle={overdueTasks.length > 0
             ? `${overdueTasks.length} overdue — your personal command center`
