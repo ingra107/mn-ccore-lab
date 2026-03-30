@@ -65,8 +65,9 @@ export default function AnalyticsPage() {
     return { completed, created, overdue, activityCount }
   }, [tasks, activity, selectedWeekStart, selectedWeekEnd])
 
-  // Task completion by person
+  // Task completion by person — only computed for PIs (individual metrics are PI-only)
   const completionByPerson = useMemo(() => {
+    if (!isPi) return []
     const now = new Date()
     const map = new Map<string, { total: number; done: number; overdue: number }>()
     for (const t of tasks) {
@@ -79,7 +80,7 @@ export default function AnalyticsPage() {
     return [...map.entries()]
       .map(([slug, stats]) => ({ slug, ...stats, rate: stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0 }))
       .sort((a, b) => b.total - a.total)
-  }, [tasks])
+  }, [tasks, isPi])
 
   // Projects by stage
   const projectsByStage = useMemo(() => {
@@ -133,14 +134,16 @@ export default function AnalyticsPage() {
     <div>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <SectionHeader icon={BarChart3} title="Lab Analytics" subtitle={`${projects.length} projects · ${pendingTasks} active tasks — performance metrics and reports`} />
-        <button
-          onClick={exportCSV}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors mt-1"
-          style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
-        >
-          <Download size={14} />
-          Export CSV
-        </button>
+        {isPi && (
+          <button
+            onClick={exportCSV}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors mt-1"
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
+          >
+            <Download size={14} />
+            Export CSV
+          </button>
+        )}
       </div>
 
       {/* Week Navigator */}
@@ -281,6 +284,11 @@ export default function AnalyticsPage() {
               </div>
               <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
                 {pendingTasks} still pending across the lab
+              </p>
+            </div>
+            <div className="text-center pt-3 mt-3" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--slate)', opacity: 0.6 }}>
+                Individual performance metrics are visible to PIs only
               </p>
             </div>
           </div>
