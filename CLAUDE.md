@@ -293,17 +293,17 @@ api/index.ts already split into `api/routes/{tasks,projects,meetings,publication
 | 6 | **Bulk task actions** | DONE — Batch API (5 actions), floating toolbar, multi-select checkboxes |
 | 10 | **SavedViewsBar** | DONE — 3 default views, custom views, localStorage, pill bar UI |
 
-### Tier 2: Features — Remaining
-| # | Item | Why | Approach |
-|---|------|-----|----------|
-| 7 | **Agenda item reordering** | Can't reorder after creation. | @dnd-kit sortable. API POST for `sort_order`. |
-| 8 | **Search ranking** | FTS returns by type, not relevance. | Weight by recency + type priority in API. |
-| 9 | **Dashboard card pinning** | Can't pin favorites to top. | Customize modal rework + localStorage sort state. |
+### Tier 2: Features — Session 2 (ALL DONE)
+| # | Item | Status |
+|---|------|--------|
+| 7 | **Agenda item reordering** | DONE — @dnd-kit sortable, API batch reorder, grip handle |
+| 8 | **Search ranking** | DONE — Relevance scoring: type priority + recency + title match + status boost |
+| 9 | **Dashboard card pinning** | DONE — Gold pinned section, hover pin buttons, Customize panel pins |
 
-### Tier 3: Infrastructure
-| # | Item | Why | Approach |
-|---|------|-----|----------|
-| 11 | **Playwright smoke tests** | No automated testing. | Script hitting 18 portal routes, verify page titles. |
+### Tier 3: Infrastructure — DONE
+| # | Item | Status |
+|---|------|--------|
+| 11 | **Playwright smoke tests** | DONE — Config + 23 route tests + 9 API health checks |
 
 ### Launch Blockers (External)
 - SendGrid API key → `wrangler secret put SENDGRID_API_KEY`
@@ -324,16 +324,24 @@ api/index.ts already split into `api/routes/{tasks,projects,meetings,publication
 
 ## Session Notes
 
-### 2026-03-30: Phase 11 Session 1 (Spring Break Day 1, Evening)
-**4 features shipped in parallel** via worktree agents:
-1. **Task Peek Overlay** — Space bar quick preview, centered modal, focus management
-2. **Task Subtasks** — schema-v10.sql, 5 API endpoints, checklist UI with progress bar
-3. **Bulk Task Actions** — batch API (complete/uncomplete/assign/priority/delete), floating toolbar, multi-select
-4. **SavedViewsBar** — 3 default views + custom named presets, localStorage, pill bar
+### 2026-03-30: Phase 11 COMPLETE (Spring Break Day 1)
+**All 11 Phase 11 items shipped in 2 rounds of parallel worktree agents (8 total).**
 
-**7 new files, 10 modified, +1897 lines.** All 4 branches merged cleanly (2 conflicts resolved). Build verified.
+**Round 1 (4 agents):**
+1. Task Peek Overlay — Space bar quick preview, centered modal, focus management
+2. Task Subtasks — schema-v10.sql, 5 API endpoints, checklist UI with progress bar
+3. Bulk Task Actions — batch API (5 actions), floating toolbar, multi-select
+4. SavedViewsBar — 3 default views + custom named presets, localStorage, pill bar
 
-**Correction:** Phase 11 Tier 1 (file splitting) was already done — api/index.ts has 12 route modules (1985 total lines). Memory estimates of 3000+/17K/14K lines were from the code dump, not actual files. Updated backlog.
+**Round 2 (4 agents):**
+5. Agenda Item Reordering — @dnd-kit drag-drop, API batch reorder, grip handle
+6. Search Ranking — Relevance scoring (type priority + recency + title/word match + status)
+7. Dashboard Card Pinning — Gold pinned section, hover pin buttons, Customize panel integration
+8. Playwright Smoke Tests — Config + 23 route tests + 9 API health checks
+
+**15 commits, 12 new files, ~2500+ lines added.** Zero conflicts in Round 2.
+
+**Correction:** Phase 11 Tier 1 (file splitting) was already done — api/index.ts has 14 route modules. Memory estimates were from the code dump, not actual files.
 
 ### 2026-03-30: Phase 10 Complete (Spring Break Day 1)
 **Morning:** Recovered from dispatch worktree incident (4 rogue deploys). Added Rule 11 guardrail. Preserved 33K-line code dump.
