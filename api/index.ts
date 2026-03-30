@@ -22,6 +22,7 @@ import { handleGetDependencies, handleGetProjectDependencies, handleCreateDepend
 import { handleTrajectory } from './routes/trajectory';
 import { handleSimilarGrants } from './routes/grant-intelligence';
 import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview } from './routes/decisions';
+import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -195,6 +196,12 @@ export default {
         if (taskSubtasksGet) {
           return await handleGetSubtasks(taskSubtasksGet[1], env);
         }
+
+        // GET /api/tasks/:id/handoffs
+        const taskHandoffsGet = url.pathname.match(/^\/api\/tasks\/([^/]+)\/handoffs$/);
+        if (taskHandoffsGet) {
+          return await handleGetHandoffs(taskHandoffsGet[1], env);
+        }
       }
 
       // Write endpoints (POST/PUT)
@@ -346,6 +353,18 @@ export default {
         const subtaskReorderMatch = path.match(/^\/api\/tasks\/([^/]+)\/subtasks\/reorder$/);
         if (request.method === 'POST' && subtaskReorderMatch) {
           return await handleReorderSubtasks(subtaskReorderMatch[1], request, env);
+        }
+
+        // POST /api/tasks/:id/handoffs — create handoff
+        const handoffCreateMatch = path.match(/^\/api\/tasks\/([^/]+)\/handoffs$/);
+        if (request.method === 'POST' && handoffCreateMatch) {
+          return await handleCreateHandoff(handoffCreateMatch[1], request, user, env);
+        }
+
+        // POST /api/handoffs/:id/acknowledge — acknowledge handoff
+        const handoffAckMatch = path.match(/^\/api\/handoffs\/([^/]+)\/acknowledge$/);
+        if (request.method === 'POST' && handoffAckMatch) {
+          return await handleAcknowledgeHandoff(handoffAckMatch[1], user, env);
         }
 
         // POST /api/settings — update lab settings

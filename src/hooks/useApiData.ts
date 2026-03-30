@@ -604,6 +604,36 @@ export function useSubtasks(taskId: string) {
   })
 }
 
+// ── Task Handoffs ──────────────────────────────────────────
+
+export interface HandoffRow {
+  id: string
+  task_id: string
+  from_slug: string
+  to_slug: string
+  situation: string
+  background: string | null
+  assessment: string | null
+  recommendation: string | null
+  acknowledged: number
+  acknowledged_at: string | null
+  created_at: string
+}
+
+export function useHandoffs(taskId: string) {
+  return useQuery({
+    queryKey: ['handoffs', taskId],
+    queryFn: async () => {
+      const res = await fetch(`/api/tasks/${taskId}/handoffs`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as HandoffRow[]
+    },
+    staleTime: 30 * 1000,
+    enabled: !!taskId,
+  })
+}
+
 // ── Paper-Project Links ────────────────────────────────────
 
 export interface PaperProjectLink {

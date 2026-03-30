@@ -565,6 +565,58 @@ export function useToggleReaction() {
   })
 }
 
+// ── Handoff mutations ─────────────────────────────────────
+
+export function useCreateHandoff(taskId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      to_slug: string
+      situation: string
+      background?: string
+      assessment?: string
+      recommendation?: string
+    }) =>
+      fetch(`/api/tasks/${taskId}/handoffs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then((r) => r.json()),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['handoffs', taskId] })
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['action-items'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    },
+  })
+}
+
+export function useAcknowledgeHandoff(taskId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (handoffId: string) =>
+      fetch(`/api/handoffs/${handoffId}/acknowledge`, { method: 'POST' }).then((r) => r.json()),
+    onMutate: async (handoffId) => {
+      await queryClient.cancelQueries({ queryKey: ['handoffs', taskId] })
+      const prev = queryClient.getQueryData<{ id: string; acknowledged: number }[]>(['handoffs', taskId])
+      if (prev) {
+        queryClient.setQueryData(['handoffs', taskId], prev.map((h) =>
+          h.id === handoffId ? { ...h, acknowledged: 1, acknowledged_at: new Date().toISOString() } : h
+        ))
+      }
+      return { prev }
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(['handoffs', taskId], ctx.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['handoffs', taskId] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Bulk task mutations ────────────────────────────────────
 
 export function useBulkUpdateTasks() {
