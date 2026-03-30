@@ -207,3 +207,58 @@ export async function handleGetTaskActivity(taskId: string, env: Env): Promise<R
   ).bind(taskId).all();
   return json({ data: result.results || [] });
 }
+
+// POST /api/tasks/batch — batch update tasks
+export async function handleBatchUpdateTasks(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    ids: string[]
+    action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete'
+    value?: string
+  }
+
+  if (!body.ids?.length || !body.action) {
+    return error('ids and action required', 400)
+  }
+
+  const placeholders = body.ids.map(() => '?').join(',')
+
+  switch (body.action) {
+    case 'complete':
+      await env.DB.prepare(
+        `UPDATE tasks SET status = 'done', completed = 1, completed_at = datetime('now'), completed_by = ? WHERE id IN (${placeholders})`
+      ).bind(user.email, ...body.ids).run()
+      break
+
+    case 'uncomplete':
+      await env.DB.prepare(
+        `UPDATE tasks SET status = 'todo', completed = 0, completed_at = NULL, completed_by = NULL WHERE id IN (${placeholders})`
+      ).bind(...body.ids).run()
+      break
+
+    case 'assign':
+      if (!body.value) return error('value (assignee) required for assign action', 400)
+      await env.DB.prepare(
+        `UPDATE tasks SET assignee = ? WHERE id IN (${placeholders})`
+      ).bind(body.value, ...body.ids).run()
+      break
+
+    case 'priority':
+      if (!body.value || !['low', 'medium', 'high', 'urgent'].includes(body.value)) {
+        return error('value must be one of: low, medium, high, urgent', 400)
+      }
+      await env.DB.prepare(
+        `UPDATE tasks SET priority = ? WHERE id IN (${placeholders})`
+      ).bind(body.value, ...body.ids).run()
+      break
+
+    case 'delete':
+      await env.DB.prepare(
+        `DELETE FROM tasks WHERE id IN (${placeholders})`
+      ).bind(...body.ids).run()
+      break
+  }
+
+  await logActivity(env, 'task', `Bulk ${body.action}: ${body.ids.length} tasks`, user.email, null, null)
+
+  return json({ data: { ok: true, count: body.ids.length } })
+}

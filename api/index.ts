@@ -2,7 +2,7 @@ import type { Env } from './types';
 import { corsHeaders, json, error, getAuthUser } from './helpers';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleTasks, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity } from './routes/tasks';
+import { handleTasks, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleBatchUpdateTasks } from './routes/tasks';
 import { handleProjects, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleAddComment, handlePostProjectUpdate } from './routes/projects';
 import { handleMeetings, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleCreateMeeting } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline } from './routes/publications';
@@ -168,6 +168,11 @@ export default {
         const teamMatch = path.match(/^\/api\/team\/([^/]+)$/);
         if (request.method === 'PUT' && teamMatch) {
           return await handleUpdateTeamMember(teamMatch[1], request, user, env);
+        }
+
+        // POST /api/tasks/batch — batch update tasks
+        if (request.method === 'POST' && path === '/api/tasks/batch') {
+          return await handleBatchUpdateTasks(request, user, env);
         }
 
         // POST /api/tasks/:id/status — change task status

@@ -7,6 +7,8 @@ interface TaskListViewProps {
   tasks: TaskRow[]
   onStatusChange: (id: string, status: string) => void
   onSelect?: (task: TaskRow) => void
+  selectedIds?: Set<string>
+  onToggleSelect?: (id: string) => void
 }
 
 type SortKey = 'priority' | 'due_date' | 'assignee' | 'created_at' | 'status'
@@ -14,7 +16,7 @@ type SortKey = 'priority' | 'due_date' | 'assignee' | 'created_at' | 'status'
 const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
 const statusOrder: Record<string, number> = { blocked: 0, in_progress: 1, todo: 2, done: 3 }
 
-export default function TaskListView({ tasks, onStatusChange, onSelect }: TaskListViewProps) {
+export default function TaskListView({ tasks, onStatusChange, onSelect, selectedIds, onToggleSelect }: TaskListViewProps) {
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortAsc, setSortAsc] = useState(true)
 
@@ -92,7 +94,26 @@ export default function TaskListView({ tasks, onStatusChange, onSelect }: TaskLi
       {/* Task list */}
       <div className="flex flex-col gap-3">
         {sorted.map((task) => (
-          <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} onClick={onSelect ? () => onSelect(task) : undefined} />
+          <div key={task.id} className="flex items-start gap-2">
+            {onToggleSelect && (
+              <div
+                onClick={(e) => { e.stopPropagation(); onToggleSelect(task.id) }}
+                className="flex-shrink-0 cursor-pointer mt-3"
+                style={{ width: 20, height: 20 }}
+              >
+                {selectedIds?.has(task.id) ? (
+                  <div style={{ width: 18, height: 18, borderRadius: 4, background: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CheckCircle2 size={12} style={{ color: 'white' }} />
+                  </div>
+                ) : (
+                  <div style={{ width: 18, height: 18, borderRadius: 4, border: '2px solid var(--border-light)' }} />
+                )}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <TaskCard task={task} onStatusChange={onStatusChange} onClick={onSelect ? () => onSelect(task) : undefined} />
+            </div>
+          </div>
         ))}
         {sorted.length === 0 && (
           <div className="text-center py-16">
