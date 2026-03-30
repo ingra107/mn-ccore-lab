@@ -27,6 +27,7 @@ import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSu
 import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
 import { handleCheckImpact } from './routes/impact-trace';
+import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -116,6 +117,11 @@ export default {
         }
         if (url.pathname === '/api/expertise') {
           return await handleGetExpertise(url, env);
+        // AI requests
+        if (url.pathname === '/api/ai-requests') {
+          return await handleGetAIRequests(url, env);
+        }
+
         // Questions (Ask the Lab)
         if (url.pathname === '/api/questions') {
           return await handleGetQuestions(url, env);
@@ -487,6 +493,17 @@ export default {
         const answerAcceptMatch = path.match(/^\/api\/answers\/([^/]+)\/accept$/);
         if (request.method === 'POST' && answerAcceptMatch) {
           return await handleAcceptAnswer(answerAcceptMatch[1], user, env);
+        // POST /api/ai-requests — create AI request
+        if (request.method === 'POST' && path === '/api/ai-requests') {
+          return await handleCreateAIRequest(request, user, env);
+        }
+
+        // POST /api/ai-requests/:id/response — update with AI response
+        const aiResponseMatch = path.match(/^\/api\/ai-requests\/([^/]+)\/response$/);
+        if (request.method === 'POST' && aiResponseMatch) {
+          return await handleUpdateAIResponse(aiResponseMatch[1], request, env);
+        }
+
         // POST /api/impact/check — scan for impact events and create notifications
         if (request.method === 'POST' && path === '/api/impact/check') {
           return await handleCheckImpact(env);

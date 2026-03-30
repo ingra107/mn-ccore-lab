@@ -1,6 +1,33 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions } from '../helpers';
 
+// ── AI Co-Scientist: detect @claude mentions and create pending request ──
+async function handleClaudeMention(
+  content: string,
+  sourceType: string,
+  sourceId: string,
+  projectId: string,
+  user: AuthUser,
+  env: Env,
+): Promise<void> {
+  if (!content.toLowerCase().includes('@claude')) return;
+
+  const aiPrompt = content.replace(/@claude/gi, '').trim();
+  if (aiPrompt.length <= 5) return;
+
+  // Create AI request record
+  const aiId = generateId();
+  await env.DB.prepare(
+    'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).bind(aiId, sourceType, sourceId, projectId, aiPrompt, `Project: ${projectId}`, user.email).run();
+
+  // Create a placeholder comment from "claude-ai"
+  const responseId = generateId();
+  await env.DB.prepare(
+    "INSERT INTO comments (id, project_id, author_id, content, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
+  ).bind(responseId, projectId, 'claude-ai', 'Thinking about this... (AI response pending)').run();
+}
+
 // GET /api/milestones?project_id=&grant_id=
 export async function handleGetMilestones(url: URL, env: Env): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
@@ -123,7 +150,9 @@ export async function handleProjects(url: URL, env: Env): Promise<Response> {
 // GET /api/projects/:id/comments
 export async function handleGetComments(projectId: string, env: Env): Promise<Response> {
   const result = await env.DB.prepare(
-    `SELECT c.id, c.content, c.created_at, t.name as author_name, t.slug as author_slug
+    `SELECT c.id, c.content, c.created_at, c.author_id,
+       COALESCE(t.name, CASE WHEN c.author_id = 'claude-ai' THEN 'Claude AI' END) as author_name,
+       COALESCE(t.slug, CASE WHEN c.author_id = 'claude-ai' THEN 'claude-ai' END) as author_slug
      FROM comments c
      LEFT JOIN team_members t ON c.author_id = t.id
      WHERE c.project_id = ?
@@ -365,6 +394,13 @@ export async function handleAddComment(
   } catch (e) {
     // Notification creation should not break the main comment operation
     console.error('Failed to create mention notifications for comment:', e);
+  }
+
+  // Check for @claude mention → create AI request + placeholder comment
+  try {
+    await handleClaudeMention(body.content, 'project_comment', commentId, projectId, user, env);
+  } catch (e) {
+    console.error('Failed to create AI request for @claude mention:', e);
   }
 
   return json({ data: { id: commentId, project_id: projectId, content: body.content.trim(), author: user.email } }, 201);
