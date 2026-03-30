@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Scale, Plus, X, Clock, CheckCircle2, AlertTriangle, FolderKanban } from 'lucide-react'
+import { Scale, Plus, X, Clock, AlertTriangle, FolderKanban } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SectionHeader from '../../components/SectionHeader'
 import Avatar from '../../components/Avatar'
@@ -10,13 +10,6 @@ import { useProjects } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { DecisionRow } from '../../hooks/useApiData'
-
-const OUTCOME_OPTIONS = [
-  { value: 'recorded', label: 'Worked' },
-  { value: 'recorded', label: 'Partially worked', outcomePrefix: 'Partially: ' },
-  { value: 'recorded', label: "Didn't work", outcomePrefix: "Didn't work: " },
-  { value: 'revisited', label: 'Too early to tell' },
-]
 
 function daysAgo(dateStr: string): number {
   const d = new Date(dateStr)
@@ -35,7 +28,6 @@ export default function DecisionsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('')
 
   // Filter decisions (exclude review ones from recent if showing separately)
-  const reviewIds = new Set(reviewDecisions.map((d) => d.id))
   const recentDecisions = filterStatus
     ? allDecisions.filter((d) => d.outcome_status === filterStatus)
     : allDecisions
