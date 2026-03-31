@@ -832,3 +832,43 @@ export function useAcceptAnswer(questionId: string) {
     },
   })
 }
+
+// ── PB Sector mutations ──────────────────────────────────
+
+export function usePBCapture() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { text: string; type?: 'task' | 'idea' | 'note'; priority?: string; project?: string }) =>
+      fetch('/api/pb/capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then((r) => r.json()),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pb-command-center'] })
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['ideas'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function usePBDefer() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { id: string; to: 'tomorrow' | 'next_week' | 'someday' }) =>
+      fetch('/api/pb/defer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then((r) => r.json()),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pb-command-center'] })
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    },
+  })
+}
