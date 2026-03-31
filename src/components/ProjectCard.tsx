@@ -41,7 +41,7 @@ export default function ProjectCard({ project, onStageChange }: ProjectCardProps
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2 }}
-      className="project-card"
+      className="project-card group"
       style={{
         background: 'var(--cream)',
         borderRadius: '12px',
@@ -128,58 +128,61 @@ export default function ProjectCard({ project, onStageChange }: ProjectCardProps
         </p>
       )}
 
-      {/* Strategic context preview */}
-      {project.strategic_context && (
-        <p
-          className="text-xs leading-relaxed mt-1.5"
-          style={{
-            fontFamily: 'var(--font-body)',
-            color: 'var(--gold)',
-            fontStyle: 'italic',
-            display: '-webkit-box',
-            WebkitLineClamp: 1,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            opacity: 0.85,
-          }}
-        >
-          {project.strategic_context}
-        </p>
-      )}
-
-      {/* Team avatars row */}
-      {project.team && project.team.length > 1 && (
-        <div className="flex items-center gap-1 mt-2">
-          <span
-            className="text-xs mr-1"
+      {/* Hover-reveal details: strategic context + team */}
+      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 max-h-0 group-hover:max-h-[80px] overflow-hidden" style={{ transition: 'opacity 0.2s ease, max-height 0.3s ease' }}>
+        {/* Strategic context preview */}
+        {project.strategic_context && (
+          <p
+            className="text-xs leading-relaxed mt-1.5"
             style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '9px',
-              color: 'var(--slate)',
-              opacity: 0.6,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
+              fontFamily: 'var(--font-body)',
+              color: 'var(--gold)',
+              fontStyle: 'italic',
+              display: '-webkit-box',
+              WebkitLineClamp: 1,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              opacity: 0.85,
             }}
           >
-            Team
-          </span>
-          {project.team.slice(0, 4).map((slug) => {
-            const info = getPiInfo(slug)
-            return (
-              <div key={slug} style={{ width: 20, height: 20 }}>
-                <Avatar
-                  name={info.name}
-                  initials={info.initials}
-                  photoUrl={info.photoUrl}
-                  size="sm"
-                  variant="ice"
-                  className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[8px]"
-                />
-              </div>
-            )
-          })}
-        </div>
-      )}
+            {project.strategic_context}
+          </p>
+        )}
+
+        {/* Team avatars row */}
+        {project.team && project.team.length > 1 && (
+          <div className="flex items-center gap-1 mt-2">
+            <span
+              className="text-xs mr-1"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '9px',
+                color: 'var(--slate)',
+                opacity: 0.6,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Team
+            </span>
+            {project.team.slice(0, 4).map((slug) => {
+              const info = getPiInfo(slug)
+              return (
+                <div key={slug} style={{ width: 20, height: 20 }}>
+                  <Avatar
+                    name={info.name}
+                    initials={info.initials}
+                    photoUrl={info.photoUrl}
+                    size="sm"
+                    variant="ice"
+                    className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[8px]"
+                  />
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </motion.div>
   )
 

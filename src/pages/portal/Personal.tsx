@@ -198,7 +198,7 @@ export default function Personal() {
       <QuickCapture />
 
       {/* Bento Grid */}
-      <div className="bento-grid mt-5">
+      <div className="bento-grid mt-8">
         {/* My Tasks — span 2 */}
         <MyTasksCard tasks={pendingTasks} onStatusChange={(id, s) => updateStatus.mutate({ id, status: s })} />
 

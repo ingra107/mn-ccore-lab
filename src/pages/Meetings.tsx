@@ -813,7 +813,7 @@ export default function Meetings() {
         </div>
 
         {/* Meeting Archive */}
-        <div>
+        <div className="mt-10">
           <div className="flex items-center justify-between mb-3">
             <h2
               className="text-lg font-semibold"

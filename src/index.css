@@ -16,6 +16,7 @@
   --font-mono: 'JetBrains Mono', monospace;
 
   --border-light: rgba(201, 168, 76, 0.12);
+  --border-subtle: rgba(15, 25, 35, 0.06);
 
   --shadow-card: 0 1px 4px rgba(15, 25, 35, 0.12);
   --shadow-card-hover: 0 6px 16px rgba(15, 25, 35, 0.18);
@@ -35,6 +36,7 @@
   --teal: #3db8b8;
 
   --border-light: rgba(201, 168, 76, 0.15);
+  --border-subtle: rgba(255, 255, 255, 0.08);
 
   --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.4);
   --shadow-card-hover: 0 6px 16px rgba(0, 0, 0, 0.5);

@@ -328,7 +328,7 @@ export default function PBSector() {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div>
+          <div className="flex flex-col gap-6">
             <StarTaskSlot
               task={starTask}
               pomodorosCompleted={starTask ? (pomodoroData[starTask.id]?.completed || 0) : 0}
@@ -395,7 +395,7 @@ export default function PBSector() {
       </div>
 
       {/* Quick Capture */}
-      <div className="mt-6 mb-4">
+      <div className="mt-10 mb-4">
         <div className="flex gap-2">
           <div className="flex-1 relative">
             <input
@@ -404,18 +404,22 @@ export default function PBSector() {
               value={captureText}
               onChange={(e) => setCaptureText(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleCapture() }}
-              className="w-full px-4 py-3 rounded-xl text-sm"
+              className="w-full px-4 py-3 rounded-xl text-sm transition-all"
               style={{
                 fontFamily: 'var(--font-body)',
-                border: '2px solid rgba(201,168,76,0.15)',
+                border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
                 outline: 'none',
+                boxShadow: '0 0 0 0px rgba(45,138,138,0)',
               }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(45,138,138,0.12)' }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.boxShadow = '0 0 0 0px rgba(45,138,138,0)' }}
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{
-              fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.3,
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center gap-2" style={{
+              fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.35,
             }}>
+              <kbd className="px-1.5 py-0.5 rounded" style={{ border: '1px solid var(--border-light)', fontSize: '9px' }}>C</kbd>
               Enter to capture
             </span>
           </div>

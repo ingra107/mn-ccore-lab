@@ -205,35 +205,15 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
         </div>
       </div>
 
-      {/* Hover action buttons */}
-      <div data-hover-actions className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        {/* Priority cycle: click to advance low→medium→high→urgent→low */}
-        <button
-          onClick={(e) => { e.stopPropagation(); cyclePriority() }}
-          title={`Priority: ${task.priority}`}
-          className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
-          style={{
-            background: 'rgba(15,25,35,0.04)',
-            border: 'none',
-            borderRadius: 4,
-            padding: '3px',
-            cursor: 'pointer',
-            color: 'var(--slate)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Flag size={13} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)' }} />
-        </button>
-
-        {/* Quick complete/uncomplete toggle */}
+      {/* Action buttons — always visible but muted, enhanced on hover */}
+      <div data-hover-actions className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-30 group-hover:opacity-100 transition-opacity">
+        {/* Quick complete/uncomplete toggle — primary action, always discoverable */}
         <button
           onClick={(e) => { e.stopPropagation(); onStatusChange(task.id, task.completed ? 'todo' : 'done') }}
           title={task.completed ? 'Reopen' : 'Complete'}
           className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
           style={{
-            background: 'rgba(15,25,35,0.04)',
+            background: 'transparent',
             border: 'none',
             borderRadius: 4,
             padding: '3px',
@@ -247,13 +227,33 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           {task.completed ? <RotateCcw size={13} /> : <CheckCircle2 size={13} />}
         </button>
 
+        {/* Priority cycle */}
+        <button
+          onClick={(e) => { e.stopPropagation(); cyclePriority() }}
+          title={`Priority: ${task.priority}`}
+          className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            borderRadius: 4,
+            padding: '3px',
+            cursor: 'pointer',
+            color: 'var(--slate)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Flag size={13} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)' }} />
+        </button>
+
         {/* Peek (view details) */}
         <button
           onClick={(e) => { e.stopPropagation(); onClick?.() }}
           title="View details"
           className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
           style={{
-            background: 'rgba(15,25,35,0.04)',
+            background: 'transparent',
             border: 'none',
             borderRadius: 4,
             padding: '3px',
