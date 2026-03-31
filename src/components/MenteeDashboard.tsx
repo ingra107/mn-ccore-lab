@@ -41,7 +41,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <FlaskConical size={14} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
               Projects
             </span>
           </div>
@@ -74,7 +74,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <ListChecks size={14} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
               Action Items
             </span>
             {myPending.length > 0 && (
@@ -111,7 +111,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <BookOpen size={14} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
               Publications
             </span>
           </div>
@@ -135,7 +135,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={14} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
               Summary
             </span>
           </div>

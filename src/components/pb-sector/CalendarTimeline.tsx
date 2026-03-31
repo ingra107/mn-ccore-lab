@@ -73,13 +73,13 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
                 className="flex-shrink-0 text-right pr-2"
                 style={{
                   width: 40,
-                  fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--slate)', opacity: 0.4,
+                  fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--slate)', opacity: 0.25,
                   lineHeight: `${HOUR_HEIGHT}px`,
                 }}
               >
                 {hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`}
               </span>
-              <div className="flex-1" style={{ borderTop: '1px solid rgba(201,168,76,0.05)', marginTop: 0 }} />
+              <div className="flex-1" style={{ borderTop: '1px solid var(--border-subtle)', marginTop: 0 }} />
             </div>
           )
         })}

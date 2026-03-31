@@ -64,7 +64,7 @@ export default function RecentActivity() {
       <section ref={ref} className="fade-in-up py-8 sm:py-12 content-container">
         <div className="flex items-center justify-between mb-6">
           <h2
-            className="text-xl sm:text-2xl"
+            className="text-2xl sm:text-3xl"
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 600,

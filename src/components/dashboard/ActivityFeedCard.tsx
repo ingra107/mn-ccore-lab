@@ -86,7 +86,7 @@ export default function ActivityFeedCard() {
   }, [publications, projects])
 
   return (
-    <BentoCard title="Recent Activity" subtitle="Lab updates" size="span-1x2" icon={Activity}>
+    <BentoCard title="Recent Activity" subtitle="Lab updates" size="span-1x2" icon={Activity} drillDown>
       <div className="flex flex-col h-full">
         {/* Feed list */}
         <div

@@ -12,6 +12,7 @@ interface BentoCardProps {
   icon?: LucideIcon
   className?: string
   glass?: boolean
+  drillDown?: boolean
   children: ReactNode
 }
 
@@ -29,6 +30,7 @@ export default function BentoCard({
   icon: Icon,
   className = '',
   glass = false,
+  drillDown = false,
   children,
 }: BentoCardProps) {
   const ref = useScrollReveal<HTMLDivElement>()
@@ -78,7 +80,7 @@ export default function BentoCard({
               <Icon size={15} style={{ color: 'var(--gold)' }} />
             </div>
           )}
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h3
               style={{
                 fontFamily: 'var(--font-display)',
@@ -105,6 +107,11 @@ export default function BentoCard({
               </p>
             )}
           </div>
+          {drillDown && (
+            <svg width="16" height="16" viewBox="0 0 16 16" className="flex-shrink-0 mt-1 opacity-20" style={{ color: 'var(--slate)' }}>
+              <path d="M6 4l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
         </div>
 
         {/* Content */}

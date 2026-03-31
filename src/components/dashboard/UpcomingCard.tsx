@@ -95,7 +95,7 @@ export default function UpcomingCard() {
   }, [nextMeeting, allActionItems])
 
   return (
-    <BentoCard title="Upcoming" subtitle="Deadlines & milestones" size="span-1" icon={Calendar}>
+    <BentoCard title="Upcoming" subtitle="Deadlines & milestones" size="span-1" icon={Calendar} drillDown>
       {/* Next Meeting banner */}
       {nextMeeting ? (
         <div

@@ -205,7 +205,7 @@ export default function MeetingDetail() {
               {/* Auto-generated agenda items */}
               {autoAgenda.length > 0 && (
                 <div className="mb-4">
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '8px' }}>
                     Prepared agenda
                   </p>
                   <ol style={{ margin: 0, paddingLeft: '20px' }}>
@@ -221,7 +221,7 @@ export default function MeetingDetail() {
               {/* Team-added agenda items (drag-to-reorder) */}
               {teamAgendaItems.length > 0 && (
                 <div className="mb-4">
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '8px' }}>
                     Team-added items
                   </p>
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAgendaDragEnd}>
@@ -264,7 +264,7 @@ export default function MeetingDetail() {
               {/* Completed items */}
               {completedActions.length > 0 && (
                 <div>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.4, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '6px' }}>
                     Completed
                   </p>
                   {completedActions.map((item) => (

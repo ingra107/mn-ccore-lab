@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Circle, CheckCircle2, Clock, AlertTriangle, CalendarDays, FolderKanban, Flag, RotateCcw, Eye } from 'lucide-react'
 import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
@@ -39,8 +38,9 @@ const PRIORITY_COLORS: Record<string, string> = {
   urgent: 'var(--maroon)',
 }
 
+const STATUS_CYCLE = ['todo', 'in_progress', 'done'] as const
+
 export default function TaskCard({ task, onStatusChange, onPriorityChange, compact = false, onClick, onMouseEnter, onMouseLeave }: TaskCardProps) {
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const person = getPersonInfo(task.assignee)
   const priority = priorityConfig[task.priority] || priorityConfig.medium
   const isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
@@ -84,11 +84,16 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
       }}
     >
       <div className={`flex items-start gap-3 ${compact ? 'p-3' : 'p-4'}`}>
-        {/* Status dropdown trigger */}
-        <div className="relative flex-shrink-0 mt-0.5" data-status-dropdown>
+        {/* Status cycle — single click advances: todo → in_progress → done → todo */}
+        <div className="flex-shrink-0 mt-0.5" data-status-dropdown>
           <button
-            onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+            onClick={() => {
+              const idx = STATUS_CYCLE.indexOf(task.status as typeof STATUS_CYCLE[number])
+              const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]
+              onStatusChange(task.id, next)
+            }}
             className="cursor-pointer"
+            title={`Status: ${(statusOptions.find((s) => s.value === task.status) || statusOptions[0]).label} — click to advance`}
             style={{ background: 'none', border: 'none', padding: '4px', margin: '-4px' }}
           >
             {(() => {
@@ -97,34 +102,6 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
               return <Icon size={18} style={{ color: opt.color }} />
             })()}
           </button>
-          {showStatusDropdown && (
-            <div
-              className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[140px]"
-              style={{ backgroundColor: 'white', borderColor: 'var(--border-light)' }}
-            >
-              {statusOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => {
-                    onStatusChange(task.id, opt.value)
-                    setShowStatusDropdown(false)
-                  }}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 text-left text-sm hover:bg-black/5 transition-colors"
-                  style={{
-                    fontFamily: 'var(--font-sans)',
-                    color: task.status === opt.value ? opt.color : 'var(--ink)',
-                    fontWeight: task.status === opt.value ? 600 : 400,
-                    cursor: 'pointer',
-                    background: 'none',
-                    border: 'none',
-                  }}
-                >
-                  <opt.icon size={14} style={{ color: opt.color }} />
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Content */}

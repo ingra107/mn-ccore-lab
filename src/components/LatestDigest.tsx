@@ -123,7 +123,7 @@ export default function LatestDigest() {
                 aria-hidden="true"
               />
               <h2
-                className="text-xl sm:text-2xl"
+                className="text-2xl sm:text-3xl"
                 style={{
                   fontFamily: 'var(--font-display)',
                   fontWeight: 600,

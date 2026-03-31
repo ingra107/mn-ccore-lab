@@ -123,7 +123,7 @@ export default function NarrativesPage() {
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <FileText size={10} style={{ color: 'var(--slate)', opacity: 0.5 }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 0.5 }}>
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
                       Related publications
                     </span>
                   </div>
