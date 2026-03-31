@@ -32,7 +32,7 @@ import { handleCheckImpact } from './routes/impact-trace';
 import { handlePIAnalytics } from './routes/pi-analytics';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
-import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory } from './routes/pb-sector';
+import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -68,6 +68,11 @@ export default {
         // PB Sector — plan history
         if (url.pathname === '/api/pb/plan/history') {
           return await handlePlanHistory(request, env);
+        }
+
+        // PB Sector — dispatch queue pending items
+        if (url.pathname === '/api/pb/dispatch/pending') {
+          return await handleGetPendingDispatch(env);
         }
 
         // PI Analytics — leadership dashboard data
@@ -580,6 +585,21 @@ export default {
         // POST /api/pb/reflection — save daily reflection
         if (request.method === 'POST' && path === '/api/pb/reflection') {
           return await handleSaveReflection(request, user, env);
+        }
+
+        // POST /api/pb/dispatch/add — add item to dispatch queue
+        if (request.method === 'POST' && path === '/api/pb/dispatch/add') {
+          return await handleAddToDispatch(request, user, env);
+        }
+
+        // POST /api/pb/dispatch/send — send all pending dispatch items
+        if (request.method === 'POST' && path === '/api/pb/dispatch/send') {
+          return await handleSendDispatch(request, user, env);
+        }
+
+        // POST /api/pb/dispatch/complete — mark dispatch item completed
+        if (request.method === 'POST' && path === '/api/pb/dispatch/complete') {
+          return await handleCompleteDispatchItem(request, env);
         }
 
         // POST /api/impact/check — scan for impact events and create notifications

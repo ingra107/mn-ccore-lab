@@ -964,3 +964,36 @@ export function useSaveReflection() {
     },
   })
 }
+
+// ── Dispatch queue mutations ────────────────────────────────
+
+export function useAddToDispatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { task_id?: string; task_title?: string; project_slug?: string; comment: string; comment_type?: 'action' | 'info' }) =>
+      fetch('/api/pb/dispatch/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then(r => r.json()),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['dispatch-pending'] })
+    },
+  })
+}
+
+export function useSendDispatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      fetch('/api/pb/dispatch/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      }).then(r => r.json()),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['dispatch-pending'] })
+      queryClient.invalidateQueries({ queryKey: ['pb-command-center'] })
+    },
+  })
+}

@@ -1118,3 +1118,17 @@ export function usePBCommandCenter() {
     refetchInterval: 5 * 60 * 1000, // Auto-refresh every 5 min
   })
 }
+
+export function useDispatchPending() {
+  return useQuery({
+    queryKey: ['dispatch-pending'],
+    queryFn: async () => {
+      const res = await fetch('/api/pb/dispatch/pending')
+      if (!res.ok) return { items: [], count: 0 }
+      const data = await res.json()
+      return { items: data.data || [], count: data.count || 0 }
+    },
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
+  })
+}

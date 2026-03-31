@@ -12,10 +12,11 @@ import {
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import { Terminal, AlertTriangle, GripVertical, Star } from 'lucide-react'
-import { usePBCommandCenter } from '../../hooks/useApiData'
+import { usePBCommandCenter, useDispatchPending } from '../../hooks/useApiData'
 import {
   usePBCapture, usePBDefer, useUpdateTaskStatus,
   useSaveDailyPlan, useReorderPlan, useSaveReflection, useStartPomodoro,
+  useSendDispatch,
 } from '../../hooks/useMutations'
 import PlannerHeader from '../../components/pb-sector/PlannerHeader'
 import StarTaskSlot from '../../components/pb-sector/StarTaskSlot'
@@ -25,6 +26,7 @@ import CalendarTimeline from '../../components/pb-sector/CalendarTimeline'
 import ReflectionPanel from '../../components/pb-sector/ReflectionPanel'
 import TaskSearchDropdown from '../../components/pb-sector/TaskSearchDropdown'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
+import DispatchBadge from '../../components/pb-sector/DispatchBadge'
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -48,6 +50,8 @@ export default function PBSector() {
   const reorderPlan = useReorderPlan()
   const saveReflection = useSaveReflection()
   const startPomodoro = useStartPomodoro()
+  const sendDispatch = useSendDispatch()
+  const { data: dispatchData } = useDispatchPending()
 
   const [captureText, setCaptureText] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -269,6 +273,14 @@ export default function PBSector() {
         gratitude={plan?.gratitude ?? null}
         onSaveIntention={(text) => handleSavePlan({ intention: text })}
         onSaveGratitude={(text) => handleSavePlan({ gratitude: text })}
+        dispatchSlot={
+          <DispatchBadge
+            items={dispatchData?.items || []}
+            count={dispatchData?.count || 0}
+            onSend={() => sendDispatch.mutate()}
+            isSending={sendDispatch.isPending}
+          />
+        }
       />
 
       {/* Main Grid */}

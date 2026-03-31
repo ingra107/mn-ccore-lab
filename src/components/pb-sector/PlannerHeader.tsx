@@ -10,6 +10,7 @@ interface PlannerHeaderProps {
   gratitude: string | null
   onSaveIntention: (text: string) => void
   onSaveGratitude: (text: string) => void
+  dispatchSlot?: React.ReactNode
 }
 
 const modeConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -78,7 +79,7 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
-export default function PlannerHeader({ greeting, mode, today, stats, intention, gratitude, onSaveIntention, onSaveGratitude }: PlannerHeaderProps) {
+export default function PlannerHeader({ greeting, mode, today, stats, intention, gratitude, onSaveIntention, onSaveGratitude, dispatchSlot }: PlannerHeaderProps) {
   const mc = modeConfig[mode] || modeConfig.plan
 
   return (
@@ -94,6 +95,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
           </h1>
         </div>
         <div className="flex items-center gap-3">
+          {dispatchSlot}
           <span
             style={{
               fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700,

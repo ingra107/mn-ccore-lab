@@ -435,3 +435,81 @@ export async function handlePlanHistory(request: Request, env: Env): Promise<Res
 
   return json({ data: history })
 }
+
+// POST /api/pb/dispatch/add — add item to dispatch queue
+export async function handleAddToDispatch(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    task_id?: string
+    task_title?: string
+    project_slug?: string
+    comment: string
+    comment_type?: 'action' | 'info'
+  }
+  if (!body.comment?.trim()) return error('comment required', 400)
+
+  const id = generateId()
+  await env.DB.prepare(
+    'INSERT INTO dispatch_queue (id, task_id, task_title, project_slug, comment, comment_type) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(
+    id,
+    body.task_id || null,
+    body.task_title || null,
+    body.project_slug || null,
+    body.comment.trim(),
+    body.comment_type || 'action'
+  ).run()
+
+  await logActivity(env, 'dispatch', `Queued for Claude: ${body.comment.trim().slice(0, 80)}`, user.email)
+  return json({ data: { id } }, 201)
+}
+
+// GET /api/pb/dispatch/pending — get pending dispatch items
+export async function handleGetPendingDispatch(env: Env): Promise<Response> {
+  const items = await env.DB.prepare(
+    "SELECT * FROM dispatch_queue WHERE status = 'pending' ORDER BY created_at ASC"
+  ).all()
+  return json({ data: items.results || [], count: (items.results || []).length })
+}
+
+// POST /api/pb/dispatch/send — mark all pending as dispatched
+export async function handleSendDispatch(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const now = new Date().toISOString()
+  const pending = await env.DB.prepare(
+    "SELECT * FROM dispatch_queue WHERE status = 'pending' ORDER BY created_at ASC"
+  ).all()
+
+  const items = (pending.results || []) as any[]
+  if (items.length === 0) return json({ data: { dispatched: 0 } })
+
+  // Mark all pending as dispatched
+  await env.DB.prepare(
+    "UPDATE dispatch_queue SET status = 'dispatched', dispatched_at = ? WHERE status = 'pending'"
+  ).bind(now).run()
+
+  await logActivity(env, 'dispatch', `Dispatched ${items.length} items to Claude`, user.email)
+  return json({ data: { dispatched: items.length, items } })
+}
+
+// POST /api/pb/dispatch/complete — mark a dispatch item as completed
+export async function handleCompleteDispatchItem(request: Request, env: Env): Promise<Response> {
+  const body = await request.json() as { id: string; response?: string }
+  if (!body.id) return error('id required', 400)
+
+  const now = new Date().toISOString()
+  await env.DB.prepare(
+    "UPDATE dispatch_queue SET status = 'completed', completed_at = ?, response = ? WHERE id = ?"
+  ).bind(now, body.response || null, body.id).run()
+
+  // If this item has a task_id, also post the response as a task comment
+  if (body.response) {
+    const item = await env.DB.prepare('SELECT task_id FROM dispatch_queue WHERE id = ?').bind(body.id).first() as any
+    if (item?.task_id) {
+      const commentId = generateId()
+      await env.DB.prepare(
+        'INSERT INTO task_comments (id, task_id, author_slug, content, created_at) VALUES (?, ?, ?, ?, ?)'
+      ).bind(commentId, item.task_id, 'claude-ai', body.response, now).run()
+    }
+  }
+
+  return json({ data: { ok: true } })
+}
