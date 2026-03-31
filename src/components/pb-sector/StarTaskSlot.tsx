@@ -109,8 +109,8 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201,168,76,0.04)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--gold)', opacity: 0.5, textTransform: 'uppercase', flexShrink: 0 }}>
-                    Suggested
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: suggestion._isCarried ? 'var(--teal)' : 'var(--gold)', opacity: 0.5, textTransform: 'uppercase', flexShrink: 0 }}>
+                    {suggestion._isCarried ? 'Carried' : 'Suggested'}
                   </span>
                   <span className="truncate" style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink)', opacity: 0.4 }}>
                     {suggestion.title || suggestion.description}

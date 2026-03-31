@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { Star, Clock, CheckCircle2, Sun } from 'lucide-react'
+import { useState, useRef, useMemo } from 'react'
+import { Star, Clock, CheckCircle2, Sun, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface PlannerHeaderProps {
   greeting: string
@@ -11,6 +11,9 @@ interface PlannerHeaderProps {
   onSaveIntention: (text: string) => void
   onSaveGratitude: (text: string) => void
   dispatchSlot?: React.ReactNode
+  quote?: { text: string; author: string } | null
+  selectedDate: string
+  onDateChange: (date: string) => void
 }
 
 const modeConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -79,20 +82,94 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
-export default function PlannerHeader({ greeting, mode, today, stats, intention, gratitude, onSaveIntention, onSaveGratitude, dispatchSlot }: PlannerHeaderProps) {
+export default function PlannerHeader({ greeting, mode, today, stats, intention, gratitude, onSaveIntention, onSaveGratitude, dispatchSlot, quote, selectedDate, onDateChange }: PlannerHeaderProps) {
   const mc = modeConfig[mode] || modeConfig.plan
+
+  const isToday = selectedDate === today
+  const isTomorrow = useMemo(() => {
+    const t = new Date(today + 'T12:00:00')
+    t.setDate(t.getDate() + 1)
+    return selectedDate === t.toISOString().split('T')[0]
+  }, [selectedDate, today])
+
+  const handlePrevDay = () => {
+    const d = new Date(selectedDate + 'T12:00:00')
+    d.setDate(d.getDate() - 1)
+    onDateChange(d.toISOString().split('T')[0])
+  }
+  const handleNextDay = () => {
+    const d = new Date(selectedDate + 'T12:00:00')
+    d.setDate(d.getDate() + 1)
+    onDateChange(d.toISOString().split('T')[0])
+  }
+  const handleToday = () => onDateChange(today)
+  const handleTomorrow = () => {
+    const t = new Date(today + 'T12:00:00')
+    t.setDate(t.getDate() + 1)
+    onDateChange(t.toISOString().split('T')[0])
+  }
 
   return (
     <div className="mb-6">
       {/* Date + Greeting + Mode */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
         <div>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', marginBottom: 2 }}>
-            {formatDate(today)}
-          </p>
+          <div className="flex items-center gap-2 mb-0.5">
+            <button onClick={handlePrevDay} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.4 }} className="hover:opacity-80">
+              <ChevronLeft size={14} style={{ color: 'var(--slate)' }} />
+            </button>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', margin: 0 }}>
+              {formatDate(selectedDate)}
+              {!isToday && (
+                <span style={{ marginLeft: 6, color: 'var(--gold)', fontWeight: 600 }}>
+                  {isTomorrow ? 'TOMORROW' : selectedDate < today ? 'PAST' : 'FUTURE'}
+                </span>
+              )}
+            </p>
+            <button onClick={handleNextDay} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.4 }} className="hover:opacity-80">
+              <ChevronRight size={14} style={{ color: 'var(--slate)' }} />
+            </button>
+            {/* Quick toggles */}
+            <div className="flex gap-1 ml-2">
+              <button
+                onClick={handleToday}
+                style={{
+                  fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700,
+                  textTransform: 'uppercase', letterSpacing: '0.5px',
+                  color: isToday ? 'var(--cream)' : 'var(--slate)',
+                  background: isToday ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
+                  border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Today
+              </button>
+              <button
+                onClick={handleTomorrow}
+                style={{
+                  fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700,
+                  textTransform: 'uppercase', letterSpacing: '0.5px',
+                  color: isTomorrow ? 'var(--cream)' : 'var(--slate)',
+                  background: isTomorrow ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
+                  border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Tomorrow
+              </button>
+            </div>
+          </div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.75rem', color: 'var(--ink)', margin: 0, lineHeight: 1.2 }}>
             {greeting}, Nick
           </h1>
+          {quote && (
+            <p style={{
+              fontFamily: 'var(--font-body)', fontSize: '12.5px', fontStyle: 'italic',
+              color: 'var(--slate)', opacity: 0.6, margin: '4px 0 0 0', lineHeight: 1.4,
+            }}>
+              "{quote.text}" — {quote.author}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {dispatchSlot}

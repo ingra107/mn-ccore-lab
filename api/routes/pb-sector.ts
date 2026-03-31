@@ -1,9 +1,10 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity } from '../helpers';
 
-// GET /api/pb/command-center
-export async function handleCommandCenter(env: Env): Promise<Response> {
+// GET /api/pb/command-center?date=YYYY-MM-DD
+export async function handleCommandCenter(env: Env, planDate?: string): Promise<Response> {
   const today = new Date().toISOString().split('T')[0]
+  const targetDate = planDate || today
   const hour = new Date().getUTCHours() - 6 // CT approximation
 
   const [tasks, projects, milestones, commitments, meetings, recentActivity, blockedTasks, decisions, dailyPlan, pomodoroSessions, dailyReflection] = await Promise.all([
@@ -67,14 +68,14 @@ export async function handleCommandCenter(env: Env): Promise<Response> {
       ORDER BY created_at ASC LIMIT 5
     `).all(),
 
-    // Today's daily plan
-    env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(today).first(),
+    // Target date's daily plan
+    env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(targetDate).first(),
 
-    // Today's pomodoro sessions
-    env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE plan_date = ?').bind(today).all(),
+    // Target date's pomodoro sessions
+    env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE plan_date = ?').bind(targetDate).all(),
 
-    // Today's reflection
-    env.DB.prepare('SELECT * FROM daily_reflections WHERE plan_date = ?').bind(today).first(),
+    // Target date's reflection
+    env.DB.prepare('SELECT * FROM daily_reflections WHERE plan_date = ?').bind(targetDate).first(),
   ])
 
   const allTasks = (tasks.results || []) as any[]
@@ -110,9 +111,35 @@ export async function handleCommandCenter(env: Env): Promise<Response> {
   if ((commitments.results || []).filter((c: any) => c.due_date && c.due_date <= today).length > 0) nudges.push('Commitments due today')
   if ((decisions.results || []).length > 0) nudges.push(`${(decisions.results || []).length} decisions awaiting outcome review`)
 
+  // ── Carry-forward suggestions ────────────────────────────
+  // When viewing a future date with no plan, check yesterday's unfinished tasks
+  let carryForward: { starTask?: any; focusTasks: any[] } = { focusTasks: [] }
+  if (targetDate !== today && !dailyPlan) {
+    // Find yesterday's plan (relative to targetDate)
+    const prevDate = new Date(targetDate + 'T12:00:00')
+    prevDate.setDate(prevDate.getDate() - 1)
+    const prevDateStr = prevDate.toISOString().split('T')[0]
+    const prevPlan = await env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(prevDateStr).first() as any
+
+    if (prevPlan) {
+      // Check which tasks from the previous plan are still open
+      const prevStarId = prevPlan.star_task_id
+      const prevFocusIds: string[] = prevPlan.focus_task_ids ? JSON.parse(prevPlan.focus_task_ids) : []
+
+      if (prevStarId) {
+        const task = openTasks.find((t: any) => t.id === prevStarId)
+        if (task) carryForward.starTask = { ...task, _carriedFrom: prevDateStr }
+      }
+      for (const id of prevFocusIds) {
+        const task = openTasks.find((t: any) => t.id === id)
+        if (task) carryForward.focusTasks.push({ ...task, _carriedFrom: prevDateStr })
+      }
+    }
+  }
+
   return json({
     data: {
-      greeting, mode, today,
+      greeting, mode, today, targetDate,
       nudges,
       sections: { focusNow, today: todayTasks, thisWeek, backlog, recentlyCompleted },
       stats: { totalOpen: openTasks.length, overdue: overdueTasks.length, completedRecently: recentlyCompleted.length },
@@ -126,6 +153,7 @@ export async function handleCommandCenter(env: Env): Promise<Response> {
       dailyPlan: dailyPlan || null,
       pomodoroSessions: (pomodoroSessions?.results || []),
       dailyReflection: dailyReflection || null,
+      carryForward,
       suggestions: {
         starCandidates: openTasks.filter(t => t.priority === 'urgent' || t.priority === 'high' || (t.due_date && t.due_date <= today)).slice(0, 5),
         focusCandidates: openTasks.filter(t => t.priority === 'high' || t.priority === 'medium').slice(0, 10),

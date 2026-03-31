@@ -11,10 +11,10 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { Terminal, AlertTriangle, GripVertical, Star } from 'lucide-react'
+import { Terminal, AlertTriangle, GripVertical } from 'lucide-react'
 import { usePBCommandCenter, useDispatchPending } from '../../hooks/useApiData'
 import {
-  usePBCapture, usePBDefer, useUpdateTaskStatus,
+  usePBCapture, useUpdateTaskStatus,
   useSaveDailyPlan, useReorderPlan, useSaveReflection, useStartPomodoro,
   useSendDispatch,
 } from '../../hooks/useMutations'
@@ -22,11 +22,12 @@ import PlannerHeader from '../../components/pb-sector/PlannerHeader'
 import StarTaskSlot from '../../components/pb-sector/StarTaskSlot'
 import FocusTaskSlot from '../../components/pb-sector/FocusTaskSlot'
 import QuickWinsList from '../../components/pb-sector/QuickWinsList'
-import CalendarTimeline from '../../components/pb-sector/CalendarTimeline'
 import ReflectionPanel from '../../components/pb-sector/ReflectionPanel'
 import TaskSearchDropdown from '../../components/pb-sector/TaskSearchDropdown'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import DispatchBadge from '../../components/pb-sector/DispatchBadge'
+import LandscapeSidebar from '../../components/pb-sector/LandscapeSidebar'
+import { getDailyQuote } from '../../data/daily-quotes'
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -42,9 +43,9 @@ function parseJsonArray(val: string | null): string[] {
 // ── Main Component ────────────────────────────────────────
 
 export default function PBSector() {
-  const { data, isLoading } = usePBCommandCenter()
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
+  const { data, isLoading } = usePBCommandCenter(selectedDate)
   const capture = usePBCapture()
-  const defer = usePBDefer()
   const completeTask = useUpdateTaskStatus()
   const savePlan = useSaveDailyPlan()
   const reorderPlan = useReorderPlan()
@@ -103,20 +104,6 @@ export default function PBSector() {
 
   // Smart suggestions (from API)
   const suggestions = data?.suggestions
-  const starSuggestion = useMemo(() => {
-    if (starTask || !suggestions?.starCandidates?.length) return null
-    // Don't suggest tasks already in the plan
-    return suggestions.starCandidates.find((t: any) => !plannedIds.has(t.id)) || null
-  }, [starTask, suggestions, plannedIds])
-
-  const focusSuggestions = useMemo(() => {
-    if (!suggestions?.focusCandidates?.length) return []
-    const slotsNeeded = 3 - focusTasks.length
-    if (slotsNeeded <= 0) return []
-    return suggestions.focusCandidates
-      .filter((t: any) => !plannedIds.has(t.id) && t.id !== starSuggestion?.id)
-      .slice(0, slotsNeeded)
-  }, [suggestions, focusTasks.length, plannedIds, starSuggestion])
 
   // Calendar events for today
   const todayEvents = useMemo(() => {
@@ -130,13 +117,42 @@ export default function PBSector() {
     }))
   }, [data])
 
+  // Daily quote (deterministic per day)
+  const quote = useMemo(() => getDailyQuote(selectedDate), [selectedDate])
+
+  // Carry-forward suggestions (from API for non-today dates)
+  const carryForward = data?.carryForward
+
+  // Use carry-forward as suggestions when no plan exists yet
+  const starSuggestionWithCarry = useMemo(() => {
+    if (starTask) return null
+    // Carry-forward takes priority over algorithm suggestions
+    if (carryForward?.starTask && !plannedIds.has(carryForward.starTask.id)) {
+      return { ...carryForward.starTask, _isCarried: true }
+    }
+    if (!suggestions?.starCandidates?.length) return null
+    return suggestions.starCandidates.find((t: any) => !plannedIds.has(t.id)) || null
+  }, [starTask, carryForward, suggestions, plannedIds])
+
+  const focusSuggestionsWithCarry = useMemo(() => {
+    const slotsNeeded = 3 - focusTasks.length
+    if (slotsNeeded <= 0) return []
+    // Carry-forward first, then algorithm
+    const carried = (carryForward?.focusTasks || [])
+      .filter((t: any) => !plannedIds.has(t.id) && t.id !== starSuggestionWithCarry?.id)
+      .map((t: any) => ({ ...t, _isCarried: true }))
+    const algoSuggestions = (suggestions?.focusCandidates || [])
+      .filter((t: any) => !plannedIds.has(t.id) && t.id !== starSuggestionWithCarry?.id && !carried.some((c: any) => c.id === t.id))
+    return [...carried, ...algoSuggestions].slice(0, slotsNeeded)
+  }, [carryForward, suggestions, focusTasks.length, plannedIds, starSuggestionWithCarry])
+
   // ── Handlers ────────────────────────────────────────────
 
   const today = data?.today || new Date().toISOString().split('T')[0]
 
   const handleSavePlan = useCallback((updates: Record<string, any>) => {
-    savePlan.mutate({ plan_date: today, ...updates })
-  }, [savePlan, today])
+    savePlan.mutate({ plan_date: selectedDate, ...updates })
+  }, [savePlan, selectedDate])
 
   const handleComplete = useCallback((id: string) => {
     completeTask.mutate({ id, status: 'done' })
@@ -161,8 +177,8 @@ export default function PBSector() {
     const slotType = taskId === starTaskId ? 'star'
       : focusTaskIds.includes(taskId) ? 'focus'
       : 'quick_win'
-    startPomodoro.mutate({ task_id: taskId, plan_date: today, slot_type: slotType })
-  }, [startPomodoro, today, starTaskId, focusTaskIds])
+    startPomodoro.mutate({ task_id: taskId, plan_date: selectedDate, slot_type: slotType })
+  }, [startPomodoro, selectedDate, starTaskId, focusTaskIds])
 
   const handleAddToSlot = useCallback((task: any) => {
     if (searchSlot === 'star') {
@@ -207,7 +223,7 @@ export default function PBSector() {
       const newIndex = focusTaskIds.indexOf(overTaskId)
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
         const reordered = arrayMove(focusTaskIds, oldIndex, newIndex)
-        reorderPlan.mutate({ plan_date: today, slot_type: 'focus', task_ids: reordered })
+        reorderPlan.mutate({ plan_date: selectedDate, slot_type: 'focus', task_ids: reordered })
       }
     } else if (fromSlot === toSlot && fromSlot === 'quick_win') {
       const oldIndex = quickWinIds.indexOf(taskId)
@@ -215,7 +231,7 @@ export default function PBSector() {
       const newIndex = quickWinIds.indexOf(overTaskId)
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
         const reordered = arrayMove(quickWinIds, oldIndex, newIndex)
-        reorderPlan.mutate({ plan_date: today, slot_type: 'quick_win', task_ids: reordered })
+        reorderPlan.mutate({ plan_date: selectedDate, slot_type: 'quick_win', task_ids: reordered })
       }
     }
     // Cross-slot: drop on star slot
@@ -250,7 +266,7 @@ export default function PBSector() {
       newQuick.push(taskId)
       handleSavePlan({ star_task_id: newStar, focus_task_ids: newFocus, quick_win_ids: newQuick })
     }
-  }, [focusTaskIds, quickWinIds, starTaskId, focusTasks.length, today, reorderPlan, handleSavePlan])
+  }, [focusTaskIds, quickWinIds, starTaskId, focusTasks.length, selectedDate, reorderPlan, handleSavePlan])
 
   // ── Loading / Error states ──────────────────────────────
 
@@ -285,11 +301,14 @@ export default function PBSector() {
         greeting={greeting}
         mode={mode}
         today={today}
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
         stats={stats}
         intention={plan?.intention ?? null}
         gratitude={plan?.gratitude ?? null}
         onSaveIntention={(text) => handleSavePlan({ intention: text })}
         onSaveGratitude={(text) => handleSavePlan({ gratitude: text })}
+        quote={quote}
         dispatchSlot={
           <DispatchBadge
             items={dispatchData?.items || []}
@@ -318,7 +337,7 @@ export default function PBSector() {
               onStartPomo={handleStartPomo}
               onClickTitle={handleClickTitle}
               onAddClick={() => openSearch('star')}
-              suggestion={starSuggestion}
+              suggestion={starSuggestionWithCarry}
               onAcceptSuggestion={(task) => handleSavePlan({ star_task_id: task.id })}
             />
 
@@ -329,7 +348,7 @@ export default function PBSector() {
               onStartPomo={handleStartPomo}
               onClickTitle={handleClickTitle}
               onAddClick={() => openSearch('focus')}
-              suggestions={focusSuggestions}
+              suggestions={focusSuggestionsWithCarry}
               onAcceptSuggestion={(task) => {
                 const newFocus = [...focusTaskIds, task.id].slice(0, 3)
                 handleSavePlan({ focus_task_ids: newFocus })
@@ -360,10 +379,19 @@ export default function PBSector() {
           </DragOverlay>
         </DndContext>
 
-        {/* Right Column — Calendar */}
-        <div className="space-y-5">
-          <CalendarTimeline events={todayEvents} />
-        </div>
+        {/* Right Column — Landscape Sidebar */}
+        <LandscapeSidebar
+          mode={mode}
+          events={todayEvents}
+          milestones={data.milestones || []}
+          commitments={data.commitments || []}
+          projects={data.projects || []}
+          stats={stats}
+          recentlyCompleted={data.sections.recentlyCompleted || []}
+          meetings={data.meetings || []}
+          selectedDate={selectedDate}
+          today={today}
+        />
       </div>
 
       {/* Quick Capture */}
@@ -397,7 +425,7 @@ export default function PBSector() {
       {/* Reflection */}
       <ReflectionPanel
         reflection={data.dailyReflection || null}
-        onSave={(reflData) => saveReflection.mutate({ plan_date: today, ...reflData })}
+        onSave={(reflData) => saveReflection.mutate({ plan_date: selectedDate, ...reflData })}
       />
 
       {/* Task Search Dropdown */}

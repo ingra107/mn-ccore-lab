@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Clock, Calendar } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 
 interface CalendarEvent {
   id: string

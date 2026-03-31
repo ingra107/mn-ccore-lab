@@ -1084,6 +1084,7 @@ export interface PBCommandCenterData {
   greeting: string
   mode: string
   today: string
+  targetDate: string
   nudges: string[]
   sections: {
     focusNow: any[]
@@ -1104,18 +1105,28 @@ export interface PBCommandCenterData {
   recentActivity: any[]
   blockedTasks: any[]
   decisionsForReview: any[]
+  dailyPlan: any
+  pomodoroSessions: any[]
+  dailyReflection: any
+  carryForward: { starTask?: any; focusTasks: any[] }
+  suggestions: {
+    starCandidates: any[]
+    focusCandidates: any[]
+    quickWinCandidates: any[]
+  }
 }
 
-export function usePBCommandCenter() {
+export function usePBCommandCenter(date?: string) {
   return useQuery({
-    queryKey: ['pb-command-center'],
+    queryKey: ['pb-command-center', date],
     queryFn: async () => {
-      const res = await fetch('/api/pb/command-center')
+      const params = date ? `?date=${date}` : ''
+      const res = await fetch(`/api/pb/command-center${params}`)
       if (!res.ok) return null
       return (await res.json()).data as PBCommandCenterData
     },
     staleTime: 60 * 1000,
-    refetchInterval: 5 * 60 * 1000, // Auto-refresh every 5 min
+    refetchInterval: 5 * 60 * 1000,
   })
 }
 

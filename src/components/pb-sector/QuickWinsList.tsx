@@ -1,7 +1,7 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Zap, GripVertical, CheckCircle2, Plus } from 'lucide-react'
+import { Zap, GripVertical, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 interface QuickWinTask {

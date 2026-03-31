@@ -174,8 +174,8 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>
                     {tasks.length + i + 1}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--teal)', opacity: 0.4, textTransform: 'uppercase', flexShrink: 0 }}>
-                    Suggested
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: suggestion._isCarried ? 'var(--gold)' : 'var(--teal)', opacity: 0.4, textTransform: 'uppercase', flexShrink: 0 }}>
+                    {suggestion._isCarried ? 'Carried' : 'Suggested'}
                   </span>
                   <span className="truncate" style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', opacity: 0.35 }}>
                     {suggestion.title || suggestion.description}

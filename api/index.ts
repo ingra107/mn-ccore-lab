@@ -62,7 +62,8 @@ export default {
       if (request.method === 'GET') {
         // PB Sector — PI command center
         if (url.pathname === '/api/pb/command-center') {
-          return await handleCommandCenter(env);
+          const planDate = url.searchParams.get('date') || undefined;
+          return await handleCommandCenter(env, planDate);
         }
 
         // PB Sector — plan history
