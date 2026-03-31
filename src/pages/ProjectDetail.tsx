@@ -2048,7 +2048,7 @@ function SectionNav({ sections }: { sections: { id: string; label: string }[] })
   return (
     <div
       className="flex items-center gap-1 mb-6 pb-2 overflow-x-auto"
-      style={{ borderBottom: '1px solid var(--border-light)' }}
+      style={{ borderBottom: '1px solid var(--border-subtle)' }}
     >
       {sections.map((s) => (
         <button

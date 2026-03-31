@@ -77,7 +77,7 @@ export default function ActivityPage() {
               <h3 className="text-sm font-semibold mb-2" style={{ fontFamily: 'var(--font-display)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
                 {label}
               </h3>
-              <div className="flex flex-col gap-1 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-light)' }}>
+              <div className="flex flex-col gap-1 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)' }}>
                 {items.map((item) => {
                   const person = item.actor ? getPersonInfo(item.actor) : null
                   return (

@@ -506,7 +506,7 @@ function CreateDecisionModal({
               <div className="mt-3 p-3 rounded-lg" style={{ background: 'rgba(201,168,76,0.04)', border: '1px dashed rgba(201,168,76,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-2">
                   <History size={12} style={{ color: 'var(--gold)' }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gold)' }}>
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
                     Similar past decisions
                   </span>
                 </div>

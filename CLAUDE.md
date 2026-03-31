@@ -21,6 +21,16 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- not just a website, 
 
 - **Fonts:** Fraunces (display) / DM Sans (body) / JetBrains Mono (mono)
 - **Palette:** ink `#0f1923` / gold `#c9a84c` / cream `#faf8f3` / maroon `#7a0019` / teal `#2d8a8a`
+- **Color roles:**
+  - **Gold** (#c9a84c): Structural accents, section dividers, active navigation, brand elements, note callouts
+  - **Teal** (#2d8a8a): Interactive elements, links, selected states, progress indicators, focus rings
+  - **Maroon** (#7a0019): Alerts only -- blocked, urgent, overdue, errors. Never decorative.
+  - **Slate** (#2c3e50): Secondary text, muted labels, inactive states
+  - **Cream/Ink**: Background/foreground (swap in dark mode)
+  - Max 2 accent colors per page. Exceptions: dashboards with data visualization.
+- **Borders:** `--border-light` (gold tint) for semantic borders (inputs, active pills, card outlines). `--border-subtle` (neutral) for structural borders (panel headers, section dividers, internal card dividers). Don't mix.
+- **Section spacing:** `mt-8` (32px) before section headings. `gap-3` (12px) between items within a section. `mt-10` before major page regions (capture bar, archive).
+- **Labels:** DM Sans 11px weight-500 for section labels above content. JetBrains Mono 10px uppercase for table headers, badges, and navigation groups only.
 - **Centering:** ALL containers use `.content-container` -- no custom max-width
 - **Dark mode:** CSS variables invert via `.dark` class. Card dark bg: `#162535`.
 - **Shared utilities:** `src/lib/dateUtils.ts` (6 formatters), `src/data/team.ts:getPersonInfo()`, `src/lib/api.ts`

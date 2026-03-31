@@ -211,7 +211,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
       ) : (
-        <div className="mt-4 rounded-xl border p-4 text-center" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="mt-4 rounded-xl border p-4 text-center" style={{ borderColor: 'var(--border-subtle)' }}>
           <CheckCircle2 size={24} style={{ color: 'var(--green, #22c55e)', margin: '0 auto 6px' }} />
           <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>All caught up!</p>
           <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>No overdue tasks. Keep up the momentum.</p>
@@ -230,7 +230,7 @@ export default function AnalyticsPage() {
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Completion by person — PI-only for psychological safety (SDT research) */}
         {isPi ? (
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
             <div className="flex items-center gap-2 mb-4">
               <h3 className="text-sm font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
                 Team Task Overview
@@ -271,7 +271,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
         ) : (
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
             <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
               Lab Progress This Week
             </h3>
@@ -295,7 +295,7 @@ export default function AnalyticsPage() {
         )}
 
         {/* Projects by stage */}
-        <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
           <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
             Project Pipeline Distribution
           </h3>
@@ -345,7 +345,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Lab-wide Activity Heatmap */}
-      <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+      <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
         <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
           Lab Activity
         </h3>

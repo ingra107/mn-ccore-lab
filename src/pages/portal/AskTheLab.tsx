@@ -261,7 +261,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
 
   if (isLoading || !detail) {
     return (
-      <div className="px-5 py-6 border-t" style={{ borderColor: 'var(--border-light)' }}>
+      <div className="px-5 py-6 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="animate-pulse flex flex-col gap-3">
           <div className="h-4 rounded w-3/4" style={{ backgroundColor: 'var(--border-light)' }} />
           <div className="h-4 rounded w-1/2" style={{ backgroundColor: 'var(--border-light)' }} />
@@ -271,11 +271,11 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
   }
 
   return (
-    <div className="px-5 pb-5 border-t" style={{ borderColor: 'var(--border-light)' }}>
+    <div className="px-5 pb-5 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
       {/* Full context */}
       {detail.context && (
         <div className="mt-4 px-3 py-2.5 rounded-lg" style={{ backgroundColor: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.1)' }}>
-          <p className="text-[10px] uppercase tracking-wider mb-1" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', fontWeight: 600 }}>
+          <p className="text-[11px] mb-1" style={{ fontFamily: 'var(--font-body)', color: 'var(--gold)', fontWeight: 500 }}>
             Context
           </p>
           <p className="text-sm leading-relaxed" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontStyle: 'italic' }}>
@@ -287,7 +287,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
       {/* Answers */}
       {detail.answers.length > 0 && (
         <div className="mt-4 flex flex-col gap-3">
-          <p className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', fontWeight: 600 }}>
+          <p className="text-[11px]" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', fontWeight: 500 }}>
             {detail.answers.length} Answer{detail.answers.length !== 1 ? 's' : ''}
           </p>
           {detail.answers.map((answer) => {
@@ -443,7 +443,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
         style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
           <h3 className="text-lg" style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--ink)' }}>
             New Question
           </h3>

@@ -47,7 +47,7 @@ export default function PipelineCard() {
   const maxCount = Math.max(...stages.map((s) => s.count), 1)
 
   return (
-    <BentoCard title="Publication Pipeline" subtitle="From bench to print" size="span-2x2" icon={GitBranch}>
+    <BentoCard title="Publication Pipeline" subtitle="From bench to print" size="span-2x2" icon={GitBranch} noLift>
       <div ref={containerRef} className="flex flex-col h-full justify-center gap-6 py-2">
         {/* Funnel visualization */}
         <div className="flex flex-col gap-5">

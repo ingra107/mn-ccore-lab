@@ -351,7 +351,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
           <div className="flex items-center justify-between gap-1.5 mb-1">
             <div className="flex items-center gap-1.5">
               <Clock size={10} style={{ color: 'var(--gold)' }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gold)' }}>
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
                 Note from past you
               </span>
             </div>
@@ -394,7 +394,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         }}>
           <div className="flex items-center gap-1.5 mb-2">
             <Pencil size={10} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gold)' }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
               Note to future me
             </span>
           </div>

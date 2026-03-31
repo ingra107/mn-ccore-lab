@@ -713,6 +713,70 @@ function SubtaskChecklist({ taskId }: { taskId: string }) {
   )
 }
 
+// ── Handoff Recipient Select ─────────────────────────────────
+
+function HandoffRecipientSelect({ value, onChange, members }: { value: string; onChange: (v: string) => void; members: { slug?: string; name: string }[] }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const person = value ? getPersonInfo(value) : null
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-full border px-2 py-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+        style={{ borderColor: 'rgba(45,138,138,0.25)', cursor: 'pointer', background: 'none' }}
+      >
+        {person ? (
+          <>
+            <div style={{ width: 24, height: 24 }}>
+              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[7px]" />
+            </div>
+            <span className="text-sm" style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}>{person.name}</span>
+          </>
+        ) : (
+          <span className="text-sm px-1" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', opacity: 0.5 }}>Select team member...</span>
+        )}
+        <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--teal)', opacity: 0.6 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[200px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
+          {members.map((m) => {
+            const slug = m.slug!
+            const mp = getPersonInfo(slug)
+            const selected = slug === value
+            return (
+              <button
+                type="button"
+                key={slug}
+                onClick={() => { onChange(slug); setOpen(false) }}
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+              >
+                <div style={{ width: 22, height: 22 }}>
+                  <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
+                </div>
+                <span className="flex-1">{m.name}</span>
+                {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Handoff Section ─────────────────────────────────────────
 
 function HandoffSection({ taskId, currentAssignee }: { taskId: string; currentAssignee: string }) {
@@ -781,18 +845,7 @@ function HandoffSection({ taskId, currentAssignee }: { taskId: string; currentAs
             {/* To: team member dropdown */}
             <div className="mb-3">
               <label style={labelStyle}>To</label>
-              <select
-                value={toSlug}
-                onChange={(e) => setToSlug(e.target.value)}
-                required
-                className="w-full rounded-md border px-3 py-2 cursor-pointer"
-                style={inputStyle}
-              >
-                <option value="">Select team member...</option>
-                {members.map((m) => (
-                  <option key={m.slug} value={m.slug}>{m.name}</option>
-                ))}
-              </select>
+              <HandoffRecipientSelect value={toSlug} onChange={setToSlug} members={members} />
             </div>
 
             {/* Situation (required) */}

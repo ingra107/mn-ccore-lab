@@ -211,7 +211,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--border-light)' }}>
+      <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="flex items-center gap-2">
           <div style={{ width: 20, height: 20 }}>
             <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
@@ -343,7 +343,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
         style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
           <h3 className="text-lg" style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--ink)' }}>
             New Idea
           </h3>

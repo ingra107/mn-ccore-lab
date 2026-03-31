@@ -13,6 +13,7 @@ interface BentoCardProps {
   className?: string
   glass?: boolean
   drillDown?: boolean
+  noLift?: boolean
   children: ReactNode
 }
 
@@ -31,6 +32,7 @@ export default function BentoCard({
   className = '',
   glass = false,
   drillDown = false,
+  noLift = false,
   children,
 }: BentoCardProps) {
   const ref = useScrollReveal<HTMLDivElement>()
@@ -56,7 +58,7 @@ export default function BentoCard({
           boxShadow: 'var(--shadow-card)',
           transition: 'transform 0.25s ease, box-shadow 0.25s ease, background-color 0.3s ease',
         }}
-        whileHover={{
+        whileHover={noLift ? undefined : {
           y: -2,
           boxShadow: 'var(--shadow-card-hover)',
         }}

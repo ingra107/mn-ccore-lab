@@ -726,21 +726,21 @@ export default function Grants() {
         {/* Funding summary stats */}
         {!isLoading && grants.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
-            <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
+            <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>Active Awards</div>
               <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--teal)' }}>{activeCount}</div>
             </div>
-            <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
+            <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>Proposed</div>
               <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)' }}>{proposedCount}</div>
             </div>
             {totalFunding > 0 && (
-              <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
                 <div className="text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>Total Funding</div>
                 <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{formatFunding(totalFunding)}</div>
               </div>
             )}
-            <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
+            <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>Mechanisms</div>
               <div className="flex flex-wrap gap-1 mt-1">
                 {mechanisms.map(m => (

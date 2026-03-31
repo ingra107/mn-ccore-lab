@@ -426,7 +426,7 @@ export default function Meetings() {
           <div className="p-4 rounded-xl mb-4" style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.12)' }}>
             <div className="flex items-center gap-2 mb-2">
               <Activity size={14} style={{ color: 'var(--gold)' }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gold)' }}>
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
                 Meeting Cadence
               </span>
             </div>

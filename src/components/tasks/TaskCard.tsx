@@ -192,16 +192,17 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           style={{
             background: 'transparent',
             border: 'none',
-            borderRadius: 4,
-            padding: '3px',
+            borderRadius: 6,
+            padding: '6px',
             cursor: 'pointer',
             color: 'var(--slate)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            touchAction: 'manipulation',
           }}
         >
-          {task.completed ? <RotateCcw size={13} /> : <CheckCircle2 size={13} />}
+          {task.completed ? <RotateCcw size={15} /> : <CheckCircle2 size={15} />}
         </button>
 
         {/* Priority cycle */}
@@ -212,16 +213,17 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           style={{
             background: 'transparent',
             border: 'none',
-            borderRadius: 4,
-            padding: '3px',
+            borderRadius: 6,
+            padding: '6px',
             cursor: 'pointer',
             color: 'var(--slate)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            touchAction: 'manipulation',
           }}
         >
-          <Flag size={13} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)' }} />
+          <Flag size={15} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)' }} />
         </button>
 
         {/* Peek (view details) */}
@@ -232,16 +234,17 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           style={{
             background: 'transparent',
             border: 'none',
-            borderRadius: 4,
-            padding: '3px',
+            borderRadius: 6,
+            padding: '6px',
             cursor: 'pointer',
             color: 'var(--slate)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            touchAction: 'manipulation',
           }}
         >
-          <Eye size={13} />
+          <Eye size={15} />
         </button>
       </div>
     </div>

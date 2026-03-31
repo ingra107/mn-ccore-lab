@@ -583,7 +583,7 @@ function getWatchTypeIcon(type: WatchItem['type']) {
     case 'project': return <FlaskConical size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
     case 'task': return <CheckSquare size={12} style={{ color: 'var(--teal)', flexShrink: 0 }} />
     case 'person': return <UserCircle size={12} style={{ color: 'var(--slate)', flexShrink: 0 }} />
-    case 'meeting': return <CalendarDays size={12} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+    case 'meeting': return <CalendarDays size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
   }
 }
 

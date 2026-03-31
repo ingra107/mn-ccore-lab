@@ -293,7 +293,7 @@ export default function CommandPalette() {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
           <Search size={16} style={{ color: 'var(--slate)', opacity: 0.5 }} />
           <input
             ref={inputRef}
@@ -363,7 +363,7 @@ export default function CommandPalette() {
         </div>
 
         {/* Footer hint */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-light)', fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
+        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
           <span>↑↓ navigate</span>
           <span>↵ select</span>
           <span>esc close</span>

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import type { TaskRow } from '../../lib/api'
 import {
   DndContext,
@@ -59,6 +59,21 @@ export default function PBSector() {
   const [searchSlot, setSearchSlot] = useState<'star' | 'focus' | 'quick_win'>('focus')
   const [activeTask, setActiveTask] = useState<any>(null)
   const [detailTask, setDetailTask] = useState<TaskRow | null>(null)
+  const captureInputRef = useRef<HTMLInputElement>(null)
+
+  // C key → focus capture bar (when no input focused)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'c' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const tag = (e.target as HTMLElement).tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target as HTMLElement).isContentEditable) return
+        e.preventDefault()
+        captureInputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   // Drag sensors
   const sensors = useSensors(
@@ -399,6 +414,7 @@ export default function PBSector() {
         <div className="flex gap-2">
           <div className="flex-1 relative">
             <input
+              ref={captureInputRef}
               type="text"
               placeholder="Capture anything — task, idea, or note..."
               value={captureText}

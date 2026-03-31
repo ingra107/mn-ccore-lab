@@ -207,6 +207,12 @@ a:hover {
 }
 
 /* ── Project card hover reveal ── */
+.project-card-details {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden;
+  transition: opacity 0.2s ease, max-height 0.3s ease;
+}
 .project-card:hover .project-card-details {
   max-height: 80px !important;
   opacity: 1 !important;
