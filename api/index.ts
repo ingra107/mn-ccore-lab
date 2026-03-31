@@ -494,6 +494,8 @@ export default {
         const expertiseDeleteMatch = path.match(/^\/api\/expertise\/([^/]+)\/delete$/);
         if (request.method === 'POST' && expertiseDeleteMatch) {
           return await handleRemoveExpertise(expertiseDeleteMatch[1], env);
+        }
+
         // POST /api/questions — create question
         if (request.method === 'POST' && path === '/api/questions') {
           return await handleCreateQuestion(request, user, env);
@@ -509,6 +511,8 @@ export default {
         const answerAcceptMatch = path.match(/^\/api\/answers\/([^/]+)\/accept$/);
         if (request.method === 'POST' && answerAcceptMatch) {
           return await handleAcceptAnswer(answerAcceptMatch[1], user, env);
+        }
+
         // POST /api/ai-requests — create AI request
         if (request.method === 'POST' && path === '/api/ai-requests') {
           return await handleCreateAIRequest(request, user, env);
