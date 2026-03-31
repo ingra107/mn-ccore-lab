@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import type { TaskRow } from '../../lib/api'
 import {
   DndContext,
   DragOverlay,
@@ -10,11 +11,11 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { Terminal, AlertTriangle, GripVertical } from 'lucide-react'
+import { Terminal, AlertTriangle, GripVertical, Star } from 'lucide-react'
 import { usePBCommandCenter } from '../../hooks/useApiData'
 import {
   usePBCapture, usePBDefer, useUpdateTaskStatus,
-  useSaveDailyPlan, useReorderPlan, useSaveReflection,
+  useSaveDailyPlan, useReorderPlan, useSaveReflection, useStartPomodoro,
 } from '../../hooks/useMutations'
 import PlannerHeader from '../../components/pb-sector/PlannerHeader'
 import StarTaskSlot from '../../components/pb-sector/StarTaskSlot'
@@ -23,6 +24,7 @@ import QuickWinsList from '../../components/pb-sector/QuickWinsList'
 import CalendarTimeline from '../../components/pb-sector/CalendarTimeline'
 import ReflectionPanel from '../../components/pb-sector/ReflectionPanel'
 import TaskSearchDropdown from '../../components/pb-sector/TaskSearchDropdown'
+import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -45,11 +47,13 @@ export default function PBSector() {
   const savePlan = useSaveDailyPlan()
   const reorderPlan = useReorderPlan()
   const saveReflection = useSaveReflection()
+  const startPomodoro = useStartPomodoro()
 
   const [captureText, setCaptureText] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchSlot, setSearchSlot] = useState<'star' | 'focus' | 'quick_win'>('focus')
   const [activeTask, setActiveTask] = useState<any>(null)
+  const [detailTask, setDetailTask] = useState<TaskRow | null>(null)
 
   // Drag sensors
   const sensors = useSensors(
@@ -127,9 +131,17 @@ export default function PBSector() {
     setCaptureText('')
   }, [capture, captureText])
 
-  const handleClickTitle = useCallback((_task: any) => {
-    // TODO: Open TaskDetailPanel — will wire in next session
+  const handleClickTitle = useCallback((task: any) => {
+    setDetailTask(task as TaskRow)
   }, [])
+
+  const handleStartPomo = useCallback((taskId: string) => {
+    // Determine which slot this task is in
+    const slotType = taskId === starTaskId ? 'star'
+      : focusTaskIds.includes(taskId) ? 'focus'
+      : 'quick_win'
+    startPomodoro.mutate({ task_id: taskId, plan_date: today, slot_type: slotType })
+  }, [startPomodoro, today, starTaskId, focusTaskIds])
 
   const handleAddToSlot = useCallback((task: any) => {
     if (searchSlot === 'star') {
@@ -274,7 +286,7 @@ export default function PBSector() {
               pomodorosCompleted={starTask ? (pomodoroData[starTask.id]?.completed || 0) : 0}
               pomodoroActive={starTask ? (pomodoroData[starTask.id]?.active || false) : false}
               onComplete={handleComplete}
-              onStartPomo={() => {}}
+              onStartPomo={handleStartPomo}
               onClickTitle={handleClickTitle}
               onAddClick={() => openSearch('star')}
             />
@@ -283,7 +295,7 @@ export default function PBSector() {
               tasks={focusTasks}
               pomodoroData={pomodoroData}
               onComplete={handleComplete}
-              onStartPomo={() => {}}
+              onStartPomo={handleStartPomo}
               onClickTitle={handleClickTitle}
               onAddClick={() => openSearch('focus')}
             />
@@ -360,6 +372,12 @@ export default function PBSector() {
         onClose={() => setSearchOpen(false)}
         onSelect={handleAddToSlot}
         slotLabel={searchSlot === 'star' ? 'Star Task' : searchSlot === 'focus' ? 'Focus Tasks' : 'Quick Wins'}
+      />
+
+      {/* Task Detail Slide-over */}
+      <TaskDetailPanel
+        task={detailTask}
+        onClose={() => setDetailTask(null)}
       />
     </div>
   )

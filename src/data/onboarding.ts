@@ -23,7 +23,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'dashboard',
     day: 1,
     title: 'Explore the Dashboard',
-    description: 'The Research Command Center shows lab health at a glance.',
+    description: 'The Dashboard shows lab health at a glance.',
     action: 'Visit the Dashboard',
     link: '/dashboard',
     category: 'explore',

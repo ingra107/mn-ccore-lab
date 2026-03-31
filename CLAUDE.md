@@ -232,7 +232,8 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 8. **Phase 8 -- DONE:** NotificationBell, MentionInput, MyItems page, commitment sync, morning pulse email cron, meeting automation D1 integration
 9. **Phase 9 -- DONE (Sessions 1-4):** LabSync parity -- Task system (4 views, drag-drop, detail panel), Personal Hub, Deadlines, Manuscripts, Ideas, Calendar, Analytics, Activity, Settings, AI Meeting Notes, Lab Pulse, Cmd+K, keyboard shortcuts, Smart Search, Quick Capture
 10. **Phase 10 -- DONE (9 rounds, 22 commits):** UX polish (LabSync benchmark). GlobalQuickAdd, PublicationDetail, Grants portal, empty state consistency, RoundPrompt, focus mode, density toggle, favicons, recently viewed, route progress bar, CSV export, notification grouping, dark mode fixes, OG meta tags.
-11. **Phase 11 -- NEXT:** Infrastructure refactors (split api/index.ts, useApiData, useMutations), hard features (task peek, subtasks, bulk actions, agenda reorder, search ranking), launch prep
+11. **Phase 11 -- DONE:** Infrastructure refactors, hard features (task peek, subtasks, bulk actions, agenda reorder, search ranking, dashboard pinning). 42 features shipped in master plan.
+12. **Phase 12 -- ACTIVE:** PB Sector v2 (Monk Manual planner). Star task + 3 focus + quick wins slots with @dnd-kit. 4 new D1 tables, 7 new API endpoints, 8 new components. Calendar timeline, pomodoro tracking, reflection panel. Dispatch queue table ready for Phase 3 (Claude integration).
 
 ## Meeting Cadence
 

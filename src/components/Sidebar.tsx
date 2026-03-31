@@ -116,7 +116,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
 
   // Conditionally include PI Tools section
   const allGroups: NavGroup[] = isPi
-    ? [...navGroups, { title: 'PI Tools', items: [{ to: '/pb', label: 'Command Center', icon: Terminal }, { to: '/pi/analytics', label: 'PI Dashboard', icon: Shield }] }]
+    ? [...navGroups, { title: 'PI Tools', items: [{ to: '/pb', label: 'Daily Plan', icon: Terminal }, { to: '/pi/analytics', label: 'PI Dashboard', icon: Shield }] }]
     : navGroups
 
   // Inject badge counts into nav items
