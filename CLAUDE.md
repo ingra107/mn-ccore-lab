@@ -233,7 +233,8 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 9. **Phase 9 -- DONE (Sessions 1-4):** LabSync parity -- Task system (4 views, drag-drop, detail panel), Personal Hub, Deadlines, Manuscripts, Ideas, Calendar, Analytics, Activity, Settings, AI Meeting Notes, Lab Pulse, Cmd+K, keyboard shortcuts, Smart Search, Quick Capture
 10. **Phase 10 -- DONE (9 rounds, 22 commits):** UX polish (LabSync benchmark). GlobalQuickAdd, PublicationDetail, Grants portal, empty state consistency, RoundPrompt, focus mode, density toggle, favicons, recently viewed, route progress bar, CSV export, notification grouping, dark mode fixes, OG meta tags.
 11. **Phase 11 -- DONE:** Infrastructure refactors, hard features (task peek, subtasks, bulk actions, agenda reorder, search ranking, dashboard pinning). 42 features shipped in master plan.
-12. **Phase 12 -- ACTIVE:** PB Sector v2 (Monk Manual planner). Star task + 3 focus + quick wins slots with @dnd-kit. 4 new D1 tables, 7 new API endpoints, 8 new components. Calendar timeline, pomodoro tracking, reflection panel. Dispatch queue table ready for Phase 3 (Claude integration).
+12. **Phase 12 -- DONE:** PB Sector v2 (Monk Manual planner). Star task + 3 focus + quick wins slots with @dnd-kit. 4 new D1 tables, 7 new API endpoints, 8 new components. Calendar timeline, pomodoro tracking, reflection panel. Dispatch queue table ready for Phase 3 (Claude integration).
+13. **Phase 13 -- ACTIVE:** Visual Polish & LabSync Parity (3-agent audit). 4 commits, 26 files. TaskDetailPanel fully custom controls, TaskCard status cycling + left borders, ProjectCard hover-reveal, PB Sector capture bar, --border-subtle system, mono label cleanup, section spacing, BentoCard drill-down chevrons, CollaborationNetwork contrast. Continuation plan: `Scratch/plans/hub-visual-polish-continuation.md`.
 
 ## Meeting Cadence
 
@@ -261,6 +262,9 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 | Calendar dedup | API deduplicates by type+date+title |
 | Brand formatting | Use `formatBrandName()` for any text that might contain "MNCCORE" |
 | Sidebar logo | Uses actual SVG logo mark, not plain text |
+| Tailwind v4 group-hover + arbitrary values | `group-hover:max-h-[80px]` doesn't compile. Use CSS rule in index.css instead: `.parent:hover .child { max-height: 80px !important }` |
+| --border-light vs --border-subtle | Gold `--border-light` for semantic borders (active pills, selected items). Neutral `--border-subtle` for structural borders (panel headers, section dividers). Don't mix. |
+| TaskCard status cycling | Cycles todo→in_progress→done (skips blocked). Blocked is set explicitly from detail panel only. |
 | @dnd-kit bundle | Used for board drag-drop (~12KB) |
 
 ## Peripheral Brain Connection
