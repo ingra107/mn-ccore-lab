@@ -1050,3 +1050,30 @@ export function useQuestionDetail(id: string) {
     enabled: !!id,
   })
 }
+
+// ── Narratives ──────────────────────────────────────────────
+
+export interface NarrativeArc {
+  id: string
+  title: string
+  category: string
+  projectCount: number
+  projects: { slug: string; title: string; stage: string; pi: string; description?: string }[]
+  connectedCount: number
+  sharedTopics: { topic: string; count: number }[]
+  stageDistribution: { stage: string; count: number }[]
+  relatedPubs: { id: string; title: string; pub_date: string }[]
+}
+
+export function useNarratives() {
+  return useQuery({
+    queryKey: ['narratives'],
+    queryFn: async () => {
+      const res = await fetch('/api/narratives')
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as NarrativeArc[]
+    },
+    staleTime: 10 * 60 * 1000,
+  })
+}

@@ -24,6 +24,7 @@ import { handleContributions } from './routes/contributions';
 import { handleSimilarGrants } from './routes/grant-intelligence';
 import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview } from './routes/decisions';
 import { handleSimilarDecisions } from './routes/decision-replay';
+import { handleNarratives } from './routes/narratives';
 import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSuggestExperts } from './routes/expertise';
 import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
@@ -114,6 +115,11 @@ export default {
         // Grant intelligence — NIH RePORTER proxy
         if (url.pathname === '/api/grants/similar') {
           return await handleSimilarGrants(url, env);
+        }
+
+        // Narratives
+        if (url.pathname === '/api/narratives') {
+          return await handleNarratives(env);
         }
 
         // Decisions endpoints

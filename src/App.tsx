@@ -118,6 +118,7 @@ const AnalyticsPage = lazy(() => import('./pages/portal/AnalyticsPage'))
 const SettingsPage = lazy(() => import('./pages/portal/SettingsPage'))
 const MeetingNotesPage = lazy(() => import('./pages/portal/MeetingNotesPage'))
 const DecisionsPage = lazy(() => import('./pages/portal/DecisionsPage'))
+const NarrativesPage = lazy(() => import('./pages/portal/NarrativesPage'))
 const AskTheLab = lazy(() => import('./pages/portal/AskTheLab'))
 const PIAnalytics = lazy(() => import('./pages/portal/PIAnalytics'))
 const Pulse = lazy(() => import('./pages/Pulse'))
@@ -185,6 +186,7 @@ export default function App() {
                   <Route path="/ideas" element={<ErrorBoundary><Ideas /></ErrorBoundary>} />
                   <Route path="/ask" element={<ErrorBoundary><AskTheLab /></ErrorBoundary>} />
                   <Route path="/decisions" element={<ErrorBoundary><DecisionsPage /></ErrorBoundary>} />
+                  <Route path="/narratives" element={<ErrorBoundary><NarrativesPage /></ErrorBoundary>} />
                   <Route path="/digest" element={<ErrorBoundary><Digest /></ErrorBoundary>} />
                   <Route path="/search" element={<ErrorBoundary><SearchPage /></ErrorBoundary>} />
                   <Route path="/grants" element={<ErrorBoundary><GrantsPage /></ErrorBoundary>} />

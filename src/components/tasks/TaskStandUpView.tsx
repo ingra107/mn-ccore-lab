@@ -52,17 +52,43 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
     })
   }, [tasks])
 
+  // Team summary stats
+  const totalOpen = grouped.reduce((sum, [, g]) => sum + g.todo.length + g.in_progress.length + g.blocked.length, 0)
+  const totalOverdue = grouped.reduce((sum, [, g]) => sum + [...g.todo, ...g.in_progress].filter(t => t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()).length, 0)
+  const totalBlocked = grouped.reduce((sum, [, g]) => sum + g.blocked.length, 0)
+
   return (
     <div className="flex flex-col gap-6">
+      {/* Team summary bar */}
+      {grouped.length > 1 && (
+        <div className="flex items-center gap-4 p-3 rounded-lg" style={{ background: 'rgba(201,168,76,0.03)', border: '1px solid rgba(201,168,76,0.08)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)' }}>
+            Team: {totalOpen} open across {grouped.length} people
+          </span>
+          {totalOverdue > 0 && (
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--maroon)', fontWeight: 600 }}>
+              {totalOverdue} overdue
+            </span>
+          )}
+          {totalBlocked > 0 && (
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--maroon)' }}>
+              {totalBlocked} blocked
+            </span>
+          )}
+        </div>
+      )}
+
       {grouped.map(([assignee, groups]) => {
         const person = getPersonInfo(assignee)
         const activeCount = groups.todo.length + groups.in_progress.length + groups.blocked.length
+        const allOpen = [...groups.todo, ...groups.in_progress, ...groups.blocked]
+        const nextDeadline = allOpen.filter(t => t.due_date).sort((a, b) => a.due_date!.localeCompare(b.due_date!))[0]?.due_date
 
         return (
           <div
             key={assignee}
             className="rounded-xl border"
-            style={{ borderColor: 'var(--border-light)', backgroundColor: 'white' }}
+            style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
           >
             {/* Person header */}
             <div className="flex items-center gap-3 p-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
@@ -105,13 +131,19 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
                       {groups.blocked.length} blocked
                     </span>
                   )}
-                  {activeCount >= 5 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: '#c2410c', backgroundColor: 'rgba(194,65,12,0.08)' }}>
-                      high load
+                  {nextDeadline && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}>
+                      next: {formatShortDate(nextDeadline)}
                     </span>
                   )}
                 </div>
               </div>
+              {/* Workload dot */}
+              <div style={{
+                width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                background: activeCount >= 7 ? 'var(--maroon)' : activeCount >= 4 ? 'var(--gold)' : '#22c55e',
+                boxShadow: activeCount >= 7 ? '0 0 6px rgba(122,0,25,0.4)' : 'none',
+              }} title={`${activeCount} open tasks`} />
             </div>
 
             {/* Task sections */}
