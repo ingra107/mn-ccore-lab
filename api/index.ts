@@ -32,6 +32,7 @@ import { handleCheckImpact } from './routes/impact-trace';
 import { handlePIAnalytics } from './routes/pi-analytics';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
+import { handleCommandCenter, handlePBCapture, handlePBDefer } from './routes/pb-sector';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -59,6 +60,11 @@ export default {
 
       // Read endpoints (GET only)
       if (request.method === 'GET') {
+        // PB Sector — PI command center
+        if (url.pathname === '/api/pb/command-center') {
+          return await handleCommandCenter(env);
+        }
+
         // PI Analytics — leadership dashboard data
         if (url.pathname === '/api/pi/analytics') {
           return await handlePIAnalytics(env);
@@ -529,6 +535,16 @@ export default {
         const aiResponseMatch = path.match(/^\/api\/ai-requests\/([^/]+)\/response$/);
         if (request.method === 'POST' && aiResponseMatch) {
           return await handleUpdateAIResponse(aiResponseMatch[1], request, env);
+        }
+
+        // POST /api/pb/capture — quick capture (task, idea, note)
+        if (request.method === 'POST' && path === '/api/pb/capture') {
+          return await handlePBCapture(request, user, env);
+        }
+
+        // POST /api/pb/defer — defer a task
+        if (request.method === 'POST' && path === '/api/pb/defer') {
+          return await handlePBDefer(request, env);
         }
 
         // POST /api/impact/check — scan for impact events and create notifications

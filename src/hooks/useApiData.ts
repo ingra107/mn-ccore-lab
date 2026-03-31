@@ -1075,5 +1075,43 @@ export function useNarratives() {
       return (data.data || []) as NarrativeArc[]
     },
     staleTime: 10 * 60 * 1000,
+// ── PB Sector (Command Center) ─────────────────────────────
+
+export interface PBCommandCenterData {
+  greeting: string
+  mode: string
+  today: string
+  nudges: string[]
+  sections: {
+    focusNow: any[]
+    today: any[]
+    thisWeek: any[]
+    backlog: any[]
+    recentlyCompleted: any[]
+  }
+  stats: {
+    totalOpen: number
+    overdue: number
+    completedRecently: number
+  }
+  projects: any[]
+  milestones: any[]
+  commitments: any[]
+  meetings: any[]
+  recentActivity: any[]
+  blockedTasks: any[]
+  decisionsForReview: any[]
+}
+
+export function usePBCommandCenter() {
+  return useQuery({
+    queryKey: ['pb-command-center'],
+    queryFn: async () => {
+      const res = await fetch('/api/pb/command-center')
+      if (!res.ok) return null
+      return (await res.json()).data as PBCommandCenterData
+    },
+    staleTime: 60 * 1000,
+    refetchInterval: 5 * 60 * 1000, // Auto-refresh every 5 min
   })
 }
