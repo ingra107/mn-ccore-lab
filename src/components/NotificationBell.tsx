@@ -48,10 +48,8 @@ export default function NotificationBell() {
     return () => document.removeEventListener('keydown', handleEscape)
   }, [open])
 
-  if (!isAuthenticated) return null
-
   // Show up to 20 most recent notifications, grouped by day
-  const displayNotifications = notifications.slice(0, 20)
+  const displayNotifications = isAuthenticated ? notifications.slice(0, 20) : []
 
   const groupedByDay = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
@@ -72,6 +70,8 @@ export default function NotificationBell() {
 
     return groups
   }, [displayNotifications])
+
+  if (!isAuthenticated) return null
 
   return (
     <div ref={ref} className="relative" style={{ display: 'inline-flex' }}>
