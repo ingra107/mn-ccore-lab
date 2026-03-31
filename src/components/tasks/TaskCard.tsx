@@ -56,12 +56,15 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
     }
   }
 
+  const statusColor = (statusOptions.find((s) => s.value === task.status) || statusOptions[0]).color
+
   return (
     <div
       className="group relative rounded-lg border transition-all duration-200 hover:shadow-md"
       style={{
         borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-light)',
-        backgroundColor: isDone ? 'rgba(0,0,0,0.02)' : 'white',
+        borderLeft: `3px solid ${statusColor}`,
+        backgroundColor: isDone ? 'rgba(0,0,0,0.02)' : 'var(--cream)',
         opacity: isDone ? 0.7 : 1,
         cursor: onClick ? 'pointer' : 'default',
       }}

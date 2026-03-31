@@ -108,15 +108,15 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
             onSave={(v) => handleFieldUpdate('title', v)}
           />
 
-          {/* Status + Priority row */}
-          <div className="grid grid-cols-2 gap-3">
-            <FieldBlock label="Status" icon={Circle}>
-              <StatusSelect value={task.status} onChange={handleStatusChange} />
-            </FieldBlock>
-            <FieldBlock label="Priority" icon={Flag}>
-              <PrioritySelect value={task.priority} onChange={(v) => handleFieldUpdate('priority', v)} />
-            </FieldBlock>
-          </div>
+          {/* Status */}
+          <FieldBlock label="Status" icon={Circle}>
+            <StatusSelect value={task.status} onChange={handleStatusChange} />
+          </FieldBlock>
+
+          {/* Priority */}
+          <FieldBlock label="Priority" icon={Flag}>
+            <PrioritySelect value={task.priority} onChange={(v) => handleFieldUpdate('priority', v)} />
+          </FieldBlock>
 
           {/* Assignee */}
           <FieldBlock label="Assignee" icon={User}>
@@ -145,7 +145,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
 
           {/* Description — editable */}
           <div>
-            <label className="block text-[10px] uppercase tracking-wider mb-1.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+            <label className="block text-[11px] mb-1.5" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
               Description
             </label>
             <EditableTextarea
@@ -181,8 +181,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
             background-color: #162535 !important;
             border-color: rgba(201, 168, 76, 0.12) !important;
           }
-          .dark .task-detail-panel select,
-          .dark .task-detail-panel input[type="date"] {
+          .dark .task-detail-panel select {
             color-scheme: dark;
           }
           @media (max-width: 640px) {
@@ -200,12 +199,12 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
 
 function FieldBlock({ label, icon: Icon, children }: { label: string; icon: typeof Circle; children: React.ReactNode }) {
   return (
-    <div>
-      <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
-        <Icon size={10} />
+    <div className="flex items-start gap-3">
+      <label className="flex items-center gap-1.5 text-[11px] pt-1.5 shrink-0 w-[88px]" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
+        <Icon size={12} style={{ opacity: 0.7 }} />
         {label}
       </label>
-      {children}
+      <div className="flex-1 min-w-0">{children}</div>
     </div>
   )
 }
@@ -294,22 +293,31 @@ function EditableTextarea({ value, onSave, placeholder }: { value: string; onSav
 // ── Status Select ────────────────────────────────────────────
 
 function StatusSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const current = statusOptions.find((s) => s.value === value) || statusOptions[0]
-  const Icon = current.icon
-
   return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none rounded-md border px-3 py-2 text-sm pl-8 cursor-pointer"
-        style={{ fontFamily: 'var(--font-sans)', color: current.color, borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)', fontWeight: 500 }}
-      >
-        {statusOptions.map((s) => (
-          <option key={s.value} value={s.value}>{s.label}</option>
-        ))}
-      </select>
-      <Icon size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: current.color }} />
+    <div className="flex flex-wrap gap-1.5">
+      {statusOptions.map((s) => {
+        const Icon = s.icon
+        const active = value === s.value
+        return (
+          <button
+            key={s.value}
+            onClick={() => onChange(s.value)}
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs border transition-colors"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontWeight: active ? 600 : 400,
+              color: active ? s.color : 'var(--slate)',
+              borderColor: active ? s.color : 'var(--border-light)',
+              backgroundColor: active ? `color-mix(in srgb, ${s.color} 8%, transparent)` : 'transparent',
+              cursor: 'pointer',
+              opacity: active ? 1 : 0.7,
+            }}
+          >
+            <Icon size={12} />
+            {s.label}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -317,44 +325,88 @@ function StatusSelect({ value, onChange }: { value: string; onChange: (v: string
 // ── Priority Select ──────────────────────────────────────────
 
 function PrioritySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const current = priorityOptions.find((p) => p.value === value) || priorityOptions[1]
-
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-md border px-3 py-2 text-sm cursor-pointer"
-      style={{ fontFamily: 'var(--font-sans)', color: current.color, borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)', fontWeight: 500 }}
-    >
-      {priorityOptions.map((p) => (
-        <option key={p.value} value={p.value}>{p.label}</option>
-      ))}
-    </select>
+    <div className="flex flex-wrap gap-1.5">
+      {priorityOptions.map((p) => {
+        const active = value === p.value
+        return (
+          <button
+            key={p.value}
+            onClick={() => onChange(p.value)}
+            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs border transition-colors"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontWeight: active ? 600 : 400,
+              color: active ? p.color : 'var(--slate)',
+              borderColor: active ? p.color : 'var(--border-light)',
+              backgroundColor: active ? `color-mix(in srgb, ${p.color} 8%, transparent)` : 'transparent',
+              cursor: 'pointer',
+              opacity: active ? 1 : 0.7,
+            }}
+          >
+            <Flag size={10} />
+            {p.label}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
 // ── Assignee Select ──────────────────────────────────────────
 
 function AssigneeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
   const { data: team = [] } = useTeam()
   const person = getPersonInfo(value)
   const members = team.filter((m) => m.slug).sort((a, b) => a.name.localeCompare(b.name))
 
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
   return (
-    <div className="flex items-center gap-2">
-      <div style={{ width: 24, height: 24 }}>
-        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[7px]" />
-      </div>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex-1 rounded-md border px-2.5 py-2 text-sm cursor-pointer"
-        style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-full border px-2 py-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+        style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}
       >
-        {members.map((m) => (
-          <option key={m.slug} value={m.slug}>{m.name}</option>
-        ))}
-      </select>
+        <div style={{ width: 28, height: 28 }}>
+          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
+        </div>
+        <span className="text-sm" style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}>{person.name}</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 0.5 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[240px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
+          {members.map((m) => {
+            const slug = m.slug!
+            const mp = getPersonInfo(slug)
+            const selected = slug === value
+            return (
+              <button
+                key={slug}
+                onClick={() => { onChange(slug); setOpen(false) }}
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+              >
+                <div style={{ width: 24, height: 24 }}>
+                  <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[7px]" />
+                </div>
+                <span className="flex-1">{m.name}</span>
+                {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -362,31 +414,45 @@ function AssigneeSelect({ value, onChange }: { value: string; onChange: (v: stri
 // ── Date Input ───────────────────────────────────────────────
 
 function DateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null)
   const isOverdue = value && new Date(value + 'T23:59:59') < new Date()
+
+  const formatted = value
+    ? new Date(value + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null
 
   return (
     <div className="flex items-center gap-2">
+      <button
+        onClick={() => inputRef.current?.showPicker()}
+        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+        style={{
+          fontFamily: 'var(--font-body)',
+          color: isOverdue ? 'var(--maroon)' : formatted ? 'var(--ink)' : 'var(--slate)',
+          fontWeight: isOverdue ? 600 : 400,
+          cursor: 'pointer',
+          background: 'none',
+          border: 'none',
+          opacity: formatted ? 1 : 0.6,
+        }}
+      >
+        {formatted || 'Set date...'}
+      </button>
       <input
+        ref={inputRef}
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 rounded-md border px-3 py-2 text-sm"
-        style={{
-          fontFamily: 'var(--font-sans)',
-          color: isOverdue ? 'var(--maroon)' : 'var(--ink)',
-          fontWeight: isOverdue ? 600 : 400,
-          borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-light)',
-          backgroundColor: 'var(--cream)',
-          cursor: 'pointer',
-        }}
+        className="sr-only"
+        tabIndex={-1}
       />
       {value && (
         <button
           onClick={() => onChange('')}
-          className="text-xs px-2 py-1 rounded"
-          style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.5 }}
+          className="text-xs px-1.5 py-0.5 rounded"
+          style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.4 }}
         >
-          Clear
+          &times;
         </button>
       )}
     </div>
@@ -396,6 +462,8 @@ function DateInput({ value, onChange }: { value: string; onChange: (v: string) =
 // ── Project Select ───────────────────────────────────────────
 
 function ProjectSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
   const { data: projectList = [] } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
@@ -407,18 +475,62 @@ function ProjectSelect({ value, onChange }: { value: string; onChange: (v: strin
     staleTime: 5 * 60 * 1000,
   })
 
+  const current = projectList.find((p) => p.slug === value)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-md border px-3 py-2 text-sm cursor-pointer"
-      style={{ fontFamily: 'var(--font-sans)', color: value ? 'var(--ink)' : 'var(--slate)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
-    >
-      <option value="">No project</option>
-      {projectList.map((p) => (
-        <option key={p.slug} value={p.slug}>{p.title}</option>
-      ))}
-    </select>
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+        style={{
+          fontFamily: 'var(--font-body)',
+          color: current ? 'var(--teal)' : 'var(--slate)',
+          cursor: 'pointer',
+          background: current ? 'rgba(45,138,138,0.06)' : 'none',
+          border: 'none',
+          opacity: current ? 1 : 0.6,
+        }}
+      >
+        <FolderKanban size={13} style={{ opacity: 0.7 }} />
+        {current ? current.title : 'No project'}
+        <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 0.4 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[240px] max-h-[280px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
+          <button
+            onClick={() => { onChange(''); setOpen(false) }}
+            className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+            style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.6 }}
+          >
+            No project
+            {!value && <Check size={14} style={{ color: 'var(--teal)', marginLeft: 'auto' }} />}
+          </button>
+          {projectList.map((p) => {
+            const selected = p.slug === value
+            return (
+              <button
+                key={p.slug}
+                onClick={() => { onChange(p.slug); setOpen(false) }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+              >
+                <span className="flex-1 truncate">{p.title}</span>
+                {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -475,8 +587,8 @@ function SubtaskChecklist({ taskId }: { taskId: string }) {
 
   return (
     <div>
-      <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
-        <ListChecks size={10} />
+      <label className="flex items-center gap-1.5 text-[11px] mb-2" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
+        <ListChecks size={12} style={{ opacity: 0.7 }} />
         Subtasks ({completed}/{total})
       </label>
 
