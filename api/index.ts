@@ -133,6 +133,7 @@ export default {
         }
         if (url.pathname === '/api/expertise') {
           return await handleGetExpertise(url, env);
+        }
         // AI requests
         if (url.pathname === '/api/ai-requests') {
           return await handleGetAIRequests(url, env);
