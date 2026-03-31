@@ -1075,6 +1075,9 @@ export function useNarratives() {
       return (data.data || []) as NarrativeArc[]
     },
     staleTime: 10 * 60 * 1000,
+  })
+}
+
 // ── PB Sector (Command Center) ─────────────────────────────
 
 export interface PBCommandCenterData {

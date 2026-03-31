@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -11,14 +11,11 @@ import {
   ArrowRight,
   CalendarPlus,
   Archive,
-  CalendarDays,
   AlertTriangle,
-  Clock,
   ChevronDown,
   ChevronRight as ChevronRightIcon,
   Users,
   Flag,
-  Milestone as MilestoneIcon,
   Handshake,
   Scale,
 } from 'lucide-react'
@@ -229,7 +226,7 @@ export default function PBSector() {
   const defer = usePBDefer()
   const completeTask = useUpdateTaskStatus()
   const [captureText, setCaptureText] = useState('')
-  const [showBacklog, setShowBacklog] = useState(false)
+  const [showBacklog] = useState(false)
   const [showCompleted, setShowCompleted] = useState(false)
 
   const handleComplete = (id: string) => {
