@@ -872,3 +872,95 @@ export function usePBDefer() {
     },
   })
 }
+
+// ── PB Sector v2 — Daily Plan mutations ─────────────────────
+
+export function useSaveDailyPlan() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { plan_date: string; star_task_id?: string | null; focus_task_ids?: string[]; quick_win_ids?: string[]; intention?: string; gratitude?: string }) =>
+      fetch('/api/pb/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then(r => r.json()),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pb-command-center'] })
+    },
+  })
+}
+
+export function useReorderPlan() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { plan_date: string; slot_type: 'focus' | 'quick_win'; task_ids: string[] }) =>
+      fetch('/api/pb/plan/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then(r => r.json()),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pb-command-center'] })
+    },
+  })
+}
+
+export function usePromoteTask() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { plan_date: string; task_id: string; from_slot: string; to_slot: string }) =>
+      fetch('/api/pb/plan/promote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then(r => r.json()),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pb-command-center'] })
+    },
+  })
+}
+
+export function useStartPomodoro() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { task_id: string; plan_date: string; slot_type: string; duration_minutes?: number }) =>
+      fetch('/api/pb/pomodoro/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then(r => r.json()),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pb-command-center'] })
+    },
+  })
+}
+
+export function useCompletePomodoro() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { id: string }) =>
+      fetch('/api/pb/pomodoro/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then(r => r.json()),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pb-command-center'] })
+    },
+  })
+}
+
+export function useSaveReflection() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { plan_date: string; highlight?: string; learned?: string; energy_rating?: number; focus_rating?: number; notes?: string }) =>
+      fetch('/api/pb/reflection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then(r => r.json()),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pb-command-center'] })
+    },
+  })
+}

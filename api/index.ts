@@ -32,7 +32,7 @@ import { handleCheckImpact } from './routes/impact-trace';
 import { handlePIAnalytics } from './routes/pi-analytics';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
-import { handleCommandCenter, handlePBCapture, handlePBDefer } from './routes/pb-sector';
+import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory } from './routes/pb-sector';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -63,6 +63,11 @@ export default {
         // PB Sector — PI command center
         if (url.pathname === '/api/pb/command-center') {
           return await handleCommandCenter(env);
+        }
+
+        // PB Sector — plan history
+        if (url.pathname === '/api/pb/plan/history') {
+          return await handlePlanHistory(request, env);
         }
 
         // PI Analytics — leadership dashboard data
@@ -545,6 +550,36 @@ export default {
         // POST /api/pb/defer — defer a task
         if (request.method === 'POST' && path === '/api/pb/defer') {
           return await handlePBDefer(request, env);
+        }
+
+        // POST /api/pb/plan — save/update daily plan
+        if (request.method === 'POST' && path === '/api/pb/plan') {
+          return await handleCreateOrUpdatePlan(request, user, env);
+        }
+
+        // POST /api/pb/plan/reorder — reorder tasks within a slot
+        if (request.method === 'POST' && path === '/api/pb/plan/reorder') {
+          return await handleReorderPlan(request, env);
+        }
+
+        // POST /api/pb/plan/promote — move task between slots
+        if (request.method === 'POST' && path === '/api/pb/plan/promote') {
+          return await handlePromoteTask(request, env);
+        }
+
+        // POST /api/pb/pomodoro/start — start a pomodoro session
+        if (request.method === 'POST' && path === '/api/pb/pomodoro/start') {
+          return await handleStartPomodoro(request, user, env);
+        }
+
+        // POST /api/pb/pomodoro/complete — complete a pomodoro session
+        if (request.method === 'POST' && path === '/api/pb/pomodoro/complete') {
+          return await handleCompletePomodoro(request, user, env);
+        }
+
+        // POST /api/pb/reflection — save daily reflection
+        if (request.method === 'POST' && path === '/api/pb/reflection') {
+          return await handleSaveReflection(request, user, env);
         }
 
         // POST /api/impact/check — scan for impact events and create notifications

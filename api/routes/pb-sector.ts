@@ -6,7 +6,7 @@ export async function handleCommandCenter(env: Env): Promise<Response> {
   const today = new Date().toISOString().split('T')[0]
   const hour = new Date().getUTCHours() - 6 // CT approximation
 
-  const [tasks, projects, milestones, commitments, meetings, recentActivity, blockedTasks, decisions] = await Promise.all([
+  const [tasks, projects, milestones, commitments, meetings, recentActivity, blockedTasks, decisions, dailyPlan, pomodoroSessions, dailyReflection] = await Promise.all([
     // All of Nick's tasks
     env.DB.prepare(`
       SELECT t.*, p.title as project_title, p.slug as project_slug
@@ -66,6 +66,15 @@ export async function handleCommandCenter(env: Env): Promise<Response> {
       WHERE outcome_status = 'pending' AND created_at < datetime('now', '-60 days')
       ORDER BY created_at ASC LIMIT 5
     `).all(),
+
+    // Today's daily plan
+    env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(today).first(),
+
+    // Today's pomodoro sessions
+    env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE plan_date = ?').bind(today).all(),
+
+    // Today's reflection
+    env.DB.prepare('SELECT * FROM daily_reflections WHERE plan_date = ?').bind(today).first(),
   ])
 
   const allTasks = (tasks.results || []) as any[]
@@ -114,6 +123,14 @@ export async function handleCommandCenter(env: Env): Promise<Response> {
       recentActivity: recentActivity.results || [],
       blockedTasks: blockedTasks.results || [],
       decisionsForReview: decisions.results || [],
+      dailyPlan: dailyPlan || null,
+      pomodoroSessions: (pomodoroSessions?.results || []),
+      dailyReflection: dailyReflection || null,
+      suggestions: {
+        starCandidates: openTasks.filter(t => t.priority === 'urgent' || t.priority === 'high' || (t.due_date && t.due_date <= today)).slice(0, 5),
+        focusCandidates: openTasks.filter(t => t.priority === 'high' || t.priority === 'medium').slice(0, 10),
+        quickWinCandidates: openTasks.filter(t => t.priority === 'low' || t.priority === 'medium').slice(0, 10),
+      },
     },
   })
 }
@@ -156,4 +173,265 @@ export async function handlePBDefer(request: Request, env: Env): Promise<Respons
   }
 
   return json({ data: { ok: true } })
+}
+
+// POST /api/pb/plan — create or update a daily plan
+export async function handleCreateOrUpdatePlan(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    plan_date: string
+    star_task_id?: string | null
+    focus_task_ids?: string[]
+    quick_win_ids?: string[]
+    intention?: string
+    gratitude?: string
+  }
+  if (!body.plan_date) return error('plan_date required', 400)
+
+  const existing = await env.DB.prepare('SELECT id FROM daily_plans WHERE plan_date = ?').bind(body.plan_date).first()
+
+  if (existing) {
+    // Update
+    const sets: string[] = ['updated_at = datetime(\'now\')']
+    const vals: any[] = []
+    if (body.star_task_id !== undefined) { sets.push('star_task_id = ?'); vals.push(body.star_task_id) }
+    if (body.focus_task_ids !== undefined) { sets.push('focus_task_ids = ?'); vals.push(JSON.stringify(body.focus_task_ids)) }
+    if (body.quick_win_ids !== undefined) { sets.push('quick_win_ids = ?'); vals.push(JSON.stringify(body.quick_win_ids)) }
+    if (body.intention !== undefined) { sets.push('intention = ?'); vals.push(body.intention) }
+    if (body.gratitude !== undefined) { sets.push('gratitude = ?'); vals.push(body.gratitude) }
+    vals.push(body.plan_date)
+    await env.DB.prepare(`UPDATE daily_plans SET ${sets.join(', ')} WHERE plan_date = ?`).bind(...vals).run()
+    const updated = await env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(body.plan_date).first()
+    return json({ data: updated })
+  } else {
+    // Create
+    const id = generateId()
+    await env.DB.prepare(
+      'INSERT INTO daily_plans (id, plan_date, star_task_id, focus_task_ids, quick_win_ids, intention, gratitude) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).bind(
+      id, body.plan_date,
+      body.star_task_id || null,
+      body.focus_task_ids ? JSON.stringify(body.focus_task_ids) : null,
+      body.quick_win_ids ? JSON.stringify(body.quick_win_ids) : null,
+      body.intention || null,
+      body.gratitude || null
+    ).run()
+    await logActivity(env, 'plan', `Daily plan created for ${body.plan_date}`, user.email)
+    const created = await env.DB.prepare('SELECT * FROM daily_plans WHERE id = ?').bind(id).first()
+    return json({ data: created }, 201)
+  }
+}
+
+// POST /api/pb/plan/reorder — reorder tasks within a plan slot
+export async function handleReorderPlan(request: Request, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    plan_date: string
+    slot_type: 'focus' | 'quick_win'
+    task_ids: string[]
+  }
+  if (!body.plan_date) return error('plan_date required', 400)
+  if (!body.slot_type || !['focus', 'quick_win'].includes(body.slot_type)) return error('slot_type must be focus or quick_win', 400)
+  if (!Array.isArray(body.task_ids)) return error('task_ids must be an array', 400)
+
+  const column = body.slot_type === 'focus' ? 'focus_task_ids' : 'quick_win_ids'
+  await env.DB.prepare(
+    `UPDATE daily_plans SET ${column} = ?, updated_at = datetime('now') WHERE plan_date = ?`
+  ).bind(JSON.stringify(body.task_ids), body.plan_date).run()
+
+  const updated = await env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(body.plan_date).first()
+  if (!updated) return error('No plan found for that date', 404)
+
+  return json({ data: updated })
+}
+
+// POST /api/pb/plan/promote — move a task between plan slots
+export async function handlePromoteTask(request: Request, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    plan_date: string
+    task_id: string
+    from_slot: 'star' | 'focus' | 'quick_win'
+    to_slot: 'star' | 'focus' | 'quick_win'
+  }
+  if (!body.plan_date) return error('plan_date required', 400)
+  if (!body.task_id) return error('task_id required', 400)
+  if (!body.from_slot || !body.to_slot) return error('from_slot and to_slot required', 400)
+  if (body.from_slot === body.to_slot) return error('from_slot and to_slot must differ', 400)
+
+  const plan = await env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(body.plan_date).first() as any
+  if (!plan) return error('No plan found for that date', 404)
+
+  // Parse current slot values
+  const starTaskId: string | null = plan.star_task_id || null
+  let focusIds: string[] = plan.focus_task_ids ? JSON.parse(plan.focus_task_ids) : []
+  let quickWinIds: string[] = plan.quick_win_ids ? JSON.parse(plan.quick_win_ids) : []
+
+  // Remove from source slot
+  if (body.from_slot === 'star') {
+    if (starTaskId !== body.task_id) return error('Task is not in the star slot', 400)
+  } else if (body.from_slot === 'focus') {
+    focusIds = focusIds.filter(id => id !== body.task_id)
+  } else {
+    quickWinIds = quickWinIds.filter(id => id !== body.task_id)
+  }
+
+  // Add to destination slot
+  let newStarTaskId = starTaskId
+  if (body.to_slot === 'star') {
+    // If there's already a star task and it's not the one being moved, push old star to focus
+    if (newStarTaskId && newStarTaskId !== body.task_id && body.from_slot !== 'star') {
+      focusIds.unshift(newStarTaskId)
+    }
+    newStarTaskId = body.task_id
+  } else if (body.to_slot === 'focus') {
+    if (!focusIds.includes(body.task_id)) focusIds.push(body.task_id)
+  } else {
+    if (!quickWinIds.includes(body.task_id)) quickWinIds.push(body.task_id)
+  }
+
+  // Clear star if moved away
+  if (body.from_slot === 'star') {
+    newStarTaskId = null
+  }
+
+  await env.DB.prepare(
+    `UPDATE daily_plans SET star_task_id = ?, focus_task_ids = ?, quick_win_ids = ?, updated_at = datetime('now') WHERE plan_date = ?`
+  ).bind(
+    newStarTaskId,
+    JSON.stringify(focusIds),
+    JSON.stringify(quickWinIds),
+    body.plan_date
+  ).run()
+
+  const updated = await env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(body.plan_date).first()
+  return json({ data: updated })
+}
+
+// POST /api/pb/pomodoro/start — start a pomodoro session
+export async function handleStartPomodoro(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    task_id: string
+    plan_date: string
+    slot_type: 'star' | 'focus' | 'quick_win'
+    duration_minutes?: number
+  }
+  if (!body.task_id) return error('task_id required', 400)
+  if (!body.plan_date) return error('plan_date required', 400)
+  if (!body.slot_type) return error('slot_type required', 400)
+
+  const id = generateId()
+  const duration = body.duration_minutes || 25
+
+  await env.DB.prepare(
+    'INSERT INTO pomodoro_sessions (id, task_id, plan_date, slot_type, duration_minutes, started_at) VALUES (?, ?, ?, ?, ?, datetime(\'now\'))'
+  ).bind(id, body.task_id, body.plan_date, body.slot_type, duration).run()
+
+  await logActivity(env, 'pomodoro', `Pomodoro started for task ${body.task_id} (${duration}min)`, user.email, body.task_id, 'task')
+
+  const created = await env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE id = ?').bind(id).first()
+  return json({ data: created }, 201)
+}
+
+// POST /api/pb/pomodoro/complete — complete a pomodoro session
+export async function handleCompletePomodoro(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { id: string }
+  if (!body.id) return error('id required', 400)
+
+  const existing = await env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE id = ?').bind(body.id).first()
+  if (!existing) return error('Pomodoro session not found', 404)
+
+  await env.DB.prepare(
+    'UPDATE pomodoro_sessions SET completed_at = datetime(\'now\'), completed = 1 WHERE id = ?'
+  ).bind(body.id).run()
+
+  await logActivity(env, 'pomodoro', `Pomodoro completed`, user.email, body.id, 'pomodoro')
+
+  const updated = await env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE id = ?').bind(body.id).first()
+  return json({ data: updated })
+}
+
+// POST /api/pb/reflection — save or update daily reflection
+export async function handleSaveReflection(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    plan_date: string
+    highlight?: string
+    learned?: string
+    energy_rating?: number
+    focus_rating?: number
+    notes?: string
+  }
+  if (!body.plan_date) return error('plan_date required', 400)
+
+  const existing = await env.DB.prepare('SELECT id FROM daily_reflections WHERE plan_date = ?').bind(body.plan_date).first()
+
+  if (existing) {
+    // Update
+    const sets: string[] = ['updated_at = datetime(\'now\')']
+    const vals: any[] = []
+    if (body.highlight !== undefined) { sets.push('highlight = ?'); vals.push(body.highlight) }
+    if (body.learned !== undefined) { sets.push('learned = ?'); vals.push(body.learned) }
+    if (body.energy_rating !== undefined) { sets.push('energy_rating = ?'); vals.push(body.energy_rating) }
+    if (body.focus_rating !== undefined) { sets.push('focus_rating = ?'); vals.push(body.focus_rating) }
+    if (body.notes !== undefined) { sets.push('notes = ?'); vals.push(body.notes) }
+    vals.push(body.plan_date)
+    await env.DB.prepare(`UPDATE daily_reflections SET ${sets.join(', ')} WHERE plan_date = ?`).bind(...vals).run()
+  } else {
+    // Create
+    const id = generateId()
+    await env.DB.prepare(
+      'INSERT INTO daily_reflections (id, plan_date, highlight, learned, energy_rating, focus_rating, notes) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).bind(
+      id, body.plan_date,
+      body.highlight || null,
+      body.learned || null,
+      body.energy_rating || null,
+      body.focus_rating || null,
+      body.notes || null
+    ).run()
+    await logActivity(env, 'reflection', `Daily reflection saved for ${body.plan_date}`, user.email)
+  }
+
+  // Also close the daily plan
+  await env.DB.prepare(
+    'UPDATE daily_plans SET status = \'closed\', updated_at = datetime(\'now\') WHERE plan_date = ?'
+  ).bind(body.plan_date).run()
+
+  const reflection = await env.DB.prepare('SELECT * FROM daily_reflections WHERE plan_date = ?').bind(body.plan_date).first()
+  return json({ data: reflection })
+}
+
+// GET /api/pb/plan/history?days=7 — recent plan history
+export async function handlePlanHistory(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url)
+  const days = parseInt(url.searchParams.get('days') || '7', 10)
+  const clampedDays = Math.min(Math.max(days, 1), 90)
+
+  const [plans, reflections] = await Promise.all([
+    env.DB.prepare(
+      'SELECT * FROM daily_plans WHERE plan_date >= date(\'now\', ? || \' days\') ORDER BY plan_date DESC'
+    ).bind(`-${clampedDays}`).all(),
+
+    env.DB.prepare(
+      'SELECT * FROM daily_reflections WHERE plan_date >= date(\'now\', ? || \' days\') ORDER BY plan_date DESC'
+    ).bind(`-${clampedDays}`).all(),
+  ])
+
+  // Merge plans and reflections by date
+  const plansByDate = new Map<string, any>()
+  for (const plan of (plans.results || []) as any[]) {
+    plansByDate.set(plan.plan_date, { plan, reflection: null })
+  }
+  for (const reflection of (reflections.results || []) as any[]) {
+    const entry = plansByDate.get(reflection.plan_date)
+    if (entry) {
+      entry.reflection = reflection
+    } else {
+      plansByDate.set(reflection.plan_date, { plan: null, reflection })
+    }
+  }
+
+  // Sort by date descending
+  const history = Array.from(plansByDate.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([date, data]) => ({ date, ...data }))
+
+  return json({ data: history })
 }
