@@ -22,6 +22,8 @@ interface FocusTaskSlotProps {
   onStartPomo: (taskId: string) => void
   onClickTitle: (task: FocusTask) => void
   onAddClick: () => void
+  suggestions?: any[]
+  onAcceptSuggestion?: (task: any) => void
 }
 
 function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, onComplete, onStartPomo, onClickTitle }: {
@@ -102,7 +104,7 @@ function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, on
   )
 }
 
-export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStartPomo, onClickTitle, onAddClick }: FocusTaskSlotProps) {
+export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStartPomo, onClickTitle, onAddClick, suggestions = [], onAcceptSuggestion }: FocusTaskSlotProps) {
   const { isOver, setNodeRef: setDropRef } = useDroppable({
     id: 'focus-slot',
     data: { type: 'slot', slotType: 'focus' },
@@ -152,30 +154,56 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
           </div>
         </SortableContext>
 
-        {/* Empty slots */}
+        {/* Empty slots — show suggestions or placeholder */}
         {emptySlots > 0 && (
           <div className="px-3">
-            {Array.from({ length: emptySlots }).map((_, i) => (
-              <motion.button
-                key={`empty-${i}`}
-                onClick={onAddClick}
-                className="w-full flex items-center gap-3 py-2.5"
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  borderBottom: i < emptySlots - 1 ? '1px solid rgba(201,168,76,0.04)' : undefined,
-                }}
-                whileHover={{ backgroundColor: 'rgba(45,138,138,0.03)' }}
-              >
-                <div style={{ width: 14 }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>
-                  {tasks.length + i + 1}
-                </span>
-                <Plus size={14} style={{ color: 'var(--slate)', opacity: 0.2 }} />
-                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--slate)', opacity: 0.3, fontStyle: 'italic' }}>
-                  Drag a task here
-                </span>
-              </motion.button>
-            ))}
+            {Array.from({ length: emptySlots }).map((_, i) => {
+              const suggestion = suggestions[i]
+              return suggestion ? (
+                <motion.button
+                  key={`suggest-${i}`}
+                  onClick={() => onAcceptSuggestion?.(suggestion)}
+                  className="w-full flex items-center gap-3 py-2.5 text-left"
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    borderBottom: i < emptySlots - 1 ? '1px solid rgba(201,168,76,0.04)' : undefined,
+                  }}
+                  whileHover={{ backgroundColor: 'rgba(45,138,138,0.03)' }}
+                >
+                  <div style={{ width: 14 }} />
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>
+                    {tasks.length + i + 1}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--teal)', opacity: 0.4, textTransform: 'uppercase', flexShrink: 0 }}>
+                    Suggested
+                  </span>
+                  <span className="truncate" style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', opacity: 0.35 }}>
+                    {suggestion.title || suggestion.description}
+                  </span>
+                  <Plus size={12} style={{ color: 'var(--teal)', opacity: 0.3, flexShrink: 0 }} />
+                </motion.button>
+              ) : (
+                <motion.button
+                  key={`empty-${i}`}
+                  onClick={onAddClick}
+                  className="w-full flex items-center gap-3 py-2.5"
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    borderBottom: i < emptySlots - 1 ? '1px solid rgba(201,168,76,0.04)' : undefined,
+                  }}
+                  whileHover={{ backgroundColor: 'rgba(45,138,138,0.03)' }}
+                >
+                  <div style={{ width: 14 }} />
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>
+                    {tasks.length + i + 1}
+                  </span>
+                  <Plus size={14} style={{ color: 'var(--slate)', opacity: 0.2 }} />
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--slate)', opacity: 0.3, fontStyle: 'italic' }}>
+                    Drag a task here
+                  </span>
+                </motion.button>
+              )
+            })}
           </div>
         )}
       </div>

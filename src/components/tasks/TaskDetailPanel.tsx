@@ -166,7 +166,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
           </div>
 
           {/* Comments */}
-          <TaskComments taskId={task.id} />
+          <TaskComments taskId={task.id} taskTitle={task.title} projectSlug={task.project_id} />
 
           {/* Activity */}
           <TaskActivity taskId={task.id} />
@@ -814,9 +814,10 @@ interface TaskComment {
   created_at: string
 }
 
-function TaskComments({ taskId }: { taskId: string }) {
+function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: string; taskTitle?: string; projectSlug?: string | null }) {
   const queryClient = useQueryClient()
   const [newComment, setNewComment] = useState('')
+  const [forClaude, setForClaude] = useState(false)
 
   const { data: comments = [] } = useQuery({
     queryKey: ['task-comments', taskId],
@@ -849,7 +850,24 @@ function TaskComments({ taskId }: { taskId: string }) {
     e.preventDefault()
     if (!newComment.trim()) return
     addComment.mutate(newComment.trim())
+    // Also add to dispatch queue if @claude toggle is on
+    if (forClaude) {
+      fetch('/api/pb/dispatch/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          task_id: taskId,
+          task_title: taskTitle || null,
+          project_slug: projectSlug || null,
+          comment: newComment.trim(),
+          comment_type: 'action',
+        }),
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['dispatch-pending'] })
+      }).catch(() => {})
+    }
     setNewComment('')
+    setForClaude(false)
   }
 
   return (
@@ -882,18 +900,41 @@ function TaskComments({ taskId }: { taskId: string }) {
       </div>
 
       {/* Add comment */}
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          type="text"
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment..."
-          className="flex-1 rounded-md border px-3 py-1.5 text-sm outline-none"
-          style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)', color: 'var(--ink)' }}
-        />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-1.5">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a comment..."
+            className="flex-1 rounded-md border px-3 py-1.5 text-sm outline-none"
+            style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)', color: 'var(--ink)' }}
+          />
+          {newComment.trim() && (
+            <button type="submit" className="p-1.5 rounded-md" style={{ backgroundColor: forClaude ? 'var(--gold)' : 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer', transition: 'background-color 0.15s' }}>
+              <Send size={14} />
+            </button>
+          )}
+        </div>
         {newComment.trim() && (
-          <button type="submit" className="p-1.5 rounded-md" style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}>
-            <Send size={14} />
+          <button
+            type="button"
+            onClick={() => setForClaude(!forClaude)}
+            className="flex items-center gap-1.5 self-start px-2 py-0.5 rounded-full transition-colors"
+            style={{
+              fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 600,
+              background: forClaude ? 'rgba(201,168,76,0.15)' : 'rgba(100,116,139,0.06)',
+              color: forClaude ? 'var(--gold)' : 'var(--slate)',
+              border: `1px solid ${forClaude ? 'rgba(201,168,76,0.3)' : 'rgba(100,116,139,0.1)'}`,
+              cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.3px',
+            }}
+          >
+            <div style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: forClaude ? 'var(--gold)' : 'var(--slate)',
+              opacity: forClaude ? 1 : 0.3,
+            }} />
+            {forClaude ? 'For Claude' : '@ Claude'}
           </button>
         )}
       </form>

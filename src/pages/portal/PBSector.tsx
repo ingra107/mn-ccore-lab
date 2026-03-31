@@ -101,6 +101,23 @@ export default function PBSector() {
     return map
   }, [data])
 
+  // Smart suggestions (from API)
+  const suggestions = data?.suggestions
+  const starSuggestion = useMemo(() => {
+    if (starTask || !suggestions?.starCandidates?.length) return null
+    // Don't suggest tasks already in the plan
+    return suggestions.starCandidates.find((t: any) => !plannedIds.has(t.id)) || null
+  }, [starTask, suggestions, plannedIds])
+
+  const focusSuggestions = useMemo(() => {
+    if (!suggestions?.focusCandidates?.length) return []
+    const slotsNeeded = 3 - focusTasks.length
+    if (slotsNeeded <= 0) return []
+    return suggestions.focusCandidates
+      .filter((t: any) => !plannedIds.has(t.id) && t.id !== starSuggestion?.id)
+      .slice(0, slotsNeeded)
+  }, [suggestions, focusTasks.length, plannedIds, starSuggestion])
+
   // Calendar events for today
   const todayEvents = useMemo(() => {
     if (!data?.meetings) return []
@@ -301,6 +318,8 @@ export default function PBSector() {
               onStartPomo={handleStartPomo}
               onClickTitle={handleClickTitle}
               onAddClick={() => openSearch('star')}
+              suggestion={starSuggestion}
+              onAcceptSuggestion={(task) => handleSavePlan({ star_task_id: task.id })}
             />
 
             <FocusTaskSlot
@@ -310,6 +329,11 @@ export default function PBSector() {
               onStartPomo={handleStartPomo}
               onClickTitle={handleClickTitle}
               onAddClick={() => openSearch('focus')}
+              suggestions={focusSuggestions}
+              onAcceptSuggestion={(task) => {
+                const newFocus = [...focusTaskIds, task.id].slice(0, 3)
+                handleSavePlan({ focus_task_ids: newFocus })
+              }}
             />
 
             <QuickWinsList

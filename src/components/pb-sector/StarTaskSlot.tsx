@@ -11,9 +11,11 @@ interface StarTaskSlotProps {
   onStartPomo: (taskId: string) => void
   onClickTitle: (task: any) => void
   onAddClick: () => void
+  suggestion?: any | null
+  onAcceptSuggestion?: (task: any) => void
 }
 
-export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive, onComplete, onStartPomo, onClickTitle, onAddClick }: StarTaskSlotProps) {
+export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive, onComplete, onStartPomo, onClickTitle, onAddClick, suggestion, onAcceptSuggestion }: StarTaskSlotProps) {
   const { isOver, setNodeRef } = useDroppable({ id: 'star-slot', data: { type: 'slot', slotType: 'star' } })
 
   return (
@@ -92,20 +94,42 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
               />
             </motion.div>
           ) : (
-            <motion.button
+            <motion.div
               key="empty"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={onAddClick}
-              className="w-full flex items-center justify-center gap-2 py-4"
-              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+              className="w-full"
             >
-              <Plus size={16} style={{ color: 'var(--gold)', opacity: 0.4 }} />
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--gold)', opacity: 0.5, fontStyle: 'italic' }}>
-                What is the ONE thing you must do today?
-              </span>
-            </motion.button>
+              {suggestion ? (
+                <button
+                  onClick={() => onAcceptSuggestion?.(suggestion)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201,168,76,0.04)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--gold)', opacity: 0.5, textTransform: 'uppercase', flexShrink: 0 }}>
+                    Suggested
+                  </span>
+                  <span className="truncate" style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink)', opacity: 0.4 }}>
+                    {suggestion.title || suggestion.description}
+                  </span>
+                  <Plus size={14} style={{ color: 'var(--gold)', opacity: 0.4, flexShrink: 0 }} />
+                </button>
+              ) : (
+                <button
+                  onClick={onAddClick}
+                  className="w-full flex items-center justify-center gap-2 py-4"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  <Plus size={16} style={{ color: 'var(--gold)', opacity: 0.4 }} />
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--gold)', opacity: 0.5, fontStyle: 'italic' }}>
+                    What is the ONE thing you must do today?
+                  </span>
+                </button>
+              )}
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
