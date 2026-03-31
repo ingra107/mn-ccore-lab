@@ -537,26 +537,73 @@ function ProjectSelect({ value, onChange }: { value: string; onChange: (v: strin
 // ── Blocked By Select ────────────────────────────────────────
 
 function BlockedBySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
   const { data: team = [] } = useTeam()
   const members = team.filter((m) => m.slug).sort((a, b) => a.name.localeCompare(b.name))
+  const person = value ? getPersonInfo(value) : null
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
 
   return (
-    <div className="flex items-center gap-2">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex-1 rounded-md border px-3 py-2 text-sm cursor-pointer"
-        style={{ fontFamily: 'var(--font-sans)', color: value ? 'var(--maroon)' : 'var(--slate)', borderColor: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.03)' }}
-      >
-        <option value="">Select who is blocking...</option>
-        {members.map((m) => (
-          <option key={m.slug} value={m.slug}>{m.name}</option>
-        ))}
-      </select>
-      {value && (
-        <button onClick={() => onChange('')} className="text-xs px-2 py-1 rounded" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.5 }}>
-          Clear
+    <div className="relative" ref={ref}>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+          style={{
+            fontFamily: 'var(--font-body)',
+            color: value ? 'var(--maroon)' : 'var(--slate)',
+            cursor: 'pointer',
+            background: value ? 'rgba(122,0,25,0.04)' : 'none',
+            border: 'none',
+            opacity: value ? 1 : 0.6,
+          }}
+        >
+          {person ? (
+            <>
+              <div style={{ width: 20, height: 20 }}>
+                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+              </div>
+              {person.name}
+            </>
+          ) : 'Select who is blocking...'}
+          <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 0.4 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
+        {value && (
+          <button onClick={() => onChange('')} className="text-xs px-1.5 py-0.5 rounded" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.4 }}>
+            &times;
+          </button>
+        )}
+      </div>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[240px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
+          {members.map((m) => {
+            const slug = m.slug!
+            const mp = getPersonInfo(slug)
+            return (
+              <button
+                key={slug}
+                onClick={() => { onChange(slug); setOpen(false) }}
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+              >
+                <div style={{ width: 20, height: 20 }}>
+                  <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+                </div>
+                <span className="flex-1">{m.name}</span>
+                {slug === value && <Check size={14} style={{ color: 'var(--maroon)' }} />}
+              </button>
+            )
+          })}
+        </div>
       )}
     </div>
   )
@@ -710,10 +757,9 @@ function HandoffSection({ taskId, currentAssignee }: { taskId: string; currentAs
   }
 
   const labelStyle = {
-    fontFamily: 'var(--font-mono)',
-    fontSize: '10px' as const,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.06em',
+    fontFamily: 'var(--font-body)',
+    fontSize: '11px' as const,
+    fontWeight: 500,
     color: 'var(--slate)',
     opacity: 0.6,
     marginBottom: '4px',
@@ -727,7 +773,7 @@ function HandoffSection({ taskId, currentAssignee }: { taskId: string; currentAs
           <div className="p-4 rounded-xl" style={{ background: 'rgba(45,138,138,0.04)', border: '1px solid rgba(45,138,138,0.15)' }}>
             <div className="flex items-center gap-2 mb-3">
               <ArrowRightLeft size={14} style={{ color: 'var(--teal)' }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--teal)' }}>
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--teal)' }}>
                 Handoff to...
               </span>
             </div>

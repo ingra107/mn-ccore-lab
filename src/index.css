@@ -206,6 +206,12 @@ a:hover {
   background: #1e3048;
 }
 
+/* ── Project card hover reveal ── */
+.project-card:hover .project-card-details {
+  max-height: 80px !important;
+  opacity: 1 !important;
+}
+
 /* ── Status Badges ── */
 .badge {
   display: inline-flex;

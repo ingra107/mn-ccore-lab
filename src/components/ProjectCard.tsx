@@ -129,7 +129,10 @@ export default function ProjectCard({ project, onStageChange }: ProjectCardProps
       )}
 
       {/* Hover-reveal details: strategic context + team */}
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 max-h-0 group-hover:max-h-[80px] overflow-hidden" style={{ transition: 'opacity 0.2s ease, max-height 0.3s ease' }}>
+      <div
+        className="project-card-details"
+        style={{ maxHeight: 0, opacity: 0, overflow: 'hidden', transition: 'opacity 0.2s ease, max-height 0.3s ease' }}
+      >
         {/* Strategic context preview */}
         {project.strategic_context && (
           <p

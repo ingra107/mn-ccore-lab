@@ -183,14 +183,14 @@ export default function CollaborationNetwork() {
         ? '#c9a84c'
         : isHovered
           ? '#c9a84c'
-          : 'rgba(250, 248, 243, 0.6)'
+          : 'rgba(250, 248, 243, 0.7)'
       ctx.fill()
 
       // Label
       ctx.font = `${isCore || isHovered ? '600' : '400'} ${isCore ? '13' : '11'}px "DM Sans", sans-serif`
       ctx.fillStyle = isCore || isHovered
         ? '#faf8f3'
-        : 'rgba(250, 248, 243, 0.5)'
+        : 'rgba(250, 248, 243, 0.75)'
       ctx.textAlign = 'center'
       ctx.fillText(node.name, x, y + r + 14)
 
@@ -234,7 +234,7 @@ export default function CollaborationNetwork() {
       <div className="content-container">
         <div className="text-center mb-6">
           <h2
-            className="text-xl sm:text-2xl mb-2"
+            className="text-2xl sm:text-3xl mb-2"
             style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: '#faf8f3' }}
           >
             Collaboration Network
