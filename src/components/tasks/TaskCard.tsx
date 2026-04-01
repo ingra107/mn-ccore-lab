@@ -7,6 +7,10 @@ import { formatBrandName } from '../BrandName'
 import { updateTask } from '../../lib/api'
 import type { TaskRow } from '../../lib/api'
 
+function hasBlockers(task: TaskRow): boolean {
+  return !!task.blocked_by && task.blocked_by.split(',').filter(s => s.trim()).length > 0
+}
+
 interface TaskCardProps {
   task: TaskRow
   onStatusChange: (id: string, status: string) => void
@@ -58,14 +62,16 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
     }
   }
 
+  const isBlocked = hasBlockers(task)
   const statusColor = (statusOptions.find((s) => s.value === task.status) || statusOptions[0]).color
+  const effectiveBorderColor = isBlocked && !isDone ? 'var(--maroon)' : statusColor
 
   return (
     <div
       className="group relative rounded-lg border transition-all duration-200 hover:shadow-md"
       style={{
         borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-light)',
-        borderLeft: `3px solid ${statusColor}`,
+        borderLeft: `3px solid ${effectiveBorderColor}`,
         backgroundColor: isDone ? 'rgba(0,0,0,0.02)' : 'var(--cream)',
         opacity: isDone ? 0.7 : 1,
         cursor: onClick ? 'pointer' : 'default',
@@ -125,6 +131,21 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
 
           {/* Meta row */}
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            {/* Blocked badge */}
+            {isBlocked && !isDone && (
+              <span
+                className="flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded font-medium"
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  color: 'var(--maroon)',
+                  backgroundColor: 'rgba(122, 0, 25, 0.1)',
+                }}
+              >
+                <AlertTriangle size={9} />
+                Blocked
+              </span>
+            )}
+
             {/* Priority badge */}
             <span
               className="text-[11px] px-1.5 py-0.5 rounded font-medium status-transition"

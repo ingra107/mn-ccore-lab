@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Circle, CheckCircle2, Clock, AlertTriangle, ChevronDown, Pencil, Archive, CalendarPlus } from 'lucide-react'
+import { Circle, CheckCircle2, Clock, AlertTriangle, ChevronDown, Pencil, Archive, CalendarPlus, Link2 } from 'lucide-react'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
@@ -8,6 +8,7 @@ import type { TaskRow } from '../../lib/api'
 
 interface TaskGridViewProps {
   tasks: TaskRow[]
+  allTasks?: TaskRow[] // for resolving blocker names
   onStatusChange: (id: string, status: string) => void
   onFieldChange?: (id: string, field: string, value: unknown) => void
   onSelect?: (task: TaskRow) => void
@@ -16,6 +17,11 @@ interface TaskGridViewProps {
   onToggleSelect?: (id: string) => void
   focusedIndex?: number
   onFocusIndex?: (index: number) => void
+}
+
+function parseBlockedByIds(blockedBy: string | null): string[] {
+  if (!blockedBy) return []
+  return blockedBy.split(',').map(s => s.trim()).filter(Boolean)
 }
 
 type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title'
@@ -37,7 +43,7 @@ const PRIORITY_OPTIONS = [
   { value: 'urgent', label: 'Urgent', color: 'var(--maroon)' },
 ]
 
-export default function TaskGridView({ tasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, selectedIds, onToggleSelect, focusedIndex, onFocusIndex }: TaskGridViewProps) {
+export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, selectedIds, onToggleSelect, focusedIndex, onFocusIndex }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortAsc, setSortAsc] = useState(true)
@@ -96,6 +102,7 @@ export default function TaskGridView({ tasks, onStatusChange, onFieldChange, onS
         <TaskGridRow
           key={task.id}
           task={task}
+          allTasks={allTasks || tasks}
           index={index}
           colStyle={colStyle}
           onStatusChange={onStatusChange}
@@ -164,9 +171,10 @@ function SortPill({ label, field, active, onSort }: { label: string; field: Sort
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex,
+  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex,
 }: {
   task: TaskRow
+  allTasks: TaskRow[]
   index: number
   colStyle: React.CSSProperties
   onStatusChange: (id: string, status: string) => void
@@ -180,6 +188,16 @@ function TaskGridRow({
   onFocusIndex?: (index: number) => void
 }) {
   const isDone = task.status === 'done'
+  const blockerIds = useMemo(() => parseBlockedByIds(task.blocked_by), [task.blocked_by])
+  const hasBlockers = blockerIds.length > 0
+  const blockerNames = useMemo(() => {
+    if (!hasBlockers) return ''
+    return blockerIds
+      .map(id => allTasks.find(t => t.id === id))
+      .filter(Boolean)
+      .map(t => t!.title || t!.description)
+      .join(', ')
+  }, [hasBlockers, blockerIds, allTasks])
   // isOverdue computed by InlineDatePicker now
   const rowRef = useRef<HTMLDivElement>(null)
   const [completingAnim, setCompletingAnim] = useState(false)
@@ -239,16 +257,23 @@ function TaskGridRow({
 
       {/* Title */}
       <div style={{ minWidth: 0, paddingRight: '12px' }}>
-        <span style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: '13px',
-          fontWeight: 400,
-          color: 'var(--ink)',
-          textDecoration: isDone ? 'line-through' : 'none',
-          lineHeight: 1.4,
-        }}>
-          {formatBrandName(task.title || task.description)}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {hasBlockers && (
+            <span title={`Blocked by: ${blockerNames}`} style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
+              <Link2 size={12} style={{ color: 'var(--maroon)', opacity: 0.7 }} />
+            </span>
+          )}
+          <span style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '13px',
+            fontWeight: 400,
+            color: 'var(--ink)',
+            textDecoration: isDone ? 'line-through' : 'none',
+            lineHeight: 1.4,
+          }}>
+            {formatBrandName(task.title || task.description)}
+          </span>
+        </div>
       </div>
 
       {/* Assignee — inline picker */}
@@ -279,7 +304,7 @@ function TaskGridRow({
         />
       </div>
 
-      {/* Status — inline dropdown */}
+      {/* Status — inline dropdown (show Blocked label for tasks with blockers) */}
       <InlineCellSelect
         value={task.status}
         options={STATUS_OPTIONS}
@@ -289,12 +314,14 @@ function TaskGridRow({
           showUndo(`Status → ${STATUS_OPTIONS.find(o => o.value === val)?.label}`, () => onStatusChange(task.id, prev))
         }}
         renderValue={(opt) => {
-          const Icon = (STATUS_OPTIONS.find(o => o.value === opt) || STATUS_OPTIONS[0])
+          // If task has blockers and is in blocked status, emphasize it
+          const effectiveStatus = (hasBlockers && opt !== 'done') ? 'blocked' : opt
+          const Icon = (STATUS_OPTIONS.find(o => o.value === effectiveStatus) || STATUS_OPTIONS[0])
           const IconComp = Icon.icon
           return (
             <span className={`flex items-center gap-1.5 status-transition ${completingAnim && opt === 'done' ? 'task-complete-anim' : ''}`} style={{ color: Icon.color }}>
               <IconComp size={13} />
-              <span>{Icon.label}</span>
+              <span>{(hasBlockers && opt !== 'done' && opt !== 'blocked') ? 'Blocked' : Icon.label}</span>
             </span>
           )
         }}

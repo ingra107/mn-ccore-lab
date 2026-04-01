@@ -225,7 +225,7 @@ export default function AnalyticsPage() {
         <MetricCard icon={FolderKanban} label="Active Projects" value={projects.filter((p) => p.status === 'Active').length} color="var(--teal)" subtitle={`${projects.length} total`} />
         <MetricCard icon={Lightbulb} label="Research Ideas" value={activeIdeas} color="var(--gold)" subtitle={`${ideas.length} total`} />
         <MetricCard icon={FileText} label="Pending Tasks" value={pendingTasks} color="var(--ink)" subtitle={`${tasks.length} total`} />
-        <MetricCard icon={Users} label="Project Health" value={health?.green || 0} color="var(--green, #22c55e)" subtitle={`${health?.yellow || 0} attention · ${health?.red || 0} stale`} />
+        <MetricCard icon={Users} label="Project Health" value={health?.healthy || 0} color="var(--green, #22c55e)" subtitle={`${health?.needs_attention || 0} attention · ${(health?.at_risk || 0) + (health?.critical || 0)} at risk`} />
       </div>
 
       {/* Team Performance */}

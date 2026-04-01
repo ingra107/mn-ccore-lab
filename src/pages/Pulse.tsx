@@ -80,9 +80,10 @@ export default function Pulse() {
         title: 'Project Health',
         content: (
           <div className="flex items-center justify-center gap-16">
-            <PulseHealthDot color="var(--green-light)" label="Healthy" count={health.green} />
-            <PulseHealthDot color="var(--gold)" label="Needs Attention" count={health.yellow} />
-            <PulseHealthDot color="var(--maroon)" label="Stale" count={health.red} />
+            <PulseHealthDot color="#16a34a" label="Healthy" count={health.healthy} />
+            <PulseHealthDot color="#c9a84c" label="Attention" count={health.needs_attention} />
+            <PulseHealthDot color="#c2410c" label="At Risk" count={health.at_risk} />
+            <PulseHealthDot color="#7a0019" label="Critical" count={health.critical} />
           </div>
         ),
       })

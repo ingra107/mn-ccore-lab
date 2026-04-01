@@ -21,6 +21,8 @@ interface UseTaskKeyboardShortcutsOptions {
   isBlocked: boolean
   /** Close any open overlay */
   closeOverlay: () => void
+  /** Open add blocker search for focused task */
+  addBlocker?: () => void
 }
 
 /**
@@ -31,6 +33,7 @@ interface UseTaskKeyboardShortcutsOptions {
  * Enter = open detail panel
  * S = cycle status (todo -> in_progress -> done)
  * X = toggle selection
+ * B = add blocker (opens detail panel with blocker search)
  * Escape = close overlay/panel
  */
 export function useTaskKeyboardShortcuts({
@@ -44,6 +47,7 @@ export function useTaskKeyboardShortcuts({
   toggleSelect,
   isBlocked,
   closeOverlay,
+  addBlocker,
 }: UseTaskKeyboardShortcutsOptions) {
   // Use refs to avoid stale closures in the event handler
   const focusedIndexRef = useRef(focusedIndex)
@@ -142,8 +146,17 @@ export function useTaskKeyboardShortcuts({
         }
         break
       }
+
+      case 'b':
+      case 'B': {
+        if (idx >= 0 && addBlocker) {
+          e.preventDefault()
+          addBlocker()
+        }
+        break
+      }
     }
-  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect])
+  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker])
 
   useEffect(() => {
     document.addEventListener('keydown', handler)

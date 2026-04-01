@@ -1,22 +1,58 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { HeartPulse, AlertTriangle, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
+import { HeartPulse, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { useProjectHealth } from '../../hooks/useApiData'
+import type { ProjectHealth, HealthFactors } from '../../hooks/useApiData'
 
-const HEALTH_COLORS: Record<string, string> = {
-  green: 'var(--green-light)',
-  yellow: '#eab308',
-  red: '#ef4444',
+const STATUS_COLORS: Record<string, string> = {
+  'Healthy': '#16a34a',
+  'Needs Attention': '#c9a84c',
+  'At Risk': '#c2410c',
+  'Critical': '#7a0019',
 }
 
-const STAGE_BG: Record<string, { bg: string; text: string }> = {
-  Idea: { bg: 'rgba(100, 116, 139, 0.1)', text: 'var(--slate)' },
-  'Data Collection': { bg: 'rgba(45, 138, 138, 0.12)', text: 'var(--teal)' },
-  Analysis: { bg: 'rgba(201, 168, 76, 0.12)', text: 'var(--gold)' },
-  Writing: { bg: 'rgba(122, 0, 25, 0.1)', text: 'var(--maroon)' },
-  Review: { bg: 'rgba(201, 168, 76, 0.2)', text: 'var(--gold)' },
-  Published: { bg: 'rgba(100, 116, 139, 0.1)', text: 'var(--slate)' },
+const FACTOR_LABELS: Record<keyof HealthFactors, { label: string; max: number }> = {
+  activity: { label: 'Activity recency', max: 30 },
+  velocity: { label: 'Task velocity', max: 25 },
+  overdue: { label: 'Overdue tasks', max: 25 },
+  milestones: { label: 'Milestone progress', max: 20 },
+}
+
+function FactorTooltip({ factors, score }: { factors: HealthFactors; score: number }) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        bottom: 'calc(100% + 8px)',
+        right: 0,
+        background: 'var(--ink, #0f1923)',
+        color: '#e8e2d6',
+        borderRadius: '8px',
+        padding: '10px 14px',
+        fontSize: '11px',
+        fontFamily: 'var(--font-sans)',
+        fontWeight: 400,
+        lineHeight: 1.6,
+        whiteSpace: 'nowrap',
+        zIndex: 50,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        pointerEvents: 'none',
+      }}
+    >
+      <div style={{ fontWeight: 600, marginBottom: '4px', fontSize: '12px' }}>
+        Score: {score}/100
+      </div>
+      {(Object.keys(FACTOR_LABELS) as (keyof HealthFactors)[]).map((key) => (
+        <div key={key} className="flex items-center justify-between gap-4">
+          <span style={{ opacity: 0.7 }}>{FACTOR_LABELS[key].label}</span>
+          <span style={{ fontWeight: 500 }}>
+            {factors[key]}/{FACTOR_LABELS[key].max}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export default function ProjectHealthCard() {
@@ -24,11 +60,11 @@ export default function ProjectHealthCard() {
   const [showHealthy, setShowHealthy] = useState(false)
 
   const projects = data?.data ?? []
-  const summary = data?.summary ?? { total: 0, green: 0, yellow: 0, red: 0, avg_days_since_update: 0 }
+  const summary = data?.summary ?? { total: 0, healthy: 0, needs_attention: 0, at_risk: 0, critical: 0, avg_score: 0 }
 
-  const redProjects = projects.filter((p) => p.health === 'red')
-  const yellowProjects = projects.filter((p) => p.health === 'yellow')
-  const greenProjects = projects.filter((p) => p.health === 'green')
+  // Projects that need attention (score < 80)
+  const needsWork = projects.filter((p) => p.status !== 'Healthy')
+  const healthyProjects = projects.filter((p) => p.status === 'Healthy')
 
   return (
     <BentoCard
@@ -38,24 +74,25 @@ export default function ProjectHealthCard() {
       icon={HeartPulse}
     >
       <div className="flex flex-col h-full">
-        {/* Summary dots */}
+        {/* Summary counts */}
         <div
           className="flex items-center gap-4 mb-3 pb-3"
           style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.08)' }}
         >
           {[
-            { color: 'red', count: summary.red, label: 'Needs attention' },
-            { color: 'yellow', count: summary.yellow, label: 'Aging' },
-            { color: 'green', count: summary.green, label: 'Healthy' },
+            { status: 'Critical' as const, count: summary.critical, label: 'Critical' },
+            { status: 'At Risk' as const, count: summary.at_risk, label: 'At Risk' },
+            { status: 'Needs Attention' as const, count: summary.needs_attention, label: 'Attention' },
+            { status: 'Healthy' as const, count: summary.healthy, label: 'Healthy' },
           ].map((s) => (
-            <div key={s.color} className="flex items-center gap-1.5">
+            <div key={s.status} className="flex items-center gap-1.5">
               <div
                 style={{
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  background: HEALTH_COLORS[s.color],
-                  boxShadow: s.count > 0 ? `0 0 6px ${HEALTH_COLORS[s.color]}40` : 'none',
+                  background: STATUS_COLORS[s.status],
+                  boxShadow: s.count > 0 ? `0 0 6px ${STATUS_COLORS[s.status]}40` : 'none',
                 }}
               />
               <span
@@ -90,18 +127,13 @@ export default function ProjectHealthCard() {
           className="flex-1 overflow-y-auto -mx-1 px-1"
           style={{ maxHeight: '280px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}
         >
-          {/* Red projects */}
-          {redProjects.map((p) => (
+          {/* Projects needing attention (sorted worst first) */}
+          {needsWork.map((p) => (
             <ProjectHealthRow key={p.slug} project={p} />
           ))}
 
-          {/* Yellow projects */}
-          {yellowProjects.map((p) => (
-            <ProjectHealthRow key={p.slug} project={p} />
-          ))}
-
-          {/* Green projects (collapsible) */}
-          {greenProjects.length > 0 && (
+          {/* Healthy projects (collapsible) */}
+          {healthyProjects.length > 0 && (
             <>
               <button
                 type="button"
@@ -122,10 +154,10 @@ export default function ProjectHealthCard() {
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
               >
                 {showHealthy ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                {showHealthy ? 'Hide' : 'Show'} {greenProjects.length} healthy project{greenProjects.length !== 1 ? 's' : ''}
+                {showHealthy ? 'Hide' : 'Show'} {healthyProjects.length} healthy project{healthyProjects.length !== 1 ? 's' : ''}
               </button>
               {showHealthy &&
-                greenProjects.map((p) => (
+                healthyProjects.map((p) => (
                   <ProjectHealthRow key={p.slug} project={p} />
                 ))}
             </>
@@ -140,7 +172,7 @@ export default function ProjectHealthCard() {
               <HeartPulse size={24} style={{ color: 'var(--teal)', marginBottom: '8px' }} />
               <p
                 style={{
-                  fontFamily: 'var(--font-body)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '12px',
                   color: 'var(--slate)',
                   margin: 0,
@@ -171,9 +203,10 @@ export default function ProjectHealthCard() {
   )
 }
 
-function ProjectHealthRow({ project }: { project: { slug: string; title: string; stage: string; health: string; days_since_update: number | null; pending_actions: number } }) {
-  const isRed = project.health === 'red'
-  const stageBg = STAGE_BG[project.stage] ?? { bg: 'rgba(100, 116, 139, 0.08)', text: 'var(--slate)' }
+function ProjectHealthRow({ project }: { project: ProjectHealth }) {
+  const [showTooltip, setShowTooltip] = useState(false)
+  const color = STATUS_COLORS[project.status]
+  const isBad = project.status === 'Critical' || project.status === 'At Risk'
 
   return (
     <Link
@@ -197,27 +230,19 @@ function ProjectHealthRow({ project }: { project: { slug: string; title: string;
           width: 8,
           height: 8,
           borderRadius: '50%',
-          background: HEALTH_COLORS[project.health],
+          background: color,
           flexShrink: 0,
-          boxShadow: isRed ? `0 0 6px ${HEALTH_COLORS.red}50` : 'none',
+          boxShadow: isBad ? `0 0 6px ${color}50` : 'none',
         }}
       />
-
-      {/* Warning icon for red */}
-      {isRed && (
-        <AlertTriangle
-          size={12}
-          style={{ color: HEALTH_COLORS.red, flexShrink: 0 }}
-        />
-      )}
 
       {/* Project title */}
       <span
         style={{
-          fontFamily: 'var(--font-body)',
+          fontFamily: 'var(--font-sans)',
           fontSize: '12px',
           color: 'var(--ink)',
-          fontWeight: isRed ? 600 : 400,
+          fontWeight: isBad ? 600 : 400,
           flex: 1,
           minWidth: 0,
           overflow: 'hidden',
@@ -229,37 +254,70 @@ function ProjectHealthRow({ project }: { project: { slug: string; title: string;
         {project.title}
       </span>
 
-      {/* Stage badge */}
-      <span
-        style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: '9px',
-          padding: '2px 6px',
-          borderRadius: '4px',
-          background: stageBg.bg,
-          color: stageBg.text,
-          flexShrink: 0,
-          letterSpacing: '0.02em',
-        }}
+      {/* Health bar + score */}
+      <div
+        className="flex items-center gap-2"
+        style={{ flexShrink: 0, position: 'relative' }}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
       >
-        {project.stage}
-      </span>
+        {/* Health bar */}
+        <div
+          style={{
+            width: '48px',
+            height: '4px',
+            borderRadius: '2px',
+            background: 'rgba(201, 168, 76, 0.08)',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              width: `${project.score}%`,
+              height: '100%',
+              borderRadius: '2px',
+              background: color,
+              transition: 'width 0.3s ease-out, background 0.15s',
+            }}
+          />
+        </div>
 
-      {/* Days since update */}
-      <span
-        style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: '10px',
-          color: isRed ? HEALTH_COLORS.red : 'var(--slate)',
-          opacity: isRed ? 1 : 0.5,
-          flexShrink: 0,
-          minWidth: '28px',
-          textAlign: 'right',
-          fontWeight: isRed ? 600 : 400,
-        }}
-      >
-        {project.days_since_update !== null ? `${project.days_since_update}d` : '--'}
-      </span>
+        {/* Score number */}
+        <span
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '10px',
+            fontWeight: 500,
+            color: isBad ? color : 'var(--slate)',
+            opacity: isBad ? 1 : 0.6,
+            minWidth: '20px',
+            textAlign: 'right',
+          }}
+        >
+          {project.score}
+        </span>
+
+        {/* Status label */}
+        <span
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '9px',
+            padding: '1px 5px',
+            borderRadius: '3px',
+            background: `${color}14`,
+            color,
+            flexShrink: 0,
+            letterSpacing: '0.02em',
+            minWidth: '44px',
+            textAlign: 'center',
+          }}
+        >
+          {project.status === 'Needs Attention' ? 'Attention' : project.status}
+        </span>
+
+        {/* Tooltip */}
+        {showTooltip && <FactorTooltip factors={project.factors} score={project.score} />}
+      </div>
     </Link>
   )
 }

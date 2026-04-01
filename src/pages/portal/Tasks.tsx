@@ -195,6 +195,14 @@ export default function Tasks() {
     }
   }, [peekTask, selectedTask])
 
+  // B shortcut: open detail panel for focused task (dependencies section)
+  const addBlockerForFocused = useCallback(() => {
+    if (focusedTask) {
+      setPeekTask(null)
+      setSelectedTask(focusedTask)
+    }
+  }, [focusedTask])
+
   // Only enable task shortcuts in list view
   const isListView = view === 'list'
   useTaskKeyboardShortcuts({
@@ -208,6 +216,7 @@ export default function Tasks() {
     toggleSelect: toggleSelectFocused,
     isBlocked: !!selectedTask || showCreate,
     closeOverlay,
+    addBlocker: addBlockerForFocused,
   })
 
   return (
@@ -332,6 +341,7 @@ export default function Tasks() {
             {view === 'list' && (
               <TaskGridView
                 tasks={displayTasks}
+                allTasks={tasks}
                 onStatusChange={handleStatusChange}
                 onFieldChange={handleFieldChange}
                 onSelect={(task) => {

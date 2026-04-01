@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
-import { useProjects, useDependencies } from '../hooks/useApiData'
+import { useProjects, useDependencies, useProjectHealth } from '../hooks/useApiData'
 import { useCreateProject } from '../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../lib/api'
@@ -41,6 +41,13 @@ const CATEGORY_LABEL: Record<string, string> = {
   mentee: 'Mentee',
 }
 
+const HEALTH_STATUS_COLOR: Record<string, string> = {
+  'Healthy': '#16a34a',
+  'Needs Attention': '#c9a84c',
+  'At Risk': '#c2410c',
+  'Critical': '#7a0019',
+}
+
 function getPiInfo(slug: string) {
   const director = directors.find((d) => d.slug === slug)
   if (director) return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
@@ -61,6 +68,16 @@ export default function Projects() {
 
   const { data: projects = [] } = useProjects()
   const { data: dependencies = [] } = useDependencies()
+  const { data: healthData } = useProjectHealth()
+
+  // Build a map of slug -> health data for quick lookup
+  const healthBySlug = useMemo(() => {
+    const map = new Map<string, { score: number; status: string }>()
+    for (const h of healthData?.data ?? []) {
+      map.set(h.slug, { score: h.score, status: h.status })
+    }
+    return map
+  }, [healthData])
   const createProject = useCreateProject()
   const queryClient = useQueryClient()
   const inlineUpdate = useMutation({
@@ -291,6 +308,7 @@ export default function Projects() {
                 return filtered.map((project) => {
                   const pi = getPiInfo(project.pi)
                   const catLabel = CATEGORY_LABEL[project.category] ?? project.category
+                  const projectHealth = healthBySlug.get(project.slug)
                   const showStageHeader = project.stage !== lastStage
                   lastStage = project.stage ?? ''
 
@@ -350,7 +368,7 @@ export default function Projects() {
                             transition: 'background 0.12s ease-out',
                           }}
                         >
-                          {/* Title with category dot */}
+                          {/* Title with category dot and health indicator */}
                           <div className="flex items-center gap-2.5" style={{ paddingRight: '16px' }}>
                             <span
                               style={{
@@ -374,6 +392,20 @@ export default function Projects() {
                             >
                               {project.title}
                             </span>
+                            {projectHealth && (
+                              <span
+                                title={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
+                                style={{
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: '50%',
+                                  background: HEALTH_STATUS_COLOR[projectHealth.status] ?? 'var(--slate)',
+                                  flexShrink: 0,
+                                  display: 'inline-block',
+                                  marginLeft: '-4px',
+                                }}
+                              />
+                            )}
                           </div>
 
                           {/* Status (inline editable) */}

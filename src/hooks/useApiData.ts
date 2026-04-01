@@ -550,24 +550,33 @@ export function useDigestDates() {
 
 // ── Project Health ───────────────────────────────────────────
 
+export interface HealthFactors {
+  activity: number
+  velocity: number
+  overdue: number
+  milestones: number
+}
+
 export interface ProjectHealth {
   slug: string
   title: string
   stage: string
-  status: string
+  score: number
+  status: 'Healthy' | 'Needs Attention' | 'At Risk' | 'Critical'
+  factors: HealthFactors
+  last_activity: string | null
+  overdue_count: number
   days_since_update: number | null
-  health: 'green' | 'yellow' | 'red'
   pending_actions: number
-  recent_updates: number
-  last_update_date: string | null
 }
 
 export interface HealthSummary {
   total: number
-  green: number
-  yellow: number
-  red: number
-  avg_days_since_update: number
+  healthy: number
+  needs_attention: number
+  at_risk: number
+  critical: number
+  avg_score: number
 }
 
 export function useProjectHealth() {
@@ -576,10 +585,10 @@ export function useProjectHealth() {
     queryFn: async () => {
       try {
         const res = await fetch('/api/projects/health')
-        if (!res.ok) return { data: [] as ProjectHealth[], summary: { total: 0, green: 0, yellow: 0, red: 0, avg_days_since_update: 0 } }
+        if (!res.ok) return { data: [] as ProjectHealth[], summary: { total: 0, healthy: 0, needs_attention: 0, at_risk: 0, critical: 0, avg_score: 0 } }
         return await res.json() as { data: ProjectHealth[], summary: HealthSummary }
       } catch {
-        return { data: [] as ProjectHealth[], summary: { total: 0, green: 0, yellow: 0, red: 0, avg_days_since_update: 0 } }
+        return { data: [] as ProjectHealth[], summary: { total: 0, healthy: 0, needs_attention: 0, at_risk: 0, critical: 0, avg_score: 0 } }
       }
     },
     staleTime: STALE_TIME,

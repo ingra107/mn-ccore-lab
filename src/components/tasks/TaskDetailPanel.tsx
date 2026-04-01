@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   X, Circle, Clock, CheckCircle2, AlertTriangle, Send,
   CalendarDays, FolderKanban, User, Flag, MessageSquare, Ban,
-  ListChecks, Plus, Trash2, ArrowRightLeft, Check,
+  ListChecks, Plus, Trash2, ArrowRightLeft, Check, Link2, Search,
 } from 'lucide-react'
 import Avatar from '../Avatar'
 import CollapsibleSection from '../CollapsibleSection'
 import ReactionBar from '../ReactionBar'
 import { getPersonInfo } from '../../data/team'
-import { useTeam, useSubtasks, useHandoffs } from '../../hooks/useApiData'
+import { useTeam, useSubtasks, useHandoffs, useTasks } from '../../hooks/useApiData'
 import { useUpdateTask, useUpdateTaskStatus, useCreateSubtask, useToggleSubtask, useDeleteSubtask, useCreateHandoff, useAcknowledgeHandoff } from '../../hooks/useMutations'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { TaskRow } from '../../lib/api'
@@ -151,13 +151,11 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
                 <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
               </FieldBlock>
 
-              {task.status === 'blocked' && (
-                <FieldBlock label="Blocked By" icon={Ban}>
-                  <BlockedBySelect value={task.blocked_by || ''} onChange={(v) => handleFieldUpdate('blocked_by', v || null)} />
-                </FieldBlock>
-              )}
             </div>
           </CollapsibleSection>
+
+          {/* Dependencies — blocker/blocking task links */}
+          <TaskDependenciesSection task={task} onFieldUpdate={handleFieldUpdate} onOpenTask={(t) => { /* re-open with new task handled by parent */ }} />
 
           {/* Subtasks — collapsible with count badge */}
           <SubtaskSection taskId={task.id} />
@@ -555,75 +553,261 @@ function ProjectSelect({ value, onChange }: { value: string; onChange: (v: strin
   )
 }
 
-// ── Blocked By Select ────────────────────────────────────────
+// ── Task Dependencies Section ────────────────────────────────
 
-function BlockedBySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [open, setOpen] = useState(false)
+function parseBlockedByIds(blockedBy: string | null): string[] {
+  if (!blockedBy) return []
+  return blockedBy.split(',').map(s => s.trim()).filter(Boolean)
+}
+
+function serializeBlockedByIds(ids: string[]): string | null {
+  if (ids.length === 0) return null
+  return ids.join(',')
+}
+
+function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { task: TaskRow; onFieldUpdate: (field: string, value: unknown) => void; onOpenTask: (task: TaskRow) => void }) {
+  const { data: allTasks = [] } = useTasks()
+  const [showSearch, setShowSearch] = useState(false)
+
+  const blockerIds = useMemo(() => parseBlockedByIds(task.blocked_by), [task.blocked_by])
+
+  // Tasks that THIS task blocks (reverse lookup)
+  const blockingTasks = useMemo(() => {
+    return allTasks.filter(t => {
+      if (t.id === task.id) return false
+      const ids = parseBlockedByIds(t.blocked_by)
+      return ids.includes(task.id)
+    })
+  }, [allTasks, task.id])
+
+  // Resolved blocker task objects
+  const blockerTasks = useMemo(() => {
+    return blockerIds.map(id => allTasks.find(t => t.id === id)).filter(Boolean) as TaskRow[]
+  }, [blockerIds, allTasks])
+
+  const hasBlockers = blockerTasks.length > 0
+  const hasBlocking = blockingTasks.length > 0
+
+  const addBlocker = (blockerId: string) => {
+    if (blockerIds.includes(blockerId)) return
+    const newIds = [...blockerIds, blockerId]
+    onFieldUpdate('blocked_by', serializeBlockedByIds(newIds))
+    // Auto-set status to blocked if not already
+    if (task.status !== 'blocked' && task.status !== 'done') {
+      onFieldUpdate('status', 'blocked')
+    }
+    setShowSearch(false)
+  }
+
+  const removeBlocker = (blockerId: string) => {
+    const newIds = blockerIds.filter(id => id !== blockerId)
+    onFieldUpdate('blocked_by', serializeBlockedByIds(newIds))
+    // If no more blockers, auto-clear blocked status
+    if (newIds.length === 0 && task.status === 'blocked') {
+      onFieldUpdate('status', 'todo')
+    }
+  }
+
+  return (
+    <CollapsibleSection
+      title="Dependencies"
+      icon={<Link2 size={11} style={{ color: hasBlockers ? 'var(--maroon)' : 'var(--slate)', opacity: hasBlockers ? 1 : 0.5 }} />}
+      badge={hasBlockers ? `${blockerTasks.length} blocker${blockerTasks.length > 1 ? 's' : ''}` : null}
+      defaultOpen={hasBlockers || hasBlocking}
+      storageKey={`task-deps-${task.id}`}
+    >
+      <div className="flex flex-col gap-3">
+        {/* Blocked by section */}
+        <div>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--maroon)', opacity: 0.7 }}>
+            <AlertTriangle size={10} />
+            Blocked by
+          </label>
+
+          {blockerTasks.length > 0 ? (
+            <div className="flex flex-col gap-1 mb-2">
+              {blockerTasks.map(bt => (
+                <div key={bt.id} className="flex items-center gap-2 py-1.5 px-2 -mx-1 rounded group hover:bg-black/[0.02] dark:hover:bg-white/[0.04] transition-colors">
+                  <Link2 size={12} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.7 }} />
+                  <button
+                    onClick={() => onOpenTask(bt)}
+                    className="flex-1 min-w-0 text-left truncate text-sm"
+                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 400 }}
+                  >
+                    {bt.title || bt.description}
+                  </button>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded" style={{
+                    fontFamily: 'var(--font-sans)',
+                    color: bt.status === 'done' ? 'var(--green)' : bt.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)',
+                    background: bt.status === 'done' ? 'rgba(34,197,94,0.1)' : bt.status === 'in_progress' ? 'rgba(45,138,138,0.1)' : 'rgba(100,116,139,0.1)',
+                  }}>
+                    {bt.status === 'done' ? 'Done' : bt.status === 'in_progress' ? 'In Progress' : bt.status === 'blocked' ? 'Blocked' : 'To Do'}
+                  </span>
+                  <button
+                    onClick={() => removeBlocker(bt.id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--slate)', flexShrink: 0 }}
+                    title="Remove blocker"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] mb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4, margin: '0 0 8px 0' }}>
+              No blockers
+            </p>
+          )}
+
+          {/* Add blocker button / search */}
+          {showSearch ? (
+            <BlockerSearchDropdown
+              currentTaskId={task.id}
+              excludeIds={blockerIds}
+              allTasks={allTasks}
+              onSelect={addBlocker}
+              onClose={() => setShowSearch(false)}
+            />
+          ) : (
+            <button
+              onClick={() => setShowSearch(true)}
+              className="flex items-center gap-1.5 text-xs transition-colors"
+              style={{
+                fontFamily: 'var(--font-sans)',
+                color: 'var(--teal)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '2px 0',
+                fontWeight: 500,
+                opacity: 0.8,
+              }}
+            >
+              <Plus size={12} />
+              Add blocker
+            </button>
+          )}
+        </div>
+
+        {/* Blocks section (reverse lookup) */}
+        {hasBlocking && (
+          <div>
+            <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', opacity: 0.7 }}>
+              <Ban size={10} />
+              Blocks
+            </label>
+            <div className="flex flex-col gap-1">
+              {blockingTasks.map(bt => (
+                <div key={bt.id} className="flex items-center gap-2 py-1.5 px-2 -mx-1 rounded hover:bg-black/[0.02] dark:hover:bg-white/[0.04] transition-colors">
+                  <Link2 size={12} style={{ color: 'var(--gold)', flexShrink: 0, opacity: 0.7 }} />
+                  <button
+                    onClick={() => onOpenTask(bt)}
+                    className="flex-1 min-w-0 text-left truncate text-sm"
+                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 400 }}
+                  >
+                    {bt.title || bt.description}
+                  </button>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded" style={{
+                    fontFamily: 'var(--font-sans)',
+                    color: 'var(--maroon)',
+                    background: 'rgba(122,0,25,0.06)',
+                  }}>
+                    Blocked
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </CollapsibleSection>
+  )
+}
+
+// ── Blocker Search Dropdown ──────────────────────────────────
+
+function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onSelect, onClose }: {
+  currentTaskId: string
+  excludeIds: string[]
+  allTasks: TaskRow[]
+  onSelect: (id: string) => void
+  onClose: () => void
+}) {
+  const [query, setQuery] = useState('')
   const ref = useRef<HTMLDivElement>(null)
-  const { data: team = [] } = useTeam()
-  const members = team.filter((m) => m.slug).sort((a, b) => a.name.localeCompare(b.name))
-  const person = value ? getPersonInfo(value) : null
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { inputRef.current?.focus() }, [])
 
   useEffect(() => {
-    if (!open) return
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [open])
+  }, [onClose])
+
+  const candidates = useMemo(() => {
+    return allTasks
+      .filter(t => t.id !== currentTaskId && !excludeIds.includes(t.id) && t.status !== 'done')
+      .filter(t => {
+        if (!query) return true
+        const text = (t.title || t.description || '').toLowerCase()
+        return text.includes(query.toLowerCase())
+      })
+      .slice(0, 10)
+  }, [allTasks, currentTaskId, excludeIds, query])
 
   return (
-    <div className="relative" ref={ref}>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setOpen(!open)}
-          className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
-          style={{
-            fontFamily: 'var(--font-body)',
-            color: value ? 'var(--maroon)' : 'var(--slate)',
-            cursor: 'pointer',
-            background: value ? 'rgba(122,0,25,0.04)' : 'none',
-            border: 'none',
-            opacity: value ? 1 : 0.6,
+    <div ref={ref} className="relative">
+      <div className="flex items-center gap-2 rounded-md border px-2.5 py-1.5" style={{ borderColor: 'var(--teal)', background: 'rgba(45,138,138,0.03)' }}>
+        <Search size={13} style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0 }} />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') onClose()
+            if (e.key === 'Enter' && candidates.length === 1) {
+              onSelect(candidates[0].id)
+            }
           }}
-        >
-          {person ? (
-            <>
-              <div style={{ width: 20, height: 20 }}>
-                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
-              </div>
-              {person.name}
-            </>
-          ) : 'Select who is blocking...'}
-          <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 0.4 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          placeholder="Search tasks to add as blocker..."
+          className="flex-1 text-sm outline-none bg-transparent"
+          style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', border: 'none' }}
+        />
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0 }}>
+          <X size={14} />
         </button>
-        {value && (
-          <button onClick={() => onChange('')} className="text-xs px-1.5 py-0.5 rounded" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.4 }}>
-            &times;
-          </button>
-        )}
       </div>
-      {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[240px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
-          {members.map((m) => {
-            const slug = m.slug!
-            const mp = getPersonInfo(slug)
-            return (
-              <button
-                key={slug}
-                onClick={() => { onChange(slug); setOpen(false) }}
-                className="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
-              >
-                <div style={{ width: 20, height: 20 }}>
-                  <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
-                </div>
-                <span className="flex-1">{m.name}</span>
-                {slug === value && <Check size={14} style={{ color: 'var(--maroon)' }} />}
-              </button>
-            )
-          })}
+
+      {candidates.length > 0 && (
+        <div
+          className="absolute left-0 right-0 mt-1 z-50 rounded-lg shadow-lg border py-1 max-h-[200px] overflow-y-auto"
+          style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
+        >
+          {candidates.map(t => (
+            <button
+              key={t.id}
+              onClick={() => onSelect(t.id)}
+              className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+            >
+              <Link2 size={12} style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0 }} />
+              <span className="flex-1 truncate">{t.title || t.description}</span>
+              <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                {t.assignee}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {query && candidates.length === 0 && (
+        <div className="mt-1 py-3 text-center text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+          No matching tasks
         </div>
       )}
     </div>

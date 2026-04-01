@@ -169,7 +169,7 @@ export async function handleGetProjectUpdates(slug: string, env: Env): Promise<R
   return json({ data: result.results, count: result.results.length });
 }
 
-// GET /api/projects/health — project health metrics
+// GET /api/projects/health — project health metrics (scored 0-100)
 export async function handleProjectHealth(env: Env): Promise<Response> {
   // Get all active projects
   const projects = await env.DB.prepare(
@@ -180,8 +180,8 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
   const healthData = [];
 
   for (const p of projects.results) {
-    // Find the most recent update timestamp across multiple tables
-    const [latestUpdate, latestAction, latestActivity] = await Promise.all([
+    // ── 1. Activity recency (30 pts max) ──────────────────────
+    const [latestUpdate, latestAction, latestActivity, latestComment] = await Promise.all([
       env.DB.prepare(
         'SELECT MAX(created_at) as latest FROM project_updates WHERE project_id = ?'
       ).bind(p.slug).first<{ latest: string | null }>(),
@@ -191,13 +191,16 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
       env.DB.prepare(
         "SELECT MAX(timestamp) as latest FROM activity_log WHERE related_id = ? AND related_type = 'project'"
       ).bind(p.slug).first<{ latest: string | null }>(),
+      env.DB.prepare(
+        'SELECT MAX(created_at) as latest FROM comments WHERE project_id = ?'
+      ).bind(p.id).first<{ latest: string | null }>(),
     ]);
 
-    // Also consider the project's own updated_at
     const dates = [
       latestUpdate?.latest,
       latestAction?.latest,
       latestActivity?.latest,
+      latestComment?.latest,
       p.updated_at,
     ].filter(Boolean) as string[];
 
@@ -209,56 +212,116 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
       ? Math.floor((now.getTime() - new Date(lastUpdateDate).getTime()) / (1000 * 60 * 60 * 24))
       : 999;
 
-    // Count pending action items for this project
+    let activityScore: number;
+    if (daysSinceUpdate <= 7) activityScore = 30;
+    else if (daysSinceUpdate <= 14) activityScore = 20;
+    else if (daysSinceUpdate <= 30) activityScore = 10;
+    else activityScore = 0;
+
+    // ── 2. Task completion velocity (25 pts max) ──────────────
+    // Count tasks completed on time vs overdue when completed
+    const completedTasks = await env.DB.prepare(
+      'SELECT due_date, completed_at FROM tasks WHERE project_id = ? AND completed = 1 AND completed_at IS NOT NULL'
+    ).bind(p.slug).all<{ due_date: string | null; completed_at: string }>();
+
+    let onTimeCount = 0;
+    let totalCompletedWithDue = 0;
+    for (const t of completedTasks.results) {
+      if (t.due_date) {
+        totalCompletedWithDue++;
+        // Task was on time if completed_at <= due_date end of day
+        if (t.completed_at <= t.due_date + 'T23:59:59') {
+          onTimeCount++;
+        }
+      }
+    }
+
+    let velocityScore: number;
+    if (totalCompletedWithDue === 0) {
+      // No tasks with due dates completed — neutral score
+      velocityScore = 15;
+    } else {
+      const onTimePct = onTimeCount / totalCompletedWithDue;
+      if (onTimePct >= 0.8) velocityScore = 25;
+      else if (onTimePct >= 0.6) velocityScore = 20;
+      else if (onTimePct >= 0.4) velocityScore = 15;
+      else velocityScore = 5;
+    }
+
+    // ── 3. Overdue tasks (25 pts max, penalty) ────────────────
+    const nowIso = now.toISOString().split('T')[0];
+    const overdueResult = await env.DB.prepare(
+      'SELECT COUNT(*) as c FROM tasks WHERE project_id = ? AND completed = 0 AND due_date IS NOT NULL AND due_date < ?'
+    ).bind(p.slug, nowIso).first<{ c: number }>();
+
+    const overdueCount = overdueResult?.c ?? 0;
+    let overdueScore: number;
+    if (overdueCount === 0) overdueScore = 25;
+    else if (overdueCount === 1) overdueScore = 15;
+    else if (overdueCount <= 3) overdueScore = 5;
+    else overdueScore = 0;
+
+    // ── 4. Milestone progress (20 pts max) ────────────────────
+    const nextMilestone = await env.DB.prepare(
+      "SELECT target_date, status FROM milestones WHERE (project_id = ? OR project_id = ?) AND status IN ('pending', 'in_progress') AND target_date IS NOT NULL ORDER BY target_date ASC LIMIT 1"
+    ).bind(p.slug, p.id).first<{ target_date: string; status: string }>();
+
+    let milestoneScore: number;
+    if (!nextMilestone) {
+      // No milestones — neutral
+      milestoneScore = 10;
+    } else {
+      const msDate = new Date(nextMilestone.target_date);
+      const daysUntil = Math.floor((msDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysUntil > 7) milestoneScore = 20;       // On track
+      else if (daysUntil >= 0) milestoneScore = 15;  // Approaching deadline
+      else milestoneScore = 5;                        // Overdue
+    }
+
+    // ── Total score and status ────────────────────────────────
+    const score = activityScore + velocityScore + overdueScore + milestoneScore;
+
+    let status: 'Healthy' | 'Needs Attention' | 'At Risk' | 'Critical';
+    if (score >= 80) status = 'Healthy';
+    else if (score >= 60) status = 'Needs Attention';
+    else if (score >= 40) status = 'At Risk';
+    else status = 'Critical';
+
+    // Pending tasks count for display
     const pendingCount = await env.DB.prepare(
       'SELECT COUNT(*) as c FROM tasks WHERE project_id = ? AND completed = 0'
     ).bind(p.slug).first<{ c: number }>();
-
-    // Count recent updates (last 30 days)
-    const recentCount = await env.DB.prepare(
-      "SELECT COUNT(*) as c FROM project_updates WHERE project_id = ? AND created_at > datetime('now', '-30 days')"
-    ).bind(p.slug).first<{ c: number }>();
-
-    // Determine health
-    const pending = pendingCount?.c ?? 0;
-    let health: 'green' | 'yellow' | 'red';
-    if (daysSinceUpdate <= 14 || (pending > 0 && daysSinceUpdate <= 30)) {
-      health = 'green';
-    } else if (daysSinceUpdate <= 30) {
-      health = 'yellow';
-    } else {
-      health = 'red';
-    }
 
     healthData.push({
       slug: p.slug,
       title: p.title,
       stage: p.stage,
-      status: p.status,
+      score,
+      status,
+      factors: {
+        activity: activityScore,
+        velocity: velocityScore,
+        overdue: overdueScore,
+        milestones: milestoneScore,
+      },
+      last_activity: lastUpdateDate ? lastUpdateDate.split('T')[0] : null,
+      overdue_count: overdueCount,
       days_since_update: daysSinceUpdate === 999 ? null : daysSinceUpdate,
-      health,
-      pending_actions: pending,
-      recent_updates: recentCount?.c ?? 0,
-      last_update_date: lastUpdateDate ? lastUpdateDate.split('T')[0] : null,
+      pending_actions: pendingCount?.c ?? 0,
     });
   }
 
-  // Sort by health (red first, then yellow, then green)
-  const healthOrder: Record<string, number> = { red: 0, yellow: 1, green: 2 };
-  healthData.sort((a, b) => healthOrder[a.health] - healthOrder[b.health]);
+  // Sort by score ascending (worst health first)
+  healthData.sort((a, b) => a.score - b.score);
 
   const summary = {
     total: healthData.length,
-    green: healthData.filter((h) => h.health === 'green').length,
-    yellow: healthData.filter((h) => h.health === 'yellow').length,
-    red: healthData.filter((h) => h.health === 'red').length,
-    avg_days_since_update: healthData.length > 0
-      ? Math.round(
-          healthData
-            .filter((h) => h.days_since_update !== null)
-            .reduce((sum, h) => sum + (h.days_since_update ?? 0), 0) /
-          Math.max(healthData.filter((h) => h.days_since_update !== null).length, 1)
-        )
+    healthy: healthData.filter((h) => h.status === 'Healthy').length,
+    needs_attention: healthData.filter((h) => h.status === 'Needs Attention').length,
+    at_risk: healthData.filter((h) => h.status === 'At Risk').length,
+    critical: healthData.filter((h) => h.status === 'Critical').length,
+    avg_score: healthData.length > 0
+      ? Math.round(healthData.reduce((sum, h) => sum + h.score, 0) / healthData.length)
       : 0,
   };
 
