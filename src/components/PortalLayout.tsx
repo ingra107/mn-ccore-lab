@@ -100,8 +100,8 @@ export default function PortalLayout() {
           {/* Search trigger */}
           <button
             onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-            className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full border text-sm transition-colors hover:bg-black/5"
-            style={{ borderColor: 'var(--border-light)', color: 'var(--slate)', fontFamily: 'var(--font-sans)', cursor: 'pointer', background: 'none', opacity: 0.7 }}
+            className="hidden sm:flex items-center gap-2 px-5 py-2 rounded-lg border text-sm transition-colors hover:bg-black/5"
+            style={{ borderColor: 'var(--border-light)', color: 'var(--slate)', fontFamily: 'var(--font-body)', cursor: 'pointer', background: 'none', opacity: 0.6, minWidth: '200px' }}
           >
             <Search size={14} />
             <span>Search...</span>
