@@ -9,7 +9,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (360+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (370+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Data | TanStack Query v5 + Cloudflare D1 (19 tables, 60+ endpoints) -- ALL LIVE |
@@ -42,8 +42,9 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 
 ### Palette (evolving -- cream is NOT sacred)
 - ink `#0f1923` / gold `#c9a84c` / teal `#2d8a8a` / maroon `#7a0019` / slate
-- Background: moving toward clean white (light) / ink (dark). Cream (#faf8f3) may be replaced.
-- Warm containers: `#f5f3ee` for pipeline columns (not cool `--ice`)
+- orange `#c2410c` (priority:high) / green `#16a34a` / green-light `#22c55e`
+- Background: white `#ffffff` (light) / ink `#0f1923` (dark). Cream replaced.
+- Containers: `#f5f5f5` for pipeline columns
 - Category encoding: small dots (6px, 0.7 opacity) -- maroon=CLIF, teal=Lab, gold=Mesfin
 
 ### Table Pattern (apply to ALL data pages)
@@ -99,18 +100,20 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 
 **Phases 1-13: COMPLETE** (360+ commits). Public website, D1 backend, team portal, sync, 28 portal features, task system, PB Sector v2, visual polish. See `REFERENCE.md` for details.
 
-**Phase 14 -- IN PROGRESS: Design Ethos Pivot**
+**Phase 14: COMPLETE** (7 commits). Design ethos pivot — palette to white, bordered table containers, inline editing, font split, monospace elimination, sidebar separation, color consolidation.
+
+**Phase 14 -- COMPLETE: Design Ethos Pivot**
 - [x] LabSync study (10 patterns), 3 design audit rounds
 - [x] Projects + Manuscripts pages redesigned (list-first, category dots, warm palette)
 - [x] `--font-sans` defined globally (was undefined -- 44 files in wrong font)
-- [ ] Palette shift: cream → white/neutral, dark-first optimization
-- [ ] Bordered table containers on all data pages
-- [ ] Inline status/stage editing in table rows
-- [ ] Sidebar section separation improvement
-- [ ] Font split: DM Sans for portal titles, Fraunces for public only
-- [ ] Project detail → operational workspace
-- [ ] Apply to all portal pages (Tasks, Ideas, Dashboard, etc.)
-- [ ] Kill remaining monospace in content (Tasks page)
+- [x] Palette shift: cream → white (#ffffff), paper grain removed, --gold-light/--ice neutralized
+- [x] Bordered .table-container on all data pages (Projects, Manuscripts, Tasks, Deadlines, Grants, Decisions, Narratives, Ideas)
+- [x] Inline status/stage editing in Projects + Manuscripts list rows (InlineSelect component)
+- [x] Sidebar section separation -- divider lines, breathing room, quieter labels
+- [x] Font split: DM Sans for portal (41 files), Fraunces for public pages only
+- [x] Kill monospace in content: 596 replacements across 105 files, font-mono now only on <kbd>
+- [x] Hardcoded colors → CSS variables (--orange, --green, --green-light)
+- [ ] Project detail → operational workspace (deferred to Phase 15)
 
 ## Meeting Cadence
 
