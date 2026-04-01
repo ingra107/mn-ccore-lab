@@ -156,35 +156,39 @@ export default function Deadlines() {
       {/* Content */}
       <div className="mt-5">
         {view === 'list' ? (
-          <div className="table-container flex flex-col gap-6" style={{ padding: '20px 24px' }}>
-            {overdue.length > 0 && (
-              <DeadlineSection title="Overdue" items={overdue} color="var(--maroon)" />
-            )}
-            {thisWeek.length > 0 && (
-              <DeadlineSection title="This Week" items={thisWeek} color="var(--teal)" />
-            )}
-            {nextWeek.length > 0 && (
-              <DeadlineSection title="Next Week" items={nextWeek} color="var(--gold)" />
-            )}
-            {later.length > 0 && (
-              <DeadlineSection title="Later" items={later} color="var(--slate)" />
-            )}
-            {completed.length > 0 && (
-              <DeadlineSection title={`Completed (${completed.length})`} items={completed.slice(0, 5)} color="var(--green, #22c55e)" collapsed />
-            )}
+          <div className="table-container">
+            {/* Column headers */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 120px 100px 80px',
+                padding: '8px 16px',
+                borderBottom: '1px solid var(--border-subtle)',
+              }}
+            >
+              {['TITLE', 'DUE DATE', 'ASSIGNEE', 'TYPE'].map((col) => (
+                <span key={col} style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+                  {col}
+                </span>
+              ))}
+            </div>
+
+            {/* Grouped rows */}
+            {[
+              { title: 'Overdue', items: overdue, color: 'var(--maroon)' },
+              { title: 'This Week', items: thisWeek, color: 'var(--teal)' },
+              { title: 'Next Week', items: nextWeek, color: 'var(--gold)' },
+              { title: 'Later', items: later, color: 'var(--slate)' },
+              { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
+            ].filter(g => g.items.length > 0).map((group) => (
+              <DeadlineTableSection key={group.title} title={group.title} items={group.items} color={group.color} />
+            ))}
+
             {deadlines.length === 0 && (
-              <div className="text-center py-20">
-                <div
-                  className="mx-auto mb-4"
-                  style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
-                >
-                  <Clock size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
-                </div>
-                <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+              <div className="text-center py-16">
+                <Clock size={24} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 8px' }} />
+                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
                   No deadlines found
-                </p>
-                <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
-                  Task due dates and grant milestones will appear here as they're created.
                 </p>
               </div>
             )}
@@ -197,37 +201,91 @@ export default function Deadlines() {
   )
 }
 
-// ── Deadline Section ─────────────────────────────────────────
+// ── Deadline Table Section (columnar) ────────────────────────
 
-function DeadlineSection({ title, items, color, collapsed = false }: { title: string; items: DeadlineItem[]; color: string; collapsed?: boolean }) {
-  const [expanded, setExpanded] = useState(!collapsed)
+function DeadlineTableSection({ title, items, color }: { title: string; items: DeadlineItem[]; color: string }) {
+  const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
 
   return (
     <div>
+      {/* Group header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 mb-2"
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        className="flex items-center gap-2 w-full"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '12px 16px 6px', textAlign: 'left' }}
       >
-        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-        <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+        <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.6, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
           {title}
         </span>
-        <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.35 }}>
           {items.length}
         </span>
+        <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
       </button>
 
-      {expanded && (
-        <div className="flex flex-col gap-1.5 pl-4 border-l-2" style={{ borderColor: color + '33' }}>
-          {items.map((item) => (
-            <DeadlineRow key={item.id} item={item} />
-          ))}
-        </div>
-      )}
+      {expanded && items.map((item) => {
+        const person = item.assignee ? getPersonInfo(item.assignee) : null
+        const isDone = item.status === 'done' || item.status === 'completed'
+        return (
+          <div
+            key={item.id}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 120px 100px 80px',
+              padding: '8px 16px',
+              borderBottom: '1px solid var(--border-subtle)',
+              alignItems: 'center',
+              opacity: isDone ? 0.45 : 1,
+            }}
+            className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+          >
+            {/* Title */}
+            <span style={{
+              fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 400,
+              color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
+              paddingRight: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+            }}>
+              {item.title}
+            </span>
+
+            {/* Due date */}
+            <span style={{
+              fontFamily: 'var(--font-sans)', fontSize: '12px',
+              color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
+              fontWeight: item.isOverdue ? 500 : 400,
+            }}>
+              {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
+            </span>
+
+            {/* Assignee */}
+            <div className="flex items-center gap-1.5">
+              {person ? (
+                <>
+                  <div style={{ width: 20, height: 20, flexShrink: 0 }}>
+                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+                  </div>
+                </>
+              ) : (
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
+              )}
+            </div>
+
+            {/* Type badge */}
+            <span style={{
+              fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500,
+              color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
+              opacity: 0.7,
+            }}>
+              {item.type === 'milestone' ? 'Milestone' : 'Task'}
+            </span>
+          </div>
+        )
+      })}
     </div>
   )
 }
+
 
 // ── Deadline Row ─────────────────────────────────────────────
 

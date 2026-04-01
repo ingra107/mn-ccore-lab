@@ -239,68 +239,78 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
 // ── Idea List View ───────────────────────────────────────────
 
 function IdeaListView({ ideas, onVote, onStatusChange }: { ideas: IdeaRow[]; onVote: (id: string) => void; onStatusChange: (id: string, status: string) => void }) {
+  const gridCols = '40px 1fr 100px 90px 80px'
   return (
-    <div className="table-container flex flex-col gap-2" style={{ padding: '12px 16px' }}>
+    <div className="table-container">
+      {/* Column headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: gridCols, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em', textAlign: 'center' as const }}>
+          VOTES
+        </span>
+        {['TITLE', 'AREA', 'STATUS', 'BY'].map((col) => (
+          <span key={col} style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+            {col}
+          </span>
+        ))}
+      </div>
+
+      {/* Rows */}
       {ideas.map((idea) => {
         const person = getPersonInfo(idea.submitted_by)
         const status = statusConfig[idea.status] || statusConfig.new
         return (
-          <div key={idea.id} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:bg-black/[0.01] dark:hover:bg-white/[0.01]" style={{ borderColor: 'var(--border-light)' }}>
+          <div
+            key={idea.id}
+            style={{ display: 'grid', gridTemplateColumns: gridCols, padding: '10px 16px', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center' }}
+            className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+          >
             {/* Votes */}
             <button
               onClick={() => onVote(idea.id)}
-              className="flex flex-col items-center gap-0.5 flex-shrink-0"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)', minWidth: 36 }}
+              className="flex flex-col items-center gap-0.5"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}
             >
-              <ThumbsUp size={14} />
-              <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-sans)' }}>{idea.votes}</span>
+              <ThumbsUp size={13} />
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600 }}>{idea.votes}</span>
             </button>
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{idea.title}</p>
+            {/* Title + description */}
+            <div style={{ minWidth: 0, paddingRight: '12px' }}>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 400, color: 'var(--ink)', display: 'block' }}>
+                {idea.title}
+              </span>
               {idea.description && (
-                <p className="text-xs mt-0.5 truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, display: 'block' }}>
                   {idea.description}
-                </p>
+                </span>
               )}
             </div>
 
-            {/* Meta */}
-            {idea.research_area && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full hidden sm:block" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}>
-                {idea.research_area}
-              </span>
-            )}
+            {/* Research area */}
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', opacity: idea.research_area ? 0.7 : 0.3 }}>
+              {idea.research_area || '—'}
+            </span>
 
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ fontFamily: 'var(--font-sans)', color: status.color, backgroundColor: status.bg }}>
+            {/* Status */}
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: status.color }}>
               {status.label}
             </span>
 
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <div style={{ width: 20, height: 20 }}>
+            {/* Submitted by */}
+            <div className="flex items-center gap-1.5">
+              <div style={{ width: 20, height: 20, flexShrink: 0 }}>
                 <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
               </div>
-              <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
-                {formatRelativeTime(idea.created_at)}
-              </span>
             </div>
           </div>
         )
       })}
+
       {ideas.length === 0 && (
-        <div className="text-center py-20">
-          <div
-            className="mx-auto mb-4"
-            style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
-          >
-            <Lightbulb size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
-          </div>
-          <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+        <div className="text-center py-16">
+          <Lightbulb size={24} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 8px' }} />
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
             No ideas yet
-          </p>
-          <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
-            Be the first to submit a research idea for the lab to explore.
           </p>
         </div>
       )}
