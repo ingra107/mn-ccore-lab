@@ -240,7 +240,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
 
 function IdeaListView({ ideas, onVote, onStatusChange }: { ideas: IdeaRow[]; onVote: (id: string) => void; onStatusChange: (id: string, status: string) => void }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="table-container flex flex-col gap-2" style={{ padding: '12px 16px' }}>
       {ideas.map((idea) => {
         const person = getPersonInfo(idea.submitted_by)
         const status = statusConfig[idea.status] || statusConfig.new

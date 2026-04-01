@@ -143,7 +143,7 @@ export default function Grants() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="table-container flex flex-col gap-3" style={{ padding: '16px 20px' }}>
             {/* Active grants first, then proposed */}
             {[...active, ...proposed].map((grant) => (
               <GrantCard key={grant.id} grant={grant} />

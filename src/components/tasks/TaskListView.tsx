@@ -97,7 +97,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
   )
 
   return (
-    <div>
+    <div className="table-container" style={{ padding: '16px 20px' }}>
       {/* Sort bar */}
       <div className="flex items-center gap-1 mb-3 pb-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
         <span className="text-[11px] uppercase tracking-wider mr-1" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>

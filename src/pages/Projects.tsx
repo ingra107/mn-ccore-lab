@@ -246,12 +246,8 @@ export default function Projects() {
 
         {/* ─── LIST VIEW ─── */}
         {viewMode === 'list' && (
-          <div
-            style={{
-              borderRadius: '4px',
-              overflow: 'hidden',
-            }}
-          >
+          <div className="table-container">
+
             {/* Table header */}
             <div
               className="hidden sm:grid"

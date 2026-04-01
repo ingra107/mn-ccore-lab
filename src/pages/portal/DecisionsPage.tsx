@@ -141,7 +141,7 @@ export default function DecisionsPage() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="table-container flex flex-col gap-3" style={{ padding: '16px 20px' }}>
             {recentDecisions.map((decision) => (
               <DecisionCard key={decision.id} decision={decision} projects={projects} />
             ))}

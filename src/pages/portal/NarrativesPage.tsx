@@ -38,9 +38,9 @@ export default function NarrativesPage() {
           <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.7, marginTop: 4 }}>Narratives emerge as projects and publications grow.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-5 mt-5">
+        <div className="table-container flex flex-col gap-5 mt-5" style={{ padding: '20px' }}>
           {narratives.map((arc) => (
-            <div key={arc.id} className="p-5 rounded-xl" style={{ background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.12)', boxShadow: 'var(--shadow-card)' }}>
+            <div key={arc.id} className="p-5 rounded-xl" style={{ background: 'var(--cream)', border: '1px solid var(--border-subtle)' }}>
               {/* Header */}
               <div className="flex items-center gap-2 mb-3">
                 <BookOpen size={16} style={{ color: 'var(--gold)' }} />

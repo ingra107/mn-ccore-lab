@@ -175,7 +175,7 @@ export default function Manuscripts() {
 
         {/* ─── LIST VIEW ─── */}
         {view === 'list' && (
-          <div style={{ borderRadius: '4px', overflow: 'hidden' }}>
+          <div className="table-container">
             {/* Table header */}
             <div
               className="hidden sm:grid"

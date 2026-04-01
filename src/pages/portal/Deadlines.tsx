@@ -156,7 +156,7 @@ export default function Deadlines() {
       {/* Content */}
       <div className="mt-5">
         {view === 'list' ? (
-          <div className="flex flex-col gap-6">
+          <div className="table-container flex flex-col gap-6" style={{ padding: '20px 24px' }}>
             {overdue.length > 0 && (
               <DeadlineSection title="Overdue" items={overdue} color="var(--maroon)" />
             )}
