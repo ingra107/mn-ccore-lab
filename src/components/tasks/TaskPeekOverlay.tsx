@@ -51,26 +51,23 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
   const previousFocus = useRef<HTMLElement | null>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
 
-  // Focus management + scroll lock
+  // Focus management (no scroll lock — list must remain scrollable behind peek)
   useEffect(() => {
     if (!task) return
 
     previousFocus.current = document.activeElement as HTMLElement
-    requestAnimationFrame(() => dialogRef.current?.focus())
-
-    document.body.style.overflow = 'hidden'
+    // Don't steal focus — let the task list retain focus for J/K navigation
     return () => {
-      document.body.style.overflow = ''
       previousFocus.current?.focus()
     }
   }, [task])
 
-  // Keyboard handler
+  // Keyboard handler — only Escape closes peek (Space is handled by parent hook)
   useEffect(() => {
     if (!task) return
 
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' || e.key === ' ') {
+      if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
         onClose()
@@ -101,12 +98,12 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
             style={{
               position: 'fixed',
               inset: 0,
-              zIndex: 9999,
+              zIndex: 9998,
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(15,25,35,0.45)',
-              backdropFilter: 'blur(4px)',
+              alignItems: 'flex-start',
+              justifyContent: 'flex-end',
+              background: 'rgba(15,25,35,0.2)',
+              pointerEvents: 'auto',
             }}
             onClick={(e) => {
               if (e.target === e.currentTarget) onClose()
@@ -115,24 +112,27 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
             <motion.div
               ref={dialogRef}
               role="dialog"
-              aria-modal="true"
+              aria-modal="false"
               aria-label={`Task preview: ${displayText}`}
               tabIndex={-1}
-              initial={{ opacity: 0, scale: 0.95, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 8 }}
-              transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
               className="peek-dialog"
               style={{
-                width: '100%',
-                maxWidth: 'min(540px, calc(100vw - 2rem))',
-                margin: '0 16px',
+                width: 400,
+                maxWidth: 'calc(100vw - 2rem)',
+                marginTop: '80px',
+                marginRight: '24px',
                 borderRadius: 12,
                 background: 'var(--cream)',
-                border: '1px solid var(--border)',
+                border: '1px solid var(--border-light)',
                 boxShadow: '0 20px 60px rgba(15,25,35,0.25), 0 0 0 1px rgba(15,25,35,0.05)',
                 outline: 'none',
                 overflow: 'hidden',
+                maxHeight: 'calc(100vh - 120px)',
+                overflowY: 'auto',
               }}
             >
               {/* Header */}
@@ -347,7 +347,11 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                   <kbd className="peek-kbd" style={kbdStyle}>Esc</kbd>
                   {' or '}
                   <kbd className="peek-kbd" style={kbdStyle}>Space</kbd>
-                  {' to close'}
+                  {' to close  '}
+                  <kbd className="peek-kbd" style={kbdStyle}>J</kbd>
+                  {'/'}
+                  <kbd className="peek-kbd" style={kbdStyle}>K</kbd>
+                  {' to navigate'}
                 </span>
               </div>
             </motion.div>

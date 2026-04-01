@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, ListTodo } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -12,12 +12,14 @@ import TaskBoardView from '../../components/tasks/TaskBoardView'
 import TaskStandUpView from '../../components/tasks/TaskStandUpView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
+import TaskPeekOverlay from '../../components/tasks/TaskPeekOverlay'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import ToggleButton from '../../components/ToggleButton'
 import { useTasks } from '../../hooks/useApiData'
 import { useCreateTask, useUpdateTaskStatus, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useSavedViews } from '../../hooks/useSavedViews'
+import { useTaskKeyboardShortcuts } from '../../hooks/useTaskKeyboardShortcuts'
 import type { ViewFilters } from '../../hooks/useSavedViews'
 import type { TaskRow } from '../../lib/api'
 
@@ -38,8 +40,10 @@ export default function Tasks() {
   const [view, setView] = useState<ViewMode>(defaultView)
   const [showCreate, setShowCreate] = useState(false)
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
+  const [peekTask, setPeekTask] = useState<TaskRow | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [focusedTaskIndex, setFocusedTaskIndex] = useState(-1)
   const bulkUpdate = useBulkUpdateTasks()
 
   // Auto-open create modal from URL params (keyboard shortcut C)
@@ -126,6 +130,79 @@ export default function Tasks() {
   const pendingCount = tasks.filter((t) => !t.completed).length
   const completedCount = tasks.filter((t) => t.completed).length
   const displayTasks = showCompleted ? tasks : tasks.filter((t) => !t.completed)
+
+  // Get the currently focused task for peek/actions
+  const focusedTask = focusedTaskIndex >= 0 && focusedTaskIndex < displayTasks.length
+    ? displayTasks[focusedTaskIndex]
+    : null
+
+  // Sync peek task when focused index changes while peek is open
+  useEffect(() => {
+    if (peekTask && focusedTask) {
+      setPeekTask(focusedTask)
+    }
+  }, [focusedTask]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset focused index when tasks change (filter, sort, etc.)
+  useEffect(() => {
+    setFocusedTaskIndex(-1)
+  }, [filters.assignee, filters.status, filters.priority, filters.project, showCompleted, view])
+
+  // Status cycle: todo -> in_progress -> done
+  const STATUS_CYCLE = ['todo', 'in_progress', 'done'] as const
+  const cycleStatus = useCallback(() => {
+    if (!focusedTask) return
+    const idx = STATUS_CYCLE.indexOf(focusedTask.status as typeof STATUS_CYCLE[number])
+    const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]
+    handleStatusChange(focusedTask.id, next)
+  }, [focusedTask]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const togglePeek = useCallback(() => {
+    if (peekTask) {
+      setPeekTask(null)
+    } else if (focusedTask) {
+      setPeekTask(focusedTask)
+    } else if (displayTasks.length > 0) {
+      setFocusedTaskIndex(0)
+      setPeekTask(displayTasks[0])
+    }
+  }, [peekTask, focusedTask, displayTasks])
+
+  const openDetailForFocused = useCallback(() => {
+    if (focusedTask) {
+      setPeekTask(null)
+      setSelectedTask(focusedTask)
+    }
+  }, [focusedTask])
+
+  const toggleSelectFocused = useCallback(() => {
+    if (focusedTask) {
+      toggleSelect(focusedTask.id)
+    }
+  }, [focusedTask]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const closeOverlay = useCallback(() => {
+    if (peekTask) {
+      setPeekTask(null)
+    } else if (selectedTask) {
+      setSelectedTask(null)
+    }
+  }, [peekTask, selectedTask])
+
+  // Only enable task shortcuts in list view
+  const isListView = view === 'list'
+  useTaskKeyboardShortcuts({
+    taskCount: isListView ? displayTasks.length : 0,
+    focusedIndex: focusedTaskIndex,
+    setFocusedIndex: setFocusedTaskIndex,
+    peekOpen: !!peekTask,
+    togglePeek,
+    openDetail: openDetailForFocused,
+    cycleStatus,
+    toggleSelect: toggleSelectFocused,
+    isBlocked: !!selectedTask || showCreate,
+    closeOverlay,
+  })
 
   return (
     <div>
@@ -269,7 +346,24 @@ export default function Tasks() {
           </div>
         ) : (
           <>
-            {view === 'list' && <TaskGridView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} selectedIds={selectedIds} onToggleSelect={toggleSelect} />}
+            {view === 'list' && (
+              <TaskGridView
+                tasks={displayTasks}
+                onStatusChange={handleStatusChange}
+                onSelect={(task) => {
+                  // Click on row = set as peek target if peek is open, otherwise just focus
+                  if (peekTask) setPeekTask(task)
+                }}
+                onOpenDetail={(task) => {
+                  setPeekTask(null)
+                  setSelectedTask(task)
+                }}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                focusedIndex={focusedTaskIndex}
+                onFocusIndex={setFocusedTaskIndex}
+              />
+            )}
             {view === 'board' && <TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
             {view === 'standup' && <TaskStandUpView tasks={displayTasks} onStatusChange={handleStatusChange} />}
             {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} />}
@@ -282,6 +376,12 @@ export default function Tasks() {
         open={showCreate}
         onClose={() => setShowCreate(false)}
         onCreate={handleCreate}
+      />
+
+      {/* Peek overlay (Space bar) */}
+      <TaskPeekOverlay
+        task={peekTask}
+        onClose={() => setPeekTask(null)}
       />
 
       {/* Detail panel */}

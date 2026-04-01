@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { Circle, CheckCircle2, Clock, AlertTriangle, ChevronDown, CalendarDays } from 'lucide-react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { Circle, CheckCircle2, Clock, AlertTriangle, ChevronDown, CalendarDays, Pencil, Archive, CalendarPlus } from 'lucide-react'
 import Avatar from '../Avatar'
 import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
@@ -11,8 +11,11 @@ interface TaskGridViewProps {
   tasks: TaskRow[]
   onStatusChange: (id: string, status: string) => void
   onSelect?: (task: TaskRow) => void
+  onOpenDetail?: (task: TaskRow) => void
   selectedIds?: Set<string>
   onToggleSelect?: (id: string) => void
+  focusedIndex?: number
+  onFocusIndex?: (index: number) => void
 }
 
 type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title'
@@ -34,7 +37,7 @@ const PRIORITY_OPTIONS = [
   { value: 'urgent', label: 'Urgent', color: 'var(--maroon)' },
 ]
 
-export default function TaskGridView({ tasks, onStatusChange, onSelect, selectedIds, onToggleSelect }: TaskGridViewProps) {
+export default function TaskGridView({ tasks, onStatusChange, onSelect, onOpenDetail, selectedIds, onToggleSelect, focusedIndex, onFocusIndex }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortAsc, setSortAsc] = useState(true)
@@ -89,16 +92,20 @@ export default function TaskGridView({ tasks, onStatusChange, onSelect, selected
       </div>
 
       {/* Rows */}
-      {sorted.map((task) => (
+      {sorted.map((task, index) => (
         <TaskGridRow
           key={task.id}
           task={task}
+          index={index}
           colStyle={colStyle}
           onStatusChange={onStatusChange}
           onSelect={onSelect}
+          onOpenDetail={onOpenDetail}
           showUndo={showUndo}
           selected={selectedIds?.has(task.id)}
           onToggleSelect={onToggleSelect}
+          isFocused={focusedIndex === index}
+          onFocusIndex={onFocusIndex}
         />
       ))}
 
@@ -156,32 +163,64 @@ function SortPill({ label, field, active, onSort }: { label: string; field: Sort
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, colStyle, onStatusChange, onSelect, showUndo, selected, onToggleSelect,
+  task, index, colStyle, onStatusChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex,
 }: {
   task: TaskRow
+  index: number
   colStyle: React.CSSProperties
   onStatusChange: (id: string, status: string) => void
   onSelect?: (task: TaskRow) => void
+  onOpenDetail?: (task: TaskRow) => void
   showUndo: (msg: string, onUndo: () => void) => void
   selected?: boolean
   onToggleSelect?: (id: string) => void
+  isFocused?: boolean
+  onFocusIndex?: (index: number) => void
 }) {
   const person = getPersonInfo(task.assignee)
   const isDone = task.status === 'done'
   const isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
+  const rowRef = useRef<HTMLDivElement>(null)
+  const [completingAnim, setCompletingAnim] = useState(false)
+  const [rowFadeAnim, setRowFadeAnim] = useState(false)
+  const prevStatusRef = useRef(task.status)
+
+  // Scroll focused row into view
+  useEffect(() => {
+    if (isFocused && rowRef.current) {
+      rowRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [isFocused])
+
+  // Detect status change to 'done' for completion animation
+  useEffect(() => {
+    if (task.status === 'done' && prevStatusRef.current !== 'done') {
+      setCompletingAnim(true)
+      setRowFadeAnim(true)
+      const timer = setTimeout(() => setCompletingAnim(false), 350)
+      const fadeTimer = setTimeout(() => setRowFadeAnim(false), 200)
+      return () => { clearTimeout(timer); clearTimeout(fadeTimer) }
+    }
+    prevStatusRef.current = task.status
+  }, [task.status])
 
   return (
     <div
+      ref={rowRef}
       style={{
         ...colStyle,
         padding: '10px 16px',
         borderBottom: '1px solid var(--border-subtle)',
         cursor: onSelect ? 'pointer' : 'default',
         opacity: isDone ? 0.5 : 1,
-        transition: 'background 0.1s',
+        transition: 'background 120ms ease, opacity 200ms ease',
+        position: 'relative',
       }}
-      className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
-      onClick={() => onSelect?.(task)}
+      className={`task-grid-row hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${isFocused ? 'task-row-focused' : ''} ${rowFadeAnim ? 'task-row-complete-fade' : ''}`}
+      onClick={() => {
+        onFocusIndex?.(index)
+        onSelect?.(task)
+      }}
     >
       {/* Checkbox */}
       <div onClick={(e) => { e.stopPropagation(); onToggleSelect?.(task.id) }} style={{ cursor: 'pointer' }}>
@@ -250,7 +289,7 @@ function TaskGridRow({
           const Icon = (STATUS_OPTIONS.find(o => o.value === opt) || STATUS_OPTIONS[0])
           const IconComp = Icon.icon
           return (
-            <span className="flex items-center gap-1.5" style={{ color: Icon.color }}>
+            <span className={`flex items-center gap-1.5 status-transition ${completingAnim && opt === 'done' ? 'task-complete-anim' : ''}`} style={{ color: Icon.color }}>
               <IconComp size={13} />
               <span>{Icon.label}</span>
             </span>
@@ -268,9 +307,39 @@ function TaskGridRow({
         }}
         renderValue={(val) => {
           const opt = PRIORITY_OPTIONS.find(o => o.value === val) || PRIORITY_OPTIONS[1]
-          return <span style={{ color: opt.color }}>{opt.label}</span>
+          return <span className="status-transition" style={{ color: opt.color }}>{opt.label}</span>
         }}
       />
+
+      {/* Hover row actions */}
+      <div className="task-grid-row-actions" onClick={(e) => e.stopPropagation()}>
+        <button
+          className="task-grid-row-action-btn"
+          onClick={() => onOpenDetail?.(task)}
+          title="Edit task"
+        >
+          <Pencil size={12} />
+          Edit
+        </button>
+        <button
+          className="task-grid-row-action-btn"
+          onClick={() => {
+            const prev = task.status
+            onStatusChange(task.id, 'done')
+            showUndo('Archived task', () => onStatusChange(task.id, prev))
+          }}
+          title="Archive task"
+        >
+          <Archive size={12} />
+        </button>
+        <button
+          className="task-grid-row-action-btn"
+          title="Add to Meeting (coming soon)"
+          style={{ opacity: 0.5 }}
+        >
+          <CalendarPlus size={12} />
+        </button>
+      </div>
     </div>
   )
 }
