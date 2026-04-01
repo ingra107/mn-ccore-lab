@@ -172,7 +172,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(15,25,35,0.5)' }} onClick={onClose}>
-      <div className="rounded-xl shadow-xl border w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto" style={{ backgroundColor: 'white', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
+      <div className="rounded-xl shadow-xl border w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
         <div className="px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
           <h3 className="text-lg flex items-center gap-2" style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, color: 'var(--ink)' }}>
             <Brain size={18} style={{ color: 'var(--teal)' }} />
@@ -249,7 +249,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
             </div>
           ) : (
             <div
-              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors hover:bg-black/[0.02]"
+              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
               style={{ borderColor: 'var(--border-light)' }}
             >
               <Upload size={32} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 8px' }} />

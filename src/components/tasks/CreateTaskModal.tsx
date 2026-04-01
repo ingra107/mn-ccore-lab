@@ -19,7 +19,7 @@ const selectStyle: React.CSSProperties = {
   fontFamily: 'var(--font-sans)',
   fontSize: '13px',
   color: 'var(--ink)',
-  backgroundColor: 'white',
+  backgroundColor: 'var(--cream)',
   borderColor: 'var(--border-light)',
 }
 
@@ -71,7 +71,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
     >
       <div
         className="rounded-xl shadow-xl border w-full max-w-lg mx-4"
-        style={{ backgroundColor: 'white', borderColor: 'var(--border-light)' }}
+        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

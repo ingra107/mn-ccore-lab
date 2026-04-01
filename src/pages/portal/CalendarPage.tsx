@@ -418,7 +418,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                 const AgendaWrapper = e.type === 'meeting' ? Link : 'div' as any
                 const agendaProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
                 return (
-                  <AgendaWrapper key={e.id} {...agendaProps} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] transition-colors" style={{ textDecoration: 'none' }}>
+                  <AgendaWrapper key={e.id} {...agendaProps} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors" style={{ textDecoration: 'none' }}>
                     <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
                       <Icon size={12} style={{ color: config.color }} />
                     </div>

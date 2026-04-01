@@ -281,7 +281,7 @@ function QuickCapture() {
           fontFamily: 'var(--font-sans)',
           borderColor: 'var(--border-light)',
           color: 'var(--ink)',
-          backgroundColor: 'white',
+          backgroundColor: 'var(--cream)',
         }}
       />
       {value.trim() && (
@@ -336,7 +336,7 @@ function MyTasksCard({ tasks, onStatusChange }: { tasks: TaskRow[]; onStatusChan
           return (
             <div
               key={task.id}
-              className="flex items-center gap-2 py-1.5 px-1 rounded-md transition-colors hover:bg-black/[0.02] cursor-pointer"
+              className="flex items-center gap-2 py-1.5 px-1 rounded-md transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02] cursor-pointer"
               onClick={() => onStatusChange(task.id, task.status === 'todo' ? 'in_progress' : 'done')}
             >
               <Circle size={14} style={{ color: task.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)', opacity: 0.5, flexShrink: 0 }} />

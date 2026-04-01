@@ -73,7 +73,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
             background: 'var(--cream)',
             border: '1px solid var(--border-subtle)',
             borderRadius: '8px',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+            boxShadow: 'var(--shadow-card-hover)',
             zIndex: 50,
             minWidth: '120px',
             overflow: 'hidden',

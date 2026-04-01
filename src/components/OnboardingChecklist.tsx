@@ -90,7 +90,7 @@ export default function OnboardingChecklist() {
           </div>
           <button
             onClick={dismiss}
-            className="p-1.5 rounded-lg transition-colors hover:bg-black/[0.04]"
+            className="p-1.5 rounded-lg transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
             style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.4 }}
             title="Dismiss"
           >
@@ -233,7 +233,7 @@ export default function OnboardingChecklist() {
               </span>
               <button
                 onClick={() => setExpanded(false)}
-                className="p-1 rounded transition-colors hover:bg-black/[0.04]"
+                className="p-1 rounded transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
                 style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.5 }}
                 title="Collapse"
               >
@@ -443,7 +443,7 @@ export default function OnboardingChecklist() {
         </span>
         <button
           onClick={dismiss}
-          className="text-xs px-2.5 py-1 rounded-md transition-colors hover:bg-black/[0.04]"
+          className="text-xs px-2.5 py-1 rounded-md transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
           style={{
             fontFamily: 'var(--font-sans)',
             fontSize: 10,

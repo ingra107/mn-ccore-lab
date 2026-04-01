@@ -154,7 +154,7 @@ function QuestionCard({
       {/* Clickable header */}
       <button
         onClick={onToggle}
-        className="w-full text-left px-5 py-4 flex items-start gap-3 transition-colors hover:bg-black/[0.01]"
+        className="w-full text-left px-5 py-4 flex items-start gap-3 transition-colors hover:bg-black/[0.01] dark:hover:bg-white/[0.01]"
         style={{ background: 'none', border: 'none', cursor: 'pointer' }}
       >
         <div className="flex-1 min-w-0">
@@ -384,7 +384,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
             placeholder="Write your answer..."
             rows={2}
             className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none resize-none"
-            style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)', backgroundColor: 'white' }}
+            style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
           />
           <button
             type="submit"

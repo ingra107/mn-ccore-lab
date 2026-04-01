@@ -207,7 +207,7 @@ export default function SettingsPage() {
 
         {/* Save indicator */}
         {saved && (
-          <div className="fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg border" style={{ backgroundColor: 'white', borderColor: 'var(--teal)' }}>
+          <div className="fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg border" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--teal)' }}>
             <Check size={14} style={{ color: 'var(--teal)' }} />
             <span className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}>Saved</span>
           </div>
@@ -271,7 +271,7 @@ function SettingsInput({ value, onSave, placeholder, multiline }: { value: strin
     fontSize: '14px',
     color: 'var(--ink)',
     borderColor: 'var(--border-light)',
-    backgroundColor: 'white',
+    backgroundColor: 'var(--cream)',
   }
 
   if (multiline) {

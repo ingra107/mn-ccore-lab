@@ -245,7 +245,7 @@ function IdeaListView({ ideas, onVote, onStatusChange }: { ideas: IdeaRow[]; onV
         const person = getPersonInfo(idea.submitted_by)
         const status = statusConfig[idea.status] || statusConfig.new
         return (
-          <div key={idea.id} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:bg-black/[0.01]" style={{ borderColor: 'var(--border-light)' }}>
+          <div key={idea.id} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:bg-black/[0.01] dark:hover:bg-white/[0.01]" style={{ borderColor: 'var(--border-light)' }}>
             {/* Votes */}
             <button
               onClick={() => onVote(idea.id)}

@@ -105,7 +105,7 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
   return (
     <div>
       {datedTasks.length > 0 && (
-        <div ref={containerRef} className="relative overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--border-light)', backgroundColor: 'white' }}>
+        <div ref={containerRef} className="relative overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}>
           <svg width={chartWidth} height={chartHeight} style={{ display: 'block', minWidth: chartWidth }}>
             {/* Week grid lines */}
             {weekMarkers.map((m, i) => (
@@ -203,7 +203,7 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
               style={{
                 left: tooltip.x + 12,
                 top: tooltip.y - 10,
-                backgroundColor: 'white',
+                backgroundColor: 'var(--cream)',
                 borderColor: 'var(--border-light)',
                 maxWidth: 260,
               }}

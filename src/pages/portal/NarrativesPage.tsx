@@ -89,7 +89,7 @@ export default function NarrativesPage() {
                   <Link
                     key={p.slug}
                     to={`/projects/${p.slug}`}
-                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-black/[0.02] transition-colors"
+                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                     style={{ textDecoration: 'none' }}
                   >
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: STAGE_COLORS[p.stage] || '#64748b', flexShrink: 0 }} />

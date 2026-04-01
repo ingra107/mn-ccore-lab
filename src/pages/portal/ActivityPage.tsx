@@ -81,7 +81,7 @@ export default function ActivityPage() {
                 {items.map((item) => {
                   const person = item.actor ? getPersonInfo(item.actor) : null
                   return (
-                    <div key={item.id} className="flex items-start gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] transition-colors">
+                    <div key={item.id} className="flex items-start gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
                       {person ? (
                         <div style={{ width: 28, height: 28, flexShrink: 0 }}>
                           <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />

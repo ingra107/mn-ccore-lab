@@ -262,7 +262,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
   return (
     <div>
       <div
-        className="flex items-center gap-3 py-2 px-3 rounded-lg transition-colors hover:bg-black/[0.02]"
+        className="flex items-center gap-3 py-2 px-3 rounded-lg transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
         style={{ opacity: isDone ? 0.5 : 1 }}
       >
         {/* Type icon */}
@@ -290,7 +290,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         {isMilestone && !item.future_note && !isDone && !editingNote && (
           <button
             onClick={() => setEditingNote(true)}
-            className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-colors hover:bg-black/[0.03]"
+            className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
             style={{
               fontFamily: 'var(--font-sans)',
               color: 'var(--gold)',
@@ -357,7 +357,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             </div>
             <button
               onClick={() => { setNoteText(item.future_note || ''); setEditingNote(true) }}
-              className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] rounded px-1"
+              className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded px-1"
               style={{ background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <Pencil size={9} style={{ color: 'var(--slate)', opacity: 0.4 }} />
@@ -378,7 +378,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
           </span>
           <button
             onClick={() => { setNoteText(item.future_note || ''); setEditingNote(true) }}
-            className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] rounded px-1"
+            className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded px-1"
             style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >
             <Pencil size={8} style={{ color: 'var(--slate)', opacity: 0.3 }} />
@@ -413,7 +413,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               border: '1px solid rgba(201,168,76,0.15)',
               borderRadius: '6px',
               padding: '8px 10px',
-              background: 'white',
+              background: 'var(--cream)',
               outline: 'none',
             }}
             autoFocus
@@ -421,7 +421,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
           <div className="flex items-center gap-2 mt-2 justify-end">
             <button
               onClick={() => { setEditingNote(false); setNoteText(item.future_note || '') }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] transition-colors hover:bg-black/[0.04]"
+              className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
               style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <X size={11} />
