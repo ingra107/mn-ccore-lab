@@ -25,6 +25,7 @@
   --shadow-card: 0 1px 4px rgba(15, 25, 35, 0.12);
   --shadow-card-hover: 0 6px 16px rgba(15, 25, 35, 0.18);
 
+  --bg-rgb: 255, 255, 255;
   color-scheme: light dark;
 }
 
@@ -47,6 +48,8 @@
 
   --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.4);
   --shadow-card-hover: 0 6px 16px rgba(0, 0, 0, 0.5);
+
+  --bg-rgb: 15, 25, 35;
 }
 
 /* ── Density modes ── */

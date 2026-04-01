@@ -243,7 +243,7 @@ export default function CLIFMap() {
               x={542}
               y={262}
               textAnchor="middle"
-              fill="rgba(250,248,243,0.7)"
+              fill="rgba(255,255,255,0.7)"
               style={{
                 fontFamily: 'var(--font-body)',
                 fontSize: '11px',
@@ -255,7 +255,7 @@ export default function CLIFMap() {
               x={740}
               y={288}
               textAnchor="middle"
-              fill="rgba(250,248,243,0.7)"
+              fill="rgba(255,255,255,0.7)"
               style={{
                 fontFamily: 'var(--font-body)',
                 fontSize: '11px',
@@ -267,7 +267,7 @@ export default function CLIFMap() {
               x={135}
               y={190}
               textAnchor="middle"
-              fill="rgba(250,248,243,0.7)"
+              fill="rgba(255,255,255,0.7)"
               style={{
                 fontFamily: 'var(--font-body)',
                 fontSize: '11px',

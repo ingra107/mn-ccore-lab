@@ -84,7 +84,7 @@ export default function PortalLayout() {
         <header
           className={`sticky top-0 z-20 flex items-center px-4 border-b backdrop-blur-sm transition-all duration-200 ${focusMode ? 'h-0 overflow-hidden opacity-0 border-none' : 'h-14'}`}
           style={{
-            backgroundColor: 'rgba(var(--bg-rgb, 250,248,243), 0.9)',
+            backgroundColor: 'rgba(var(--bg-rgb, 255,255,255), 0.9)',
             borderColor: 'var(--border-light)',
           }}
         >
