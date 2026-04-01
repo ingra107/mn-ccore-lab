@@ -25,13 +25,15 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 The Hub is a **research operations center**, not a magazine. Every design choice prioritizes usability and data clarity over decoration. Read `Context/Decisions/2026-04-01_hub-design-ethos-pivot.md` (PB repo) for full rationale.
 
 **Core principles (NEVER violate):**
-1. **Dark-first design.** Optimize for dark mode. Light must also be great, but dark is primary.
-2. **Data tables in bordered containers.** Every table sits inside a visible bordered rectangle. No floating rows.
-3. **Inline editability.** Status, stage, priority editable directly in table rows. Detail panel for deeper edits.
-4. **Zero monospace in content.** JetBrains Mono is for code displays ONLY. Project slugs, meeting names, metadata use DM Sans. NEVER render user-facing text in monospace.
-5. **One accent color per view.** Teal for interactive elements. Everything else neutral.
-6. **Restraint > decoration.** Fewer visual layers, more whitespace. The loudest thing on the page is the data.
-7. **List view as default** for data-heavy pages (>10 items). Kanban/pipeline as opt-in toggle.
+1. **Dark-first design.** Dark bg is deep neutral (#0b1017), NOT blue-tinted. Text is #e2e8f0 (not pure white — less glare). Light mode secondary.
+2. **Columnar tables, not card stacks.** Data pages use fixed-column tables with headers (Title|Assignee|Due|Status|Priority). Cards are for dashboards only. Fixed row height for vertical scanning.
+3. **Inline editability with visible affordance.** Every editable field shows "▾" dropdown indicator. Click cell → dropdown/picker by type. Auto-save on blur. No explicit save button. (Research: Pattern 4)
+4. **Typography: light weight, three opacity tiers.** Body font-weight: 400. Active text: 100% opacity. Normal: 70% (--ink = #e2e8f0). Muted: 40% (--slate = #94a3b8). NEVER 500+ weight for body text.
+5. **One accent color per view.** Teal for interactive. Everything else neutral. Max 2 non-neutral colors per view.
+6. **More info, more readable.** Density ≠ clutter. LabSync puts 20 sidebar items that are MORE readable than our 17. The secret: font-weight 400, grouped sections with rhythm, consistent icon opacity.
+7. **Zero monospace in content.** JetBrains Mono for `<kbd>` only. ALL other text is DM Sans.
+8. **Optimistic UI + undo.** State changes are instant. Undo toast for 5 seconds. Never show spinners for actions. (Research: Pattern 9)
+9. **Click targets must be precise.** Clicking a task row opens detail panel. ONLY clicking the status circle changes status. Hover actions hidden until hover (pointer-events:none at opacity:0).
 
 ### Fonts
 - **Portal titles:** DM Sans (clean, operational)
@@ -40,12 +42,12 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 - **Code only:** JetBrains Mono
 - **CSS:** `--font-sans` and `--font-body` both resolve to DM Sans. `--font-display` = Fraunces (public pages only).
 
-### Palette (evolving -- cream is NOT sacred)
-- ink `#0f1923` / gold `#c9a84c` / teal `#2d8a8a` / maroon `#7a0019` / slate
-- orange `#c2410c` (priority:high) / green `#16a34a` / green-light `#22c55e`
-- Background: white `#ffffff` (light) / ink `#0f1923` (dark). Cream replaced.
-- Containers: `#f5f5f5` for pipeline columns
-- Category encoding: small dots (6px, 0.7 opacity) -- maroon=CLIF, teal=Lab, gold=Mesfin
+### Palette
+- **Light:** bg white `#ffffff` / ink `#0f1923` / slate `#2c3e50`
+- **Dark:** bg `#0b1017` / ink `#e2e8f0` / slate `#94a3b8` (neutral, not blue-tinted)
+- **Accents:** gold `#c9a84c` / teal `#2d8a8a` / maroon `#7a0019` / orange `#c2410c` / green `#16a34a`
+- **Containers:** light `#f5f5f5` / dark `#111820`
+- Category dots: 6px, 0.7 opacity -- maroon=CLIF, teal=Lab, gold=Mesfin
 
 ### Table Pattern (apply to ALL data pages)
 - Bordered container with subtle border and small radius
@@ -58,13 +60,28 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 ### Micro-interactions
 - Background: 120ms ease-out. Shadows: 250ms ease. Card hover: -1px lift.
 
-### Sidebar (needs improvement)
-- Sections need clear whitespace separation (not just a heading)
-- Reference: LabSync sidebar for section separation quality
+### Sidebar
+- Font-weight 400 for nav items, 500 for active only
+- Active: teal bg fill, no left border. Inactive: --slate color, icon opacity 0.7.
+- Section labels: 10px uppercase, opacity 0.5. Divider lines between groups.
+- Row height: py-2.5 (generous). Gap: gap-3. Items within groups are tight; groups are separated.
+- Reference: LabSync sidebar — more items, more readable. The secret is lighter weight + grouped rhythm.
 
 ### Borders & Spacing
 - `--border-light` (gold tint) = semantic. `--border-subtle` (neutral) = structural. Don't mix.
 - Spacing: 4, 8, 12, 16, 20, 24, 32px grid. No off-grid values.
+
+### UX Research Patterns (from task-management-ux-patterns-research.md)
+
+Must-reference before building ANY new feature. Key implementable patterns:
+- **Pattern 4 (Inline Editing):** Click any field → edit mode by type (dropdown/picker/text). Auto-save on blur.
+- **Pattern 7 (List View):** Fixed row height. Column headers. Grouping with collapsible headers. Density toggle.
+- **Pattern 9 (Optimistic UI):** Instant state changes. Undo toast for 5 seconds. Never show spinners.
+- **Pattern 10 (Micro-interactions):** Completion animation. Status color transitions. Progressive disclosure.
+- **Pattern 3 (Three depth levels):** Peek (Space) → Side Panel (click) → Full Page (Enter). Decision tree in research doc.
+
+Reference: `Projects/mn-ccore-lab-hub/task-management-ux-patterns-research.md` (PB repo)
+Competitive reference: LabSync (JC Rojas) — friend, learn from, never compete.
 
 ### Shared Utilities
 - `src/lib/dateUtils.ts` (formatters), `src/data/team.ts:getPersonInfo()`, `formatBrandName()` from BrandName.tsx
