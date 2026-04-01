@@ -9,7 +9,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (390+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (400+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Data | TanStack Query v5 + Cloudflare D1 (19 tables, 60+ endpoints) -- ALL LIVE |
@@ -128,6 +128,17 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - SectionHeader, ToggleButton, MetricCard, BentoCard: lighter weights
 - Undo toast system, workload visibility, task click bug fix
 - CLAUDE.md: 9 design principles from LabSync + UX research
+
+**Phase 19: COMPLETE** (4 commits). Differentiation features:
+- Trainee Development Trajectories: per-member page with pub curve, project velocity, task metrics, activity heatmap
+- Decision Replay System: tags, similar decisions search, outcomes tracking, project linking, timeline view
+- Evidence-Based PI Dashboard: commitment scorecard, response time, team engagement, mentee pub velocity, grant pipeline
+- Expertise tags on team profiles (teal pills, clickable, filterable on Team page)
+
+**Phase 18: COMPLETE** (2 commits). Functional depth:
+- Blocker flagging: blocked_by field, Link2 chain icons, B keyboard shortcut, auto-status
+- Project Health: real algorithm (activity/velocity/overdue/milestones), colored bars, health dots
+- Dashboard card type badges, view toggle standardization
 
 **Phase 17: COMPLETE** (7 commits). UX interaction layer + visual consistency:
 - PageHeader: standardized across all 18 portal pages (LabSync Pattern 3)
