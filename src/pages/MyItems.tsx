@@ -75,7 +75,7 @@ function SignInPrompt() {
         </div>
         <h2
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 700,
             fontSize: '1.5rem',
             color: 'var(--ink)',
@@ -161,7 +161,7 @@ function StatCard({
       <div style={{ minWidth: 0 }}>
         <div
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 700,
             fontSize: '1.5rem',
             color: 'var(--ink)',
@@ -773,7 +773,7 @@ export default function MyItems() {
         <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1.5rem' }}>
           <h1
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 800,
               fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
               color: 'var(--ink)',

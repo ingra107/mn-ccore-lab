@@ -193,7 +193,7 @@ export default function AnalyticsPage() {
         <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'var(--maroon)', borderLeftWidth: 3 }}>
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={14} style={{ color: 'var(--maroon)' }} />
-            <h3 className="text-sm font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--maroon)' }}>
+            <h3 className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--maroon)' }}>
               Attention Required
             </h3>
             <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
@@ -232,7 +232,7 @@ export default function AnalyticsPage() {
         {isPi ? (
           <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
             <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-sm font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+              <h3 className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
                 Team Task Overview
               </h3>
               <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', backgroundColor: 'var(--border-light)' }}>
@@ -272,12 +272,12 @@ export default function AnalyticsPage() {
           </div>
         ) : (
           <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-            <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+            <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
               Lab Progress This Week
             </h3>
             <div className="text-center py-6">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <span className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--teal)' }}>
+                <span className="text-3xl font-bold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}>
                   {tasks.filter(t => t.completed_at && t.completed_at >= new Date(Date.now() - 7 * 86400000).toISOString()).length}
                 </span>
                 <span className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>tasks completed</span>
@@ -296,7 +296,7 @@ export default function AnalyticsPage() {
 
         {/* Projects by stage */}
         <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+          <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
             Project Pipeline Distribution
           </h3>
           <div className="flex flex-col gap-2">
@@ -325,7 +325,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Priority distribution */}
-          <h4 className="text-xs font-semibold mt-6 mb-3" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+          <h4 className="text-xs font-semibold mt-6 mb-3" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
             Active Task Priority
           </h4>
           <div className="flex items-center gap-3">
@@ -346,7 +346,7 @@ export default function AnalyticsPage() {
 
       {/* Lab-wide Activity Heatmap */}
       <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-        <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+        <h3 className="text-sm font-semibold mb-4" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
           Lab Activity
         </h3>
         <ActivityHeatmap days={90} />

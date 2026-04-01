@@ -210,7 +210,7 @@ function DeadlineSection({ title, items, color, collapsed = false }: { title: st
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
       >
         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-        <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+        <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
           {title}
         </span>
         <span className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
@@ -512,7 +512,7 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
 
             {/* Week label */}
             <div className="mb-2">
-              <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+              <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
                 {formatShortDate(weekStart)} — {formatShortDate(weekEnd.toISOString().split('T')[0])}
               </span>
             </div>

@@ -124,7 +124,7 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
           <img src={photoUrl} alt={name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <span style={{
-            fontFamily: 'var(--font-display)', fontSize: '10px', fontWeight: 700,
+            fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700,
             color: isActive ? '#22c55e' : 'var(--slate)', opacity: isActive ? 1 : 0.45,
           }}>
             {initials}

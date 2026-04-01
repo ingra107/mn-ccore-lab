@@ -69,7 +69,7 @@ export default function SearchPage() {
         <div className="flex flex-col items-center justify-center" style={{ minHeight: '50vh', paddingTop: '8vh' }}>
           <h1
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 800,
               fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
               color: 'var(--ink)',

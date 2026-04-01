@@ -507,7 +507,7 @@ function SectionHeader({
       <Icon size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
       <h2
         style={{
-          fontFamily: 'var(--font-display)',
+          fontFamily: 'var(--font-sans)',
           fontWeight: 600,
           fontSize: '1.25rem',
           color: 'var(--ink)',
@@ -616,7 +616,7 @@ function MetricCard({
       />
       <div
         style={{
-          fontFamily: 'var(--font-display)',
+          fontFamily: 'var(--font-sans)',
           fontSize: '2rem',
           fontWeight: 700,
           color: 'var(--ink)',
@@ -937,7 +937,7 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
       <div className="contributions-print-header" style={{ display: 'none' }}>
         <h2
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '16pt',
             fontWeight: 700,
             margin: '0 0 4pt',
@@ -1069,7 +1069,7 @@ export default function TrajectoryPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-sans)',
                 fontSize: '18px',
                 fontWeight: 700,
                 color: 'white',
@@ -1082,7 +1082,7 @@ export default function TrajectoryPage() {
           <div>
             <h1
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-sans)',
                 fontSize: '1.75rem',
                 fontWeight: 700,
                 color: 'var(--ink)',

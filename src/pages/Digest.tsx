@@ -142,7 +142,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
           <h3
             className="text-sm sm:text-base leading-snug mb-1"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 600,
               color: 'var(--ink)',
             }}
@@ -465,7 +465,7 @@ function EmptyState() {
       <h2
         className="text-xl sm:text-2xl mb-3"
         style={{
-          fontFamily: 'var(--font-display)',
+          fontFamily: 'var(--font-sans)',
           fontWeight: 600,
           color: 'var(--ink)',
         }}
@@ -491,7 +491,7 @@ function NoResults() {
     <div className="text-center py-12">
       <p
         className="text-lg mb-2"
-        style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}
+        style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
       >
         No papers match your filters.
       </p>
@@ -598,7 +598,7 @@ export default function Digest() {
           <h1
             className="text-3xl sm:text-4xl lg:text-5xl"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 800,
               color: 'var(--ink)',
             }}

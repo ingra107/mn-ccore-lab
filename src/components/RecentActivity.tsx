@@ -66,7 +66,7 @@ export default function RecentActivity() {
           <h2
             className="text-2xl sm:text-3xl"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 600,
               color: 'var(--ink)',
             }}

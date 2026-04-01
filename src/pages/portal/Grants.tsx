@@ -70,7 +70,7 @@ export default function Grants() {
       {/* Upcoming milestones */}
       {upcomingMilestones.length > 0 && (
         <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
-          <h3 className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+          <h3 className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
             Upcoming Milestones
           </h3>
           <div className="flex flex-col gap-1.5">
@@ -170,7 +170,7 @@ export default function Grants() {
       <div className="mt-6 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Telescope size={16} style={{ color: 'var(--gold)' }} />
-          <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+          <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
             Grant Landscape (NIH RePORTER)
           </h3>
         </div>

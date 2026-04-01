@@ -86,7 +86,7 @@ export default function DecisionsPage() {
             <AlertTriangle size={16} style={{ color: 'var(--gold)' }} />
             <h2
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-sans)',
                 fontWeight: 600,
                 fontSize: '16px',
                 color: 'var(--ink)',
@@ -114,7 +114,7 @@ export default function DecisionsPage() {
       <div className="mt-8">
         <h2
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 600,
             fontSize: '16px',
             color: 'var(--ink)',
@@ -181,7 +181,7 @@ function DecisionCard({ decision, projects }: { decision: DecisionRow; projects:
     >
       <div className="flex items-center gap-2 mb-2">
         <Scale size={14} style={{ color: 'var(--gold)' }} />
-        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '15px', color: 'var(--ink)' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '15px', color: 'var(--ink)' }}>
           {decision.title}
         </span>
         {decision.outcome_status !== 'pending' && (
@@ -290,7 +290,7 @@ function ReviewCard({
       <div className="p-4" style={{ background: 'var(--cream)' }}>
         <div className="flex items-center gap-2 mb-2">
           <Scale size={14} style={{ color: 'var(--gold)' }} />
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '15px', color: 'var(--ink)' }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '15px', color: 'var(--ink)' }}>
             {decision.title}
           </span>
         </div>
@@ -478,7 +478,7 @@ function CreateDecisionModal({
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
           <div className="flex items-center gap-2">
             <Scale size={18} style={{ color: 'var(--gold)' }} />
-            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '17px', color: 'var(--ink)', margin: 0 }}>
+            <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '17px', color: 'var(--ink)', margin: 0 }}>
               Log a Decision
             </h3>
           </div>

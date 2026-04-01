@@ -159,7 +159,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
               </button>
             </div>
           </div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.75rem', color: 'var(--ink)', margin: 0, lineHeight: 1.2 }}>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '1.75rem', color: 'var(--ink)', margin: 0, lineHeight: 1.2 }}>
             {greeting}, Nick
           </h1>
           {quote && (

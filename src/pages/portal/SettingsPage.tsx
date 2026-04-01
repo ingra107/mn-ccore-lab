@@ -124,7 +124,7 @@ export default function SettingsPage() {
               return (
                 <div key={template.id} className="rounded-lg border p-4" style={{ borderColor: 'var(--border-light)' }}>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+                    <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
                       {template.name}
                     </span>
                     {template.is_default === 1 && (
@@ -227,7 +227,7 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
           <Icon size={16} style={{ color: 'var(--teal)' }} />
         </div>
         <div>
-          <h3 className="text-sm font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{title}</h3>
+          <h3 className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{title}</h3>
           <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>{subtitle}</p>
         </div>
       </div>

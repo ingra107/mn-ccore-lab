@@ -83,7 +83,7 @@ export default function ProjectDetail() {
         </Link>
         <h1
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 800,
             fontSize: '1.75rem',
             color: 'var(--ink)',
@@ -369,7 +369,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             <div className="flex items-start gap-2">
               <h1
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-sans)',
                   fontWeight: 800,
                   fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)',
                   color: 'var(--ink)',
@@ -572,7 +572,7 @@ function ProjectDetailInner({ project }: InnerProps) {
       >
         <h2
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 600,
             fontSize: '16px',
             color: 'var(--ink)',
@@ -752,7 +752,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         >
           <h2
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 600,
               fontSize: '16px',
               color: 'var(--ink)',
@@ -958,7 +958,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         >
           <h2
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 600,
               fontSize: '16px',
               color: 'var(--ink)',
@@ -1115,7 +1115,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           <BookOpen size={16} style={{ color: 'var(--gold)' }} />
           <h2
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: 600,
               fontSize: '16px',
               color: 'var(--ink)',
@@ -1269,7 +1269,7 @@ function ProjectDetailInner({ project }: InnerProps) {
       >
         <h2
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 600,
             fontSize: '16px',
             color: 'var(--ink)',
@@ -1417,7 +1417,7 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
       <div className="flex items-center justify-between mb-3">
         <h2
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 600,
             fontSize: '16px',
             color: 'var(--ink)',
@@ -1618,7 +1618,7 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
       <div className="flex items-center justify-between mb-3">
         <h2
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 600,
             fontSize: '16px',
             color: 'var(--ink)',

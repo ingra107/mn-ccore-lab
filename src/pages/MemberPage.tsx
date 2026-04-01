@@ -332,7 +332,7 @@ export default function MemberPage() {
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-sans)',
                   fontWeight: 600,
                   color: 'var(--ink)',
                 }}
@@ -387,7 +387,7 @@ export default function MemberPage() {
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-sans)',
                   fontWeight: 600,
                   color: 'var(--ink)',
                 }}
@@ -453,7 +453,7 @@ export default function MemberPage() {
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-sans)',
                   fontWeight: 600,
                   color: 'var(--ink)',
                 }}
@@ -621,7 +621,7 @@ export default function MemberPage() {
             <h2
               className="text-xl sm:text-2xl mb-4"
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-sans)',
                 fontWeight: 600,
                 color: 'var(--ink)',
               }}
@@ -683,7 +683,7 @@ export default function MemberPage() {
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-sans)',
                   fontWeight: 600,
                   color: 'var(--ink)',
                 }}

@@ -95,7 +95,7 @@ export default function UpcomingMeetingBanner() {
                 <h3
                   className="text-base sm:text-lg mb-1"
                   style={{
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: 'var(--font-sans)',
                     fontWeight: 600,
                     color: 'var(--ink)',
                     lineHeight: 1.3,

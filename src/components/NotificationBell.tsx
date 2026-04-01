@@ -145,7 +145,7 @@ export default function NotificationBell() {
             >
               <span
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-sans)',
                   fontWeight: 600,
                   fontSize: '14px',
                   color: 'var(--ink)',

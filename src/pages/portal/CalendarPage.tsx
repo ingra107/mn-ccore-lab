@@ -120,7 +120,7 @@ export default function CalendarPage() {
           <button
             onClick={goToToday}
             className="px-3 py-1 rounded-md text-sm font-medium min-w-[180px] text-center"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
           >
             {headerLabel}
           </button>
@@ -285,7 +285,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
             {/* Day header */}
             <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-light)' }}>
               <div className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>{dayNames[i]}</div>
-              <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8' : ''}`} style={{ fontFamily: 'var(--font-display)', color: isToday ? 'white' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
+              <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8' : ''}`} style={{ fontFamily: 'var(--font-sans)', color: isToday ? 'white' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
                 {dayNum}
               </div>
             </div>
@@ -325,7 +325,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
   return (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-light)' }}>
       <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.04)' : 'var(--cream)' }}>
-        <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
+        <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-sans)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
           {isToday ? 'Today' : formatLongDate(dateStr)}
         </h3>
         <span className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
@@ -406,7 +406,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
           <div key={date}>
             <div className="flex items-center gap-2 mb-2">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: isToday ? 'var(--teal)' : 'var(--slate)', opacity: isToday ? 1 : 0.3 }} />
-              <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-display)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
+              <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
                 {isToday ? 'Today' : formatLongDate(date)}
               </span>
             </div>

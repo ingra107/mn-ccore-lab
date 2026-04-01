@@ -324,7 +324,7 @@ export default function Meetings() {
             </div>
             <h1
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-sans)',
                 fontWeight: 800,
                 fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
                 color: 'var(--ink)',
@@ -408,7 +408,7 @@ export default function Meetings() {
                 <Clock size={14} style={{ color: 'var(--gold)' }} />
                 <span
                   className="text-sm font-semibold"
-                  style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}
+                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
                 >
                   {daysUntil === 0
                     ? 'Today'
@@ -447,7 +447,7 @@ export default function Meetings() {
         <div className="mb-8">
           <h2
             className="text-lg font-semibold mb-3"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
           >
             Action Items
           </h2>
@@ -817,7 +817,7 @@ export default function Meetings() {
           <div className="flex items-center justify-between mb-3">
             <h2
               className="text-lg font-semibold"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
             >
               Meeting Archive
             </h2>

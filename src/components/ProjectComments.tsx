@@ -42,7 +42,7 @@ export default function ProjectComments({ projectSlug }: Props) {
         <MessageSquare size={16} style={{ color: 'var(--gold)' }} />
         <h2
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 600,
             fontSize: '16px',
             color: 'var(--ink)',

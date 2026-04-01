@@ -83,7 +83,7 @@ export default function MeetingDetail() {
           style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
           <ArrowLeft size={16} /> Back to Meetings
         </Link>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.75rem', color: 'var(--ink)' }}>
+        <h1 style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: '1.75rem', color: 'var(--ink)' }}>
           Meeting not found
         </h1>
       </div>
@@ -137,7 +137,7 @@ export default function MeetingDetail() {
             <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
           </div>
 
-          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
             {meeting.title}
           </h1>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--slate)', marginTop: '6px' }}>
@@ -193,7 +193,7 @@ export default function MeetingDetail() {
           <motion.div className="order-2 lg:order-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
             <div className="flex items-center gap-2 mb-3">
               <ListChecks size={16} style={{ color: 'var(--gold)' }} />
-              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+              <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
                 Agenda
               </h2>
             </div>
@@ -243,7 +243,7 @@ export default function MeetingDetail() {
           <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }}>
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
-              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+              <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
                 Action Items
               </h2>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
@@ -287,7 +287,7 @@ export default function MeetingDetail() {
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }} className="mt-8">
             <div className="flex items-center gap-2 mb-3">
               <Lightbulb size={16} style={{ color: 'var(--gold)' }} />
-              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+              <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
                 Decisions
               </h2>
             </div>
@@ -306,7 +306,7 @@ export default function MeetingDetail() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.25 }} className="mt-8">
           <div className="flex items-center gap-2 mb-3">
             <FileText size={16} style={{ color: 'var(--gold)' }} />
-            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+            <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
               Meeting Notes
             </h3>
           </div>

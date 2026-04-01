@@ -45,7 +45,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
     >
       <div className="flex items-center gap-2 mb-3">
         <MessageCircle size={16} style={{ color: 'var(--teal)' }} />
-        <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+        <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
           Project Updates
         </h2>
         {updates.length > 0 && (

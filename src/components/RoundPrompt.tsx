@@ -106,7 +106,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               if (e.key === 'Escape') cancelEdit()
             }}
             style={{
-              flex: 1, fontFamily: 'var(--font-display)', fontSize: '15px', color: 'var(--ink)',
+              flex: 1, fontFamily: 'var(--font-sans)', fontSize: '15px', color: 'var(--ink)',
               background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.25)',
               borderRadius: '8px', padding: '8px 12px', outline: 'none',
               resize: 'vertical', lineHeight: 1.5,
@@ -148,7 +148,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             exit={{ opacity: 0, y: -3 }}
             transition={{ duration: 0.18 }}
             style={{
-              fontFamily: 'var(--font-display)', fontWeight: 600,
+              fontFamily: 'var(--font-sans)', fontWeight: 600,
               fontSize: 'clamp(14px, 2.2vw, 16px)',
               color: 'var(--ink)', lineHeight: 1.45, margin: 0,
             }}

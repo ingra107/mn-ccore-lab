@@ -24,7 +24,7 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
           <Sparkles size={16} style={{ color: 'var(--gold)' }} />
           <h3
             className="text-sm font-semibold"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
           >
             Who can help?
           </h3>

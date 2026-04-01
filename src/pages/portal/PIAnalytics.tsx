@@ -176,7 +176,7 @@ export default function PIAnalytics() {
         </div>
         <h2
           className="text-xl font-semibold mb-2"
-          style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}
+          style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
         >
           PI Access Only
         </h2>
@@ -233,7 +233,7 @@ export default function PIAnalytics() {
               >
                 <span
                   className="text-2xl font-bold"
-                  style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}
+                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
                 >
                   {commitRate}%
                 </span>

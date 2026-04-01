@@ -150,7 +150,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
     <div className="cv-section-header mb-4 mt-10 pb-2" style={{ borderBottom: '2px solid var(--gold)' }}>
       <h2
         style={{
-          fontFamily: 'var(--font-display)',
+          fontFamily: 'var(--font-sans)',
           fontSize: '18px',
           fontWeight: 700,
           color: 'var(--ink)',
@@ -234,7 +234,7 @@ export default function CVPage() {
         </Link>
         <h1
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 800,
             fontSize: '1.75rem',
             color: 'var(--ink)',
@@ -279,7 +279,7 @@ export default function CVPage() {
           <h1
             className="cv-name"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)',
               fontSize: '28px',
               fontWeight: 800,
               color: 'var(--ink)',
@@ -368,7 +368,7 @@ export default function CVPage() {
                   <h3
                     className="mb-2"
                     style={{
-                      fontFamily: 'var(--font-display)',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: '15px',
                       fontWeight: 600,
                       color: 'var(--gold)',

@@ -62,7 +62,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
           </span>
           <span
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)',
               fontSize: '20px',
               fontWeight: 700,
               color: 'var(--ink)',

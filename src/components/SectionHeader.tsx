@@ -55,7 +55,7 @@ export default function SectionHeader({
       <Tag
         className={sizeClasses[size]}
         style={{
-          fontFamily: 'var(--font-display)',
+          fontFamily: 'var(--font-sans)',
           fontWeight: weight,
           color: 'var(--ink)',
           lineHeight: 1.2,

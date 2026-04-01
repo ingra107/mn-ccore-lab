@@ -74,7 +74,7 @@ export default function ActivityPage() {
           const label = isToday ? 'Today' : isYesterday ? 'Yesterday' : formatMediumDate(date)
           return (
             <div key={date}>
-              <h3 className="text-sm font-semibold mb-2" style={{ fontFamily: 'var(--font-display)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
+              <h3 className="text-sm font-semibold mb-2" style={{ fontFamily: 'var(--font-sans)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
                 {label}
               </h3>
               <div className="flex flex-col gap-1 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)' }}>

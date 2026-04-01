@@ -47,7 +47,7 @@ export default function MeetingNotesPage() {
 
       {/* How it works */}
       <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
-        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
           <Brain size={16} style={{ color: 'var(--teal)' }} />
           How AI Meeting Notes Works
         </h3>
@@ -74,7 +74,7 @@ export default function MeetingNotesPage() {
 
       {/* Recent meetings with notes */}
       <div className="mt-6">
-        <h3 className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+        <h3 className="text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
           Recent Meetings
         </h3>
         <div className="flex flex-col gap-2">
@@ -174,7 +174,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(15,25,35,0.5)' }} onClick={onClose}>
       <div className="rounded-xl shadow-xl border w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto" style={{ backgroundColor: 'white', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
         <div className="px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
-          <h3 className="text-lg flex items-center gap-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--ink)' }}>
+          <h3 className="text-lg flex items-center gap-2" style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, color: 'var(--ink)' }}>
             <Brain size={18} style={{ color: 'var(--teal)' }} />
             Process Meeting
           </h3>
@@ -268,7 +268,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
           {/* Results */}
           {result && (
             <div className="rounded-lg border p-4" style={{ borderColor: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.02)' }}>
-              <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--teal)' }}>
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}>
                 <Sparkles size={14} />
                 AI Insights
               </h4>
