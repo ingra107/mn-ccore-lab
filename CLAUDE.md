@@ -102,6 +102,8 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 
 **Phase 14: COMPLETE** (7 commits). Design ethos pivot — palette to white, bordered table containers, inline editing, font split, monospace elimination, sidebar separation, color consolidation.
 
+**Phase 15: COMPLETE** (1 commit). Project detail → operational workspace — compact header with inline status/stage, tab navigation (Overview/Tasks/Activity/Literature), project-scoped task list.
+
 **Phase 14 -- COMPLETE: Design Ethos Pivot**
 - [x] LabSync study (10 patterns), 3 design audit rounds
 - [x] Projects + Manuscripts pages redesigned (list-first, category dots, warm palette)
@@ -113,7 +115,7 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - [x] Font split: DM Sans for portal (41 files), Fraunces for public pages only
 - [x] Kill monospace in content: 596 replacements across 105 files, font-mono now only on <kbd>
 - [x] Hardcoded colors → CSS variables (--orange, --green, --green-light)
-- [ ] Project detail → operational workspace (deferred to Phase 15)
+- [x] Project detail → operational workspace (compact header, tabs, tasks tab)
 
 ## Meeting Cadence
 
