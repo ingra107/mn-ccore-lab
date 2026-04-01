@@ -12,6 +12,7 @@ import RouteProgressBar from './RouteProgressBar'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useDensity } from '../hooks/useDensity'
 import { useFavicon } from '../hooks/useFavicon'
+import { UndoToastProvider } from './UndoToast'
 
 export default function PortalLayout() {
   const { mode, setTheme } = useDarkMode()
@@ -51,6 +52,7 @@ export default function PortalLayout() {
   }, [])
 
   return (
+    <UndoToastProvider>
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg)' }}>
       <RouteProgressBar />
 
@@ -227,5 +229,6 @@ export default function PortalLayout() {
         </div>
       )}
     </div>
+    </UndoToastProvider>
   )
 }

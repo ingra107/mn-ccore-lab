@@ -1,4 +1,5 @@
 import { Circle, CheckCircle2, Clock, AlertTriangle, CalendarDays, FolderKanban, Flag, RotateCcw, Eye } from 'lucide-react'
+import { useUndoToast } from '../UndoToast'
 import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
@@ -41,6 +42,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 const STATUS_CYCLE = ['todo', 'in_progress', 'done'] as const
 
 export default function TaskCard({ task, onStatusChange, onPriorityChange, compact = false, onClick, onMouseEnter, onMouseLeave }: TaskCardProps) {
+  const { showUndo } = useUndoToast()
   const person = getPersonInfo(task.assignee)
   const priority = priorityConfig[task.priority] || priorityConfig.medium
   const isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
@@ -90,7 +92,10 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             onClick={() => {
               const idx = STATUS_CYCLE.indexOf(task.status as typeof STATUS_CYCLE[number])
               const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]
+              const prev = task.status
               onStatusChange(task.id, next)
+              const label = next === 'done' ? 'Completed' : next === 'in_progress' ? 'In Progress' : 'To Do'
+              showUndo(`Marked "${(task.title || task.description).slice(0, 30)}..." as ${label}`, () => onStatusChange(task.id, prev))
             }}
             className="cursor-pointer"
             title={`Status: ${(statusOptions.find((s) => s.value === task.status) || statusOptions[0]).label} — click to advance`}
@@ -186,7 +191,13 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
       <div data-hover-actions className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-30 group-hover:opacity-100 transition-opacity">
         {/* Quick complete/uncomplete toggle — primary action, always discoverable */}
         <button
-          onClick={(e) => { e.stopPropagation(); onStatusChange(task.id, task.completed ? 'todo' : 'done') }}
+          onClick={(e) => {
+            e.stopPropagation()
+            const prev = task.status
+            const next = task.completed ? 'todo' : 'done'
+            onStatusChange(task.id, next)
+            showUndo(`${task.completed ? 'Reopened' : 'Completed'} task`, () => onStatusChange(task.id, prev))
+          }}
           title={task.completed ? 'Reopen' : 'Complete'}
           className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
           style={{
