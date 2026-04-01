@@ -10,6 +10,7 @@ interface BentoCardProps {
   subtitle?: string
   size?: BentoSize
   icon?: LucideIcon
+  badge?: string
   className?: string
   glass?: boolean
   drillDown?: boolean
@@ -29,6 +30,7 @@ export default function BentoCard({
   subtitle,
   size = 'span-1',
   icon: Icon,
+  badge,
   className = '',
   glass = false,
   drillDown = false,
@@ -64,6 +66,28 @@ export default function BentoCard({
         }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       >
+        {/* Type badge */}
+        {badge && (
+          <span
+            style={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              fontFamily: 'var(--font-sans)',
+              fontSize: '9px',
+              fontWeight: 500,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: 'var(--slate)',
+              opacity: 0.4,
+              lineHeight: 1,
+              pointerEvents: 'none',
+            }}
+          >
+            {badge}
+          </span>
+        )}
+
         {/* Header */}
         <div className="flex items-start gap-2.5 mb-3">
           {Icon && (

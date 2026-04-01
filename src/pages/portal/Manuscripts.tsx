@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { FileText, Plus, List, LayoutGrid } from 'lucide-react'
+import { FileText, Plus, List, GitBranch } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
+import ToggleButton from '../../components/ToggleButton'
 import CreateProjectModal from '../../components/CreateProjectModal'
 import { useProjects, useTasks } from '../../hooks/useApiData'
 import { useCreateProject } from '../../hooks/useMutations'
@@ -119,25 +120,15 @@ export default function Manuscripts() {
         >
           <div className="flex items-center gap-4 flex-wrap">
             {/* View toggle */}
-            <div className="flex items-center rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
-              {(['list', 'pipeline'] as const).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
-                  style={{
-                    fontFamily: 'var(--font-sans)',
-                    fontWeight: 500,
-                    background: view === v ? 'var(--teal)' : 'transparent',
-                    color: view === v ? '#ffffff' : 'var(--slate)',
-                    border: 'none',
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                  }}
-                >
-                  {v === 'list' ? <List size={14} /> : <LayoutGrid size={14} />}
-                  {v === 'list' ? 'List' : 'Pipeline'}
-                </button>
-              ))}
+            <div className="flex items-center gap-1.5">
+              <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
+                <List size={14} />
+                List
+              </ToggleButton>
+              <ToggleButton active={view === 'pipeline'} onClick={() => setView('pipeline')}>
+                <GitBranch size={14} />
+                Pipeline
+              </ToggleButton>
             </div>
 
             <select

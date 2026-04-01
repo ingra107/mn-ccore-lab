@@ -314,7 +314,7 @@ function MyTasksCard({ tasks, onStatusChange }: { tasks: TaskRow[]; onStatusChan
     .slice(0, 6)
 
   return (
-    <BentoCard title="My Tasks" subtitle={`${tasks.length} active`} size="span-2" icon={CheckSquare}>
+    <BentoCard title="My Tasks" subtitle={`${tasks.length} active`} size="span-2" icon={CheckSquare} badge="TASKS">
       <div className="flex flex-col gap-1.5">
         {sorted.map((task) => {
           const isOverdue = task.due_date && new Date(task.due_date + 'T23:59:59') < new Date()
@@ -356,7 +356,7 @@ function MyTasksCard({ tasks, onStatusChange }: { tasks: TaskRow[]; onStatusChan
 
 function DeadlinesCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: TaskRow[] }) {
   return (
-    <BentoCard title="Deadlines" subtitle={`${deadlines.length} upcoming · ${overdue.length} overdue`} icon={Calendar}>
+    <BentoCard title="Deadlines" subtitle={`${deadlines.length} upcoming · ${overdue.length} overdue`} icon={Calendar} badge="UPCOMING">
       <div className="flex flex-col gap-1.5">
         {overdue.slice(0, 2).map((t) => (
           <div key={t.id} className="flex items-center gap-2 py-1">
@@ -395,7 +395,7 @@ function DeadlinesCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: 
 
 function NotificationsCard({ notifications }: { notifications: { id: string; title: string; body: string | null; link: string | null; created_at: string }[] }) {
   return (
-    <BentoCard title="Notifications" subtitle={`${notifications.length} unread`} icon={Bell}>
+    <BentoCard title="Notifications" subtitle={`${notifications.length} unread`} icon={Bell} badge="ALERTS">
       <div className="flex flex-col gap-1.5">
         {notifications.slice(0, 4).map((n) => (
           <div key={n.id} className="py-1">
@@ -423,7 +423,7 @@ function NotificationsCard({ notifications }: { notifications: { id: string; tit
 
 function AssignedByMeCard({ tasks }: { tasks: TaskRow[] }) {
   return (
-    <BentoCard title="Assigned by Me" subtitle={`${tasks.length} pending`} icon={Users}>
+    <BentoCard title="Assigned by Me" subtitle={`${tasks.length} pending`} icon={Users} badge="DELEGATED">
       <div className="flex flex-col gap-1.5">
         {tasks.slice(0, 5).map((t) => {
           const person = getPersonInfo(t.assignee)
@@ -453,7 +453,7 @@ function AssignedByMeCard({ tasks }: { tasks: TaskRow[] }) {
 
 function CommitmentsCard({ commitments }: { commitments: { id: string; commitment: string; to_whom: string; due_date: string | null; status: string }[] }) {
   return (
-    <BentoCard title="Commitments" subtitle={`${commitments.length} pending`} icon={Handshake}>
+    <BentoCard title="Commitments" subtitle={`${commitments.length} pending`} icon={Handshake} badge="PROMISES">
       <div className="flex flex-col gap-1.5">
         {commitments.slice(0, 4).map((c) => {
           const isOverdue = c.due_date && new Date(c.due_date + 'T23:59:59') < new Date()
@@ -480,7 +480,7 @@ function CommitmentsCard({ commitments }: { commitments: { id: string; commitmen
 
 function ActivityCard({ activity }: { activity: { id: string; type: string; description: string; actor: string | null; timestamp: string }[] }) {
   return (
-    <BentoCard title="Recent Activity" subtitle="Lab-wide" icon={Activity}>
+    <BentoCard title="Recent Activity" subtitle="Lab-wide" icon={Activity} badge="ACTIVITY">
       <div className="flex flex-col gap-1.5">
         {activity.slice(0, 5).map((a) => (
           <div key={a.id} className="flex items-start gap-2 py-1">
@@ -503,13 +503,14 @@ function ActivityCard({ activity }: { activity: { id: string; type: string; desc
 
 // ── PI-only: Lab Health Card ─────────────────────────────────
 
-function LabHealthCard({ health }: { health: { total: number; green: number; yellow: number; red: number } }) {
+function LabHealthCard({ health }: { health: { total: number; healthy: number; needs_attention: number; at_risk: number; critical: number; avg_score: number } }) {
   return (
-    <BentoCard title="Lab Health" subtitle={`${health.total} projects`} icon={TrendingUp}>
+    <BentoCard title="Lab Health" subtitle={`${health.total} projects`} icon={TrendingUp} badge="HEALTH">
       <div className="flex items-center gap-4 py-2">
-        <HealthDot color="var(--green-light)" label="Healthy" count={health.green} />
-        <HealthDot color="var(--gold)" label="Needs Attention" count={health.yellow} />
-        <HealthDot color="var(--maroon)" label="Stale" count={health.red} />
+        <HealthDot color="#16a34a" label="Healthy" count={health.healthy} />
+        <HealthDot color="#c9a84c" label="Attention" count={health.needs_attention} />
+        <HealthDot color="#c2410c" label="At Risk" count={health.at_risk} />
+        <HealthDot color="#7a0019" label="Critical" count={health.critical} />
       </div>
       <Link to="/projects" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         View projects <ArrowRight size={11} />
@@ -537,7 +538,7 @@ function GrantMiniCard({ grants }: { grants: { title: string; mechanism: string;
   const pending = grants.filter((g) => g.proposed)
 
   return (
-    <BentoCard title="Grants" subtitle={`${active.length} active · ${pending.length} pending`} icon={FolderKanban}>
+    <BentoCard title="Grants" subtitle={`${active.length} active · ${pending.length} pending`} icon={FolderKanban} badge="GRANTS">
       <div className="flex flex-col gap-1.5">
         {grants.slice(0, 4).map((g, i) => (
           <div key={i} className="flex items-center gap-2 py-1">
@@ -583,7 +584,7 @@ function getWatchItemUrl(item: WatchItem): string {
 
 function WatchingCard({ items, onUnwatch }: { items: WatchItem[]; onUnwatch: (id: string, type: string) => void }) {
   return (
-    <BentoCard title="Watching" subtitle={`${items.length} item${items.length !== 1 ? 's' : ''}`} icon={Eye}>
+    <BentoCard title="Watching" subtitle={`${items.length} item${items.length !== 1 ? 's' : ''}`} icon={Eye} badge="WATCHING">
       <div className="flex flex-col gap-0.5">
         {items.map(item => (
           <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.06)' }}>
