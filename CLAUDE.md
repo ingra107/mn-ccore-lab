@@ -19,22 +19,60 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- not just a website, 
 
 ## Design System
 
-- **Fonts:** Fraunces (display) / DM Sans (body) / JetBrains Mono (mono)
-- **Palette:** ink `#0f1923` / gold `#c9a84c` / cream `#faf8f3` / maroon `#7a0019` / teal `#2d8a8a`
-- **Color roles:**
-  - **Gold** (#c9a84c): Structural accents, section dividers, active navigation, brand elements, note callouts
-  - **Teal** (#2d8a8a): Interactive elements, links, selected states, progress indicators, focus rings
-  - **Maroon** (#7a0019): Alerts only -- blocked, urgent, overdue, errors. Never decorative.
-  - **Slate** (#2c3e50): Secondary text, muted labels, inactive states
-  - **Cream/Ink**: Background/foreground (swap in dark mode)
-  - Max 2 accent colors per page. Exceptions: dashboards with data visualization.
-- **Borders:** `--border-light` (gold tint) for semantic borders (inputs, active pills, card outlines). `--border-subtle` (neutral) for structural borders (panel headers, section dividers, internal card dividers). Don't mix.
-- **Section spacing:** `mt-8` (32px) before section headings. `gap-3` (12px) between items within a section. `mt-10` before major page regions (capture bar, archive).
-- **Labels:** DM Sans 11px weight-500 for section labels above content. JetBrains Mono 10px uppercase for table headers, badges, and navigation groups only.
-- **Centering:** ALL containers use `.content-container` -- no custom max-width
-- **Dark mode:** CSS variables invert via `.dark` class. Card dark bg: `#162535`.
-- **Shared utilities:** `src/lib/dateUtils.ts` (6 formatters), `src/data/team.ts:getPersonInfo()`, `src/lib/api.ts`
-- **Brand formatting:** `formatBrandName()` from `src/components/BrandName.tsx` -- use for any text that might contain "MNCCORE"
+### Design Ethos: Operational, Not Editorial (Decision: 2026-04-01)
+
+The Hub is a **research operations center**, not a magazine. Every design choice prioritizes usability and data clarity over decoration. Read `Context/Decisions/2026-04-01_hub-design-ethos-pivot.md` for full rationale.
+
+**Core principles (NEVER violate):**
+1. **Dark-first design.** Optimize for dark mode. Light must also be great, but dark is primary.
+2. **Data tables in bordered containers.** Every table sits inside a visible bordered rectangle. No floating rows.
+3. **Inline editability.** Status, stage, priority editable directly in table rows. Detail panel for deeper edits.
+4. **Zero monospace in content.** JetBrains Mono is for code displays ONLY. Project slugs, meeting names, metadata use DM Sans. NEVER render user-facing text in monospace.
+5. **One accent color per view.** Teal for interactive elements. Everything else neutral. No multi-color category badges.
+6. **Restraint > decoration.** Fewer visual layers, more whitespace. The loudest thing on the page is the data.
+7. **List view as default** for data-heavy pages (>10 items). Kanban/pipeline as opt-in toggle.
+
+### Fonts
+- **Portal titles:** DM Sans (clean, operational)
+- **Public website titles:** Fraunces (editorial, brand voice)
+- **Body text:** DM Sans everywhere
+- **Code only:** JetBrains Mono
+- **CSS:** `--font-sans` and `--font-body` both resolve to DM Sans. `--font-display` = Fraunces (public pages only).
+
+### Palette (evolving — cream is NOT sacred)
+- ink `#0f1923` / gold `#c9a84c` / teal `#2d8a8a` / maroon `#7a0019` / slate
+- Background: moving toward clean white (light) / ink (dark). Cream (#faf8f3) may be replaced.
+- Warm containers: `#f5f3ee` for pipeline columns (not cool `--ice`)
+- Category encoding: small dots (6px, 0.7 opacity) — maroon=CLIF, teal=Lab, gold=Mesfin
+
+### Table Pattern (apply to ALL data pages)
+- Bordered container with subtle border and small radius
+- Proper column headers (uppercase, 11px, 0.5 opacity)
+- Stage group headers: quiet uppercase labels with extending rule line
+- Row hover: gold-tinted `rgba(201, 168, 76, 0.06)`, active state at `0.10`
+- Inline controls: status/priority dropdowns editable in-row
+- Ghost-style action buttons (outline, not filled)
+
+### Micro-interactions
+- Background transitions: 120ms ease-out (fast, responsive)
+- Shadow transitions: 250ms ease (physical, weighty)
+- Card hover: -1px lift with shadow deepening
+- Row active: brief darken for tactile feedback
+
+### Sidebar (needs improvement)
+- Sections must be clearly separated by whitespace (not just a heading)
+- Section headings: subtle, small, but navigable — current ones don't create enough visual breaks
+- Reference: LabSync sidebar for section separation quality
+
+### Borders & Spacing
+- `--border-light` (gold tint): semantic borders (inputs, active pills)
+- `--border-subtle` (neutral): structural borders (table rows, panel headers)
+- Spacing scale: 4, 8, 12, 16, 20, 24, 32px. No off-grid values (no 14px, no 13.5px).
+- `mt-8` before section headings, `gap-3` within sections
+
+### Shared utilities
+- `src/lib/dateUtils.ts` (6 formatters), `src/data/team.ts:getPersonInfo()`, `src/lib/api.ts`
+- `formatBrandName()` from `src/components/BrandName.tsx`
 
 ## Architecture
 
@@ -244,7 +282,8 @@ Nick's CLI (brain.db)                      Team Members (browsers)
 10. **Phase 10 -- DONE (9 rounds, 22 commits):** UX polish (LabSync benchmark). GlobalQuickAdd, PublicationDetail, Grants portal, empty state consistency, RoundPrompt, focus mode, density toggle, favicons, recently viewed, route progress bar, CSV export, notification grouping, dark mode fixes, OG meta tags.
 11. **Phase 11 -- DONE:** Infrastructure refactors, hard features (task peek, subtasks, bulk actions, agenda reorder, search ranking, dashboard pinning). 42 features shipped in master plan.
 12. **Phase 12 -- DONE:** PB Sector v2 (Monk Manual planner). Star task + 3 focus + quick wins slots with @dnd-kit. 4 new D1 tables, 7 new API endpoints, 8 new components. Calendar timeline, pomodoro tracking, reflection panel. Dispatch queue table ready for Phase 3 (Claude integration).
-13. **Phase 13 -- DONE:** Visual Polish & LabSync Parity (3-agent audit). 5 commits, ~40 files, 2 sessions. TaskDetailPanel fully custom controls (all native selects replaced), TaskCard status cycling + left borders + touch targets, ProjectCard hover-reveal (CSS-level fix), PB Sector capture bar + C shortcut, --border-subtle system + migration, mono label cleanup (DM Sans for section labels), section spacing conventions, BentoCard drill-down chevrons + noLift, chromatic restraint audit, color role docs in CLAUDE.md. Light mode verified.
+13. **Phase 13 -- DONE:** Visual Polish & LabSync Parity. TaskDetailPanel custom controls, TaskCard status cycling, --border-subtle system, section spacing, chromatic restraint audit.
+14. **Phase 14 -- IN PROGRESS:** Design Ethos Pivot (operational, not editorial). Deep LabSync study → 10 design patterns extracted → 3 rounds of design audits. Projects + Manuscripts pages redesigned (list-first, category dots, warm palette, ghost buttons, gold hover). Next: palette shift (drop cream), bordered table containers, inline editing, sidebar improvement, font split (Fraunces public-only), project detail → workspace. See `Context/Decisions/2026-04-01_hub-design-ethos-pivot.md`.
 
 ## Meeting Cadence
 
