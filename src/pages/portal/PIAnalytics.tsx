@@ -125,7 +125,7 @@ function CompletionRing({ rate, size = 120 }: { rate: number; size?: number }) {
 }
 
 // Sparkline — inline SVG line chart
-function Sparkline({ values, width = 60, height = 24, color = 'var(--teal)' }: {
+export function Sparkline({ values, width = 60, height = 24, color = 'var(--teal)' }: {
   values: number[]
   width?: number
   height?: number
@@ -284,7 +284,7 @@ function StackedBar({ segments, height = 28 }: {
 }
 
 // Trend arrow component
-function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' | string }) {
+export function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' | string }) {
   if (trend === 'up') return <ArrowUp size={12} style={{ color: 'var(--green, #22c55e)' }} />
   if (trend === 'down') return <ArrowDown size={12} style={{ color: 'var(--maroon)' }} />
   return <Minus size={12} style={{ color: 'var(--slate)', opacity: 0.5 }} />

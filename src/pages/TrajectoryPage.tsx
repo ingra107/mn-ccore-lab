@@ -22,7 +22,7 @@ const STAGE_COLORS: Record<string, string> = {
 // ── Cumulative Publication Curve ──────────────────────────
 
 function PublicationCurve({ publications }: { publications: TrajectoryData['publications'] }) {
-  const { points, months, maxCount } = useMemo(() => {
+  const { points, months: _months, maxCount } = useMemo(() => {
     if (publications.length === 0) return { points: [], months: [] as string[], maxCount: 0 }
 
     // Sort chronologically
