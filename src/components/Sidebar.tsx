@@ -164,13 +164,23 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
       </div>
 
       {/* Nav groups */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2">
-        {navWithBadges.map((group) => (
-          <div key={group.title} className="mb-3">
+      <nav className="flex-1 overflow-y-auto py-3 px-2">
+        {navWithBadges.map((group, groupIndex) => (
+          <div key={group.title} style={{ marginBottom: '8px' }}>
+            {/* Section divider (not before first group) */}
+            {groupIndex > 0 && (
+              <div
+                style={{
+                  height: '1px',
+                  background: 'var(--border-subtle)',
+                  margin: collapsed ? '8px 4px 12px' : '8px 8px 12px',
+                }}
+              />
+            )}
             {!collapsed && (
               <div
-                className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider"
-                style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)' }}
+                className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider"
+                style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)', opacity: 0.5, letterSpacing: '0.08em' }}
               >
                 {group.title}
               </div>
