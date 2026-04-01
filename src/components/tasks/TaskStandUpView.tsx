@@ -112,9 +112,14 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
                 <div className="flex items-center gap-2 mt-0.5">
                   <span
                     className="text-[10px] px-1.5 py-0.5 rounded"
-                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}
+                    style={{
+                      fontFamily: 'var(--font-sans)',
+                      color: activeCount > 8 ? 'var(--maroon)' : activeCount > 5 ? 'var(--orange)' : 'var(--teal)',
+                      backgroundColor: activeCount > 8 ? 'rgba(122,0,25,0.08)' : activeCount > 5 ? 'rgba(194,65,12,0.08)' : 'rgba(45,138,138,0.08)',
+                      fontWeight: activeCount > 5 ? 600 : 400,
+                    }}
                   >
-                    {activeCount} active
+                    {activeCount} active{activeCount > 8 ? ' — overloaded' : activeCount > 5 ? ' — heavy' : ''}
                   </span>
                   {(() => {
                     const overdueCount = [...groups.todo, ...groups.in_progress].filter(
