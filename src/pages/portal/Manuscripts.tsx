@@ -6,6 +6,9 @@ import Avatar from '../../components/Avatar'
 import CreateProjectModal from '../../components/CreateProjectModal'
 import { useProjects, useTasks } from '../../hooks/useApiData'
 import { useCreateProject } from '../../hooks/useMutations'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { updateProject } from '../../lib/api'
+import InlineSelect from '../../components/InlineSelect'
 import { getPersonInfo } from '../../data/team'
 import type { Project } from '../../data/types'
 import { usePageMeta } from '../../hooks/usePageMeta'
@@ -42,6 +45,12 @@ export default function Manuscripts() {
   const { data: projects = [] } = useProjects()
   const { data: tasks = [] } = useTasks()
   const createProject = useCreateProject()
+  const queryClient = useQueryClient()
+  const inlineUpdate = useMutation({
+    mutationFn: ({ slug, fields }: { slug: string; fields: Record<string, unknown> }) =>
+      updateProject(slug, fields),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
+  })
 
   const manuscripts = useMemo(() => {
     let filtered = projects.filter((p) => p.status !== 'Published' || p.stage === 'Published')
@@ -180,12 +189,12 @@ export default function Manuscripts() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: '1fr 120px 72px',
+                gridTemplateColumns: '1fr 100px 100px 100px 72px',
                 padding: '8px 24px',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
-              {['Title', 'PI', 'Group'].map((col) => (
+              {['Title', 'Status', 'Stage', 'PI', 'Group'].map((col) => (
                 <span
                   key={col}
                   style={{
@@ -244,7 +253,7 @@ export default function Manuscripts() {
                           className="manuscript-list-row"
                           style={{
                             display: 'grid',
-                            gridTemplateColumns: '1fr 120px 72px',
+                            gridTemplateColumns: '1fr 100px 100px 100px 72px',
                             padding: '14px 24px',
                             borderBottom: '1px solid var(--border-subtle)',
                             alignItems: 'center',
@@ -269,6 +278,24 @@ export default function Manuscripts() {
                               </span>
                             )}
                           </div>
+
+                          {/* Status (inline editable) */}
+                          <InlineSelect
+                            value={project.status || 'Active'}
+                            options={[
+                              { value: 'Active', label: 'Active', color: '#16a34a' },
+                              { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
+                              { value: 'Completed', label: 'Done', color: 'var(--slate)' },
+                            ]}
+                            onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
+                          />
+
+                          {/* Stage (inline editable) */}
+                          <InlineSelect
+                            value={project.stage || 'Idea'}
+                            options={STAGES.map((s) => ({ value: s, label: s }))}
+                            onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
+                          />
 
                           <div className="flex items-center gap-1.5">
                             <div style={{ width: 22, height: 22, flexShrink: 0 }}>

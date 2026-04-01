@@ -6,6 +6,9 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useProjects, useDependencies } from '../hooks/useApiData'
 import { useCreateProject } from '../hooks/useMutations'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { updateProject } from '../lib/api'
+import InlineSelect from '../components/InlineSelect'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
@@ -59,6 +62,12 @@ export default function Projects() {
   const { data: projects = [] } = useProjects()
   const { data: dependencies = [] } = useDependencies()
   const createProject = useCreateProject()
+  const queryClient = useQueryClient()
+  const inlineUpdate = useMutation({
+    mutationFn: ({ slug, fields }: { slug: string; fields: Record<string, unknown> }) =>
+      updateProject(slug, fields),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
+  })
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list')
@@ -252,12 +261,12 @@ export default function Projects() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: '1fr 120px 72px',
+                gridTemplateColumns: '1fr 100px 100px 100px 72px',
                 padding: '8px 24px',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
-              {['Title', 'PI', 'Group'].map((col) => (
+              {['Title', 'Status', 'Stage', 'PI', 'Group'].map((col) => (
                 <span
                   key={col}
                   style={{
@@ -333,7 +342,7 @@ export default function Projects() {
                           className="project-list-row"
                           style={{
                             display: 'grid',
-                            gridTemplateColumns: '1fr 120px 72px',
+                            gridTemplateColumns: '1fr 100px 100px 100px 72px',
                             padding: '14px 24px',
                             borderBottom: '1px solid var(--border-subtle)',
                             alignItems: 'center',
@@ -366,6 +375,24 @@ export default function Projects() {
                               {project.title}
                             </span>
                           </div>
+
+                          {/* Status (inline editable) */}
+                          <InlineSelect
+                            value={project.status || 'Active'}
+                            options={[
+                              { value: 'Active', label: 'Active', color: '#16a34a' },
+                              { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
+                              { value: 'Completed', label: 'Done', color: 'var(--slate)' },
+                            ]}
+                            onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
+                          />
+
+                          {/* Stage (inline editable) */}
+                          <InlineSelect
+                            value={project.stage || 'Idea'}
+                            options={STAGES.map((s) => ({ value: s, label: s }))}
+                            onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
+                          />
 
                           {/* PI */}
                           <div className="flex items-center gap-1.5">
