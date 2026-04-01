@@ -472,13 +472,17 @@ export default function MemberPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.15 }}
-                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium"
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] cursor-pointer transition-opacity hover:opacity-80"
                     style={{
                       fontFamily: 'var(--font-sans)',
-                      background: 'rgba(201,168,76,0.12)',
-                      color: 'var(--gold)',
-                      border: '1px solid rgba(201,168,76,0.2)',
+                      fontWeight: 400,
+                      background: 'rgba(45,138,138,0.10)',
+                      color: 'var(--teal)',
+                      border: '1px solid rgba(45,138,138,0.2)',
                     }}
+                    onClick={() => window.location.href = `/team?expertise=${encodeURIComponent(t.tag)}`}
+                    role="link"
+                    tabIndex={0}
                   >
                     {t.tag}
                     {t.source !== 'manual' && (

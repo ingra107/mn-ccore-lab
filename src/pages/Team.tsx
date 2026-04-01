@@ -1,16 +1,60 @@
-import { ArrowRight } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
+import { ArrowRight, X } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import SectionDivider from '../components/SectionDivider'
 import Avatar from '../components/Avatar'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { directors, seniorMentors, facultyCollaborators, researchTeam } from '../data/team'
 import { grants } from '../data/grants'
-import { usePublications } from '../hooks/useApiData'
+import { usePublications, useExpertise } from '../hooks/useApiData'
+import type { ExpertiseTag } from '../hooks/useApiData'
 import { mentees } from '../data/mentees'
 
 export default function Team() {
   const { data: publications = [] } = usePublications()
+  const { data: allExpertise = [] } = useExpertise() as { data: ExpertiseTag[] }
+  const [searchParams, setSearchParams] = useSearchParams()
+  const expertiseFilter = searchParams.get('expertise') || ''
+
+  // Group expertise tags by member
+  const expertiseByMember = useMemo(() => {
+    const map = new Map<string, ExpertiseTag[]>()
+    for (const tag of allExpertise) {
+      const existing = map.get(tag.member_slug) || []
+      existing.push(tag)
+      map.set(tag.member_slug, existing)
+    }
+    return map
+  }, [allExpertise])
+
+  // Get all unique tags for the filter
+  const allTags = useMemo(() => {
+    const tagSet = new Map<string, number>()
+    for (const tag of allExpertise) {
+      tagSet.set(tag.tag, (tagSet.get(tag.tag) || 0) + 1)
+    }
+    return [...tagSet.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([tag, count]) => ({ tag, count }))
+  }, [allExpertise])
+
+  // Members matching the expertise filter
+  const filteredSlugs = useMemo(() => {
+    if (!expertiseFilter) return null
+    const slugs = new Set<string>()
+    for (const tag of allExpertise) {
+      if (tag.tag.toLowerCase() === expertiseFilter.toLowerCase()) {
+        slugs.add(tag.member_slug)
+      }
+    }
+    return slugs
+  }, [allExpertise, expertiseFilter])
+
+  function matchesFilter(slug: string | undefined): boolean {
+    if (!filteredSlugs || !slug) return !filteredSlugs
+    return filteredSlugs.has(slug)
+  }
 
   function getDirectorStats(slug: string) {
     const grantCount = grants.filter((g) => g.pi === slug && !g.proposed).length
@@ -51,6 +95,49 @@ export default function Team() {
         </p>
       </section>
 
+      {/* Expertise Filter */}
+      {(expertiseFilter || allTags.length > 0) && (
+        <section className="py-3 content-container">
+          <div className="flex flex-wrap items-center gap-2">
+            {expertiseFilter && (
+              <button
+                onClick={() => setSearchParams({})}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] transition-colors"
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: 400,
+                  background: 'var(--teal)',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {expertiseFilter}
+                <X size={10} />
+              </button>
+            )}
+            {!expertiseFilter && allTags.slice(0, 12).map(({ tag, count }) => (
+              <button
+                key={tag}
+                onClick={() => setSearchParams({ expertise: tag })}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] transition-all hover:opacity-80"
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: 400,
+                  background: 'rgba(45,138,138,0.10)',
+                  color: 'var(--teal)',
+                  border: '1px solid rgba(45,138,138,0.2)',
+                  cursor: 'pointer',
+                }}
+              >
+                {tag}
+                <span style={{ opacity: 0.5, fontSize: '9px' }}>{count}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       <SectionDivider />
 
       {/* Co-Directors */}
@@ -70,8 +157,9 @@ export default function Team() {
         </h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {directors.map((director) => {
+          {directors.filter(d => matchesFilter(d.slug)).map((director) => {
             const stats = getDirectorStats(director.slug)
+            const tags = expertiseByMember.get(director.slug) || []
             return (
               <Link
                 key={director.name}
@@ -119,11 +207,29 @@ export default function Team() {
                       {director.title}
                     </p>
                     <p
-                      className="text-sm leading-relaxed mb-3"
+                      className="text-sm leading-relaxed mb-2"
                       style={{ color: 'var(--slate)' }}
                     >
                       {director.bio}
                     </p>
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {tags.slice(0, 4).map(t => (
+                          <span
+                            key={t.id}
+                            className="inline-block px-2 py-0.5 rounded-full text-[11px]"
+                            style={{
+                              fontFamily: 'var(--font-sans)',
+                              fontWeight: 400,
+                              background: 'rgba(45,138,138,0.10)',
+                              color: 'var(--teal)',
+                            }}
+                          >
+                            {t.tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <p
                       style={{
                         fontFamily: 'var(--font-sans)',
@@ -171,30 +277,52 @@ export default function Team() {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          {seniorMentors.map((member) => (
-            <div key={member.name} className="fade-in-up card p-4 sm:p-6">
-              <div className="flex items-center gap-4">
-                <Avatar
-                  name={member.name}
-                  initials={member.initials}
-                  photoUrl={member.photoUrl}
-                  size="sm"
-                  variant="gold"
-                />
-                <div>
-                  <h3
-                    className="text-base sm:text-lg"
-                    style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--ink)' }}
-                  >
-                    {member.name}{member.credentials ? `, ${member.credentials}` : ''}
-                  </h3>
-                  <p className="text-sm" style={{ color: 'var(--gold)', fontFamily: 'var(--font-sans)', fontSize: '12px' }}>
-                    {member.role}
-                  </p>
+          {seniorMentors.filter((m) => matchesFilter(m.slug)).map((member) => {
+            const tags = member.slug ? expertiseByMember.get(member.slug) || [] : []
+            return (
+              <div key={member.name} className="fade-in-up card p-4 sm:p-6">
+                <div className="flex items-center gap-4">
+                  <Avatar
+                    name={member.name}
+                    initials={member.initials}
+                    photoUrl={member.photoUrl}
+                    size="sm"
+                    variant="gold"
+                  />
+                  <div>
+                    <h3
+                      className="text-base sm:text-lg"
+                      style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--ink)' }}
+                    >
+                      {member.name}{member.credentials ? `, ${member.credentials}` : ''}
+                    </h3>
+                    <p className="text-sm" style={{ color: 'var(--gold)', fontFamily: 'var(--font-sans)', fontSize: '12px' }}>
+                      {member.role}
+                    </p>
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {tags.slice(0, 3).map(t => (
+                          <span
+                            key={t.id}
+                            className="inline-block px-2 py-0.5 rounded-full text-[11px] cursor-pointer transition-opacity hover:opacity-80"
+                            style={{
+                              fontFamily: 'var(--font-sans)',
+                              fontWeight: 400,
+                              background: 'rgba(45,138,138,0.10)',
+                              color: 'var(--teal)',
+                            }}
+                            onClick={(e) => { e.preventDefault(); setSearchParams({ expertise: t.tag }) }}
+                          >
+                            {t.tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </section>
 
@@ -217,33 +345,54 @@ export default function Team() {
         </h2>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 sm:gap-6">
-          {facultyCollaborators.map((member) => (
-            <Link
-              key={member.name}
-              to={member.slug ? `/team/${member.slug}` : '#'}
-              className="fade-in-up text-center p-4 rounded-lg transition-all duration-200 cursor-pointer group"
-              style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)', textDecoration: 'none' }}
-            >
-              <div className="flex justify-center mb-2">
-                <Avatar
-                  name={member.name}
-                  initials={member.initials}
-                  photoUrl={member.photoUrl}
-                  size="sm"
-                  variant="ice"
-                />
-              </div>
-              <h3
-                className="text-xs sm:text-sm font-semibold mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
-                style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
+          {facultyCollaborators.filter(m => matchesFilter(m.slug)).map((member) => {
+            const tags = member.slug ? expertiseByMember.get(member.slug) || [] : []
+            return (
+              <Link
+                key={member.name}
+                to={member.slug ? `/team/${member.slug}` : '#'}
+                className="fade-in-up text-center p-4 rounded-lg transition-all duration-200 cursor-pointer group"
+                style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)', textDecoration: 'none' }}
               >
-                {member.name}{member.credentials ? `, ${member.credentials}` : ''}
-              </h3>
-              <p className="text-xs" style={{ color: 'var(--slate)' }}>
-                {member.role}
-              </p>
-            </Link>
-          ))}
+                <div className="flex justify-center mb-2">
+                  <Avatar
+                    name={member.name}
+                    initials={member.initials}
+                    photoUrl={member.photoUrl}
+                    size="sm"
+                    variant="ice"
+                  />
+                </div>
+                <h3
+                  className="text-xs sm:text-sm font-semibold mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
+                  style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
+                >
+                  {member.name}{member.credentials ? `, ${member.credentials}` : ''}
+                </h3>
+                <p className="text-xs" style={{ color: 'var(--slate)' }}>
+                  {member.role}
+                </p>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1 mt-1.5">
+                    {tags.slice(0, 2).map(t => (
+                      <span
+                        key={t.id}
+                        className="inline-block px-1.5 py-0.5 rounded-full text-[10px]"
+                        style={{
+                          fontFamily: 'var(--font-sans)',
+                          fontWeight: 400,
+                          background: 'rgba(45,138,138,0.10)',
+                          color: 'var(--teal)',
+                        }}
+                      >
+                        {t.tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Link>
+            )
+          })}
         </div>
       </section>
 
@@ -266,33 +415,54 @@ export default function Team() {
         </h2>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-          {researchTeam.map((member) => (
-            <Link
-              key={member.name}
-              to={member.slug ? `/team/${member.slug}` : '#'}
-              className="fade-in-up text-center p-4 rounded-lg transition-all duration-200 cursor-pointer group"
-              style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)', textDecoration: 'none' }}
-            >
-              <div className="flex justify-center mb-2">
-                <Avatar
-                  name={member.name}
-                  initials={member.initials}
-                  photoUrl={member.photoUrl}
-                  size="sm"
-                  variant="ice"
-                />
-              </div>
-              <h3
-                className="text-xs sm:text-sm font-semibold mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
-                style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
+          {researchTeam.filter(m => matchesFilter(m.slug)).map((member) => {
+            const tags = member.slug ? expertiseByMember.get(member.slug) || [] : []
+            return (
+              <Link
+                key={member.name}
+                to={member.slug ? `/team/${member.slug}` : '#'}
+                className="fade-in-up text-center p-4 rounded-lg transition-all duration-200 cursor-pointer group"
+                style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)', textDecoration: 'none' }}
               >
-                {member.name}{member.credentials ? `, ${member.credentials}` : ''}
-              </h3>
-              <p className="text-xs" style={{ color: 'var(--slate)' }}>
-                {member.role}
-              </p>
-            </Link>
-          ))}
+                <div className="flex justify-center mb-2">
+                  <Avatar
+                    name={member.name}
+                    initials={member.initials}
+                    photoUrl={member.photoUrl}
+                    size="sm"
+                    variant="ice"
+                  />
+                </div>
+                <h3
+                  className="text-xs sm:text-sm font-semibold mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
+                  style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
+                >
+                  {member.name}{member.credentials ? `, ${member.credentials}` : ''}
+                </h3>
+                <p className="text-xs" style={{ color: 'var(--slate)' }}>
+                  {member.role}
+                </p>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1 mt-1.5">
+                    {tags.slice(0, 2).map(t => (
+                      <span
+                        key={t.id}
+                        className="inline-block px-1.5 py-0.5 rounded-full text-[10px]"
+                        style={{
+                          fontFamily: 'var(--font-sans)',
+                          fontWeight: 400,
+                          background: 'rgba(45,138,138,0.10)',
+                          color: 'var(--teal)',
+                        }}
+                      >
+                        {t.tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Link>
+            )
+          })}
         </div>
       </section>
     </>
