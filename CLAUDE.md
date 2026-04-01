@@ -115,24 +115,19 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 
 ## Roadmap
 
-**Phases 1-13: COMPLETE** (360+ commits). Public website, D1 backend, team portal, sync, 28 portal features, task system, PB Sector v2, visual polish. See `REFERENCE.md` for details.
+**Phases 1-13: COMPLETE** (360+ commits). See `REFERENCE.md` for details.
 
-**Phase 14: COMPLETE** (7 commits). Design ethos pivot — palette to white, bordered table containers, inline editing, font split, monospace elimination, sidebar separation, color consolidation.
+**Phase 14: COMPLETE** (7 commits). Design ethos pivot — palette, containers, inline editing, fonts, monospace, colors.
 
-**Phase 15: COMPLETE** (1 commit). Project detail → operational workspace — compact header with inline status/stage, tab navigation (Overview/Tasks/Activity/Literature), project-scoped task list.
+**Phase 15: COMPLETE** (1 commit). Project detail → tabbed workspace.
 
-**Phase 14 -- COMPLETE: Design Ethos Pivot**
-- [x] LabSync study (10 patterns), 3 design audit rounds
-- [x] Projects + Manuscripts pages redesigned (list-first, category dots, warm palette)
-- [x] `--font-sans` defined globally (was undefined -- 44 files in wrong font)
-- [x] Palette shift: cream → white (#ffffff), paper grain removed, --gold-light/--ice neutralized
-- [x] Bordered .table-container on all data pages (Projects, Manuscripts, Tasks, Deadlines, Grants, Decisions, Narratives, Ideas)
-- [x] Inline status/stage editing in Projects + Manuscripts list rows (InlineSelect component)
-- [x] Sidebar section separation -- divider lines, breathing room, quieter labels
-- [x] Font split: DM Sans for portal (41 files), Fraunces for public pages only
-- [x] Kill monospace in content: 596 replacements across 105 files, font-mono now only on <kbd>
-- [x] Hardcoded colors → CSS variables (--orange, --green, --green-light)
-- [x] Project detail → operational workspace (compact header, tabs, tasks tab)
+**Phase 16: COMPLETE** (10 commits). LabSync parity push — foundation + tables:
+- Dark bg deepened #0b1017, text softened #e2e8f0, body weight 400
+- TaskGridView: columnar table (Title|Assignee|Due|Status|Priority) with inline editing
+- Deadlines + Ideas: converted to columnar tables
+- SectionHeader, ToggleButton, MetricCard, BentoCard: lighter weights
+- Undo toast system, workload visibility, task click bug fix
+- CLAUDE.md: 9 design principles from LabSync + UX research
 
 ## Meeting Cadence
 
