@@ -208,7 +208,7 @@ a:hover {
 
 /* ── Project card hover ── */
 .project-card:hover {
-  background: rgba(45, 138, 138, 0.04);
+  box-shadow: 0 2px 8px rgba(15, 25, 35, 0.06);
 }
 
 /* ── Status Badges ── */

@@ -90,16 +90,16 @@ export default function Projects() {
     <div style={{ minHeight: '100vh' }}>
       <div className="content-container" style={{ paddingBottom: '4rem' }}>
         {/* Page Header */}
-        <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1.5rem', paddingTop: '1.5rem' }}>
-          <div className="flex items-center gap-3">
-            <div style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.1)', flexShrink: 0 }}>
-              <FolderKanban size={19} style={{ color: 'var(--teal)' }} />
+        <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1rem', paddingTop: '1rem' }}>
+          <div className="flex items-center gap-2.5">
+            <div style={{ width: 28, height: 28, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)', flexShrink: 0 }}>
+              <FolderKanban size={16} style={{ color: 'var(--teal)' }} />
             </div>
             <h1
               style={{
                 fontFamily: 'var(--font-display)',
-                fontWeight: 800,
-                fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
+                fontWeight: 700,
+                fontSize: 'clamp(1.35rem, 3vw, 1.75rem)',
                 color: 'var(--ink)',
                 margin: 0,
                 lineHeight: 1.15,
@@ -109,45 +109,26 @@ export default function Projects() {
             </h1>
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg ml-auto"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg ml-auto new-project-btn"
               style={{
-                background: 'var(--teal)',
-                color: '#faf8f3',
+                background: 'transparent',
+                color: 'var(--teal)',
                 fontFamily: 'var(--font-body)',
                 fontSize: '13px',
                 fontWeight: 600,
-                border: 'none',
+                border: '1px solid rgba(45, 138, 138, 0.25)',
                 cursor: 'pointer',
+                transition: 'background 0.15s',
               }}
             >
               <Plus size={14} />
               New Project
             </button>
           </div>
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '15px',
-              color: 'var(--slate)',
-              opacity: 0.6,
-              marginTop: '6px',
-            }}
-          >
-            Track projects from idea to publication
-          </p>
-
-          {/* Separator */}
-          <div
-            style={{
-              height: '1px',
-              background: 'var(--border-subtle)',
-              marginTop: '1.25rem',
-            }}
-          />
         </div>
 
         {/* Controls bar: view toggle + filters + stats */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div className="flex items-center gap-4">
             {/* View toggle */}
             <div
@@ -195,14 +176,15 @@ export default function Projects() {
                   key={f.key}
                   type="button"
                   onClick={() => setActiveCategory(f.key)}
-                  className="cursor-pointer inline-flex items-center px-2.5 py-1 rounded-full text-xs"
+                  className="cursor-pointer inline-flex items-center px-2.5 py-1 text-xs filter-pill"
                   style={{
                     fontFamily: 'var(--font-body)',
                     fontWeight: 500,
                     fontSize: '12px',
+                    borderRadius: '6px',
                     background: activeCategory === f.key ? 'var(--teal)' : 'transparent',
                     color: activeCategory === f.key ? '#faf8f3' : 'var(--slate)',
-                    border: activeCategory === f.key ? '1px solid var(--teal)' : '1px solid var(--border-subtle)',
+                    border: activeCategory === f.key ? '1px solid var(--teal)' : '1px solid transparent',
                     transition: 'all 0.15s',
                   }}
                 >
@@ -219,7 +201,7 @@ export default function Projects() {
               style={{
                 fontFamily: 'var(--font-body)',
                 color: 'var(--slate)',
-                opacity: 0.5,
+                opacity: 0.6,
                 whiteSpace: 'nowrap',
               }}
             >
@@ -275,8 +257,8 @@ export default function Projects() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: '1fr 140px 80px',
-                padding: '10px 24px',
+                gridTemplateColumns: '1fr 120px 72px',
+                padding: '8px 24px',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
@@ -288,9 +270,9 @@ export default function Projects() {
                     fontSize: '11px',
                     fontWeight: 500,
                     color: 'var(--slate)',
-                    opacity: 0.35,
+                    opacity: 0.5,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
+                    letterSpacing: '0.06em',
                   }}
                 >
                   {col}
@@ -314,8 +296,7 @@ export default function Projects() {
                       {showStageHeader && (
                         <div
                           style={{
-                            padding: '14px 24px 6px',
-                            ...(lastStage !== (STAGES[0] as string) ? { borderTop: '1px solid var(--border-subtle)' } : {}),
+                            padding: '20px 24px 8px',
                           }}
                         >
                           <span
@@ -324,8 +305,9 @@ export default function Projects() {
                               fontSize: '11px',
                               fontWeight: 500,
                               color: 'var(--slate)',
-                              opacity: 0.5,
-                              letterSpacing: '0.03em',
+                              opacity: 0.45,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.06em',
                             }}
                           >
                             {project.stage}
@@ -352,8 +334,8 @@ export default function Projects() {
                           className="project-list-row"
                           style={{
                             display: 'grid',
-                            gridTemplateColumns: '1fr 140px 80px',
-                            padding: '12px 24px',
+                            gridTemplateColumns: '1fr 120px 72px',
+                            padding: '14px 24px',
                             borderBottom: '1px solid var(--border-subtle)',
                             alignItems: 'center',
                             cursor: 'pointer',
@@ -364,12 +346,12 @@ export default function Projects() {
                           <div className="flex items-center gap-2.5" style={{ paddingRight: '16px' }}>
                             <span
                               style={{
-                                width: 7,
-                                height: 7,
+                                width: 6,
+                                height: 6,
                                 borderRadius: '50%',
                                 background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
                                 flexShrink: 0,
-                                opacity: 0.5,
+                                opacity: 0.7,
                               }}
                             />
                             <span
@@ -386,36 +368,36 @@ export default function Projects() {
                           </div>
 
                           {/* PI */}
-                          <div className="flex items-center gap-2">
-                            <div style={{ width: 24, height: 24, flexShrink: 0 }}>
+                          <div className="flex items-center gap-1.5">
+                            <div style={{ width: 22, height: 22, flexShrink: 0 }}>
                               <Avatar
                                 name={pi.name}
                                 initials={pi.initials}
                                 photoUrl={pi.photoUrl}
                                 size="sm"
                                 variant="ice"
-                                className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[9px]"
+                                className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[8px]"
                               />
                             </div>
                             <span
                               style={{
                                 fontFamily: 'var(--font-body)',
-                                fontSize: '13px',
+                                fontSize: '12px',
                                 color: 'var(--slate)',
-                                opacity: 0.7,
+                                opacity: 0.6,
                               }}
                             >
                               {pi.name.split(' ').pop()}
                             </span>
                           </div>
 
-                          {/* Category — small muted pill */}
+                          {/* Category */}
                           <span
                             style={{
                               fontFamily: 'var(--font-body)',
                               fontSize: '11px',
                               color: 'var(--slate)',
-                              opacity: 0.5,
+                              opacity: 0.4,
                             }}
                           >
                             {catLabel}
@@ -605,7 +587,15 @@ export default function Projects() {
         }
 
         .project-list-row:hover {
-          background: rgba(15, 25, 35, 0.025) !important;
+          background: rgba(201, 168, 76, 0.04) !important;
+        }
+
+        .new-project-btn:hover {
+          background: rgba(45, 138, 138, 0.06) !important;
+        }
+
+        .filter-pill:hover {
+          background: rgba(15, 25, 35, 0.04);
         }
 
         /* Dark mode overrides */
@@ -619,7 +609,7 @@ export default function Projects() {
           background: #1a2a3a !important;
         }
         .dark .project-list-row:hover {
-          background: rgba(255, 255, 255, 0.03) !important;
+          background: rgba(201, 168, 76, 0.04) !important;
         }
       `}</style>
     </div>

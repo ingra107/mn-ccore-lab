@@ -5,7 +5,7 @@ import { directors } from '../data/team'
 import { getAllMembers } from '../data/team'
 import type { Project } from '../data/types'
 
-const CATEGORY_BORDER: Record<string, string> = {
+const CATEGORY_DOT: Record<string, string> = {
   clif: 'var(--maroon)',
   lab: 'var(--teal)',
   nate: 'var(--gold)',
@@ -30,7 +30,7 @@ interface ProjectCardProps {
 
 export default function ProjectCard({ project }: ProjectCardProps) {
   const pi = getPiInfo(project.pi)
-  const borderColor = CATEGORY_BORDER[project.category] ?? 'var(--slate)'
+  const dotColor = CATEGORY_DOT[project.category] ?? 'var(--slate)'
 
   const cardContent = (
     <motion.div
@@ -42,48 +42,61 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       className="project-card"
       style={{
         background: 'var(--cream)',
-        borderRadius: '10px',
-        borderLeft: `4px solid ${borderColor}`,
-        padding: '18px 20px',
+        borderRadius: '8px',
+        padding: '16px 18px',
         cursor: 'pointer',
+        boxShadow: '0 1px 2px rgba(15, 25, 35, 0.04)',
         transition: 'box-shadow 0.2s ease, background 0.15s ease',
       }}
     >
-      {/* Title */}
-      <h4
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontWeight: 600,
-          fontSize: '13.5px',
-          color: 'var(--ink)',
-          lineHeight: 1.4,
-          margin: 0,
-        }}
-      >
-        {project.title}
-      </h4>
+      {/* Title with category dot */}
+      <div className="flex items-start gap-2">
+        <span
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: dotColor,
+            flexShrink: 0,
+            opacity: 0.7,
+            marginTop: '6px',
+          }}
+        />
+        <h4
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontWeight: 600,
+            fontSize: '13.5px',
+            color: 'var(--ink)',
+            lineHeight: 1.4,
+            margin: 0,
+          }}
+        >
+          {project.title}
+        </h4>
+      </div>
 
       {/* PI — small, muted */}
       <div
         className="flex items-center gap-1.5"
-        style={{ marginTop: '8px' }}
+        style={{ marginTop: '8px', marginLeft: '14px' }}
       >
-        <div style={{ width: 20, height: 20, flexShrink: 0 }}>
+        <div style={{ width: 18, height: 18, flexShrink: 0 }}>
           <Avatar
             name={pi.name}
             initials={pi.initials}
             photoUrl={pi.photoUrl}
             size="sm"
             variant="ice"
-            className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[8px]"
+            className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[7px]"
           />
         </div>
         <span
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: '11.5px',
+            fontSize: '11px',
             color: 'var(--slate)',
-            opacity: 0.7,
+            opacity: 0.6,
           }}
         >
           {pi.name.split(' ').pop()}
