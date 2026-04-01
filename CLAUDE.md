@@ -9,7 +9,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (370+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (390+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Data | TanStack Query v5 + Cloudflare D1 (19 tables, 60+ endpoints) -- ALL LIVE |
@@ -128,6 +128,22 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - SectionHeader, ToggleButton, MetricCard, BentoCard: lighter weights
 - Undo toast system, workload visibility, task click bug fix
 - CLAUDE.md: 9 design principles from LabSync + UX research
+
+**Phase 17: COMPLETE** (7 commits). UX interaction layer + visual consistency:
+- PageHeader: standardized across all 18 portal pages (LabSync Pattern 3)
+- EmptyState: consistent empty states with icon+title+subtitle+CTA
+- LoadingSkeleton: Table/Card/Text skeletons replacing all loading spinners
+- Task keyboard shortcuts: J/K nav, Space peek, S status cycle, X select, Enter detail
+- TaskPeekOverlay: Linear-style right-side panel (400px, slide-in)
+- InlineAssigneePicker: avatar dropdown for assignee editing in grid
+- InlineDatePicker: date editing with overdue detection
+- CollapsibleSection: progressive disclosure in TaskDetailPanel
+- Board enhancements: column collapse + swimlanes (group by status/priority/assignee)
+- Status color transitions (150ms), task completion animation (Todoist-style)
+- Hover row actions (Edit/Archive/Add to Meeting ghost buttons)
+- Portal heading weights reduced (h1:600, h2:500, h3:400)
+- Card hover stabilized (no layout-shifting translateY)
+- Density toggle verified across data pages
 
 ## Meeting Cadence
 
