@@ -30,7 +30,7 @@ const TOPIC_DISPLAY: Record<string, string> = {
 const TOPIC_COLORS: Record<string, string> = {
   clif: '#3b82f6',
   covid: '#dc2626',
-  ventilation: '#16a34a',
+  ventilation: 'var(--green)',
   'decision-making': '#9333ea',
   quality: '#d97706',
   sepsis: '#db2777',

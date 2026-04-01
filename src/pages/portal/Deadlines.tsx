@@ -315,7 +315,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 
         {/* Priority */}
         {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ fontFamily: 'var(--font-sans)', color: item.priority === 'urgent' ? 'var(--maroon)' : '#c2410c', backgroundColor: item.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
+          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ fontFamily: 'var(--font-sans)', color: item.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: item.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
             {item.priority}
           </span>
         )}

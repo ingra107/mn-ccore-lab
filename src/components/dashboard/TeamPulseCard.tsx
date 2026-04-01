@@ -40,7 +40,7 @@ export default function TeamPulseCard() {
           <div
             style={{
               width: 8, height: 8, borderRadius: '50%',
-              background: activeThisWeek > 0 ? '#22c55e' : 'rgba(100, 116, 139, 0.3)',
+              background: activeThisWeek > 0 ? 'var(--green-light)' : 'rgba(100, 116, 139, 0.3)',
               boxShadow: activeThisWeek > 0 ? '0 0 6px rgba(34, 197, 94, 0.4)' : 'none',
               flexShrink: 0,
               animation: activeThisWeek > 0 ? 'status-pulse 2s ease-in-out infinite' : 'none',
@@ -125,7 +125,7 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
         ) : (
           <span style={{
             fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700,
-            color: isActive ? '#22c55e' : 'var(--slate)', opacity: isActive ? 1 : 0.45,
+            color: isActive ? 'var(--green-light)' : 'var(--slate)', opacity: isActive ? 1 : 0.45,
           }}>
             {initials}
           </span>
@@ -133,7 +133,7 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
       </div>
       <div style={{
         position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: '50%',
-        background: isActive ? '#22c55e' : 'rgba(100, 116, 139, 0.25)',
+        background: isActive ? 'var(--green-light)' : 'rgba(100, 116, 139, 0.25)',
         border: '1.5px solid var(--cream)',
         boxShadow: isActive ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none',
       }} />

@@ -307,7 +307,7 @@ export default function AnalyticsPage() {
                 'Idea': 'var(--slate)',
                 'Data Collection': 'var(--teal)',
                 'Analysis': 'var(--gold)',
-                'Writing': '#c2410c',
+                'Writing': 'var(--orange)',
                 'Review': 'var(--maroon)',
                 'Published': 'var(--green, #22c55e)',
               }
@@ -331,7 +331,7 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-3">
             {(['urgent', 'high', 'medium', 'low'] as const).map((p) => {
               const count = tasksByPriority.get(p) || 0
-              const colors: Record<string, string> = { urgent: 'var(--maroon)', high: '#c2410c', medium: 'var(--gold)', low: 'var(--slate)' }
+              const colors: Record<string, string> = { urgent: 'var(--maroon)', high: 'var(--orange)', medium: 'var(--gold)', low: 'var(--slate)' }
               return (
                 <div key={p} className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded" style={{ backgroundColor: colors[p] }} />

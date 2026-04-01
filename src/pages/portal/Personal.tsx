@@ -158,7 +158,7 @@ export default function Personal() {
           <QuickStat
             label="High Priority"
             value={urgentTasks.length}
-            color="#c2410c"
+            color="var(--orange)"
             icon={TrendingUp}
           />
         )}
@@ -344,7 +344,7 @@ function MyTasksCard({ tasks, onStatusChange }: { tasks: TaskRow[]; onStatusChan
                 {task.title || task.description}
               </span>
               {task.priority === 'urgent' || task.priority === 'high' ? (
-                <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ fontFamily: 'var(--font-sans)', color: task.priority === 'urgent' ? 'var(--maroon)' : '#c2410c', backgroundColor: task.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
+                <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ fontFamily: 'var(--font-sans)', color: task.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: task.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
                   {task.priority}
                 </span>
               ) : null}
@@ -522,7 +522,7 @@ function LabHealthCard({ health }: { health: { total: number; green: number; yel
   return (
     <BentoCard title="Lab Health" subtitle={`${health.total} projects`} icon={TrendingUp}>
       <div className="flex items-center gap-4 py-2">
-        <HealthDot color="#22c55e" label="Healthy" count={health.green} />
+        <HealthDot color="var(--green-light)" label="Healthy" count={health.green} />
         <HealthDot color="var(--gold)" label="Needs Attention" count={health.yellow} />
         <HealthDot color="var(--maroon)" label="Stale" count={health.red} />
       </div>

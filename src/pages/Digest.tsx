@@ -51,13 +51,13 @@ function parseTopics(topicsJson: string | null): string[] {
 }
 
 function relevanceColor(score: number): { bg: string; text: string; label: string } {
-  if (score >= 0.7) return { bg: 'rgba(34, 197, 94, 0.12)', text: '#16a34a', label: 'High' }
+  if (score >= 0.7) return { bg: 'rgba(34, 197, 94, 0.12)', text: 'var(--green)', label: 'High' }
   if (score >= 0.4) return { bg: 'rgba(201, 168, 76, 0.15)', text: 'var(--gold)', label: 'Medium' }
   return { bg: 'rgba(100, 116, 139, 0.1)', text: 'var(--slate)', label: 'Low' }
 }
 
 function relevanceColorDark(score: number): { bg: string; text: string } {
-  if (score >= 0.7) return { bg: 'rgba(34, 197, 94, 0.15)', text: '#4ade80' }
+  if (score >= 0.7) return { bg: 'rgba(34, 197, 94, 0.15)', text: 'var(--green-light)' }
   if (score >= 0.4) return { bg: 'rgba(201, 168, 76, 0.2)', text: '#c9a84c' }
   return { bg: 'rgba(100, 116, 139, 0.15)', text: '#94a3b8' }
 }

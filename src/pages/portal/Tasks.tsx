@@ -216,7 +216,7 @@ export default function Tasks() {
               style={{
                 fontFamily: 'var(--font-sans)',
                 backgroundColor: showCompleted ? 'rgba(34,197,94,0.1)' : 'transparent',
-                color: showCompleted ? '#16a34a' : 'var(--slate)',
+                color: showCompleted ? 'var(--green)' : 'var(--slate)',
                 border: `1px solid ${showCompleted ? 'rgba(34,197,94,0.3)' : 'var(--border-light)'}`,
                 cursor: 'pointer',
                 opacity: showCompleted ? 1 : 0.5,

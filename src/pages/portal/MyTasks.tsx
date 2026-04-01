@@ -303,7 +303,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange }: {
     'Today': 'var(--teal)',
     'This Week': 'var(--gold)',
     'Urgent': 'var(--maroon)',
-    'High': '#c2410c',
+    'High': 'var(--orange)',
     'In Progress': 'var(--teal)',
     'Blocked': 'var(--maroon)',
   }

@@ -76,7 +76,7 @@ export default function ActionBoardCard() {
                                 </span>
                               )}
                               {item.priority && item.priority !== 'medium' && (
-                                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? '#c2410c' : 'var(--slate)', opacity: 0.7 }}>
+                                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? 'var(--orange)' : 'var(--slate)', opacity: 0.7 }}>
                                   {item.priority}
                                 </span>
                               )}

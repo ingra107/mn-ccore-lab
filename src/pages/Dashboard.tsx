@@ -116,7 +116,7 @@ export default function Dashboard() {
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  background: '#22c55e',
+                  background: 'var(--green-light)',
                   boxShadow: '0 0 8px rgba(34, 197, 94, 0.4)',
                   animation: 'status-pulse 2s ease-in-out infinite',
                 }}

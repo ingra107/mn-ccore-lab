@@ -5,7 +5,7 @@ import BentoCard from './BentoCard'
 import { useProjectHealth } from '../../hooks/useApiData'
 
 const HEALTH_COLORS: Record<string, string> = {
-  green: '#22c55e',
+  green: 'var(--green-light)',
   yellow: '#eab308',
   red: '#ef4444',
 }

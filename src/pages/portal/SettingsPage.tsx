@@ -140,7 +140,7 @@ export default function SettingsPage() {
                         { bg: 'rgba(45,138,138,0.1)', text: 'var(--teal)', border: 'rgba(45,138,138,0.3)' },
                         { bg: 'rgba(201,168,76,0.1)', text: 'var(--gold)', border: 'rgba(201,168,76,0.3)' },
                         { bg: 'rgba(122,0,25,0.08)', text: 'var(--maroon)', border: 'rgba(122,0,25,0.2)' },
-                        { bg: 'rgba(34,197,94,0.1)', text: '#16a34a', border: 'rgba(34,197,94,0.3)' },
+                        { bg: 'rgba(34,197,94,0.1)', text: 'var(--green)', border: 'rgba(34,197,94,0.3)' },
                         { bg: 'rgba(59,130,246,0.1)', text: '#2563eb', border: 'rgba(59,130,246,0.3)' },
                         { bg: 'rgba(168,85,247,0.1)', text: '#7c3aed', border: 'rgba(168,85,247,0.3)' },
                       ]

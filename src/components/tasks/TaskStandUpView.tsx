@@ -141,7 +141,7 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
               {/* Workload dot */}
               <div style={{
                 width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                background: activeCount >= 7 ? 'var(--maroon)' : activeCount >= 4 ? 'var(--gold)' : '#22c55e',
+                background: activeCount >= 7 ? 'var(--maroon)' : activeCount >= 4 ? 'var(--gold)' : 'var(--green-light)',
                 boxShadow: activeCount >= 7 ? '0 0 6px rgba(122,0,25,0.4)' : 'none',
               }} title={`${activeCount} open tasks`} />
             </div>

@@ -29,7 +29,7 @@ const statusOptions = [
 const priorityOptions = [
   { value: 'low', label: 'Low', color: 'var(--slate)' },
   { value: 'medium', label: 'Medium', color: 'var(--gold)' },
-  { value: 'high', label: 'High', color: '#c2410c' },
+  { value: 'high', label: 'High', color: 'var(--orange)' },
   { value: 'urgent', label: 'Urgent', color: 'var(--maroon)' },
 ]
 

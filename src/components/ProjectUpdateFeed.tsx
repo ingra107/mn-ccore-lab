@@ -14,7 +14,7 @@ import ReactionBar from './ReactionBar'
 const TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; borderBg: string; label: string }> = {
   progress: { icon: TrendingUp, color: 'var(--teal)', bg: 'rgba(45, 138, 138, 0.1)', borderBg: 'rgba(45, 138, 138, 0.25)', label: 'Progress' },
   blocker: { icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122, 0, 25, 0.1)', borderBg: 'rgba(122, 0, 25, 0.25)', label: 'Blocker' },
-  result: { icon: CheckCircle, color: '#22c55e', bg: 'rgba(34, 197, 94, 0.1)', borderBg: 'rgba(34, 197, 94, 0.25)', label: 'Result' },
+  result: { icon: CheckCircle, color: 'var(--green-light)', bg: 'rgba(34, 197, 94, 0.1)', borderBg: 'rgba(34, 197, 94, 0.25)', label: 'Result' },
   question: { icon: HelpCircle, color: 'var(--gold)', bg: 'rgba(201, 168, 76, 0.1)', borderBg: 'rgba(201, 168, 76, 0.25)', label: 'Question' },
 }
 

@@ -17,7 +17,7 @@ const TOPIC_DISPLAY: Record<string, string> = {
 const TOPIC_COLORS: Record<string, { bg: string; color: string; darkBg: string; darkColor: string }> = {
   clif: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', darkBg: 'rgba(96, 165, 250, 0.15)', darkColor: '#60a5fa' },
   covid: { bg: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', darkBg: 'rgba(248, 113, 113, 0.15)', darkColor: '#f87171' },
-  ventilation: { bg: 'rgba(34, 197, 94, 0.1)', color: '#16a34a', darkBg: 'rgba(74, 222, 128, 0.15)', darkColor: '#4ade80' },
+  ventilation: { bg: 'rgba(34, 197, 94, 0.1)', color: 'var(--green)', darkBg: 'rgba(74, 222, 128, 0.15)', darkColor: 'var(--green-light)' },
   'decision-making': { bg: 'rgba(168, 85, 247, 0.1)', color: '#9333ea', darkBg: 'rgba(192, 132, 252, 0.15)', darkColor: '#c084fc' },
   quality: { bg: 'rgba(245, 158, 11, 0.1)', color: '#d97706', darkBg: 'rgba(251, 191, 36, 0.15)', darkColor: '#fbbf24' },
   sepsis: { bg: 'rgba(236, 72, 153, 0.1)', color: '#db2777', darkBg: 'rgba(244, 114, 182, 0.15)', darkColor: '#f472b6' },
@@ -347,7 +347,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                     style={{
                       fontFamily: 'var(--font-sans)',
                       background: 'transparent',
-                      color: copied ? '#16a34a' : 'var(--slate)',
+                      color: copied ? 'var(--green)' : 'var(--slate)',
                       border: '1px solid rgba(201, 168, 76, 0.15)',
                       minHeight: '32px',
                     }}

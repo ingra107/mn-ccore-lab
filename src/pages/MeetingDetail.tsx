@@ -41,7 +41,7 @@ function parseJsonArray(s: string | null): string[] {
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   upcoming: { bg: 'rgba(45, 138, 138, 0.15)', text: 'var(--teal)' },
   'in-progress': { bg: 'rgba(201, 168, 76, 0.15)', text: 'var(--gold)' },
-  completed: { bg: 'rgba(34, 197, 94, 0.12)', text: '#22c55e' },
+  completed: { bg: 'rgba(34, 197, 94, 0.12)', text: 'var(--green-light)' },
 }
 
 const AGENDA_TYPE_ICONS: Record<string, typeof Lightbulb> = {

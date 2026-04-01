@@ -25,7 +25,7 @@ const statusOptions = [
 
 const priorityConfig: Record<string, { label: string; color: string; bg: string }> = {
   urgent: { label: 'Urgent', color: 'var(--maroon)', bg: 'rgba(122, 0, 25, 0.1)' },
-  high: { label: 'High', color: '#c2410c', bg: 'rgba(194, 65, 12, 0.1)' },
+  high: { label: 'High', color: 'var(--orange)', bg: 'rgba(194, 65, 12, 0.1)' },
   medium: { label: 'Med', color: 'var(--gold)', bg: 'rgba(201, 168, 76, 0.1)' },
   low: { label: 'Low', color: 'var(--slate)', bg: 'rgba(100, 116, 139, 0.1)' },
 }

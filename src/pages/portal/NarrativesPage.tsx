@@ -10,7 +10,7 @@ const STAGE_COLORS: Record<string, string> = {
   Analysis: '#2d8a8a',
   Writing: '#c9a84c',
   Review: '#7a0019',
-  Published: '#22c55e',
+  Published: 'var(--green-light)',
 }
 
 export default function NarrativesPage() {

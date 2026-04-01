@@ -283,7 +283,7 @@ export default function Manuscripts() {
                           <InlineSelect
                             value={project.status || 'Active'}
                             options={[
-                              { value: 'Active', label: 'Active', color: '#16a34a' },
+                              { value: 'Active', label: 'Active', color: 'var(--green)' },
                               { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
                               { value: 'Completed', label: 'Done', color: 'var(--slate)' },
                             ]}
