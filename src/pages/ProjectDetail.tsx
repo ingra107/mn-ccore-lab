@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -24,17 +24,21 @@ import {
   Scale,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useProjects, useMeetingsApi, useActionItems, useProjectPapers, useProjectDependencies, useDecisions } from '../hooks/useApiData'
+import { useProjects, useMeetingsApi, useActionItems, useProjectPapers, useProjectDependencies, useDecisions, useTasks } from '../hooks/useApiData'
 import type { DecisionRow } from '../hooks/useApiData'
-import { useUpdateProject, useAddAgendaItem, useToggleActionItem, usePostProjectUpdate, useUnlinkPaper, useCreateDependency, useDeleteDependency } from '../hooks/useMutations'
+import { useUpdateProject, useAddAgendaItem, useToggleActionItem, usePostProjectUpdate, useUnlinkPaper, useCreateDependency, useDeleteDependency, useUpdateTaskStatus } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import { formatMediumDate, formatTimestamp } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
+import InlineSelect from '../components/InlineSelect'
 import WatchButton from '../components/WatchButton'
 import ProjectComments from '../components/ProjectComments'
 import ProjectUpdateFeed from '../components/ProjectUpdateFeed'
+import TaskCard from '../components/tasks/TaskCard'
 import type { Project, ActionItem } from '../data/types'
+
+type Tab = 'overview' | 'tasks' | 'activity' | 'literature'
 
 const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
 
@@ -47,12 +51,6 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; label: string 
   nate: { bg: 'var(--gold)', text: '#0f1923', label: 'Mesfin' },
 }
 
-const STATUS_CLASSES: Record<string, string> = {
-  Active: 'badge-active',
-  'In Review': 'badge-review',
-  Published: 'badge-published',
-  'In Preparation': 'badge-preparation',
-}
 
 export default function ProjectDetail() {
   const { slug } = useParams<{ slug: string }>()
@@ -119,6 +117,15 @@ function ProjectDetailInner({ project }: InnerProps) {
   const { isAuthenticated, user } = useAuth()
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
 
+  // Tabs
+  const [activeTab, setActiveTab] = useState<Tab>('overview')
+
+  // Tasks for this project
+  const { data: projectTasks = [] } = useTasks({ project: project.slug })
+  const updateTaskStatus = useUpdateTaskStatus()
+  const pendingTasks = projectTasks.filter((t) => !t.completed)
+  const completedTasks = projectTasks.filter((t) => t.completed)
+
   // Copy link
   const [copied, setCopied] = useState(false)
   const handleCopyLink = () => {
@@ -141,7 +148,6 @@ function ProjectDetailInner({ project }: InnerProps) {
     label: project.category,
   }
   const pi = getPersonInfo(project.pi)
-  const statusClass = STATUS_CLASSES[project.status] ?? 'badge-preparation'
 
   // Stage changer state
   const [confirmStage, setConfirmStage] = useState<Stage | null>(null)
@@ -223,60 +229,114 @@ function ProjectDetailInner({ project }: InnerProps) {
     <>
       <Breadcrumb backTo="/projects" backLabel="Projects" current={project.title} />
 
-      {/* Header section */}
+      {/* ── Compact Header ── */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.2 }}
+        style={{ marginBottom: '16px' }}
       >
-        {/* Badges row */}
-        <div className="flex flex-wrap items-center gap-2 mb-3">
+        {/* Title row */}
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 700,
+                fontSize: 'clamp(1.25rem, 3vw, 1.75rem)',
+                color: 'var(--ink)',
+                margin: 0,
+                lineHeight: 1.2,
+              }}
+            >
+              {project.title}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={handleCopyLink}
+              className="p-1.5 rounded-md transition-colors hover:bg-black/5"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--teal)' : 'var(--slate)', opacity: copied ? 1 : 0.3 }}
+              title={copied ? 'Link copied!' : 'Copy link'}
+            >
+              {copied ? <Check size={14} /> : <Link2 size={14} />}
+            </button>
+            <WatchButton id={project.slug} type="project" label={project.title} slug={project.slug} />
+          </div>
+        </div>
+
+        {/* Meta row: category dot, PI, status, stage, agenda button */}
+        <div className="flex flex-wrap items-center gap-3">
           <span
-            className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
-            style={{
-              background: cat.bg,
-              color: cat.text,
-              fontFamily: 'var(--font-sans)',
-              fontSize: '11px',
-              letterSpacing: '0.04em',
-            }}
+            className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium"
+            style={{ background: cat.bg, color: cat.text, fontFamily: 'var(--font-sans)', letterSpacing: '0.04em' }}
           >
             {cat.label}
           </span>
-          <span className={`badge ${statusClass}`}>{project.status}</span>
 
-          {/* Add to meeting agenda button — only when authenticated and a meeting exists */}
+          <div className="flex items-center gap-1.5">
+            <div style={{ width: 24, height: 24, flexShrink: 0 }}>
+              <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm" variant="gold" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[8px]" />
+            </div>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)' }}>{pi.name}</span>
+          </div>
+
+          <div style={{ width: '1px', height: '16px', background: 'var(--border-subtle)' }} />
+
+          <InlineSelect
+            value={project.status || 'Active'}
+            options={[
+              { value: 'Active', label: 'Active', color: 'var(--green)' },
+              { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
+              { value: 'Completed', label: 'Done', color: 'var(--slate)' },
+            ]}
+            onChange={(val) => d1Update.mutate({ status: val } as Partial<Project>)}
+          />
+
+          <InlineSelect
+            value={project.stage || 'Idea'}
+            options={STAGES.map((s) => ({ value: s, label: s }))}
+            onChange={(val) => d1Update.mutate({ stage: val } as Partial<Project>)}
+          />
+
           {isAuthenticated && nextUpcomingMeeting && (
-            <motion.button
-              type="button"
+            <button
               onClick={() => setShowAgendaForm(!showAgendaForm)}
-              className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px]"
               style={{
-                background: showAgendaForm ? 'var(--gold)' : 'rgba(201, 168, 76, 0.1)',
+                background: showAgendaForm ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
                 color: showAgendaForm ? '#0f1923' : 'var(--gold)',
-                border: '1px solid rgba(201, 168, 76, 0.25)',
-                fontFamily: 'var(--font-body)',
-                fontSize: '11px',
+                border: '1px solid rgba(201,168,76,0.2)',
+                fontFamily: 'var(--font-sans)',
                 fontWeight: 500,
-                marginLeft: '4px',
-                transition: 'all 0.2s',
+                cursor: 'pointer',
               }}
-              whileTap={{ scale: 0.95 }}
             >
-              <CalendarPlus size={12} />
-              Add to meeting agenda
-            </motion.button>
+              <CalendarPlus size={11} />
+              Agenda
+            </button>
+          )}
+
+          {pendingTasks.length > 0 && (
+            <span
+              className="inline-flex items-center gap-1 text-[11px]"
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', fontWeight: 500 }}
+            >
+              <CheckCircle2 size={12} />
+              {pendingTasks.length} task{pendingTasks.length !== 1 ? 's' : ''}
+            </span>
           )}
         </div>
+      </motion.div>
 
-        {/* Inline agenda form */}
-        <AnimatePresence>
-          {showAgendaForm && nextUpcomingMeeting && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden"
+      {/* Inline agenda form */}
+      <AnimatePresence>
+        {showAgendaForm && nextUpcomingMeeting && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
               style={{ marginBottom: '12px' }}
             >
               <div
@@ -363,80 +423,37 @@ function ProjectDetailInner({ project }: InnerProps) {
           )}
         </AnimatePresence>
 
-        {/* Title + PI */}
-        <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-6">
-          <div style={{ flex: 1 }}>
-            <div className="flex items-start gap-2">
-              <h1
-                style={{
-                  fontFamily: 'var(--font-sans)',
-                  fontWeight: 800,
-                  fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)',
-                  color: 'var(--ink)',
-                margin: 0,
-                lineHeight: 1.15,
-              }}
-            >
-              {project.title}
-            </h1>
-              <button
-                onClick={handleCopyLink}
-                className="mt-2 p-1.5 rounded-md transition-colors hover:bg-black/5 flex-shrink-0"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--teal)' : 'var(--slate)', opacity: copied ? 1 : 0.3 }}
-                title={copied ? 'Link copied!' : 'Copy link to this project'}
-              >
-                {copied ? <Check size={16} /> : <Link2 size={16} />}
-              </button>
-              <div className="mt-2 flex-shrink-0">
-                <WatchButton id={project.slug} type="project" label={project.title} slug={project.slug} />
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div style={{ width: 36, height: 36 }}>
-              <Avatar
-                name={pi.name}
-                initials={pi.initials}
-                photoUrl={pi.photoUrl}
-                size="sm"
-                variant="gold"
-                className="!w-9 !h-9 !min-w-0 !min-h-0"
-              />
-            </div>
-            <span
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '14px',
-                color: 'var(--slate)',
-                fontWeight: 500,
-              }}
-            >
-              {pi.name}
-            </span>
-          </div>
-        </div>
+      {/* Tab navigation */}
+      <div
+        className="flex items-center gap-1 mb-6 pb-2 overflow-x-auto"
+        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+      >
+        {([
+          { id: 'overview' as Tab, label: 'Overview' },
+          { id: 'tasks' as Tab, label: `Tasks${pendingTasks.length ? ` (${pendingTasks.length})` : ''}` },
+          { id: 'activity' as Tab, label: 'Activity' },
+          { id: 'literature' as Tab, label: 'Literature' },
+        ]).map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              color: activeTab === tab.id ? 'var(--teal)' : 'var(--slate)',
+              backgroundColor: activeTab === tab.id ? 'rgba(45,138,138,0.08)' : 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              opacity: activeTab === tab.id ? 1 : 0.6,
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-        {/* Gold rule */}
-        <div
-          style={{
-            height: '1px',
-            background: 'linear-gradient(to right, var(--gold), transparent)',
-            opacity: 0.3,
-            marginBottom: '1rem',
-          }}
-        />
-      </motion.div>
-
-      {/* Section navigation */}
-      <SectionNav sections={[
-        { id: 'overview', label: 'Overview' },
-        { id: 'decisions', label: 'Decisions' },
-        { id: 'dependencies', label: 'Dependencies' },
-        { id: 'updates', label: 'Updates' },
-        { id: 'action-items', label: 'Action Items' },
-        { id: 'comments', label: 'Comments' },
-        { id: 'literature', label: 'Literature' },
-      ]} />
+      {/* ── OVERVIEW TAB ── */}
+      {activeTab === 'overview' && (<>
 
       {/* Strategic Context — Why This Matters Now */}
       {(project.strategic_context || isPi) && (
@@ -1093,6 +1110,61 @@ function ProjectDetailInner({ project }: InnerProps) {
         </motion.div>
       </div>
 
+      </>)}
+
+      {/* ── TASKS TAB ── */}
+      {activeTab === 'tasks' && (
+        <div className="table-container" style={{ padding: '16px 20px', marginBottom: '2rem' }}>
+          {pendingTasks.length === 0 && completedTasks.length === 0 ? (
+            <div className="text-center py-12">
+              <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 12px' }} />
+              <p style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', color: 'var(--slate)', opacity: 0.5 }}>
+                No tasks for this project
+              </p>
+            </div>
+          ) : (
+            <>
+              {pendingTasks.length > 0 && (
+                <div className="flex flex-col gap-2 mb-4">
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Active ({pendingTasks.length})
+                  </span>
+                  {pendingTasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onStatusChange={(id, status) => updateTaskStatus.mutate({ id, status })}
+                    />
+                  ))}
+                </div>
+              )}
+              {completedTasks.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.35, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Done ({completedTasks.length})
+                  </span>
+                  {completedTasks.slice(0, 5).map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onStatusChange={(id, status) => updateTaskStatus.mutate({ id, status })}
+                    />
+                  ))}
+                  {completedTasks.length > 5 && (
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'var(--slate)', opacity: 0.4, paddingLeft: '4px' }}>
+                      +{completedTasks.length - 5} more completed
+                    </span>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── ACTIVITY TAB ── */}
+      {activeTab === 'activity' && (<>
+
       {/* Decisions */}
       <ProjectDecisionsSection projectSlug={project.slug} />
 
@@ -1109,8 +1181,11 @@ function ProjectDetailInner({ project }: InnerProps) {
         <ProjectComments projectSlug={project.slug} />
       </div>
 
-      {/* Related Literature — living literature review */}
-      <div id="literature" style={{ scrollMarginTop: '60px', marginBottom: '2.5rem' }}>
+      </>)}
+
+      {/* ── LITERATURE TAB ── */}
+      {activeTab === 'literature' && (
+      <div style={{ marginBottom: '2.5rem' }}>
         <div className="flex items-center gap-2 mb-3">
           <BookOpen size={16} style={{ color: 'var(--gold)' }} />
           <h2
@@ -1258,7 +1333,10 @@ function ProjectDetailInner({ project }: InnerProps) {
           )}
         </div>
       </div>
+      )}
 
+      {/* Action items — rendered inside Activity tab */}
+      {activeTab === 'activity' && (<>
       {/* Action items from meetings */}
       <motion.div
         id="action-items"
@@ -1387,6 +1465,8 @@ function ProjectDetailInner({ project }: InnerProps) {
           )}
         </div>
       </motion.div>
+
+      </>)}
 
       {/* Scoped dark mode styles */}
       <style>{`
@@ -2021,55 +2101,3 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
   )
 }
 
-// ── Section Navigation ──────────────────────────────────────────
-function SectionNav({ sections }: { sections: { id: string; label: string }[] }) {
-  const [active, setActive] = useState(sections[0]?.id)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActive(entry.target.id)
-          }
-        }
-      },
-      { rootMargin: '-80px 0px -60% 0px', threshold: 0 }
-    )
-
-    for (const section of sections) {
-      const el = document.getElementById(section.id)
-      if (el) observer.observe(el)
-    }
-
-    return () => observer.disconnect()
-  }, [sections])
-
-  return (
-    <div
-      className="flex items-center gap-1 mb-6 pb-2 overflow-x-auto"
-      style={{ borderBottom: '1px solid var(--border-subtle)' }}
-    >
-      {sections.map((s) => (
-        <button
-          key={s.id}
-          onClick={() => {
-            const el = document.getElementById(s.id)
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }}
-          className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap"
-          style={{
-            fontFamily: 'var(--font-sans)',
-            color: active === s.id ? 'var(--teal)' : 'var(--slate)',
-            backgroundColor: active === s.id ? 'rgba(45,138,138,0.08)' : 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            opacity: active === s.id ? 1 : 0.6,
-          }}
-        >
-          {s.label}
-        </button>
-      ))}
-    </div>
-  )
-}
