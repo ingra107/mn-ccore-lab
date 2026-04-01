@@ -191,7 +191,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
             <span
               className="text-xs font-medium px-2 py-1 rounded"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 background: 'rgba(201, 168, 76, 0.1)',
                 color: 'var(--gold)',
               }}
@@ -290,7 +290,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                           key={t}
                           className="inline-flex items-center px-2.5 py-1 rounded-full"
                           style={{
-                            fontFamily: 'var(--font-mono)',
+                            fontFamily: 'var(--font-sans)',
                             fontSize: '11px',
                             background: tc.bg,
                             color: tc.color,
@@ -311,7 +311,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                       rel="noopener noreferrer"
                       className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                       style={{
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--font-sans)',
                         background: 'rgba(201, 168, 76, 0.1)',
                         color: 'var(--gold)',
                         border: '1px solid rgba(201, 168, 76, 0.2)',
@@ -329,7 +329,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                       rel="noopener noreferrer"
                       className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                       style={{
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--font-sans)',
                         background: 'rgba(201, 168, 76, 0.08)',
                         color: 'var(--gold)',
                         border: '1px solid rgba(201, 168, 76, 0.15)',
@@ -345,7 +345,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                     onClick={handleCopy}
                     className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       background: 'transparent',
                       color: copied ? '#16a34a' : 'var(--slate)',
                       border: '1px solid rgba(201, 168, 76, 0.15)',
@@ -369,7 +369,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                     onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       background: 'transparent',
                       color: 'var(--teal)',
                       border: '1px solid rgba(45, 138, 138, 0.15)',

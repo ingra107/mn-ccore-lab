@@ -104,7 +104,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
             {item.due_date && (
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   color: overdue ? 'var(--maroon)' : 'var(--slate)',
                   opacity: overdue ? 1 : 0.7,
@@ -121,7 +121,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
                 {item.due_date && <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>}
                 <span
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: 'var(--slate)',
                     opacity: 0.5,
@@ -279,7 +279,7 @@ export default function MemberPage() {
             to={`/team/${slug}/cv`}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               background: 'var(--ice)',
               color: 'var(--slate)',
               border: '1px solid transparent',
@@ -301,7 +301,7 @@ export default function MemberPage() {
             to={`/team/${slug}/trajectory`}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               background: 'var(--ice)',
               color: 'var(--slate)',
               border: '1px solid transparent',
@@ -366,7 +366,7 @@ export default function MemberPage() {
                 border: '1px solid rgba(201, 168, 76, 0.1)',
               }}
             >
-              <span className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
+              <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
                 {mentee.mentor === 'shared'
                   ? 'Shared mentorship — Ingraham & Mesfin'
                   : `Mentor: ${mentee.mentor === 'nick' ? 'Nick Ingraham, MD' : 'Nathan Mesfin, MD'}`}
@@ -430,7 +430,7 @@ export default function MemberPage() {
                   {project.stage && (
                     <p
                       className="text-xs mt-2"
-                      style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.7 }}
+                      style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}
                     >
                       Stage: {project.stage}
                     </p>
@@ -474,7 +474,7 @@ export default function MemberPage() {
                     transition={{ duration: 0.15 }}
                     className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium"
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       background: 'rgba(201,168,76,0.12)',
                       color: 'var(--gold)',
                       border: '1px solid rgba(201,168,76,0.2)',
@@ -512,7 +512,7 @@ export default function MemberPage() {
                   onClick={() => setShowAddTag(true)}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all duration-200"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     background: 'transparent',
                     color: 'var(--slate)',
                     border: '1px dashed rgba(100,116,139,0.3)',
@@ -583,7 +583,7 @@ export default function MemberPage() {
                   disabled={!newTag.trim() || addExpertiseMut.isPending}
                   className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     background: newTag.trim() ? 'var(--gold)' : 'var(--ice)',
                     color: newTag.trim() ? 'var(--ink)' : 'var(--slate)',
                     border: 'none',
@@ -643,7 +643,7 @@ export default function MemberPage() {
                   {TOPIC_DISPLAY[topic] ?? topic}
                   <span
                     className="text-xs opacity-60"
-                    style={{ fontFamily: 'var(--font-mono)' }}
+                    style={{ fontFamily: 'var(--font-sans)' }}
                   >
                     {count}
                   </span>
@@ -654,7 +654,7 @@ export default function MemberPage() {
               <p
                 className="text-sm"
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '12px',
                   color: 'var(--slate)',
                 }}
@@ -693,7 +693,7 @@ export default function MemberPage() {
               {openCommitments.length > 0 && (
                 <span
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: 'var(--slate)',
                     opacity: 0.6,

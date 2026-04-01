@@ -16,7 +16,7 @@ interface ReflectionPanelProps {
 function RatingDots({ value, onChange, label }: { value: number | null; onChange: (v: number) => void; label: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6, width: 50, flexShrink: 0 }}>
+      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6, width: 50, flexShrink: 0 }}>
         {label}
       </span>
       <div className="flex gap-1">
@@ -79,11 +79,11 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
         style={{ background: 'rgba(201,168,76,0.03)', border: 'none', cursor: 'pointer' }}
       >
         <BookOpen size={14} style={{ color: 'var(--gold)', opacity: 0.6 }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
           End of Day
         </span>
         {hour < 16 && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.4 }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.4 }}>
             opens at 4pm
           </span>
         )}
@@ -103,7 +103,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
             <div className="space-y-3 pt-2">
               {/* Highlight */}
               <div>
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: 4 }}>
+                <label style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: 4 }}>
                   Highlight of the day
                 </label>
                 <input
@@ -122,7 +122,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
 
               {/* Learned */}
               <div>
-                <label style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: 4 }}>
+                <label style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: 4 }}>
                   What did I learn?
                 </label>
                 <input
@@ -152,7 +152,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   disabled={!hasContent}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
                   style={{
-                    fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 600,
+                    fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600,
                     background: hasContent ? 'var(--gold)' : 'rgba(201,168,76,0.15)',
                     color: hasContent ? '#fff' : 'var(--slate)',
                     border: 'none', cursor: hasContent ? 'pointer' : 'default',
@@ -169,7 +169,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0 }}
                       className="flex items-center gap-1"
-                      style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--teal)' }}
+                      style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--teal)' }}
                     >
                       <Sparkles size={12} /> Saved
                     </motion.span>

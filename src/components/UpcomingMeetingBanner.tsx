@@ -83,7 +83,7 @@ export default function UpcomingMeetingBanner() {
                 <p
                   className="text-xs mb-1"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     color: 'var(--gold)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.12em',
@@ -115,7 +115,7 @@ export default function UpcomingMeetingBanner() {
                   return fInfo ? (
                     <p
                       className="flex items-center gap-1.5 text-xs mt-1"
-                      style={{ color: 'var(--teal)', fontFamily: 'var(--font-mono)', margin: '4px 0 0 0' }}
+                      style={{ color: 'var(--teal)', fontFamily: 'var(--font-sans)', margin: '4px 0 0 0' }}
                     >
                       <UserCheck size={13} strokeWidth={1.5} aria-hidden="true" />
                       Facilitated by {fInfo.name}

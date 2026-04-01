@@ -118,7 +118,7 @@ export default function Contact() {
                     href="mailto:mnccore@umn.edu"
                     className="cursor-pointer text-sm transition-colors duration-200"
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       color: 'var(--maroon)',
                     }}
                   >
@@ -274,7 +274,7 @@ export default function Contact() {
                     href="mailto:mnccore@umn.edu"
                     className="cursor-pointer font-medium transition-colors duration-200"
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       color: 'var(--maroon)',
                       fontSize: '13px',
                     }}

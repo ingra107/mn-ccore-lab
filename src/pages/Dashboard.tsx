@@ -123,7 +123,7 @@ export default function Dashboard() {
               />
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   color: 'var(--slate)',
                   opacity: 0.6,
@@ -273,7 +273,7 @@ export default function Dashboard() {
               <Pin size={14} style={{ color: 'var(--gold)' }} />
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',

@@ -77,7 +77,7 @@ export default function RecentActivity() {
             to="/publications"
             className="text-xs flex items-center gap-1 transition-colors duration-200"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               color: 'var(--gold)',
               textDecoration: 'none',
             }}
@@ -123,7 +123,7 @@ export default function RecentActivity() {
                 <span
                   className="flex-shrink-0 text-xs"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     color: 'var(--slate)',
                     opacity: 0.7,
                     fontSize: '10px',

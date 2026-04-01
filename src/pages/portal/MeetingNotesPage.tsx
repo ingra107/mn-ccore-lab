@@ -90,16 +90,16 @@ export default function MeetingNotesPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{m.title}</p>
-                <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+                <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
                   {formatMediumDate(m.date)}
                 </span>
               </div>
               {m.notes ? (
-                <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: 'var(--green, #22c55e)', backgroundColor: 'rgba(34,197,94,0.08)' }}>
+                <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--green, #22c55e)', backgroundColor: 'rgba(34,197,94,0.08)' }}>
                   Notes available
                 </span>
               ) : (
-                <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
+                <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
                   No notes
                 </span>
               )}
@@ -256,10 +256,10 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               <p className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
                 Click to upload audio file
               </p>
-              <p className="text-[10px] mt-1" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
+              <p className="text-[10px] mt-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
                 MP3, M4A, WAV, or MP4 (max 25MB)
               </p>
-              <p className="text-[10px] mt-2 px-4 py-1.5 rounded-full inline-block" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}>
+              <p className="text-[10px] mt-2 px-4 py-1.5 rounded-full inline-block" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}>
                 Audio upload requires AI API key — use "Paste Transcript" for now
               </p>
             </div>

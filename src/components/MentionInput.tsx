@@ -300,7 +300,7 @@ export default function MentionInput({
                 </span>
                 <span
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: 'var(--gold)',
                     opacity: 0.7,

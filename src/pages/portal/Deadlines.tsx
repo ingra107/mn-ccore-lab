@@ -213,7 +213,7 @@ function DeadlineSection({ title, items, color, collapsed = false }: { title: st
         <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
           {title}
         </span>
-        <span className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+        <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
           {items.length}
         </span>
       </button>
@@ -292,7 +292,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             onClick={() => setEditingNote(true)}
             className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-colors hover:bg-black/[0.03]"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               color: 'var(--gold)',
               opacity: 0.6,
               background: 'none',
@@ -308,14 +308,14 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 
         {/* Project */}
         {item.project && (
-          <span className="text-[10px] hidden sm:block" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', opacity: 0.6 }}>
+          <span className="text-[10px] hidden sm:block" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', opacity: 0.6 }}>
             {item.project}
           </span>
         )}
 
         {/* Priority */}
         {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ fontFamily: 'var(--font-mono)', color: item.priority === 'urgent' ? 'var(--maroon)' : '#c2410c', backgroundColor: item.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
+          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ fontFamily: 'var(--font-sans)', color: item.priority === 'urgent' ? 'var(--maroon)' : '#c2410c', backgroundColor: item.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
             {item.priority}
           </span>
         )}
@@ -331,7 +331,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         <span
           className="text-[11px] flex-shrink-0 w-16 text-right"
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
             fontWeight: item.isOverdue ? 600 : 400,
             opacity: item.isOverdue ? 1 : 0.6,
@@ -373,7 +373,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {isMilestone && item.future_note && !isDueSoon && !isDone && (
         <div className="ml-8 mr-3 mt-0.5 mb-1 flex items-center gap-1.5">
           <Clock size={9} style={{ color: 'var(--gold)', opacity: 0.4 }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--slate)', opacity: 0.4 }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.4 }}>
             Future Me note attached
           </span>
           <button

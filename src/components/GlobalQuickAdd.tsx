@@ -22,7 +22,7 @@ function TokenHint({ prefix, desc, color }: { prefix: string; desc: string; colo
         display: 'inline-flex',
         alignItems: 'center',
         gap: '3px',
-        fontFamily: 'var(--font-mono)',
+        fontFamily: 'var(--font-sans)',
         fontSize: '10px',
       }}
     >
@@ -137,7 +137,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                 <Zap size={15} style={{ color: 'var(--gold)', flexShrink: 0 }} />
                 <span
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     color: 'var(--slate)',
                     opacity: 0.65,
@@ -151,7 +151,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                 <div style={{ flex: 1 }} />
                 <kbd
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     color: 'var(--slate)',
                     opacity: 0.4,
@@ -216,7 +216,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                     borderRadius: '8px',
                     cursor: parseQuickAddInput(value).title.trim() ? 'pointer' : 'default',
                     padding: '6px 16px',
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '12px',
                     fontWeight: 700,
                     letterSpacing: '0.02em',

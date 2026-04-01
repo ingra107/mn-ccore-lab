@@ -128,10 +128,10 @@ export default function MeetingDetail() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs"
-              style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', background: statusStyle.bg, color: statusStyle.text }}>
+              style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', background: statusStyle.bg, color: statusStyle.text }}>
               <Calendar size={12} /> {meeting.status}
             </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
               {meeting.type}
             </span>
             <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
@@ -151,7 +151,7 @@ export default function MeetingDetail() {
             return facilitatorInfo ? (
               <div className="flex items-center gap-2 mt-2">
                 <UserCheck size={14} style={{ color: 'var(--teal)' }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--teal)' }}>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--teal)' }}>
                   Facilitator:
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -246,7 +246,7 @@ export default function MeetingDetail() {
               <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
                 Action Items
               </h2>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
                 {completedActions.length}/{actionItems.length}
               </span>
             </div>
@@ -355,7 +355,7 @@ export default function MeetingDetail() {
                   >
                     Cancel
                   </button>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
                     Ctrl+Enter to save · Esc to cancel
                   </span>
                 </div>
@@ -375,7 +375,7 @@ export default function MeetingDetail() {
                 <button
                   onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
                   className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: 'var(--gold)', fontFamily: 'var(--font-mono)', fontSize: '11px' }}
+                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: 'var(--gold)', fontFamily: 'var(--font-sans)', fontSize: '11px' }}
                 >
                   Edit
                 </button>
@@ -421,7 +421,7 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
       <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
           Added by {item.added_by}
           {item.document_url && (
             <> · <a href={item.document_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)' }}>View document</a></>
@@ -465,15 +465,15 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
             <div style={{ width: 16, height: 16 }}>
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[7px]" />
             </div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{person.name.split(' ')[0]}</span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{person.name.split(' ')[0]}</span>
           </div>
           {item.due_date && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
               {isOverdue ? 'Overdue: ' : 'Due '}{formatShortDate(item.due_date)}
             </span>
           )}
           {item.project_id && (
-            <Link to={`/projects/${item.project_id}`} onClick={(e) => e.stopPropagation()} style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
+            <Link to={`/projects/${item.project_id}`} onClick={(e) => e.stopPropagation()} style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
               {item.project_id}
             </Link>
           )}
@@ -540,7 +540,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
               type="url" value={docUrl} onChange={(e) => setDocUrl(e.target.value)}
               placeholder="Document URL (Google Doc, PDF, etc.)"
               style={{
-                width: '100%', fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--ink)',
+                width: '100%', fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'var(--ink)',
                 background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: '8px',
                 padding: '6px 10px', outline: 'none', marginTop: '6px',
               }}

@@ -205,7 +205,7 @@ export default function AnalyticsPage() {
               <div key={t.id} className="flex items-center gap-2 text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
                 <Circle size={10} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
                 <span className="truncate">{t.title}</span>
-                {t.due_date && <span style={{ color: 'var(--maroon)', fontFamily: 'var(--font-mono)', fontSize: '10px', flexShrink: 0 }}>Due {new Date(t.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                {t.due_date && <span style={{ color: 'var(--maroon)', fontFamily: 'var(--font-sans)', fontSize: '10px', flexShrink: 0 }}>Due {new Date(t.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
               </div>
             ))}
           </div>
@@ -235,7 +235,7 @@ export default function AnalyticsPage() {
               <h3 className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
                 Team Task Overview
               </h3>
-              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', backgroundColor: 'var(--border-light)' }}>
+              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', backgroundColor: 'var(--border-light)' }}>
                 PI only
               </span>
             </div>
@@ -254,11 +254,11 @@ export default function AnalyticsPage() {
                     <div className="flex-1 h-4 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
                       <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, backgroundColor: rate > 70 ? 'var(--green, #22c55e)' : rate > 40 ? 'var(--gold)' : 'var(--maroon)' }} />
                     </div>
-                    <span className="text-[11px] w-16 text-right" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
+                    <span className="text-[11px] w-16 text-right" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
                       {done}/{total}
                     </span>
                     {overdue > 0 && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-sans)', color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
                         {overdue} overdue
                       </span>
                     )}
@@ -316,7 +316,7 @@ export default function AnalyticsPage() {
                   <span className="text-xs w-28" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{stage}</span>
                   <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
                     <div className="h-full rounded transition-all flex items-center px-2" style={{ width: `${width}%`, backgroundColor: stageColors[stage] || 'var(--teal)', minWidth: 24 }}>
-                      <span className="text-[9px] font-semibold" style={{ color: 'white', fontFamily: 'var(--font-mono)' }}>{count}</span>
+                      <span className="text-[9px] font-semibold" style={{ color: 'white', fontFamily: 'var(--font-sans)' }}>{count}</span>
                     </div>
                   </div>
                 </div>
@@ -336,7 +336,7 @@ export default function AnalyticsPage() {
                 <div key={p} className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded" style={{ backgroundColor: colors[p] }} />
                   <span className="text-xs capitalize" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{p}</span>
-                  <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-mono)', color: colors[p] }}>{count}</span>
+                  <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-sans)', color: colors[p] }}>{count}</span>
                 </div>
               )
             })}

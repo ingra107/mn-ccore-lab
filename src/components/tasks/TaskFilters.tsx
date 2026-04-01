@@ -138,7 +138,7 @@ export default function TaskFilters({ filters, onChange }: TaskFiltersProps) {
           onClick={() => onChange({ assignee: '', status: '', priority: '', project: '' })}
           className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] transition-colors hover:bg-black/5"
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             color: 'var(--maroon)',
             cursor: 'pointer',
             background: 'none',

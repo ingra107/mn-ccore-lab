@@ -232,7 +232,7 @@ a:hover {
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
 }
 
 .badge-active {
@@ -283,7 +283,7 @@ a:hover {
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   background: rgba(201, 168, 76, 0.15);
   color: var(--gold);
 }

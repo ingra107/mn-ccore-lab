@@ -123,7 +123,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             <span
               className="text-[11px] px-1.5 py-0.5 rounded font-medium"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 color: priority.color,
                 backgroundColor: priority.bg,
               }}
@@ -136,7 +136,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
               <span
                 className="flex items-center gap-1 text-[11px]"
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
                   fontWeight: isOverdue ? 600 : 400,
                 }}
@@ -150,7 +150,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             {task.project_id && !compact && (
               <span
                 className="flex items-center gap-1 text-[11px]"
-                style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', opacity: 0.8 }}
+                style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', opacity: 0.8 }}
               >
                 <FolderKanban size={10} />
                 {task.project_id}
@@ -161,7 +161,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             {task.source === 'meeting' && task.meeting_title && !compact && (
               <span
                 className="text-[11px]"
-                style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', opacity: 0.7 }}
+                style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', opacity: 0.7 }}
               >
                 {formatBrandName(task.meeting_title.split(':')[0])}
               </span>

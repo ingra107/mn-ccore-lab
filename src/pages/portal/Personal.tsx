@@ -182,7 +182,7 @@ export default function Personal() {
               to={page.path}
               className="text-[11px] px-2.5 py-1 rounded-full border transition-colors hover:bg-[rgba(45,138,138,0.06)]"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 color: 'var(--slate)',
                 borderColor: 'var(--border-light)',
                 textDecoration: 'none',
@@ -315,7 +315,7 @@ function QuickStat({ label, value, color, icon: Icon }: { label: string; value: 
     >
       <Icon size={13} style={{ color }} />
       <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, color }}>{value}</span>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{label}</span>
+      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{label}</span>
     </div>
   )
 }
@@ -344,12 +344,12 @@ function MyTasksCard({ tasks, onStatusChange }: { tasks: TaskRow[]; onStatusChan
                 {task.title || task.description}
               </span>
               {task.priority === 'urgent' || task.priority === 'high' ? (
-                <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ fontFamily: 'var(--font-mono)', color: task.priority === 'urgent' ? 'var(--maroon)' : '#c2410c', backgroundColor: task.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
+                <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ fontFamily: 'var(--font-sans)', color: task.priority === 'urgent' ? 'var(--maroon)' : '#c2410c', backgroundColor: task.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
                   {task.priority}
                 </span>
               ) : null}
               {task.due_date && (
-                <span className="text-[10px] flex-shrink-0" style={{ fontFamily: 'var(--font-mono)', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', fontWeight: isOverdue ? 600 : 400, opacity: isOverdue ? 1 : 0.5 }}>
+                <span className="text-[10px] flex-shrink-0" style={{ fontFamily: 'var(--font-sans)', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', fontWeight: isOverdue ? 600 : 400, opacity: isOverdue ? 1 : 0.5 }}>
                   {isOverdue ? 'Overdue' : formatShortDate(task.due_date)}
                 </span>
               )}
@@ -360,7 +360,7 @@ function MyTasksCard({ tasks, onStatusChange }: { tasks: TaskRow[]; onStatusChan
           <p className="text-center py-6 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>All caught up</p>
         )}
       </div>
-      <Link to="/my-tasks" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/my-tasks" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         View all tasks <ArrowRight size={11} />
       </Link>
     </BentoCard>
@@ -379,7 +379,7 @@ function DeadlinesCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: 
             <span className="flex-1 text-xs truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--maroon)' }}>
               {t.title || t.description}
             </span>
-            <span className="text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--maroon)', fontWeight: 600 }}>
+            <span className="text-[9px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--maroon)', fontWeight: 600 }}>
               {formatShortDate(t.due_date!)}
             </span>
           </div>
@@ -390,7 +390,7 @@ function DeadlinesCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: 
             <span className="flex-1 text-xs truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
               {t.title || t.description}
             </span>
-            <span className="text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+            <span className="text-[9px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
               {formatShortDate(t.due_date!)}
             </span>
           </div>
@@ -399,7 +399,7 @@ function DeadlinesCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: 
           <p className="text-center py-4 text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>No upcoming deadlines</p>
         )}
       </div>
-      <Link to="/deadlines" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/deadlines" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         All deadlines <ArrowRight size={11} />
       </Link>
     </BentoCard>
@@ -418,7 +418,7 @@ function NotificationsCard({ notifications }: { notifications: { id: string; tit
             {n.body && (
               <p className="text-[10px] mt-0.5 truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>{n.body}</p>
             )}
-            <span className="text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
+            <span className="text-[9px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
               {formatRelativeTime(n.created_at)}
             </span>
           </div>
@@ -427,7 +427,7 @@ function NotificationsCard({ notifications }: { notifications: { id: string; tit
           <p className="text-center py-4 text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>All caught up</p>
         )}
       </div>
-      <Link to="/my-items" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/my-items" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         View all items <ArrowRight size={11} />
       </Link>
     </BentoCard>
@@ -450,14 +450,14 @@ function AssignedByMeCard({ tasks }: { tasks: TaskRow[] }) {
               <span className="flex-1 text-xs truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
                 {t.title || t.description}
               </span>
-              <span className="text-[9px] px-1 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: t.status === 'in_progress' ? 'var(--teal)' : t.status === 'blocked' ? 'var(--maroon)' : 'var(--slate)', backgroundColor: t.status === 'in_progress' ? 'rgba(45,138,138,0.08)' : t.status === 'blocked' ? 'rgba(122,0,25,0.08)' : 'transparent', opacity: 0.7 }}>
+              <span className="text-[9px] px-1 py-0.5 rounded" style={{ fontFamily: 'var(--font-sans)', color: t.status === 'in_progress' ? 'var(--teal)' : t.status === 'blocked' ? 'var(--maroon)' : 'var(--slate)', backgroundColor: t.status === 'in_progress' ? 'rgba(45,138,138,0.08)' : t.status === 'blocked' ? 'rgba(122,0,25,0.08)' : 'transparent', opacity: 0.7 }}>
                 {t.status.replace('_', ' ')}
               </span>
             </div>
           )
         })}
       </div>
-      <Link to="/tasks" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/tasks" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         All tasks <ArrowRight size={11} />
       </Link>
     </BentoCard>
@@ -476,9 +476,9 @@ function CommitmentsCard({ commitments }: { commitments: { id: string; commitmen
             <div key={c.id} className="py-1" style={{ borderLeft: isOverdue ? '2px solid var(--maroon)' : '2px solid var(--gold)', paddingLeft: '8px' }}>
               <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{c.commitment}</p>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', opacity: 0.7 }}>to {c.to_whom}</span>
+                <span className="text-[9px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', opacity: 0.7 }}>to {c.to_whom}</span>
                 {c.due_date && (
-                  <span className="text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', fontWeight: isOverdue ? 600 : 400, opacity: isOverdue ? 1 : 0.5 }}>
+                  <span className="text-[9px]" style={{ fontFamily: 'var(--font-sans)', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', fontWeight: isOverdue ? 600 : 400, opacity: isOverdue ? 1 : 0.5 }}>
                     {isOverdue ? 'Overdue' : formatShortDate(c.due_date)}
                   </span>
                 )}
@@ -502,7 +502,7 @@ function ActivityCard({ activity }: { activity: { id: string; type: string; desc
             <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: 'var(--teal)', opacity: 0.4 }} />
             <div className="flex-1 min-w-0">
               <p className="text-xs truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{a.description}</p>
-              <span className="text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
+              <span className="text-[9px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
                 {formatRelativeTime(a.timestamp)}
               </span>
             </div>
@@ -526,7 +526,7 @@ function LabHealthCard({ health }: { health: { total: number; green: number; yel
         <HealthDot color="var(--gold)" label="Needs Attention" count={health.yellow} />
         <HealthDot color="var(--maroon)" label="Stale" count={health.red} />
       </div>
-      <Link to="/projects" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/projects" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         View projects <ArrowRight size={11} />
       </Link>
     </BentoCard>
@@ -539,7 +539,7 @@ function HealthDot({ color, label, count }: { color: string; label: string; coun
       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
       <div>
         <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{count}</span>
-        <span className="text-[9px] ml-1" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>{label}</span>
+        <span className="text-[9px] ml-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>{label}</span>
       </div>
     </div>
   )
@@ -560,7 +560,7 @@ function GrantMiniCard({ grants }: { grants: { title: string; mechanism: string;
               className="w-2 h-2 rounded-full flex-shrink-0"
               style={{ backgroundColor: g.proposed ? 'var(--gold)' : 'var(--teal)' }}
             />
-            <span className="text-xs font-medium flex-shrink-0" style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)' }}>
+            <span className="text-xs font-medium flex-shrink-0" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}>
               {g.mechanism}
             </span>
             <span className="flex-1 text-xs truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
@@ -569,7 +569,7 @@ function GrantMiniCard({ grants }: { grants: { title: string; mechanism: string;
           </div>
         ))}
       </div>
-      <Link to="/grants" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/grants" className="flex items-center gap-1 mt-2 pt-2" style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         Grant timeline <ArrowRight size={11} />
       </Link>
     </BentoCard>

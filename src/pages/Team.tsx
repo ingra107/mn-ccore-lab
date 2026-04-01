@@ -106,7 +106,7 @@ export default function Team() {
                       className="mb-0.5"
                       style={{
                         color: 'var(--gold)',
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--font-sans)',
                         fontSize: '11px',
                       }}
                     >
@@ -126,7 +126,7 @@ export default function Team() {
                     </p>
                     <p
                       style={{
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--font-sans)',
                         fontSize: '12px',
                         color: 'var(--gold)',
                       }}
@@ -188,7 +188,7 @@ export default function Team() {
                   >
                     {member.name}{member.credentials ? `, ${member.credentials}` : ''}
                   </h3>
-                  <p className="text-sm" style={{ color: 'var(--gold)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+                  <p className="text-sm" style={{ color: 'var(--gold)', fontFamily: 'var(--font-sans)', fontSize: '12px' }}>
                     {member.role}
                   </p>
                 </div>

@@ -92,7 +92,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
           <span
             className="px-1.5 py-0.5 rounded text-xs font-bold"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               background: grant.proposed
                 ? 'rgba(201, 168, 76, 0.15)'
                 : 'rgba(45, 138, 138, 0.15)',
@@ -104,14 +104,14 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
           </span>
           <span
             className="text-xs"
-            style={{ color: 'var(--slate)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}
+            style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}
           >
             {grant.agency}
           </span>
           {grant.proposed ? (
             <span
               className="text-xs ml-auto"
-              style={{ color: 'var(--gold)', fontFamily: 'var(--font-mono)', fontSize: '9px' }}
+              style={{ color: 'var(--gold)', fontFamily: 'var(--font-sans)', fontSize: '9px' }}
             >
               PROPOSED
             </span>
@@ -159,7 +159,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
           <div className="mt-2 pt-2" style={{ borderTop: '1px solid rgba(201, 168, 76, 0.2)' }}>
             <span
               className="text-xs block mb-1"
-              style={{ color: 'var(--gold)', fontFamily: 'var(--font-mono)', fontSize: '9px' }}
+              style={{ color: 'var(--gold)', fontFamily: 'var(--font-sans)', fontSize: '9px' }}
             >
               MILESTONES
             </span>
@@ -255,7 +255,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                 y={chartHeight - CHART_PADDING_BOTTOM + 28}
                 textAnchor="middle"
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   fill: 'var(--slate)',
                   opacity: 0.6,
@@ -282,7 +282,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
           y={CHART_PADDING_TOP - 20}
           textAnchor="middle"
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '9px',
             fill: 'var(--maroon)',
             fontWeight: 700,
@@ -325,7 +325,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                 textAnchor="middle"
                 dominantBaseline="middle"
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   fontWeight: 700,
                   fill: color,
@@ -469,7 +469,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
         <span
           className="px-2 py-0.5 rounded text-xs font-bold"
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             background: isProposed ? 'rgba(201, 168, 76, 0.15)' : 'rgba(45, 138, 138, 0.15)',
             color,
             fontSize: '11px',
@@ -481,7 +481,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
         <span
           className="text-xs"
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             color: 'var(--slate)',
             fontSize: '10px',
           }}
@@ -493,7 +493,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
           <span
             className="px-2 py-0.5 rounded-full text-xs"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               background: 'rgba(201, 168, 76, 0.12)',
               color: 'var(--gold)',
               fontSize: '10px',
@@ -506,7 +506,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
           <span
             className="px-2 py-0.5 rounded-full text-xs"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               background: 'rgba(45, 138, 138, 0.12)',
               color: 'var(--teal)',
               fontSize: '10px',
@@ -573,7 +573,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
           <span
             className="text-xs block mb-1.5"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               color: 'var(--gold)',
               fontSize: '9px',
               letterSpacing: '0.1em',
@@ -591,7 +591,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
                 {m.target_date && (
                   <span
                     className="text-xs ml-auto flex-shrink-0"
-                    style={{ color: 'var(--slate)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}
+                    style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}
                   >
                     {formatMediumDate(m.target_date)}
                   </span>
@@ -647,7 +647,7 @@ function GrantSummary({ grants }: { grants: GrantTimelineItem[] }) {
           <div
             className="text-xs"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               color: 'var(--slate)',
               fontSize: '10px',
               textTransform: 'uppercase',
@@ -744,7 +744,7 @@ export default function Grants() {
               <div className="text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>Mechanisms</div>
               <div className="flex flex-wrap gap-1 mt-1">
                 {mechanisms.map(m => (
-                  <span key={m} className="text-[10px] px-2 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: mechanismColor(m, false), backgroundColor: mechanismColor(m, false) + '14' }}>
+                  <span key={m} className="text-[10px] px-2 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: mechanismColor(m, false), backgroundColor: mechanismColor(m, false) + '14' }}>
                     {m}
                   </span>
                 ))}
@@ -764,7 +764,7 @@ export default function Grants() {
             <h2
               className="text-sm"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
                 color: 'var(--gold)',
@@ -783,7 +783,7 @@ export default function Grants() {
             <div className="flex items-center gap-2">
               <div style={{ width: 24, height: 8, borderRadius: 4, background: 'var(--teal)', opacity: 0.85 }} />
               <span
-                style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)' }}
+                style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)' }}
               >
                 Active
               </span>
@@ -800,7 +800,7 @@ export default function Grants() {
                 }}
               />
               <span
-                style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)' }}
+                style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)' }}
               >
                 Proposed
               </span>
@@ -810,7 +810,7 @@ export default function Grants() {
                 <polygon points="6,1 11,6 6,11 1,6" fill="var(--gold)" />
               </svg>
               <span
-                style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)' }}
+                style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)' }}
               >
                 Milestone
               </span>
@@ -818,7 +818,7 @@ export default function Grants() {
             <div className="flex items-center gap-2">
               <div style={{ width: 12, height: 2, background: 'var(--maroon)', opacity: 0.7 }} />
               <span
-                style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)' }}
+                style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)' }}
               >
                 Today
               </span>
@@ -843,7 +843,7 @@ export default function Grants() {
           <h2
             className="text-sm mr-2"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
               color: 'var(--gold)',
@@ -858,7 +858,7 @@ export default function Grants() {
               onClick={() => setFilter(f)}
               className="px-3 py-1.5 rounded-full text-xs cursor-pointer transition-all duration-200"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 fontSize: '11px',
                 fontWeight: filter === f ? 600 : 400,
                 background: filter === f ? 'rgba(201, 168, 76, 0.15)' : 'transparent',
@@ -881,7 +881,7 @@ export default function Grants() {
                 className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
                 style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
               />
-              <span className="text-sm" style={{ color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>
+              <span className="text-sm" style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)' }}>
                 Loading grants...
               </span>
             </div>

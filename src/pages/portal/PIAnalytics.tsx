@@ -218,7 +218,7 @@ export default function PIAnalytics() {
           <Target size={14} style={{ color: 'var(--gold)' }} />
           <h3
             className="text-xs font-semibold uppercase tracking-wider"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)' }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
           >
             Commitment Scorecard
           </h3>
@@ -239,7 +239,7 @@ export default function PIAnalytics() {
                 </span>
                 <span
                   className="text-[10px]"
-                  style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}
+                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
                 >
                   kept
                 </span>
@@ -289,11 +289,11 @@ export default function PIAnalytics() {
           <Users size={14} style={{ color: 'var(--gold)' }} />
           <h3
             className="text-xs font-semibold uppercase tracking-wider"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)' }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
           >
             Team Engagement
           </h3>
-          <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.6 }}>
+          <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
             Last 30 days
           </span>
         </div>
@@ -337,7 +337,7 @@ export default function PIAnalytics() {
                       >
                         <span
                           className="text-[9px] font-semibold"
-                          style={{ color: 'white', fontFamily: 'var(--font-mono)' }}
+                          style={{ color: 'white', fontFamily: 'var(--font-sans)' }}
                         >
                           {member.actions}
                         </span>
@@ -366,7 +366,7 @@ export default function PIAnalytics() {
             <BookOpen size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-semibold uppercase tracking-wider"
-              style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)' }}
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
             >
               Mentee Publication Velocity
             </h3>
@@ -378,19 +378,19 @@ export default function PIAnalytics() {
                   <tr>
                     <th
                       className="text-left text-[10px] uppercase tracking-wider pb-2"
-                      style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}
+                      style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
                     >
                       Mentee
                     </th>
                     <th
                       className="text-right text-[10px] uppercase tracking-wider pb-2"
-                      style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}
+                      style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
                     >
                       Papers
                     </th>
                     <th
                       className="text-right text-[10px] uppercase tracking-wider pb-2"
-                      style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}
+                      style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
                     >
                       Status
                     </th>
@@ -427,7 +427,7 @@ export default function PIAnalytics() {
                         </td>
                         <td
                           className="text-right text-sm font-semibold"
-                          style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink)' }}
+                          style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
                         >
                           {mentee.pub_count}
                         </td>
@@ -436,7 +436,7 @@ export default function PIAnalytics() {
                             <span
                               className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded"
                               style={{
-                                fontFamily: 'var(--font-mono)',
+                                fontFamily: 'var(--font-sans)',
                                 color: 'var(--green, #22c55e)',
                                 backgroundColor: 'rgba(34, 197, 94, 0.08)',
                               }}
@@ -448,7 +448,7 @@ export default function PIAnalytics() {
                             <span
                               className="text-[10px] px-1.5 py-0.5 rounded"
                               style={{
-                                fontFamily: 'var(--font-mono)',
+                                fontFamily: 'var(--font-sans)',
                                 color: 'var(--slate)',
                                 backgroundColor: 'var(--border-light)',
                               }}
@@ -479,7 +479,7 @@ export default function PIAnalytics() {
             <DollarSign size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-semibold uppercase tracking-wider"
-              style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)' }}
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
             >
               Grant Pipeline
             </h3>
@@ -521,7 +521,7 @@ export default function PIAnalytics() {
           <Lightbulb size={14} style={{ color: 'var(--gold)' }} />
           <h3
             className="text-xs font-semibold uppercase tracking-wider"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)' }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
           >
             Leadership Insights
           </h3>

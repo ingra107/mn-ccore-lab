@@ -108,7 +108,7 @@ export default function LabPageLayout({
                 className="text-sm mb-1"
                 style={{
                   color: 'var(--gold)',
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '12px',
                 }}
               >
@@ -140,7 +140,7 @@ export default function LabPageLayout({
                     rel="noopener noreferrer"
                     className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       background: 'var(--ice)',
                       color: 'var(--slate)',
                       border: '1px solid transparent',
@@ -166,7 +166,7 @@ export default function LabPageLayout({
                   <p
                     className="mb-3 uppercase"
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: '10px',
                       letterSpacing: '0.08em',
                       color: 'var(--slate)',
@@ -265,7 +265,7 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
               <span className="badge badge-active">Active</span>
               <span
                 className="text-xs"
-                style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}
+                style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
               >
                 {grant.agency}
               </span>
@@ -277,7 +277,7 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
             <p
               className="text-xs mt-4 mb-2"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 color: 'var(--slate)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
@@ -309,7 +309,7 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
                   <span className="badge badge-review">Pending</span>
                   <span
                     className="text-xs"
-                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}
+                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
                   >
                     {grant.agency}
                   </span>
@@ -499,7 +499,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
             <p
               className="text-xs mt-0.5"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 color: 'var(--gold)',
                 letterSpacing: '0.02em',
               }}
@@ -532,7 +532,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
                 key={interest}
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs"
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   letterSpacing: '0.02em',
                   background: 'var(--ice)',
@@ -557,7 +557,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
               <span
                 className="text-xs uppercase"
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '9px',
                   letterSpacing: '0.08em',
                   color: 'var(--slate)',

@@ -88,7 +88,7 @@ export default function ActivityPage() {
                         </div>
                       ) : (
                         <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--ice)' }}>
-                          <span className="text-[8px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>SYS</span>
+                          <span className="text-[8px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>SYS</span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
@@ -97,10 +97,10 @@ export default function ActivityPage() {
                           {item.description}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize" style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}>
                             {item.type}
                           </span>
-                          <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
+                          <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
                             {formatRelativeTime(item.timestamp)}
                           </span>
                         </div>

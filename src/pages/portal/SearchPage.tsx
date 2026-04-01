@@ -96,12 +96,12 @@ export default function SearchPage() {
           </div>
           <div className="flex items-center justify-center gap-3 mt-5 flex-wrap">
             {['tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity'].map((t) => (
-              <span key={t} className="text-[10px] px-2.5 py-1 rounded-full border capitalize" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.4 }}>
+              <span key={t} className="text-[10px] px-2.5 py-1 rounded-full border capitalize" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.4 }}>
                 {t}
               </span>
             ))}
           </div>
-          <p className="text-[10px] mt-4" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.3 }}>
+          <p className="text-[10px] mt-4" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.3 }}>
             Powered by D1 full-text search
           </p>
         </div>
@@ -150,7 +150,7 @@ export default function SearchPage() {
 
         {!isLoading && results.length > 0 && (
           <div className="flex flex-col gap-6">
-            <p className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+            <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
               {results.length} result{results.length !== 1 ? 's' : ''} for "{debouncedQuery}"
             </p>
 
@@ -164,7 +164,7 @@ export default function SearchPage() {
                 <div key={type}>
                   <div className="flex items-center gap-2 mb-2">
                     <Icon size={14} style={{ color: config.color }} />
-                    <span className="text-xs uppercase tracking-wider font-semibold" style={{ fontFamily: 'var(--font-mono)', color: config.color }}>
+                    <span className="text-xs uppercase tracking-wider font-semibold" style={{ fontFamily: 'var(--font-sans)', color: config.color }}>
                       {config.label}s ({items.length})
                     </span>
                   </div>
@@ -184,7 +184,7 @@ export default function SearchPage() {
                             {formatBrandName(item.title)}
                           </p>
                           {item.subtitle && (
-                            <p className="text-[10px] truncate mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+                            <p className="text-[10px] truncate mt-0.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
                               {formatBrandName(item.subtitle)}
                             </p>
                           )}

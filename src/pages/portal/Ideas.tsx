@@ -68,7 +68,7 @@ export default function Ideas() {
               const cfg = statusConfig[s]
               return (
                 <span key={s} className="flex items-center gap-1">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: cfg.color, backgroundColor: cfg.bg }}>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: cfg.color, backgroundColor: cfg.bg }}>
                     {cfg.label}
                   </span>
                   {i < 3 && <span className="text-[8px]" style={{ color: 'var(--slate)', opacity: 0.3 }}>→</span>}
@@ -188,11 +188,11 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
     <div className="rounded-xl border p-4 flex flex-col" style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}>
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ fontFamily: 'var(--font-mono)', color: status.color, backgroundColor: status.bg }}>
+        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ fontFamily: 'var(--font-sans)', color: status.color, backgroundColor: status.bg }}>
           {status.label}
         </span>
         {idea.research_area && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}>
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}>
             {idea.research_area}
           </span>
         )}
@@ -216,7 +216,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
           <div style={{ width: 20, height: 20 }}>
             <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
           </div>
-          <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.6 }}>
+          <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
             {formatRelativeTime(idea.created_at)}
           </span>
         </div>
@@ -227,7 +227,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}
         >
           <ThumbsUp size={13} />
-          <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-mono)' }}>
+          <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-sans)' }}>
             {idea.votes}
           </span>
         </button>
@@ -253,7 +253,7 @@ function IdeaListView({ ideas, onVote, onStatusChange }: { ideas: IdeaRow[]; onV
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)', minWidth: 36 }}
             >
               <ThumbsUp size={14} />
-              <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-mono)' }}>{idea.votes}</span>
+              <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-sans)' }}>{idea.votes}</span>
             </button>
 
             {/* Content */}
@@ -268,12 +268,12 @@ function IdeaListView({ ideas, onVote, onStatusChange }: { ideas: IdeaRow[]; onV
 
             {/* Meta */}
             {idea.research_area && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full hidden sm:block" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full hidden sm:block" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}>
                 {idea.research_area}
               </span>
             )}
 
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ fontFamily: 'var(--font-mono)', color: status.color, backgroundColor: status.bg }}>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ fontFamily: 'var(--font-sans)', color: status.color, backgroundColor: status.bg }}>
               {status.label}
             </span>
 
@@ -281,7 +281,7 @@ function IdeaListView({ ideas, onVote, onStatusChange }: { ideas: IdeaRow[]; onV
               <div style={{ width: 20, height: 20 }}>
                 <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
               </div>
-              <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
+              <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
                 {formatRelativeTime(idea.created_at)}
               </span>
             </div>

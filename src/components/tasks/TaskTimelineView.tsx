@@ -111,7 +111,7 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
             {weekMarkers.map((m, i) => (
               <g key={i}>
                 <line x1={m.x} y1={0} x2={m.x} y2={chartHeight} stroke="var(--border-light)" strokeWidth={1} />
-                <text x={m.x} y={chartHeight - 8} textAnchor="middle" fill="var(--slate)" fontSize={9} fontFamily="var(--font-mono)" opacity={0.5}>
+                <text x={m.x} y={chartHeight - 8} textAnchor="middle" fill="var(--slate)" fontSize={9} fontFamily="var(--font-sans)" opacity={0.5}>
                   {m.label}
                 </text>
               </g>
@@ -121,7 +121,7 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
             {todayX >= LABEL_WIDTH && todayX <= chartWidth && (
               <g>
                 <line x1={todayX} y1={0} x2={todayX} y2={chartHeight - CHART_PADDING_BOTTOM} stroke="var(--maroon)" strokeWidth={1.5} strokeDasharray="4,3" opacity={0.6} />
-                <text x={todayX} y={12} textAnchor="middle" fill="var(--maroon)" fontSize={9} fontFamily="var(--font-mono)" fontWeight={600}>
+                <text x={todayX} y={12} textAnchor="middle" fill="var(--maroon)" fontSize={9} fontFamily="var(--font-sans)" fontWeight={600}>
                   TODAY
                 </text>
               </g>
@@ -211,7 +211,7 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
               <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
                 {tooltip.task.title || tooltip.task.description}
               </p>
-              <div className="flex items-center gap-2 mt-1 text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
+              <div className="flex items-center gap-2 mt-1 text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
                 <span>{getPersonInfo(tooltip.task.assignee).name}</span>
                 <span style={{ opacity: 0.3 }}>|</span>
                 <span>Due {formatShortDate(tooltip.task.due_date!)}</span>
@@ -228,7 +228,7 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
         <div className="mt-4">
           <p
             className="text-xs uppercase tracking-wider mb-2"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.6 }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}
           >
             No due date ({undatedTasks.length})
           </p>

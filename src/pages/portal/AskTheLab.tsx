@@ -187,14 +187,14 @@ function QuestionCard({
               </span>
             </div>
 
-            <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+            <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
               {formatRelativeTime(question.created_at)}
             </span>
 
             {question.project_slug && (
               <span
                 className="text-[9px] px-1.5 py-0.5 rounded-full"
-                style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}
+                style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}
               >
                 {question.project_slug}
               </span>
@@ -207,7 +207,7 @@ function QuestionCard({
           {/* Answer count badge */}
           <div className="flex items-center gap-1" style={{ color: answerCount > 0 ? 'var(--teal)' : 'var(--slate)', opacity: answerCount > 0 ? 1 : 0.4 }}>
             <MessageSquare size={14} />
-            <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-mono)' }}>
+            <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-sans)' }}>
               {answerCount}
             </span>
           </div>
@@ -215,7 +215,7 @@ function QuestionCard({
           {/* Status pill */}
           <span
             className="text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
-            style={{ fontFamily: 'var(--font-mono)', color: status.color, backgroundColor: status.bg }}
+            style={{ fontFamily: 'var(--font-sans)', color: status.color, backgroundColor: status.bg }}
           >
             {status.label}
           </span>
@@ -306,10 +306,10 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                 >
                   <div className="flex items-center gap-1.5 mb-1">
                     <Sparkles size={12} style={{ color: 'var(--gold)' }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--gold)' }}>
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--gold)' }}>
                       AI Co-Scientist
                     </span>
-                    <span className="ml-auto" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                    <span className="ml-auto" style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
                       {formatRelativeTime(answer.created_at)}
                     </span>
                   </div>
@@ -337,11 +337,11 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                     <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
                       {answerPerson.name}
                     </span>
-                    <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+                    <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
                       {formatRelativeTime(answer.created_at)}
                     </span>
                     {answer.is_accepted === 1 && (
-                      <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.1)' }}>
+                      <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.1)' }}>
                         <Check size={10} />
                         Accepted
                       </span>

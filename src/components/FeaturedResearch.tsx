@@ -71,7 +71,7 @@ export default function FeaturedResearch() {
                 <span
                   className="inline-block px-2 py-0.5 rounded text-xs"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     background: 'var(--gold)',
                     color: 'var(--ink)',
                   }}

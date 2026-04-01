@@ -198,7 +198,7 @@ export default function TopicBubblesCard() {
                   textAnchor="middle"
                   dominantBaseline="central"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '9px',
                     fill: '#fff',
                     fontWeight: 400,

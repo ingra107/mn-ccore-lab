@@ -70,7 +70,7 @@ export default function GrantTimelineCard() {
                   {/* Mechanism badge */}
                   <span
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: '10px',
                       fontWeight: 700,
                       color: g.proposed ? color : '#fff',
@@ -127,7 +127,7 @@ export default function GrantTimelineCard() {
                 )}
                 <span
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '9px',
                     color: isCurrent ? 'var(--gold)' : 'var(--slate)',
                     opacity: isCurrent ? 1 : 0.4,
@@ -145,11 +145,11 @@ export default function GrantTimelineCard() {
         <div className="flex items-center gap-4 mt-2">
           <div className="flex items-center gap-1.5">
             <div style={{ width: 14, height: 6, borderRadius: 3, background: '#2d8a8a' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--slate)', opacity: 0.6 }}>Active</span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.6 }}>Active</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div style={{ width: 14, height: 6, borderRadius: 3, border: '1.5px dashed #2d8a8a', opacity: 0.5 }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--slate)', opacity: 0.6 }}>Proposed</span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.6 }}>Proposed</span>
           </div>
         </div>
       </div>

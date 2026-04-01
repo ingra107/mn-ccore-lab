@@ -47,11 +47,11 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <Calendar size={13} style={{ color: 'var(--gold)', opacity: 0.6 }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
           Today
         </span>
         {meetings.length > 0 && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
             {meetings.length} meeting{meetings.length !== 1 ? 's' : ''}
           </span>
         )}
@@ -73,7 +73,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
                 className="flex-shrink-0 text-right pr-2"
                 style={{
                   width: 40,
-                  fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--slate)', opacity: 0.25,
+                  fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.25,
                   lineHeight: `${HOUR_HEIGHT}px`,
                 }}
               >
@@ -130,7 +130,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
         {/* "Now" label */}
         {isInRange && (
           <div className="absolute" style={{ right: 8, top: nowOffset + 4, zIndex: 10 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--gold)', fontWeight: 600 }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--gold)', fontWeight: 600 }}>
               {now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
             </span>
           </div>

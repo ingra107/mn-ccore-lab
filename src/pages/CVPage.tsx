@@ -38,7 +38,7 @@ function CitationBlock({ pub, index }: { pub: CVData['publications'][0]; index: 
     <div className="cv-citation mb-3" style={{ paddingLeft: '2rem', textIndent: '-2rem' }}>
       <span
         className="cv-citation-number"
-        style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--slate)', marginRight: '0.5rem' }}
+        style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'var(--slate)', marginRight: '0.5rem' }}
       >
         {index}.
       </span>
@@ -55,7 +55,7 @@ function CitationBlock({ pub, index }: { pub: CVData['publications'][0]; index: 
               target="_blank"
               rel="noopener noreferrer"
               className="cv-doi-link"
-              style={{ color: 'var(--teal)', textDecoration: 'none', fontSize: '12px', fontFamily: 'var(--font-mono)' }}
+              style={{ color: 'var(--teal)', textDecoration: 'none', fontSize: '12px', fontFamily: 'var(--font-sans)' }}
             >
               DOI: {pub.doi.replace(/^https?:\/\/doi\.org\//, '')}
             </a>
@@ -69,7 +69,7 @@ function CitationBlock({ pub, index }: { pub: CVData['publications'][0]; index: 
               target="_blank"
               rel="noopener noreferrer"
               className="cv-doi-link"
-              style={{ color: 'var(--teal)', textDecoration: 'none', fontSize: '12px', fontFamily: 'var(--font-mono)' }}
+              style={{ color: 'var(--teal)', textDecoration: 'none', fontSize: '12px', fontFamily: 'var(--font-sans)' }}
             >
               PMID: {pub.pmid}
             </a>
@@ -78,7 +78,7 @@ function CitationBlock({ pub, index }: { pub: CVData['publications'][0]; index: 
         {pub.status !== 'Published' && (
           <span
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               fontSize: '11px',
               color: 'var(--gold)',
               marginLeft: '0.5rem',
@@ -103,7 +103,7 @@ function GrantBlock({ grant, slug }: { grant: CVData['grants'][0]; slug: string 
       <div className="flex items-baseline gap-2 flex-wrap">
         <span
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '12px',
             color: 'var(--gold)',
             fontWeight: 600,
@@ -112,10 +112,10 @@ function GrantBlock({ grant, slug }: { grant: CVData['grants'][0]; slug: string 
         >
           {grant.mechanism}
         </span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)' }}>
           ({grant.agency})
         </span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)' }}>
           {formatYearRange(grant.start_date, grant.end_date)}
         </span>
       </div>
@@ -132,10 +132,10 @@ function GrantBlock({ grant, slug }: { grant: CVData['grants'][0]; slug: string 
         {grant.title}
       </h4>
       <div className="flex items-center gap-3 mt-1">
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)' }}>
           Role: {roleLabel(grant.pi, slug)}
         </span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)' }}>
           {formatDateRange(grant.start_date, grant.end_date)}
         </span>
       </div>
@@ -210,7 +210,7 @@ export default function CVPage() {
           className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin mx-auto"
           style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
         />
-        <p className="mt-4 text-sm" style={{ color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>
+        <p className="mt-4 text-sm" style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)' }}>
           Loading CV data...
         </p>
       </div>
@@ -330,7 +330,7 @@ export default function CVPage() {
             onClick={() => window.print()}
             className="no-print mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-md cursor-pointer transition-all duration-200"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               fontSize: '12px',
               fontWeight: 500,
               background: 'var(--ice)',
@@ -395,7 +395,7 @@ export default function CVPage() {
                 <h3
                   className="mb-3"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '12px',
                     fontWeight: 600,
                     color: 'var(--slate)',
@@ -416,7 +416,7 @@ export default function CVPage() {
                 <h3
                   className="mb-3"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '12px',
                     fontWeight: 600,
                     color: 'var(--slate)',
@@ -453,7 +453,7 @@ export default function CVPage() {
                   </span>
                   <span
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: '11px',
                       color: 'var(--slate)',
                     }}

@@ -49,7 +49,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
           Project Updates
         </h2>
         {updates.length > 0 && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
             {updates.length}
           </span>
         )}
@@ -70,7 +70,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
                   onClick={() => setUpdateType(key)}
                   className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     background: isActive ? config.bg : 'transparent',
                     color: isActive ? config.color : 'var(--slate)',
@@ -166,10 +166,10 @@ function UpdateCard({ update }: { update: ProjectUpdateRow }) {
               {person.name}
             </span>
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs"
-              style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', background: config.bg, color: config.color }}>
+              style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', background: config.bg, color: config.color }}>
               <Icon size={9} /> {config.label}
             </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
               {formatRelativeTime(update.created_at)}
             </span>
           </div>

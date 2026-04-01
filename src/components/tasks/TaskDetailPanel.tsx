@@ -93,7 +93,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
-          <span className="text-xs uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+          <span className="text-xs uppercase tracking-wider" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
             Task Detail
           </span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
@@ -159,7 +159,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
           <SubtaskChecklist taskId={task.id} />
 
           {/* Meta info */}
-          <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
+          <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
             {task.source && <span>Source: {task.source}</span>}
             {task.created_at && <span>Created {formatRelativeTime(task.created_at)}</span>}
             {task.completed_at && <span>Completed {formatRelativeTime(task.completed_at)}</span>}
@@ -335,7 +335,7 @@ function PrioritySelect({ value, onChange }: { value: string; onChange: (v: stri
             onClick={() => onChange(p.value)}
             className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs border transition-colors"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               fontWeight: active ? 600 : 400,
               color: active ? p.color : 'var(--slate)',
               borderColor: active ? p.color : 'var(--border-light)',
@@ -950,7 +950,7 @@ function HandoffSection({ taskId, currentAssignee }: { taskId: string; currentAs
       {/* Handoff History Timeline */}
       {handoffs.length > 0 && (
         <div className="mt-3">
-          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
             <ArrowRightLeft size={10} />
             Handoff History ({handoffs.length})
           </label>
@@ -974,19 +974,19 @@ function HandoffSection({ taskId, currentAssignee }: { taskId: string; currentAs
                       </div>
                       <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{to.name}</span>
                     </div>
-                    <span className="text-[9px] ml-auto" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
+                    <span className="text-[9px] ml-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
                       {formatRelativeTime(h.created_at)}
                     </span>
                   </div>
                   <div className="flex flex-col gap-1 text-[12px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-                    <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>S:</span> {h.situation}</p>
-                    {h.background && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>B:</span> {h.background}</p>}
-                    {h.assessment && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>A:</span> {h.assessment}</p>}
-                    {h.recommendation && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>R:</span> {h.recommendation}</p>}
+                    <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>S:</span> {h.situation}</p>
+                    {h.background && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>B:</span> {h.background}</p>}
+                    {h.assessment && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>A:</span> {h.assessment}</p>}
+                    {h.recommendation && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>R:</span> {h.recommendation}</p>}
                   </div>
                   <div className="mt-2">
                     {h.acknowledged ? (
-                      <span className="flex items-center gap-1 text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', opacity: 0.6 }}>
+                      <span className="flex items-center gap-1 text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', opacity: 0.6 }}>
                         <Check size={10} /> Acknowledged {h.acknowledged_at ? formatRelativeTime(h.acknowledged_at) : ''}
                       </span>
                     ) : (
@@ -994,7 +994,7 @@ function HandoffSection({ taskId, currentAssignee }: { taskId: string; currentAs
                         onClick={() => acknowledgeHandoff.mutate(h.id)}
                         className="flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors"
                         style={{
-                          fontFamily: 'var(--font-mono)',
+                          fontFamily: 'var(--font-sans)',
                           color: 'var(--gold)',
                           background: 'rgba(201,168,76,0.08)',
                           border: '1px solid rgba(201,168,76,0.2)',
@@ -1083,7 +1083,7 @@ function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: string; task
 
   return (
     <div>
-      <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+      <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
         <MessageSquare size={10} />
         Comments ({comments.length})
       </label>
@@ -1100,7 +1100,7 @@ function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: string; task
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{person.name}</span>
-                  <span className="text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>{formatRelativeTime(c.created_at)}</span>
+                  <span className="text-[9px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>{formatRelativeTime(c.created_at)}</span>
                 </div>
                 <p className="text-sm mt-0.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>{c.content}</p>
                 <ReactionBar targetType="task_comment" targetId={c.id} compact />
@@ -1133,7 +1133,7 @@ function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: string; task
             onClick={() => setForClaude(!forClaude)}
             className="flex items-center gap-1.5 self-start px-2 py-0.5 rounded-full transition-colors"
             style={{
-              fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 600,
+              fontFamily: 'var(--font-sans)', fontSize: '9px', fontWeight: 600,
               background: forClaude ? 'rgba(201,168,76,0.15)' : 'rgba(100,116,139,0.06)',
               color: forClaude ? 'var(--gold)' : 'var(--slate)',
               border: `1px solid ${forClaude ? 'rgba(201,168,76,0.3)' : 'rgba(100,116,139,0.1)'}`,
@@ -1172,7 +1172,7 @@ function TaskActivity({ taskId }: { taskId: string }) {
 
   return (
     <div>
-      <label className="text-[10px] uppercase tracking-wider mb-2 block" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+      <label className="text-[10px] uppercase tracking-wider mb-2 block" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
         Activity
       </label>
       <div className="flex flex-col gap-1">
@@ -1180,7 +1180,7 @@ function TaskActivity({ taskId }: { taskId: string }) {
           <div key={a.id} className="flex items-start gap-2 py-0.5">
             <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: 'var(--teal)', opacity: 0.3 }} />
             <span className="text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>{a.description}</span>
-            <span className="text-[9px] ml-auto flex-shrink-0" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.3 }}>{formatRelativeTime(a.timestamp)}</span>
+            <span className="text-[9px] ml-auto flex-shrink-0" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.3 }}>{formatRelativeTime(a.timestamp)}</span>
           </div>
         ))}
       </div>

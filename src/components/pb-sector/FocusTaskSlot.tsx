@@ -59,7 +59,7 @@ function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, on
 
         {/* Number */}
         <span style={{
-          fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700,
+          fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700,
           color: 'var(--teal)', opacity: 0.6, width: 16, textAlign: 'center', flexShrink: 0,
         }}>
           {index + 1}
@@ -87,7 +87,7 @@ function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, on
             {task.title || task.description}
           </button>
           {task.project_title && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--gold)', opacity: 0.7 }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--gold)', opacity: 0.7 }}>
               {task.project_title}
             </span>
           )}
@@ -117,10 +117,10 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-2">
         <Target size={14} style={{ color: 'var(--teal)' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--teal)' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--teal)' }}>
           Focus Tasks
         </span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
           {tasks.length}/3
         </span>
       </div>
@@ -171,10 +171,10 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
                   whileHover={{ backgroundColor: 'rgba(45,138,138,0.03)' }}
                 >
                   <div style={{ width: 14 }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>
                     {tasks.length + i + 1}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: suggestion._isCarried ? 'var(--gold)' : 'var(--teal)', opacity: 0.4, textTransform: 'uppercase', flexShrink: 0 }}>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: suggestion._isCarried ? 'var(--gold)' : 'var(--teal)', opacity: 0.4, textTransform: 'uppercase', flexShrink: 0 }}>
                     {suggestion._isCarried ? 'Carried' : 'Suggested'}
                   </span>
                   <span className="truncate" style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', opacity: 0.35 }}>
@@ -194,7 +194,7 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
                   whileHover={{ backgroundColor: 'rgba(45,138,138,0.03)' }}
                 >
                   <div style={{ width: 14 }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>
                     {tasks.length + i + 1}
                   </span>
                   <Plus size={14} style={{ color: 'var(--slate)', opacity: 0.2 }} />

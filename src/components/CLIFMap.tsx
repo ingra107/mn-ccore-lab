@@ -226,7 +226,7 @@ export default function CLIFMap() {
                     textAnchor="middle"
                     fill="rgba(201, 168, 76, 0.6)"
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: '9px',
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
@@ -317,7 +317,7 @@ export default function CLIFMap() {
                     <span
                       style={{
                         color: 'var(--gold)',
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--font-sans)',
                         marginLeft: '8px',
                         fontSize: '10px',
                       }}
@@ -335,7 +335,7 @@ export default function CLIFMap() {
         <div
           className="mt-8 flex items-center justify-center gap-6"
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '12px',
             color: 'rgba(255, 255, 255, 0.5)',
           }}

@@ -128,7 +128,7 @@ export default function SettingsPage() {
                       {template.name}
                     </span>
                     {template.is_default === 1 && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
                         Default
                       </span>
                     )}
@@ -161,7 +161,7 @@ export default function SettingsPage() {
                       )
                     })}
                   </div>
-                  <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+                  <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
                     {stages.length} stage{stages.length !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -184,7 +184,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{person.name}</div>
-                    <div className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>{member.role}</div>
+                    <div className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>{member.role}</div>
                   </div>
                   <input
                     type="text"
@@ -377,7 +377,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
           <button
             onClick={addStage}
             className="flex items-center gap-1 text-xs px-2 py-1 rounded self-start"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal)', cursor: 'pointer', background: 'none', border: 'none' }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', cursor: 'pointer', background: 'none', border: 'none' }}
           >
             <Plus size={12} /> Add stage
           </button>

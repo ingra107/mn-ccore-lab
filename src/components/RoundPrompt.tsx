@@ -83,12 +83,12 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
       <div className="flex items-center gap-1.5 mb-2">
         <MessageCircle size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
         <span style={{
-          fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--gold)',
+          fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--gold)',
           textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600,
         }}>
           Opening Round
         </span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
           · {categoryLabel}
         </span>
       </div>
@@ -167,7 +167,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             title="Try a different prompt"
             className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[rgba(201,168,76,0.08)]"
             style={{
-              fontFamily: 'var(--font-mono)', color: 'var(--slate)',
+              fontFamily: 'var(--font-sans)', color: 'var(--slate)',
               background: 'transparent', borderColor: 'rgba(201, 168, 76, 0.2)', cursor: 'pointer',
             }}
           >
@@ -180,7 +180,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             title={isCustom ? 'Edit custom prompt' : 'Write a custom prompt'}
             className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[rgba(201,168,76,0.08)]"
             style={{
-              fontFamily: 'var(--font-mono)', color: 'var(--slate)',
+              fontFamily: 'var(--font-sans)', color: 'var(--slate)',
               background: 'transparent', borderColor: 'rgba(201, 168, 76, 0.2)', cursor: 'pointer',
             }}
           >
@@ -194,7 +194,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               title="Restore generated prompt"
               className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[rgba(201,168,76,0.08)]"
               style={{
-                fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.6,
+                fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6,
                 background: 'transparent', borderColor: 'rgba(201, 168, 76, 0.15)', cursor: 'pointer',
               }}
             >

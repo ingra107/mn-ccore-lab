@@ -290,7 +290,7 @@ export default function PBSector() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <Terminal size={24} style={{ color: 'var(--gold)', opacity: 0.5 }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--slate)' }}>Loading planner...</span>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'var(--slate)' }}>Loading planner...</span>
         </div>
       </div>
     )
@@ -433,7 +433,7 @@ export default function PBSector() {
               onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.boxShadow = '0 0 0 0px rgba(45,138,138,0)' }}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center gap-2" style={{
-              fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.35,
+              fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.35,
             }}>
               <kbd className="px-1.5 py-0.5 rounded" style={{ border: '1px solid var(--border-light)', fontSize: '9px' }}>C</kbd>
               Enter to capture

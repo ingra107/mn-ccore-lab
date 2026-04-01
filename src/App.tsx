@@ -57,12 +57,12 @@ class ErrorBoundary extends Component<
           </div>
           <button
             onClick={() => this.setState({ showDetail: !this.state.showDetail })}
-            style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+            style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
           >
             {this.state.showDetail ? 'Hide details' : 'Show error details'}
           </button>
           {this.state.showDetail && (
-            <pre style={{ marginTop: 12, padding: '12px 16px', borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.03)', fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', textAlign: 'left', maxWidth: 500, overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            <pre style={{ marginTop: 12, padding: '12px 16px', borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.03)', fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', textAlign: 'left', maxWidth: 500, overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {errorMsg}
             </pre>
           )}
@@ -134,7 +134,7 @@ function PageLoader() {
           className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
           style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
         />
-        <span className="text-sm" style={{ color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>
+        <span className="text-sm" style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)' }}>
           Loading...
         </span>
       </div>

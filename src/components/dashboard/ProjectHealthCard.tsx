@@ -60,7 +60,7 @@ export default function ProjectHealthCard() {
               />
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '13px',
                   fontWeight: 700,
                   color: 'var(--ink)',
@@ -71,7 +71,7 @@ export default function ProjectHealthCard() {
               </span>
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '9px',
                   color: 'var(--slate)',
                   opacity: 0.5,
@@ -112,7 +112,7 @@ export default function ProjectHealthCard() {
                   border: 'none',
                   padding: '10px 0',
                   minHeight: '44px',
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   color: 'var(--slate)',
                   opacity: 0.6,
@@ -157,7 +157,7 @@ export default function ProjectHealthCard() {
           to="/projects"
           className="flex items-center gap-1 mt-3 pt-2"
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '11px',
             color: 'var(--gold)',
             textDecoration: 'none',
@@ -232,7 +232,7 @@ function ProjectHealthRow({ project }: { project: { slug: string; title: string;
       {/* Stage badge */}
       <span
         style={{
-          fontFamily: 'var(--font-mono)',
+          fontFamily: 'var(--font-sans)',
           fontSize: '9px',
           padding: '2px 6px',
           borderRadius: '4px',
@@ -248,7 +248,7 @@ function ProjectHealthRow({ project }: { project: { slug: string; title: string;
       {/* Days since update */}
       <span
         style={{
-          fontFamily: 'var(--font-mono)',
+          fontFamily: 'var(--font-sans)',
           fontSize: '10px',
           color: isRed ? HEALTH_COLORS.red : 'var(--slate)',
           opacity: isRed ? 1 : 0.5,

@@ -83,7 +83,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
           style={{
             height: pillHeight,
             padding: '0 8px',
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '11px',
             lineHeight: 1,
             background: userReacted ? 'rgba(45,138,138,0.08)' : 'transparent',

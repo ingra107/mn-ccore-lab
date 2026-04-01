@@ -21,7 +21,7 @@ function topicPill(topic: string) {
       key={topic}
       className="inline-block px-2 py-0.5 rounded-full text-xs"
       style={{
-        fontFamily: 'var(--font-mono)',
+        fontFamily: 'var(--font-sans)',
         fontSize: '10px',
         letterSpacing: '0.02em',
         background: 'rgba(201,168,76,0.08)',
@@ -51,7 +51,7 @@ function PaperCard({ paper }: { paper: DigestPaper }) {
         <span
           className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '11px',
             background: relevanceBg(score),
             color: relevanceColor(score),
@@ -144,7 +144,7 @@ export default function LatestDigest() {
             to="/digest"
             className="hidden sm:flex items-center gap-1.5 text-xs transition-colors duration-200"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               color: 'var(--gold)',
               textDecoration: 'none',
               whiteSpace: 'nowrap',

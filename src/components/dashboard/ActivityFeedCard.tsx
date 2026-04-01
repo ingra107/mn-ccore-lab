@@ -168,7 +168,7 @@ export default function ActivityFeedCard() {
                   <span
                     className="flex-shrink-0"
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: '9px',
                       color: 'var(--slate)',
                       opacity: 0.5,
@@ -189,7 +189,7 @@ export default function ActivityFeedCard() {
           to="/publications"
           className="flex items-center gap-1 mt-3 pt-2"
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '11px',
             color: 'var(--gold)',
             textDecoration: 'none',

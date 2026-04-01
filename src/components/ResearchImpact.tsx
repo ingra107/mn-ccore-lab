@@ -75,7 +75,7 @@ export default function ResearchImpact() {
             <h3
               className="text-sm mb-4 text-center"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
                 color: 'rgba(255, 255, 255, 0.5)',
@@ -92,7 +92,7 @@ export default function ResearchImpact() {
             <h3
               className="text-sm mb-4 text-center"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
                 color: 'rgba(255, 255, 255, 0.5)',
@@ -134,7 +134,7 @@ export default function ResearchImpact() {
                     <span
                       className="flex-shrink-0 text-xs"
                       style={{
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--font-sans)',
                         color: 'rgba(255, 255, 255, 0.5)',
                         minWidth: '20px',
                         textAlign: 'right',

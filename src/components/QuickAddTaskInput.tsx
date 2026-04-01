@@ -27,7 +27,7 @@ const TOKEN_STYLES: Record<TokenType, TokenStyle> = {
   plain:    { color: 'inherit' },
 }
 
-const FONT_FAMILY = 'var(--font-mono)'
+const FONT_FAMILY = 'var(--font-sans)'
 const FONT_SIZE   = '13px'
 const LINE_HEIGHT = '22px'
 const PADDING     = '8px 12px'

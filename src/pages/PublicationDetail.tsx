@@ -112,7 +112,7 @@ export default function PublicationDetail() {
             <span
               className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 fontSize: '11px',
                 background: 'rgba(201, 168, 76, 0.1)',
                 color: 'var(--gold)',
@@ -124,7 +124,7 @@ export default function PublicationDetail() {
             <span
               className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 fontSize: '11px',
                 background: sc.bg,
                 color: sc.color,
@@ -136,7 +136,7 @@ export default function PublicationDetail() {
               <span
                 className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   background: 'rgba(45,138,138,0.1)',
                   color: 'var(--teal)',
@@ -258,7 +258,7 @@ export default function PublicationDetail() {
                     to={`/publications?topic=${encodeURIComponent(t)}`}
                     className="inline-flex items-center px-2.5 py-1 rounded-full transition-colors hover:opacity-80"
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: '11px',
                       background: 'rgba(201, 168, 76, 0.1)',
                       color: 'var(--gold)',
@@ -279,7 +279,7 @@ export default function PublicationDetail() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors hover:opacity-80"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     background: 'rgba(201, 168, 76, 0.1)',
                     color: 'var(--gold)',
                     border: '1px solid rgba(201, 168, 76, 0.2)',
@@ -297,7 +297,7 @@ export default function PublicationDetail() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors hover:opacity-80"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     background: 'rgba(45, 138, 138, 0.08)',
                     color: 'var(--teal)',
                     border: '1px solid rgba(45, 138, 138, 0.15)',

@@ -115,7 +115,7 @@ export default function CLIFMiniCard() {
         <div className="flex-shrink-0 text-right" style={{ minWidth: '100px' }}>
           <div
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               fontSize: '36px',
               fontWeight: 700,
               color: 'var(--ink)',
@@ -139,7 +139,7 @@ export default function CLIFMiniCard() {
             to="/nick"
             className="inline-flex items-center gap-1 mt-3"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               fontSize: '10px',
               color: 'var(--gold)',
               textDecoration: 'none',

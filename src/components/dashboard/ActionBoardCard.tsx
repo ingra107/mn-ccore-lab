@@ -46,7 +46,7 @@ export default function ActionBoardCard() {
                       <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>
                         {person.name}
                       </span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--slate)', opacity: 0.5 }}>
+                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.5 }}>
                         {assigneeItems.length}
                       </span>
                     </div>
@@ -71,18 +71,18 @@ export default function ActionBoardCard() {
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               {item.due_date && (
-                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
+                                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
                                   {isOverdue ? 'Overdue' : `Due ${formatShortDate(item.due_date)}`}
                                 </span>
                               )}
                               {item.priority && item.priority !== 'medium' && (
-                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? '#c2410c' : 'var(--slate)', opacity: 0.7 }}>
+                                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? '#c2410c' : 'var(--slate)', opacity: 0.7 }}>
                                   {item.priority}
                                 </span>
                               )}
                               {item.meeting_title && (
                                 <Link to={`/meetings/${item.meeting_id}`}
-                                  style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--gold)', textDecoration: 'none', opacity: 0.7 }}
+                                  style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--gold)', textDecoration: 'none', opacity: 0.7 }}
                                   onClick={(e) => e.stopPropagation()}>
                                   {formatBrandName(item.meeting_title?.split(':')[0] || '')}
                                 </Link>
@@ -107,7 +107,7 @@ export default function ActionBoardCard() {
         </div>
 
         <Link to="/tasks" className="flex items-center gap-1 mt-3 pt-2"
-          style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}>
+          style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}>
           View all tasks <ArrowRight size={11} />
         </Link>
       </div>

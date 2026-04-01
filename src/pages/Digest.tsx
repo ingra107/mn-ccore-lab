@@ -114,7 +114,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
           className="flex-shrink-0 rounded-md px-2 py-1 text-center"
           style={{
             minWidth: '52px',
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '11px',
             fontWeight: 600,
           }}
@@ -179,7 +179,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
               <span
                 className="text-xs"
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   color: 'var(--slate)',
                   opacity: 0.8,
                 }}
@@ -191,7 +191,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
               <span
                 className="text-xs"
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   color: 'var(--slate)',
                   opacity: 0.6,
                 }}
@@ -235,7 +235,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                   key={topic}
                   className="inline-block rounded-full px-2 py-0.5 text-xs"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     background: 'rgba(201, 168, 76, 0.1)',
                     color: 'var(--gold)',
@@ -253,7 +253,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
             <div className="flex items-center gap-1.5 mb-2">
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '9px',
                   color: 'var(--slate)',
                   opacity: 0.5,
@@ -282,7 +282,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                 {paper.relevant_members.length > 5 && (
                   <span
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: '9px',
                       color: 'var(--slate)',
                       opacity: 0.5,
@@ -308,7 +308,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                   background: 'none',
                   border: 'none',
                   padding: 0,
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -407,7 +407,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                 <div
                   style={{
                     padding: '8px 12px 4px',
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '9px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
@@ -626,7 +626,7 @@ export default function Digest() {
               <div
                 className="flex items-center gap-2 mb-3"
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   textTransform: 'uppercase' as const,
                   letterSpacing: '0.1em',
@@ -661,7 +661,7 @@ export default function Digest() {
                       <span
                         className="ml-1.5"
                         style={{
-                          fontFamily: 'var(--font-mono)',
+                          fontFamily: 'var(--font-sans)',
                           fontSize: '10px',
                           opacity: 0.7,
                         }}
@@ -718,7 +718,7 @@ export default function Digest() {
                       <span
                         className="ml-1"
                         style={{
-                          fontFamily: 'var(--font-mono)',
+                          fontFamily: 'var(--font-sans)',
                           fontSize: '10px',
                           opacity: 0.6,
                         }}
@@ -750,7 +750,7 @@ export default function Digest() {
                 For You
                 <span
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     opacity: 0.7,
                   }}
@@ -764,7 +764,7 @@ export default function Digest() {
             <span
               className="text-xs"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 color: 'var(--slate)',
                 opacity: 0.7,
               }}
@@ -781,7 +781,7 @@ export default function Digest() {
                   onClick={() => setTopicFilter(null)}
                   className="cursor-pointer rounded-full px-2.5 py-1 text-xs transition-all duration-200"
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     background: 'rgba(122, 0, 25, 0.08)',
                     color: 'var(--maroon)',
@@ -799,7 +799,7 @@ export default function Digest() {
                     onClick={() => setTopicFilter(isActive ? null : topic)}
                     className="cursor-pointer rounded-full px-2.5 py-1 text-xs transition-all duration-200"
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: '10px',
                       background: isActive
                         ? 'var(--gold)'
@@ -825,7 +825,7 @@ export default function Digest() {
                   className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
                   style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
                 />
-                <span className="text-sm" style={{ color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>
+                <span className="text-sm" style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)' }}>
                   Loading digest...
                 </span>
               </div>
@@ -846,7 +846,7 @@ export default function Digest() {
           ) : (
             <div className="space-y-3 sm:space-y-4">
               {searchQuery && (
-                <p className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+                <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
                   {filteredPapers.length} of {papers.length} papers matching "{searchQuery}"
                 </p>
               )}

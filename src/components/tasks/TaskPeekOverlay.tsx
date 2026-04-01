@@ -29,7 +29,7 @@ const priorityConfig: Record<string, { label: string; color: string; bg: string 
 }
 
 const labelStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-mono)',
+  fontFamily: 'var(--font-sans)',
   fontSize: '10px',
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
@@ -43,7 +43,7 @@ const kbdStyle: React.CSSProperties = {
   borderRadius: 4,
   background: 'var(--ice)',
   border: '1px solid var(--border)',
-  fontFamily: 'var(--font-mono)',
+  fontFamily: 'var(--font-sans)',
   fontSize: '10px',
 }
 
@@ -155,7 +155,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                       padding: '3px 8px',
                       borderRadius: 999,
                       fontSize: '11px',
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       fontWeight: 600,
                       color: status.color,
                       background: status.bg,
@@ -173,7 +173,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                       padding: '3px 8px',
                       borderRadius: 999,
                       fontSize: '11px',
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       fontWeight: 500,
                       color: priority.color,
                       background: priority.bg,
@@ -270,7 +270,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                       {task.due_date ? (
                         <span
                           style={{
-                            fontFamily: 'var(--font-mono)',
+                            fontFamily: 'var(--font-sans)',
                             fontSize: '13px',
                             color: isOverdue ? 'var(--maroon)' : 'var(--ink)',
                             fontWeight: isOverdue ? 600 : 400,
@@ -279,7 +279,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                           {isOverdue ? 'Overdue — ' : ''}{formatShortDate(task.due_date)}
                         </span>
                       ) : (
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
+                        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
                           None
                         </span>
                       )}

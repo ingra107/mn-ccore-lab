@@ -139,7 +139,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                 </div>
                 <span
                   className="text-xs px-1.5 py-0.5 rounded-full"
-                  style={{ fontFamily: 'var(--font-mono)', backgroundColor: col.bg, color: col.color, fontWeight: 600 }}
+                  style={{ fontFamily: 'var(--font-sans)', backgroundColor: col.bg, color: col.color, fontWeight: 600 }}
                 >
                   {columnTasks.length}
                 </span>

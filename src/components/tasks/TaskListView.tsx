@@ -83,7 +83,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
       onClick={() => handleSort(field)}
       className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-colors"
       style={{
-        fontFamily: 'var(--font-mono)',
+        fontFamily: 'var(--font-sans)',
         color: sortKey === field ? 'var(--teal)' : 'var(--slate)',
         fontWeight: sortKey === field ? 600 : 400,
         cursor: 'pointer',
@@ -100,7 +100,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
     <div className="table-container" style={{ padding: '16px 20px' }}>
       {/* Sort bar */}
       <div className="flex items-center gap-1 mb-3 pb-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
-        <span className="text-[11px] uppercase tracking-wider mr-1" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+        <span className="text-[11px] uppercase tracking-wider mr-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
           Sort:
         </span>
         <SortButton label="Priority" field="priority" />

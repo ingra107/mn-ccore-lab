@@ -214,7 +214,7 @@ export default function Tasks() {
               onClick={() => setShowCompleted(!showCompleted)}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 backgroundColor: showCompleted ? 'rgba(34,197,94,0.1)' : 'transparent',
                 color: showCompleted ? '#16a34a' : 'var(--slate)',
                 border: `1px solid ${showCompleted ? 'rgba(34,197,94,0.3)' : 'var(--border-light)'}`,
@@ -231,7 +231,7 @@ export default function Tasks() {
           {activeFilterCount > 0 && (
             <span
               className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium"
-              style={{ fontFamily: 'var(--font-mono)', backgroundColor: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}
+              style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}
             >
               <Filter size={10} />
               {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active

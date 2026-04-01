@@ -82,7 +82,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
           {/* Count + clear */}
           <span
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               fontSize: 13,
               fontWeight: 600,
               color: 'var(--gold)',
@@ -199,7 +199,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                         justifyContent: 'center',
                         fontSize: 10,
                         fontWeight: 700,
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--font-sans)',
                         flexShrink: 0,
                       }}
                     >

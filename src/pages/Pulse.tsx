@@ -63,7 +63,7 @@ export default function Pulse() {
                   <span className="text-lg" style={{ fontFamily: 'var(--font-sans)', color: 'var(--cream)' }}>
                     {formatBrandName(t.title || t.description)}
                   </span>
-                  <span className="ml-auto text-sm" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', opacity: 0.6 }}>
+                  <span className="ml-auto text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', opacity: 0.6 }}>
                     {person.name.split(' ')[0]}
                   </span>
                 </div>
@@ -96,11 +96,11 @@ export default function Pulse() {
           <div className="flex flex-col gap-3">
             {grants.slice(0, 5).map((g, i) => (
               <div key={i} className="flex items-center gap-4 px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                <span className="text-sm font-semibold px-3 py-1 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'white', backgroundColor: g.proposed ? 'var(--gold)' : 'var(--teal)' }}>
+                <span className="text-sm font-semibold px-3 py-1 rounded" style={{ fontFamily: 'var(--font-sans)', color: 'white', backgroundColor: g.proposed ? 'var(--gold)' : 'var(--teal)' }}>
                   {g.mechanism}
                 </span>
                 <span className="text-lg" style={{ fontFamily: 'var(--font-sans)', color: 'var(--cream)' }}>{g.title}</span>
-                <span className="ml-auto text-sm" style={{ fontFamily: 'var(--font-mono)', color: g.proposed ? 'var(--gold)' : 'var(--teal)' }}>
+                <span className="ml-auto text-sm" style={{ fontFamily: 'var(--font-sans)', color: g.proposed ? 'var(--gold)' : 'var(--teal)' }}>
                   {g.proposed ? 'Pending' : 'Active'}
                 </span>
               </div>
@@ -119,7 +119,7 @@ export default function Pulse() {
           <div className="flex flex-col gap-3">
             {deadlines.map((t) => (
               <div key={t.id} className="flex items-center gap-4 px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                <span className="text-sm font-semibold px-3 py-1 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'white', backgroundColor: overdueTasks.includes(t) ? 'var(--maroon)' : 'var(--teal)' }}>
+                <span className="text-sm font-semibold px-3 py-1 rounded" style={{ fontFamily: 'var(--font-sans)', color: 'white', backgroundColor: overdueTasks.includes(t) ? 'var(--maroon)' : 'var(--teal)' }}>
                   {formatShortDate(t.due_date!)}
                 </span>
                 <span className="text-lg" style={{ fontFamily: 'var(--font-sans)', color: 'var(--cream)' }}>
@@ -173,7 +173,7 @@ export default function Pulse() {
           <img src="/logos/mnccore-logo-mark.svg" alt="" style={{ width: 48, height: 48 }} />
           <img src="/logos/mnccore-logo-primary.svg" alt="MN-CCORE" style={{ height: 32, filter: 'brightness(2)' }} />
         </div>
-        <span className="text-sm" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', opacity: 0.5 }}>
+        <span className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', opacity: 0.5 }}>
           Lab Pulse
         </span>
       </div>
@@ -216,7 +216,7 @@ function PulseStat({ label, value, color }: { label: string; value: number | str
       <div className="text-5xl font-bold" style={{ fontFamily: 'var(--font-display)', color: color || 'var(--cream)' }}>
         {value}
       </div>
-      <div className="text-sm mt-2" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', opacity: 0.5 }}>
+      <div className="text-sm mt-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', opacity: 0.5 }}>
         {label}
       </div>
     </div>
@@ -228,7 +228,7 @@ function PulseHealthDot({ color, label, count }: { color: string; label: string;
     <div className="flex flex-col items-center gap-3">
       <div className="w-16 h-16 rounded-full" style={{ backgroundColor: color }} />
       <div className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--cream)' }}>{count}</div>
-      <div className="text-sm" style={{ fontFamily: 'var(--font-mono)', color: 'var(--gold)', opacity: 0.5 }}>{label}</div>
+      <div className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', opacity: 0.5 }}>{label}</div>
     </div>
   )
 }

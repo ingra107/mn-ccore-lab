@@ -102,7 +102,7 @@ function SignInPrompt() {
             alignItems: 'center',
             gap: 6,
             marginTop: '1.5rem',
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '13px',
             color: 'var(--gold)',
           }}
@@ -172,7 +172,7 @@ function StatCard({
         </div>
         <div
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '11px',
             color: 'var(--slate)',
             opacity: 0.7,
@@ -195,7 +195,7 @@ function SectionHeader({ title }: { title: string }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
       <span
         style={{
-          fontFamily: 'var(--font-mono)',
+          fontFamily: 'var(--font-sans)',
           fontSize: '11px',
           color: 'var(--slate)',
           opacity: 0.6,
@@ -296,7 +296,7 @@ function ActionItemCard({
                   fontSize: '8px',
                   fontWeight: 700,
                   color: 'var(--gold)',
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   flexShrink: 0,
                 }}
               >
@@ -312,7 +312,7 @@ function ActionItemCard({
               </div>
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   color: 'var(--slate)',
                   opacity: 0.7,
@@ -328,7 +328,7 @@ function ActionItemCard({
                 <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
                 <span
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: overdue ? 'var(--maroon)' : 'var(--slate)',
                     opacity: overdue ? 1 : 0.7,
@@ -346,7 +346,7 @@ function ActionItemCard({
                 <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
                 <span
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: 'var(--slate)',
                     opacity: 0.5,
@@ -440,7 +440,7 @@ function NotificationCard({
           )}
           <div
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               fontSize: '11px',
               color: 'var(--slate)',
               opacity: 0.5,
@@ -554,7 +554,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
                   fontSize: '8px',
                   fontWeight: 700,
                   color: 'var(--gold)',
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   flexShrink: 0,
                 }}
               >
@@ -570,7 +570,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
               </div>
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   color: 'var(--slate)',
                   opacity: 0.7,
@@ -586,7 +586,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
                 <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
                 <span
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: overdue ? 'var(--maroon)' : 'var(--slate)',
                     opacity: overdue ? 1 : 0.7,
@@ -604,7 +604,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
                 <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
                 <span
                   style={{
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: 'var(--slate)',
                     opacity: 0.5,
@@ -754,7 +754,7 @@ export default function MyItems() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               fontSize: '12px',
               color: 'var(--slate)',
               opacity: 0.6,
@@ -881,7 +881,7 @@ export default function MyItems() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 4,
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   color: 'var(--teal)',
                   opacity: markAllRead.isPending ? 0.5 : 0.8,
@@ -984,7 +984,7 @@ export default function MyItems() {
             >
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   color: 'var(--slate)',
                   opacity: 0.6,

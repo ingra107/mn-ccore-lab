@@ -118,7 +118,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
             <button onClick={handlePrevDay} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.4 }} className="hover:opacity-80">
               <ChevronLeft size={14} style={{ color: 'var(--slate)' }} />
             </button>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', margin: 0 }}>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', margin: 0 }}>
               {formatDate(selectedDate)}
               {!isToday && (
                 <span style={{ marginLeft: 6, color: 'var(--gold)', fontWeight: 600 }}>
@@ -134,7 +134,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
               <button
                 onClick={handleToday}
                 style={{
-                  fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700,
+                  fontFamily: 'var(--font-sans)', fontSize: '9px', fontWeight: 700,
                   textTransform: 'uppercase', letterSpacing: '0.5px',
                   color: isToday ? 'var(--cream)' : 'var(--slate)',
                   background: isToday ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
@@ -147,7 +147,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
               <button
                 onClick={handleTomorrow}
                 style={{
-                  fontFamily: 'var(--font-mono)', fontSize: '9px', fontWeight: 700,
+                  fontFamily: 'var(--font-sans)', fontSize: '9px', fontWeight: 700,
                   textTransform: 'uppercase', letterSpacing: '0.5px',
                   color: isTomorrow ? 'var(--cream)' : 'var(--slate)',
                   background: isTomorrow ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
@@ -175,7 +175,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
           {dispatchSlot}
           <span
             style={{
-              fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700,
+              fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700,
               textTransform: 'uppercase', letterSpacing: '1px',
               color: mc.color, background: mc.bg,
               padding: '3px 10px', borderRadius: 9999,
@@ -183,7 +183,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
           >
             {mc.label}
           </span>
-          <div className="flex items-center gap-3" style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)' }}>
+          <div className="flex items-center gap-3" style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)' }}>
             <span className="flex items-center gap-1">
               <Clock size={11} /> {stats.totalOpen} open
             </span>

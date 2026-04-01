@@ -86,11 +86,11 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+        <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
           {totalContributions} contribution{totalContributions !== 1 ? 's' : ''} in the last {days} days
         </span>
         <div className="flex items-center gap-1">
-          <span className="text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.3 }}>Less</span>
+          <span className="text-[9px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.3 }}>Less</span>
           {[0, 0.25, 0.5, 0.75, 1].map((intensity) => (
             <div
               key={intensity}
@@ -102,7 +102,7 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
               }}
             />
           ))}
-          <span className="text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.3 }}>More</span>
+          <span className="text-[9px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.3 }}>More</span>
         </div>
       </div>
 
@@ -111,7 +111,7 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
         <svg width={svgWidth} height={svgHeight} style={{ display: 'block' }}>
           {/* Month labels */}
           {monthLabels.map((m, i) => (
-            <text key={i} x={m.weekIndex * CELL} y={10} fontSize={9} fontFamily="var(--font-mono)" fill="var(--slate)" opacity={0.4}>
+            <text key={i} x={m.weekIndex * CELL} y={10} fontSize={9} fontFamily="var(--font-sans)" fill="var(--slate)" opacity={0.4}>
               {m.label}
             </text>
           ))}

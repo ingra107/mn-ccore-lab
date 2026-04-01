@@ -315,7 +315,7 @@ export default function CommandPalette() {
             .sort(([a], [b]) => (categoryOrder[a] || 9) - (categoryOrder[b] || 9))
             .map(([category, items]) => (
               <div key={category}>
-                <div className="px-4 py-1.5 text-[9px] uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
+                <div className="px-4 py-1.5 text-[9px] uppercase tracking-wider" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
                   {categoryLabels[category] || category}
                 </div>
                 {items.map((item) => {
@@ -339,7 +339,7 @@ export default function CommandPalette() {
                           {item.label}
                         </span>
                         {item.sublabel && (
-                          <span className="text-[10px] truncate block" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+                          <span className="text-[10px] truncate block" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
                             {item.sublabel}
                           </span>
                         )}
@@ -363,7 +363,7 @@ export default function CommandPalette() {
         </div>
 
         {/* Footer hint */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}>
+        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
           <span>↑↓ navigate</span>
           <span>↵ select</span>
           <span>esc close</span>

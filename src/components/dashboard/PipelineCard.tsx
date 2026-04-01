@@ -74,7 +74,7 @@ export default function PipelineCard() {
                   </span>
                   <span
                     style={{
-                      fontFamily: 'var(--font-mono)',
+                      fontFamily: 'var(--font-sans)',
                       fontSize: '22px',
                       fontWeight: 700,
                       color: i === 2 ? 'var(--ink)' : 'var(--gold)',
@@ -129,7 +129,7 @@ export default function PipelineCard() {
             <div key={stage.label} className="flex items-center gap-2">
               <div
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   color: 'var(--slate)',
                   opacity: 0.6,
@@ -152,7 +152,7 @@ export default function PipelineCard() {
         <div
           className="text-center"
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-sans)',
             fontSize: '11px',
             color: 'var(--slate)',
             opacity: 0.5,

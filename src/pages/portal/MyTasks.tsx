@@ -140,7 +140,7 @@ export default function MyTasks() {
 
         {/* Group By */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>Group by:</span>
+          <span className="text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>Group by:</span>
           <select
             value={groupBy}
             onChange={(e) => setGroupBy(e.target.value as GroupBy)}
@@ -166,7 +166,7 @@ export default function MyTasks() {
 
         {/* Sort By */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>Sort:</span>
+          <span className="text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>Sort:</span>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortBy)}
@@ -314,10 +314,10 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange }: {
         <div key={label}>
           <div className="flex items-center gap-2 mb-2">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: groupColors[label] || 'var(--slate)', opacity: groupColors[label] ? 1 : 0.3 }} />
-            <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)', color: groupColors[label] || 'var(--ink)' }}>
+            <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ fontFamily: 'var(--font-sans)', color: groupColors[label] || 'var(--ink)' }}>
               {label}
             </h3>
-            <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.5 }}>
+            <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
               {items.length}
             </span>
           </div>

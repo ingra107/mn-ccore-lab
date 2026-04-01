@@ -97,7 +97,7 @@ export default function DecisionsPage() {
             </h2>
             <span
               className="text-xs px-2 py-0.5 rounded-full"
-              style={{ fontFamily: 'var(--font-mono)', backgroundColor: 'rgba(201,168,76,0.12)', color: 'var(--gold)' }}
+              style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'rgba(201,168,76,0.12)', color: 'var(--gold)' }}
             >
               {reviewDecisions.length}
             </span>
@@ -188,7 +188,7 @@ function DecisionCard({ decision, projects }: { decision: DecisionRow; projects:
           <span
             className="text-[10px] px-1.5 py-0.5 rounded-full ml-1"
             style={{
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--font-sans)',
               color: decision.outcome_status === 'recorded' ? 'var(--teal)' : 'var(--gold)',
               backgroundColor: decision.outcome_status === 'recorded' ? 'rgba(45,138,138,0.08)' : 'rgba(201,168,76,0.08)',
             }}
@@ -217,7 +217,7 @@ function DecisionCard({ decision, projects }: { decision: DecisionRow; projects:
 
       {/* Metadata row */}
       <div className="flex items-center gap-3 flex-wrap mt-2">
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
           <Clock size={11} style={{ display: 'inline', verticalAlign: '-1px', marginRight: '3px' }} />
           {formatRelativeTime(decision.created_at)}
         </span>
@@ -246,7 +246,7 @@ function DecisionCard({ decision, projects }: { decision: DecisionRow; projects:
           <span
             key={tag}
             className="text-[10px] px-1.5 py-0.5 rounded-full"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.08)' }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.08)' }}
           >
             {tag}
           </span>
@@ -436,7 +436,7 @@ function CreateDecisionModal({
   }
 
   const labelStyle = {
-    fontFamily: 'var(--font-mono)',
+    fontFamily: 'var(--font-sans)',
     fontSize: '10px',
     color: 'var(--slate)',
     opacity: 0.7,
@@ -520,7 +520,7 @@ function CreateDecisionModal({
                         Outcome: {d.outcome}
                       </p>
                     )}
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
                       {new Date(d.created_at).toLocaleDateString()}
                     </span>
                   </div>
