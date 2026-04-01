@@ -22,14 +22,15 @@ import { handleGetDependencies, handleGetProjectDependencies, handleCreateDepend
 import { handleTrajectory } from './routes/trajectory';
 import { handleContributions } from './routes/contributions';
 import { handleSimilarGrants } from './routes/grant-intelligence';
-import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleGetDecisionsNeedingReview } from './routes/decisions';
-import { handleSimilarDecisions } from './routes/decision-replay';
+import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleUpdateDecision, handleGetDecisionsNeedingReview, handleGetDecisionTags } from './routes/decisions';
+import { handleSimilarDecisions, handleSimilarDecisionsById } from './routes/decision-replay';
 import { handleNarratives } from './routes/narratives';
 import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSuggestExperts } from './routes/expertise';
 import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
 import { handleCheckImpact } from './routes/impact-trace';
 import { handlePIAnalytics } from './routes/pi-analytics';
+import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeamEngagement, handleTeamByExpertise } from './routes/pi-dashboard';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
 import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
@@ -79,6 +80,25 @@ export default {
         // PI Analytics — leadership dashboard data
         if (url.pathname === '/api/pi/analytics') {
           return await handlePIAnalytics(env);
+        }
+
+        // Enhanced PI Dashboard & analytics endpoints
+        if (url.pathname === '/api/analytics/pi-dashboard') {
+          return await handlePIDashboard(env);
+        }
+        if (url.pathname === '/api/analytics/mentee-velocity') {
+          return await handleMenteeVelocity(env);
+        }
+        if (url.pathname === '/api/analytics/response-time') {
+          return await handleResponseTime(env);
+        }
+        if (url.pathname === '/api/analytics/team-engagement') {
+          return await handleTeamEngagement(env);
+        }
+
+        // Team members by expertise tag
+        if (url.pathname === '/api/team/by-expertise') {
+          return await handleTeamByExpertise(url, env);
         }
 
         // Digest endpoints (must come before parameterized catch-alls)
@@ -143,8 +163,14 @@ export default {
         if (url.pathname === '/api/decisions/similar') {
           return await handleSimilarDecisions(url, env);
         }
+        if (url.pathname === '/api/decisions/similar-by-id') {
+          return await handleSimilarDecisionsById(url, env);
+        }
         if (url.pathname === '/api/decisions/review') {
           return await handleGetDecisionsNeedingReview(env);
+        }
+        if (url.pathname === '/api/decisions/tags') {
+          return await handleGetDecisionTags(env);
         }
         if (url.pathname === '/api/decisions') {
           return await handleGetDecisions(url, env);
@@ -507,6 +533,12 @@ export default {
         const decisionOutcomeMatch = path.match(/^\/api\/decisions\/([^/]+)\/outcome$/);
         if (request.method === 'POST' && decisionOutcomeMatch) {
           return await handleUpdateDecisionOutcome(decisionOutcomeMatch[1], request, user, env);
+        }
+
+        // POST /api/decisions/:id/update — update decision fields
+        const decisionUpdateMatch = path.match(/^\/api\/decisions\/([^/]+)\/update$/);
+        if (request.method === 'POST' && decisionUpdateMatch) {
+          return await handleUpdateDecision(decisionUpdateMatch[1], request, user, env);
         }
 
         // POST /api/expertise — add expertise tag

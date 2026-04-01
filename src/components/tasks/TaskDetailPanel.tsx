@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  X, Circle, Clock, CheckCircle2, AlertTriangle, Send,
+  X, Circle, Clock, CheckCircle2, AlertTriangle, Send, Scale,
   CalendarDays, FolderKanban, User, Flag, MessageSquare, Ban,
   ListChecks, Plus, Trash2, ArrowRightLeft, Check, Link2, Search,
 } from 'lucide-react'
@@ -10,7 +10,8 @@ import Avatar from '../Avatar'
 import CollapsibleSection from '../CollapsibleSection'
 import ReactionBar from '../ReactionBar'
 import { getPersonInfo } from '../../data/team'
-import { useTeam, useSubtasks, useHandoffs, useTasks } from '../../hooks/useApiData'
+import { useTeam, useSubtasks, useHandoffs, useTasks, useDecisions } from '../../hooks/useApiData'
+import type { DecisionRow } from '../../hooks/useApiData'
 import { useUpdateTask, useUpdateTaskStatus, useCreateSubtask, useToggleSubtask, useDeleteSubtask, useCreateHandoff, useAcknowledgeHandoff } from '../../hooks/useMutations'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { TaskRow } from '../../lib/api'
@@ -169,6 +170,18 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
           >
             <HandoffSection taskId={task.id} currentAssignee={task.assignee} />
           </CollapsibleSection>
+
+          {/* Related Decisions — show decisions linked to this task's project */}
+          {task.project_id && (
+            <CollapsibleSection
+              title="Related Decisions"
+              icon={<Scale size={11} style={{ color: 'var(--gold)', opacity: 0.7 }} />}
+              defaultOpen={false}
+              storageKey={`task-decisions-${task.id}`}
+            >
+              <ProjectDecisionsSection projectSlug={task.project_id} />
+            </CollapsibleSection>
+          )}
 
           {/* Meta info */}
           <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
@@ -1409,6 +1422,82 @@ function TaskActivity({ taskId }: { taskId: string }) {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+// ── Project Decisions Section ────────────────────────────────
+
+const SENTIMENT_BADGE: Record<string, { color: string; bg: string }> = {
+  positive: { color: 'var(--teal)', bg: 'rgba(45,138,138,0.08)' },
+  negative: { color: 'var(--maroon)', bg: 'rgba(128,0,0,0.08)' },
+  neutral: { color: 'var(--slate)', bg: 'rgba(100,116,139,0.08)' },
+  pending: { color: 'var(--gold)', bg: 'rgba(201,168,76,0.08)' },
+}
+
+function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
+  const { data: decisions = [] } = useDecisions(projectSlug)
+
+  if (decisions.length === 0) {
+    return (
+      <p className="text-xs" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', opacity: 0.4 }}>
+        No decisions linked to this project.
+      </p>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {decisions.slice(0, 5).map((d: DecisionRow) => {
+        const sentiment = d.outcome_sentiment || 'pending'
+        const badge = SENTIMENT_BADGE[sentiment] || SENTIMENT_BADGE.pending
+        const tags = d.tags ? d.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+
+        return (
+          <div
+            key={d.id}
+            className="p-2.5 rounded-lg"
+            style={{ background: 'rgba(201,168,76,0.03)', border: '1px solid rgba(201,168,76,0.1)' }}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Scale size={11} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+              <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>
+                {d.title}
+              </span>
+              <span
+                className="text-[9px] px-1 py-0.5 rounded-full ml-auto"
+                style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, color: badge.color, backgroundColor: badge.bg }}
+              >
+                {sentiment}
+              </span>
+            </div>
+            {d.outcome && (
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--teal)', margin: '2px 0 0 0' }}>
+                {d.outcome}
+              </p>
+            )}
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.4 }}>
+                {formatRelativeTime(d.created_at)}
+              </span>
+              {tags.map(tag => (
+                <span
+                  key={tag}
+                  className="text-[9px] px-1 py-0.5 rounded-full"
+                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+      {decisions.length > 5 && (
+        <p className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4, textAlign: 'center' }}>
+          + {decisions.length - 5} more decisions
+        </p>
+      )}
     </div>
   )
 }

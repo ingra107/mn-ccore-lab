@@ -1,16 +1,18 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity } from '../helpers';
 
-// GET /api/decisions?project_slug=&status=pending|recorded|revisited
+// GET /api/decisions?project_slug=&status=pending|recorded|revisited&tag=
 export async function handleGetDecisions(url: URL, env: Env): Promise<Response> {
   const projectSlug = url.searchParams.get('project_slug');
   const status = url.searchParams.get('status');
+  const tag = url.searchParams.get('tag');
 
   let query = 'SELECT * FROM decision_log WHERE 1=1';
   const params: string[] = [];
 
-  if (projectSlug) { query += ' AND project_slug = ?'; params.push(projectSlug); }
+  if (projectSlug) { query += ' AND (project_slug = ? OR linked_projects LIKE ?)'; params.push(projectSlug, `%${projectSlug}%`); }
   if (status) { query += ' AND outcome_status = ?'; params.push(status); }
+  if (tag) { query += ' AND ("," || tags || ",") LIKE ?'; params.push(`%,${tag},%`); }
 
   query += ' ORDER BY created_at DESC';
 
@@ -27,6 +29,7 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
     project_slug?: string;
     meeting_id?: string;
     tags?: string;
+    linked_projects?: string;
   };
   if (!body.title) return error('title required', 400);
 
@@ -34,7 +37,7 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
   const decidedBy = user.email.split('@')[0].toLowerCase();
 
   await env.DB.prepare(
-    'INSERT INTO decision_log (id, title, rationale, context, project_slug, meeting_id, decided_by, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO decision_log (id, title, rationale, context, project_slug, meeting_id, decided_by, tags, linked_projects) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id,
     body.title,
@@ -44,6 +47,7 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
     body.meeting_id || null,
     decidedBy,
     body.tags || null,
+    body.linked_projects || null,
   ).run();
 
   await logActivity(env, 'decision', `Decision logged: "${body.title}"`, decidedBy, id, 'decision');
@@ -52,11 +56,12 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
   return json({ data: created }, 201);
 }
 
-// POST /api/decisions/:id/outcome — update outcome + outcome_status
+// POST /api/decisions/:id/outcome — update outcome + outcome_status + outcome_sentiment
 export async function handleUpdateDecisionOutcome(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
     outcome: string;
     outcome_status: string;
+    outcome_sentiment?: string;
   };
 
   if (!body.outcome || !body.outcome_status) {
@@ -68,9 +73,14 @@ export async function handleUpdateDecisionOutcome(id: string, request: Request, 
     return error(`outcome_status must be one of: ${validStatuses.join(', ')}`, 400);
   }
 
+  const validSentiments = ['positive', 'negative', 'neutral', 'pending'];
+  const sentiment = body.outcome_sentiment && validSentiments.includes(body.outcome_sentiment)
+    ? body.outcome_sentiment
+    : 'neutral';
+
   await env.DB.prepare(
-    "UPDATE decision_log SET outcome = ?, outcome_status = ?, outcome_date = datetime('now') WHERE id = ?"
-  ).bind(body.outcome, body.outcome_status, id).run();
+    "UPDATE decision_log SET outcome = ?, outcome_status = ?, outcome_sentiment = ?, outcome_date = datetime('now') WHERE id = ?"
+  ).bind(body.outcome, body.outcome_status, sentiment, id).run();
 
   const actor = user.email.split('@')[0].toLowerCase();
   await logActivity(env, 'decision_outcome', `Outcome recorded for decision`, actor, id, 'decision');
@@ -80,10 +90,60 @@ export async function handleUpdateDecisionOutcome(id: string, request: Request, 
   return json({ data: updated });
 }
 
-// GET /api/decisions/review — decisions older than 90 days with outcome_status='pending'
+// POST /api/decisions/:id/update — update decision fields (tags, linked_projects, etc.)
+export async function handleUpdateDecision(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as Record<string, unknown>;
+
+  const allowedFields = ['title', 'rationale', 'context', 'project_slug', 'tags', 'linked_projects', 'outcome_sentiment'];
+  const updates: string[] = [];
+  const values: unknown[] = [];
+
+  for (const field of allowedFields) {
+    if (field in body) {
+      updates.push(`${field} = ?`);
+      values.push(body[field] ?? null);
+    }
+  }
+
+  if (updates.length === 0) return error('No valid fields to update', 400);
+
+  values.push(id);
+  await env.DB.prepare(
+    `UPDATE decision_log SET ${updates.join(', ')} WHERE id = ?`
+  ).bind(...values).run();
+
+  const actor = user.email.split('@')[0].toLowerCase();
+  await logActivity(env, 'decision_update', `Decision updated`, actor, id, 'decision');
+
+  const updated = await env.DB.prepare('SELECT * FROM decision_log WHERE id = ?').bind(id).first();
+  if (!updated) return error('Decision not found', 404);
+  return json({ data: updated });
+}
+
+// GET /api/decisions/review — decisions older than 30 days with outcome_status='pending'
 export async function handleGetDecisionsNeedingReview(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
-    "SELECT * FROM decision_log WHERE outcome_status = 'pending' AND created_at <= datetime('now', '-90 days') ORDER BY created_at ASC"
+    "SELECT * FROM decision_log WHERE outcome_status = 'pending' AND created_at <= datetime('now', '-30 days') ORDER BY created_at ASC"
   ).all();
   return json({ data: result.results || [], count: result.results?.length || 0 });
+}
+
+// GET /api/decisions/tags — unique tags across all decisions
+export async function handleGetDecisionTags(env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    "SELECT tags FROM decision_log WHERE tags IS NOT NULL AND tags != ''"
+  ).all();
+
+  const tagCounts = new Map<string, number>();
+  for (const row of (result.results || []) as { tags: string }[]) {
+    for (const tag of row.tags.split(',').map(t => t.trim()).filter(Boolean)) {
+      tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+    }
+  }
+
+  const tags = [...tagCounts.entries()]
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count);
+
+  return json({ data: tags });
 }

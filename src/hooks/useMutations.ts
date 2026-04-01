@@ -651,6 +651,7 @@ export function useCreateDecision() {
       project_slug?: string
       meeting_id?: string
       tags?: string
+      linked_projects?: string
     }) =>
       fetch('/api/decisions', {
         method: 'POST',
@@ -669,11 +670,29 @@ export function useUpdateDecisionOutcome() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, outcome, outcome_status }: { id: string; outcome: string; outcome_status: string }) =>
+    mutationFn: ({ id, outcome, outcome_status, outcome_sentiment }: { id: string; outcome: string; outcome_status: string; outcome_sentiment?: string }) =>
       fetch(`/api/decisions/${id}/outcome`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outcome, outcome_status }),
+        body: JSON.stringify({ outcome, outcome_status, outcome_sentiment }),
+      }).then((r) => r.json()),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['decisions'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUpdateDecision() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, fields }: { id: string; fields: Record<string, unknown> }) =>
+      fetch(`/api/decisions/${id}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fields),
       }).then((r) => r.json()),
 
     onSettled: () => {
