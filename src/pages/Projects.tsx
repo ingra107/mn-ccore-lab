@@ -88,11 +88,11 @@ export default function Projects() {
 
   return (
     <div style={{ minHeight: '100vh' }}>
-      <div className="content-container" style={{ paddingBottom: '4rem' }}>
+      <div className="content-container" style={{ paddingBottom: '6rem' }}>
         {/* Page Header */}
         <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1rem', paddingTop: '1rem' }}>
           <div className="flex items-center gap-2.5">
-            <div style={{ width: 28, height: 28, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)', flexShrink: 0 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)', flexShrink: 0 }}>
               <FolderKanban size={16} style={{ color: 'var(--teal)' }} />
             </div>
             <h1
@@ -116,7 +116,7 @@ export default function Projects() {
                 fontFamily: 'var(--font-body)',
                 fontSize: '13px',
                 fontWeight: 600,
-                border: '1px solid rgba(45, 138, 138, 0.25)',
+                border: '1px solid var(--border-subtle)',
                 cursor: 'pointer',
                 transition: 'background 0.15s',
               }}
@@ -201,7 +201,6 @@ export default function Projects() {
               style={{
                 fontFamily: 'var(--font-body)',
                 color: 'var(--slate)',
-                opacity: 0.6,
                 whiteSpace: 'nowrap',
               }}
             >
@@ -295,8 +294,10 @@ export default function Projects() {
                       {/* Stage group divider — minimal, just text */}
                       {showStageHeader && (
                         <div
+                          className="flex items-center"
                           style={{
                             padding: '20px 24px 8px',
+                            gap: '8px',
                           }}
                         >
                           <span
@@ -305,9 +306,10 @@ export default function Projects() {
                               fontSize: '11px',
                               fontWeight: 500,
                               color: 'var(--slate)',
-                              opacity: 0.45,
+                              opacity: 0.55,
                               textTransform: 'uppercase',
                               letterSpacing: '0.06em',
+                              flexShrink: 0,
                             }}
                           >
                             {project.stage}
@@ -317,12 +319,13 @@ export default function Projects() {
                               fontFamily: 'var(--font-body)',
                               fontSize: '11px',
                               color: 'var(--slate)',
-                              opacity: 0.3,
-                              marginLeft: '6px',
+                              opacity: 0.35,
+                              flexShrink: 0,
                             }}
                           >
                             {filtered.filter((p) => p.stage === project.stage).length}
                           </span>
+                          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
                         </div>
                       )}
 
@@ -339,7 +342,7 @@ export default function Projects() {
                             borderBottom: '1px solid var(--border-subtle)',
                             alignItems: 'center',
                             cursor: 'pointer',
-                            transition: 'background 0.15s ease',
+                            transition: 'background 0.12s ease-out',
                           }}
                         >
                           {/* Title with category dot */}
@@ -352,6 +355,7 @@ export default function Projects() {
                                 background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
                                 flexShrink: 0,
                                 opacity: 0.7,
+                                marginTop: '-1px',
                               }}
                             />
                             <span
@@ -472,7 +476,7 @@ export default function Projects() {
               style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${STAGES.length}, minmax(200px, 1fr))`,
-                gap: '16px',
+                gap: '20px',
                 overflowX: 'auto',
                 paddingBottom: '1rem',
               }}
@@ -484,10 +488,10 @@ export default function Projects() {
                     key={stage}
                     className="pipeline-column"
                     style={{
-                      background: 'var(--ice)',
+                      background: '#f5f3ee',
                       borderRadius: '12px',
                       borderTop: '2px solid var(--teal)',
-                      padding: '16px 14px',
+                      padding: '16px',
                       minHeight: '300px',
                       minWidth: '200px',
                     }}
@@ -587,7 +591,12 @@ export default function Projects() {
         }
 
         .project-list-row:hover {
-          background: rgba(201, 168, 76, 0.04) !important;
+          background: rgba(201, 168, 76, 0.06) !important;
+          transition: background 0.12s ease-out !important;
+        }
+        .project-list-row:active {
+          background: rgba(201, 168, 76, 0.10) !important;
+          transition: background 0.05s ease-out !important;
         }
 
         .new-project-btn:hover {
@@ -609,7 +618,10 @@ export default function Projects() {
           background: #1a2a3a !important;
         }
         .dark .project-list-row:hover {
-          background: rgba(201, 168, 76, 0.04) !important;
+          background: rgba(201, 168, 76, 0.08) !important;
+        }
+        .dark .project-list-row:active {
+          background: rgba(201, 168, 76, 0.12) !important;
         }
       `}</style>
     </div>

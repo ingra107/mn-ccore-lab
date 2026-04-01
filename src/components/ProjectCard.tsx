@@ -43,7 +43,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       style={{
         background: 'var(--cream)',
         borderRadius: '8px',
-        padding: '16px 18px',
+        padding: '16px',
         cursor: 'pointer',
         boxShadow: '0 1px 2px rgba(15, 25, 35, 0.04)',
         transition: 'box-shadow 0.2s ease, background 0.15s ease',
@@ -66,7 +66,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           style={{
             fontFamily: 'var(--font-body)',
             fontWeight: 600,
-            fontSize: '13.5px',
+            fontSize: '13px',
             color: 'var(--ink)',
             lineHeight: 1.4,
             margin: 0,
@@ -79,7 +79,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       {/* PI — small, muted */}
       <div
         className="flex items-center gap-1.5"
-        style={{ marginTop: '8px', marginLeft: '14px' }}
+        style={{ marginTop: '8px', marginLeft: '16px' }}
       >
         <div style={{ width: 18, height: 18, flexShrink: 0 }}>
           <Avatar

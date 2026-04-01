@@ -101,7 +101,7 @@ export default function PortalLayout() {
           <button
             onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
             className="hidden sm:flex items-center gap-2 px-5 py-2 rounded-lg border text-sm transition-colors hover:bg-black/5"
-            style={{ borderColor: 'var(--border-light)', color: 'var(--slate)', fontFamily: 'var(--font-body)', cursor: 'pointer', background: 'none', opacity: 0.6, minWidth: '200px' }}
+            style={{ borderColor: 'var(--border-light)', color: 'var(--slate)', fontFamily: 'var(--font-body)', cursor: 'pointer', background: 'none', minWidth: '220px' }}
           >
             <Search size={14} />
             <span>Search...</span>
@@ -203,18 +203,19 @@ export default function PortalLayout() {
       {/* Floating quick-add button */}
       <button
         onClick={() => setQuickAddOpen(true)}
-        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+        className="fixed bottom-5 right-5 z-40 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{
           background: 'var(--teal)',
           color: 'white',
           border: 'none',
           cursor: 'pointer',
-          boxShadow: '0 4px 12px rgba(45,138,138,0.35)',
+          boxShadow: '0 2px 8px rgba(45,138,138,0.25)',
+          opacity: 0.85,
         }}
         aria-label="Quick add task (Ctrl+N)"
         title="Quick add task (Ctrl+N)"
       >
-        <Plus size={22} strokeWidth={2.5} />
+        <Plus size={20} strokeWidth={2.5} />
       </button>
 
       {/* G-key pending indicator */}

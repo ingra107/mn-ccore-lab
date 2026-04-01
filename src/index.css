@@ -13,6 +13,7 @@
 
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'DM Sans', sans-serif;
+  --font-sans: 'DM Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   --border-light: rgba(201, 168, 76, 0.12);
@@ -208,7 +209,9 @@ a:hover {
 
 /* ── Project card hover ── */
 .project-card:hover {
-  box-shadow: 0 2px 8px rgba(15, 25, 35, 0.06);
+  box-shadow: 0 3px 10px rgba(15, 25, 35, 0.08);
+  transform: translateY(-1px);
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
 }
 
 /* ── Status Badges ── */
