@@ -34,7 +34,7 @@ const PRIORITY_ORDER = ['low', 'medium', 'high', 'urgent'] as const
 const PRIORITY_COLORS: Record<string, string> = {
   low: 'var(--slate)',
   medium: 'var(--gold)',
-  high: '#f97316',
+  high: 'var(--orange)',
   urgent: 'var(--maroon)',
 }
 

@@ -1026,7 +1026,7 @@ export default function Meetings() {
           </div>
 
           {/* Meeting list */}
-          <div className="space-y-3">
+          <div className="table-container space-y-3" style={{ padding: '16px 20px' }}>
             {filteredMeetings.length > 0 ? (
               filteredMeetings.map((meeting) => (
                 <MeetingCard

@@ -58,7 +58,7 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
   const totalBlocked = grouped.reduce((sum, [, g]) => sum + g.blocked.length, 0)
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="table-container flex flex-col gap-6" style={{ padding: '16px 20px' }}>
       {/* Team summary bar */}
       {grouped.length > 1 && (
         <div className="flex items-center gap-4 p-3 rounded-lg" style={{ background: 'rgba(201,168,76,0.03)', border: '1px solid rgba(201,168,76,0.08)' }}>
