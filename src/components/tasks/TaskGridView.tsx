@@ -180,7 +180,7 @@ function TaskGridRow({
   onFocusIndex?: (index: number) => void
 }) {
   const isDone = task.status === 'done'
-  const _isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
+  // isOverdue computed by InlineDatePicker now
   const rowRef = useRef<HTMLDivElement>(null)
   const [completingAnim, setCompletingAnim] = useState(false)
   const [rowFadeAnim, setRowFadeAnim] = useState(false)
