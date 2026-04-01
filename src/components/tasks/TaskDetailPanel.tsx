@@ -302,7 +302,7 @@ function StatusSelect({ value, onChange }: { value: string; onChange: (v: string
           <button
             key={s.value}
             onClick={() => onChange(s.value)}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs border transition-colors"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs border transition-colors status-transition"
             style={{
               fontFamily: 'var(--font-sans)',
               fontWeight: active ? 600 : 400,
@@ -333,7 +333,7 @@ function PrioritySelect({ value, onChange }: { value: string; onChange: (v: stri
           <button
             key={p.value}
             onClick={() => onChange(p.value)}
-            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs border transition-colors"
+            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs border transition-colors status-transition"
             style={{
               fontFamily: 'var(--font-sans)',
               fontWeight: active ? 600 : 400,

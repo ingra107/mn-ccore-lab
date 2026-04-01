@@ -105,7 +105,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             {(() => {
               const opt = statusOptions.find((s) => s.value === task.status) || statusOptions[0]
               const Icon = opt.icon
-              return <Icon size={18} style={{ color: opt.color }} />
+              return <Icon size={18} className="status-transition" style={{ color: opt.color }} />
             })()}
           </button>
         </div>
@@ -127,7 +127,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {/* Priority badge */}
             <span
-              className="text-[11px] px-1.5 py-0.5 rounded font-medium"
+              className="text-[11px] px-1.5 py-0.5 rounded font-medium status-transition"
               style={{
                 fontFamily: 'var(--font-sans)',
                 color: priority.color,
