@@ -140,7 +140,7 @@ export default function Layout() {
           background: scrolled
             ? isDark
               ? 'rgba(15, 25, 35, 0.85)'
-              : 'rgba(250, 248, 243, 0.85)'
+              : 'rgba(255, 255, 255, 0.85)'
             : 'transparent',
           backdropFilter: scrolled ? 'blur(12px)' : 'none',
           WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
@@ -226,7 +226,7 @@ export default function Layout() {
                 className="absolute top-full left-0 mt-1 py-2 rounded-lg"
                 style={{
                   minWidth: '180px',
-                  background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(250, 248, 243, 0.98)',
+                  background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.98)',
                   backdropFilter: 'blur(12px)',
                   WebkitBackdropFilter: 'blur(12px)',
                   border: '1px solid rgba(201, 168, 76, 0.2)',
@@ -371,7 +371,7 @@ export default function Layout() {
             opacity: menuOpen ? 1 : 0,
             background: isDark
               ? 'rgba(15, 25, 35, 0.95)'
-              : 'rgba(250, 248, 243, 0.95)',
+              : 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(12px)',
           }}
         >
@@ -543,20 +543,20 @@ export default function Layout() {
                 className="text-lg font-bold mb-4 tracking-wider"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  color: '#faf8f3',
+                  color: '#ffffff',
                 }}
               >
                 MN-CCORE
               </h3>
               <p
                 className="text-sm leading-relaxed"
-                style={{ color: 'rgba(250, 248, 243, 0.7)' }}
+                style={{ color: 'rgba(255, 255, 255, 0.7)' }}
               >
                 Minnesota Critical Care Outcomes & Research Effort
               </p>
               <p
                 className="text-sm mt-2"
-                style={{ color: 'rgba(250, 248, 243, 0.5)' }}
+                style={{ color: 'rgba(255, 255, 255, 0.5)' }}
               >
                 University of Minnesota
                 <br />
@@ -566,7 +566,7 @@ export default function Layout() {
               </p>
               <p
                 className="text-sm mt-2"
-                style={{ color: 'rgba(250, 248, 243, 0.5)' }}
+                style={{ color: 'rgba(255, 255, 255, 0.5)' }}
               >
                 Mayo Memorial Building
                 <br />
@@ -582,7 +582,7 @@ export default function Layout() {
                 className="text-lg font-bold mb-4"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  color: '#faf8f3',
+                  color: '#ffffff',
                 }}
               >
                 Research Portal
@@ -593,12 +593,12 @@ export default function Layout() {
                     <Link
                       to={link.to}
                       className="text-sm cursor-pointer transition-colors duration-200"
-                      style={{ color: 'rgba(250, 248, 243, 0.7)' }}
+                      style={{ color: 'rgba(255, 255, 255, 0.7)' }}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.color = '#c9a84c')
                       }
                       onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = 'rgba(250, 248, 243, 0.7)')
+                        (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')
                       }
                     >
                       {link.label}
@@ -614,7 +614,7 @@ export default function Layout() {
                 className="text-lg font-bold mb-4"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  color: '#faf8f3',
+                  color: '#ffffff',
                 }}
               >
                 Quick Links
@@ -625,12 +625,12 @@ export default function Layout() {
                     <Link
                       to={link.to}
                       className="text-sm cursor-pointer transition-colors duration-200"
-                      style={{ color: 'rgba(250, 248, 243, 0.7)' }}
+                      style={{ color: 'rgba(255, 255, 255, 0.7)' }}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.color = '#c9a84c')
                       }
                       onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = 'rgba(250, 248, 243, 0.7)')
+                        (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')
                       }
                     >
                       {link.label}
@@ -646,7 +646,7 @@ export default function Layout() {
                 className="text-lg font-bold mb-4"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  color: '#faf8f3',
+                  color: '#ffffff',
                 }}
               >
                 Affiliates
@@ -673,12 +673,12 @@ export default function Layout() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm cursor-pointer transition-colors duration-200"
-                      style={{ color: 'rgba(250, 248, 243, 0.7)' }}
+                      style={{ color: 'rgba(255, 255, 255, 0.7)' }}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.color = '#c9a84c')
                       }
                       onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = 'rgba(250, 248, 243, 0.7)')
+                        (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')
                       }
                     >
                       {link.label}
@@ -690,7 +690,7 @@ export default function Layout() {
                 className="text-lg font-bold mb-4 mt-6"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  color: '#faf8f3',
+                  color: '#ffffff',
                 }}
               >
                 Social
@@ -707,12 +707,12 @@ export default function Layout() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm cursor-pointer transition-colors duration-200"
-                      style={{ color: 'rgba(250, 248, 243, 0.7)' }}
+                      style={{ color: 'rgba(255, 255, 255, 0.7)' }}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.color = '#c9a84c')
                       }
                       onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = 'rgba(250, 248, 243, 0.7)')
+                        (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')
                       }
                     >
                       {link.label}
@@ -728,7 +728,7 @@ export default function Layout() {
             className="mt-8 md:mt-12 pt-6 md:pt-8 text-center text-xs"
             style={{
               borderTop: '1px solid rgba(201, 168, 76, 0.2)',
-              color: 'rgba(250, 248, 243, 0.4)',
+              color: 'rgba(255, 255, 255, 0.4)',
             }}
           >
             &copy; {new Date().getFullYear()} MN-CCORE Lab, University of

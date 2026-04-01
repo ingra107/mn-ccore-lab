@@ -127,18 +127,18 @@ export default function NetworkSidebar({
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-lg cursor-pointer transition-colors duration-200"
             style={{
-              background: 'rgba(250, 248, 243, 0.05)',
+              background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid rgba(201, 168, 76, 0.15)',
-              color: 'rgba(250, 248, 243, 0.6)',
+              color: 'rgba(255, 255, 255, 0.6)',
               zIndex: 21,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.4)'
-              e.currentTarget.style.color = 'rgba(250, 248, 243, 0.9)'
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)'
-              e.currentTarget.style.color = 'rgba(250, 248, 243, 0.6)'
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
             }}
             aria-label="Close panel"
           >
@@ -231,14 +231,14 @@ function NodeDetail({
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 600,
-              color: '#faf8f3',
+              color: '#ffffff',
             }}
           >
             {node.displayName}
           </h3>
           <p
             className="text-sm mt-0.5"
-            style={{ color: 'rgba(250, 248, 243, 0.5)' }}
+            style={{ color: 'rgba(255, 255, 255, 0.5)' }}
           >
             {role}
           </p>
@@ -251,7 +251,7 @@ function NodeDetail({
               className="text-xs"
               style={{
                 fontFamily: 'var(--font-mono)',
-                color: 'rgba(250, 248, 243, 0.4)',
+                color: 'rgba(255, 255, 255, 0.4)',
                 fontSize: '10px',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
@@ -267,7 +267,7 @@ function NodeDetail({
       <div
         className="grid grid-cols-2 gap-3 mb-6 p-4 rounded-lg"
         style={{
-          background: 'rgba(250, 248, 243, 0.04)',
+          background: 'rgba(255, 255, 255, 0.04)',
           border: '1px solid rgba(201, 168, 76, 0.1)',
         }}
       >
@@ -282,7 +282,7 @@ function NodeDetail({
             className="text-xs mt-0.5"
             style={{
               fontFamily: 'var(--font-mono)',
-              color: 'rgba(250, 248, 243, 0.4)',
+              color: 'rgba(255, 255, 255, 0.4)',
               fontSize: '10px',
             }}
           >
@@ -300,7 +300,7 @@ function NodeDetail({
             className="text-xs mt-0.5"
             style={{
               fontFamily: 'var(--font-mono)',
-              color: 'rgba(250, 248, 243, 0.4)',
+              color: 'rgba(255, 255, 255, 0.4)',
               fontSize: '10px',
             }}
           >
@@ -345,7 +345,7 @@ function NodeDetail({
             className="text-xs uppercase mb-3"
             style={{
               fontFamily: 'var(--font-mono)',
-              color: 'rgba(250, 248, 243, 0.4)',
+              color: 'rgba(255, 255, 255, 0.4)',
               letterSpacing: '0.1em',
               fontSize: '10px',
             }}
@@ -365,7 +365,7 @@ function NodeDetail({
                   key={c.node.id}
                   className="flex items-center justify-between px-3 py-2 rounded-md"
                   style={{
-                    background: 'rgba(250, 248, 243, 0.03)',
+                    background: 'rgba(255, 255, 255, 0.03)',
                     border: '1px solid rgba(201, 168, 76, 0.06)',
                   }}
                 >
@@ -376,7 +376,7 @@ function NodeDetail({
                     />
                     <span
                       className="text-sm truncate"
-                      style={{ color: 'rgba(250, 248, 243, 0.7)' }}
+                      style={{ color: 'rgba(255, 255, 255, 0.7)' }}
                     >
                       {c.node.displayName}
                     </span>
@@ -461,14 +461,14 @@ function EdgeDetail({
         style={{
           fontFamily: 'var(--font-display)',
           fontWeight: 600,
-          color: '#faf8f3',
+          color: '#ffffff',
         }}
       >
         {sourceNode.displayName} & {targetNode.displayName}
       </h3>
       <p
         className="text-sm mb-6"
-        style={{ color: 'rgba(250, 248, 243, 0.5)' }}
+        style={{ color: 'rgba(255, 255, 255, 0.5)' }}
       >
         {uniquePapers.length} shared publication{uniquePapers.length !== 1 ? 's' : ''}
       </p>
@@ -479,7 +479,7 @@ function EdgeDetail({
           className="text-xs uppercase mb-3"
           style={{
             fontFamily: 'var(--font-mono)',
-            color: 'rgba(250, 248, 243, 0.4)',
+            color: 'rgba(255, 255, 255, 0.4)',
             letterSpacing: '0.1em',
             fontSize: '10px',
           }}
@@ -493,13 +493,13 @@ function EdgeDetail({
               key={paper.id}
               className="p-3 rounded-lg"
               style={{
-                background: 'rgba(250, 248, 243, 0.03)',
+                background: 'rgba(255, 255, 255, 0.03)',
                 border: '1px solid rgba(201, 168, 76, 0.06)',
               }}
             >
               <p
                 className="text-sm leading-relaxed"
-                style={{ color: 'rgba(250, 248, 243, 0.7)' }}
+                style={{ color: 'rgba(255, 255, 255, 0.7)' }}
               >
                 {paper.title}
               </p>

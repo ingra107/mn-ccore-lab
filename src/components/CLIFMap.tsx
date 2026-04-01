@@ -111,7 +111,7 @@ export default function CLIFMap() {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 600,
-              color: '#faf8f3',
+              color: '#ffffff',
               lineHeight: 1.2,
             }}
           >
@@ -121,7 +121,7 @@ export default function CLIFMap() {
             className="text-base sm:text-lg"
             style={{
               fontFamily: 'var(--font-body)',
-              color: 'rgba(250, 248, 243, 0.8)',
+              color: 'rgba(255, 255, 255, 0.8)',
             }}
           >
             13 academic medical centers collaborating on ICU data standards
@@ -203,7 +203,7 @@ export default function CLIFMap() {
                   cy={site.y}
                   r={site.isHome ? 12 : 8}
                   fill="#c9a84c"
-                  stroke={site.isHome ? '#faf8f3' : 'rgba(250, 248, 243, 0.3)'}
+                  stroke={site.isHome ? '#ffffff' : 'rgba(255, 255, 255, 0.3)'}
                   strokeWidth={site.isHome ? 2 : 1}
                   className="cursor-pointer"
                   style={{
@@ -337,7 +337,7 @@ export default function CLIFMap() {
           style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '12px',
-            color: 'rgba(250, 248, 243, 0.5)',
+            color: 'rgba(255, 255, 255, 0.5)',
           }}
         >
           <span className="flex items-center gap-2">

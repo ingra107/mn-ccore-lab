@@ -366,10 +366,10 @@ export default function EnhancedCollaborationNetwork({
         ctx.fillStyle = dimmed ? 'rgba(201, 168, 76, 0.2)' : '#c9a84c'
       } else {
         ctx.fillStyle = dimmed
-          ? 'rgba(250, 248, 243, 0.1)'
+          ? 'rgba(255, 255, 255, 0.1)'
           : isHovered || isEdgeNode
             ? '#c9a84c'
-            : 'rgba(250, 248, 243, 0.6)'
+            : 'rgba(255, 255, 255, 0.6)'
       }
       ctx.fill()
 
@@ -387,8 +387,8 @@ export default function EnhancedCollaborationNetwork({
       const fontSize = isCore ? 13 : node.isClif ? 11 : !node.isMnccore ? 10 : 11
       ctx.font = `${isCore || isHovered || isSelected ? '600' : '400'} ${fontSize}px "DM Sans", sans-serif`
       ctx.fillStyle = isCore || isHovered || isSelected || isEdgeNode
-        ? `rgba(250, 248, 243, ${labelOpacity})`
-        : `rgba(250, 248, 243, ${0.5 * labelOpacity})`
+        ? `rgba(255, 255, 255, ${labelOpacity})`
+        : `rgba(255, 255, 255, ${0.5 * labelOpacity})`
       ctx.textAlign = 'center'
       ctx.fillText(node.displayName, x, y + r + 14)
 
@@ -574,7 +574,7 @@ export default function EnhancedCollaborationNetwork({
               background: 'rgba(15, 25, 35, 0.8)',
               backdropFilter: 'blur(8px)',
               border: '1px solid rgba(201, 168, 76, 0.3)',
-              color: 'rgba(250, 248, 243, 0.8)',
+              color: 'rgba(255, 255, 255, 0.8)',
             }}
             aria-label="Zoom in"
           >
@@ -587,7 +587,7 @@ export default function EnhancedCollaborationNetwork({
               background: 'rgba(15, 25, 35, 0.8)',
               backdropFilter: 'blur(8px)',
               border: '1px solid rgba(201, 168, 76, 0.3)',
-              color: 'rgba(250, 248, 243, 0.8)',
+              color: 'rgba(255, 255, 255, 0.8)',
             }}
             aria-label="Zoom out"
           >
@@ -603,7 +603,7 @@ export default function EnhancedCollaborationNetwork({
               background: 'rgba(15, 25, 35, 0.8)',
               backdropFilter: 'blur(8px)',
               border: '1px solid rgba(201, 168, 76, 0.3)',
-              color: 'rgba(250, 248, 243, 0.6)',
+              color: 'rgba(255, 255, 255, 0.6)',
               fontFamily: 'var(--font-mono)',
             }}
             aria-label="Reset view"
@@ -623,7 +623,7 @@ export default function EnhancedCollaborationNetwork({
             className="inline-block w-3 h-3 rounded-full"
             style={{ background: '#c9a84c' }}
           />
-          <span style={{ color: 'rgba(250, 248, 243, 0.6)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>
+          <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>
             MNCCORE
           </span>
         </div>
@@ -633,7 +633,7 @@ export default function EnhancedCollaborationNetwork({
               className="inline-block w-3 h-3 rounded-full"
               style={{ background: '#60a5b5' }}
             />
-            <span style={{ color: 'rgba(250, 248, 243, 0.6)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>
+            <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>
               CLIF
             </span>
           </div>
@@ -644,7 +644,7 @@ export default function EnhancedCollaborationNetwork({
               className="inline-block w-3 h-3 rounded-full"
               style={{ background: '#64748b' }}
             />
-            <span style={{ color: 'rgba(250, 248, 243, 0.6)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>
+            <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>
               External
             </span>
           </div>

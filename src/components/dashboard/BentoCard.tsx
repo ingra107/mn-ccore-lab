@@ -50,7 +50,7 @@ export default function BentoCard({
           overflow: 'hidden',
           position: 'relative',
           background: glass
-            ? 'rgba(250, 248, 243, 0.7)'
+            ? 'rgba(255, 255, 255, 0.7)'
             : 'var(--cream)',
           backdropFilter: glass ? 'blur(12px)' : undefined,
           WebkitBackdropFilter: glass ? 'blur(12px)' : undefined,

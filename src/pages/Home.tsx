@@ -229,7 +229,7 @@ export default function Home() {
                 fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
                 lineHeight: 0.95,
                 letterSpacing: '-0.02em',
-                color: '#faf8f3',
+                color: '#ffffff',
                 opacity: heroVisible ? 1 : 0,
                 transform: heroVisible ? 'translateY(0)' : 'translateY(24px)',
                 transitionDelay: '100ms',
@@ -255,7 +255,7 @@ export default function Home() {
                 fontFamily: 'var(--font-body)',
                 fontSize: 'clamp(1rem, 2vw, 1.3rem)',
                 lineHeight: 1.5,
-                color: 'rgba(250, 248, 243, 0.6)',
+                color: 'rgba(255, 255, 255, 0.6)',
                 maxWidth: '540px',
                 opacity: heroVisible ? 1 : 0,
                 transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
@@ -288,7 +288,7 @@ export default function Home() {
                   <div style={{
                     fontFamily: 'var(--font-mono)',
                     fontSize: '10px',
-                    color: 'rgba(250, 248, 243, 0.5)',
+                    color: 'rgba(255, 255, 255, 0.5)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     marginTop: '4px',
@@ -318,18 +318,18 @@ export default function Home() {
                   className="hero-pathway group rounded-xl p-5 sm:p-6 flex items-center gap-4 transition-all duration-300"
                   style={{
                     textDecoration: 'none',
-                    background: 'rgba(250, 248, 243, 0.04)',
-                    border: '1px solid rgba(250, 248, 243, 0.08)',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
                     backdropFilter: 'blur(8px)',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(250, 248, 243, 0.08)'
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
                     e.currentTarget.style.borderColor = `${path.accent}55`
                     e.currentTarget.style.transform = 'translateY(-2px)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(250, 248, 243, 0.04)'
-                    e.currentTarget.style.borderColor = 'rgba(250, 248, 243, 0.08)'
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'
                     e.currentTarget.style.transform = 'translateY(0)'
                   }}
                 >
@@ -342,11 +342,11 @@ export default function Home() {
                   <div className="flex-1 min-w-0">
                     <h3
                       className="text-base font-semibold"
-                      style={{ fontFamily: 'var(--font-body)', fontWeight: 600, color: '#faf8f3', lineHeight: 1.2 }}
+                      style={{ fontFamily: 'var(--font-body)', fontWeight: 600, color: '#ffffff', lineHeight: 1.2 }}
                     >
                       {path.title}
                     </h3>
-                    <p className="text-xs mt-0.5" style={{ color: 'rgba(250, 248, 243, 0.45)' }}>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>
                       {path.description}
                     </p>
                   </div>

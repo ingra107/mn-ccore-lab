@@ -76,7 +76,7 @@ export default function ActivityFeedCard() {
     // Team growth
     feed.push({
       icon: Users,
-      dotColor: '#faf8f3',
+      dotColor: '#ffffff',
       text: 'CLIF Consortium expanding to 13+ sites nationwide',
       detail: 'Multi-center ICU data infrastructure',
       time: '2025',
@@ -129,7 +129,7 @@ export default function ActivityFeedCard() {
                       height: '15px',
                       borderRadius: '50%',
                       background: item.dotColor,
-                      border: item.dotColor === '#faf8f3'
+                      border: item.dotColor === '#ffffff'
                         ? '1.5px solid rgba(201, 168, 76, 0.3)'
                         : '2px solid var(--cream)',
                       marginTop: '2px',

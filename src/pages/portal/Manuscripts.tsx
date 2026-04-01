@@ -142,7 +142,7 @@ export default function Manuscripts() {
                   fontFamily: 'var(--font-body)',
                   fontWeight: 500,
                   background: view === v ? 'var(--teal)' : 'transparent',
-                  color: view === v ? '#faf8f3' : 'var(--slate)',
+                  color: view === v ? '#ffffff' : 'var(--slate)',
                   border: 'none',
                   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
@@ -315,7 +315,7 @@ export default function Manuscripts() {
                 <div
                   key={stage}
                   style={{
-                    background: '#f5f3ee',
+                    background: '#f5f5f5',
                     borderRadius: '12px',
                     borderTop: '2px solid var(--teal)',
                     padding: '16px',

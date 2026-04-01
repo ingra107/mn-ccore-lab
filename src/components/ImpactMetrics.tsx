@@ -48,7 +48,7 @@ function MetricCard({
         className="mt-2 text-xs sm:text-sm"
         style={{
           fontFamily: 'var(--font-mono)',
-          color: 'rgba(250, 248, 243, 0.8)',
+          color: 'rgba(255, 255, 255, 0.8)',
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
         }}

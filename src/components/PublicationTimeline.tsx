@@ -111,7 +111,7 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
                 style={{
                   fontFamily: 'var(--font-mono)',
                   fontSize: '10px',
-                  color: 'rgba(250, 248, 243, 0.6)',
+                  color: 'rgba(255, 255, 255, 0.6)',
                   writingMode: yearData.length > 8 ? 'vertical-rl' : undefined,
                   transform: yearData.length > 8 ? 'rotate(180deg)' : undefined,
                 }}
@@ -127,13 +127,13 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
       <div className="flex items-center gap-4 mt-3 justify-center">
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 0.9 }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(250, 248, 243, 0.6)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
             Published
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 0.4 }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(250, 248, 243, 0.6)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
             In Review / Prep
           </span>
         </div>

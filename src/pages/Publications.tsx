@@ -231,13 +231,13 @@ export default function Publications() {
                   <div className="min-w-0">
                     <p
                       className="text-sm font-medium leading-snug"
-                      style={{ color: '#faf8f3' }}
+                      style={{ color: '#ffffff' }}
                     >
                       {pub.title}
                     </p>
                     <p
                       className="text-xs mt-0.5"
-                      style={{ color: 'rgba(250, 248, 243, 0.5)', fontStyle: 'italic' }}
+                      style={{ color: 'rgba(255, 255, 255, 0.5)', fontStyle: 'italic' }}
                     >
                       {pub.journal}
                     </p>

@@ -47,11 +47,11 @@ function Pill({
         fontFamily: 'var(--font-mono)',
         fontSize: '11px',
         minHeight: '28px',
-        background: active ? 'rgba(201, 168, 76, 0.9)' : 'rgba(250, 248, 243, 0.08)',
-        color: active ? '#0f1923' : 'rgba(250, 248, 243, 0.6)',
+        background: active ? 'rgba(201, 168, 76, 0.9)' : 'rgba(255, 255, 255, 0.08)',
+        color: active ? '#0f1923' : 'rgba(255, 255, 255, 0.6)',
         border: active
           ? '1px solid rgba(201, 168, 76, 0.6)'
-          : '1px solid rgba(250, 248, 243, 0.1)',
+          : '1px solid rgba(255, 255, 255, 0.1)',
         transitionProperty: 'background-color, color, border-color',
         transitionDuration: '200ms',
         transitionTimingFunction: 'ease',
@@ -129,7 +129,7 @@ export default function NetworkFilters({
           className="text-xs"
           style={{
             fontFamily: 'var(--font-mono)',
-            color: 'rgba(250, 248, 243, 0.4)',
+            color: 'rgba(255, 255, 255, 0.4)',
             fontSize: '10px',
             textTransform: 'uppercase',
           }}
@@ -158,7 +158,7 @@ export default function NetworkFilters({
           className="text-xs tabular-nums"
           style={{
             fontFamily: 'var(--font-mono)',
-            color: 'rgba(250, 248, 243, 0.5)',
+            color: 'rgba(255, 255, 255, 0.5)',
             fontSize: '11px',
             minWidth: '55px',
             textAlign: 'center',
@@ -229,11 +229,11 @@ export default function NetworkFilters({
           minHeight: '28px',
           background: filters.mnccoreOnly
             ? 'rgba(201, 168, 76, 0.9)'
-            : 'rgba(250, 248, 243, 0.08)',
-          color: filters.mnccoreOnly ? '#0f1923' : 'rgba(250, 248, 243, 0.6)',
+            : 'rgba(255, 255, 255, 0.08)',
+          color: filters.mnccoreOnly ? '#0f1923' : 'rgba(255, 255, 255, 0.6)',
           border: filters.mnccoreOnly
             ? '1px solid rgba(201, 168, 76, 0.6)'
-            : '1px solid rgba(250, 248, 243, 0.1)',
+            : '1px solid rgba(255, 255, 255, 0.1)',
           transitionProperty: 'background-color, color, border-color',
           transitionDuration: '200ms',
         }}
@@ -258,7 +258,7 @@ export default function NetworkFilters({
           style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '10px',
-            color: 'rgba(250, 248, 243, 0.5)',
+            color: 'rgba(255, 255, 255, 0.5)',
             background: 'transparent',
             border: '1px solid rgba(201, 168, 76, 0.15)',
           }}

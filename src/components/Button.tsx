@@ -25,7 +25,7 @@ const variantStyles = {
   },
   secondary: {
     background: 'transparent',
-    color: '#faf8f3',
+    color: '#ffffff',
     border: '1px solid rgba(250,248,243,0.3)',
   },
   ghost: {
@@ -51,7 +51,7 @@ const hoverHandlers = {
     },
     onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
       e.currentTarget.style.borderColor = 'rgba(250,248,243,0.3)'
-      e.currentTarget.style.color = '#faf8f3'
+      e.currentTarget.style.color = '#ffffff'
     },
   },
   ghost: {

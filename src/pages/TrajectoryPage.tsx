@@ -72,7 +72,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
               height: '16px',
               borderRadius: '50%',
               background: 'var(--gold)',
-              border: '3px solid var(--cream, #faf8f3)',
+              border: '3px solid var(--cream, #ffffff)',
               zIndex: 1,
             }}
           />
@@ -790,7 +790,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                 height: '16px',
                 borderRadius: '50%',
                 background: config.color,
-                border: '3px solid var(--cream, #faf8f3)',
+                border: '3px solid var(--cream, #ffffff)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

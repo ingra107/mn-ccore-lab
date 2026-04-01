@@ -42,8 +42,8 @@ const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Pub
 type Stage = (typeof STAGES)[number]
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  clif: { bg: 'var(--maroon)', text: '#faf8f3', label: 'CLIF' },
-  lab: { bg: 'var(--teal)', text: '#faf8f3', label: 'Lab' },
+  clif: { bg: 'var(--maroon)', text: '#ffffff', label: 'CLIF' },
+  lab: { bg: 'var(--teal)', text: '#ffffff', label: 'Lab' },
   nate: { bg: 'var(--gold)', text: '#0f1923', label: 'Mesfin' },
 }
 
@@ -137,7 +137,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   const cat = CATEGORY_COLORS[project.category] ?? {
     bg: 'var(--slate)',
-    text: '#faf8f3',
+    text: '#ffffff',
     label: project.category,
   }
   const pi = getPersonInfo(project.pi)
@@ -1805,7 +1805,7 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                   className="cursor-pointer px-3 py-1.5 rounded-md text-xs font-medium"
                   style={{
                     background: newTarget ? 'var(--teal)' : 'var(--ice)',
-                    color: newTarget ? '#faf8f3' : 'var(--slate)',
+                    color: newTarget ? '#ffffff' : 'var(--slate)',
                     border: 'none',
                     fontFamily: 'var(--font-body)',
                     opacity: newTarget ? 1 : 0.5,

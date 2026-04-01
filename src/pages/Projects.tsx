@@ -144,7 +144,7 @@ export default function Projects() {
                   fontFamily: 'var(--font-body)',
                   fontWeight: 500,
                   background: viewMode === 'list' ? 'var(--teal)' : 'transparent',
-                  color: viewMode === 'list' ? '#faf8f3' : 'var(--slate)',
+                  color: viewMode === 'list' ? '#ffffff' : 'var(--slate)',
                   border: 'none',
                   transition: 'all 0.15s',
                 }}
@@ -159,7 +159,7 @@ export default function Projects() {
                   fontFamily: 'var(--font-body)',
                   fontWeight: 500,
                   background: viewMode === 'pipeline' ? 'var(--teal)' : 'transparent',
-                  color: viewMode === 'pipeline' ? '#faf8f3' : 'var(--slate)',
+                  color: viewMode === 'pipeline' ? '#ffffff' : 'var(--slate)',
                   border: 'none',
                   transition: 'all 0.15s',
                 }}
@@ -183,7 +183,7 @@ export default function Projects() {
                     fontSize: '12px',
                     borderRadius: '6px',
                     background: activeCategory === f.key ? 'var(--teal)' : 'transparent',
-                    color: activeCategory === f.key ? '#faf8f3' : 'var(--slate)',
+                    color: activeCategory === f.key ? '#ffffff' : 'var(--slate)',
                     border: activeCategory === f.key ? '1px solid var(--teal)' : '1px solid transparent',
                     transition: 'all 0.15s',
                   }}
@@ -216,7 +216,7 @@ export default function Projects() {
                   fontSize: '11px',
                   fontWeight: 500,
                   background: showDeps ? 'var(--teal)' : 'transparent',
-                  color: showDeps ? '#faf8f3' : 'var(--teal)',
+                  color: showDeps ? '#ffffff' : 'var(--teal)',
                   border: '1px solid rgba(45, 138, 138, 0.2)',
                   transition: 'all 0.2s',
                   whiteSpace: 'nowrap',
@@ -488,7 +488,7 @@ export default function Projects() {
                     key={stage}
                     className="pipeline-column"
                     style={{
-                      background: '#f5f3ee',
+                      background: '#f5f5f5',
                       borderRadius: '12px',
                       borderTop: '2px solid var(--teal)',
                       padding: '16px',

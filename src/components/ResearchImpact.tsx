@@ -53,14 +53,14 @@ export default function ResearchImpact() {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 600,
-              color: '#faf8f3',
+              color: '#ffffff',
             }}
           >
             Research Output
           </h2>
           <p
             className="text-sm"
-            style={{ color: 'rgba(250, 248, 243, 0.6)' }}
+            style={{ color: 'rgba(255, 255, 255, 0.6)' }}
           >
             {publishedPubs.length} published papers across {Object.keys(
               publishedPubs.reduce((acc, p) => ({ ...acc, [p.journal]: true }), {} as Record<string, boolean>)
@@ -78,7 +78,7 @@ export default function ResearchImpact() {
                 fontFamily: 'var(--font-mono)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
-                color: 'rgba(250, 248, 243, 0.5)',
+                color: 'rgba(255, 255, 255, 0.5)',
                 fontSize: '11px',
               }}
             >
@@ -95,7 +95,7 @@ export default function ResearchImpact() {
                 fontFamily: 'var(--font-mono)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
-                color: 'rgba(250, 248, 243, 0.5)',
+                color: 'rgba(255, 255, 255, 0.5)',
                 fontSize: '11px',
               }}
             >
@@ -112,7 +112,7 @@ export default function ResearchImpact() {
                         <span
                           className="text-xs truncate"
                           style={{
-                            color: isHighImpact ? 'var(--gold)' : 'rgba(250, 248, 243, 0.7)',
+                            color: isHighImpact ? 'var(--gold)' : 'rgba(255, 255, 255, 0.7)',
                             fontFamily: 'var(--font-body)',
                             fontWeight: isHighImpact ? 500 : 400,
                           }}
@@ -126,7 +126,7 @@ export default function ResearchImpact() {
                           width: `${widthPercent}%`,
                           background: isHighImpact
                             ? 'var(--gold)'
-                            : 'rgba(250, 248, 243, 0.2)',
+                            : 'rgba(255, 255, 255, 0.2)',
                           opacity: isHighImpact ? 0.8 : 0.6,
                         }}
                       />
@@ -135,7 +135,7 @@ export default function ResearchImpact() {
                       className="flex-shrink-0 text-xs"
                       style={{
                         fontFamily: 'var(--font-mono)',
-                        color: 'rgba(250, 248, 243, 0.5)',
+                        color: 'rgba(255, 255, 255, 0.5)',
                         minWidth: '20px',
                         textAlign: 'right',
                       }}

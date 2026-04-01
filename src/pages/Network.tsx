@@ -94,13 +94,13 @@ export default function Network() {
               to="/"
               className="flex items-center gap-1.5 text-sm transition-colors duration-200"
               style={{
-                color: 'rgba(250, 248, 243, 0.5)',
+                color: 'rgba(255, 255, 255, 0.5)',
                 textDecoration: 'none',
                 fontFamily: 'var(--font-body)',
               }}
               onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
               onMouseLeave={(e) =>
-                (e.currentTarget.style.color = 'rgba(250, 248, 243, 0.5)')
+                (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)')
               }
             >
               <ArrowLeft size={14} />
@@ -112,7 +112,7 @@ export default function Network() {
               style={{
                 fontFamily: 'var(--font-display)',
                 fontWeight: 600,
-                color: '#faf8f3',
+                color: '#ffffff',
               }}
             >
               Collaboration Network
@@ -122,7 +122,7 @@ export default function Network() {
             className="hidden sm:block text-xs"
             style={{
               fontFamily: 'var(--font-mono)',
-              color: 'rgba(250, 248, 243, 0.35)',
+              color: 'rgba(255, 255, 255, 0.35)',
               letterSpacing: '0.05em',
             }}
           >
@@ -169,7 +169,7 @@ export default function Network() {
             className="text-xs px-3 py-1 rounded-full"
             style={{
               fontFamily: 'var(--font-mono)',
-              color: 'rgba(250, 248, 243, 0.4)',
+              color: 'rgba(255, 255, 255, 0.4)',
               background: 'rgba(15, 25, 35, 0.6)',
               fontSize: '10px',
             }}
