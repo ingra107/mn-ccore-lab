@@ -11,15 +11,15 @@ interface SectionHeaderProps {
 }
 
 const sizeClasses = {
-  sm: 'text-xl sm:text-2xl lg:text-3xl',
-  md: 'text-2xl sm:text-3xl lg:text-4xl',
-  lg: 'text-3xl sm:text-4xl lg:text-5xl',
+  sm: 'text-lg sm:text-xl',
+  md: 'text-xl sm:text-2xl',
+  lg: 'text-2xl sm:text-3xl',
 } as const
 
 const iconSizes = {
-  sm: { box: 28, icon: 15 },
-  md: { box: 32, icon: 17 },
-  lg: { box: 36, icon: 19 },
+  sm: { box: 24, icon: 13 },
+  md: { box: 28, icon: 15 },
+  lg: { box: 32, icon: 17 },
 } as const
 
 export default function SectionHeader({
@@ -31,7 +31,7 @@ export default function SectionHeader({
   accentLine = false,
   className,
 }: SectionHeaderProps) {
-  const weight = Tag === 'h1' ? 800 : 600
+  const weight = Tag === 'h1' ? 700 : 600
   const iconConfig = iconSizes[size]
 
   const titleContent = (
@@ -78,11 +78,13 @@ export default function SectionHeader({
       )}
       {subtitle && (
         <p
-          className={`text-base sm:text-lg ${Icon ? 'ml-0' : ''}`}
+          className="text-sm"
           style={{
             fontFamily: 'var(--font-body)',
+            fontWeight: 400,
             color: 'var(--slate)',
-            marginTop: Icon ? '4px' : '12px',
+            opacity: 0.7,
+            marginTop: '2px',
             paddingLeft: Icon ? `${iconConfig.box + 12}px` : undefined,
           }}
         >
