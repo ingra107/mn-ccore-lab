@@ -173,7 +173,7 @@ export default function PortalLayout() {
         </header>
 
         {/* Page content */}
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="portal-content p-4 md:p-6 lg:p-8">
           <AnimatePresence mode="wait">
             <PageTransition>
               <Outlet />
