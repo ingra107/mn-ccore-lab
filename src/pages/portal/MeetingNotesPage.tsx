@@ -4,7 +4,8 @@ import {
   Brain, Mic, Upload, FileText, CheckCircle2, Clock, ArrowRight,
   Sparkles, Users,
 } from 'lucide-react'
-import SectionHeader from '../../components/SectionHeader'
+import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
 import { useMeetingsApi } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
@@ -19,13 +20,12 @@ export default function MeetingNotesPage() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <SectionHeader
-          icon={FileText}
-          title="AI Meeting Notes"
-          subtitle="AI-powered transcription, summaries, and action items"
-        />
-        <div className="flex items-center gap-2">
+      <PageHeader
+        icon={<FileText size={20} />}
+        title="AI Meeting Notes"
+        subtitle="Transcription, summaries, and action items"
+        count={processedCount}
+        actions={
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -34,8 +34,8 @@ export default function MeetingNotesPage() {
             <Upload size={16} />
             Upload Audio
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Stats */}
       <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -107,9 +107,11 @@ export default function MeetingNotesPage() {
             </Link>
           ))}
           {meetings.length === 0 && (
-            <div className="text-center py-12 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
-              No meetings yet. Create one from the Meetings page.
-            </div>
+            <EmptyState
+              icon={<FileText size={40} />}
+              title="No meetings yet"
+              subtitle="Create one from the Meetings page."
+            />
           )}
         </div>
       </div>

@@ -11,7 +11,7 @@ import {
   CheckCircle2,
   TrendingUp,
 } from 'lucide-react'
-import SectionHeader from '../../components/SectionHeader'
+import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
@@ -206,10 +206,10 @@ export default function PIAnalytics() {
 
   return (
     <div>
-      <SectionHeader
-        icon={Shield}
+      <PageHeader
+        icon={<Shield size={20} />}
         title="PI Dashboard"
-        subtitle="Leadership effectiveness metrics -- for self-improvement, not evaluation"
+        subtitle="Leadership effectiveness metrics"
       />
 
       {/* Commitment Scorecard */}

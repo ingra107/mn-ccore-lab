@@ -6,7 +6,7 @@ import {
   Users, Send, Lightbulb, User, History,
   Eye, EyeOff, FlaskConical, CalendarDays, UserCircle,
 } from 'lucide-react'
-import SectionHeader from '../../components/SectionHeader'
+import PageHeader from '../../components/PageHeader'
 import OnboardingChecklist from '../../components/OnboardingChecklist'
 import BentoCard from '../../components/dashboard/BentoCard'
 import Avatar from '../../components/Avatar'
@@ -94,30 +94,15 @@ export default function Personal() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-1">
-        {person && (
-          <div style={{ width: 48, height: 48 }}>
-            <Avatar
-              name={person.name}
-              initials={person.initials}
-              photoUrl={person.photoUrl}
-              size="sm"
-              variant="ice"
-              className="!w-12 !h-12 !min-w-0 !min-h-0 !text-sm"
-            />
-          </div>
-        )}
-        <SectionHeader
-          icon={User}
-          title={person ? `${person.name.split(' ')[0]}'s Hub` : 'My Hub'}
-          subtitle={overdueTasks.length > 0
-            ? `${overdueTasks.length} overdue — your personal command center`
-            : pendingTasks.length > 0
-              ? `${pendingTasks.length} active task${pendingTasks.length !== 1 ? 's' : ''} — your personal command center`
-              : 'All caught up — your personal command center'}
-        />
-      </div>
+      <PageHeader
+        icon={<User size={20} />}
+        title={person ? `${person.name.split(' ')[0]}'s Hub` : 'My Hub'}
+        subtitle={overdueTasks.length > 0
+          ? `${overdueTasks.length} overdue`
+          : pendingTasks.length > 0
+            ? `${pendingTasks.length} active task${pendingTasks.length !== 1 ? 's' : ''}`
+            : 'All caught up'}
+      />
 
       {!currentUser && (
         <div

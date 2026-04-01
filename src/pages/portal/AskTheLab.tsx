@@ -3,7 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Send, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SkeletonCard } from '../../components/Skeleton'
-import SectionHeader from '../../components/SectionHeader'
+import PageHeader from '../../components/PageHeader'
+import EmptyStateComponent from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import { useQuestions, useQuestionDetail, useProjects } from '../../hooks/useApiData'
@@ -40,37 +41,38 @@ export default function AskTheLab() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <SectionHeader
-          icon={HelpCircle}
-          title="Ask the Lab"
-          subtitle={`${openCount} open question${openCount !== 1 ? 's' : ''} \u2014 ask anything, anyone can answer`}
-        />
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors mt-1"
-          style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
-        >
-          <Plus size={16} />
-          New Question
-        </button>
-      </div>
-
-      {/* Filter controls */}
-      <div className="mt-5 flex items-center gap-3 flex-wrap">
-        {(['', 'open', 'resolved'] as const).map((s) => {
-          const label = s === '' ? 'All' : s === 'open' ? 'Open' : 'Resolved'
-          return (
-            <ToggleButton
-              key={s}
-              active={filterStatus === s}
-              onClick={() => setFilterStatus(s)}
-            >
-              {label}
-            </ToggleButton>
-          )
-        })}
-      </div>
+      <PageHeader
+        icon={<HelpCircle size={20} />}
+        title="Ask the Lab"
+        subtitle={`${openCount} open question${openCount !== 1 ? 's' : ''}`}
+        count={openCount}
+        actions={
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+          >
+            <Plus size={16} />
+            New Question
+          </button>
+        }
+      >
+        {/* Filter controls */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {(['', 'open', 'resolved'] as const).map((s) => {
+            const label = s === '' ? 'All' : s === 'open' ? 'Open' : 'Resolved'
+            return (
+              <ToggleButton
+                key={s}
+                active={filterStatus === s}
+                onClick={() => setFilterStatus(s)}
+              >
+                {label}
+              </ToggleButton>
+            )
+          })}
+        </div>
+      </PageHeader>
 
       {/* Question feed */}
       <div className="mt-5 flex flex-col gap-3">
@@ -79,7 +81,12 @@ export default function AskTheLab() {
             {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
           </>
         ) : questions.length === 0 ? (
-          <EmptyState onAsk={() => setShowCreate(true)} />
+          <EmptyStateComponent
+            icon={<HelpCircle size={40} />}
+            title="No questions yet"
+            subtitle="Be the first to ask. No question is too small."
+            action={{ label: 'Ask a question', onClick: () => setShowCreate(true) }}
+          />
         ) : (
           questions.map((q) => (
             <QuestionCard
@@ -94,35 +101,6 @@ export default function AskTheLab() {
 
       {/* Create modal */}
       <CreateQuestionModal open={showCreate} onClose={() => setShowCreate(false)} />
-    </div>
-  )
-}
-
-// ── Empty State ─────────────────────────────────────────────────
-
-function EmptyState({ onAsk }: { onAsk: () => void }) {
-  return (
-    <div className="text-center py-20">
-      <div
-        className="mx-auto mb-4"
-        style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
-      >
-        <HelpCircle size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
-      </div>
-      <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-        No questions yet
-      </p>
-      <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
-        Be the first to ask. No question is too small.
-      </p>
-      <button
-        onClick={onAsk}
-        className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
-        style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', background: 'none', cursor: 'pointer' }}
-      >
-        <Plus size={15} />
-        Ask a question
-      </button>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FileText, Plus, List, LayoutGrid } from 'lucide-react'
+import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
 import CreateProjectModal from '../../components/CreateProjectModal'
 import { useProjects, useTasks } from '../../hooks/useApiData'
@@ -11,6 +12,9 @@ import { updateProject } from '../../lib/api'
 import InlineSelect from '../../components/InlineSelect'
 import { getPersonInfo } from '../../data/team'
 import type { Project } from '../../data/types'
+import PageHeader from '../../components/PageHeader'
+// EmptyState available if needed
+
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 
@@ -40,9 +44,9 @@ export default function Manuscripts() {
   const [view, setView] = useState<'list' | 'pipeline'>('list')
   const [filterPI, setFilterPI] = useState<string>('')
   const [showCreate, setShowCreate] = useState(false)
-  const headerRef = useScrollReveal<HTMLDivElement>()
+  useScrollReveal<HTMLDivElement>()
 
-  const { data: projects = [] } = useProjects()
+  const { data: projects = [], isLoading } = useProjects()
   const { data: tasks = [] } = useTasks()
   const createProject = useCreateProject()
   const queryClient = useQueryClient()
@@ -89,42 +93,18 @@ export default function Manuscripts() {
   return (
     <div style={{ minHeight: '100vh' }}>
       <div className="content-container" style={{ paddingBottom: '6rem' }}>
-        {/* Page Header */}
-        <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1rem', paddingTop: '1rem' }}>
-          <div className="flex items-center gap-2.5">
-            <div style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)', flexShrink: 0 }}>
-              <FileText size={16} style={{ color: 'var(--teal)' }} />
-            </div>
-            <h1
-              style={{
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 700,
-                fontSize: 'clamp(1.35rem, 3vw, 1.75rem)',
-                color: 'var(--ink)',
-                margin: 0,
-                lineHeight: 1.15,
-              }}
-            >
-              Manuscripts
-            </h1>
-            <span
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '13px',
-                color: 'var(--slate)',
-                opacity: 0.5,
-                marginLeft: '4px',
-              }}
-            >
-              {activeCount} active
-            </span>
+        <PageHeader
+          icon={<FileText size={20} />}
+          title="Manuscripts"
+          count={activeCount}
+          actions={
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg ml-auto new-project-btn"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg new-project-btn"
               style={{
                 background: 'transparent',
                 color: 'var(--teal)',
-                fontFamily: 'var(--font-body)',
+                fontFamily: 'var(--font-sans)',
                 fontSize: '13px',
                 fontWeight: 600,
                 border: '1px solid var(--border-subtle)',
@@ -135,55 +115,56 @@ export default function Manuscripts() {
               <Plus size={14} />
               New Project
             </button>
-          </div>
-        </div>
+          }
+        >
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* View toggle */}
+            <div className="flex items-center rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+              {(['list', 'pipeline'] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
+                  style={{
+                    fontFamily: 'var(--font-sans)',
+                    fontWeight: 500,
+                    background: view === v ? 'var(--teal)' : 'transparent',
+                    color: view === v ? '#ffffff' : 'var(--slate)',
+                    border: 'none',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  {v === 'list' ? <List size={14} /> : <LayoutGrid size={14} />}
+                  {v === 'list' ? 'List' : 'Pipeline'}
+                </button>
+              ))}
+            </div>
 
-        {/* Controls */}
-        <div className="flex items-center gap-4 mb-4">
-          {/* View toggle */}
-          <div className="flex items-center rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
-            {(['list', 'pipeline'] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 500,
-                  background: view === v ? 'var(--teal)' : 'transparent',
-                  color: view === v ? '#ffffff' : 'var(--slate)',
-                  border: 'none',
-                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                }}
-              >
-                {v === 'list' ? <List size={14} /> : <LayoutGrid size={14} />}
-                {v === 'list' ? 'List' : 'Pipeline'}
-              </button>
-            ))}
+            <select
+              value={filterPI}
+              onChange={(e) => setFilterPI(e.target.value)}
+              className="rounded-md border px-3 py-1.5 text-xs"
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '12px',
+                color: filterPI ? 'var(--teal)' : 'var(--slate)',
+                backgroundColor: 'transparent',
+                borderColor: 'var(--border-subtle)',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="">All PIs</option>
+              <option value="nick">Nick Ingraham</option>
+              <option value="nate">Nate Mesfin</option>
+            </select>
           </div>
+        </PageHeader>
 
-          {/* PI filter */}
-          <select
-            value={filterPI}
-            onChange={(e) => setFilterPI(e.target.value)}
-            className="rounded-md border px-3 py-1.5 text-xs"
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '12px',
-              color: filterPI ? 'var(--teal)' : 'var(--slate)',
-              backgroundColor: 'transparent',
-              borderColor: 'var(--border-subtle)',
-              cursor: 'pointer',
-            }}
-          >
-            <option value="">All PIs</option>
-            <option value="nick">Nick Ingraham</option>
-            <option value="nate">Nate Mesfin</option>
-          </select>
-        </div>
+        {/* Loading skeleton */}
+        {isLoading && <TableSkeleton rows={6} cols={5} />}
 
         {/* ─── LIST VIEW ─── */}
-        {view === 'list' && (
+        {!isLoading && view === 'list' && (
           <div className="table-container">
             {/* Table header */}
             <div
@@ -326,7 +307,7 @@ export default function Manuscripts() {
         )}
 
         {/* ─── PIPELINE VIEW ─── */}
-        {view === 'pipeline' && (
+        {!isLoading && view === 'pipeline' && (
           <div
             style={{
               display: 'grid',

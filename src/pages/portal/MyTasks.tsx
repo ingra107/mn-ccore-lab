@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Plus, List, LayoutGrid, GanttChartSquare, ChevronDown, CheckCircle2, CheckSquare } from 'lucide-react'
-import { SkeletonList } from '../../components/Skeleton'
-import SectionHeader from '../../components/SectionHeader'
+import { TableSkeleton } from '../../components/LoadingSkeleton'
+import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import TaskGridView from '../../components/tasks/TaskGridView'
 import TaskBoardView from '../../components/tasks/TaskBoardView'
@@ -92,27 +93,88 @@ export default function MyTasks() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <SectionHeader
-          icon={CheckSquare}
-          title={person ? `${person.name.split(' ')[0]}'s Tasks` : 'My Tasks'}
-          subtitle={`${pendingCount} active task${pendingCount !== 1 ? 's' : ''}`}
-        />
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors mt-1"
-          style={{
-            fontFamily: 'var(--font-sans)',
-            backgroundColor: 'var(--teal)',
-            color: 'white',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          <Plus size={16} />
-          New Task
-        </button>
-      </div>
+      <PageHeader
+        icon={<CheckSquare size={20} />}
+        title={person ? `${person.name.split(' ')[0]}'s Tasks` : 'My Tasks'}
+        subtitle={`${pendingCount} active task${pendingCount !== 1 ? 's' : ''}`}
+        count={pendingCount}
+        actions={
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              backgroundColor: 'var(--teal)',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <Plus size={16} />
+            New Task
+          </button>
+        }
+      >
+        {/* Controls: View + Group By + Sort By */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
+            <List size={14} />
+            List
+          </ToggleButton>
+          <ViewDropdown view={view} setView={setView} views={alternateViews} />
+
+          <div className="flex-1" />
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>Group by:</span>
+            <select
+              value={groupBy}
+              onChange={(e) => setGroupBy(e.target.value as GroupBy)}
+              className="rounded-full border px-2.5 py-1 text-xs"
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '12px',
+                color: groupBy !== 'none' ? 'var(--teal)' : 'var(--slate)',
+                backgroundColor: groupBy !== 'none' ? 'rgba(45,138,138,0.06)' : 'transparent',
+                borderColor: groupBy !== 'none' ? 'var(--teal)' : 'var(--border-light)',
+                cursor: 'pointer',
+                appearance: 'none' as const,
+                WebkitAppearance: 'none' as const,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 6px center',
+                paddingRight: '20px',
+              }}
+            >
+              {groupByOptions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              className="rounded-full border px-2.5 py-1 text-xs"
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '12px',
+                color: 'var(--slate)',
+                borderColor: 'var(--border-light)',
+                cursor: 'pointer',
+                appearance: 'none' as const,
+                WebkitAppearance: 'none' as const,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 6px center',
+                paddingRight: '20px',
+              }}
+            >
+              {sortByOptions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+            </select>
+          </div>
+        </div>
+      </PageHeader>
 
       {!currentUser && (
         <div
@@ -128,97 +190,19 @@ export default function MyTasks() {
         </div>
       )}
 
-      {/* Controls: View + Group By + Sort By */}
-      <div className="mt-5 flex items-center gap-3 flex-wrap">
-        <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
-          <List size={14} />
-          List
-        </ToggleButton>
-        <ViewDropdown view={view} setView={setView} views={alternateViews} />
-
-        <div className="flex-1" />
-
-        {/* Group By */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>Group by:</span>
-          <select
-            value={groupBy}
-            onChange={(e) => setGroupBy(e.target.value as GroupBy)}
-            className="rounded-full border px-2.5 py-1 text-xs"
-            style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: '12px',
-              color: groupBy !== 'none' ? 'var(--teal)' : 'var(--slate)',
-              backgroundColor: groupBy !== 'none' ? 'rgba(45,138,138,0.06)' : 'transparent',
-              borderColor: groupBy !== 'none' ? 'var(--teal)' : 'var(--border-light)',
-              cursor: 'pointer',
-              appearance: 'none' as const,
-              WebkitAppearance: 'none' as const,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 6px center',
-              paddingRight: '20px',
-            }}
-          >
-            {groupByOptions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
-          </select>
-        </div>
-
-        {/* Sort By */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>Sort:</span>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortBy)}
-            className="rounded-full border px-2.5 py-1 text-xs"
-            style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: '12px',
-              color: 'var(--slate)',
-              borderColor: 'var(--border-light)',
-              cursor: 'pointer',
-              appearance: 'none' as const,
-              WebkitAppearance: 'none' as const,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 6px center',
-              paddingRight: '20px',
-            }}
-          >
-            {sortByOptions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
-          </select>
-        </div>
-      </div>
-
       {/* Content */}
       <div className="mt-5">
         {isLoading ? (
-          <SkeletonList count={3} />
+          <TableSkeleton rows={6} cols={5} />
         ) : tasks.length === 0 ? (
-          <div className="text-center py-20">
-            <div
-              className="mx-auto mb-4"
-              style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
-            >
-              <CheckCircle2 size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
-            </div>
-            <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-              {currentUser ? 'All caught up!' : 'No tasks yet'}
-            </p>
-            <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
-              {currentUser
-                ? 'You have no active tasks assigned to you.'
-                : 'Sign in to see your personal tasks, or create one below.'}
-            </p>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', background: 'none', cursor: 'pointer' }}
-            >
-              <Plus size={15} />
-              Create a task
-            </button>
-          </div>
+          <EmptyState
+            icon={<CheckCircle2 size={40} />}
+            title={currentUser ? 'All caught up!' : 'No tasks yet'}
+            subtitle={currentUser
+              ? 'You have no active tasks assigned to you.'
+              : 'Sign in to see your personal tasks, or create one below.'}
+            action={{ label: 'Create a task', onClick: () => setShowCreate(true) }}
+          />
         ) : view !== 'list' ? (
           <>
             {view === 'board' && <TaskBoardView tasks={tasks} onStatusChange={handleStatusChange} />}

@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check } from 'lucide-react'
-import SectionHeader from '../../components/SectionHeader'
+import { TableSkeleton } from '../../components/LoadingSkeleton'
+import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import { useTasks } from '../../hooks/useApiData'
@@ -30,8 +32,9 @@ export default function Deadlines() {
   const [view, setView] = useState<ViewMode>('list')
   const [filterType, setFilterType] = useState<string>('')
 
-  const { data: tasks = [] } = useTasks()
-  const { data: grants = [] } = useGrantTimeline()
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks()
+  const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
+  const isLoading = tasksLoading || grantsLoading
 
   const now = new Date()
 
@@ -97,65 +100,66 @@ export default function Deadlines() {
 
   return (
     <div>
-      <SectionHeader
-        icon={Clock}
+      <PageHeader
+        icon={<Clock size={20} />}
         title="Deadlines & Milestones"
         subtitle={overdue.length > 0
-          ? `${overdue.length} overdue · ${thisWeek.length + nextWeek.length} upcoming — track important dates`
-          : `${thisWeek.length + nextWeek.length} upcoming — track important dates and time-sensitive deliverables`
+          ? `${overdue.length} overdue, ${thisWeek.length + nextWeek.length} upcoming`
+          : `${thisWeek.length + nextWeek.length} upcoming`
         }
-      />
+      >
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            {([
+              { key: 'list' as ViewMode, label: 'List', icon: List },
+              { key: 'timeline' as ViewMode, label: 'Timeline', icon: GanttChartSquare },
+            ]).map((v) => {
+              const Icon = v.icon
+              const active = view === v.key
+              return (
+                <ToggleButton
+                  key={v.key}
+                  active={active}
+                  onClick={() => setView(v.key)}
+                >
+                  <Icon size={14} />
+                  {v.label}
+                </ToggleButton>
+              )
+            })}
+          </div>
 
-      {/* View tabs + filter */}
-      <div className="mt-5 flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          {([
-            { key: 'list' as ViewMode, label: 'List', icon: List },
-            { key: 'timeline' as ViewMode, label: 'Timeline', icon: GanttChartSquare },
-          ]).map((v) => {
-            const Icon = v.icon
-            const active = view === v.key
-            return (
-              <ToggleButton
-                key={v.key}
-                active={active}
-                onClick={() => setView(v.key)}
-              >
-                <Icon size={14} />
-                {v.label}
-              </ToggleButton>
-            )
-          })}
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="rounded-full border px-3 py-1.5 text-xs"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: '12px',
+              color: filterType ? 'var(--teal)' : 'var(--slate)',
+              backgroundColor: filterType ? 'rgba(45,138,138,0.06)' : 'transparent',
+              borderColor: filterType ? 'var(--teal)' : 'var(--border-light)',
+              cursor: 'pointer',
+              appearance: 'none' as const,
+              WebkitAppearance: 'none' as const,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 8px center',
+              paddingRight: '24px',
+            }}
+          >
+            <option value="">All Types</option>
+            <option value="task">Tasks</option>
+            <option value="milestone">Grant Milestones</option>
+          </select>
         </div>
-
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className="rounded-full border px-3 py-1.5 text-xs"
-          style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: '12px',
-            color: filterType ? 'var(--teal)' : 'var(--slate)',
-            backgroundColor: filterType ? 'rgba(45,138,138,0.06)' : 'transparent',
-            borderColor: filterType ? 'var(--teal)' : 'var(--border-light)',
-            cursor: 'pointer',
-            appearance: 'none' as const,
-            WebkitAppearance: 'none' as const,
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right 8px center',
-            paddingRight: '24px',
-          }}
-        >
-          <option value="">All Types</option>
-          <option value="task">Tasks</option>
-          <option value="milestone">Grant Milestones</option>
-        </select>
-      </div>
+      </PageHeader>
 
       {/* Content */}
       <div className="mt-5">
-        {view === 'list' ? (
+        {isLoading ? (
+          <TableSkeleton rows={8} cols={4} />
+        ) : view === 'list' ? (
           <div className="table-container">
             {/* Column headers */}
             <div
@@ -185,12 +189,11 @@ export default function Deadlines() {
             ))}
 
             {deadlines.length === 0 && (
-              <div className="text-center py-16">
-                <Clock size={24} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 8px' }} />
-                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
-                  No deadlines found
-                </p>
-              </div>
+              <EmptyState
+                icon={<Clock size={40} />}
+                title="No deadlines found"
+                subtitle="Deadlines will appear as tasks and milestones are scheduled."
+              />
             )}
           </div>
         ) : (
@@ -513,20 +516,11 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="text-center py-20">
-        <div
-          className="mx-auto mb-4"
-          style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
-        >
-          <GanttChartSquare size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
-        </div>
-        <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-          No upcoming deadlines
-        </p>
-        <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
-          Deadlines will appear on the timeline as tasks and milestones are scheduled.
-        </p>
-      </div>
+      <EmptyState
+        icon={<GanttChartSquare size={40} />}
+        title="No upcoming deadlines"
+        subtitle="Deadlines will appear on the timeline as tasks and milestones are scheduled."
+      />
     )
   }
 

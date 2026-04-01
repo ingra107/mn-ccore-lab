@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info } from 'lucide-react'
-import SectionHeader from '../../components/SectionHeader'
+import PageHeader from '../../components/PageHeader'
 import { useTeam } from '../../hooks/useApiData'
 import Avatar from '../../components/Avatar'
 import { getPersonInfo } from '../../data/team'
@@ -73,7 +73,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <SectionHeader icon={Settings} title="Settings" subtitle="Configure your lab workspace — changes are saved automatically" />
+      <PageHeader icon={<Settings size={20} />} title="Settings" subtitle="Changes are saved automatically" />
 
       <div className="mt-6 flex flex-col gap-8 max-w-2xl">
         {/* Basic Information */}

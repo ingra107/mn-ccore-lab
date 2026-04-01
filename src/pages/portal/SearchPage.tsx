@@ -5,7 +5,9 @@ import {
   Search, CheckSquare, FolderKanban, Users, Lightbulb,
   MessageSquare, Activity, ArrowRight, X,
 } from 'lucide-react'
-import SectionHeader from '../../components/SectionHeader'
+import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
+import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { formatBrandName } from '../../components/BrandName'
 
 interface SearchResult {
@@ -107,7 +109,7 @@ export default function SearchPage() {
         </div>
       ) : (
         <>
-          <SectionHeader icon={Search} title="Search" subtitle="Find anything across the lab" />
+          <PageHeader icon={<Search size={20} />} title="Search" subtitle="Find anything across the lab" />
           <div className="mt-5 relative">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
             <input
@@ -134,18 +136,17 @@ export default function SearchPage() {
 
       <div className="mt-6">
         {isLoading && debouncedQuery.length >= 2 && (
-          <div className="text-center py-12 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
-            Searching...
+          <div style={{ padding: '24px 0' }}>
+            <TextSkeleton lines={6} widths={['100%', '88%', '92%', '75%', '95%', '60%']} />
           </div>
         )}
 
         {!isLoading && debouncedQuery.length >= 2 && results.length === 0 && (
-          <div className="text-center py-12">
-            <Search size={32} style={{ color: 'var(--slate)', opacity: 0.2, margin: '0 auto 8px' }} />
-            <p className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
-              No results for "{debouncedQuery}"
-            </p>
-          </div>
+          <EmptyState
+            icon={<Search size={40} />}
+            title={`No results for "${debouncedQuery}"`}
+            subtitle="Try different keywords or check your spelling."
+          />
         )}
 
         {!isLoading && results.length > 0 && (

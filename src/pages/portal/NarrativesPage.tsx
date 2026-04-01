@@ -1,6 +1,7 @@
 import { BookOpen, GitBranch, FileText } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import SectionHeader from '../../components/SectionHeader'
+import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
 import { useNarratives } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
 
@@ -19,10 +20,11 @@ export default function NarrativesPage() {
 
   return (
     <div>
-      <SectionHeader
+      <PageHeader
+        icon={<BookOpen size={20} />}
         title="Research Narratives"
-        subtitle="Auto-detected research arcs connecting projects, publications, and themes"
-        icon={BookOpen}
+        subtitle="Auto-detected research arcs"
+        count={narratives.length}
       />
 
       {isLoading ? (
@@ -30,13 +32,11 @@ export default function NarrativesPage() {
           <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin mx-auto" style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }} />
         </div>
       ) : narratives.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="mx-auto mb-4" style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}>
-            <BookOpen size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
-          </div>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '15px', fontWeight: 600, color: 'var(--ink)' }}>No research narratives detected yet</p>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.7, marginTop: 4 }}>Narratives emerge as projects and publications grow.</p>
-        </div>
+        <EmptyState
+          icon={<BookOpen size={40} />}
+          title="No research narratives detected yet"
+          subtitle="Narratives emerge as projects and publications grow."
+        />
       ) : (
         <div className="table-container flex flex-col gap-5 mt-5" style={{ padding: '20px' }}>
           {narratives.map((arc) => (

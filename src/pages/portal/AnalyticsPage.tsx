@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download } from 'lucide-react'
-import SectionHeader from '../../components/SectionHeader'
+import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
@@ -132,19 +132,21 @@ export default function AnalyticsPage() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <SectionHeader icon={BarChart3} title="Lab Analytics" subtitle={`${projects.length} projects · ${pendingTasks} active tasks — performance metrics and reports`} />
-        {isPi && (
+      <PageHeader
+        icon={<BarChart3 size={20} />}
+        title="Lab Analytics"
+        subtitle={`${projects.length} projects, ${pendingTasks} active tasks`}
+        actions={isPi ? (
           <button
             onClick={exportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors mt-1"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
             style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
           >
             <Download size={14} />
             Export CSV
           </button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* Week Navigator */}
       <div className="mt-5 flex items-center gap-3 flex-wrap">

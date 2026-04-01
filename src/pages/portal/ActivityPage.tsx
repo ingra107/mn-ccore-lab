@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react'
 import { Activity as ActivityIcon } from 'lucide-react'
+import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { useActivity } from '../../hooks/useApiData'
 import Avatar from '../../components/Avatar'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime, formatMediumDate } from '../../lib/dateUtils'
-import SectionHeader from '../../components/SectionHeader'
+import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
 
 const typeOptions = [
   { value: '', label: 'All Types' },
@@ -18,7 +20,7 @@ const typeOptions = [
 
 export default function ActivityPage() {
   const [filterType, setFilterType] = useState('')
-  const { data: allActivity = [] } = useActivity(200)
+  const { data: allActivity = [], isLoading } = useActivity(200)
 
   const filtered = useMemo(() => {
     if (!filterType) return allActivity
@@ -39,34 +41,51 @@ export default function ActivityPage() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <SectionHeader icon={ActivityIcon} title="Activity" subtitle={`${allActivity.length} recent actions across the lab`} />
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className="rounded-full border px-3 py-1.5 text-xs mt-2"
-          style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: '12px',
-            color: filterType ? 'var(--teal)' : 'var(--slate)',
-            backgroundColor: filterType ? 'rgba(45,138,138,0.06)' : 'transparent',
-            borderColor: filterType ? 'var(--teal)' : 'var(--border-light)',
-            cursor: 'pointer',
-            appearance: 'none' as const,
-            WebkitAppearance: 'none' as const,
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right 8px center',
-            paddingRight: '24px',
-          }}
-        >
-          {typeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </div>
+      <PageHeader
+        icon={<ActivityIcon size={20} />}
+        title="Activity"
+        subtitle={`${allActivity.length} recent actions across the lab`}
+        count={allActivity.length}
+        actions={
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="rounded-full border px-3 py-1.5 text-xs"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: '12px',
+              color: filterType ? 'var(--teal)' : 'var(--slate)',
+              backgroundColor: filterType ? 'rgba(45,138,138,0.06)' : 'transparent',
+              borderColor: filterType ? 'var(--teal)' : 'var(--border-light)',
+              cursor: 'pointer',
+              appearance: 'none' as const,
+              WebkitAppearance: 'none' as const,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 8px center',
+              paddingRight: '24px',
+            }}
+          >
+            {typeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        }
+      />
 
       {/* Activity feed */}
       <div className="mt-5 flex flex-col gap-6">
-        {grouped.map(([date, items]) => {
+        {isLoading && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {[1, 2, 3].map((i) => (
+              <div key={i}>
+                <div style={{ marginBottom: 8 }}>
+                  <TextSkeleton lines={1} widths={['120px']} />
+                </div>
+                <TextSkeleton lines={4} widths={['100%', '90%', '85%', '70%']} />
+              </div>
+            ))}
+          </div>
+        )}
+        {!isLoading && grouped.map(([date, items]) => {
           const today = new Date().toISOString().split('T')[0]
           const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
           const isToday = date === today
@@ -112,23 +131,14 @@ export default function ActivityPage() {
             </div>
           )
         })}
-        {grouped.length === 0 && (
-          <div className="text-center py-20">
-            <div
-              className="mx-auto mb-4"
-              style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
-            >
-              <ActivityIcon size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
-            </div>
-            <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-              {filterType ? 'No matching activity' : 'No activity yet'}
-            </p>
-            <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
-              {filterType
-                ? `No ${typeOptions.find(o => o.value === filterType)?.label.toLowerCase()} activity found. Try a different filter.`
-                : 'Activity from tasks, meetings, project updates, and ideas will appear here.'}
-            </p>
-          </div>
+        {!isLoading && grouped.length === 0 && (
+          <EmptyState
+            icon={<ActivityIcon size={40} />}
+            title={filterType ? 'No matching activity' : 'No activity yet'}
+            subtitle={filterType
+              ? `No ${typeOptions.find(o => o.value === filterType)?.label.toLowerCase()} activity found. Try a different filter.`
+              : 'Activity from tasks, meetings, project updates, and ideas will appear here.'}
+          />
         )}
       </div>
     </div>

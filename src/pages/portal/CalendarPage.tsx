@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, ChevronLeft, ChevronRight, Users, CheckSquare, Diamond, Download } from 'lucide-react'
-import SectionHeader from '../../components/SectionHeader'
+import { CardSkeleton } from '../../components/LoadingSkeleton'
+import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import { formatBrandName } from '../../components/BrandName'
 import { useCalendarEvents } from '../../hooks/useApiData'
@@ -38,7 +40,7 @@ export default function CalendarPage() {
     }
   }, [currentDate])
 
-  const { data: events = [] } = useCalendarEvents({ start, end })
+  const { data: events = [], isLoading } = useCalendarEvents({ start, end })
 
   const monthLabel = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
@@ -93,68 +95,80 @@ export default function CalendarPage() {
 
   return (
     <div>
-      <SectionHeader icon={Calendar} title="Lab Calendar" subtitle={`${events.length} events — meetings, deadlines, and milestones`} />
-
-      {/* Controls */}
-      <div className="mt-5 flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-1">
-          {(['month', 'week', 'day', 'agenda'] as ViewMode[]).map((v) => {
-            const active = view === v
-            return (
-              <ToggleButton
-                key={v}
-                active={active}
-                onClick={() => setView(v)}
-                className="capitalize"
-              >
-                {v}
-              </ToggleButton>
-            )
-          })}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button onClick={goToPrev} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}>
-            <ChevronLeft size={16} style={{ color: 'var(--ink)' }} />
-          </button>
-          <button
-            onClick={goToToday}
-            className="px-3 py-1 rounded-md text-sm font-medium min-w-[180px] text-center"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
-          >
-            {headerLabel}
-          </button>
-          <button onClick={goToNext} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}>
-            <ChevronRight size={16} style={{ color: 'var(--ink)' }} />
-          </button>
-
-          {currentDate.toDateString() !== new Date().toDateString() && (
-            <button
-              onClick={goToToday}
-              className="px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', cursor: 'pointer', background: 'none' }}
-            >
-              Today
-            </button>
-          )}
-
+      <PageHeader
+        icon={<Calendar size={20} />}
+        title="Lab Calendar"
+        subtitle={`${events.length} events`}
+        count={events.length}
+        actions={
           <button
             onClick={exportICal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors hover:bg-black/5 ml-1"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors hover:bg-black/5"
             style={{ borderColor: 'var(--border-light)', color: 'var(--slate)', fontFamily: 'var(--font-sans)', cursor: 'pointer', background: 'none' }}
           >
             <Download size={14} />
             Export
           </button>
+        }
+      >
+        {/* Controls */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-1">
+            {(['month', 'week', 'day', 'agenda'] as ViewMode[]).map((v) => {
+              const active = view === v
+              return (
+                <ToggleButton
+                  key={v}
+                  active={active}
+                  onClick={() => setView(v)}
+                  className="capitalize"
+                >
+                  {v}
+                </ToggleButton>
+              )
+            })}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button onClick={goToPrev} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}>
+              <ChevronLeft size={16} style={{ color: 'var(--ink)' }} />
+            </button>
+            <button
+              onClick={goToToday}
+              className="px-3 py-1 rounded-md text-sm font-medium min-w-[180px] text-center"
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+            >
+              {headerLabel}
+            </button>
+            <button onClick={goToNext} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}>
+              <ChevronRight size={16} style={{ color: 'var(--ink)' }} />
+            </button>
+
+            {currentDate.toDateString() !== new Date().toDateString() && (
+              <button
+                onClick={goToToday}
+                className="px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
+                style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', cursor: 'pointer', background: 'none' }}
+              >
+                Today
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      </PageHeader>
 
       {/* Content */}
       <div className="mt-5">
-        {view === 'month' && <MonthView currentDate={currentDate} events={events} />}
-        {view === 'week' && <WeekView weekStart={weekStart} events={events} />}
-        {view === 'day' && <DayView date={currentDate} events={events} />}
-        {view === 'agenda' && <AgendaView events={events} />}
+        {isLoading ? (
+          <CardSkeleton count={4} />
+        ) : (
+          <>
+            {view === 'month' && <MonthView currentDate={currentDate} events={events} />}
+            {view === 'week' && <WeekView weekStart={weekStart} events={events} />}
+            {view === 'day' && <DayView date={currentDate} events={events} />}
+            {view === 'agenda' && <AgendaView events={events} />}
+          </>
+        )}
       </div>
 
       {/* Legend */}
@@ -362,20 +376,11 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
             })}
           </div>
         ) : (
-          <div className="text-center py-20">
-            <div
-              className="mx-auto mb-4"
-              style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
-            >
-              <Calendar size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
-            </div>
-            <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-              No events on this day
-            </p>
-            <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
-              Meetings, task deadlines, and milestones will appear here.
-            </p>
-          </div>
+          <EmptyState
+            icon={<Calendar size={40} />}
+            title="No events on this day"
+            subtitle="Meetings, task deadlines, and milestones will appear here."
+          />
         )}
       </div>
     </div>
@@ -435,20 +440,11 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
         )
       })}
       {grouped.length === 0 && (
-        <div className="text-center py-20">
-          <div
-            className="mx-auto mb-4"
-            style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
-          >
-            <Calendar size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
-          </div>
-          <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-            No upcoming events
-          </p>
-          <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
-            Scheduled meetings, task deadlines, and milestones will appear in the agenda.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Calendar size={40} />}
+          title="No upcoming events"
+          subtitle="Scheduled meetings, task deadlines, and milestones will appear in the agenda."
+        />
       )}
     </div>
   )

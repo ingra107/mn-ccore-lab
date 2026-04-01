@@ -71,6 +71,22 @@
   --density-text-xs: 11px;
 }
 
+/* Density: compact table rows */
+.density-compact .table-container [style*="padding"] {
+  /* Applied via density vars below */
+}
+.density-compact .task-grid-row {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+.density-compact .table-container .col-header {
+  font-size: 9px;
+}
+.density-compact .manuscript-list-row {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
 /* ── Base Styles ── */
 /* Note: margin/padding/box-sizing reset is handled by Tailwind's @layer base preflight */
 

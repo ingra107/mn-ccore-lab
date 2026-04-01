@@ -7,6 +7,7 @@ import {
   ListChecks, Plus, Trash2, ArrowRightLeft, Check,
 } from 'lucide-react'
 import Avatar from '../Avatar'
+import CollapsibleSection from '../CollapsibleSection'
 import ReactionBar from '../ReactionBar'
 import { getPersonInfo } from '../../data/team'
 import { useTeam, useSubtasks, useHandoffs } from '../../hooks/useApiData'
@@ -102,48 +103,23 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
         </div>
 
         <div className="p-5 flex flex-col gap-5">
-          {/* Title — editable */}
+          {/* Title — editable (always visible) */}
           <EditableTitle
             value={task.title || task.description}
             onSave={(v) => handleFieldUpdate('title', v)}
           />
 
-          {/* Status */}
+          {/* Status (always visible) */}
           <FieldBlock label="Status" icon={Circle}>
             <StatusSelect value={task.status} onChange={handleStatusChange} />
           </FieldBlock>
 
-          {/* Priority */}
-          <FieldBlock label="Priority" icon={Flag}>
-            <PrioritySelect value={task.priority} onChange={(v) => handleFieldUpdate('priority', v)} />
-          </FieldBlock>
-
-          {/* Assignee */}
+          {/* Assignee (always visible) */}
           <FieldBlock label="Assignee" icon={User}>
             <AssigneeSelect value={task.assignee} onChange={(v) => handleFieldUpdate('assignee', v)} />
           </FieldBlock>
 
-          {/* Handoff */}
-          <HandoffSection taskId={task.id} currentAssignee={task.assignee} />
-
-          {/* Due Date */}
-          <FieldBlock label="Due Date" icon={CalendarDays}>
-            <DateInput value={task.due_date || ''} onChange={(v) => handleFieldUpdate('due_date', v || null)} />
-          </FieldBlock>
-
-          {/* Project */}
-          <FieldBlock label="Project" icon={FolderKanban}>
-            <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
-          </FieldBlock>
-
-          {/* Blocked By (only show when status is blocked) */}
-          {task.status === 'blocked' && (
-            <FieldBlock label="Blocked By" icon={Ban}>
-              <BlockedBySelect value={task.blocked_by || ''} onChange={(v) => handleFieldUpdate('blocked_by', v || null)} />
-            </FieldBlock>
-          )}
-
-          {/* Description — editable */}
+          {/* Description (always visible) */}
           <div>
             <label className="block text-[11px] mb-1.5" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
               Description
@@ -155,8 +131,46 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
             />
           </div>
 
-          {/* Subtasks / Checklist */}
-          <SubtaskChecklist taskId={task.id} />
+          {/* Details — collapsible, opens by default when fields have values */}
+          <CollapsibleSection
+            title="Details"
+            icon={<Flag size={11} style={{ color: 'var(--slate)', opacity: 0.5 }} />}
+            defaultOpen={!!(task.priority && task.priority !== 'medium') || !!task.due_date || !!task.project_id || task.status === 'blocked'}
+            storageKey={`task-details-${task.id}`}
+          >
+            <div className="flex flex-col gap-4">
+              <FieldBlock label="Priority" icon={Flag}>
+                <PrioritySelect value={task.priority} onChange={(v) => handleFieldUpdate('priority', v)} />
+              </FieldBlock>
+
+              <FieldBlock label="Due Date" icon={CalendarDays}>
+                <DateInput value={task.due_date || ''} onChange={(v) => handleFieldUpdate('due_date', v || null)} />
+              </FieldBlock>
+
+              <FieldBlock label="Project" icon={FolderKanban}>
+                <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
+              </FieldBlock>
+
+              {task.status === 'blocked' && (
+                <FieldBlock label="Blocked By" icon={Ban}>
+                  <BlockedBySelect value={task.blocked_by || ''} onChange={(v) => handleFieldUpdate('blocked_by', v || null)} />
+                </FieldBlock>
+              )}
+            </div>
+          </CollapsibleSection>
+
+          {/* Subtasks — collapsible with count badge */}
+          <SubtaskSection taskId={task.id} />
+
+          {/* Handoffs — collapsible */}
+          <CollapsibleSection
+            title="Handoffs"
+            icon={<ArrowRightLeft size={11} style={{ color: 'var(--slate)', opacity: 0.5 }} />}
+            defaultOpen={false}
+            storageKey={`task-handoffs-${task.id}`}
+          >
+            <HandoffSection taskId={task.id} currentAssignee={task.assignee} />
+          </CollapsibleSection>
 
           {/* Meta info */}
           <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
@@ -165,11 +179,18 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
             {task.completed_at && <span>Completed {formatRelativeTime(task.completed_at)}</span>}
           </div>
 
-          {/* Comments */}
+          {/* Comments (always visible — most used) */}
           <TaskComments taskId={task.id} taskTitle={task.title} projectSlug={task.project_id} />
 
-          {/* Activity */}
-          <TaskActivity taskId={task.id} />
+          {/* Activity — collapsible */}
+          <CollapsibleSection
+            title="Activity"
+            icon={<Clock size={11} style={{ color: 'var(--slate)', opacity: 0.5 }} />}
+            defaultOpen={false}
+            storageKey="task-activity"
+          >
+            <TaskActivity taskId={task.id} />
+          </CollapsibleSection>
         </div>
 
         <style>{`
@@ -606,6 +627,26 @@ function BlockedBySelect({ value, onChange }: { value: string; onChange: (v: str
         </div>
       )}
     </div>
+  )
+}
+
+// ── Subtask Section (collapsible wrapper) ───────────────────
+
+function SubtaskSection({ taskId }: { taskId: string }) {
+  const { data: subtasks = [] } = useSubtasks(taskId)
+  const total = subtasks.length
+  const completed = subtasks.filter((s) => s.completed).length
+
+  return (
+    <CollapsibleSection
+      title="Subtasks"
+      icon={<ListChecks size={11} style={{ color: 'var(--slate)', opacity: 0.5 }} />}
+      badge={total > 0 ? `${completed}/${total}` : null}
+      defaultOpen={total > 0}
+      storageKey={`task-subtasks-${taskId}`}
+    >
+      <SubtaskChecklist taskId={taskId} />
+    </CollapsibleSection>
   )
 }
 

@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Scale, Plus, X, Clock, AlertTriangle, FolderKanban, History } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import SectionHeader from '../../components/SectionHeader'
+import { TableSkeleton } from '../../components/LoadingSkeleton'
+import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
 import Avatar from '../../components/Avatar'
 import { useDecisions, useDecisionsForReview, useSimilarDecisions } from '../../hooks/useApiData'
 import { useCreateDecision, useUpdateDecisionOutcome } from '../../hooks/useMutations'
@@ -38,46 +40,47 @@ export default function DecisionsPage() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <SectionHeader
-          icon={Scale}
-          title="Decision Log"
-          subtitle={`${allDecisions.length} decisions tracked -- ${pendingCount} pending review, ${recordedCount} with outcomes`}
-        />
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors mt-1"
-          style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
-        >
-          <Plus size={16} />
-          Log Decision
-        </button>
-      </div>
-
-      {/* Status filters */}
-      <div className="mt-5 flex items-center gap-2 flex-wrap">
-        {[
-          { key: '', label: 'All' },
-          { key: 'pending', label: 'Pending' },
-          { key: 'recorded', label: 'Recorded' },
-          { key: 'revisited', label: 'Revisited' },
-        ].map((f) => (
+      <PageHeader
+        icon={<Scale size={20} />}
+        title="Decision Log"
+        subtitle={`${pendingCount} pending review, ${recordedCount} with outcomes`}
+        count={allDecisions.length}
+        actions={
           <button
-            key={f.key}
-            onClick={() => setFilterStatus(f.key)}
-            className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-            style={{
-              fontFamily: 'var(--font-sans)',
-              color: filterStatus === f.key ? 'var(--teal)' : 'var(--slate)',
-              backgroundColor: filterStatus === f.key ? 'rgba(45,138,138,0.1)' : 'transparent',
-              border: `1px solid ${filterStatus === f.key ? 'rgba(45,138,138,0.25)' : 'var(--border-light)'}`,
-              cursor: 'pointer',
-            }}
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
           >
-            {f.label}
+            <Plus size={16} />
+            Log Decision
           </button>
-        ))}
-      </div>
+        }
+      >
+        {/* Status filters */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {[
+            { key: '', label: 'All' },
+            { key: 'pending', label: 'Pending' },
+            { key: 'recorded', label: 'Recorded' },
+            { key: 'revisited', label: 'Revisited' },
+          ].map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilterStatus(f.key)}
+              className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
+              style={{
+                fontFamily: 'var(--font-sans)',
+                color: filterStatus === f.key ? 'var(--teal)' : 'var(--slate)',
+                backgroundColor: filterStatus === f.key ? 'rgba(45,138,138,0.1)' : 'transparent',
+                border: `1px solid ${filterStatus === f.key ? 'rgba(45,138,138,0.25)' : 'var(--border-light)'}`,
+                cursor: 'pointer',
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </PageHeader>
 
       {/* Decisions Awaiting Review */}
       {reviewDecisions.length > 0 && !filterStatus && (
@@ -125,21 +128,14 @@ export default function DecisionsPage() {
         </h2>
 
         {isLoading ? (
-          <div className="flex flex-col gap-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 rounded-xl animate-pulse" style={{ background: 'var(--ice)' }} />
-            ))}
-          </div>
+          <TableSkeleton rows={5} cols={4} />
         ) : recentDecisions.length === 0 ? (
-          <div
-            className="text-center py-12 rounded-xl"
-            style={{ background: 'var(--ice)' }}
-          >
-            <Scale size={32} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)', opacity: 0.5 }}>
-              No decisions logged yet. Start building institutional memory.
-            </p>
-          </div>
+          <EmptyState
+            icon={<Scale size={40} />}
+            title="No decisions logged yet"
+            subtitle="Start building institutional memory."
+            action={{ label: 'Log Decision', onClick: () => setShowCreate(true) }}
+          />
         ) : (
           <div className="table-container flex flex-col gap-3" style={{ padding: '16px 20px' }}>
             {recentDecisions.map((decision) => (

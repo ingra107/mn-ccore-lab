@@ -68,6 +68,17 @@ export default function InlineAssigneePicker({ value, onChange }: InlineAssignee
             className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]"
           />
         </div>
+        <span style={{
+          fontFamily: 'var(--font-sans)',
+          fontSize: '12px',
+          color: 'var(--slate)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap' as const,
+          maxWidth: '72px',
+        }}>
+          {person.name.split(' ')[0]}
+        </span>
         <ChevronDown size={10} style={{ opacity: 0.3 }} />
       </button>
 

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Wallet, Calendar, Banknote, Diamond, ArrowRight, Clock, Telescope } from 'lucide-react'
-import SectionHeader from '../../components/SectionHeader'
+import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
 import Avatar from '../../components/Avatar'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
@@ -53,10 +54,11 @@ export default function Grants() {
 
   return (
     <div>
-      <SectionHeader
-        icon={Wallet}
+      <PageHeader
+        icon={<Wallet size={20} />}
         title="Grants & Funding"
-        subtitle={`${active.length} active · ${proposed.length} proposed — track timelines and milestones`}
+        subtitle={`${active.length} active, ${proposed.length} proposed`}
+        count={grants.length}
       />
 
       {/* Summary metrics */}
@@ -128,20 +130,11 @@ export default function Grants() {
             ))}
           </div>
         ) : grants.length === 0 ? (
-          <div className="text-center py-20">
-            <div
-              className="mx-auto mb-4"
-              style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
-            >
-              <Wallet size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
-            </div>
-            <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-              No grants yet
-            </p>
-            <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
-              Active and pending grants with timelines, milestones, and budget tracking will appear here.
-            </p>
-          </div>
+          <EmptyState
+            icon={<Wallet size={40} />}
+            title="No grants yet"
+            subtitle="Active and pending grants with timelines, milestones, and budget tracking will appear here."
+          />
         ) : (
           <div className="table-container flex flex-col gap-3" style={{ padding: '16px 20px' }}>
             {/* Active grants first, then proposed */}
