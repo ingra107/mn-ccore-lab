@@ -15,7 +15,7 @@ export default function MetricCard({ icon: Icon, label, value, color, subtitle }
         <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>{label}</span>
         <Icon size={14} style={{ color, opacity: 0.6 }} />
       </div>
-      <div className="text-xl sm:text-2xl font-bold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{value}</div>
+      <div className="text-lg sm:text-xl" style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, color: 'var(--ink)' }}>{value}</div>
       {subtitle && (
         <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>{subtitle}</span>
       )}

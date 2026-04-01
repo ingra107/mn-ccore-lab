@@ -54,7 +54,7 @@ export default function BentoCard({
             : 'var(--cream)',
           backdropFilter: glass ? 'blur(12px)' : undefined,
           WebkitBackdropFilter: glass ? 'blur(12px)' : undefined,
-          border: '1px solid rgba(201, 168, 76, 0.12)',
+          border: '1px solid var(--border-subtle)',
           boxShadow: 'var(--shadow-card)',
           transition: 'transform 0.25s ease, box-shadow 0.25s ease, background-color 0.3s ease',
         }}
@@ -86,8 +86,8 @@ export default function BentoCard({
             <h3
               style={{
                 fontFamily: 'var(--font-sans)',
-                fontWeight: 600,
-                fontSize: '16px',
+                fontWeight: 500,
+                fontSize: '15px',
                 lineHeight: 1.3,
                 color: 'var(--ink)',
                 margin: 0,
