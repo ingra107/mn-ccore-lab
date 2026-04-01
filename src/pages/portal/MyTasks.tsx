@@ -3,7 +3,7 @@ import { Plus, List, LayoutGrid, GanttChartSquare, ChevronDown, CheckCircle2, Ch
 import { SkeletonList } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import ToggleButton from '../../components/ToggleButton'
-import TaskListView from '../../components/tasks/TaskListView'
+import TaskGridView from '../../components/tasks/TaskGridView'
 import TaskBoardView from '../../components/tasks/TaskBoardView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
@@ -225,7 +225,7 @@ export default function MyTasks() {
             {view === 'timeline' && <TaskTimelineView tasks={tasks} onStatusChange={handleStatusChange} />}
           </>
         ) : groupBy === 'none' ? (
-          <TaskListView tasks={sortTasks(tasks, sortBy)} onStatusChange={handleStatusChange} />
+          <TaskGridView tasks={sortTasks(tasks, sortBy)} onStatusChange={handleStatusChange} />
         ) : (
           <GroupedTaskList tasks={tasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} />
         )}
@@ -321,7 +321,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange }: {
               {items.length}
             </span>
           </div>
-          <TaskListView tasks={items} onStatusChange={onStatusChange} />
+          <TaskGridView tasks={items} onStatusChange={onStatusChange} />
         </div>
       ))}
     </div>

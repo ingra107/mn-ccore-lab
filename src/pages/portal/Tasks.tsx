@@ -7,7 +7,7 @@ import { SkeletonList } from '../../components/Skeleton'
 import SectionHeader from '../../components/SectionHeader'
 import TaskFilters from '../../components/tasks/TaskFilters'
 import SavedViewsBar from '../../components/tasks/SavedViewsBar'
-import TaskListView from '../../components/tasks/TaskListView'
+import TaskGridView from '../../components/tasks/TaskGridView'
 import TaskBoardView from '../../components/tasks/TaskBoardView'
 import TaskStandUpView from '../../components/tasks/TaskStandUpView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
@@ -269,7 +269,7 @@ export default function Tasks() {
           </div>
         ) : (
           <>
-            {view === 'list' && <TaskListView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} selectedIds={selectedIds} onToggleSelect={toggleSelect} />}
+            {view === 'list' && <TaskGridView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} selectedIds={selectedIds} onToggleSelect={toggleSelect} />}
             {view === 'board' && <TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
             {view === 'standup' && <TaskStandUpView tasks={displayTasks} onStatusChange={handleStatusChange} />}
             {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} />}
