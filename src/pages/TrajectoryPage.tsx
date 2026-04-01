@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useParams, Navigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Printer, BookOpen, BarChart3, FolderKanban, Flag, ClipboardList, MessageSquare, GitBranch, Users, FileText, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Printer, BookOpen, BarChart3, FolderKanban, Flag, ClipboardList, MessageSquare, GitBranch, Users, FileText, CheckCircle2, Clock, AlertTriangle, TrendingUp } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useTrajectory, useContributions } from '../hooks/useApiData'
 import type { TrajectoryData, ContributionsData } from '../hooks/useApiData'
 import { getMemberBySlug } from '../data/team'
+import ActivityHeatmap from '../components/ActivityHeatmap'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -16,6 +17,412 @@ const STAGE_COLORS: Record<string, string> = {
   Writing: '#c9a84c',
   Review: '#7a0019',
   Published: 'var(--green-light)',
+}
+
+// ── Cumulative Publication Curve ──────────────────────────
+
+function PublicationCurve({ publications }: { publications: TrajectoryData['publications'] }) {
+  const { points, months, maxCount } = useMemo(() => {
+    if (publications.length === 0) return { points: [], months: [] as string[], maxCount: 0 }
+
+    // Sort chronologically
+    const sorted = [...publications]
+      .filter((p) => p.pub_date)
+      .sort((a, b) => a.pub_date.localeCompare(b.pub_date))
+
+    if (sorted.length === 0) return { points: [], months: [] as string[], maxCount: 0 }
+
+    // Build month buckets from first pub to now
+    const firstDate = new Date(sorted[0].pub_date + 'T12:00:00')
+    const now = new Date()
+    const monthList: string[] = []
+    const d = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1)
+    while (d <= now) {
+      monthList.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+      d.setMonth(d.getMonth() + 1)
+    }
+
+    // Count cumulative pubs per month
+    let cumulative = 0
+    const pts = monthList.map((month) => {
+      const count = sorted.filter((p) => {
+        const pm = p.pub_date.slice(0, 7)
+        return pm === month
+      }).length
+      cumulative += count
+      return { month, cumulative, count }
+    })
+
+    return { points: pts, months: monthList, maxCount: cumulative }
+  }, [publications])
+
+  if (points.length === 0) {
+    return (
+      <div
+        className="py-10 text-center rounded-xl"
+        style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
+      >
+        <TrendingUp size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>
+          No publications with dates yet
+        </p>
+      </div>
+    )
+  }
+
+  const width = 600
+  const height = 200
+  const padding = { top: 20, right: 24, bottom: 30, left: 40 }
+  const chartW = width - padding.left - padding.right
+  const chartH = height - padding.top - padding.bottom
+
+  const xScale = (i: number) => padding.left + (i / (points.length - 1 || 1)) * chartW
+  const yScale = (v: number) => padding.top + chartH - (v / (maxCount || 1)) * chartH
+
+  // Build SVG path
+  const pathD = points
+    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i).toFixed(1)} ${yScale(p.cumulative).toFixed(1)}`)
+    .join(' ')
+
+  // Area fill path
+  const areaD = `${pathD} L ${xScale(points.length - 1).toFixed(1)} ${yScale(0).toFixed(1)} L ${xScale(0).toFixed(1)} ${yScale(0).toFixed(1)} Z`
+
+  // Y-axis ticks
+  const yTicks = useMemo(() => {
+    const step = Math.max(1, Math.ceil(maxCount / 4))
+    const ticks: number[] = []
+    for (let v = 0; v <= maxCount; v += step) ticks.push(v)
+    if (ticks[ticks.length - 1] !== maxCount) ticks.push(maxCount)
+    return ticks
+  }, [maxCount])
+
+  // X-axis labels (every ~6 months or less)
+  const xLabels = useMemo(() => {
+    if (points.length <= 6) return points.map((_, i) => i)
+    const step = Math.max(1, Math.floor(points.length / 6))
+    const indices: number[] = []
+    for (let i = 0; i < points.length; i += step) indices.push(i)
+    if (indices[indices.length - 1] !== points.length - 1) indices.push(points.length - 1)
+    return indices
+  }, [points])
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Cumulative Publications Over Time
+        </span>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '20px', fontWeight: 700, color: 'var(--teal)' }}>
+          {maxCount}
+        </span>
+      </div>
+
+      <div className="overflow-x-auto" style={{ scrollbarWidth: 'thin' }}>
+        <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet" style={{ width: '100%', maxWidth: width, height: 'auto' }}>
+          {/* Grid lines */}
+          {yTicks.map((v) => (
+            <g key={`y-${v}`}>
+              <line
+                x1={padding.left} y1={yScale(v)}
+                x2={width - padding.right} y2={yScale(v)}
+                stroke="var(--border-light, #e8eff5)" strokeWidth={1}
+              />
+              <text
+                x={padding.left - 8} y={yScale(v) + 4}
+                textAnchor="end"
+                style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', fill: 'var(--slate)' }}
+                opacity={0.5}
+              >
+                {v}
+              </text>
+            </g>
+          ))}
+
+          {/* X-axis labels */}
+          {xLabels.map((idx) => (
+            <text
+              key={`x-${idx}`}
+              x={xScale(idx)}
+              y={height - 6}
+              textAnchor="middle"
+              style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', fill: 'var(--slate)' }}
+              opacity={0.5}
+            >
+              {points[idx]?.month.slice(2).replace('-', '/')}
+            </text>
+          ))}
+
+          {/* Area fill */}
+          <path d={areaD} fill="rgba(45,138,138,0.08)" />
+
+          {/* Line */}
+          <path d={pathD} fill="none" stroke="var(--teal)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+
+          {/* Dot markers on publication dates */}
+          {points.map((p, i) =>
+            p.count > 0 ? (
+              <circle
+                key={`dot-${i}`}
+                cx={xScale(i)} cy={yScale(p.cumulative)}
+                r={3.5} fill="var(--gold)" stroke="var(--cream, #fff)" strokeWidth={1.5}
+              >
+                <title>{p.month}: {p.count} publication{p.count > 1 ? 's' : ''} (total: {p.cumulative})</title>
+              </circle>
+            ) : null
+          )}
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+// ── Project Velocity (horizontal bars) ───────────────────
+
+function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['projectStages'] }) {
+  if (!projectStages || projectStages.length === 0) {
+    return (
+      <div
+        className="py-10 text-center rounded-xl"
+        style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
+      >
+        <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>
+          No active projects to track velocity
+        </p>
+      </div>
+    )
+  }
+
+  const maxDays = Math.max(...projectStages.map((p) => p.total_days), 1)
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Time in Pipeline
+        </span>
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+          days in current stage / total days
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {projectStages.map((project, i) => {
+          const stageColor = STAGE_COLORS[project.stage] || '#64748b'
+          const totalWidth = (project.total_days / maxDays) * 100
+          const stageWidth = project.total_days > 0
+            ? (project.days_in_stage / project.total_days) * 100
+            : 100
+
+          return (
+            <motion.div
+              key={project.id}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.04, duration: 0.25 }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
+                <Link
+                  to={`/projects/${project.slug}`}
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    color: 'var(--ink)',
+                    textDecoration: 'none',
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {project.title}
+                </Link>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '2px 8px',
+                    borderRadius: '9999px',
+                    fontSize: '10px',
+                    fontFamily: 'var(--font-sans)',
+                    fontWeight: 500,
+                    color: stageColor,
+                    background: `${stageColor}15`,
+                    flexShrink: 0,
+                  }}
+                >
+                  {project.stage}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div
+                  style={{
+                    flex: 1,
+                    height: '20px',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    backgroundColor: 'var(--border-light, #e8eff5)',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Total project time */}
+                  <div
+                    style={{
+                      width: `${Math.max(totalWidth, 4)}%`,
+                      height: '100%',
+                      backgroundColor: 'rgba(45,138,138,0.15)',
+                      position: 'relative',
+                    }}
+                  >
+                    {/* Current stage portion (right-aligned within total) */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: `${Math.max(stageWidth, 8)}%`,
+                        backgroundColor: stageColor,
+                        borderRadius: '0 4px 4px 0',
+                        opacity: 0.7,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <span
+                  style={{
+                    fontFamily: 'var(--font-sans)',
+                    fontSize: '11px',
+                    color: 'var(--slate)',
+                    whiteSpace: 'nowrap',
+                    minWidth: '60px',
+                    textAlign: 'right',
+                    flexShrink: 0,
+                  }}
+                >
+                  {project.days_in_stage}d / {project.total_days}d
+                </span>
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Task Metrics Row ─────────────────────────────────────
+
+function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] }) {
+  if (!metrics || metrics.total === 0) {
+    return null
+  }
+
+  const completionRate = metrics.total > 0
+    ? Math.round((metrics.completed / metrics.total) * 100)
+    : 0
+  const overdueRate = metrics.total > 0
+    ? Math.round((metrics.overdue / (metrics.total - metrics.completed)) * 100)
+    : 0
+
+  const cards = [
+    {
+      label: 'Completion Rate',
+      value: `${completionRate}%`,
+      color: completionRate > 70 ? 'var(--teal)' : completionRate > 40 ? 'var(--gold)' : 'var(--maroon)',
+      icon: CheckCircle2,
+      subtitle: `${metrics.completed} of ${metrics.total}`,
+    },
+    {
+      label: 'Avg Days to Complete',
+      value: metrics.avg_days != null ? `${metrics.avg_days}` : '--',
+      color: 'var(--gold)',
+      icon: Clock,
+      subtitle: 'per task',
+    },
+    {
+      label: 'Overdue',
+      value: `${metrics.overdue}`,
+      color: metrics.overdue > 0 ? 'var(--maroon)' : 'var(--teal)',
+      icon: AlertTriangle,
+      subtitle: metrics.total - metrics.completed > 0 ? `${overdueRate}% of open` : 'none open',
+    },
+    {
+      label: 'Total Tasks',
+      value: `${metrics.total}`,
+      color: 'var(--ink)',
+      icon: BarChart3,
+      subtitle: `${metrics.total - metrics.completed} open`,
+    },
+  ]
+
+  return (
+    <div
+      className="grid gap-3"
+      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}
+    >
+      {cards.map((card) => {
+        const Icon = card.icon
+        return (
+          <div
+            key={card.label}
+            className="card"
+            style={{
+              padding: '1.25rem',
+              borderLeft: `3px solid ${card.color}`,
+              textAlign: 'center',
+            }}
+          >
+            <Icon
+              size={18}
+              style={{ color: card.color, margin: '0 auto 0.5rem', display: 'block', opacity: 0.7 }}
+              aria-hidden="true"
+            />
+            <div
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '1.75rem',
+                fontWeight: 700,
+                color: 'var(--ink)',
+                lineHeight: 1,
+              }}
+            >
+              {card.value}
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '10px',
+                color: 'var(--slate)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                marginTop: '0.35rem',
+              }}
+            >
+              {card.label}
+            </div>
+            {card.subtitle && (
+              <div
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '10px',
+                  color: 'var(--slate)',
+                  opacity: 0.5,
+                  marginTop: '0.2rem',
+                }}
+              >
+                {card.subtitle}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 // ── Publication Timeline ───────────────────────────────────
@@ -221,7 +628,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
             letterSpacing: '0.05em',
           }}
         >
-          Tasks Completed — Last 12 Months
+          Tasks Completed -- Last 12 Months
         </span>
         <span
           style={{
@@ -589,7 +996,7 @@ function PeriodSelector({
 
 // ── Contribution Metric Card ──────────────────────────────
 
-function MetricCard({
+function ContribMetricCard({
   label,
   count,
   color,
@@ -943,7 +1350,7 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
             margin: '0 0 4pt',
           }}
         >
-          Contribution Portfolio — {memberName}
+          Contribution Portfolio -- {memberName}
         </h2>
         <p style={{ fontFamily: 'var(--font-sans)', fontSize: '10pt', color: '#666', margin: 0 }}>
           {period === 365 ? '1 year' : `${period} days`} ending {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -955,12 +1362,12 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
         className="grid gap-3 mb-8"
         style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}
       >
-        <MetricCard label="Tasks Completed" count={s.tasks_completed} color="var(--teal)" icon={CheckCircle2} />
-        <MetricCard label="Updates Posted" count={s.updates_posted} color="var(--gold)" icon={FileText} />
-        <MetricCard label="Comments Made" count={s.comments_made} color="var(--ink)" icon={MessageSquare} />
-        <MetricCard label="Decisions Made" count={s.decisions_made} color="var(--maroon)" icon={GitBranch} />
-        <MetricCard label="Meetings" count={s.meetings_contributed} color="var(--teal)" icon={Users} />
-        <MetricCard label="Publications" count={s.publications} color="var(--gold)" icon={BookOpen} />
+        <ContribMetricCard label="Tasks Completed" count={s.tasks_completed} color="var(--teal)" icon={CheckCircle2} />
+        <ContribMetricCard label="Updates Posted" count={s.updates_posted} color="var(--gold)" icon={FileText} />
+        <ContribMetricCard label="Comments Made" count={s.comments_made} color="var(--ink)" icon={MessageSquare} />
+        <ContribMetricCard label="Decisions Made" count={s.decisions_made} color="var(--maroon)" icon={GitBranch} />
+        <ContribMetricCard label="Meetings" count={s.meetings_contributed} color="var(--teal)" icon={Users} />
+        <ContribMetricCard label="Publications" count={s.publications} color="var(--gold)" icon={BookOpen} />
       </div>
 
       <Divider />
@@ -1128,7 +1535,7 @@ export default function TrajectoryPage() {
           }}
         >
           <Printer size={14} />
-          Export PDF
+          Export for Review
         </button>
       </motion.div>
 
@@ -1198,15 +1605,37 @@ export default function TrajectoryPage() {
             {/* Content */}
             {!isLoading && trajectory && (
               <>
-                {/* Section 1: Publication Timeline */}
-                <section id="publication-timeline">
-                  <SectionHeader icon={BookOpen} title="Publication Timeline" count={trajectory.publications.length} />
-                  <PublicationTimeline publications={trajectory.publications} />
+                {/* Section 0: Task Metrics */}
+                {trajectory.taskMetrics && trajectory.taskMetrics.total > 0 && (
+                  <>
+                    <section id="task-metrics">
+                      <SectionHeader icon={CheckCircle2} title="Task Metrics" />
+                      <TaskMetricsRow metrics={trajectory.taskMetrics} />
+                    </section>
+                    <Divider />
+                  </>
+                )}
+
+                {/* Section 1: Publication Curve */}
+                <section id="publication-curve">
+                  <SectionHeader icon={TrendingUp} title="Publication Curve" count={trajectory.publications.length} />
+                  <PublicationCurve publications={trajectory.publications} />
                 </section>
 
                 <Divider />
 
-                {/* Section 2: Task Velocity */}
+                {/* Section 2: Project Velocity */}
+                {trajectory.projectStages && trajectory.projectStages.length > 0 && (
+                  <>
+                    <section id="project-velocity">
+                      <SectionHeader icon={FolderKanban} title="Project Velocity" count={trajectory.projectStages.length} />
+                      <ProjectVelocity projectStages={trajectory.projectStages} />
+                    </section>
+                    <Divider />
+                  </>
+                )}
+
+                {/* Section 3: Task Velocity */}
                 <section id="task-velocity">
                   <SectionHeader icon={BarChart3} title="Task Velocity" />
                   <TaskVelocity taskStats={trajectory.taskStats} />
@@ -1214,7 +1643,20 @@ export default function TrajectoryPage() {
 
                 <Divider />
 
-                {/* Section 3: Active Projects */}
+                {/* Section 4: Activity Heatmap */}
+                {slug && (
+                  <>
+                    <section id="activity-heatmap">
+                      <SectionHeader icon={BarChart3} title="Activity" />
+                      <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+                        <ActivityHeatmap slug={slug} days={180} />
+                      </div>
+                    </section>
+                    <Divider />
+                  </>
+                )}
+
+                {/* Section 5: Active Projects */}
                 <section id="active-projects">
                   <SectionHeader icon={FolderKanban} title="Active Projects" count={trajectory.projects.length} />
                   <ActiveProjects projects={trajectory.projects} />
@@ -1222,7 +1664,15 @@ export default function TrajectoryPage() {
 
                 <Divider />
 
-                {/* Section 4: Upcoming Milestones */}
+                {/* Section 6: Publication Timeline */}
+                <section id="publication-timeline">
+                  <SectionHeader icon={BookOpen} title="Publication Timeline" count={trajectory.publications.length} />
+                  <PublicationTimeline publications={trajectory.publications} />
+                </section>
+
+                <Divider />
+
+                {/* Section 7: Milestones */}
                 <section id="milestones">
                   <SectionHeader icon={Flag} title="Milestones" count={trajectory.milestones.length} />
                   <UpcomingMilestones milestones={trajectory.milestones} />
@@ -1295,6 +1745,18 @@ export default function TrajectoryPage() {
           body {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+          }
+
+          /* Hide sidebar for clean print */
+          nav, aside {
+            display: none !important;
+          }
+
+          /* Maximize content width */
+          main, [role="main"] {
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
           }
         }
       `}</style>

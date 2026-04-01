@@ -792,15 +792,29 @@ export interface DecisionRow {
   outcome: string | null
   outcome_date: string | null
   outcome_status: string
+  outcome_sentiment: string | null
   tags: string | null
+  linked_projects: string | null
   created_at: string
+  // Added by similar-by-id endpoint
+  relevance_score?: number
+  shared_tags?: string[]
 }
 
-export function useDecisions(projectSlug?: string) {
+export interface DecisionTagCount {
+  tag: string
+  count: number
+}
+
+export function useDecisions(projectSlug?: string, tag?: string) {
   return useQuery({
-    queryKey: ['decisions', projectSlug || 'all'],
+    queryKey: ['decisions', projectSlug || 'all', tag || ''],
     queryFn: async () => {
-      const url = projectSlug ? `/api/decisions?project_slug=${projectSlug}` : '/api/decisions'
+      const params = new URLSearchParams()
+      if (projectSlug) params.set('project_slug', projectSlug)
+      if (tag) params.set('tag', tag)
+      const qs = params.toString()
+      const url = `/api/decisions${qs ? `?${qs}` : ''}`
       const res = await fetch(url)
       if (!res.ok) return []
       const data = await res.json()
@@ -834,6 +848,33 @@ export function useSimilarDecisions(query: string) {
     },
     staleTime: 30 * 1000,
     enabled: !!query && query.length >= 2,
+  })
+}
+
+export function useSimilarDecisionsById(id: string) {
+  return useQuery({
+    queryKey: ['decisions', 'similar-by-id', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/decisions/similar-by-id?id=${encodeURIComponent(id)}`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as DecisionRow[]
+    },
+    staleTime: 60 * 1000,
+    enabled: !!id,
+  })
+}
+
+export function useDecisionTags() {
+  return useQuery({
+    queryKey: ['decisions', 'tags'],
+    queryFn: async () => {
+      const res = await fetch('/api/decisions/tags')
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as DecisionTagCount[]
+    },
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -877,6 +918,8 @@ export interface TrajectoryData {
   taskStats: { month: string; completed: number }[]
   projects: { id: string; title: string; slug: string; stage: string; status: string; category: string }[]
   milestones: { id: string; title: string; due_date: string; status: string; project_id: string; project_title: string }[]
+  taskMetrics: { total: number; completed: number; overdue: number; avg_days: number | null }
+  projectStages: { id: string; title: string; slug: string; stage: string; status: string; days_in_stage: number; total_days: number }[]
 }
 
 export function useTrajectory(slug: string) {
