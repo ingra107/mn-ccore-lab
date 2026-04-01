@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router-dom'
 import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, ListTodo } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { getUserRole, ROLE_DEFAULTS } from '../../lib/roleDefaults'
-import { SkeletonList } from '../../components/Skeleton'
-import SectionHeader from '../../components/SectionHeader'
+import { TableSkeleton } from '../../components/LoadingSkeleton'
+import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
 import TaskFilters from '../../components/tasks/TaskFilters'
 import SavedViewsBar from '../../components/tasks/SavedViewsBar'
 import TaskGridView from '../../components/tasks/TaskGridView'
@@ -17,7 +18,7 @@ import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import ToggleButton from '../../components/ToggleButton'
 import { useTasks } from '../../hooks/useApiData'
-import { useCreateTask, useUpdateTaskStatus, useBulkUpdateTasks } from '../../hooks/useMutations'
+import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useSavedViews } from '../../hooks/useSavedViews'
 import { useTaskKeyboardShortcuts } from '../../hooks/useTaskKeyboardShortcuts'
 import type { ViewFilters } from '../../hooks/useSavedViews'
@@ -89,11 +90,16 @@ export default function Tasks() {
   )
   const createTask = useCreateTask()
   const updateStatus = useUpdateTaskStatus()
+  const updateTask = useUpdateTask()
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length
 
   const handleStatusChange = (id: string, status: string) => {
     updateStatus.mutate({ id, status })
+  }
+
+  const handleFieldChange = (id: string, field: string, value: unknown) => {
+    updateTask.mutate({ id, fields: { [field]: value } })
   }
 
   const handleCreate = (task: {
@@ -206,68 +212,64 @@ export default function Tasks() {
 
   return (
     <div>
-      {/* Header: Title + Filter chips + New Task button */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3 flex-wrap flex-1 min-w-0">
-          <SectionHeader
-            title="All Tasks"
-            subtitle={`${pendingCount} active across the lab`}
-            icon={ListTodo}
-          />
-          {/* Inline filter chips */}
-          <div className="mt-1">
-            <TaskFilters filters={filters} onChange={setFilters} />
-          </div>
-        </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors mt-1"
-          style={{
-            fontFamily: 'var(--font-sans)',
-            backgroundColor: 'var(--teal)',
-            color: 'white',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          <Plus size={16} />
-          New Task
-        </button>
-      </div>
-
-      {/* Saved view presets */}
-      <div className="mt-3">
-        <SavedViewsBar
-          views={views}
-          activeViewId={activeViewId}
-          currentFilters={currentViewFilters}
-          activeViewFilters={activeViewFilters}
-          onSelectView={(id) => {
-            setActiveViewId(id)
-            const view = views.find(v => v.id === id)
-            if (view) {
-              const resolved = {
-                ...view.filters,
-                assignee: view.filters.assignee === '__me__' ? 'nick' : view.filters.assignee,
+      <PageHeader
+        icon={<ListTodo size={20} />}
+        title="All Tasks"
+        subtitle={`${pendingCount} active across the lab`}
+        count={pendingCount}
+        actions={
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              backgroundColor: 'var(--teal)',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <Plus size={16} />
+            New Task
+          </button>
+        }
+      >
+        {/* Saved view presets */}
+        <div className="mb-3">
+          <SavedViewsBar
+            views={views}
+            activeViewId={activeViewId}
+            currentFilters={currentViewFilters}
+            activeViewFilters={activeViewFilters}
+            onSelectView={(id) => {
+              setActiveViewId(id)
+              const view = views.find(v => v.id === id)
+              if (view) {
+                const resolved = {
+                  ...view.filters,
+                  assignee: view.filters.assignee === '__me__' ? 'nick' : view.filters.assignee,
+                }
+                setFilters({
+                  assignee: resolved.assignee,
+                  status: resolved.status === 'all' ? '' : resolved.status,
+                  priority: '',
+                  project: '',
+                })
               }
-              setFilters({
-                assignee: resolved.assignee,
-                status: resolved.status === 'all' ? '' : resolved.status,
-                priority: '',
-                project: '',
-              })
-            }
-          }}
-          onSaveView={saveView}
-          onRenameView={renameView}
-          onDeleteView={deleteView}
-        />
-      </div>
+            }}
+            onSaveView={saveView}
+            onRenameView={renameView}
+            onDeleteView={deleteView}
+          />
+        </div>
 
-      {/* View selector */}
-      <div className="mt-4 flex flex-col gap-3">
+        {/* Inline filter chips */}
+        <div className="mb-3">
+          <TaskFilters filters={filters} onChange={setFilters} />
+        </div>
+
+        {/* View selector */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          {/* All views inline */}
           <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
             <List size={14} />
             List
@@ -282,10 +284,8 @@ export default function Tasks() {
             )
           })}
 
-          {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Show completed toggle */}
           {completedCount > 0 && (
             <button
               onClick={() => setShowCompleted(!showCompleted)}
@@ -304,7 +304,6 @@ export default function Tasks() {
             </button>
           )}
 
-          {/* Active filter indicator */}
           {activeFilterCount > 0 && (
             <span
               className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium"
@@ -315,41 +314,26 @@ export default function Tasks() {
             </span>
           )}
         </div>
-      </div>
+      </PageHeader>
 
       {/* Content */}
       <div className="mt-5">
         {isLoading ? (
-          <SkeletonList count={5} />
+          <TableSkeleton rows={8} cols={5} />
         ) : displayTasks.length === 0 ? (
-          <div className="text-center py-20">
-            <div
-              className="mx-auto mb-4"
-              style={{ width: 56, height: 56, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)' }}
-            >
-              <CheckCircle2 size={28} style={{ color: 'var(--teal)', opacity: 0.6 }} />
-            </div>
-            <p className="text-base font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-              No tasks yet
-            </p>
-            <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
-              Tasks created in meetings, assigned by PIs, or added by team members will appear here.
-            </p>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', background: 'none', cursor: 'pointer' }}
-            >
-              <Plus size={15} />
-              Create first task
-            </button>
-          </div>
+          <EmptyState
+            icon={<CheckCircle2 size={40} />}
+            title="No tasks yet"
+            subtitle="Tasks created in meetings, assigned by PIs, or added by team members will appear here."
+            action={{ label: 'Create first task', onClick: () => setShowCreate(true) }}
+          />
         ) : (
           <>
             {view === 'list' && (
               <TaskGridView
                 tasks={displayTasks}
                 onStatusChange={handleStatusChange}
+                onFieldChange={handleFieldChange}
                 onSelect={(task) => {
                   // Click on row = set as peek target if peek is open, otherwise just focus
                   if (peekTask) setPeekTask(task)

@@ -3,11 +3,14 @@ import { useState, useCallback, useEffect } from 'react'
 export type ViewStatus = 'all' | 'pending' | 'overdue' | 'completed'
 export type ViewSort = 'due_asc' | 'due_desc' | 'created_desc' | 'alpha'
 
+export type ViewGroupBy = 'none' | 'status' | 'priority' | 'assignee'
+
 export interface ViewFilters {
   assignee: string   // '__me__' resolves to current user slug; '' = all
   status: ViewStatus
   search: string
   sort: ViewSort
+  groupBy?: ViewGroupBy
 }
 
 export interface SavedView {

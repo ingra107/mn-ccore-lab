@@ -1,15 +1,15 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Circle, CheckCircle2, Clock, AlertTriangle, ChevronDown, CalendarDays, Pencil, Archive, CalendarPlus } from 'lucide-react'
-import Avatar from '../Avatar'
+import { Circle, CheckCircle2, Clock, AlertTriangle, ChevronDown, Pencil, Archive, CalendarPlus } from 'lucide-react'
+import InlineAssigneePicker from '../InlineAssigneePicker'
+import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
-import { getPersonInfo } from '../../data/team'
-import { formatShortDate } from '../../lib/dateUtils'
 import { formatBrandName } from '../BrandName'
 import type { TaskRow } from '../../lib/api'
 
 interface TaskGridViewProps {
   tasks: TaskRow[]
   onStatusChange: (id: string, status: string) => void
+  onFieldChange?: (id: string, field: string, value: unknown) => void
   onSelect?: (task: TaskRow) => void
   onOpenDetail?: (task: TaskRow) => void
   selectedIds?: Set<string>
@@ -37,7 +37,7 @@ const PRIORITY_OPTIONS = [
   { value: 'urgent', label: 'Urgent', color: 'var(--maroon)' },
 ]
 
-export default function TaskGridView({ tasks, onStatusChange, onSelect, onOpenDetail, selectedIds, onToggleSelect, focusedIndex, onFocusIndex }: TaskGridViewProps) {
+export default function TaskGridView({ tasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, selectedIds, onToggleSelect, focusedIndex, onFocusIndex }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortAsc, setSortAsc] = useState(true)
@@ -99,6 +99,7 @@ export default function TaskGridView({ tasks, onStatusChange, onSelect, onOpenDe
           index={index}
           colStyle={colStyle}
           onStatusChange={onStatusChange}
+          onFieldChange={onFieldChange}
           onSelect={onSelect}
           onOpenDetail={onOpenDetail}
           showUndo={showUndo}
@@ -163,12 +164,13 @@ function SortPill({ label, field, active, onSort }: { label: string; field: Sort
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, index, colStyle, onStatusChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex,
+  task, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex,
 }: {
   task: TaskRow
   index: number
   colStyle: React.CSSProperties
   onStatusChange: (id: string, status: string) => void
+  onFieldChange?: (id: string, field: string, value: unknown) => void
   onSelect?: (task: TaskRow) => void
   onOpenDetail?: (task: TaskRow) => void
   showUndo: (msg: string, onUndo: () => void) => void
@@ -177,7 +179,6 @@ function TaskGridRow({
   isFocused?: boolean
   onFocusIndex?: (index: number) => void
 }) {
-  const person = getPersonInfo(task.assignee)
   const isDone = task.status === 'done'
   const isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
   const rowRef = useRef<HTMLDivElement>(null)
@@ -250,30 +251,32 @@ function TaskGridRow({
         </span>
       </div>
 
-      {/* Assignee */}
-      <div className="flex items-center gap-1.5">
-        <div style={{ width: 22, height: 22, flexShrink: 0 }}>
-          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
-        </div>
+      {/* Assignee — inline picker */}
+      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <InlineAssigneePicker
+          value={task.assignee}
+          onChange={(slug) => {
+            if (onFieldChange) {
+              onFieldChange(task.id, 'assignee', slug)
+            } else {
+              import('../../lib/api').then(({ updateTask }) => updateTask(task.id, { assignee: slug }))
+            }
+          }}
+        />
       </div>
 
-      {/* Due date */}
-      <div>
-        {task.due_date ? (
-          <span className="flex items-center gap-1" style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: '12px',
-            color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
-            fontWeight: isOverdue ? 500 : 400,
-          }}>
-            <CalendarDays size={11} />
-            {isOverdue ? 'Overdue' : formatShortDate(task.due_date)}
-          </span>
-        ) : (
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'var(--slate)', opacity: 0.3 }}>
-            Set date
-          </span>
-        )}
+      {/* Due date — inline date picker */}
+      <div onClick={(e) => e.stopPropagation()}>
+        <InlineDatePicker
+          value={task.due_date}
+          onChange={(date) => {
+            if (onFieldChange) {
+              onFieldChange(task.id, 'due_date', date)
+            } else {
+              import('../../lib/api').then(({ updateTask }) => updateTask(task.id, { due_date: date }))
+            }
+          }}
+        />
       </div>
 
       {/* Status — inline dropdown */}
@@ -302,8 +305,11 @@ function TaskGridRow({
         value={task.priority}
         options={PRIORITY_OPTIONS}
         onChange={(val) => {
-          // Priority change via API
-          import('../../lib/api').then(({ updateTask }) => updateTask(task.id, { priority: val }))
+          if (onFieldChange) {
+            onFieldChange(task.id, 'priority', val)
+          } else {
+            import('../../lib/api').then(({ updateTask }) => updateTask(task.id, { priority: val }))
+          }
         }}
         renderValue={(val) => {
           const opt = PRIORITY_OPTIONS.find(o => o.value === val) || PRIORITY_OPTIONS[1]

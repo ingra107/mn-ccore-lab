@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -13,8 +13,10 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Circle, Clock, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Circle, Clock, CheckCircle2, AlertTriangle, ChevronDown, ChevronRight, Layers } from 'lucide-react'
 import TaskCard from './TaskCard'
+import Avatar from '../Avatar'
+import { getPersonInfo } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
 
 interface TaskBoardViewProps {
@@ -23,6 +25,8 @@ interface TaskBoardViewProps {
   onSelect?: (task: TaskRow) => void
 }
 
+type GroupByField = 'status' | 'priority' | 'assignee'
+
 const columns = [
   { key: 'todo', label: 'To Do', icon: Circle, color: 'var(--slate)', bg: 'rgba(100,116,139,0.06)' },
   { key: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--teal)', bg: 'rgba(45,138,138,0.06)' },
@@ -30,16 +34,63 @@ const columns = [
   { key: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--green, #22c55e)', bg: 'rgba(34,197,94,0.06)' },
 ]
 
+const priorityConfig: Record<string, { label: string; color: string; bg: string }> = {
+  urgent: { label: 'Urgent', color: 'var(--maroon)', bg: 'rgba(122,0,25,0.06)' },
+  high: { label: 'High', color: 'var(--orange)', bg: 'rgba(194,65,12,0.06)' },
+  medium: { label: 'Medium', color: 'var(--gold)', bg: 'rgba(201,168,76,0.06)' },
+  low: { label: 'Low', color: 'var(--slate)', bg: 'rgba(100,116,139,0.06)' },
+}
+
 const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
+
+const COLLAPSED_KEY = 'mnccore-board-collapsed-v1'
+const SWIMLANE_COLLAPSED_KEY = 'mnccore-swimlane-collapsed-v1'
+
+function loadCollapsed(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(COLLAPSED_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch { return {} }
+}
+
+function saveCollapsed(state: Record<string, boolean>) {
+  localStorage.setItem(COLLAPSED_KEY, JSON.stringify(state))
+}
+
+function loadSwimlaneCollapsed(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(SWIMLANE_COLLAPSED_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch { return {} }
+}
+
+function saveSwimlaneCollapsed(state: Record<string, boolean>) {
+  localStorage.setItem(SWIMLANE_COLLAPSED_KEY, JSON.stringify(state))
+}
 
 export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskBoardViewProps) {
   const [activeTask, setActiveTask] = useState<TaskRow | null>(null)
   const [overColumnId, setOverColumnId] = useState<string | null>(null)
+  const [groupBy, setGroupBy] = useState<GroupByField>('status')
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(loadCollapsed)
+  const [swimlaneCollapsed, setSwimlaneCollapsed] = useState<Record<string, boolean>>(loadSwimlaneCollapsed)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   )
 
+  useEffect(() => { saveCollapsed(collapsed) }, [collapsed])
+  useEffect(() => { saveSwimlaneCollapsed(swimlaneCollapsed) }, [swimlaneCollapsed])
+
+  const toggleCollapse = useCallback((key: string) => {
+    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
+  }, [])
+
+  const toggleSwimlaneCollapse = useCallback((key: string) => {
+    setSwimlaneCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
+  }, [])
+
+  // Group tasks by status for standard board
   const tasksByStatus = useMemo(() => {
     const map: Record<string, TaskRow[]> = {}
     for (const col of columns) map[col.key] = []
@@ -52,6 +103,36 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
     }
     return map
   }, [tasks])
+
+  // Build swimlane data when grouping by non-status field
+  const swimlaneData = useMemo(() => {
+    if (groupBy === 'status') return null
+
+    const lanes = new Map<string, TaskRow[]>()
+    for (const task of tasks) {
+      const key = groupBy === 'priority' ? (task.priority || 'medium') : (task.assignee || 'unassigned')
+      if (!lanes.has(key)) lanes.set(key, [])
+      lanes.get(key)!.push(task)
+    }
+
+    // Sort lanes
+    const sortedEntries = [...lanes.entries()].sort((a, b) => {
+      if (groupBy === 'priority') {
+        return (priorityOrder[a[0]] ?? 2) - (priorityOrder[b[0]] ?? 2)
+      }
+      return a[0].localeCompare(b[0])
+    })
+
+    return sortedEntries.map(([key, laneTasks]) => {
+      const tasksByCol: Record<string, TaskRow[]> = {}
+      for (const col of columns) tasksByCol[col.key] = []
+      for (const task of laneTasks) {
+        const bucket = tasksByCol[task.status] || tasksByCol.todo
+        bucket.push(task)
+      }
+      return { key, tasks: laneTasks, tasksByCol }
+    })
+  }, [tasks, groupBy])
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = tasks.find((t) => t.id === event.active.id)
@@ -66,7 +147,12 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
     }
     const overData = over.data.current
     if (overData?.type === 'column') {
-      setOverColumnId(over.id as string)
+      // Auto-expand collapsed column on drag over
+      const colKey = over.id as string
+      setOverColumnId(colKey)
+      if (collapsed[colKey]) {
+        setCollapsed((prev) => ({ ...prev, [colKey]: false }))
+      }
     } else if (overData?.type === 'task') {
       setOverColumnId(overData.status as string)
     } else {
@@ -85,7 +171,6 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
     const draggedTask = tasks.find((t) => t.id === taskId)
     if (!draggedTask) return
 
-    // Determine target status from column or task data
     const overData = over.data.current
     let targetStatus: string | undefined
 
@@ -94,12 +179,10 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
     } else if (overData?.type === 'task') {
       targetStatus = overData.status as string
     } else {
-      // Fallback: check if overId matches a column key
       const targetColumn = columns.find((c) => c.key === overId)
       if (targetColumn) {
         targetStatus = targetColumn.key
       } else {
-        // Or a task's status
         const targetTask = tasks.find((t) => t.id === overId)
         if (targetTask) targetStatus = targetTask.status
       }
@@ -110,6 +193,30 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
     }
   }
 
+  const renderLaneLabel = (key: string) => {
+    if (groupBy === 'priority') {
+      const cfg = priorityConfig[key] || priorityConfig.medium
+      return (
+        <span className="flex items-center gap-2" style={{ color: cfg.color, fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 500 }}>
+          <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: cfg.color, opacity: 0.7 }} />
+          {cfg.label}
+        </span>
+      )
+    }
+    if (groupBy === 'assignee') {
+      const person = getPersonInfo(key)
+      return (
+        <span className="flex items-center gap-2" style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>
+          <div style={{ width: 20, height: 20 }}>
+            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]" />
+          </div>
+          {person.name}
+        </span>
+      )
+    }
+    return <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>{key}</span>
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -118,66 +225,219 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {columns.map((col) => {
-          const Icon = col.icon
-          const columnTasks = tasksByStatus[col.key] || []
-          const taskIds = columnTasks.map((t) => t.id)
-
-          return (
-            <DroppableColumn key={col.key} id={col.key} isOver={overColumnId === col.key}>
-              {/* Column header */}
-              <div
-                className="flex items-center justify-between px-3 py-2 rounded-t-lg border-b-2 mb-2"
-                style={{ backgroundColor: col.bg, borderColor: col.color }}
-              >
-                <div className="flex items-center gap-2">
-                  <Icon size={14} style={{ color: col.color }} />
-                  <span className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: col.color }}>
-                    {col.label}
-                  </span>
-                </div>
-                <span
-                  className="text-xs px-1.5 py-0.5 rounded-full"
-                  style={{ fontFamily: 'var(--font-sans)', backgroundColor: col.bg, color: col.color, fontWeight: 600 }}
-                >
-                  {columnTasks.length}
-                </span>
-              </div>
-
-              {/* Cards */}
-              <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-2 min-h-[200px]">
-                  {columnTasks.map((task) => (
-                    <SortableTaskCard
-                      key={task.id}
-                      task={task}
-                      onStatusChange={onStatusChange}
-                      onSelect={onSelect}
-                    />
-                  ))}
-                  {columnTasks.length === 0 && (
-                    <div
-                      className="flex items-center justify-center py-8 rounded-lg border border-dashed"
-                      style={{
-                        borderColor: 'var(--border-light)',
-                        color: 'var(--slate)',
-                        opacity: 0.4,
-                        fontFamily: 'var(--font-sans)',
-                        fontSize: '12px',
-                      }}
-                    >
-                      Drop here
-                    </div>
-                  )}
-                </div>
-              </SortableContext>
-            </DroppableColumn>
-          )
-        })}
+      {/* Group By selector */}
+      <div className="flex items-center gap-2 mb-3">
+        <Layers size={13} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+          Group by:
+        </span>
+        {(['status', 'priority', 'assignee'] as const).map((field) => (
+          <button
+            key={field}
+            onClick={() => setGroupBy(field)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '3px 10px',
+              borderRadius: '6px',
+              border: groupBy === field ? '1px solid var(--teal)' : '1px solid transparent',
+              background: groupBy === field ? 'rgba(45,138,138,0.08)' : 'none',
+              color: groupBy === field ? 'var(--teal)' : 'var(--slate)',
+              fontFamily: 'var(--font-sans)',
+              fontSize: '11px',
+              fontWeight: groupBy === field ? 500 : 400,
+              cursor: 'pointer',
+              textTransform: 'capitalize',
+            }}
+          >
+            {field === 'assignee' ? 'Assignee' : field === 'priority' ? 'Priority' : 'Status'}
+          </button>
+        ))}
       </div>
 
-      {/* Drag overlay — shows the card being dragged */}
+      {/* Standard status board (no swimlanes) */}
+      {groupBy === 'status' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {columns.map((col) => {
+            const Icon = col.icon
+            const columnTasks = tasksByStatus[col.key] || []
+            const taskIds = columnTasks.map((t) => t.id)
+            const isCollapsed = !!collapsed[col.key]
+
+            if (isCollapsed) {
+              return (
+                <CollapsedColumn
+                  key={col.key}
+                  id={col.key}
+                  label={col.label}
+                  icon={Icon}
+                  color={col.color}
+                  bg={col.bg}
+                  count={columnTasks.length}
+                  isOver={overColumnId === col.key}
+                  onExpand={() => toggleCollapse(col.key)}
+                />
+              )
+            }
+
+            return (
+              <DroppableColumn key={col.key} id={col.key} isOver={overColumnId === col.key}>
+                {/* Column header */}
+                <div
+                  className="flex items-center justify-between px-3 py-2 rounded-t-lg border-b-2 mb-2"
+                  style={{ backgroundColor: col.bg, borderColor: col.color }}
+                >
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => toggleCollapse(col.key)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', color: col.color }}
+                      title="Collapse column"
+                    >
+                      <ChevronDown size={12} />
+                    </button>
+                    <Icon size={14} style={{ color: col.color }} />
+                    <span className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: col.color }}>
+                      {col.label}
+                    </span>
+                  </div>
+                  <span
+                    className="text-xs px-1.5 py-0.5 rounded-full"
+                    style={{ fontFamily: 'var(--font-sans)', backgroundColor: col.bg, color: col.color, fontWeight: 600 }}
+                  >
+                    {columnTasks.length}
+                  </span>
+                </div>
+
+                {/* Cards */}
+                <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+                  <div className="flex flex-col gap-2 min-h-[200px]">
+                    {columnTasks.map((task) => (
+                      <SortableTaskCard
+                        key={task.id}
+                        task={task}
+                        onStatusChange={onStatusChange}
+                        onSelect={onSelect}
+                      />
+                    ))}
+                    {columnTasks.length === 0 && (
+                      <div
+                        className="flex items-center justify-center py-8 rounded-lg border border-dashed"
+                        style={{
+                          borderColor: 'var(--border-light)',
+                          color: 'var(--slate)',
+                          opacity: 0.4,
+                          fontFamily: 'var(--font-sans)',
+                          fontSize: '12px',
+                        }}
+                      >
+                        Drop here
+                      </div>
+                    )}
+                  </div>
+                </SortableContext>
+              </DroppableColumn>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Swimlane view (groupBy = priority or assignee) */}
+      {swimlaneData && (
+        <div className="flex flex-col gap-4">
+          {swimlaneData.map((lane) => {
+            const isLaneCollapsed = !!swimlaneCollapsed[lane.key]
+
+            return (
+              <div key={lane.key}>
+                {/* Swimlane header */}
+                <button
+                  onClick={() => toggleSwimlaneCollapse(lane.key)}
+                  className="flex items-center gap-2 w-full mb-2 pb-1.5"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: '1px solid var(--border-subtle)',
+                    cursor: 'pointer',
+                    padding: '4px 0',
+                  }}
+                >
+                  {isLaneCollapsed ? (
+                    <ChevronRight size={14} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+                  ) : (
+                    <ChevronDown size={14} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+                  )}
+                  {renderLaneLabel(lane.key)}
+                  <span
+                    className="text-xs px-1.5 py-0.5 rounded-full ml-1"
+                    style={{ fontFamily: 'var(--font-sans)', background: 'var(--ice)', color: 'var(--slate)', fontWeight: 500 }}
+                  >
+                    {lane.tasks.length}
+                  </span>
+                </button>
+
+                {/* Swimlane columns */}
+                {!isLaneCollapsed && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pl-4">
+                    {columns.map((col) => {
+                      const Icon = col.icon
+                      const columnTasks = lane.tasksByCol[col.key] || []
+                      const taskIds = columnTasks.map((t) => t.id)
+
+                      return (
+                        <DroppableColumn key={`${lane.key}-${col.key}`} id={col.key} isOver={overColumnId === col.key}>
+                          <div
+                            className="flex items-center justify-between px-2 py-1.5 rounded-t-lg border-b mb-1.5"
+                            style={{ backgroundColor: col.bg, borderColor: `color-mix(in srgb, ${col.color} 30%, transparent)` }}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <Icon size={12} style={{ color: col.color, opacity: 0.7 }} />
+                              <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: col.color, opacity: 0.8 }}>
+                                {col.label}
+                              </span>
+                            </div>
+                            <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: col.color, opacity: 0.6 }}>
+                              {columnTasks.length}
+                            </span>
+                          </div>
+                          <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+                            <div className="flex flex-col gap-1.5 min-h-[80px]">
+                              {columnTasks.map((task) => (
+                                <SortableTaskCard
+                                  key={task.id}
+                                  task={task}
+                                  onStatusChange={onStatusChange}
+                                  onSelect={onSelect}
+                                />
+                              ))}
+                              {columnTasks.length === 0 && (
+                                <div
+                                  className="flex items-center justify-center py-4 rounded border border-dashed"
+                                  style={{
+                                    borderColor: 'var(--border-light)',
+                                    color: 'var(--slate)',
+                                    opacity: 0.3,
+                                    fontFamily: 'var(--font-sans)',
+                                    fontSize: '10px',
+                                  }}
+                                >
+                                  --
+                                </div>
+                              )}
+                            </div>
+                          </SortableContext>
+                        </DroppableColumn>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Drag overlay */}
       <DragOverlay>
         {activeTask && (
           <div style={{ opacity: 0.85, transform: 'rotate(3deg)', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
@@ -186,6 +446,88 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
         )}
       </DragOverlay>
     </DndContext>
+  )
+}
+
+// ── Collapsed Column ────────────────────────────────────────
+
+function CollapsedColumn({
+  id, label, icon: Icon, color, bg, count, isOver, onExpand,
+}: {
+  id: string
+  label: string
+  icon: typeof Circle
+  color: string
+  bg: string
+  count: number
+  isOver: boolean
+  onExpand: () => void
+}) {
+  const { setNodeRef } = useDroppable({ id, data: { type: 'column' } })
+
+  return (
+    <div
+      ref={setNodeRef}
+      onClick={onExpand}
+      style={{
+        transition: 'all 150ms ease',
+        backgroundColor: isOver ? 'rgba(45, 138, 138, 0.04)' : bg,
+        border: isOver ? '2px dashed var(--gold)' : '2px solid transparent',
+        borderRadius: '8px',
+        padding: '8px 4px',
+        cursor: 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '8px',
+        minHeight: '200px',
+      }}
+    >
+      <button
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '2px',
+          display: 'flex',
+          alignItems: 'center',
+          color,
+        }}
+        title="Expand column"
+      >
+        <ChevronRight size={12} />
+      </button>
+
+      {/* Vertical label */}
+      <div
+        style={{
+          writingMode: 'vertical-rl',
+          textOrientation: 'mixed',
+          fontFamily: 'var(--font-sans)',
+          fontSize: '12px',
+          fontWeight: 500,
+          color,
+          letterSpacing: '0.04em',
+        }}
+      >
+        {label}
+      </div>
+
+      <Icon size={14} style={{ color, opacity: 0.7 }} />
+
+      {/* Count badge */}
+      <span
+        className="rounded-full px-1.5 py-0.5 text-[10px]"
+        style={{
+          fontFamily: 'var(--font-sans)',
+          fontWeight: 600,
+          color,
+          background: `color-mix(in srgb, ${color} 12%, transparent)`,
+        }}
+      >
+        {count}
+      </span>
+    </div>
   )
 }
 

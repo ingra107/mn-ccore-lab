@@ -19,7 +19,8 @@ function filtersMatch(a: ViewFilters, b: ViewFilters): boolean {
     a.assignee === b.assignee &&
     a.status === b.status &&
     a.search === b.search &&
-    a.sort === b.sort
+    a.sort === b.sort &&
+    (a.groupBy || 'none') === (b.groupBy || 'none')
   )
 }
 
