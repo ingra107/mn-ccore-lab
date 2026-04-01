@@ -89,7 +89,8 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
         {/* Status cycle — single click advances: todo → in_progress → done → todo */}
         <div className="flex-shrink-0 mt-0.5" data-status-dropdown>
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation()
               const idx = STATUS_CYCLE.indexOf(task.status as typeof STATUS_CYCLE[number])
               const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]
               const prev = task.status
@@ -187,8 +188,8 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
         </div>
       </div>
 
-      {/* Action buttons — always visible but muted, enhanced on hover */}
-      <div data-hover-actions className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-30 group-hover:opacity-100 transition-opacity">
+      {/* Action buttons — hidden until hover, then fully interactive */}
+      <div data-hover-actions className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
         {/* Quick complete/uncomplete toggle — primary action, always discoverable */}
         <button
           onClick={(e) => {

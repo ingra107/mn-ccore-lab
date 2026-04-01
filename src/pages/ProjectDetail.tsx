@@ -1471,8 +1471,8 @@ function ProjectDetailInner({ project }: InnerProps) {
       {/* Scoped dark mode styles */}
       <style>{`
         .dark .detail-card {
-          background: #162535 !important;
-          border: 1px solid rgba(201, 168, 76, 0.12);
+          background: #111820 !important;
+          border: 1px solid rgba(255, 255, 255, 0.06);
         }
       `}</style>
     </>

@@ -193,19 +193,16 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   key={item.to}
                   to={item.to}
                   onClick={onNavigate}
-                  className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors mb-1 ${
-                    active ? 'font-medium' : ''
-                  }`}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-colors mb-0.5"
                   style={{
-                    backgroundColor: active ? 'var(--teal-light, rgba(45,138,138,0.12))' : 'transparent',
-                    color: active ? 'var(--teal)' : 'var(--ink-light, #4a5568)',
+                    backgroundColor: active ? 'rgba(45,138,138,0.12)' : 'transparent',
+                    color: active ? 'var(--teal)' : 'var(--slate)',
                     fontFamily: 'var(--font-sans)',
-                    borderLeft: active ? '3px solid var(--teal)' : '3px solid transparent',
-                    borderRadius: active ? '2px 6px 6px 2px' : undefined,
+                    fontWeight: active ? 500 : 400,
                   }}
                   title={collapsed ? item.label : undefined}
                 >
-                  <Icon size={18} />
+                  <span style={{ opacity: active ? 1 : 0.7, display: 'flex' }}><Icon size={18} /></span>
                   {!collapsed && <span className="truncate">{item.label}</span>}
                   {!collapsed && item.badge !== undefined && item.badge > 0 && (
                     <span
