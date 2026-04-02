@@ -129,13 +129,26 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - Undo toast system, workload visibility, task click bug fix
 - CLAUDE.md: 9 design principles from LabSync + UX research
 
-**Phase 20: IN PROGRESS** (6+ commits). UX polish & interaction:
+**Phase 20: COMPLETE** (12 commits + simplify). UX polish & interaction:
 - HoverCard: preview cards on hover (project/member/task), wired to 6 surfaces
-- ActivityHeatmap on MemberPage: 90-day contribution heatmap on team profiles
-- Design ethos enforcement: heading weights fixed across 57 files (h1=600, h2=500, h3=400)
-- TaskContextMenu: right-click for quick actions (status, priority, assign, copy, archive)
-- Toast system: success confirmations for 8 key mutations
-- Stagger animations, keyboard nav on Projects, role-based dashboard views (in progress)
+- TaskContextMenu: right-click for quick actions with submenus
+- Toast system: success confirmations for 8 key mutations + timeout cleanup
+- ActivityHeatmap on MemberPage, stagger animations (Dashboard + Projects)
+- J/K keyboard nav on Projects page, role-based dashboard views (PI/Fellow/Coordinator)
+- Design ethos enforcement: heading weights fixed across 57 files
+- Simplify: shared constants (lib/taskConstants.ts, lib/animations.ts), memoized Personal.tsx
+
+**Phase 21: Visual Perfection** (ordered by impact — work top-to-bottom):
+1. Loading skeletons on AnalyticsPage, PIAnalyticsPage, Personal, SettingsPage
+2. Mobile sidebar auto-collapse (<768px) + hamburger toggle
+3. Replace 16+ hardcoded `color: 'white'` with CSS variable
+4. Touch target audit (44px min on filter/toggle buttons)
+5. Inline editing on Ideas, Manuscripts, Decisions pages + "▾" affordance
+6. Undo toast on Idea/Decision/Manuscript status changes
+7. J/K keyboard nav on Meetings, Ideas, Decisions pages
+8. HoverCard on Projects list, Team page, Meetings list
+9. Accent color discipline (max 2 non-neutral per view)
+10. Stagger animations on Meetings, Ideas, Team pages
 
 **Phase 19: COMPLETE** (4 commits). Differentiation features:
 - Trainee Development Trajectories: per-member page with pub curve, project velocity, task metrics, activity heatmap
