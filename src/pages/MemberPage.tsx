@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { useParams, Navigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
-import { FlaskConical, GraduationCap, FileText, Handshake, CheckCircle2, TrendingUp, Sparkles, X, Plus } from 'lucide-react'
+import { FlaskConical, GraduationCap, FileText, Handshake, CheckCircle2, TrendingUp, Sparkles, X, Plus, Activity } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
+import ActivityHeatmap from '../components/ActivityHeatmap'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { usePublications, useExpertise } from '../hooks/useApiData'
 import { useCommitments } from '../hooks/useCommitments'
@@ -261,6 +262,9 @@ export default function MemberPage() {
         ...(expertiseTags.length > 0 || isAuthenticated
           ? [{ id: 'expertise', label: `Expertise${expertiseTags.length > 0 ? ` (${expertiseTags.length})` : ''}` }]
           : []),
+        ...(slug
+          ? [{ id: 'activity', label: 'Activity' }]
+          : []),
         ...(topicCounts.length > 0
           ? [{ id: 'research-areas', label: 'Research Areas' }]
           : []),
@@ -333,7 +337,7 @@ export default function MemberPage() {
                 className="text-xl sm:text-2xl"
                 style={{
                   fontFamily: 'var(--font-sans)',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: 'var(--ink)',
                 }}
               >
@@ -388,7 +392,7 @@ export default function MemberPage() {
                 className="text-xl sm:text-2xl"
                 style={{
                   fontFamily: 'var(--font-sans)',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: 'var(--ink)',
                 }}
               >
@@ -454,7 +458,7 @@ export default function MemberPage() {
                 className="text-xl sm:text-2xl"
                 style={{
                   fontFamily: 'var(--font-sans)',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: 'var(--ink)',
                 }}
               >
@@ -618,6 +622,30 @@ export default function MemberPage() {
         </>
       )}
 
+      {/* Activity heatmap */}
+      {slug && (
+        <>
+          <section className="mb-8" id="activity">
+            <div className="flex items-center gap-3 mb-4">
+              <Activity size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <h2
+                className="text-xl sm:text-2xl"
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: 500,
+                  color: 'var(--ink)',
+                }}
+              >
+                Activity
+              </h2>
+            </div>
+            <ActivityHeatmap slug={slug} days={90} />
+          </section>
+          <SectionDivider />
+          <div className="py-4" />
+        </>
+      )}
+
       {/* Research areas derived from publication topics */}
       {topicCounts.length > 0 && (
         <>
@@ -626,7 +654,7 @@ export default function MemberPage() {
               className="text-xl sm:text-2xl mb-4"
               style={{
                 fontFamily: 'var(--font-sans)',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: 'var(--ink)',
               }}
             >
@@ -688,7 +716,7 @@ export default function MemberPage() {
                 className="text-xl sm:text-2xl"
                 style={{
                   fontFamily: 'var(--font-sans)',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: 'var(--ink)',
                 }}
               >
