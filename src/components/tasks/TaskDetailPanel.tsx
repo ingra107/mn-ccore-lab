@@ -9,6 +9,9 @@ import {
 import Avatar from '../Avatar'
 import CollapsibleSection from '../CollapsibleSection'
 import ReactionBar from '../ReactionBar'
+import HoverCard from '../HoverCard'
+import type { HoverCardData } from '../HoverCard'
+import { useHoverCard } from '../../hooks/useHoverCard'
 import { getPersonInfo } from '../../data/team'
 import { useTeam, useSubtasks, useHandoffs, useTasks, useDecisions } from '../../hooks/useApiData'
 import type { DecisionRow } from '../../hooks/useApiData'
@@ -502,12 +505,25 @@ function ProjectSelect({ value, onChange }: { value: string; onChange: (v: strin
       const res = await fetch('/api/projects')
       if (!res.ok) return []
       const data = await res.json()
-      return data.data as { slug: string; title: string }[]
+      return data.data as { slug: string; title: string; stage?: string; status?: string; pi?: string; category?: string; description?: string; updated_at?: string }[]
     },
     staleTime: 5 * 60 * 1000,
   })
 
   const current = projectList.find((p) => p.slug === value)
+
+  // Hover card for project preview
+  const hoverCard = useHoverCard()
+  const hoverCardData: HoverCardData | null = current ? {
+    type: 'project',
+    title: current.title,
+    stage: current.stage,
+    status: current.status,
+    pi: current.pi,
+    category: current.category,
+    description: current.description,
+    updated_at: current.updated_at,
+  } : null
 
   useEffect(() => {
     if (!open) return
@@ -521,7 +537,10 @@ function ProjectSelect({ value, onChange }: { value: string; onChange: (v: strin
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={hoverCard.triggerRef as React.RefObject<HTMLButtonElement>}
         onClick={() => setOpen(!open)}
+        onMouseEnter={current && !open ? hoverCard.handlers.onMouseEnter : undefined}
+        onMouseLeave={current && !open ? hoverCard.handlers.onMouseLeave : undefined}
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
         style={{
           fontFamily: 'var(--font-body)',
@@ -536,6 +555,16 @@ function ProjectSelect({ value, onChange }: { value: string; onChange: (v: strin
         {current ? current.title : 'No project'}
         <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 0.4 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
+      {/* Project hover preview card */}
+      {hoverCardData && !open && (
+        <HoverCard
+          data={hoverCardData}
+          isVisible={hoverCard.isVisible}
+          position={hoverCard.position}
+          cardRef={hoverCard.cardRef}
+          cardHandlers={hoverCard.cardHandlers}
+        />
+      )}
       {open && (
         <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[240px] max-h-[280px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
           <button
