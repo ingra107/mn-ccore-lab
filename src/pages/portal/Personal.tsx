@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import type { ReactElement } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -6,6 +7,7 @@ import {
   Activity, ArrowRight, Circle, AlertTriangle, TrendingUp,
   Users, Send, Lightbulb, User, History,
   Eye, EyeOff, FlaskConical, CalendarDays, UserCircle,
+  ChevronDown,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import OnboardingChecklist from '../../components/OnboardingChecklist'
@@ -17,10 +19,14 @@ import { useNotifications } from '../../hooks/useNotifications'
 import { useCommitments } from '../../hooks/useCommitments'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { useUpdateTaskStatus, useCreateIdea } from '../../hooks/useMutations'
+import { useAuth } from '../../hooks/useAuth'
+import { useUserRole } from '../../hooks/useUserRole'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed'
 import { useWatchlist } from '../../hooks/useWatchlist'
+import { ROLE_CARD_CONFIGS, ROLE_LABELS } from '../../lib/roleDefaults'
+import type { PersonalCardId, UserRole } from '../../lib/roleDefaults'
 import type { WatchItem } from '../../hooks/useWatchlist'
 import type { TaskRow } from '../../lib/api'
 
@@ -40,7 +46,7 @@ const staggerItem = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: 'easeOut' },
+    transition: { duration: 0.3, ease: 'easeOut' as const },
   },
 }
 
@@ -58,9 +64,46 @@ function getCurrentUser(): string | null {
   return null
 }
 
-// Check if user is PI (Nick or Nate)
-function isPI(slug: string | null): boolean {
-  return slug === 'nick-ingraham' || slug === 'nate-mesfin'
+// ── Card ordering per role ──────────────────────────────────
+
+// Defines the render order of cards per role. Cards not in the list are appended at the end.
+const ROLE_CARD_ORDER: Record<UserRole, PersonalCardId[]> = {
+  pi: [
+    'lab-health', 'my-tasks', 'assigned-by-me',
+    'activity', 'deadlines',
+    'grants', 'commitments', 'notifications', 'watching', 'quick-capture',
+  ],
+  fellow: [
+    'my-tasks', 'deadlines',
+    'notifications', 'watching',
+    'quick-capture', 'activity',
+  ],
+  coordinator: [
+    'my-tasks', 'deadlines',
+    'activity', 'notifications',
+    'assigned-by-me', 'commitments', 'watching', 'quick-capture',
+  ],
+  default: [
+    'my-tasks', 'deadlines',
+    'notifications', 'assigned-by-me',
+    'commitments', 'activity', 'watching', 'lab-health', 'grants', 'quick-capture',
+  ],
+}
+
+// ── Visibility storage key ──────────────────────────────────
+
+const VISIBLE_CARDS_KEY = 'dashboard-visible-cards'
+
+function getStoredVisibleCards(): Set<PersonalCardId> | null {
+  try {
+    const stored = localStorage.getItem(VISIBLE_CARDS_KEY)
+    if (stored) return new Set(JSON.parse(stored))
+  } catch { /* use defaults */ }
+  return null
+}
+
+function storeVisibleCards(cards: Set<PersonalCardId>) {
+  localStorage.setItem(VISIBLE_CARDS_KEY, JSON.stringify([...cards]))
 }
 
 export default function Personal() {
@@ -68,6 +111,8 @@ export default function Personal() {
   const watchlist = useWatchlist()
   const currentUser = useMemo(() => getCurrentUser(), [])
   const person = currentUser ? getPersonInfo(currentUser) : null
+  const { isAuthenticated } = useAuth()
+  const { role, setRoleOverride, clearRoleOverride, isRoleInitialized, markRoleInitialized } = useUserRole()
 
   const { data: allTasks = [] } = useTasks()
   const { data: healthData } = useProjectHealth()
@@ -110,20 +155,93 @@ export default function Personal() {
   // Pending commitments
   const pendingCommitments = commitments.filter((c) => c.status !== 'completed')
 
-  // Health summary (for PIs)
+  // Health summary
   const health = healthData?.summary
+
+  // ── Role-based card visibility ──────────────────────────────
+
+  const [visibleCards, setVisibleCards] = useState<Set<PersonalCardId>>(() => {
+    const stored = getStoredVisibleCards()
+    if (stored) return stored
+    return new Set(ROLE_CARD_CONFIGS[role].visible)
+  })
+
+  // When role changes and hasn't been initialized yet, apply role defaults
+  useEffect(() => {
+    if (!isRoleInitialized(role)) {
+      const defaults = new Set(ROLE_CARD_CONFIGS[role].visible)
+      setVisibleCards(defaults)
+      storeVisibleCards(defaults)
+      markRoleInitialized(role)
+    }
+  }, [role, isRoleInitialized, markRoleInitialized])
+
+  const primaryCards = useMemo(() => new Set(ROLE_CARD_CONFIGS[role].primary), [role])
+  const cardOrder = useMemo(() => ROLE_CARD_ORDER[role], [role])
+
+  const isCardVisible = (id: PersonalCardId) => visibleCards.has(id)
+  const isPrimary = (id: PersonalCardId) => primaryCards.has(id)
+
+  // Build the card render list: each card as { id, render() }
+  // This maps card IDs to their rendered components, respecting data availability
+  const cardRenderers: Record<PersonalCardId, (() => ReactElement | null) | null> = {
+    'my-tasks': () => (
+      <MyTasksCard
+        tasks={pendingTasks}
+        onStatusChange={(id, s) => updateStatus.mutate({ id, status: s })}
+        large={isPrimary('my-tasks')}
+      />
+    ),
+    'deadlines': () => (
+      <DeadlinesCard
+        deadlines={upcomingDeadlines}
+        overdue={overdueTasks}
+        large={isPrimary('deadlines')}
+      />
+    ),
+    'notifications': () => <NotificationsCard notifications={unreadNotifications} />,
+    'assigned-by-me': assignedByMe.length > 0 ? () => <AssignedByMeCard tasks={assignedByMe} /> : null,
+    'commitments': pendingCommitments.length > 0 ? () => <CommitmentsCard commitments={pendingCommitments} /> : null,
+    'activity': () => <ActivityCard activity={activity} />,
+    'watching': watchlist.items.length > 0 ? () => <WatchingCard items={watchlist.items} onUnwatch={watchlist.unwatch} /> : null,
+    'lab-health': health ? () => <LabHealthCard health={health} /> : null,
+    'grants': grants.length > 0 ? () => <GrantMiniCard grants={grants} /> : null,
+    'quick-capture': null, // Quick capture is rendered separately above the grid
+  }
+
+  // Ordered, visible, renderable cards
+  const orderedCards = useMemo(() => {
+    return cardOrder
+      .filter((id) => isCardVisible(id) && cardRenderers[id] != null)
+      .map((id) => ({ id, render: cardRenderers[id]! }))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardOrder, visibleCards, pendingTasks, upcomingDeadlines, overdueTasks, unreadNotifications, assignedByMe, pendingCommitments, activity, watchlist.items, health, grants, role])
+
+  // Show role selector when authenticated OR in dev mode
+  const showRoleSelector = isAuthenticated || import.meta.env.DEV
 
   return (
     <div>
-      <PageHeader
-        icon={<User size={20} />}
-        title={person ? `${person.name.split(' ')[0]}'s Hub` : 'My Hub'}
-        subtitle={overdueTasks.length > 0
-          ? `${overdueTasks.length} overdue`
-          : pendingTasks.length > 0
-            ? `${pendingTasks.length} active task${pendingTasks.length !== 1 ? 's' : ''}`
-            : 'All caught up'}
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          icon={<User size={20} />}
+          title={person ? `${person.name.split(' ')[0]}'s Hub` : 'My Hub'}
+          subtitle={overdueTasks.length > 0
+            ? `${overdueTasks.length} overdue`
+            : pendingTasks.length > 0
+              ? `${pendingTasks.length} active task${pendingTasks.length !== 1 ? 's' : ''}`
+              : 'All caught up'}
+        />
+        {showRoleSelector && (
+          <RoleSelector
+            role={role}
+            onSelect={(r) => {
+              if (r === 'auto') clearRoleOverride()
+              else setRoleOverride(r)
+            }}
+          />
+        )}
+      </div>
 
       {!currentUser && (
         <div
@@ -214,67 +332,24 @@ export default function Personal() {
       )}
 
       {/* Quick Capture */}
-      <QuickCapture />
+      {isCardVisible('quick-capture') && <QuickCapture />}
 
-      {/* Bento Grid */}
+      {/* Bento Grid — role-ordered */}
       <motion.div
         className="bento-grid mt-8"
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
       >
-        {/* My Tasks — span 2 */}
-        <motion.div variants={staggerItem} className="bento-span-2">
-          <MyTasksCard tasks={pendingTasks} onStatusChange={(id, s) => updateStatus.mutate({ id, status: s })} />
-        </motion.div>
-
-        {/* Upcoming Deadlines */}
-        <motion.div variants={staggerItem}>
-          <DeadlinesCard deadlines={upcomingDeadlines} overdue={overdueTasks} />
-        </motion.div>
-
-        {/* Notifications */}
-        <motion.div variants={staggerItem}>
-          <NotificationsCard notifications={unreadNotifications} />
-        </motion.div>
-
-        {/* Assigned by Me (if any) */}
-        {assignedByMe.length > 0 && (
-          <motion.div variants={staggerItem}>
-            <AssignedByMeCard tasks={assignedByMe} />
+        {orderedCards.map(({ id, render }) => (
+          <motion.div
+            key={id}
+            variants={staggerItem}
+            className={isPrimary(id) ? 'bento-span-2' : undefined}
+          >
+            {render()}
           </motion.div>
-        )}
-
-        {/* Commitments */}
-        {pendingCommitments.length > 0 && (
-          <motion.div variants={staggerItem}>
-            <CommitmentsCard commitments={pendingCommitments} />
-          </motion.div>
-        )}
-
-        {/* Recent Activity */}
-        <motion.div variants={staggerItem}>
-          <ActivityCard activity={activity} />
-        </motion.div>
-
-        {/* Watching */}
-        {watchlist.items.length > 0 && (
-          <motion.div variants={staggerItem}>
-            <WatchingCard items={watchlist.items} onUnwatch={watchlist.unwatch} />
-          </motion.div>
-        )}
-
-        {/* PI-only cards */}
-        {isPI(currentUser) && health && (
-          <motion.div variants={staggerItem}>
-            <LabHealthCard health={health} />
-          </motion.div>
-        )}
-        {isPI(currentUser) && grants.length > 0 && (
-          <motion.div variants={staggerItem}>
-            <GrantMiniCard grants={grants} />
-          </motion.div>
-        )}
+        ))}
       </motion.div>
 
       <style>{`
@@ -293,6 +368,117 @@ export default function Personal() {
           .bento-span-2 { grid-column: span 1; }
         }
       `}</style>
+    </div>
+  )
+}
+
+// ── Role Selector ──────────────────────────────────────────
+
+const roleOptions: { value: UserRole | 'auto'; label: string }[] = [
+  { value: 'auto', label: 'Auto-detect' },
+  { value: 'pi', label: 'PI View' },
+  { value: 'fellow', label: 'Fellow View' },
+  { value: 'coordinator', label: 'Coordinator View' },
+  { value: 'default', label: 'Default' },
+]
+
+function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: UserRole | 'auto') => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0, marginTop: 4 }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          padding: '4px 8px',
+          borderRadius: 6,
+          border: '1px solid transparent',
+          background: 'none',
+          cursor: 'pointer',
+          fontFamily: 'var(--font-sans)',
+          fontSize: '11px',
+          fontWeight: 400,
+          color: 'var(--slate)',
+          transition: 'border-color 150ms ease, color 150ms ease',
+          whiteSpace: 'nowrap',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--border-light)'
+        }}
+        onMouseLeave={(e) => {
+          if (!open) e.currentTarget.style.borderColor = 'transparent'
+        }}
+      >
+        <span style={{ color: 'var(--teal)', fontSize: '11px' }}>{ROLE_LABELS[role]}</span>
+        <ChevronDown size={10} style={{ opacity: 0.5 }} />
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            right: 0,
+            marginTop: 4,
+            minWidth: 140,
+            borderRadius: 8,
+            border: '1px solid var(--border-subtle)',
+            background: 'var(--cream)',
+            boxShadow: 'var(--shadow-card)',
+            zIndex: 50,
+            overflow: 'hidden',
+          }}
+        >
+          {roleOptions.map((opt) => {
+            const isActive = opt.value === role || (opt.value === 'auto' && role === 'default')
+            return (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  onSelect(opt.value)
+                  setOpen(false)
+                }}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: '7px 12px',
+                  border: 'none',
+                  background: isActive ? 'rgba(45,138,138,0.06)' : 'transparent',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '11px',
+                  fontWeight: 400,
+                  color: isActive ? 'var(--teal)' : 'var(--slate)',
+                  textAlign: 'left',
+                  transition: 'background 150ms ease, color 150ms ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.background = 'rgba(45,138,138,0.03)'
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -364,14 +550,14 @@ function QuickStat({ label, value, color, icon: Icon }: { label: string; value: 
 
 // ── My Tasks Card ────────────────────────────────────────────
 
-function MyTasksCard({ tasks, onStatusChange }: { tasks: TaskRow[]; onStatusChange: (id: string, status: string) => void }) {
+function MyTasksCard({ tasks, onStatusChange, large }: { tasks: TaskRow[]; onStatusChange: (id: string, status: string) => void; large?: boolean }) {
   const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
   const sorted = [...tasks]
     .sort((a, b) => (priorityOrder[a.priority] ?? 2) - (priorityOrder[b.priority] ?? 2))
-    .slice(0, 6)
+    .slice(0, large ? 8 : 6)
 
   return (
-    <BentoCard title="My Tasks" subtitle={`${tasks.length} active`} size="span-2" icon={CheckSquare} badge="TASKS">
+    <BentoCard title="My Tasks" subtitle={`${tasks.length} active`} size={large ? 'span-2' : 'span-1'} icon={CheckSquare} badge="TASKS">
       <div className="flex flex-col gap-1.5">
         {sorted.map((task) => {
           const isOverdue = task.due_date && new Date(task.due_date + 'T23:59:59') < new Date()
@@ -411,9 +597,9 @@ function MyTasksCard({ tasks, onStatusChange }: { tasks: TaskRow[]; onStatusChan
 
 // ── Deadlines Card ───────────────────────────────────────────
 
-function DeadlinesCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: TaskRow[] }) {
+function DeadlinesCard({ deadlines, overdue, large }: { deadlines: TaskRow[]; overdue: TaskRow[]; large?: boolean }) {
   return (
-    <BentoCard title="Deadlines" subtitle={`${deadlines.length} upcoming · ${overdue.length} overdue`} icon={Calendar} badge="UPCOMING">
+    <BentoCard title="Deadlines" subtitle={`${deadlines.length} upcoming · ${overdue.length} overdue`} size={large ? 'span-2' : 'span-1'} icon={Calendar} badge="UPCOMING">
       <div className="flex flex-col gap-1.5">
         {overdue.slice(0, 2).map((t) => (
           <div key={t.id} className="flex items-center gap-2 py-1">
@@ -426,7 +612,7 @@ function DeadlinesCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: 
             </span>
           </div>
         ))}
-        {deadlines.slice(0, 4).map((t) => (
+        {deadlines.slice(0, large ? 6 : 4).map((t) => (
           <div key={t.id} className="flex items-center gap-2 py-1">
             <Clock size={12} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.6 }} />
             <span className="flex-1 text-xs truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
