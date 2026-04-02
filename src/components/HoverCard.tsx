@@ -1,8 +1,9 @@
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FolderKanban, Clock, Flag, Circle, CheckCircle2, AlertTriangle, BookOpen } from 'lucide-react'
+import { FolderKanban, Clock, Flag, Circle, CheckCircle2, Ban, BookOpen } from 'lucide-react'
 import { getPersonInfo } from '../data/team'
 import { formatRelativeTime } from '../lib/dateUtils'
+import { STATUS_CONFIG, PRIORITY_CONFIG, STAGE_COLORS } from '../lib/taskConstants'
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -52,27 +53,21 @@ interface HoverCardProps {
 
 // ── Status helpers ───────────────────────────────────────────
 
-const statusConfig: Record<string, { color: string; icon: typeof Circle; label: string }> = {
-  todo: { color: 'var(--slate)', icon: Circle, label: 'To Do' },
-  in_progress: { color: 'var(--teal)', icon: Clock, label: 'In Progress' },
-  done: { color: 'var(--green, #22c55e)', icon: CheckCircle2, label: 'Done' },
-  blocked: { color: 'var(--maroon)', icon: AlertTriangle, label: 'Blocked' },
+const STATUS_ICON_MAP: Record<string, typeof Circle> = {
+  Circle,
+  Clock,
+  CheckCircle2,
+  Ban,
 }
 
-const priorityColors: Record<string, string> = {
-  low: 'var(--slate)',
-  medium: 'var(--gold)',
-  high: 'var(--orange)',
-  urgent: 'var(--maroon)',
+function getStatusConfig(status: string): { color: string; icon: typeof Circle; label: string } | undefined {
+  const cfg = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]
+  if (!cfg) return undefined
+  return { color: cfg.color, icon: STATUS_ICON_MAP[cfg.icon] || Circle, label: cfg.label }
 }
 
-const stageColors: Record<string, string> = {
-  Idea: 'var(--slate)',
-  'Data Collection': 'var(--teal)',
-  Analysis: 'var(--gold)',
-  Writing: 'var(--orange)',
-  Review: 'var(--maroon)',
-  Published: 'var(--green, #22c55e)',
+function getPriorityColor(priority: string): string {
+  return PRIORITY_CONFIG[priority as keyof typeof PRIORITY_CONFIG]?.color || 'var(--slate)'
 }
 
 // ── Mini avatar (24px) ──────────────────────────────────────
@@ -104,7 +99,7 @@ function MiniAvatar({ slug }: { slug: string }) {
 // ── Stage badge ─────────────────────────────────────────────
 
 function StageBadge({ stage }: { stage: string }) {
-  const color = stageColors[stage] || 'var(--slate)'
+  const color = STAGE_COLORS[stage] || 'var(--slate)'
   return (
     <span
       className="inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase tracking-wider"
@@ -125,7 +120,7 @@ function StageBadge({ stage }: { stage: string }) {
 // ── Status badge ────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
-  const config = statusConfig[status]
+  const config = getStatusConfig(status)
   if (!config) return null
   const Icon = config.icon
   return (
@@ -142,7 +137,7 @@ function StatusBadge({ status }: { status: string }) {
 // ── Priority indicator ──────────────────────────────────────
 
 function PriorityDot({ priority }: { priority: string }) {
-  const color = priorityColors[priority] || 'var(--slate)'
+  const color = getPriorityColor(priority)
   return (
     <span
       className="inline-flex items-center gap-1 text-[11px] capitalize"

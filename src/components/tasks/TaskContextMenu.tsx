@@ -1,27 +1,38 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  Circle, CheckCircle2, Clock, AlertTriangle, ChevronRight,
+  Circle, CheckCircle2, Clock, Ban, ChevronRight,
   Check, Copy, Link, Archive, Eye, ArrowRight,
 } from 'lucide-react'
 import type { TaskRow } from '../../lib/api'
 import type { ContextMenuState } from '../../hooks/useContextMenu'
+import { STATUS_CONFIG, PRIORITY_CONFIG } from '../../lib/taskConstants'
 
 // ── Constants ──────────────────────────────────────────────────
 
-const STATUS_ITEMS = [
-  { value: 'todo', label: 'To Do', icon: Circle, color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--teal)' },
-  { value: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--green, #16a34a)' },
-  { value: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--maroon)' },
-]
+const STATUS_ICON_MAP: Record<string, typeof Circle> = {
+  Circle,
+  Clock,
+  CheckCircle2,
+  Ban,
+}
 
-const PRIORITY_ITEMS = [
-  { value: 'urgent', label: 'Urgent', color: 'var(--maroon)' },
-  { value: 'high', label: 'High', color: 'var(--orange, #c2410c)' },
-  { value: 'medium', label: 'Medium', color: 'var(--gold)' },
-  { value: 'low', label: 'Low', color: 'var(--slate)' },
-]
+const STATUS_ITEMS = (Object.entries(STATUS_CONFIG) as [string, typeof STATUS_CONFIG[keyof typeof STATUS_CONFIG]][]).map(
+  ([value, cfg]) => ({
+    value,
+    label: cfg.label,
+    icon: STATUS_ICON_MAP[cfg.icon] || Circle,
+    color: cfg.color,
+  })
+)
+
+const PRIORITY_ITEMS = (Object.entries(PRIORITY_CONFIG) as [string, typeof PRIORITY_CONFIG[keyof typeof PRIORITY_CONFIG]][]).map(
+  ([value, cfg]) => ({
+    value,
+    label: cfg.label,
+    color: cfg.color,
+  })
+)
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -89,6 +100,29 @@ const dividerStyles: React.CSSProperties = {
 const submenuIndicatorStyles: React.CSSProperties = {
   opacity: 0.3,
   flexShrink: 0,
+}
+
+// ── MenuItem Component (shared hover pattern) ─────────────────
+
+function MenuItem({
+  onClick,
+  style,
+  children,
+}: {
+  onClick: () => void
+  style?: React.CSSProperties
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      style={{ ...itemStyles, ...style }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(201,168,76,0.06)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  )
 }
 
 // ── Submenu Component ──────────────────────────────────────────
@@ -269,14 +303,9 @@ export default function TaskContextMenu({
           const Icon = s.icon
           const isCurrent = task.status === s.value
           return (
-            <button
+            <MenuItem
               key={s.value}
-              style={{
-                ...itemStyles,
-                color: isCurrent ? 'var(--teal)' : s.color,
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(201,168,76,0.06)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+              style={{ color: isCurrent ? 'var(--teal)' : s.color }}
               onClick={() => handleAction(() => onStatusChange(task.id, s.value))}
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -284,7 +313,7 @@ export default function TaskContextMenu({
                 {s.label}
               </span>
               {isCurrent && <Check size={12} style={{ opacity: 0.6 }} />}
-            </button>
+            </MenuItem>
           )
         })}
       </SubmenuItem>
@@ -294,14 +323,9 @@ export default function TaskContextMenu({
         {PRIORITY_ITEMS.map((p) => {
           const isCurrent = task.priority === p.value
           return (
-            <button
+            <MenuItem
               key={p.value}
-              style={{
-                ...itemStyles,
-                color: isCurrent ? 'var(--teal)' : 'var(--ink, #e2e8f0)',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(201,168,76,0.06)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+              style={{ color: isCurrent ? 'var(--teal)' : 'var(--ink, #e2e8f0)' }}
               onClick={() => handleAction(() => {
                 onFieldChange?.(task.id, 'priority', p.value)
               })}
@@ -317,7 +341,7 @@ export default function TaskContextMenu({
                 {p.label}
               </span>
               {isCurrent && <Check size={12} style={{ opacity: 0.6 }} />}
-            </button>
+            </MenuItem>
           )
         })}
       </SubmenuItem>
@@ -326,135 +350,78 @@ export default function TaskContextMenu({
 
       {/* Assign to */}
       {onFieldChange && (
-        <button
-          style={itemStyles}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(201,168,76,0.06)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-          onClick={() => handleAction(() => {
-            // Open detail panel which has the assignee picker
-            onOpenDetail?.(task)
-          })}
-        >
+        <MenuItem onClick={() => handleAction(() => { onOpenDetail?.(task) })}>
           <span>Assign to...</span>
-        </button>
+        </MenuItem>
       )}
 
       {/* Set due date */}
       {onFieldChange && (
-        <button
-          style={itemStyles}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(201,168,76,0.06)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-          onClick={() => handleAction(() => {
-            // Open detail panel which has the date picker
-            onOpenDetail?.(task)
-          })}
-        >
+        <MenuItem onClick={() => handleAction(() => { onOpenDetail?.(task) })}>
           <span>Set due date...</span>
-        </button>
+        </MenuItem>
       )}
 
       <div style={dividerStyles} />
 
       {/* Open detail panel */}
       {onOpenDetail && (
-        <button
-          style={itemStyles}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(201,168,76,0.06)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-          onClick={() => handleAction(() => onOpenDetail(task))}
-        >
+        <MenuItem onClick={() => handleAction(() => onOpenDetail(task))}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ArrowRight size={13} style={{ opacity: 0.5 }} />
             Open detail panel
           </span>
           <span style={shortcutStyles}>Enter</span>
-        </button>
+        </MenuItem>
       )}
 
       {/* Peek */}
       {onPeek && (
-        <button
-          style={itemStyles}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(201,168,76,0.06)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-          onClick={() => handleAction(() => onPeek(task))}
-        >
+        <MenuItem onClick={() => handleAction(() => onPeek(task))}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Eye size={13} style={{ opacity: 0.5 }} />
             Peek
           </span>
           <span style={shortcutStyles}>Space</span>
-        </button>
+        </MenuItem>
       )}
 
       <div style={dividerStyles} />
 
       {/* Copy task title */}
-      <button
-        style={itemStyles}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(201,168,76,0.06)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-        onClick={() => handleAction(() => {
-          copyToClipboard(task.title || task.description)
-        })}
-      >
+      <MenuItem onClick={() => handleAction(() => { copyToClipboard(task.title || task.description) })}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Copy size={13} style={{ opacity: 0.5 }} />
           Copy task title
         </span>
-      </button>
+      </MenuItem>
 
       {/* Copy link */}
-      <button
-        style={itemStyles}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(201,168,76,0.06)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-        onClick={() => handleAction(() => {
-          const url = `${window.location.origin}/portal/tasks?task=${task.id}`
-          copyToClipboard(url)
-        })}
-      >
+      <MenuItem onClick={() => handleAction(() => {
+        const url = `${window.location.origin}/portal/tasks?task=${task.id}`
+        copyToClipboard(url)
+      })}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Link size={13} style={{ opacity: 0.5 }} />
           Copy link
         </span>
-      </button>
+      </MenuItem>
 
       <div style={dividerStyles} />
 
       {/* Archive */}
-      <button
-        style={itemStyles}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(201,168,76,0.06)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-        onClick={() => handleAction(() => {
-          if (onArchive) {
-            onArchive(task)
-          } else {
-            onStatusChange(task.id, 'done')
-          }
-        })}
-      >
+      <MenuItem onClick={() => handleAction(() => {
+        if (onArchive) {
+          onArchive(task)
+        } else {
+          onStatusChange(task.id, 'done')
+        }
+      })}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Archive size={13} style={{ opacity: 0.5 }} />
           Archive
         </span>
-      </button>
-
-      {/* Keyframe animation injected via style tag */}
-      <style>{`
-        @keyframes contextMenuIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}</style>
+      </MenuItem>
     </div>
   )
 

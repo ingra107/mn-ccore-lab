@@ -13,30 +13,11 @@ import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
 import Avatar from '../components/Avatar'
-import { directors, getAllMembers } from '../data/team'
+import { getPersonInfo } from '../data/team'
 import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import type { Stage } from '../components/StageSelector'
-
-// ── Stagger animation variants ──────────────────────────────
-
-const staggerContainer = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.05,
-    },
-  },
-}
-
-const staggerItem = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.3, ease: 'easeOut' as const },
-  },
-}
+import { staggerContainer, staggerItem } from '../lib/animations'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
 
@@ -62,19 +43,13 @@ const CATEGORY_LABEL: Record<string, string> = {
   mentee: 'Mentee',
 }
 
+const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
+
 const HEALTH_STATUS_COLOR: Record<string, string> = {
   'Healthy': '#16a34a',
   'Needs Attention': '#c9a84c',
   'At Risk': '#c2410c',
   'Critical': '#7a0019',
-}
-
-function getPiInfo(slug: string) {
-  const director = directors.find((d) => d.slug === slug)
-  if (director) return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
-  const member = getAllMembers().find((m) => m.slug === slug)
-  if (member) return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
-  return { name: slug, initials: slug.slice(0, 2).toUpperCase(), photoUrl: undefined }
 }
 
 function getStageProjects(stage: Stage, filtered: Project[]): Project[] {
@@ -113,9 +88,6 @@ export default function Projects() {
   const [showCreate, setShowCreate] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const rowRefs = useRef<(HTMLDivElement | null)[]>([])
-
-  // Sort by stage pipeline order, then alphabetically within stage
-  const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
   const filtered = useMemo(() => {
     const base = activeCategory === 'all' ? projects : projects.filter((p) => p.category === activeCategory)
@@ -360,7 +332,7 @@ export default function Projects() {
                 {(() => {
                   let lastStage = ''
                   return filtered.map((project, index) => {
-                    const pi = getPiInfo(project.pi)
+                    const pi = getPersonInfo(project.pi)
                     const catLabel = CATEGORY_LABEL[project.category] ?? project.category
                     const projectHealth = healthBySlug.get(project.slug)
                     const showStageHeader = project.stage !== lastStage

@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Avatar from './Avatar'
-import { directors } from '../data/team'
-import { getAllMembers } from '../data/team'
+import { getPersonInfo } from '../data/team'
 import type { Project } from '../data/types'
 
 const CATEGORY_DOT: Record<string, string> = {
@@ -12,24 +11,12 @@ const CATEGORY_DOT: Record<string, string> = {
   mentee: 'var(--slate)',
 }
 
-function getPiInfo(slug: string) {
-  const director = directors.find((d) => d.slug === slug)
-  if (director) {
-    return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
-  }
-  const member = getAllMembers().find((m) => m.slug === slug)
-  if (member) {
-    return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
-  }
-  return { name: slug, initials: slug.slice(0, 2).toUpperCase(), photoUrl: undefined }
-}
-
 interface ProjectCardProps {
   project: Project
 }
 
 export default function ProjectCard({ project }: ProjectCardProps) {
-  const pi = getPiInfo(project.pi)
+  const pi = getPersonInfo(project.pi)
   const dotColor = CATEGORY_DOT[project.category] ?? 'var(--slate)'
 
   const cardContent = (

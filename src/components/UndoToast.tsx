@@ -1,4 +1,4 @@
-import { useState, useCallback, createContext, useContext } from 'react'
+import { useState, useCallback, useRef, useEffect, createContext, useContext } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Undo2, X, Check } from 'lucide-react'
 
@@ -30,15 +30,35 @@ export function useUndoToast() {
 
 export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+  // Clear all timeouts on unmount
+  useEffect(() => {
+    const currentTimers = timers.current
+    return () => {
+      currentTimers.forEach((timer) => clearTimeout(timer))
+      currentTimers.clear()
+    }
+  }, [])
+
+  const clearTimer = useCallback((id: string) => {
+    const timer = timers.current.get(id)
+    if (timer) {
+      clearTimeout(timer)
+      timers.current.delete(id)
+    }
+  }, [])
 
   const showUndo = useCallback((message: string, onUndo: () => void) => {
     const id = Date.now().toString()
     setToasts((prev) => [...prev, { id, type: 'undo', message, onUndo }])
 
     // Auto-dismiss after 5 seconds
-    setTimeout(() => {
+    const timer = setTimeout(() => {
+      timers.current.delete(id)
       setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 5000)
+    timers.current.set(id, timer)
   }, [])
 
   const showSuccess = useCallback((message: string) => {
@@ -46,14 +66,17 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => [...prev, { id, type: 'success', message }])
 
     // Auto-dismiss after 3 seconds (shorter than undo)
-    setTimeout(() => {
+    const timer = setTimeout(() => {
+      timers.current.delete(id)
       setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 3000)
+    timers.current.set(id, timer)
   }, [])
 
   const dismiss = useCallback((id: string) => {
+    clearTimer(id)
     setToasts((prev) => prev.filter((t) => t.id !== id))
-  }, [])
+  }, [clearTimer])
 
   const handleUndo = useCallback((toast: UndoToast) => {
     toast.onUndo()

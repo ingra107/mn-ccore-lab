@@ -29,40 +29,7 @@ import { ROLE_CARD_CONFIGS, ROLE_LABELS } from '../../lib/roleDefaults'
 import type { PersonalCardId, UserRole } from '../../lib/roleDefaults'
 import type { WatchItem } from '../../hooks/useWatchlist'
 import type { TaskRow } from '../../lib/api'
-
-// ── Stagger animation variants ──────────────────────────────
-
-const staggerContainer = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.05,
-    },
-  },
-}
-
-const staggerItem = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.3, ease: 'easeOut' as const },
-  },
-}
-
-// Try to get current user from CF Access JWT
-function getCurrentUser(): string | null {
-  try {
-    const cookies = document.cookie.split(';').map((c) => c.trim())
-    const cfCookie = cookies.find((c) => c.startsWith('CF_Authorization='))
-    if (cfCookie) {
-      const jwt = cfCookie.split('=')[1]
-      const payload = JSON.parse(atob(jwt.split('.')[1]))
-      if (payload.email) return payload.email.split('@')[0].toLowerCase()
-    }
-  } catch { /* no auth */ }
-  return null
-}
+import { staggerContainer, staggerItem } from '../../lib/animations'
 
 // ── Card ordering per role ──────────────────────────────────
 
@@ -109,9 +76,12 @@ function storeVisibleCards(cards: Set<PersonalCardId>) {
 export default function Personal() {
   const { recent } = useRecentlyViewed()
   const watchlist = useWatchlist()
-  const currentUser = useMemo(() => getCurrentUser(), [])
+  const { user: authUser, isAuthenticated } = useAuth()
+  const currentUser = useMemo(() => {
+    if (!authUser.email) return null
+    return authUser.email.split('@')[0].toLowerCase()
+  }, [authUser.email])
   const person = currentUser ? getPersonInfo(currentUser) : null
-  const { isAuthenticated } = useAuth()
   const { role, setRoleOverride, clearRoleOverride, isRoleInitialized, markRoleInitialized } = useUserRole()
 
   const { data: allTasks = [] } = useTasks()
@@ -128,11 +98,11 @@ export default function Personal() {
     return allTasks.filter((t) => t.assignee === currentUser)
   }, [allTasks, currentUser])
 
-  const pendingTasks = myTasks.filter((t) => !t.completed)
-  const urgentTasks = pendingTasks.filter((t) => t.priority === 'urgent' || t.priority === 'high')
-  const overdueTasks = pendingTasks.filter(
+  const pendingTasks = useMemo(() => myTasks.filter((t) => !t.completed), [myTasks])
+  const urgentTasks = useMemo(() => pendingTasks.filter((t) => t.priority === 'urgent' || t.priority === 'high'), [pendingTasks])
+  const overdueTasks = useMemo(() => pendingTasks.filter(
     (t) => t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()
-  )
+  ), [pendingTasks])
 
   // Tasks assigned by me to others
   const assignedByMe = useMemo(() => {
@@ -150,10 +120,10 @@ export default function Personal() {
   }, [pendingTasks])
 
   // Unread notifications
-  const unreadNotifications = notifications.filter((n) => !n.read)
+  const unreadNotifications = useMemo(() => notifications.filter((n) => !n.read), [notifications])
 
   // Pending commitments
-  const pendingCommitments = commitments.filter((c) => c.status !== 'completed')
+  const pendingCommitments = useMemo(() => commitments.filter((c) => c.status !== 'completed'), [commitments])
 
   // Health summary
   const health = healthData?.summary
