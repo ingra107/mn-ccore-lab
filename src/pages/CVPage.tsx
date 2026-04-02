@@ -152,7 +152,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
         style={{
           fontFamily: 'var(--font-sans)',
           fontSize: '18px',
-          fontWeight: 700,
+          fontWeight: 500,
           color: 'var(--ink)',
           letterSpacing: '0.02em',
           textTransform: 'uppercase',

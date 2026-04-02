@@ -339,7 +339,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
   return (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-light)' }}>
       <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.04)' : 'var(--cream)' }}>
-        <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-sans)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
+        <h3 className="text-lg font-normal" style={{ fontFamily: 'var(--font-sans)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
           {isToday ? 'Today' : formatLongDate(dateStr)}
         </h3>
         <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>

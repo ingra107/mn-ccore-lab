@@ -110,7 +110,7 @@ export default function CLIFMap() {
             className="text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4"
             style={{
               fontFamily: 'var(--font-display)',
-              fontWeight: 600,
+              fontWeight: 500,
               color: '#ffffff',
               lineHeight: 1.2,
             }}

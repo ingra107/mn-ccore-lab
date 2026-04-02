@@ -93,7 +93,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
         >
           <h3
             className="text-lg"
-            style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, color: 'var(--ink)' }}
+            style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--ink)' }}
           >
             New Project
           </h3>

@@ -311,7 +311,7 @@ export default function Publications() {
                 className="fade-in-up text-lg sm:text-xl mb-4 sm:mb-6 flex items-center gap-3"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: 'var(--ink)',
                 }}
               >

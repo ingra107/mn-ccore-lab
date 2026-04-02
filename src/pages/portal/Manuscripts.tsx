@@ -322,7 +322,7 @@ export default function Manuscripts() {
                   }}
                 >
                   <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
-                    <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
+                    <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
                       {stage}
                     </h3>
                     <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.4, fontWeight: 500 }}>

@@ -149,7 +149,7 @@ export default function Team() {
           className="fade-in-up text-xl sm:text-2xl lg:text-3xl mb-6 sm:mb-8"
           style={{
             fontFamily: 'var(--font-display)',
-            fontWeight: 600,
+            fontWeight: 500,
             color: 'var(--ink)',
           }}
         >
@@ -184,7 +184,7 @@ export default function Team() {
                       className="text-lg sm:text-xl mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
                       style={{
                         fontFamily: 'var(--font-display)',
-                        fontWeight: 600,
+                        fontWeight: 400,
                         color: 'var(--ink)',
                       }}
                     >
@@ -269,7 +269,7 @@ export default function Team() {
           className="fade-in-up text-xl sm:text-2xl lg:text-3xl mb-6 sm:mb-8"
           style={{
             fontFamily: 'var(--font-display)',
-            fontWeight: 600,
+            fontWeight: 500,
             color: 'var(--ink)',
           }}
         >
@@ -292,7 +292,7 @@ export default function Team() {
                   <div>
                     <h3
                       className="text-base sm:text-lg"
-                      style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--ink)' }}
+                      style={{ fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--ink)' }}
                     >
                       {member.name}{member.credentials ? `, ${member.credentials}` : ''}
                     </h3>
@@ -337,7 +337,7 @@ export default function Team() {
           className="fade-in-up text-xl sm:text-2xl lg:text-3xl mb-6 sm:mb-8"
           style={{
             fontFamily: 'var(--font-display)',
-            fontWeight: 600,
+            fontWeight: 500,
             color: 'var(--ink)',
           }}
         >
@@ -407,7 +407,7 @@ export default function Team() {
           className="fade-in-up text-xl sm:text-2xl lg:text-3xl mb-6 sm:mb-8"
           style={{
             fontFamily: 'var(--font-display)',
-            fontWeight: 600,
+            fontWeight: 500,
             color: 'var(--ink)',
           }}
         >

@@ -915,7 +915,7 @@ function SectionHeader({
       <h2
         style={{
           fontFamily: 'var(--font-sans)',
-          fontWeight: 600,
+          fontWeight: 500,
           fontSize: '1.25rem',
           color: 'var(--ink)',
           margin: 0,
@@ -1346,7 +1346,7 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
           style={{
             fontFamily: 'var(--font-sans)',
             fontSize: '16pt',
-            fontWeight: 700,
+            fontWeight: 500,
             margin: '0 0 4pt',
           }}
         >

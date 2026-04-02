@@ -204,7 +204,7 @@ export default function DecisionsPage() {
             <h2
               style={{
                 fontFamily: 'var(--font-sans)',
-                fontWeight: 600,
+                fontWeight: 500,
                 fontSize: '16px',
                 color: 'var(--ink)',
                 margin: 0,
@@ -232,7 +232,7 @@ export default function DecisionsPage() {
         <h2
           style={{
             fontFamily: 'var(--font-sans)',
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
             marginBottom: '16px',
@@ -896,7 +896,7 @@ function CreateDecisionModal({
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
           <div className="flex items-center gap-2">
             <Scale size={18} style={{ color: 'var(--gold)' }} />
-            <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '17px', color: 'var(--ink)', margin: 0 }}>
+            <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, fontSize: '17px', color: 'var(--ink)', margin: 0 }}>
               Log a Decision
             </h3>
           </div>

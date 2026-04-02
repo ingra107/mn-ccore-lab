@@ -380,7 +380,7 @@ export default function Meetings() {
             </div>
             <div>
               <h2
-                className="text-sm font-semibold"
+                className="text-sm font-medium"
                 style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)', margin: 0 }}
               >
                 Next Meeting
@@ -446,7 +446,7 @@ export default function Meetings() {
         {/* Action Items Summary */}
         <div className="mb-8">
           <h2
-            className="text-lg font-semibold mb-3"
+            className="text-lg font-medium mb-3"
             style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
           >
             Action Items
@@ -816,7 +816,7 @@ export default function Meetings() {
         <div className="mt-10">
           <div className="flex items-center justify-between mb-3">
             <h2
-              className="text-lg font-semibold"
+              className="text-lg font-medium"
               style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
             >
               Meeting Archive

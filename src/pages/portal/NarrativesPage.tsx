@@ -44,7 +44,7 @@ export default function NarrativesPage() {
               {/* Header */}
               <div className="flex items-center gap-2 mb-3">
                 <BookOpen size={16} style={{ color: 'var(--gold)' }} />
-                <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '18px', color: 'var(--ink)', margin: 0 }}>
+                <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, fontSize: '18px', color: 'var(--ink)', margin: 0 }}>
                   {arc.title}
                 </h3>
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>

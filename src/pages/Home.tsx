@@ -341,8 +341,8 @@ export default function Home() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3
-                      className="text-base font-semibold"
-                      style={{ fontFamily: 'var(--font-body)', fontWeight: 600, color: '#ffffff', lineHeight: 1.2 }}
+                      className="text-base font-normal"
+                      style={{ fontFamily: 'var(--font-body)', fontWeight: 400, color: '#ffffff', lineHeight: 1.2 }}
                     >
                       {path.title}
                     </h3>
@@ -388,7 +388,7 @@ export default function Home() {
             className="fade-in-up mb-4 sm:mb-5"
             style={{
               fontFamily: 'var(--font-display)',
-              fontWeight: 700,
+              fontWeight: 500,
               fontSize: 'clamp(1.8rem, 4vw, 3rem)',
               color: 'var(--ink)',
               lineHeight: 1.1,
@@ -430,7 +430,7 @@ export default function Home() {
                       className="text-lg sm:text-xl mb-2"
                       style={{
                         fontFamily: 'var(--font-display)',
-                        fontWeight: 600,
+                        fontWeight: 400,
                         color: 'var(--ink)',
                       }}
                     >
@@ -576,7 +576,7 @@ export default function Home() {
               className="fade-in-up text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4"
               style={{
                 fontFamily: 'var(--font-display)',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: 'var(--ink)',
               }}
             >

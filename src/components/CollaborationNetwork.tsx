@@ -235,7 +235,7 @@ export default function CollaborationNetwork() {
         <div className="text-center mb-6">
           <h2
             className="text-2xl sm:text-3xl mb-2"
-            style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: '#ffffff' }}
+            style={{ fontFamily: 'var(--font-display)', fontWeight: 500, color: '#ffffff' }}
           >
             Collaboration Network
           </h2>

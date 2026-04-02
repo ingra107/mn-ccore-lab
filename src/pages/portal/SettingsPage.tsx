@@ -227,7 +227,7 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
           <Icon size={16} style={{ color: 'var(--teal)' }} />
         </div>
         <div>
-          <h3 className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{title}</h3>
+          <h3 className="text-sm font-normal" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{title}</h3>
           <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>{subtitle}</p>
         </div>
       </div>

@@ -147,7 +147,7 @@ export default function Contact() {
                 className="text-lg mb-4"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontWeight: 600,
+                  fontWeight: 400,
                   color: 'var(--ink)',
                 }}
               >
@@ -213,7 +213,7 @@ export default function Contact() {
                   className="text-xl sm:text-2xl"
                   style={{
                     fontFamily: 'var(--font-display)',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: 'var(--ink)',
                   }}
                 >

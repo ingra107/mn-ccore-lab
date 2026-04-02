@@ -76,7 +76,7 @@ function SignInPrompt() {
         <h2
           style={{
             fontFamily: 'var(--font-sans)',
-            fontWeight: 700,
+            fontWeight: 500,
             fontSize: '1.5rem',
             color: 'var(--ink)',
             marginBottom: '0.75rem',

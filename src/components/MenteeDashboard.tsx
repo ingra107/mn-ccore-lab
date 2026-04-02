@@ -32,7 +32,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
     <div style={{ marginTop: '2rem', marginBottom: '2rem' }}>
       <div style={{ height: '1px', background: 'linear-gradient(to right, var(--teal), transparent)', opacity: 0.3, marginBottom: '1.5rem' }} />
 
-      <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--ink)', marginBottom: '1rem' }}>
+      <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--ink)', marginBottom: '1rem' }}>
         {firstName}'s Dashboard
       </h2>
 

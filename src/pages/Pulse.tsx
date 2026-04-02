@@ -181,7 +181,7 @@ export default function Pulse() {
 
       {/* Card content */}
       <div className="flex-1 flex flex-col items-center justify-center px-12 pb-12">
-        <h2 className="text-3xl font-bold mb-8" style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)' }}>
+        <h2 className="text-3xl font-medium mb-8" style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)' }}>
           {currentCard?.title}
         </h2>
         <div className="w-full max-w-4xl">

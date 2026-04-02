@@ -143,7 +143,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
             className="text-sm sm:text-base leading-snug mb-1"
             style={{
               fontFamily: 'var(--font-sans)',
-              fontWeight: 600,
+              fontWeight: 400,
               color: 'var(--ink)',
             }}
           >
@@ -466,7 +466,7 @@ function EmptyState() {
         className="text-xl sm:text-2xl mb-3"
         style={{
           fontFamily: 'var(--font-sans)',
-          fontWeight: 600,
+          fontWeight: 500,
           color: 'var(--ink)',
         }}
       >

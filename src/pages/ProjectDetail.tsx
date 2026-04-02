@@ -590,7 +590,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         <h2
           style={{
             fontFamily: 'var(--font-sans)',
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
             margin: '0 0 12px 0',
@@ -770,7 +770,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           <h2
             style={{
               fontFamily: 'var(--font-sans)',
-              fontWeight: 600,
+              fontWeight: 500,
               fontSize: '16px',
               color: 'var(--ink)',
               margin: '0 0 12px 0',
@@ -976,7 +976,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           <h2
             style={{
               fontFamily: 'var(--font-sans)',
-              fontWeight: 600,
+              fontWeight: 500,
               fontSize: '16px',
               color: 'var(--ink)',
               margin: '0 0 12px 0',
@@ -1191,7 +1191,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           <h2
             style={{
               fontFamily: 'var(--font-sans)',
-              fontWeight: 600,
+              fontWeight: 500,
               fontSize: '16px',
               color: 'var(--ink)',
               margin: 0,
@@ -1348,7 +1348,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         <h2
           style={{
             fontFamily: 'var(--font-sans)',
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
             margin: '0 0 12px 0',
@@ -1498,7 +1498,7 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
         <h2
           style={{
             fontFamily: 'var(--font-sans)',
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
             margin: 0,
@@ -1699,7 +1699,7 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
         <h2
           style={{
             fontFamily: 'var(--font-sans)',
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
             margin: 0,

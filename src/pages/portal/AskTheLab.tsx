@@ -422,7 +422,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-lg" style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, color: 'var(--ink)' }}>
+          <h3 className="text-lg" style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--ink)' }}>
             New Question
           </h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>

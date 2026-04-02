@@ -557,7 +557,7 @@ export default function Projects() {
                         <h3
                           style={{
                             fontFamily: 'var(--font-body)',
-                            fontWeight: 600,
+                            fontWeight: 400,
                             fontSize: '13px',
                             color: 'var(--ink)',
                             margin: 0,
