@@ -12,6 +12,7 @@ import { Zap, X } from 'lucide-react'
 import QuickAddTaskInput from './QuickAddTaskInput'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { useCreateTask } from '../hooks/useMutations'
+import { useToast } from '../hooks/useToast'
 
 // ── Token hint pill ──────────────────────────────────────────
 
@@ -44,6 +45,7 @@ const PRIORITY_MAP: Record<number, string> = { 1: 'urgent', 2: 'high', 3: 'mediu
 function GlobalQuickAddModal({ isOpen, onClose }: Props) {
   const [value, setValue] = useState('')
   const createTask = useCreateTask()
+  const { showSuccess } = useToast()
 
   useEffect(() => {
     if (!isOpen) setValue('')
@@ -60,11 +62,13 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
       ...(parsed.dueDate ? { due_date: parsed.dueDate } : {}),
       ...(parsed.projectSlug ? { project_id: parsed.projectSlug } : {}),
       ...(parsed.priority ? { priority: PRIORITY_MAP[parsed.priority] ?? 'medium' } : {}),
+    }, {
+      onSuccess: () => showSuccess('Task created'),
     })
 
     setValue('')
     onClose()
-  }, [value, createTask, onClose])
+  }, [value, createTask, onClose, showSuccess])
 
   useEffect(() => {
     if (!isOpen) return

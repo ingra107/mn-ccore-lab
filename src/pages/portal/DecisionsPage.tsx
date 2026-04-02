@@ -8,6 +8,7 @@ import EmptyState from '../../components/EmptyState'
 import Avatar from '../../components/Avatar'
 import { useDecisions, useDecisionsForReview, useSimilarDecisions, useSimilarDecisionsById, useDecisionTags } from '../../hooks/useApiData'
 import { useCreateDecision, useUpdateDecisionOutcome } from '../../hooks/useMutations'
+import { useToast } from '../../hooks/useToast'
 import { useProjects } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
@@ -811,6 +812,7 @@ function CreateDecisionModal({
   const [tags, setTags] = useState('')
   const [linkedProjectSlugs, setLinkedProjectSlugs] = useState<string[]>([])
   const [projectSearchQuery, setProjectSearchQuery] = useState('')
+  const { showSuccess } = useToast()
 
   // Decision replay -- search for similar past decisions as user types
   const debouncedTitle = useDebounce(title, 500)
@@ -849,6 +851,8 @@ function CreateDecisionModal({
       project_slug: projectSlug || undefined,
       tags: tags.trim() || undefined,
       linked_projects: linkedProjectSlugs.length > 0 ? linkedProjectSlugs.join(',') : undefined,
+    }, {
+      onSuccess: () => showSuccess('Decision logged'),
     })
     onClose()
   }

@@ -10,6 +10,7 @@ import { formatRelativeTime } from '../lib/dateUtils'
 import Avatar from './Avatar'
 import MentionInput from './MentionInput'
 import ReactionBar from './ReactionBar'
+import { useToast } from '../hooks/useToast'
 
 const TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; borderBg: string; label: string }> = {
   progress: { icon: TrendingUp, color: 'var(--teal)', bg: 'rgba(45, 138, 138, 0.1)', borderBg: 'rgba(45, 138, 138, 0.25)', label: 'Progress' },
@@ -26,13 +27,16 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
   const { data: updates = [] } = useProjectUpdates(projectSlug)
   const postUpdate = usePostProjectUpdate(projectSlug)
   const { isAuthenticated } = useAuth()
+  const { showSuccess } = useToast()
   const [text, setText] = useState('')
   const [updateType, setUpdateType] = useState<string>('progress')
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    postUpdate.mutate({ content: text.trim(), update_type: updateType })
+    postUpdate.mutate({ content: text.trim(), update_type: updateType }, {
+      onSuccess: () => showSuccess('Update posted'),
+    })
     setText('')
   }
 

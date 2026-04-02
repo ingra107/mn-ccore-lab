@@ -16,6 +16,7 @@ import { getPersonInfo } from '../../data/team'
 import { useTeam, useSubtasks, useHandoffs, useTasks, useDecisions } from '../../hooks/useApiData'
 import type { DecisionRow } from '../../hooks/useApiData'
 import { useUpdateTask, useUpdateTaskStatus, useCreateSubtask, useToggleSubtask, useDeleteSubtask, useCreateHandoff, useAcknowledgeHandoff } from '../../hooks/useMutations'
+import { useToast } from '../../hooks/useToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { TaskRow } from '../../lib/api'
 
@@ -1058,6 +1059,7 @@ function HandoffSection({ taskId, currentAssignee }: { taskId: string; currentAs
   const { data: handoffs = [] } = useHandoffs(taskId)
   const createHandoff = useCreateHandoff(taskId)
   const acknowledgeHandoff = useAcknowledgeHandoff(taskId)
+  const { showSuccess } = useToast()
 
   const members = team.filter((m) => m.slug && m.slug !== currentAssignee).sort((a, b) => a.name.localeCompare(b.name))
 
@@ -1070,6 +1072,8 @@ function HandoffSection({ taskId, currentAssignee }: { taskId: string; currentAs
       background: background.trim() || undefined,
       assessment: assessment.trim() || undefined,
       recommendation: recommendation.trim() || undefined,
+    }, {
+      onSuccess: () => showSuccess('Handoff sent'),
     })
     setShowForm(false)
     setToSlug('')

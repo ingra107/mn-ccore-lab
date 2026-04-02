@@ -1,18 +1,28 @@
 import { useState, useCallback, createContext, useContext } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Undo2, X } from 'lucide-react'
+import { Undo2, X, Check } from 'lucide-react'
 
-interface Toast {
+interface UndoToast {
   id: string
+  type: 'undo'
   message: string
   onUndo: () => void
 }
 
-interface ToastContextType {
-  showUndo: (message: string, onUndo: () => void) => void
+interface SuccessToast {
+  id: string
+  type: 'success'
+  message: string
 }
 
-const ToastContext = createContext<ToastContextType>({ showUndo: () => {} })
+type Toast = UndoToast | SuccessToast
+
+export interface ToastContextType {
+  showUndo: (message: string, onUndo: () => void) => void
+  showSuccess: (message: string) => void
+}
+
+const ToastContext = createContext<ToastContextType>({ showUndo: () => {}, showSuccess: () => {} })
 
 export function useUndoToast() {
   return useContext(ToastContext)
@@ -23,7 +33,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
 
   const showUndo = useCallback((message: string, onUndo: () => void) => {
     const id = Date.now().toString()
-    setToasts((prev) => [...prev, { id, message, onUndo }])
+    setToasts((prev) => [...prev, { id, type: 'undo', message, onUndo }])
 
     // Auto-dismiss after 5 seconds
     setTimeout(() => {
@@ -31,17 +41,27 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     }, 5000)
   }, [])
 
+  const showSuccess = useCallback((message: string) => {
+    const id = Date.now().toString() + '-s'
+    setToasts((prev) => [...prev, { id, type: 'success', message }])
+
+    // Auto-dismiss after 3 seconds (shorter than undo)
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, 3000)
+  }, [])
+
   const dismiss = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
-  const handleUndo = useCallback((toast: Toast) => {
+  const handleUndo = useCallback((toast: UndoToast) => {
     toast.onUndo()
     dismiss(toast.id)
   }, [dismiss])
 
   return (
-    <ToastContext.Provider value={{ showUndo }}>
+    <ToastContext.Provider value={{ showUndo, showSuccess }}>
       {children}
 
       {/* Toast container — fixed bottom-center */}
@@ -78,32 +98,38 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
                 color: 'var(--cream)',
                 fontFamily: 'var(--font-sans)',
                 fontSize: '13px',
-                fontWeight: 500,
+                fontWeight: toast.type === 'success' ? 400 : 500,
                 boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
                 minWidth: '240px',
+                borderLeft: toast.type === 'success' ? '3px solid var(--teal)' : 'none',
               }}
             >
+              {toast.type === 'success' && (
+                <Check size={14} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+              )}
               <span style={{ flex: 1 }}>{toast.message}</span>
-              <button
-                onClick={() => handleUndo(toast)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: 'rgba(255,255,255,0.15)',
-                  color: 'var(--gold)',
-                  fontFamily: 'var(--font-sans)',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                <Undo2 size={12} />
-                Undo
-              </button>
+              {toast.type === 'undo' && (
+                <button
+                  onClick={() => handleUndo(toast)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: 'rgba(255,255,255,0.15)',
+                    color: 'var(--gold)',
+                    fontFamily: 'var(--font-sans)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Undo2 size={12} />
+                  Undo
+                </button>
+              )}
               <button
                 onClick={() => dismiss(toast.id)}
                 style={{

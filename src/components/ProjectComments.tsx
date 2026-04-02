@@ -8,6 +8,7 @@ import { formatRelativeTime } from '../lib/dateUtils'
 import Avatar from './Avatar'
 import MentionInput from './MentionInput'
 import ReactionBar from './ReactionBar'
+import { useToast } from '../hooks/useToast'
 
 interface Props {
   projectSlug: string
@@ -17,6 +18,7 @@ export default function ProjectComments({ projectSlug }: Props) {
   const { data: comments = [], isLoading } = useComments(projectSlug)
   const addComment = useAddComment(projectSlug)
   const { user, isAuthenticated } = useAuth()
+  const { showSuccess } = useToast()
   const [text, setText] = useState('')
 
   function handleSubmit(e: React.FormEvent) {
@@ -27,6 +29,8 @@ export default function ProjectComments({ projectSlug }: Props) {
     addComment.mutate({
       content,
       author: user?.email?.split('@')[0] || 'anonymous',
+    }, {
+      onSuccess: () => showSuccess('Comment posted'),
     })
     setText('')
   }

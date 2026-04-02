@@ -8,6 +8,7 @@ import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import { useIdeas } from '../../hooks/useApiData'
 import { useCreateIdea, useVoteIdea, useUpdateIdea } from '../../hooks/useMutations'
+import { useToast } from '../../hooks/useToast'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { IdeaRow } from '../../lib/api'
@@ -310,6 +311,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
   const [description, setDescription] = useState('')
   const [researchArea, setResearchArea] = useState('')
   const createIdea = useCreateIdea()
+  const { showSuccess } = useToast()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -318,6 +320,8 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
       title: title.trim(),
       description: description.trim() || undefined,
       research_area: researchArea || undefined,
+    }, {
+      onSuccess: () => showSuccess('Idea submitted'),
     })
     setTitle('')
     setDescription('')

@@ -9,6 +9,7 @@ import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import { useQuestions, useQuestionDetail, useProjects } from '../../hooks/useApiData'
 import { useCreateQuestion, useCreateAnswer, useAcceptAnswer } from '../../hooks/useMutations'
+import { useToast } from '../../hooks/useToast'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
@@ -393,6 +394,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
   const [projectSlug, setProjectSlug] = useState('')
   const createQuestion = useCreateQuestion()
   const { data: projects = [] } = useProjects()
+  const { showSuccess } = useToast()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -401,6 +403,8 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
       question: questionText.trim(),
       context: context.trim() || undefined,
       project_slug: projectSlug || undefined,
+    }, {
+      onSuccess: () => showSuccess('Question posted'),
     })
     setQuestionText('')
     setContext('')
