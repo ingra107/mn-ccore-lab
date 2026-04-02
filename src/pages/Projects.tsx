@@ -18,6 +18,26 @@ import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import type { Stage } from '../components/StageSelector'
 
+// ── Stagger animation variants ──────────────────────────────
+
+const staggerContainer = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+}
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: 'easeOut' },
+  },
+}
+
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
 
 const CATEGORY_FILTERS = [
@@ -330,174 +350,180 @@ export default function Projects() {
               ))}
             </div>
 
-            {/* Stage-grouped rows */}
+            {/* Stage-grouped rows with stagger animation */}
             {filtered.length > 0 ? (
-              (() => {
-                let lastStage = ''
-                return filtered.map((project, index) => {
-                  const pi = getPiInfo(project.pi)
-                  const catLabel = CATEGORY_LABEL[project.category] ?? project.category
-                  const projectHealth = healthBySlug.get(project.slug)
-                  const showStageHeader = project.stage !== lastStage
-                  lastStage = project.stage ?? ''
-                  const isFocused = focusedIndex === index
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+              >
+                {(() => {
+                  let lastStage = ''
+                  return filtered.map((project, index) => {
+                    const pi = getPiInfo(project.pi)
+                    const catLabel = CATEGORY_LABEL[project.category] ?? project.category
+                    const projectHealth = healthBySlug.get(project.slug)
+                    const showStageHeader = project.stage !== lastStage
+                    lastStage = project.stage ?? ''
+                    const isFocused = focusedIndex === index
 
-                  return (
-                    <div key={project.slug} ref={setRowRef(index)}>
-                      {/* Stage group divider — minimal, just text */}
-                      {showStageHeader && (
-                        <div
-                          className="flex items-center"
-                          style={{
-                            padding: '20px 24px 8px',
-                            gap: '8px',
-                          }}
-                        >
-                          <span
+                    return (
+                      <motion.div key={project.slug} variants={staggerItem} ref={setRowRef(index)}>
+                        {/* Stage group divider — minimal, just text */}
+                        {showStageHeader && (
+                          <div
+                            className="flex items-center"
                             style={{
-                              fontFamily: 'var(--font-body)',
-                              fontSize: '11px',
-                              fontWeight: 500,
-                              color: 'var(--slate)',
-                              opacity: 0.55,
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.06em',
-                              flexShrink: 0,
+                              padding: '20px 24px 8px',
+                              gap: '8px',
                             }}
                           >
-                            {project.stage}
-                          </span>
-                          <span
-                            style={{
-                              fontFamily: 'var(--font-body)',
-                              fontSize: '11px',
-                              color: 'var(--slate)',
-                              opacity: 0.35,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {filtered.filter((p) => p.stage === project.stage).length}
-                          </span>
-                          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-                        </div>
-                      )}
-
-                      <Link
-                        to={`/projects/${project.slug}`}
-                        style={{ textDecoration: 'none', display: 'block' }}
-                        onClick={() => setFocusedIndex(index)}
-                      >
-                        <div
-                          className={`project-list-row${isFocused ? ' project-row-focused' : ''}`}
-                          style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 100px 100px 100px 72px',
-                            padding: '14px 24px',
-                            borderBottom: '1px solid var(--border-subtle)',
-                            alignItems: 'center',
-                            cursor: 'pointer',
-                            transition: 'background 0.12s ease-out',
-                          }}
-                        >
-                          {/* Title with category dot and health indicator */}
-                          <div className="flex items-center gap-2.5" style={{ paddingRight: '16px' }}>
-                            <span
-                              style={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: '50%',
-                                background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
-                                flexShrink: 0,
-                                opacity: 0.7,
-                                marginTop: '-1px',
-                              }}
-                            />
                             <span
                               style={{
                                 fontFamily: 'var(--font-body)',
-                                fontSize: '14px',
+                                fontSize: '11px',
                                 fontWeight: 500,
-                                color: 'var(--ink)',
-                                lineHeight: 1.4,
+                                color: 'var(--slate)',
+                                opacity: 0.55,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.06em',
+                                flexShrink: 0,
                               }}
                             >
-                              {project.title}
+                              {project.stage}
                             </span>
-                            {projectHealth && (
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-body)',
+                                fontSize: '11px',
+                                color: 'var(--slate)',
+                                opacity: 0.35,
+                                flexShrink: 0,
+                              }}
+                            >
+                              {filtered.filter((p) => p.stage === project.stage).length}
+                            </span>
+                            <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+                          </div>
+                        )}
+
+                        <Link
+                          to={`/projects/${project.slug}`}
+                          style={{ textDecoration: 'none', display: 'block' }}
+                          onClick={() => setFocusedIndex(index)}
+                        >
+                          <div
+                            className={`project-list-row${isFocused ? ' project-row-focused' : ''}`}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 100px 100px 100px 72px',
+                              padding: '14px 24px',
+                              borderBottom: '1px solid var(--border-subtle)',
+                              alignItems: 'center',
+                              cursor: 'pointer',
+                              transition: 'background 0.12s ease-out',
+                            }}
+                          >
+                            {/* Title with category dot and health indicator */}
+                            <div className="flex items-center gap-2.5" style={{ paddingRight: '16px' }}>
                               <span
-                                title={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
                                 style={{
                                   width: 6,
                                   height: 6,
                                   borderRadius: '50%',
-                                  background: HEALTH_STATUS_COLOR[projectHealth.status] ?? 'var(--slate)',
+                                  background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
                                   flexShrink: 0,
-                                  display: 'inline-block',
-                                  marginLeft: '-4px',
+                                  opacity: 0.7,
+                                  marginTop: '-1px',
                                 }}
                               />
-                            )}
-                          </div>
-
-                          {/* Status (inline editable) */}
-                          <InlineSelect
-                            value={project.status || 'Active'}
-                            options={[
-                              { value: 'Active', label: 'Active', color: 'var(--green)' },
-                              { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
-                              { value: 'Completed', label: 'Done', color: 'var(--slate)' },
-                            ]}
-                            onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
-                          />
-
-                          {/* Stage (inline editable) */}
-                          <InlineSelect
-                            value={project.stage || 'Idea'}
-                            options={STAGES.map((s) => ({ value: s, label: s }))}
-                            onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
-                          />
-
-                          {/* PI */}
-                          <div className="flex items-center gap-1.5">
-                            <div style={{ width: 22, height: 22, flexShrink: 0 }}>
-                              <Avatar
-                                name={pi.name}
-                                initials={pi.initials}
-                                photoUrl={pi.photoUrl}
-                                size="sm"
-                                variant="ice"
-                                className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[8px]"
-                              />
+                              <span
+                                style={{
+                                  fontFamily: 'var(--font-body)',
+                                  fontSize: '14px',
+                                  fontWeight: 500,
+                                  color: 'var(--ink)',
+                                  lineHeight: 1.4,
+                                }}
+                              >
+                                {project.title}
+                              </span>
+                              {projectHealth && (
+                                <span
+                                  title={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
+                                  style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: '50%',
+                                    background: HEALTH_STATUS_COLOR[projectHealth.status] ?? 'var(--slate)',
+                                    flexShrink: 0,
+                                    display: 'inline-block',
+                                    marginLeft: '-4px',
+                                  }}
+                                />
+                              )}
                             </div>
+
+                            {/* Status (inline editable) */}
+                            <InlineSelect
+                              value={project.status || 'Active'}
+                              options={[
+                                { value: 'Active', label: 'Active', color: 'var(--green)' },
+                                { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
+                                { value: 'Completed', label: 'Done', color: 'var(--slate)' },
+                              ]}
+                              onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
+                            />
+
+                            {/* Stage (inline editable) */}
+                            <InlineSelect
+                              value={project.stage || 'Idea'}
+                              options={STAGES.map((s) => ({ value: s, label: s }))}
+                              onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
+                            />
+
+                            {/* PI */}
+                            <div className="flex items-center gap-1.5">
+                              <div style={{ width: 22, height: 22, flexShrink: 0 }}>
+                                <Avatar
+                                  name={pi.name}
+                                  initials={pi.initials}
+                                  photoUrl={pi.photoUrl}
+                                  size="sm"
+                                  variant="ice"
+                                  className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[8px]"
+                                />
+                              </div>
+                              <span
+                                style={{
+                                  fontFamily: 'var(--font-body)',
+                                  fontSize: '12px',
+                                  color: 'var(--slate)',
+                                  opacity: 0.6,
+                                }}
+                              >
+                                {pi.name.split(' ').pop()}
+                              </span>
+                            </div>
+
+                            {/* Category */}
                             <span
                               style={{
                                 fontFamily: 'var(--font-body)',
-                                fontSize: '12px',
+                                fontSize: '11px',
                                 color: 'var(--slate)',
-                                opacity: 0.6,
+                                opacity: 0.4,
                               }}
                             >
-                              {pi.name.split(' ').pop()}
+                              {catLabel}
                             </span>
                           </div>
-
-                          {/* Category */}
-                          <span
-                            style={{
-                              fontFamily: 'var(--font-body)',
-                              fontSize: '11px',
-                              color: 'var(--slate)',
-                              opacity: 0.4,
-                            }}
-                          >
-                            {catLabel}
-                          </span>
-                        </div>
-                      </Link>
-                    </div>
-                  )
-                })
-              })()
+                        </Link>
+                      </motion.div>
+                    )
+                  })
+                })()}
+              </motion.div>
             ) : (
               <div
                 style={{
@@ -610,15 +636,22 @@ export default function Projects() {
                       </div>
                     </div>
 
-                    {/* Cards */}
-                    <div className="flex flex-col" style={{ gap: '12px' }}>
+                    {/* Cards with stagger animation */}
+                    <motion.div
+                      className="flex flex-col"
+                      style={{ gap: '12px' }}
+                      variants={staggerContainer}
+                      initial="hidden"
+                      animate="visible"
+                    >
                       <AnimatePresence mode="popLayout">
                         {stageProjects.length > 0 ? (
                           stageProjects.map((project) => (
-                            <ProjectCard
-                              key={project.slug}
-                              project={project}
-                            />
+                            <motion.div key={project.slug} variants={staggerItem}>
+                              <ProjectCard
+                                project={project}
+                              />
+                            </motion.div>
                           ))
                         ) : (
                           <motion.div
@@ -642,7 +675,7 @@ export default function Projects() {
                           </motion.div>
                         )}
                       </AnimatePresence>
-                    </div>
+                    </motion.div>
                   </div>
                 )
               })}

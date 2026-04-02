@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
   CheckSquare, Clock, FolderKanban, Bell, Calendar, Handshake,
   Activity, ArrowRight, Circle, AlertTriangle, TrendingUp,
@@ -22,6 +23,26 @@ import { useRecentlyViewed } from '../../hooks/useRecentlyViewed'
 import { useWatchlist } from '../../hooks/useWatchlist'
 import type { WatchItem } from '../../hooks/useWatchlist'
 import type { TaskRow } from '../../lib/api'
+
+// ── Stagger animation variants ──────────────────────────────
+
+const staggerContainer = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+}
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: 'easeOut' },
+  },
+}
 
 // Try to get current user from CF Access JWT
 function getCurrentUser(): string | null {
@@ -124,38 +145,51 @@ export default function Personal() {
       </div>
 
       {/* Quick Stats Bar */}
-      <div className="flex items-center gap-4 mt-5 flex-wrap">
-        <QuickStat
-          label="Active Tasks"
-          value={pendingTasks.length}
-          color="var(--teal)"
-          icon={CheckSquare}
-        />
-        {overdueTasks.length > 0 && (
+      <motion.div
+        className="flex items-center gap-4 mt-5 flex-wrap"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={staggerItem}>
           <QuickStat
-            label="Overdue"
-            value={overdueTasks.length}
-            color="var(--maroon)"
-            icon={AlertTriangle}
+            label="Active Tasks"
+            value={pendingTasks.length}
+            color="var(--teal)"
+            icon={CheckSquare}
           />
+        </motion.div>
+        {overdueTasks.length > 0 && (
+          <motion.div variants={staggerItem}>
+            <QuickStat
+              label="Overdue"
+              value={overdueTasks.length}
+              color="var(--maroon)"
+              icon={AlertTriangle}
+            />
+          </motion.div>
         )}
         {urgentTasks.length > 0 && (
-          <QuickStat
-            label="High Priority"
-            value={urgentTasks.length}
-            color="var(--orange)"
-            icon={TrendingUp}
-          />
+          <motion.div variants={staggerItem}>
+            <QuickStat
+              label="High Priority"
+              value={urgentTasks.length}
+              color="var(--orange)"
+              icon={TrendingUp}
+            />
+          </motion.div>
         )}
         {unreadNotifications.length > 0 && (
-          <QuickStat
-            label="Unread"
-            value={unreadNotifications.length}
-            color="var(--gold)"
-            icon={Bell}
-          />
+          <motion.div variants={staggerItem}>
+            <QuickStat
+              label="Unread"
+              value={unreadNotifications.length}
+              color="var(--gold)"
+              icon={Bell}
+            />
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
       {/* Recently Viewed */}
       {recent.length > 1 && (
@@ -183,42 +217,65 @@ export default function Personal() {
       <QuickCapture />
 
       {/* Bento Grid */}
-      <div className="bento-grid mt-8">
+      <motion.div
+        className="bento-grid mt-8"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {/* My Tasks — span 2 */}
-        <MyTasksCard tasks={pendingTasks} onStatusChange={(id, s) => updateStatus.mutate({ id, status: s })} />
+        <motion.div variants={staggerItem} className="bento-span-2">
+          <MyTasksCard tasks={pendingTasks} onStatusChange={(id, s) => updateStatus.mutate({ id, status: s })} />
+        </motion.div>
 
         {/* Upcoming Deadlines */}
-        <DeadlinesCard deadlines={upcomingDeadlines} overdue={overdueTasks} />
+        <motion.div variants={staggerItem}>
+          <DeadlinesCard deadlines={upcomingDeadlines} overdue={overdueTasks} />
+        </motion.div>
 
         {/* Notifications */}
-        <NotificationsCard notifications={unreadNotifications} />
+        <motion.div variants={staggerItem}>
+          <NotificationsCard notifications={unreadNotifications} />
+        </motion.div>
 
         {/* Assigned by Me (if any) */}
         {assignedByMe.length > 0 && (
-          <AssignedByMeCard tasks={assignedByMe} />
+          <motion.div variants={staggerItem}>
+            <AssignedByMeCard tasks={assignedByMe} />
+          </motion.div>
         )}
 
         {/* Commitments */}
         {pendingCommitments.length > 0 && (
-          <CommitmentsCard commitments={pendingCommitments} />
+          <motion.div variants={staggerItem}>
+            <CommitmentsCard commitments={pendingCommitments} />
+          </motion.div>
         )}
 
         {/* Recent Activity */}
-        <ActivityCard activity={activity} />
+        <motion.div variants={staggerItem}>
+          <ActivityCard activity={activity} />
+        </motion.div>
 
         {/* Watching */}
         {watchlist.items.length > 0 && (
-          <WatchingCard items={watchlist.items} onUnwatch={watchlist.unwatch} />
+          <motion.div variants={staggerItem}>
+            <WatchingCard items={watchlist.items} onUnwatch={watchlist.unwatch} />
+          </motion.div>
         )}
 
         {/* PI-only cards */}
         {isPI(currentUser) && health && (
-          <LabHealthCard health={health} />
+          <motion.div variants={staggerItem}>
+            <LabHealthCard health={health} />
+          </motion.div>
         )}
         {isPI(currentUser) && grants.length > 0 && (
-          <GrantMiniCard grants={grants} />
+          <motion.div variants={staggerItem}>
+            <GrantMiniCard grants={grants} />
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
       <style>{`
         .bento-grid {
