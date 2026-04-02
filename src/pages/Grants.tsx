@@ -520,10 +520,10 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
 
       {/* Title */}
       <h3
-        className="text-base font-semibold leading-snug mb-3"
+        className="text-base font-normal leading-snug mb-3"
         style={{
           fontFamily: 'var(--font-display)',
-          fontWeight: 600,
+          fontWeight: 400,
           color: 'var(--ink)',
         }}
       >

@@ -276,7 +276,7 @@ function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) =
   return (
     <h3
       onClick={() => setEditing(true)}
-      className="text-lg font-semibold cursor-text hover:bg-black/[0.02] dark:hover:bg-white/[0.04] rounded px-1 -mx-1 py-0.5 transition-colors"
+      className="text-lg font-normal cursor-text hover:bg-black/[0.02] dark:hover:bg-white/[0.04] rounded px-1 -mx-1 py-0.5 transition-colors"
       style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
     >
       {value}

@@ -72,7 +72,7 @@ export default function OnboardingChecklist() {
           <div className="flex-1">
             <h3 style={{
               fontFamily: 'var(--font-sans)',
-              fontWeight: 600,
+              fontWeight: 400,
               fontSize: 16,
               color: 'var(--ink)',
               margin: 0,
@@ -215,7 +215,7 @@ export default function OnboardingChecklist() {
           <div className="flex items-center justify-between">
             <h3 style={{
               fontFamily: 'var(--font-sans)',
-              fontWeight: 600,
+              fontWeight: 400,
               fontSize: 16,
               color: 'var(--ink)',
               margin: 0,

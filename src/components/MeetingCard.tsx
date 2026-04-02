@@ -76,7 +76,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
         {/* Title + meta */}
         <div className="flex-1 min-w-0">
           <h3
-            className="text-sm sm:text-base font-semibold leading-snug truncate"
+            className="text-sm sm:text-base font-normal leading-snug truncate"
             style={{
               fontFamily: 'var(--font-body)',
               color: 'var(--ink)',

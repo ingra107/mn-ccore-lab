@@ -235,7 +235,7 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
         className="text-xl sm:text-2xl mb-6"
         style={{
           fontFamily: 'var(--font-display)',
-          fontWeight: 600,
+          fontWeight: 500,
           color: 'var(--ink)',
         }}
       >
@@ -252,7 +252,7 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
             </span>
             <div className="flex-1 min-w-0">
               <h3
-                className="text-base font-semibold"
+                className="text-base font-normal"
                 style={{
                   fontFamily: 'var(--font-body)',
                   color: 'var(--ink)',
@@ -296,7 +296,7 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
                 </span>
                 <div className="flex-1 min-w-0">
                   <h3
-                    className="text-sm font-semibold"
+                    className="text-sm font-normal"
                     style={{
                       fontFamily: 'var(--font-body)',
                       color: 'var(--ink)',
@@ -362,7 +362,7 @@ function ProjectCardItem({ project }: { project: ProjectCard }) {
     >
       <div className="flex items-center justify-between gap-3 mb-2">
         <h3
-          className="text-sm sm:text-base font-semibold leading-snug"
+          className="text-sm sm:text-base font-normal leading-snug"
           style={{
             fontFamily: 'var(--font-body)',
             color: 'var(--ink)',
@@ -412,7 +412,7 @@ export function ProjectsSection({
         className="text-xl sm:text-2xl mb-6"
         style={{
           fontFamily: 'var(--font-display)',
-          fontWeight: 600,
+          fontWeight: 500,
           color: 'var(--ink)',
         }}
       >
@@ -443,7 +443,7 @@ export function PublicationsSection({
         className="text-xl sm:text-2xl mb-6"
         style={{
           fontFamily: 'var(--font-display)',
-          fontWeight: 600,
+          fontWeight: 500,
           color: 'var(--ink)',
         }}
       >
@@ -488,7 +488,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
           />
           <div className="flex-1 min-w-0">
             <h3
-              className="text-base font-semibold leading-tight"
+              className="text-base font-normal leading-tight"
               style={{
                 fontFamily: 'var(--font-body)',
                 color: 'var(--ink)',
@@ -613,7 +613,7 @@ export function MenteesSection({ mentees, id, title = 'MNCCORE Trainees' }: { me
           className="text-xl sm:text-2xl"
           style={{
             fontFamily: 'var(--font-display)',
-            fontWeight: 600,
+            fontWeight: 500,
             color: 'var(--ink)',
           }}
         >

@@ -456,7 +456,7 @@ export default function Meetings() {
           {pendingActions.length > 0 && (
             <div className="mb-4">
               <h3
-                className="text-xs font-semibold uppercase tracking-wider mb-2"
+                className="text-xs font-normal uppercase tracking-wider mb-2"
                 style={{ color: 'var(--gold)', fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}
               >
                 Pending ({pendingActions.length})
@@ -696,7 +696,7 @@ export default function Meetings() {
           {completedActions.length > 0 && (
             <div>
               <h3
-                className="text-xs font-semibold uppercase tracking-wider mb-2"
+                className="text-xs font-normal uppercase tracking-wider mb-2"
                 style={{ color: 'var(--teal)', fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}
               >
                 Completed ({completedActions.length})

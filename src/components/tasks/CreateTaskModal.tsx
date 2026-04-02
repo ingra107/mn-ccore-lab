@@ -81,7 +81,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
         >
           <h3
             className="text-lg"
-            style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, color: 'var(--ink)' }}
+            style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--ink)' }}
           >
             Create New Task
           </h3>

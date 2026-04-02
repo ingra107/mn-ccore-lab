@@ -230,7 +230,7 @@ function NodeDetail({
             className="text-lg leading-tight"
             style={{
               fontFamily: 'var(--font-display)',
-              fontWeight: 600,
+              fontWeight: 400,
               color: '#ffffff',
             }}
           >
@@ -460,7 +460,7 @@ function EdgeDetail({
         className="text-base mb-1"
         style={{
           fontFamily: 'var(--font-display)',
-          fontWeight: 600,
+          fontWeight: 400,
           color: '#ffffff',
         }}
       >

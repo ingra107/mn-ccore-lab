@@ -219,7 +219,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
               {formatAuthors(pub.authors)}
             </p>
             <h3
-              className="text-sm sm:text-base font-semibold leading-tight mb-1.5"
+              className="text-sm sm:text-base font-normal leading-tight mb-1.5"
               style={{
                 fontFamily: 'var(--font-body)',
                 color: 'var(--ink)',

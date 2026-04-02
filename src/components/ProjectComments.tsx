@@ -43,7 +43,7 @@ export default function ProjectComments({ projectSlug }: Props) {
         <h2
           style={{
             fontFamily: 'var(--font-sans)',
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
             margin: 0,

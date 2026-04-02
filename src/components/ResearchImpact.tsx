@@ -52,7 +52,7 @@ export default function ResearchImpact() {
             className="text-2xl sm:text-3xl mb-2"
             style={{
               fontFamily: 'var(--font-display)',
-              fontWeight: 600,
+              fontWeight: 500,
               color: '#ffffff',
             }}
           >

@@ -410,7 +410,7 @@ export default function MemberPage() {
                 >
                   <div className="flex items-center justify-between gap-3 mb-2">
                     <h3
-                      className="text-sm sm:text-base font-semibold"
+                      className="text-sm sm:text-base font-normal"
                       style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
                     >
                       {project.title}

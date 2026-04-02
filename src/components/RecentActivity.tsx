@@ -67,7 +67,7 @@ export default function RecentActivity() {
             className="text-2xl sm:text-3xl"
             style={{
               fontFamily: 'var(--font-sans)',
-              fontWeight: 600,
+              fontWeight: 500,
               color: 'var(--ink)',
             }}
           >

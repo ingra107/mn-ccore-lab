@@ -370,7 +370,7 @@ export default function CVPage() {
                     style={{
                       fontFamily: 'var(--font-sans)',
                       fontSize: '15px',
-                      fontWeight: 600,
+                      fontWeight: 400,
                       color: 'var(--gold)',
                     }}
                   >
@@ -397,7 +397,7 @@ export default function CVPage() {
                   style={{
                     fontFamily: 'var(--font-sans)',
                     fontSize: '12px',
-                    fontWeight: 600,
+                    fontWeight: 400,
                     color: 'var(--slate)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
@@ -418,7 +418,7 @@ export default function CVPage() {
                   style={{
                     fontFamily: 'var(--font-sans)',
                     fontSize: '12px',
-                    fontWeight: 600,
+                    fontWeight: 400,
                     color: 'var(--slate)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',

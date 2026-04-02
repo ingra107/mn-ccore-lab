@@ -88,7 +88,7 @@ export default function FeaturedResearch() {
 
               {/* Title */}
               <h3
-                className="text-base font-semibold mb-2 leading-snug"
+                className="text-base font-normal mb-2 leading-snug"
                 style={{
                   fontFamily: 'var(--font-body)',
                   color: 'var(--ink)',

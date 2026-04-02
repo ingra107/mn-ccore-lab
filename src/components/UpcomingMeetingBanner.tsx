@@ -96,7 +96,7 @@ export default function UpcomingMeetingBanner() {
                   className="text-base sm:text-lg mb-1"
                   style={{
                     fontFamily: 'var(--font-sans)',
-                    fontWeight: 600,
+                    fontWeight: 400,
                     color: 'var(--ink)',
                     lineHeight: 1.3,
                   }}

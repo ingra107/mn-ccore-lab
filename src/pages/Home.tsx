@@ -603,7 +603,7 @@ export default function Home() {
               >
                 <div className="flex items-start justify-between mb-2 sm:mb-3">
                   <h3
-                    className="text-sm sm:text-base font-semibold"
+                    className="text-sm sm:text-base font-normal"
                     style={{
                       fontFamily: 'var(--font-body)',
                       color: 'var(--ink)',

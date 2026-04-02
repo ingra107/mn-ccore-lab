@@ -23,7 +23,7 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={16} style={{ color: 'var(--gold)' }} />
           <h3
-            className="text-sm font-semibold"
+            className="text-sm font-normal"
             style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
           >
             Who can help?

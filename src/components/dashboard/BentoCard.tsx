@@ -110,7 +110,7 @@ export default function BentoCard({
             <h3
               style={{
                 fontFamily: 'var(--font-sans)',
-                fontWeight: 500,
+                fontWeight: 400,
                 fontSize: '15px',
                 lineHeight: 1.3,
                 color: 'var(--ink)',

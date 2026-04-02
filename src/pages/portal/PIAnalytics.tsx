@@ -361,7 +361,7 @@ export default function PIAnalytics() {
           <Shield size={24} style={{ color: 'var(--maroon)' }} />
         </div>
         <h2
-          className="text-xl font-semibold mb-2"
+          className="text-xl font-medium mb-2"
           style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
         >
           PI Access Only
@@ -448,7 +448,7 @@ export default function PIAnalytics() {
           <div className="flex items-center gap-2 mb-3">
             <Target size={14} style={{ color: 'var(--gold)' }} />
             <h3
-              className="text-xs font-semibold uppercase tracking-wider"
+              className="text-xs font-normal uppercase tracking-wider"
               style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
             >
               Commitment Scorecard
@@ -497,7 +497,7 @@ export default function PIAnalytics() {
           <div className="flex items-center gap-2 mb-3">
             <Clock size={14} style={{ color: 'var(--gold)' }} />
             <h3
-              className="text-xs font-semibold uppercase tracking-wider"
+              className="text-xs font-normal uppercase tracking-wider"
               style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
             >
               Response Time
@@ -587,7 +587,7 @@ export default function PIAnalytics() {
           <div className="flex items-center gap-2 mb-3">
             <Users size={14} style={{ color: 'var(--gold)' }} />
             <h3
-              className="text-xs font-semibold uppercase tracking-wider"
+              className="text-xs font-normal uppercase tracking-wider"
               style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
             >
               Team Engagement
@@ -674,7 +674,7 @@ export default function PIAnalytics() {
           <div className="flex items-center gap-2 mb-3">
             <BookOpen size={14} style={{ color: 'var(--gold)' }} />
             <h3
-              className="text-xs font-semibold uppercase tracking-wider"
+              className="text-xs font-normal uppercase tracking-wider"
               style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
             >
               Mentee Publication Velocity
@@ -774,7 +774,7 @@ export default function PIAnalytics() {
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 size={14} style={{ color: 'var(--gold)' }} />
             <h3
-              className="text-xs font-semibold uppercase tracking-wider"
+              className="text-xs font-normal uppercase tracking-wider"
               style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
             >
               Publications per Quarter
@@ -803,7 +803,7 @@ export default function PIAnalytics() {
           <div className="flex items-center gap-2 mb-3">
             <DollarSign size={14} style={{ color: 'var(--gold)' }} />
             <h3
-              className="text-xs font-semibold uppercase tracking-wider"
+              className="text-xs font-normal uppercase tracking-wider"
               style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
             >
               Grant Pipeline & Projects
@@ -865,7 +865,7 @@ export default function PIAnalytics() {
         <div className="flex items-center gap-2 mb-3">
           <Lightbulb size={14} style={{ color: 'var(--gold)' }} />
           <h3
-            className="text-xs font-semibold uppercase tracking-wider"
+            className="text-xs font-normal uppercase tracking-wider"
             style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
           >
             Leadership Insights

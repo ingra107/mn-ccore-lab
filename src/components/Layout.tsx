@@ -540,7 +540,7 @@ export default function Layout() {
             {/* Column 1: About */}
             <div className="lg:col-span-2">
               <h3
-                className="text-lg font-bold mb-4 tracking-wider"
+                className="text-lg font-normal mb-4 tracking-wider"
                 style={{
                   fontFamily: 'var(--font-display)',
                   color: '#ffffff',
@@ -579,7 +579,7 @@ export default function Layout() {
             {/* Column 2: Research Portal */}
             <div>
               <h3
-                className="text-lg font-bold mb-4"
+                className="text-lg font-normal mb-4"
                 style={{
                   fontFamily: 'var(--font-display)',
                   color: '#ffffff',
@@ -611,7 +611,7 @@ export default function Layout() {
             {/* Column 3: Quick Links */}
             <div>
               <h3
-                className="text-lg font-bold mb-4"
+                className="text-lg font-normal mb-4"
                 style={{
                   fontFamily: 'var(--font-display)',
                   color: '#ffffff',
@@ -643,7 +643,7 @@ export default function Layout() {
             {/* Column 4: Affiliates & Social */}
             <div>
               <h3
-                className="text-lg font-bold mb-4"
+                className="text-lg font-normal mb-4"
                 style={{
                   fontFamily: 'var(--font-display)',
                   color: '#ffffff',
@@ -687,7 +687,7 @@ export default function Layout() {
                 ))}
               </ul>
               <h3
-                className="text-lg font-bold mb-4 mt-6"
+                className="text-lg font-normal mb-4 mt-6"
                 style={{
                   fontFamily: 'var(--font-display)',
                   color: '#ffffff',
