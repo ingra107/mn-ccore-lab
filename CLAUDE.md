@@ -129,6 +129,14 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - Undo toast system, workload visibility, task click bug fix
 - CLAUDE.md: 9 design principles from LabSync + UX research
 
+**Phase 20: IN PROGRESS** (6+ commits). UX polish & interaction:
+- HoverCard: preview cards on hover (project/member/task), wired to 6 surfaces
+- ActivityHeatmap on MemberPage: 90-day contribution heatmap on team profiles
+- Design ethos enforcement: heading weights fixed across 57 files (h1=600, h2=500, h3=400)
+- TaskContextMenu: right-click for quick actions (status, priority, assign, copy, archive)
+- Toast system: success confirmations for 8 key mutations
+- Stagger animations, keyboard nav on Projects, role-based dashboard views (in progress)
+
 **Phase 19: COMPLETE** (4 commits). Differentiation features:
 - Trainee Development Trajectories: per-member page with pub curve, project velocity, task metrics, activity heatmap
 - Decision Replay System: tags, similar decisions search, outcomes tracking, project linking, timeline view
