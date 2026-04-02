@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
 import Avatar from './Avatar'
-import { getPersonInfo, directors, seniorMentors, facultyCollaborators, researchTeam } from '../data/team'
+import HoverCard from './HoverCard'
+import type { HoverCardData } from './HoverCard'
+import { useHoverCard } from '../hooks/useHoverCard'
+import { getPersonInfo, getMemberBySlug, directors, seniorMentors, facultyCollaborators, researchTeam } from '../data/team'
 
 interface InlineAssigneePickerProps {
   value: string
@@ -30,6 +33,22 @@ export default function InlineAssigneePicker({ value, onChange }: InlineAssignee
   const ref = useRef<HTMLDivElement>(null)
   const person = getPersonInfo(value)
   const members = getAssignableMembers()
+  const hoverCard = useHoverCard()
+
+  // Build member HoverCard data
+  const memberData: HoverCardData | null = (() => {
+    if (!value) return null
+    const dir = directors.find(d => d.slug === value)
+    const member = getMemberBySlug(value)
+    const role = dir?.role || member?.role
+    return {
+      type: 'member' as const,
+      name: person.name,
+      role,
+      photoUrl: person.photoUrl,
+      initials: person.initials,
+    }
+  })()
 
   useEffect(() => {
     if (!open) return
@@ -43,6 +62,7 @@ export default function InlineAssigneePicker({ value, onChange }: InlineAssignee
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
+        ref={hoverCard.triggerRef as React.RefObject<HTMLButtonElement>}
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
         className="inline-flex items-center gap-1.5 rounded-md transition-colors"
         style={{
@@ -55,8 +75,15 @@ export default function InlineAssigneePicker({ value, onChange }: InlineAssignee
           fontWeight: 400,
           color: 'var(--ink)',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'rgba(45,138,138,0.04)' }}
-        onMouseLeave={(e) => { if (!open) { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' } }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--border-subtle)'
+          e.currentTarget.style.background = 'rgba(45,138,138,0.04)'
+          if (!open && memberData) hoverCard.handlers.onMouseEnter()
+        }}
+        onMouseLeave={(e) => {
+          if (!open) { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' }
+          hoverCard.handlers.onMouseLeave()
+        }}
       >
         <div style={{ width: 20, height: 20, flexShrink: 0 }}>
           <Avatar
@@ -82,6 +109,15 @@ export default function InlineAssigneePicker({ value, onChange }: InlineAssignee
         <ChevronDown size={10} style={{ opacity: 0.3 }} />
       </button>
 
+      {memberData && !open && (
+        <HoverCard
+          data={memberData}
+          isVisible={hoverCard.isVisible}
+          position={hoverCard.position}
+          cardRef={hoverCard.cardRef}
+          cardHandlers={hoverCard.cardHandlers}
+        />
+      )}
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpen(false) }} />

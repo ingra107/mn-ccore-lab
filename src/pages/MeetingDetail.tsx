@@ -27,11 +27,28 @@ import { useMeetingDetail } from '../hooks/useApiData'
 import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks/useApiData'
 import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
+import { useToast } from '../hooks/useToast'
 import Avatar from '../components/Avatar'
 import WatchButton from '../components/WatchButton'
-import { getPersonInfo } from '../data/team'
+import HoverCard from '../components/HoverCard'
+import type { HoverCardData } from '../components/HoverCard'
+import { useHoverCard } from '../hooks/useHoverCard'
+import { getPersonInfo, getMemberBySlug, directors } from '../data/team'
 import { formatLongDate, formatShortDate } from '../lib/dateUtils'
 import { getMeetingFacilitator } from '../lib/facilitator'
+
+function buildMemberHoverData(slug: string): HoverCardData {
+  const p = getPersonInfo(slug)
+  const dir = directors.find(d => d.slug === slug)
+  const member = getMemberBySlug(slug)
+  return {
+    type: 'member',
+    name: p.name,
+    role: dir?.role || member?.role,
+    photoUrl: p.photoUrl,
+    initials: p.initials,
+  }
+}
 
 function parseJsonArray(s: string | null): string[] {
   if (!s) return []
@@ -55,6 +72,7 @@ export default function MeetingDetail() {
   const { id } = useParams<{ id: string }>()
   const { data: meeting, isLoading } = useMeetingDetail(id || '')
   const { isAuthenticated } = useAuth()
+  const { showSuccess } = useToast()
   // Hooks must be called unconditionally (before any conditional returns)
   const toggleAction = useToggleActionItem()
   const addAgenda = useAddAgendaItem(meeting?.id || '')
@@ -170,17 +188,9 @@ export default function MeetingDetail() {
           {attendees.length > 0 && (
             <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-1 -mx-1 px-1 attendee-scroll">
               <Users size={14} style={{ color: 'var(--slate)', opacity: 0.5, flexShrink: 0 }} />
-              {attendees.map((slug) => {
-                const p = getPersonInfo(slug)
-                return (
-                  <div key={slug} className="flex items-center gap-1.5 flex-shrink-0" title={p.name}>
-                    <div style={{ width: 24, height: 24 }}>
-                      <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0" />
-                    </div>
-                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{p.name.split(' ')[0]}</span>
-                  </div>
-                )
-              })}
+              {attendees.map((slug) => (
+                <AttendeeChip key={slug} slug={slug} />
+              ))}
             </div>
           )}
 
@@ -235,7 +245,7 @@ export default function MeetingDetail() {
               )}
 
               {/* Add agenda item form */}
-              <AddAgendaForm isAuthenticated={isAuthenticated} onAdd={(input) => addAgenda.mutate(input)} />
+              <AddAgendaForm isAuthenticated={isAuthenticated} onAdd={(input) => addAgenda.mutate(input, { onSuccess: () => showSuccess('Added to agenda') })} />
             </div>
           </motion.div>
 
@@ -432,9 +442,40 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
   )
 }
 
+function AttendeeChip({ slug }: { slug: string }) {
+  const p = getPersonInfo(slug)
+  const hoverCard = useHoverCard()
+  const memberData = buildMemberHoverData(slug)
+
+  return (
+    <div
+      key={slug}
+      ref={hoverCard.triggerRef as React.RefObject<HTMLDivElement>}
+      className="flex items-center gap-1.5 flex-shrink-0"
+      title={p.name}
+      onMouseEnter={hoverCard.handlers.onMouseEnter}
+      onMouseLeave={hoverCard.handlers.onMouseLeave}
+    >
+      <div style={{ width: 24, height: 24 }}>
+        <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0" />
+      </div>
+      <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{p.name.split(' ')[0]}</span>
+      <HoverCard
+        data={memberData}
+        isVisible={hoverCard.isVisible}
+        position={hoverCard.position}
+        cardRef={hoverCard.cardRef}
+        cardHandlers={hoverCard.cardHandlers}
+      />
+    </div>
+  )
+}
+
 function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?: (id: string) => void }) {
   const person = getPersonInfo(item.assignee)
   const isOverdue = item.due_date && !item.completed && new Date(item.due_date) < new Date()
+  const hoverCard = useHoverCard()
+  const memberData = buildMemberHoverData(item.assignee)
 
   return (
     <div
@@ -461,11 +502,23 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
           {item.description}
         </p>
         <div className="flex flex-wrap items-center gap-3 mt-1">
-          <div className="flex items-center gap-1">
+          <div
+            ref={hoverCard.triggerRef as React.RefObject<HTMLDivElement>}
+            className="flex items-center gap-1"
+            onMouseEnter={hoverCard.handlers.onMouseEnter}
+            onMouseLeave={hoverCard.handlers.onMouseLeave}
+          >
             <div style={{ width: 16, height: 16 }}>
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[7px]" />
             </div>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{person.name.split(' ')[0]}</span>
+            <HoverCard
+              data={memberData}
+              isVisible={hoverCard.isVisible}
+              position={hoverCard.position}
+              cardRef={hoverCard.cardRef}
+              cardHandlers={hoverCard.cardHandlers}
+            />
           </div>
           {item.due_date && (
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>

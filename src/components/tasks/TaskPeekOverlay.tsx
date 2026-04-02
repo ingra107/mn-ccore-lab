@@ -4,7 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { X, CheckCircle2, Circle, AlertTriangle, Clock } from 'lucide-react'
 import Avatar from '../Avatar'
-import { getPersonInfo } from '../../data/team'
+import HoverCard from '../HoverCard'
+import type { HoverCardData } from '../HoverCard'
+import { useHoverCard } from '../../hooks/useHoverCard'
+import { getPersonInfo, getMemberBySlug, directors } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 import { formatBrandName } from '../BrandName'
 import type { TaskRow } from '../../lib/api'
@@ -50,6 +53,22 @@ const kbdStyle: React.CSSProperties = {
 export default function TaskPeekOverlay({ task, onClose }: Props) {
   const previousFocus = useRef<HTMLElement | null>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
+  const assigneeHover = useHoverCard()
+
+  // Build member HoverCard data for assignee
+  const assigneeData: HoverCardData | null = (() => {
+    if (!task?.assignee) return null
+    const p = getPersonInfo(task.assignee)
+    const dir = directors.find(d => d.slug === task.assignee)
+    const member = getMemberBySlug(task.assignee)
+    return {
+      type: 'member' as const,
+      name: p.name,
+      role: dir?.role || member?.role,
+      photoUrl: p.photoUrl,
+      initials: p.initials,
+    }
+  })()
 
   // Focus management (no scroll lock — list must remain scrollable behind peek)
   useEffect(() => {
@@ -248,7 +267,12 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                   {/* Assignee */}
                   <div>
                     <span className="peek-label" style={labelStyle}>Assignee</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                    <div
+                      ref={assigneeHover.triggerRef as React.RefObject<HTMLDivElement>}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, cursor: 'default' }}
+                      onMouseEnter={assigneeData ? assigneeHover.handlers.onMouseEnter : undefined}
+                      onMouseLeave={assigneeData ? assigneeHover.handlers.onMouseLeave : undefined}
+                    >
                       <Avatar
                         name={person.name}
                         initials={person.initials}
@@ -260,6 +284,15 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                       <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--ink)' }}>
                         {person.name}
                       </span>
+                      {assigneeData && (
+                        <HoverCard
+                          data={assigneeData}
+                          isVisible={assigneeHover.isVisible}
+                          position={assigneeHover.position}
+                          cardRef={assigneeHover.cardRef}
+                          cardHandlers={assigneeHover.cardHandlers}
+                        />
+                      )}
                     </div>
                   </div>
 

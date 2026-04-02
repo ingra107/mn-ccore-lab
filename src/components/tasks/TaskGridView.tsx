@@ -4,6 +4,8 @@ import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
 import { formatBrandName } from '../BrandName'
+import TaskContextMenu from './TaskContextMenu'
+import { useContextMenu } from '../../hooks/useContextMenu'
 import type { TaskRow } from '../../lib/api'
 
 interface TaskGridViewProps {
@@ -13,6 +15,7 @@ interface TaskGridViewProps {
   onFieldChange?: (id: string, field: string, value: unknown) => void
   onSelect?: (task: TaskRow) => void
   onOpenDetail?: (task: TaskRow) => void
+  onPeek?: (task: TaskRow) => void
   selectedIds?: Set<string>
   onToggleSelect?: (id: string) => void
   focusedIndex?: number
@@ -43,10 +46,15 @@ const PRIORITY_OPTIONS = [
   { value: 'urgent', label: 'Urgent', color: 'var(--maroon)' },
 ]
 
-export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, selectedIds, onToggleSelect, focusedIndex, onFocusIndex }: TaskGridViewProps) {
+export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortAsc, setSortAsc] = useState(true)
+  const { state: contextMenuState, openMenu: openContextMenu, closeMenu: closeContextMenu } = useContextMenu()
+  const contextMenuTask = useMemo(
+    () => (contextMenuState.taskId ? tasks.find(t => t.id === contextMenuState.taskId) ?? null : null),
+    [contextMenuState.taskId, tasks]
+  )
 
   const sorted = useMemo(() => {
     return [...tasks].sort((a, b) => {
@@ -114,6 +122,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           onToggleSelect={onToggleSelect}
           isFocused={focusedIndex === index}
           onFocusIndex={onFocusIndex}
+          onContextMenu={openContextMenu}
         />
       ))}
 
@@ -124,6 +133,22 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           </p>
         </div>
       )}
+
+      {/* Context menu */}
+      <TaskContextMenu
+        state={contextMenuState}
+        task={contextMenuTask}
+        onClose={closeContextMenu}
+        onStatusChange={onStatusChange}
+        onFieldChange={onFieldChange}
+        onOpenDetail={onOpenDetail}
+        onPeek={onPeek}
+        onArchive={(t) => {
+          const prev = t.status
+          onStatusChange(t.id, 'done')
+          showUndo('Archived task', () => onStatusChange(t.id, prev))
+        }}
+      />
 
       <style>{`
         .col-header {
@@ -171,7 +196,7 @@ function SortPill({ label, field, active, onSort }: { label: string; field: Sort
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex,
+  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu,
 }: {
   task: TaskRow
   allTasks: TaskRow[]
@@ -186,6 +211,7 @@ function TaskGridRow({
   onToggleSelect?: (id: string) => void
   isFocused?: boolean
   onFocusIndex?: (index: number) => void
+  onContextMenu?: (e: React.MouseEvent, taskId: string) => void
 }) {
   const isDone = task.status === 'done'
   const blockerIds = useMemo(() => parseBlockedByIds(task.blocked_by), [task.blocked_by])
@@ -240,6 +266,7 @@ function TaskGridRow({
         onFocusIndex?.(index)
         onSelect?.(task)
       }}
+      onContextMenu={(e) => onContextMenu?.(e, task.id)}
     >
       {/* Checkbox */}
       <div onClick={(e) => { e.stopPropagation(); onToggleSelect?.(task.id) }} style={{ cursor: 'pointer' }}>

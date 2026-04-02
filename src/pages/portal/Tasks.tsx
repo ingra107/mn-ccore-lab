@@ -352,6 +352,7 @@ export default function Tasks() {
                   setPeekTask(null)
                   setSelectedTask(task)
                 }}
+                onPeek={(task) => setPeekTask(task)}
                 selectedIds={selectedIds}
                 onToggleSelect={toggleSelect}
                 focusedIndex={focusedTaskIndex}

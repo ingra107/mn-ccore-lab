@@ -8,6 +8,9 @@ import {
   Circle,
   ArrowRight,
 } from 'lucide-react'
+import HoverCard from './HoverCard'
+import type { HoverCardData } from './HoverCard'
+import { useHoverCard } from '../hooks/useHoverCard'
 import { usePublications, useActionItems, useProjects } from '../hooks/useApiData'
 
 interface Props {
@@ -48,14 +51,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
           {myProjects.length > 0 ? (
             <div className="flex flex-col gap-2">
               {myProjects.slice(0, 4).map((p) => (
-                <Link key={p.slug} to={`/projects/${p.slug}`}
-                  style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', textDecoration: 'none', lineHeight: 1.3 }}
-                  className="hover:opacity-80">
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--gold)', marginRight: '4px' }}>
-                    {p.stage || p.status}
-                  </span>
-                  {p.title.length > 50 ? p.title.slice(0, 47) + '...' : p.title}
-                </Link>
+                <MenteeProjectLink key={p.slug} project={p} />
               ))}
               {myProjects.length > 4 && (
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
@@ -160,5 +156,42 @@ export default function MenteeDashboard({ slug, name }: Props) {
         </div>
       </div>
     </div>
+  )
+}
+
+function MenteeProjectLink({ project }: { project: { slug: string; title: string; stage?: string; status?: string; category?: string; description?: string; pi?: string; team?: string[] } }) {
+  const hoverCard = useHoverCard()
+  const projectData: HoverCardData = {
+    type: 'project',
+    title: project.title,
+    stage: project.stage,
+    status: project.status,
+    category: project.category,
+    description: project.description,
+    pi: project.pi,
+    team: project.team,
+  }
+
+  return (
+    <Link
+      ref={hoverCard.triggerRef as React.RefObject<HTMLAnchorElement>}
+      to={`/projects/${project.slug}`}
+      style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', textDecoration: 'none', lineHeight: 1.3 }}
+      className="hover:opacity-80"
+      onMouseEnter={hoverCard.handlers.onMouseEnter}
+      onMouseLeave={hoverCard.handlers.onMouseLeave}
+    >
+      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--gold)', marginRight: '4px' }}>
+        {project.stage || project.status}
+      </span>
+      {project.title.length > 50 ? project.title.slice(0, 47) + '...' : project.title}
+      <HoverCard
+        data={projectData}
+        isVisible={hoverCard.isVisible}
+        position={hoverCard.position}
+        cardRef={hoverCard.cardRef}
+        cardHandlers={hoverCard.cardHandlers}
+      />
+    </Link>
   )
 }

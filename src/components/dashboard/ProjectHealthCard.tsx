@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HeartPulse, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
+import HoverCard from '../HoverCard'
+import type { HoverCardData } from '../HoverCard'
+import { useHoverCard } from '../../hooks/useHoverCard'
 import { useProjectHealth } from '../../hooks/useApiData'
 import type { ProjectHealth, HealthFactors } from '../../hooks/useApiData'
 
@@ -207,6 +210,14 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   const [showTooltip, setShowTooltip] = useState(false)
   const color = STATUS_COLORS[project.status]
   const isBad = project.status === 'Critical' || project.status === 'At Risk'
+  const hoverCard = useHoverCard()
+
+  const projectData: HoverCardData = {
+    type: 'project',
+    title: project.title,
+    stage: project.stage,
+    status: project.status,
+  }
 
   return (
     <Link
@@ -238,6 +249,9 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
 
       {/* Project title */}
       <span
+        ref={hoverCard.triggerRef as React.RefObject<HTMLSpanElement>}
+        onMouseEnter={hoverCard.handlers.onMouseEnter}
+        onMouseLeave={hoverCard.handlers.onMouseLeave}
         style={{
           fontFamily: 'var(--font-sans)',
           fontSize: '12px',
@@ -253,6 +267,13 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
       >
         {project.title}
       </span>
+      <HoverCard
+        data={projectData}
+        isVisible={hoverCard.isVisible}
+        position={hoverCard.position}
+        cardRef={hoverCard.cardRef}
+        cardHandlers={hoverCard.cardHandlers}
+      />
 
       {/* Health bar + score */}
       <div
