@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
@@ -15,6 +15,7 @@ import CreateProjectModal from '../components/CreateProjectModal'
 import Avatar from '../components/Avatar'
 import { directors, getAllMembers } from '../data/team'
 import type { Project } from '../data/types'
+import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import type { Stage } from '../components/StageSelector'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
@@ -90,6 +91,8 @@ export default function Projects() {
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list')
   const [showDeps, setShowDeps] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([])
 
   // Sort by stage pipeline order, then alphabetically within stage
   const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
@@ -103,6 +106,32 @@ export default function Projects() {
       return a.title.localeCompare(b.title)
     })
   }, [activeCategory, projects])
+
+  // Project slugs in display order for keyboard nav
+  const projectSlugs = useMemo(() => filtered.map((p) => p.slug), [filtered])
+
+  // Reset focus when filter/view changes
+  useEffect(() => { setFocusedIndex(-1) }, [activeCategory, viewMode])
+
+  // Keyboard navigation (list view only)
+  useProjectKeyboardNav({
+    projectCount: filtered.length,
+    focusedIndex,
+    setFocusedIndex,
+    slugs: projectSlugs,
+    enabled: viewMode === 'list' && !showCreate,
+  })
+
+  // Scroll focused row into view
+  const setRowRef = useCallback((index: number) => (el: HTMLDivElement | null) => {
+    rowRefs.current[index] = el
+  }, [])
+
+  useEffect(() => {
+    if (focusedIndex >= 0 && rowRefs.current[focusedIndex]) {
+      rowRefs.current[focusedIndex]!.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [focusedIndex])
 
   // Summary stats
   const totalCount = projects.length
@@ -305,15 +334,16 @@ export default function Projects() {
             {filtered.length > 0 ? (
               (() => {
                 let lastStage = ''
-                return filtered.map((project) => {
+                return filtered.map((project, index) => {
                   const pi = getPiInfo(project.pi)
                   const catLabel = CATEGORY_LABEL[project.category] ?? project.category
                   const projectHealth = healthBySlug.get(project.slug)
                   const showStageHeader = project.stage !== lastStage
                   lastStage = project.stage ?? ''
+                  const isFocused = focusedIndex === index
 
                   return (
-                    <div key={project.slug}>
+                    <div key={project.slug} ref={setRowRef(index)}>
                       {/* Stage group divider — minimal, just text */}
                       {showStageHeader && (
                         <div
@@ -355,9 +385,10 @@ export default function Projects() {
                       <Link
                         to={`/projects/${project.slug}`}
                         style={{ textDecoration: 'none', display: 'block' }}
+                        onClick={() => setFocusedIndex(index)}
                       >
                         <div
-                          className="project-list-row"
+                          className={`project-list-row${isFocused ? ' project-row-focused' : ''}`}
                           style={{
                             display: 'grid',
                             gridTemplateColumns: '1fr 100px 100px 100px 72px',
@@ -654,6 +685,21 @@ export default function Projects() {
           transition: background 0.05s ease-out !important;
         }
 
+        .project-row-focused {
+          position: relative;
+          background: rgba(201, 168, 76, 0.04) !important;
+        }
+        .project-row-focused::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 2px;
+          background: var(--gold);
+          border-radius: 0 1px 1px 0;
+        }
+
         .new-project-btn:hover {
           background: rgba(45, 138, 138, 0.06) !important;
         }
@@ -671,6 +717,9 @@ export default function Projects() {
         }
         .dark .project-card:hover {
           background: #1a2a3a !important;
+        }
+        .dark .project-row-focused {
+          background: rgba(201, 168, 76, 0.06) !important;
         }
         .dark .project-list-row:hover {
           background: rgba(201, 168, 76, 0.08) !important;

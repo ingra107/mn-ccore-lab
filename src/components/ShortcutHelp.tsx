@@ -40,10 +40,24 @@ const shortcuts = [
     ],
   },
   {
-    category: 'Task Detail Panel',
+    category: 'Task List',
     items: [
-      { keys: 'Click', action: 'Open task detail' },
+      { keys: 'J', action: 'Focus next task' },
+      { keys: 'K', action: 'Focus previous task' },
+      { keys: 'Space', action: 'Peek task' },
+      { keys: 'Enter', action: 'Open task detail' },
+      { keys: 'S', action: 'Cycle status' },
+      { keys: 'X', action: 'Toggle selection' },
       { keys: 'Esc', action: 'Close panel' },
+    ],
+  },
+  {
+    category: 'Project List',
+    items: [
+      { keys: 'J', action: 'Focus next project' },
+      { keys: 'K', action: 'Focus previous project' },
+      { keys: 'Enter', action: 'Open project detail' },
+      { keys: 'Esc', action: 'Clear selection' },
     ],
   },
 ]
