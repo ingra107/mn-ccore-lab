@@ -68,7 +68,8 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
 
   return (
     <div
-      className="group relative rounded-lg border transition-all duration-200 hover:shadow-md"
+      className="group relative rounded-lg border hover:shadow-md"
+      // CSS handles the hover lift — no JS onMouse handlers needed for transform
       style={{
         borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-light)',
         borderLeft: `3px solid ${effectiveBorderColor}`,
@@ -76,14 +77,8 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
         opacity: isDone ? 0.7 : 1,
         cursor: onClick ? 'pointer' : 'default',
       }}
-      onMouseEnter={(e) => {
-        if (!isDone) e.currentTarget.style.transform = 'translateY(-1px)'
-        onMouseEnter?.()
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)'
-        onMouseLeave?.()
-      }}
+      onMouseEnter={() => onMouseEnter?.()}
+      onMouseLeave={() => onMouseLeave?.()}
       onClick={(e) => {
         // Don't trigger if clicking the status dropdown or hover actions
         if ((e.target as HTMLElement).closest('[data-status-dropdown]')) return

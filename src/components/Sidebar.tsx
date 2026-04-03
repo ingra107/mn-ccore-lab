@@ -24,6 +24,8 @@ import {
   Scale,
   Shield,
   Terminal,
+  Inbox,
+  ScrollText,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useUnreadCount } from '../hooks/useNotifications'
@@ -61,6 +63,7 @@ const navGroups: NavGroup[] = [
     title: 'Planning',
     items: [
       { to: '/my-tasks', label: 'My Tasks', icon: CheckSquare },
+      { to: '/my-items', label: 'My Items', icon: Inbox },
       { to: '/tasks', label: 'All Tasks', icon: ListTodo },
       { to: '/calendar', label: 'Calendar', icon: Calendar },
       { to: '/deadlines', label: 'Deadlines', icon: Clock },
@@ -84,6 +87,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: '/meetings', label: 'Meetings', icon: UsersIcon },
       { to: '/meeting-notes', label: 'AI Notes', icon: FileText },
+      { to: '/narratives', label: 'Narratives', icon: ScrollText },
     ],
   },
   {

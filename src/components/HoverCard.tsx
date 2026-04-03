@@ -340,7 +340,7 @@ export default function HoverCard({ data, isVisible, position, cardRef, cardHand
           initial={{ opacity: 0, y: position.placement === 'below' ? -4 : 4 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: position.placement === 'below' ? -4 : 4 }}
-          transition={{ duration: 0.15, ease: 'easeOut' }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.8 }}
           onMouseEnter={cardHandlers.onMouseEnter}
           onMouseLeave={cardHandlers.onMouseLeave}
           style={{

@@ -17,6 +17,7 @@ import {
   ExternalLink,
   GripVertical,
   UserCheck,
+  Scale,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -25,7 +26,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMeetingDetail } from '../hooks/useApiData'
 import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks/useApiData'
-import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes } from '../hooks/useMutations'
+import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../hooks/useToast'
 import Avatar from '../components/Avatar'
@@ -77,8 +78,12 @@ export default function MeetingDetail() {
   const toggleAction = useToggleActionItem()
   const addAgenda = useAddAgendaItem(meeting?.id || '')
   const updateNotes = useUpdateMeetingNotes(meeting?.id || '')
+  const createDecision = useCreateDecision()
   const [editingNotes, setEditingNotes] = useState(false)
   const [notesDraft, setNotesDraft] = useState(meeting?.notes || '')
+  const [showDecisionForm, setShowDecisionForm] = useState(false)
+  const [decisionTitle, setDecisionTitle] = useState('')
+  const [decisionRationale, setDecisionRationale] = useState('')
 
   usePageMeta(
     meeting ? `${meeting.title} | MN-CCORE` : 'Meeting | MN-CCORE',
@@ -293,24 +298,112 @@ export default function MeetingDetail() {
         </div>
 
         {/* Decisions */}
-        {decisions.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }} className="mt-8">
-            <div className="flex items-center gap-2 mb-3">
-              <Lightbulb size={16} style={{ color: 'var(--gold)' }} />
-              <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
-                Decisions
-              </h2>
-            </div>
-            <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px' }} className="detail-card">
-              {decisions.map((d, i) => (
-                <div key={i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < decisions.length - 1 ? '1px solid rgba(201, 168, 76, 0.06)' : 'none' }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)', marginTop: '7px', flexShrink: 0 }} />
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>{d}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }} className="mt-8">
+          <div className="flex items-center gap-2 mb-3">
+            <Scale size={16} style={{ color: 'var(--gold)' }} />
+            <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+              Decisions
+            </h2>
+            {isAuthenticated && (
+              <button
+                onClick={() => setShowDecisionForm(!showDecisionForm)}
+                style={{
+                  marginLeft: 'auto', background: 'none', border: '1px solid var(--border-light)',
+                  borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)',
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                }}
+              >
+                <Plus size={12} /> Log Decision
+              </button>
+            )}
+          </div>
+          <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px' }} className="detail-card">
+            {/* Inline decision form */}
+            <AnimatePresence>
+              {showDecisionForm && (
+                <motion.form
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    if (!decisionTitle.trim()) return
+                    createDecision.mutate({
+                      title: decisionTitle.trim(),
+                      rationale: decisionRationale.trim() || undefined,
+                      context: `From meeting: ${meeting?.title} (${meeting?.date})`,
+                      meeting_id: meeting?.id,
+                    }, {
+                      onSuccess: () => {
+                        showSuccess('Decision logged')
+                        setDecisionTitle('')
+                        setDecisionRationale('')
+                        setShowDecisionForm(false)
+                      },
+                    })
+                  }}
+                  style={{ marginBottom: decisions.length > 0 ? '12px' : 0, paddingBottom: decisions.length > 0 ? '12px' : 0, borderBottom: decisions.length > 0 ? '1px solid rgba(201,168,76,0.1)' : 'none' }}
+                >
+                  <input
+                    type="text"
+                    value={decisionTitle}
+                    onChange={(e) => setDecisionTitle(e.target.value)}
+                    placeholder="What was decided?"
+                    autoFocus
+                    style={{
+                      width: '100%', fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+                      background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8,
+                      padding: '8px 12px', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
+                    }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)')}
+                  />
+                  <input
+                    type="text"
+                    value={decisionRationale}
+                    onChange={(e) => setDecisionRationale(e.target.value)}
+                    placeholder="Why? (optional rationale)"
+                    style={{
+                      width: '100%', fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)',
+                      background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.1)', borderRadius: 8,
+                      padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
+                    }}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      style={{ background: 'var(--gold)', color: '#0f1923', border: 'none', borderRadius: 6, padding: '5px 14px', fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale('') }}
+                      style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 6, padding: '5px 14px', fontFamily: 'var(--font-sans)', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </motion.form>
+              )}
+            </AnimatePresence>
+
+            {decisions.map((d, i) => (
+              <div key={i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < decisions.length - 1 ? '1px solid rgba(201, 168, 76, 0.06)' : 'none' }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)', marginTop: '7px', flexShrink: 0 }} />
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>{d}</p>
+              </div>
+            ))}
+
+            {decisions.length === 0 && !showDecisionForm && (
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                No decisions logged yet. Record one during the meeting so nobody forgets.
+              </p>
+            )}
+          </div>
+        </motion.div>
 
         {/* Notes */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.25 }} className="mt-8">

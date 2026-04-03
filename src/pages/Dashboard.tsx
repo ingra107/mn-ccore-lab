@@ -164,7 +164,7 @@ export default function Dashboard() {
               lineHeight: 1.15,
             }}
           >
-            Research Command Center
+            Dashboard
           </h1>
           <p
             style={{

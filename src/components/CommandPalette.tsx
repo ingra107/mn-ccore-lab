@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, LayoutDashboard, User, CheckSquare, ListTodo, Calendar,
   Clock, FolderKanban, FileText, Lightbulb, HelpCircle, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
   CheckCircle2, AlertTriangle, Flag, CircleDot, Scale,
 } from 'lucide-react'
+import { spring } from '../lib/animations'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { getPersonInfo } from '../data/team'
 
@@ -260,14 +262,12 @@ export default function CommandPalette() {
     }
   }, [filtered, selectedIndex])
 
-  if (!open) return null
-
   const categoryOrder: Record<string, number> = { action: 0, filter: 1, navigation: 2, task: 3, project: 4, person: 5, meeting: 6 }
-  const grouped = filtered.reduce((acc, item) => {
+  const grouped = open ? filtered.reduce((acc, item) => {
     if (!acc[item.category]) acc[item.category] = []
     acc[item.category].push(item)
     return acc
-  }, {} as Record<string, CommandItem[]>)
+  }, {} as Record<string, CommandItem[]>) : {}
 
   const categoryLabels: Record<string, string> = {
     action: 'Actions',
@@ -282,13 +282,23 @@ export default function CommandPalette() {
   let globalIdx = -1
 
   return (
-    <div
+    <AnimatePresence>
+      {open && (
+    <motion.div
       className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.1 }}
       style={{ backgroundColor: 'rgba(15, 25, 35, 0.5)' }}
       onClick={() => setOpen(false)}
     >
-      <div
+      <motion.div
         className="w-full max-w-lg rounded-xl shadow-2xl border overflow-hidden"
+        initial={{ opacity: 0, scale: 0.95, y: -8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.97, y: -4 }}
+        transition={spring.snappy}
         style={{ backgroundColor: 'var(--cream, white)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -371,7 +381,9 @@ export default function CommandPalette() {
             <Command size={9} />K to toggle
           </span>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

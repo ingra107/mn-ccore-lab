@@ -109,7 +109,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 15, mass: 0.6 }}
               style={{
                 pointerEvents: 'auto',
                 display: 'flex',

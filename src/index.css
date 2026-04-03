@@ -1,18 +1,20 @@
 @import "tailwindcss";
+@plugin "tailwindcss-motion";
 
-/* ── Design System CSS Variables ── */
+/* ── Design System CSS Variables (OKLCH) ── */
 :root {
-  --ink: #0f1923;
-  --slate: #2c3e50;
-  --gold: #c9a84c;
-  --gold-light: #f0efe8;
-  --cream: #ffffff;
-  --maroon: #7a0019;
-  --ice: #f4f5f7;
-  --teal: #2d8a8a;
-  --orange: #c2410c;
-  --green: #16a34a;
-  --green-light: #22c55e;
+  /* Colors — OKLCH for perceptual uniformity + dark mode via lightness math */
+  --ink: oklch(0.15 0.02 250);           /* #0f1923 */
+  --slate: oklch(0.35 0.03 230);         /* #2c3e50 */
+  --gold: oklch(0.72 0.10 85);           /* #c9a84c */
+  --gold-light: oklch(0.95 0.01 85);     /* #f0efe8 */
+  --cream: oklch(1.00 0 0);              /* #ffffff */
+  --maroon: oklch(0.35 0.15 10);         /* #7a0019 */
+  --ice: oklch(0.97 0.005 250);          /* #f4f5f7 */
+  --teal: oklch(0.55 0.10 192);          /* #2d8a8a */
+  --orange: oklch(0.52 0.15 40);         /* #c2410c */
+  --green: oklch(0.60 0.16 145);         /* #16a34a */
+  --green-light: oklch(0.70 0.17 145);   /* #22c55e */
 
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'DM Sans', sans-serif;
@@ -25,25 +27,31 @@
   --shadow-card: 0 1px 4px rgba(15, 25, 35, 0.12);
   --shadow-card-hover: 0 6px 16px rgba(15, 25, 35, 0.18);
 
+  /* Transition constants — Material Design 3 / Apple HIG consensus */
+  --transition-fast: 150ms;
+  --transition-panel: 250ms;
+  --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1.0);
+  --ease-in: cubic-bezier(0.4, 0.0, 1, 1);
+
   --bg-rgb: 255, 255, 255;
   color-scheme: light dark;
 }
 
 /* ── Dark mode variables ── */
-/* Dark-first: deeper, more neutral dark — less blue tint */
+/* Dark-first: deeper, more neutral dark — OKLCH lightness math */
 .dark {
-  --ink: #e2e8f0;
-  --ink-bright: #ffffff;
-  --slate: #94a3b8;
-  --gold: #c9a84c;
-  --gold-light: #1a2332;
-  --cream: #0b1017;
-  --maroon: #e85d7a;
-  --ice: #131a24;
-  --teal: #3db8b8;
-  --orange: #e8713a;
-  --green: #4ade80;
-  --green-light: #4ade80;
+  --ink: oklch(0.90 0.01 230);           /* #e2e8f0 */
+  --ink-bright: oklch(1.00 0 0);         /* #ffffff */
+  --slate: oklch(0.70 0.02 240);         /* #94a3b8 */
+  --gold: oklch(0.72 0.10 85);           /* #c9a84c */
+  --gold-light: oklch(0.18 0.02 240);    /* #1a2332 */
+  --cream: oklch(0.10 0.01 250);         /* #0b1017 */
+  --maroon: oklch(0.65 0.15 10);         /* #e85d7a */
+  --ice: oklch(0.14 0.015 240);          /* #131a24 */
+  --teal: oklch(0.70 0.10 192);          /* #3db8b8 */
+  --orange: oklch(0.65 0.14 45);         /* #e8713a */
+  --green: oklch(0.78 0.16 145);         /* #4ade80 */
+  --green-light: oklch(0.78 0.16 145);   /* #4ade80 */
 
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(255, 255, 255, 0.06);
@@ -507,6 +515,15 @@ a:hover {
     grid-column: span 1 !important;
     grid-row: span 1 !important;
   }
+}
+
+/* ── TaskCard hover lift (CSS, not JS) ── */
+.group.relative.rounded-lg {
+  transition: transform var(--transition-fast) cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow var(--transition-fast) ease;
+}
+.group.relative.rounded-lg:hover {
+  transform: translateY(-1px);
 }
 
 /* ── Context Menu animation ── */
