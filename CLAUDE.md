@@ -12,7 +12,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Repo | github.com/ingra107/mn-ccore-lab (400+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
-| Data | TanStack Query v5 + Cloudflare D1 (19 tables, 60+ endpoints) -- ALL LIVE |
+| Data | TanStack Query v5 + Cloudflare D1 (33 tables, 90+ endpoints) -- ALL LIVE |
 | D1 database | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM) |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
@@ -28,7 +28,7 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 1. **Dark-first design.** Dark bg is deep neutral (#0b1017), NOT blue-tinted. Text is #e2e8f0 (not pure white — less glare). Light mode secondary.
 2. **Columnar tables, not card stacks.** Data pages use fixed-column tables with headers (Title|Assignee|Due|Status|Priority). Cards are for dashboards only. Fixed row height for vertical scanning.
 3. **Inline editability with visible affordance.** Every editable field shows "▾" dropdown indicator. Click cell → dropdown/picker by type. Auto-save on blur. No explicit save button. (Research: Pattern 4)
-4. **Typography: light weight, three opacity tiers.** Body font-weight: 400. Active text: 100% opacity. Normal: 70% (--ink = #e2e8f0). Muted: 40% (--slate = #94a3b8). NEVER 500+ weight for body text.
+4. **Typography: light weight, three opacity tiers.** Body font-weight: 400. Active text: 100% opacity. Normal: 70% (--ink = #e2e8f0). Muted: 40% (--slate = #94a3b8). NEVER 500+ weight for body text. Weight hierarchy: body=400, label/subtitle=500, card metrics=700, heading h1=600.
 5. **One accent color per view.** Teal for interactive. Everything else neutral. Max 2 non-neutral colors per view.
 6. **More info, more readable.** Density ≠ clutter. LabSync puts 20 sidebar items that are MORE readable than our 17. The secret: font-weight 400, grouped sections with rhythm, consistent icon opacity.
 7. **Zero monospace in content.** JetBrains Mono for `<kbd>` only. ALL other text is DM Sans.
@@ -57,8 +57,11 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 - Inline controls: status/priority dropdowns editable in-row
 - Ghost-style action buttons (outline, not filled)
 
-### Micro-interactions
-- Background: 120ms ease-out. Shadows: 250ms ease. Card hover: -1px lift.
+### Micro-interactions (standardize to 2 constants)
+- `--transition-fast: 150ms` — hover, toggle, status change, row highlight
+- `--transition-panel: 250ms` — sidebar, detail panel, modal, card shadow
+- Card hover: -1px lift.
+- NOTE: Currently 7+ different durations exist inline (120/150/200/250/300ms). Standardize to these 2.
 
 ### Sidebar
 - Font-weight 400 for nav items, 500 for active only
@@ -93,7 +96,7 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 ```
 
 - **Data:** TanStack Query v5 → D1 API (prod), static TS fallback (dev)
-- **API:** Cloudflare Worker, 60+ endpoints, auth-gated writes
+- **API:** Cloudflare Worker, 90+ endpoints, auth-gated writes
 - **Auth:** Open now. Cloudflare Access for April 7 launch (@umn.edu)
 - **Email:** Worker cron + SendGrid (dormant -- needs API key)
 - **Sync:** `sync_d1_push.py` / `sync_d1_pull.py` in PB, scheduled
@@ -138,17 +141,24 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - Design ethos enforcement: heading weights fixed across 57 files
 - Simplify: shared constants (lib/taskConstants.ts, lib/animations.ts), memoized Personal.tsx
 
-**Phase 21: Visual Perfection** (ordered by impact — work top-to-bottom):
-1. Loading skeletons on AnalyticsPage, PIAnalyticsPage, Personal, SettingsPage
-2. Mobile sidebar auto-collapse (<768px) + hamburger toggle
-3. Replace 16+ hardcoded `color: 'white'` with CSS variable
-4. Touch target audit (44px min on filter/toggle buttons)
-5. Inline editing on Ideas, Manuscripts, Decisions pages + "▾" affordance
-6. Undo toast on Idea/Decision/Manuscript status changes
-7. J/K keyboard nav on Meetings, Ideas, Decisions pages
-8. HoverCard on Projects list, Team page, Meetings list
-9. Accent color discipline (max 2 non-neutral per view)
-10. Stagger animations on Meetings, Ideas, Team pages
+**Phase 20.5: Mobile Responsive** (1 commit from home laptop, d65d71c):
+- Stacked card layout on mobile, columnar grid on desktop (Projects, Manuscripts, Deadlines, Ideas)
+- InlineSelect larger touch targets, global CSS 36px min touch targets
+
+**Phase 21: Visual Perfection** (audit-verified scope 2026-04-03 — work top-to-bottom):
+1. Progressive disclosure: collapse filter/sort controls on Tasks behind F key/disclosure button
+2. Clickable column headers: remove sort pill row, let headers sort on click
+3. Loading skeletons: 10 pages need them (Analytics, PIAnalytics, Personal, Settings, Grants, MeetingNotes, Narratives, PBSector, AskTheLab)
+4. Transition standardization: 7+ durations → 2 constants (150ms/250ms)
+5. Hardcoded white: ~50 instances of 'white'/#fff/#ffffff → var(--cream) or token
+6. Extract shared taskConfig.ts: STATUS_OPTIONS/PRIORITY_OPTIONS duplicated in 4+ files
+7. Empty state personality: domain-appropriate copy in EmptyState instances
+8. Inline editing expansion: Ideas, Decisions pages + "▾" affordance everywhere
+9. Undo toast expansion: Idea/Decision/Manuscript/Project status changes
+10. J/K keyboard nav expansion: Meetings, Ideas, Decisions, Deadlines, Manuscripts
+11. HoverCard expansion: Projects list, Team page, Meetings list, Activity feed
+12. Stagger animations expansion: Meetings, Ideas, Deadlines, Team, Decisions
+13. Accent color discipline: audit max 2 non-neutral per view
 
 **Phase 19: COMPLETE** (4 commits). Differentiation features:
 - Trainee Development Trajectories: per-member page with pub curve, project velocity, task metrics, activity heatmap
@@ -181,6 +191,31 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 
 Biweekly Tuesdays 3pm CT. Anchor: Apr 7, Apr 21. Automation runs Monday mornings.
 
+## Component Coverage Gaps (Verified 2026-04-03)
+
+Track which shared components are used where. Expand coverage as Phase 21 progresses.
+
+| Component | Used On | NOT Used On |
+|-----------|---------|-------------|
+| LoadingSkeleton | Tasks, MyTasks, Deadlines, Manuscripts, Decisions, Ideas, Activity, Calendar, Search | Analytics, PIAnalytics, Personal, Settings, Grants, MeetingNotes, Narratives, PBSector, AskTheLab |
+| EmptyState | Tasks, MyTasks, Deadlines, Decisions, Ideas, Activity, Calendar, Search, Grants, MeetingNotes, Narratives, AskTheLab | Analytics, Settings, PBSector, Personal, PIAnalytics. Digest has local duplicate. |
+| PageHeader | 17 of 19 portal pages | PBSector (has custom PlannerHeader) |
+| InlineSelect | Tasks (grid), Projects (list+detail), Manuscripts | Ideas, Decisions, Deadlines, Meetings, Grants |
+| J/K keyboard nav | Tasks, Projects | All other list pages |
+| HoverCard | TaskDetail, TaskPeek, MeetingDetail, AssigneePicker, ProjectHealth, MenteeDashboard | Projects list, Team, Meetings list, Activity |
+| UndoToast | TaskCard, TaskGridView | All other status-changing surfaces |
+| Stagger animations | Projects, Personal | All other list pages |
+
+## Accessibility Requirements
+
+Currently good: aria-hidden on icons, aria-label on interactive elements, aria-pressed on toggles, skip-to-content link, focus-visible styling, prefers-reduced-motion in 5 locations.
+
+**Gaps to fix:**
+- UndoToast needs `role="alert"` and `aria-live="polite"`
+- CommandPalette and CreateProjectModal need focus trapping
+- No `aria-live` regions for dynamic content updates
+- Toast notifications not announced to screen readers
+
 ## Known Gotchas
 
 | Problem | Fix |
@@ -197,8 +232,10 @@ Biweekly Tuesdays 3pm CT. Anchor: Apr 7, Apr 21. Automation runs Monday mornings
 
 ## Peripheral Brain Connection
 
-- **Project folder:** `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, vision, future ideas
-- **Memory:** `memory/project_mnccore-website-redesign.md`
+- **Project folder:** `Projects/mn-ccore-lab-hub/` -- PROJECT.md + hub-future-ideas.md (88 features tracked)
+- **Research:** `Projects/mn-ccore-lab-hub/competitive-landscape-lab-management-2026.md` + `task-management-ux-patterns-research.md`
 - **Design decision:** `Context/Decisions/2026-04-01_hub-design-ethos-pivot.md`
+- **Memory:** `memory/project_mnccore-website-redesign.md`
 - **Sync:** `scripts/db/sync_d1_push.py` / `sync_d1_pull.py`
 - **Meeting automation:** `scripts/scheduled/meeting_automation.py`
+- **Archived plans:** `Projects/mn-ccore-lab-hub/_archived/` + `Archive/Scratch/hub-plans-consolidated/`
