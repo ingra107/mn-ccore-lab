@@ -144,8 +144,8 @@ export default function Projects() {
             </div>
             <h1
               style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 600,
                 fontSize: 'clamp(1.35rem, 3vw, 1.75rem)',
                 color: 'var(--ink)',
                 margin: 0,

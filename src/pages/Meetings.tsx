@@ -631,8 +631,8 @@ export default function Meetings() {
             </div>
           )}
 
-          {/* If no pending actions but form should still be accessible */}
-          {pendingActions.length === 0 && (
+          {/* If no pending actions but some completed exist — show "no pending" with add form */}
+          {pendingActions.length === 0 && allActionItems.length > 0 && (
             <div className="mb-4">
               <p className="text-sm mb-2" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                 No pending action items.

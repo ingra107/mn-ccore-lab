@@ -156,8 +156,8 @@ export default function Dashboard() {
 
           <h1
             style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 800,
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 600,
               fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
               color: 'var(--ink)',
               margin: 0,
