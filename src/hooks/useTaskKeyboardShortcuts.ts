@@ -23,6 +23,8 @@ interface UseTaskKeyboardShortcutsOptions {
   closeOverlay: () => void
   /** Open add blocker search for focused task */
   addBlocker?: () => void
+  /** Toggle filter panel visibility */
+  toggleFilters?: () => void
 }
 
 /**
@@ -48,6 +50,7 @@ export function useTaskKeyboardShortcuts({
   isBlocked,
   closeOverlay,
   addBlocker,
+  toggleFilters,
 }: UseTaskKeyboardShortcutsOptions) {
   // Use refs to avoid stale closures in the event handler
   const focusedIndexRef = useRef(focusedIndex)
@@ -155,8 +158,17 @@ export function useTaskKeyboardShortcuts({
         }
         break
       }
+
+      case 'f':
+      case 'F': {
+        if (toggleFilters) {
+          e.preventDefault()
+          toggleFilters()
+        }
+        break
+      }
     }
-  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker])
+  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker, toggleFilters])
 
   useEffect(() => {
     document.addEventListener('keydown', handler)

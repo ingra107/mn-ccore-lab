@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Circle, CheckCircle2, Clock, AlertTriangle, ChevronDown, Pencil, Archive, CalendarPlus, Link2 } from 'lucide-react'
+import { Circle, CheckCircle2, Clock, AlertTriangle, ChevronDown, ChevronUp, Pencil, Archive, CalendarPlus, Link2 } from 'lucide-react'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
@@ -80,29 +80,14 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
 
   return (
     <div className="table-container">
-      {/* Sort row */}
-      <div className="flex items-center gap-2 px-4 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
-          Sort by:
-        </span>
-        <SortPill label="Due Date" field="due_date" active={sortKey} onSort={handleSort} />
-        <SortPill label="Priority" field="priority" active={sortKey} onSort={handleSort} />
-        <SortPill label="Status" field="status" active={sortKey} onSort={handleSort} />
-        <SortPill label="Assignee" field="assignee" active={sortKey} onSort={handleSort} />
-        <div style={{ flex: 1 }} />
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>
-          {tasks.filter(t => !t.completed).length} task{tasks.filter(t => !t.completed).length !== 1 ? 's' : ''}
-        </span>
-      </div>
-
-      {/* Column headers */}
+      {/* Column headers — clickable for sort */}
       <div style={{ ...colStyle, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
         <div />
-        <span className="col-header">TITLE</span>
-        <span className="col-header">ASSIGNEES</span>
-        <span className="col-header">DUE DATE</span>
-        <span className="col-header">STATUS</span>
-        <span className="col-header">PRIORITY</span>
+        <SortableColumnHeader label="TITLE" field="title" active={sortKey} asc={sortAsc} onSort={handleSort} />
+        <SortableColumnHeader label="ASSIGNEE" field="assignee" active={sortKey} asc={sortAsc} onSort={handleSort} />
+        <SortableColumnHeader label="DUE DATE" field="due_date" active={sortKey} asc={sortAsc} onSort={handleSort} />
+        <SortableColumnHeader label="STATUS" field="status" active={sortKey} asc={sortAsc} onSort={handleSort} />
+        <SortableColumnHeader label="PRIORITY" field="priority" active={sortKey} asc={sortAsc} onSort={handleSort} />
       </div>
 
       {/* Rows */}
@@ -165,30 +150,28 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
   )
 }
 
-// ── Sort Pill ────────────────────────────────────────────────
+// ── Sortable Column Header ─────────────────────────────────
 
-function SortPill({ label, field, active, onSort }: { label: string; field: SortKey; active: SortKey; onSort: (k: SortKey) => void }) {
+function SortableColumnHeader({ label, field, active, asc, onSort }: { label: string; field: SortKey; active: SortKey; asc: boolean; onSort: (k: SortKey) => void }) {
   const isActive = active === field
   return (
     <button
       onClick={() => onSort(field)}
+      className="col-header"
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '4px',
-        padding: '3px 10px',
-        borderRadius: '6px',
-        border: isActive ? '1px solid var(--teal)' : '1px solid transparent',
-        background: isActive ? 'rgba(45,138,138,0.08)' : 'none',
-        color: isActive ? 'var(--teal)' : 'var(--slate)',
-        fontFamily: 'var(--font-sans)',
-        fontSize: '11px',
-        fontWeight: isActive ? 500 : 400,
+        gap: '3px',
+        background: 'none',
+        border: 'none',
         cursor: 'pointer',
+        padding: 0,
+        opacity: isActive ? 0.9 : undefined,
+        color: isActive ? 'var(--teal)' : undefined,
       }}
     >
       {label}
-      {isActive && <ChevronDown size={10} />}
+      {isActive && (asc ? <ChevronUp size={10} /> : <ChevronDown size={10} />)}
     </button>
   )
 }

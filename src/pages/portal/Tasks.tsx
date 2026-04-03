@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, ListTodo } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { getUserRole, ROLE_DEFAULTS } from '../../lib/roleDefaults'
@@ -45,6 +46,7 @@ export default function Tasks() {
   const [showCompleted, setShowCompleted] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [focusedTaskIndex, setFocusedTaskIndex] = useState(-1)
+  const [showFilters, setShowFilters] = useState(false)
   const bulkUpdate = useBulkUpdateTasks()
 
   // Auto-open create modal from URL params (keyboard shortcut C)
@@ -217,6 +219,7 @@ export default function Tasks() {
     isBlocked: !!selectedTask || showCreate,
     closeOverlay,
     addBlocker: addBlockerForFocused,
+    toggleFilters: useCallback(() => setShowFilters(prev => !prev), []),
   })
 
   return (
@@ -243,41 +246,7 @@ export default function Tasks() {
           </button>
         }
       >
-        {/* Saved view presets */}
-        <div className="mb-3">
-          <SavedViewsBar
-            views={views}
-            activeViewId={activeViewId}
-            currentFilters={currentViewFilters}
-            activeViewFilters={activeViewFilters}
-            onSelectView={(id) => {
-              setActiveViewId(id)
-              const view = views.find(v => v.id === id)
-              if (view) {
-                const resolved = {
-                  ...view.filters,
-                  assignee: view.filters.assignee === '__me__' ? 'nick' : view.filters.assignee,
-                }
-                setFilters({
-                  assignee: resolved.assignee,
-                  status: resolved.status === 'all' ? '' : resolved.status,
-                  priority: '',
-                  project: '',
-                })
-              }
-            }}
-            onSaveView={saveView}
-            onRenameView={renameView}
-            onDeleteView={deleteView}
-          />
-        </div>
-
-        {/* Inline filter chips */}
-        <div className="mb-3">
-          <TaskFilters filters={filters} onChange={setFilters} />
-        </div>
-
-        {/* View selector */}
+        {/* View selector + filter toggle (always visible) */}
         <div className="flex items-center gap-1.5 flex-wrap">
           <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
             <List size={14} />
@@ -313,16 +282,69 @@ export default function Tasks() {
             </button>
           )}
 
-          {activeFilterCount > 0 && (
-            <span
-              className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium"
-              style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}
-            >
-              <Filter size={10} />
-              {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active
-            </span>
-          )}
+          {/* Filter toggle button */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              backgroundColor: showFilters || activeFilterCount > 0 ? 'rgba(45,138,138,0.08)' : 'transparent',
+              color: showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--slate)',
+              border: `1px solid ${showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--border-light)'}`,
+              cursor: 'pointer',
+              opacity: showFilters || activeFilterCount > 0 ? 1 : 0.5,
+            }}
+            title="Toggle filters (F)"
+          >
+            {activeFilterCount > 0 && (
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--teal)', flexShrink: 0 }} />
+            )}
+            <Filter size={10} />
+            Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+          </button>
         </div>
+
+        {/* Collapsible filter panel (F key or button toggle) */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.0, 0.0, 0.2, 1.0] }}
+              className="overflow-hidden"
+            >
+              <div className="pt-3 pb-1 space-y-2">
+                <SavedViewsBar
+                  views={views}
+                  activeViewId={activeViewId}
+                  currentFilters={currentViewFilters}
+                  activeViewFilters={activeViewFilters}
+                  onSelectView={(id) => {
+                    setActiveViewId(id)
+                    const view = views.find(v => v.id === id)
+                    if (view) {
+                      const resolved = {
+                        ...view.filters,
+                        assignee: view.filters.assignee === '__me__' ? 'nick' : view.filters.assignee,
+                      }
+                      setFilters({
+                        assignee: resolved.assignee,
+                        status: resolved.status === 'all' ? '' : resolved.status,
+                        priority: '',
+                        project: '',
+                      })
+                    }
+                  }}
+                  onSaveView={saveView}
+                  onRenameView={renameView}
+                  onDeleteView={deleteView}
+                />
+                <TaskFilters filters={filters} onChange={setFilters} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </PageHeader>
 
       {/* Content */}
