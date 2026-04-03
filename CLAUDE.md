@@ -149,7 +149,9 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - Fixed: Portal h1 fonts changed from Fraunces to DM Sans (Dashboard, Projects)
 - Fixed: Duplicate action item empty states on Meetings page
 
-**Phase 21: Visual Perfection** (audit-verified + expert playbook 2026-04-03):
+**Phase 21: Visual Perfection** (audit-verified + expert playbook 2026-04-03, deployed 53026b0):
+
+~~**Block 0: Expert Quick Wins**~~ DONE (f942985) — Spring physics, CommandPalette animation, TaskCard hover CSS, orphan pages in sidebar, Dashboard title fix, Log Decision on MeetingDetail, TailwindCSS Motion, OKLCH colors, transition constants
 
 > **SELF-EXECUTING SESSION INSTRUCTIONS:**
 > When `/work-on MN-CCORE Lab Hub` loads this file, execute Phase 21 blocks in order.
@@ -164,21 +166,9 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 > Minimum: mark item BUILT in hub-future-ideas.md, strikethrough in CLAUDE.md, update PROJECT.md next_action.
 > This keeps the stream of consciousness alive across sessions.
 
-**Block 1 (2.5 hrs): Progressive Disclosure + Column Sort**
-- Collapse SavedViewsBar + TaskFilters behind F key toggle on Tasks page
-- Make column headers clickable for sort (ascending -> descending -> clear), remove sort pill row
-- Filter panel: AnimatePresence height 0->auto, 250ms. Active filter: teal dot on button
-- Sticky control row. Files: Tasks.tsx, TaskFilters.tsx, TaskGridView.tsx, useTaskKeyboardShortcuts.ts
-- New: FilterToggleButton.tsx
-- Layout: [Title] / [ViewToggles | Filter(count)] / [F reveals: SavedViews + Filters] / [Column headers] / [Data]
-
-**Block 2 (30 min): Empty State Personality**
-- String-only edits across 10 files. Copy in playbook. No component changes.
-
-**Block 3 (30 min): Transition Constants**
-- Add --transition-fast (150ms) and --transition-panel (250ms) to index.css
-- New: src/lib/transitions.ts with FAST/PANEL/STAGGER exports
-- Normalize inline durations as files are touched
+~~**Block 1 (2.5 hrs): Progressive Disclosure + Column Sort**~~ DONE (b7ef18a)
+~~**Block 2 (30 min): Empty State Personality**~~ DONE (53026b0)
+~~**Block 3 (30 min): Transition Constants**~~ DONE (part of Block 0 — f942985)
 
 **Block 4 (1.5 hrs): Welcome Banner + First Visit**
 - New: WelcomeBanner.tsx on Dashboard (teal bg, progress ring, dismissible)
