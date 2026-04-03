@@ -161,10 +161,10 @@ export default function Deadlines() {
           <TableSkeleton rows={8} cols={4} />
         ) : view === 'list' ? (
           <div className="table-container">
-            {/* Column headers */}
+            {/* Column headers — hidden on mobile */}
             <div
+              className="hidden sm:grid"
               style={{
-                display: 'grid',
                 gridTemplateColumns: '1fr 120px 100px 80px',
                 padding: '8px 16px',
                 borderBottom: '1px solid var(--border-subtle)',
@@ -231,57 +231,91 @@ function DeadlineTableSection({ title, items, color }: { title: string; items: D
         const person = item.assignee ? getPersonInfo(item.assignee) : null
         const isDone = item.status === 'done' || item.status === 'completed'
         return (
-          <div
-            key={item.id}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 120px 100px 80px',
-              padding: '8px 16px',
-              borderBottom: '1px solid var(--border-subtle)',
-              alignItems: 'center',
-              opacity: isDone ? 0.45 : 1,
-            }}
-            className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
-          >
-            {/* Title */}
-            <span style={{
-              fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 400,
-              color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
-              paddingRight: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
-            }}>
-              {item.title}
-            </span>
+          <div key={item.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: isDone ? 0.45 : 1 }}>
+            {/* Desktop row — hidden on mobile */}
+            <div
+              className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+              style={{
+                gridTemplateColumns: '1fr 120px 100px 80px',
+                padding: '8px 16px',
+                alignItems: 'center',
+              }}
+            >
+              {/* Title */}
+              <span style={{
+                fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 400,
+                color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
+                paddingRight: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+              }}>
+                {item.title}
+              </span>
 
-            {/* Due date */}
-            <span style={{
-              fontFamily: 'var(--font-sans)', fontSize: '12px',
-              color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
-              fontWeight: item.isOverdue ? 500 : 400,
-            }}>
-              {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
-            </span>
+              {/* Due date */}
+              <span style={{
+                fontFamily: 'var(--font-sans)', fontSize: '12px',
+                color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
+                fontWeight: item.isOverdue ? 500 : 400,
+              }}>
+                {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
+              </span>
 
-            {/* Assignee */}
-            <div className="flex items-center gap-1.5">
-              {person ? (
-                <>
+              {/* Assignee */}
+              <div className="flex items-center gap-1.5">
+                {person ? (
                   <div style={{ width: 20, height: 20, flexShrink: 0 }}>
                     <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
                   </div>
-                </>
-              ) : (
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
-              )}
+                ) : (
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
+                )}
+              </div>
+
+              {/* Type badge */}
+              <span style={{
+                fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500,
+                color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
+                opacity: 0.7,
+              }}>
+                {item.type === 'milestone' ? 'Milestone' : 'Task'}
+              </span>
             </div>
 
-            {/* Type badge */}
-            <span style={{
-              fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500,
-              color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
-              opacity: 0.7,
-            }}>
-              {item.type === 'milestone' ? 'Milestone' : 'Task'}
-            </span>
+            {/* Mobile row — shown only on mobile */}
+            <div
+              className="sm:hidden hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+              style={{ padding: '12px 16px' }}
+            >
+              {/* Title */}
+              <span style={{
+                fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 500,
+                color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
+                display: 'block', marginBottom: '4px',
+              }}>
+                {item.title}
+              </span>
+              {/* Metadata row */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span style={{
+                  fontFamily: 'var(--font-sans)', fontSize: '11px',
+                  color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
+                  fontWeight: item.isOverdue ? 500 : 400,
+                }}>
+                  {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
+                </span>
+                <span style={{
+                  fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500,
+                  color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
+                  opacity: 0.7,
+                }}>
+                  {item.type === 'milestone' ? 'Milestone' : 'Task'}
+                </span>
+                {person && (
+                  <div style={{ width: 18, height: 18, flexShrink: 0 }}>
+                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[7px]" />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )
       })}

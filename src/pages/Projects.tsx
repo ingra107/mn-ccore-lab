@@ -346,7 +346,7 @@ export default function Projects() {
                           <div
                             className="flex items-center"
                             style={{
-                              padding: '20px 24px 8px',
+                              padding: '20px 16px 8px',
                               gap: '8px',
                             }}
                           >
@@ -384,10 +384,10 @@ export default function Projects() {
                           style={{ textDecoration: 'none', display: 'block' }}
                           onClick={() => setFocusedIndex(index)}
                         >
+                          {/* Desktop: 5-column grid */}
                           <div
-                            className={`project-list-row${isFocused ? ' project-row-focused' : ''}`}
+                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} hidden sm:grid`}
                             style={{
-                              display: 'grid',
                               gridTemplateColumns: '1fr 100px 100px 100px 72px',
                               padding: '14px 24px',
                               borderBottom: '1px solid var(--border-subtle)',
@@ -489,6 +489,84 @@ export default function Projects() {
                             >
                               {catLabel}
                             </span>
+                          </div>
+
+                          {/* Mobile: stacked card layout */}
+                          <div
+                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} sm:hidden`}
+                            style={{
+                              padding: '12px 16px',
+                              borderBottom: '1px solid var(--border-subtle)',
+                              cursor: 'pointer',
+                              transition: 'background 0.12s ease-out',
+                            }}
+                          >
+                            {/* Title row */}
+                            <div className="flex items-start gap-2" style={{ marginBottom: '8px' }}>
+                              <span
+                                style={{
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: '50%',
+                                  background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
+                                  flexShrink: 0,
+                                  opacity: 0.7,
+                                  marginTop: '6px',
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontFamily: 'var(--font-body)',
+                                  fontSize: '14px',
+                                  fontWeight: 500,
+                                  color: 'var(--ink)',
+                                  lineHeight: 1.4,
+                                  flex: 1,
+                                }}
+                              >
+                                {project.title}
+                              </span>
+                              {projectHealth && (
+                                <span
+                                  style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: '50%',
+                                    background: HEALTH_STATUS_COLOR[projectHealth.status] ?? 'var(--slate)',
+                                    flexShrink: 0,
+                                    marginTop: '6px',
+                                  }}
+                                />
+                              )}
+                            </div>
+                            {/* Metadata row */}
+                            <div className="flex items-center gap-3" style={{ paddingLeft: '14px' }}>
+                              <InlineSelect
+                                value={project.status || 'Active'}
+                                options={[
+                                  { value: 'Active', label: 'Active', color: 'var(--green)' },
+                                  { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
+                                  { value: 'Completed', label: 'Done', color: 'var(--slate)' },
+                                ]}
+                                onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
+                              />
+                              <InlineSelect
+                                value={project.stage || 'Idea'}
+                                options={STAGES.map((s) => ({ value: s, label: s }))}
+                                onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
+                              />
+                              <span
+                                style={{
+                                  fontFamily: 'var(--font-body)',
+                                  fontSize: '11px',
+                                  color: 'var(--slate)',
+                                  opacity: 0.4,
+                                  marginLeft: 'auto',
+                                }}
+                              >
+                                {catLabel}
+                              </span>
+                            </div>
                           </div>
                         </Link>
                       </motion.div>

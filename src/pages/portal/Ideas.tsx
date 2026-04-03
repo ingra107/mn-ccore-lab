@@ -228,8 +228,8 @@ function IdeaListView({ ideas, onVote, onStatusChange }: { ideas: IdeaRow[]; onV
   const gridCols = '40px 1fr 100px 90px 80px'
   return (
     <div className="table-container">
-      {/* Column headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: gridCols, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center' }}>
+      {/* Column headers — hidden on mobile */}
+      <div className="hidden sm:grid" style={{ gridTemplateColumns: gridCols, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center' }}>
         <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em', textAlign: 'center' as const }}>
           VOTES
         </span>
@@ -245,47 +245,82 @@ function IdeaListView({ ideas, onVote, onStatusChange }: { ideas: IdeaRow[]; onV
         const person = getPersonInfo(idea.submitted_by)
         const status = statusConfig[idea.status] || statusConfig.new
         return (
-          <div
-            key={idea.id}
-            style={{ display: 'grid', gridTemplateColumns: gridCols, padding: '10px 16px', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center' }}
-            className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
-          >
-            {/* Votes */}
-            <button
-              onClick={() => onVote(idea.id)}
-              className="flex flex-col items-center gap-0.5"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}
+          <div key={idea.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+            {/* Desktop row — hidden on mobile */}
+            <div
+              className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+              style={{ gridTemplateColumns: gridCols, padding: '10px 16px', alignItems: 'center' }}
             >
-              <ThumbsUp size={13} />
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600 }}>{idea.votes}</span>
-            </button>
+              {/* Votes */}
+              <button
+                onClick={() => onVote(idea.id)}
+                className="flex flex-col items-center gap-0.5"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}
+              >
+                <ThumbsUp size={13} />
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600 }}>{idea.votes}</span>
+              </button>
 
-            {/* Title + description */}
-            <div style={{ minWidth: 0, paddingRight: '12px' }}>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 400, color: 'var(--ink)', display: 'block' }}>
-                {idea.title}
-              </span>
-              {idea.description && (
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, display: 'block' }}>
-                  {idea.description}
+              {/* Title + description */}
+              <div style={{ minWidth: 0, paddingRight: '12px' }}>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 400, color: 'var(--ink)', display: 'block' }}>
+                  {idea.title}
                 </span>
-              )}
+                {idea.description && (
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, display: 'block' }}>
+                    {idea.description}
+                  </span>
+                )}
+              </div>
+
+              {/* Research area */}
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', opacity: idea.research_area ? 0.7 : 0.3 }}>
+                {idea.research_area || '—'}
+              </span>
+
+              {/* Status */}
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: status.color }}>
+                {status.label}
+              </span>
+
+              {/* Submitted by */}
+              <div className="flex items-center gap-1.5">
+                <div style={{ width: 20, height: 20, flexShrink: 0 }}>
+                  <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+                </div>
+              </div>
             </div>
 
-            {/* Research area */}
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', opacity: idea.research_area ? 0.7 : 0.3 }}>
-              {idea.research_area || '—'}
-            </span>
-
-            {/* Status */}
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: status.color }}>
-              {status.label}
-            </span>
-
-            {/* Submitted by */}
-            <div className="flex items-center gap-1.5">
-              <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+            {/* Mobile row — shown only on mobile */}
+            <div
+              className="sm:hidden hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+              style={{ padding: '12px 16px' }}
+            >
+              {/* Title */}
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 500, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
+                {idea.title}
+              </span>
+              {/* Metadata row */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  onClick={() => onVote(idea.id)}
+                  className="flex items-center gap-1"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)', padding: 0 }}
+                >
+                  <ThumbsUp size={11} />
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600 }}>{idea.votes}</span>
+                </button>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: status.color }}>
+                  {status.label}
+                </span>
+                {idea.research_area && (
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', opacity: 0.7 }}>
+                    {idea.research_area}
+                  </span>
+                )}
+                <div style={{ width: 18, height: 18, flexShrink: 0 }}>
+                  <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[7px]" />
+                </div>
               </div>
             </div>
           </div>

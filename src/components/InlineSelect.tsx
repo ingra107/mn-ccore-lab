@@ -95,7 +95,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
               style={{
                 display: 'block',
                 width: '100%',
-                padding: '8px 12px',
+                padding: '10px 12px',
                 border: 'none',
                 background: opt.value === value ? 'rgba(45,138,138,0.06)' : 'none',
                 cursor: 'pointer',

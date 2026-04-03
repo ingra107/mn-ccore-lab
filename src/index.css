@@ -621,3 +621,39 @@ a:hover {
   background: rgba(61, 184, 184, 0.1);
   border-color: rgba(61, 184, 184, 0.2);
 }
+
+/* ── Mobile UX improvements ── */
+@media (max-width: 640px) {
+  /* Content container — tighter horizontal padding on small screens */
+  .content-container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Filter pills — larger tap targets for touch */
+  .filter-pill {
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+
+  /* Table container — tighter border radius on mobile */
+  .table-container {
+    border-radius: 8px;
+  }
+
+  /* Portal content — tighter padding on mobile */
+  .portal-content {
+    padding: 12px !important;
+  }
+
+  /* New project / action buttons — larger touch targets */
+  .new-project-btn {
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+
+  /* Cards — reduce bottom gap on mobile */
+  .card {
+    margin-bottom: 0.75rem;
+  }
+}

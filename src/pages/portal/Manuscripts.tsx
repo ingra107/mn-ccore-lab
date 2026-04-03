@@ -221,10 +221,10 @@ export default function Manuscripts() {
                       )}
 
                       <Link to={`/projects/${project.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
+                        {/* Desktop: 5-column grid */}
                         <div
-                          className="manuscript-list-row"
+                          className="manuscript-list-row hidden sm:grid"
                           style={{
-                            display: 'grid',
                             gridTemplateColumns: '1fr 100px 100px 100px 72px',
                             padding: '14px 24px',
                             borderBottom: '1px solid var(--border-subtle)',
@@ -281,6 +281,64 @@ export default function Manuscripts() {
                           <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>
                             {catLabel}
                           </span>
+                        </div>
+
+                        {/* Mobile: stacked layout */}
+                        <div
+                          className="manuscript-list-row sm:hidden"
+                          style={{
+                            padding: '12px 16px',
+                            borderBottom: '1px solid var(--border-subtle)',
+                            cursor: 'pointer',
+                            transition: 'background 0.12s ease-out',
+                          }}
+                        >
+                          {/* Title row: category dot + title + task count */}
+                          <div className="flex items-start gap-2" style={{ marginBottom: '8px' }}>
+                            <span
+                              style={{
+                                width: 6, height: 6, borderRadius: '50%',
+                                background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
+                                flexShrink: 0, opacity: 0.7, marginTop: '6px',
+                              }}
+                            />
+                            <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.4, flex: 1 }}>
+                              {project.title}
+                            </span>
+                            {tc > 0 && (
+                              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--teal)', opacity: 0.7, flexShrink: 0, marginTop: '4px' }}>
+                                {tc}
+                              </span>
+                            )}
+                          </div>
+                          {/* Metadata row: status + stage + category label right-aligned */}
+                          <div className="flex items-center gap-3" style={{ paddingLeft: '14px' }}>
+                            <InlineSelect
+                              value={project.status || 'Active'}
+                              options={[
+                                { value: 'Active', label: 'Active', color: 'var(--green)' },
+                                { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
+                                { value: 'Completed', label: 'Done', color: 'var(--slate)' },
+                              ]}
+                              onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
+                            />
+                            <InlineSelect
+                              value={project.stage || 'Idea'}
+                              options={STAGES.map((s) => ({ value: s, label: s }))}
+                              onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
+                            />
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-body)',
+                                fontSize: '11px',
+                                color: 'var(--slate)',
+                                opacity: 0.4,
+                                marginLeft: 'auto',
+                              }}
+                            >
+                              {catLabel}
+                            </span>
+                          </div>
                         </div>
                       </Link>
                     </div>
