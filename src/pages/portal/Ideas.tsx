@@ -146,8 +146,8 @@ export default function Ideas() {
               <div className="col-span-3">
                 <EmptyState
                   icon={<Lightbulb size={40} />}
-                  title="No ideas yet"
-                  subtitle="Be the first to submit a research idea for the lab to explore."
+                  title="The board is open"
+                  subtitle="Research ideas, clinical questions, side projects — anything worth exploring. Drop one here and let the team weigh in."
                   action={{ label: 'Submit an idea', onClick: () => setShowCreate(true) }}
                 />
               </div>

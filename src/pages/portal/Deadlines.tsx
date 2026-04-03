@@ -191,8 +191,8 @@ export default function Deadlines() {
             {deadlines.length === 0 && (
               <EmptyState
                 icon={<Clock size={40} />}
-                title="No deadlines found"
-                subtitle="Deadlines will appear as tasks and milestones are scheduled."
+                title="No deadlines this week"
+                subtitle="A rare and beautiful thing. Deadlines appear as tasks and grant milestones are scheduled."
               />
             )}
           </div>

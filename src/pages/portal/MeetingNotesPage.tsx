@@ -109,8 +109,8 @@ export default function MeetingNotesPage() {
           {meetings.length === 0 && (
             <EmptyState
               icon={<FileText size={40} />}
-              title="No meetings yet"
-              subtitle="Create one from the Meetings page."
+              title="No meetings recorded yet"
+              subtitle="Meeting notes, decisions, and action items live here. Once the first meeting is logged, this becomes the lab's institutional memory."
             />
           )}
         </div>

@@ -137,7 +137,7 @@ export default function ActivityPage() {
             title={filterType ? 'No matching activity' : 'No activity yet'}
             subtitle={filterType
               ? `No ${typeOptions.find(o => o.value === filterType)?.label.toLowerCase()} activity found. Try a different filter.`
-              : 'Activity from tasks, meetings, project updates, and ideas will appear here.'}
+              : 'Task completions, status changes, comments, and project updates will stream here as the team works.'}
           />
         )}
       </div>

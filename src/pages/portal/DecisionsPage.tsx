@@ -247,8 +247,8 @@ export default function DecisionsPage() {
         ) : filteredDecisions.length === 0 ? (
           <EmptyState
             icon={<Scale size={40} />}
-            title="No decisions logged yet"
-            subtitle="Start building institutional memory."
+            title="No decisions logged"
+            subtitle="When the team makes a call — study design, protocol change, authorship — record it here so nobody has to remember who said what, or when."
             action={{ label: 'Log Decision', onClick: () => setShowCreate(true) }}
           />
         ) : viewMode === 'timeline' ? (

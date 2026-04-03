@@ -133,7 +133,7 @@ export default function Grants() {
           <EmptyState
             icon={<Wallet size={40} />}
             title="No grants yet"
-            subtitle="Active and pending grants with timelines, milestones, and budget tracking will appear here."
+            subtitle="Active and pending grants with timelines, milestones, and budget tracking will appear here as they're added."
           />
         ) : (
           <div className="table-container flex flex-col gap-3" style={{ padding: '16px 20px' }}>

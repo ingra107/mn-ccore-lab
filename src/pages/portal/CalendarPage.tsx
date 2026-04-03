@@ -442,8 +442,8 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
       {grouped.length === 0 && (
         <EmptyState
           icon={<Calendar size={40} />}
-          title="No upcoming events"
-          subtitle="Scheduled meetings, task deadlines, and milestones will appear in the agenda."
+          title="Nothing scheduled today"
+          subtitle="Meetings, deadlines, and milestones will show up here as they're created."
         />
       )}
     </div>

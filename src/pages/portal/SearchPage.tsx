@@ -144,8 +144,8 @@ export default function SearchPage() {
         {!isLoading && debouncedQuery.length >= 2 && results.length === 0 && (
           <EmptyState
             icon={<Search size={40} />}
-            title={`No results for "${debouncedQuery}"`}
-            subtitle="Try different keywords or check your spelling."
+            title="Nothing matched"
+            subtitle="Try different keywords, or check if the item exists under a different name."
           />
         )}
 

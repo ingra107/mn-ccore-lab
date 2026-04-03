@@ -354,8 +354,8 @@ export default function Tasks() {
         ) : displayTasks.length === 0 ? (
           <EmptyState
             icon={<CheckCircle2 size={40} />}
-            title="No tasks yet"
-            subtitle="Tasks created in meetings, assigned by PIs, or added by team members will appear here."
+            title="All clear"
+            subtitle="No active tasks right now. They'll appear here as projects move forward, meetings generate action items, or someone assigns work."
             action={{ label: 'Create first task', onClick: () => setShowCreate(true) }}
           />
         ) : (
