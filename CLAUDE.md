@@ -145,20 +145,55 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - Stacked card layout on mobile, columnar grid on desktop (Projects, Manuscripts, Deadlines, Ideas)
 - InlineSelect larger touch targets, global CSS 36px min touch targets
 
-**Phase 21: Visual Perfection** (audit-verified scope 2026-04-03 — work top-to-bottom):
-1. Progressive disclosure: collapse filter/sort controls on Tasks behind F key/disclosure button
-2. Clickable column headers: remove sort pill row, let headers sort on click
-3. Loading skeletons: 10 pages need them (Analytics, PIAnalytics, Personal, Settings, Grants, MeetingNotes, Narratives, PBSector, AskTheLab)
-4. Transition standardization: 7+ durations → 2 constants (150ms/250ms)
-5. Hardcoded white: ~50 instances of 'white'/#fff/#ffffff → var(--cream) or token
-6. Extract shared taskConfig.ts: STATUS_OPTIONS/PRIORITY_OPTIONS duplicated in 4+ files
-7. Empty state personality: domain-appropriate copy in EmptyState instances
-8. Inline editing expansion: Ideas, Decisions pages + "▾" affordance everywhere
-9. Undo toast expansion: Idea/Decision/Manuscript/Project status changes
-10. J/K keyboard nav expansion: Meetings, Ideas, Decisions, Deadlines, Manuscripts
-11. HoverCard expansion: Projects list, Team page, Meetings list, Activity feed
-12. Stagger animations expansion: Meetings, Ideas, Deadlines, Team, Decisions
-13. Accent color discipline: audit max 2 non-neutral per view
+**Phase 20.6: Quick Fixes** (2026-04-03):
+- Fixed: Portal h1 fonts changed from Fraunces to DM Sans (Dashboard, Projects)
+- Fixed: Duplicate action item empty states on Meetings page
+
+**Phase 21: Visual Perfection** (audit-verified + expert playbook 2026-04-03):
+
+> **SELF-EXECUTING SESSION INSTRUCTIONS:**
+> When `/work-on MN-CCORE Lab Hub` loads this file, execute Phase 21 blocks in order.
+> DO NOT ask questions. All decisions have been made. All file paths are specified.
+> Read `Projects/mn-ccore-lab-hub/phase21-implementation-playbook.md` (PB repo) for full details.
+> Deploy once at end of session. Commit at natural checkpoints.
+
+**Block 1 (2.5 hrs): Progressive Disclosure + Column Sort**
+- Collapse SavedViewsBar + TaskFilters behind F key toggle on Tasks page
+- Make column headers clickable for sort (ascending -> descending -> clear), remove sort pill row
+- Filter panel: AnimatePresence height 0->auto, 250ms. Active filter: teal dot on button
+- Sticky control row. Files: Tasks.tsx, TaskFilters.tsx, TaskGridView.tsx, useTaskKeyboardShortcuts.ts
+- New: FilterToggleButton.tsx
+- Layout: [Title] / [ViewToggles | Filter(count)] / [F reveals: SavedViews + Filters] / [Column headers] / [Data]
+
+**Block 2 (30 min): Empty State Personality**
+- String-only edits across 10 files. Copy in playbook. No component changes.
+
+**Block 3 (30 min): Transition Constants**
+- Add --transition-fast (150ms) and --transition-panel (250ms) to index.css
+- New: src/lib/transitions.ts with FAST/PANEL/STAGGER exports
+- Normalize inline durations as files are touched
+
+**Block 4 (1.5 hrs): Welcome Banner + First Visit**
+- New: WelcomeBanner.tsx on Dashboard (teal bg, progress ring, dismissible)
+- New: PageTooltip.tsx (single-use contextual tooltips, localStorage "seen" state)
+- Wire onboarding checklist as top card on Personal Hub
+
+**Block 5 (3-4 hrs): Meeting Prep View — Demo Showpiece**
+- New route: /meetings/:id/prep
+- New: functions/api/meetings/[id]/prep.ts (aggregate: prev meeting action items + activity + deadlines)
+- New: MeetingPrep.tsx (facilitator view: action items, project updates, upcoming deadlines, suggested agenda)
+- Add "Prep View" button on MeetingDetail.tsx
+
+**Remaining Phase 21 items (after Blocks 1-5):**
+6. Hardcoded white: ~50 instances → CSS variable
+7. Extract shared taskConfig.ts (4+ duplicate config files)
+8. Loading skeletons: 10 pages
+9. Inline editing expansion: Ideas, Decisions + "▾"
+10. Undo toast expansion
+11. J/K keyboard nav expansion (6+ pages)
+12. HoverCard expansion (5+ surfaces)
+13. Stagger animations expansion
+14. Accent color discipline
 
 **Phase 19: COMPLETE** (4 commits). Differentiation features:
 - Trainee Development Trajectories: per-member page with pub curve, project velocity, task metrics, activity heatmap
