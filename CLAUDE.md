@@ -159,6 +159,10 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 > Also read: `nicks-vision-and-priorities.md` for design philosophy and priorities.
 > Start with **Block 0** (expert quick wins), then Block 1, etc.
 > Deploy once at end of session. Commit at natural checkpoints.
+>
+> **AFTER EVERY BLOCK/FEATURE:** Update docs per the Documentation Protocol in the playbook.
+> Minimum: mark item BUILT in hub-future-ideas.md, strikethrough in CLAUDE.md, update PROJECT.md next_action.
+> This keeps the stream of consciousness alive across sessions.
 
 **Block 1 (2.5 hrs): Progressive Disclosure + Column Sort**
 - Collapse SavedViewsBar + TaskFilters behind F key toggle on Tasks page
