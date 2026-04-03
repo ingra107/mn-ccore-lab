@@ -155,6 +155,9 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 > When `/work-on MN-CCORE Lab Hub` loads this file, execute Phase 21 blocks in order.
 > DO NOT ask questions. All decisions have been made. All file paths are specified.
 > Read `Projects/mn-ccore-lab-hub/phase21-implementation-playbook.md` (PB repo) for full details.
+> Also read: `expert-code-review-2026-04-03.md` for spring physics code + detailed specs.
+> Also read: `nicks-vision-and-priorities.md` for design philosophy and priorities.
+> Start with **Block 0** (expert quick wins), then Block 1, etc.
 > Deploy once at end of session. Commit at natural checkpoints.
 
 **Block 1 (2.5 hrs): Progressive Disclosure + Column Sort**
