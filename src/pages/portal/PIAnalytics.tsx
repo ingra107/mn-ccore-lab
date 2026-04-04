@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
+import { CardSkeleton } from '../../components/LoadingSkeleton'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
@@ -373,16 +374,7 @@ export default function PIAnalytics() {
     )
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div
-          className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-          style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
-        />
-      </div>
-    )
-  }
+  if (isLoading) return <CardSkeleton count={6} />
 
   const commitRate = data && data.commitments.total > 0
     ? Math.round((data.commitments.completed / data.commitments.total) * 100)

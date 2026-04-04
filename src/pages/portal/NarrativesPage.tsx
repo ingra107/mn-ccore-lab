@@ -2,6 +2,7 @@ import { BookOpen, GitBranch, FileText } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
+import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useNarratives } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
 
@@ -28,9 +29,7 @@ export default function NarrativesPage() {
       />
 
       {isLoading ? (
-        <div className="text-center py-12">
-          <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin mx-auto" style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }} />
-        </div>
+        <TableSkeleton rows={5} cols={3} />
       ) : narratives.length === 0 ? (
         <EmptyState
           icon={<BookOpen size={40} />}

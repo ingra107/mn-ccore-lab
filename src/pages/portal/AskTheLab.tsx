@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Send, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { SkeletonCard } from '../../components/Skeleton'
+import { CardSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyStateComponent from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
@@ -78,9 +78,7 @@ export default function AskTheLab() {
       {/* Question feed */}
       <div className="mt-5 flex flex-col gap-3">
         {isLoading ? (
-          <>
-            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
-          </>
+          <CardSkeleton count={3} />
         ) : questions.length === 0 ? (
           <EmptyStateComponent
             icon={<HelpCircle size={40} />}

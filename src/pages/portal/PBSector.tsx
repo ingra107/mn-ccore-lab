@@ -11,7 +11,8 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { Terminal, AlertTriangle, GripVertical } from 'lucide-react'
+import { AlertTriangle, GripVertical } from 'lucide-react'
+import { CardSkeleton } from '../../components/LoadingSkeleton'
 import { usePBCommandCenter, useDispatchPending } from '../../hooks/useApiData'
 import {
   usePBCapture, useUpdateTaskStatus,
@@ -285,16 +286,7 @@ export default function PBSector() {
 
   // ── Loading / Error states ──────────────────────────────
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-3">
-          <Terminal size={24} style={{ color: 'var(--gold)', opacity: 0.5 }} />
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'var(--slate)' }}>Loading planner...</span>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <CardSkeleton count={4} />
 
   if (!data) {
     return (

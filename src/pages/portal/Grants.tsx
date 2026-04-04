@@ -4,6 +4,7 @@ import { Wallet, Calendar, Banknote, Diamond, ArrowRight, Clock, Telescope } fro
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
+import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import type { GrantTimelineItem } from '../../hooks/useGrantTimeline'
@@ -120,15 +121,7 @@ export default function Grants() {
       {/* Grant cards */}
       <div className="mt-5">
         {isLoading ? (
-          <div className="flex flex-col gap-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl border p-5 animate-pulse" style={{ borderColor: 'var(--border-light)' }}>
-                <div className="h-4 w-20 rounded" style={{ backgroundColor: 'var(--border-light)' }} />
-                <div className="h-5 w-3/4 rounded mt-2" style={{ backgroundColor: 'var(--border-light)' }} />
-                <div className="h-3 w-1/3 rounded mt-3" style={{ backgroundColor: 'var(--border-light)' }} />
-              </div>
-            ))}
-          </div>
+          <TableSkeleton rows={3} cols={4} />
         ) : grants.length === 0 ? (
           <EmptyState
             icon={<Wallet size={40} />}
