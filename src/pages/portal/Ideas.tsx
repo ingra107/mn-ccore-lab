@@ -8,6 +8,7 @@ import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import { useUndoToast } from '../../components/UndoToast'
+import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useIdeas } from '../../hooks/useApiData'
 import { useCreateIdea, useVoteIdea, useUpdateIdea } from '../../hooks/useMutations'
 import { useToast } from '../../hooks/useToast'
@@ -55,6 +56,17 @@ export default function Ideas() {
   const vote = useVoteIdea()
   const updateIdea = useUpdateIdea()
   const { showUndo } = useUndoToast()
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+
+  useListKeyboardNav({
+    itemCount: view === 'list' ? ideas.length : 0,
+    focusedIndex,
+    setFocusedIndex,
+    disabled: showCreate,
+  })
+
+  // Reset focus when filters change
+  useEffect(() => { setFocusedIndex(-1) }, [filterStatus, view])
 
   const handleIdeaStatusChange = (id: string, status: string, prevStatus: string) => {
     updateIdea.mutate({ id, fields: { status } })
@@ -172,7 +184,7 @@ export default function Ideas() {
           <IdeaListView ideas={ideas} onVote={(id) => vote.mutate(id)} onStatusChange={(id, status) => {
             const prev = ideas.find(i => i.id === id)?.status || 'new'
             handleIdeaStatusChange(id, status, prev)
-          }} />
+          }} focusedIndex={focusedIndex} />
         )}
       </div>
 
@@ -242,7 +254,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
 
 // ── Idea List View ───────────────────────────────────────────
 
-function IdeaListView({ ideas, onVote, onStatusChange }: { ideas: IdeaRow[]; onVote: (id: string) => void; onStatusChange: (id: string, status: string) => void }) {
+function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { ideas: IdeaRow[]; onVote: (id: string) => void; onStatusChange: (id: string, status: string) => void; focusedIndex?: number }) {
   const gridCols = '40px 1fr 100px 90px 80px'
   return (
     <div className="table-container">
@@ -259,11 +271,12 @@ function IdeaListView({ ideas, onVote, onStatusChange }: { ideas: IdeaRow[]; onV
       </div>
 
       {/* Rows */}
-      {ideas.map((idea) => {
+      {ideas.map((idea, idx) => {
         const person = getPersonInfo(idea.submitted_by)
         const status = statusConfig[idea.status] || statusConfig.new
+        const isFocused = focusedIndex === idx
         return (
-          <div key={idea.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+          <div key={idea.id} className={isFocused ? 'task-row-focused' : ''} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
             {/* Desktop row — hidden on mobile */}
             <div
               className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"

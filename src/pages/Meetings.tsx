@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Activity, Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
+import { useListKeyboardNav } from '../hooks/useListKeyboardNav'
 import { useMeetingsApi, useActionItems, useMeetingCadence } from '../hooks/useApiData'
 import type { MeetingRow, ActionItemRow } from '../hooks/useApiData'
 import { useToggleActionItem, useCreateActionItem } from '../hooks/useMutations'
@@ -119,6 +120,7 @@ export default function Meetings() {
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [filter, setFilter] = useState<FilterMode>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [focusedIndex, setFocusedIndex] = useState(-1)
 
   // D1 API data
   const { data: meetingRows = [] } = useMeetingsApi()
@@ -209,6 +211,12 @@ export default function Meetings() {
 
     return result
   }, [filter, searchQuery, meetings])
+
+  useListKeyboardNav({
+    itemCount: filteredMeetings.length,
+    focusedIndex,
+    setFocusedIndex,
+  })
 
   const FILTER_OPTIONS: { key: FilterMode; label: string }[] = [
     { key: 'all', label: 'All Meetings' },

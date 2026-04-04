@@ -12,6 +12,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../../lib/api'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
+import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo } from '../../data/team'
 import type { Project } from '../../data/types'
 import PageHeader from '../../components/PageHeader'
@@ -46,6 +47,7 @@ export default function Manuscripts() {
   const [view, setView] = useState<'list' | 'pipeline'>('list')
   const [filterPI, setFilterPI] = useState<string>('')
   const [showCreate, setShowCreate] = useState(false)
+  const [focusedIndex, setFocusedIndex] = useState(-1)
   useScrollReveal<HTMLDivElement>()
 
   const { data: projects = [], isLoading } = useProjects()
@@ -74,6 +76,13 @@ export default function Manuscripts() {
       return a.title.localeCompare(b.title)
     })
   }, [projects, filterPI])
+
+  useListKeyboardNav({
+    itemCount: view === 'list' ? manuscripts.length : 0,
+    focusedIndex,
+    setFocusedIndex,
+    disabled: showCreate,
+  })
 
   const taskCounts = useMemo(() => {
     const map = new Map<string, number>()

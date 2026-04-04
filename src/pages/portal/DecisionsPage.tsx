@@ -8,6 +8,7 @@ import EmptyState from '../../components/EmptyState'
 import Avatar from '../../components/Avatar'
 import { useDecisions, useDecisionsForReview, useSimilarDecisions, useSimilarDecisionsById, useDecisionTags } from '../../hooks/useApiData'
 import { useCreateDecision, useUpdateDecisionOutcome } from '../../hooks/useMutations'
+import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useToast } from '../../hooks/useToast'
 import { useProjects } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
@@ -64,6 +65,7 @@ export default function DecisionsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list')
   const [showCreate, setShowCreate] = useState(false)
+  const [focusedIndex, setFocusedIndex] = useState(-1)
 
   const { data: allDecisions = [], isLoading } = useDecisions(undefined, filterTag || undefined)
   const { data: reviewDecisions = [] } = useDecisionsForReview()
@@ -79,6 +81,13 @@ export default function DecisionsPage() {
 
   const pendingCount = allDecisions.filter((d) => d.outcome_status === 'pending').length
   const recordedCount = allDecisions.filter((d) => d.outcome_status !== 'pending').length
+
+  useListKeyboardNav({
+    itemCount: viewMode === 'list' ? filteredDecisions.length : 0,
+    focusedIndex,
+    setFocusedIndex,
+    disabled: showCreate,
+  })
 
   return (
     <div>

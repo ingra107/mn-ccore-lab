@@ -11,6 +11,7 @@ import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 import { useQueryClient } from '@tanstack/react-query'
+import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 interface DeadlineItem {
   id: string
@@ -32,6 +33,7 @@ type ViewMode = 'list' | 'timeline'
 export default function Deadlines() {
   const [view, setView] = useState<ViewMode>('list')
   const [filterType, setFilterType] = useState<string>('')
+  const [focusedIndex, setFocusedIndex] = useState(-1)
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
   const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
@@ -98,6 +100,12 @@ export default function Deadlines() {
   const nextWeek = deadlines.filter((d) => d.daysUntil > 7 && d.daysUntil <= 14 && d.status !== 'done')
   const later = deadlines.filter((d) => d.daysUntil > 14 && d.status !== 'done')
   const completed = deadlines.filter((d) => d.status === 'done' || d.status === 'completed')
+
+  useListKeyboardNav({
+    itemCount: view === 'list' ? deadlines.length : 0,
+    focusedIndex,
+    setFocusedIndex,
+  })
 
   return (
     <div>
