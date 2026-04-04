@@ -12,6 +12,7 @@ import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useToast } from '../../hooks/useToast'
 import { useProjects } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
+import InlineSelect from '../../components/InlineSelect'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { useDebounce } from '../../hooks/useDebounce'
 import type { DecisionRow } from '../../hooks/useApiData'
@@ -272,7 +273,7 @@ export default function DecisionsPage() {
           >
             {filteredDecisions.map((decision) => (
               <motion.div key={decision.id} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
-                <DecisionCard decision={decision} projects={projects} />
+                <DecisionCard decision={decision} projects={projects} onUpdateOutcome={updateOutcome} />
               </motion.div>
             ))}
           </motion.div>
@@ -314,7 +315,7 @@ function SentimentBadge({ sentiment }: { sentiment: string | null }) {
 
 // ── Decision Card ─────────────────────────────────────────────
 
-function DecisionCard({ decision, projects }: { decision: DecisionRow; projects: { slug: string; title: string }[] }) {
+function DecisionCard({ decision, projects, onUpdateOutcome }: { decision: DecisionRow; projects: { slug: string; title: string }[]; onUpdateOutcome?: { mutate: (input: { id: string; outcome: string; outcome_status: string; outcome_sentiment?: string }) => void } }) {
   const [expanded, setExpanded] = useState(false)
   const person = decision.decided_by ? getPersonInfo(decision.decided_by) : null
   const projectTitle = decision.project_slug
@@ -343,18 +344,15 @@ function DecisionCard({ decision, projects }: { decision: DecisionRow; projects:
           {decision.outcome_sentiment && decision.outcome_sentiment !== 'pending' && (
             <SentimentBadge sentiment={decision.outcome_sentiment} />
           )}
-          {decision.outcome_status !== 'pending' && (
-            <span
-              className="text-[10px] px-1.5 py-0.5 rounded-full ml-1"
-              style={{
-                fontFamily: 'var(--font-sans)',
-                color: decision.outcome_status === 'recorded' ? 'var(--teal)' : 'var(--gold)',
-                backgroundColor: decision.outcome_status === 'recorded' ? 'rgba(45,138,138,0.08)' : 'rgba(201,168,76,0.08)',
-              }}
-            >
-              {decision.outcome_status}
-            </span>
-          )}
+          <InlineSelect
+            value={decision.outcome_status || 'pending'}
+            options={[
+              { value: 'pending', label: 'Pending', color: 'var(--gold)' },
+              { value: 'recorded', label: 'Recorded', color: 'var(--teal)' },
+              { value: 'revisited', label: 'Revisited', color: 'var(--slate)' },
+            ]}
+            onChange={(val) => onUpdateOutcome?.mutate({ id: decision.id, outcome: decision.outcome || '', outcome_status: val })}
+          />
           <button
             onClick={() => setExpanded(!expanded)}
             style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '2px', opacity: 0.5 }}

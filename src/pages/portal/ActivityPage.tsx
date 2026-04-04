@@ -3,7 +3,10 @@ import { Activity as ActivityIcon } from 'lucide-react'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { useActivity } from '../../hooks/useApiData'
 import Avatar from '../../components/Avatar'
-import { getPersonInfo } from '../../data/team'
+import HoverCard from '../../components/HoverCard'
+import type { HoverCardData } from '../../components/HoverCard'
+import { useHoverCard } from '../../hooks/useHoverCard'
+import { getPersonInfo, getMemberBySlug, directors } from '../../data/team'
 import { formatRelativeTime, formatMediumDate } from '../../lib/dateUtils'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -102,9 +105,7 @@ export default function ActivityPage() {
                   return (
                     <div key={item.id} className="flex items-start gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
                       {person ? (
-                        <div style={{ width: 28, height: 28, flexShrink: 0 }}>
-                          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
-                        </div>
+                        <ActivityAvatar slug={item.actor!} />
                       ) : (
                         <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--ice)' }}>
                           <span className="text-[8px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>SYS</span>
@@ -141,6 +142,26 @@ export default function ActivityPage() {
           />
         )}
       </div>
+    </div>
+  )
+}
+
+function ActivityAvatar({ slug }: { slug: string }) {
+  const p = getPersonInfo(slug)
+  const hoverCard = useHoverCard()
+  const dir = directors.find(d => d.slug === slug)
+  const member = getMemberBySlug(slug)
+  const data: HoverCardData = { type: 'member', name: p.name, role: dir?.role || member?.role, photoUrl: p.photoUrl, initials: p.initials }
+
+  return (
+    <div
+      ref={hoverCard.triggerRef as React.RefObject<HTMLDivElement>}
+      style={{ width: 28, height: 28, flexShrink: 0 }}
+      onMouseEnter={hoverCard.handlers.onMouseEnter}
+      onMouseLeave={hoverCard.handlers.onMouseLeave}
+    >
+      <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
+      <HoverCard data={data} isVisible={hoverCard.isVisible} position={hoverCard.position} cardRef={hoverCard.cardRef} cardHandlers={hoverCard.cardHandlers} />
     </div>
   )
 }

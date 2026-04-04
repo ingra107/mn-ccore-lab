@@ -7,6 +7,7 @@ import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
+import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useIdeas } from '../../hooks/useApiData'
@@ -309,10 +310,17 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
                 {idea.research_area || '—'}
               </span>
 
-              {/* Status */}
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: status.color }}>
-                {status.label}
-              </span>
+              {/* Status (inline editable) */}
+              <InlineSelect
+                value={idea.status}
+                options={[
+                  { value: 'new', label: 'New', color: 'var(--teal)' },
+                  { value: 'under_review', label: 'Review', color: 'var(--gold)' },
+                  { value: 'approved', label: 'Approved', color: 'var(--green)' },
+                  { value: 'parked', label: 'Parked', color: 'var(--slate)' },
+                ]}
+                onChange={(val) => onStatusChange(idea.id, val)}
+              />
 
               {/* Submitted by */}
               <div className="flex items-center gap-1.5">
