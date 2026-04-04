@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
+import { CardSkeleton } from '../../components/LoadingSkeleton'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
@@ -30,8 +31,8 @@ function formatWeekRange(start: Date): string {
 export default function AnalyticsPage() {
   const { user } = useAuth()
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
-  const { data: tasks = [] } = useTasks()
-  const { data: projects = [] } = useProjects()
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks()
+  const { data: projects = [], isLoading: projectsLoading } = useProjects()
   const { data: ideas = [] } = useIdeas()
   const { data: activity = [] } = useActivity(100)
   const { data: healthData } = useProjectHealth()
@@ -129,6 +130,8 @@ export default function AnalyticsPage() {
     a.click()
     URL.revokeObjectURL(url)
   }
+
+  if (tasksLoading || projectsLoading) return <CardSkeleton count={6} />
 
   return (
     <div>

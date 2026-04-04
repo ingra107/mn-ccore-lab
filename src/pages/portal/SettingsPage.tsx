@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
+import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { useTeam } from '../../hooks/useApiData'
 import Avatar from '../../components/Avatar'
 import { getPersonInfo } from '../../data/team'
@@ -19,7 +20,7 @@ export default function SettingsPage() {
   const { data: team = [] } = useTeam()
 
   // Load settings
-  const { data: settings = {} } = useQuery({
+  const { data: settings = {}, isLoading: settingsLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
       const res = await fetch('/api/settings')
@@ -70,6 +71,8 @@ export default function SettingsPage() {
   })
 
   const [saved, setSaved] = useState(false)
+
+  if (settingsLoading) return <TextSkeleton lines={8} />
 
   return (
     <div>

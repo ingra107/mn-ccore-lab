@@ -10,6 +10,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
+import { CardSkeleton } from '../../components/LoadingSkeleton'
 import OnboardingChecklist from '../../components/OnboardingChecklist'
 import BentoCard from '../../components/dashboard/BentoCard'
 import Avatar from '../../components/Avatar'
@@ -84,7 +85,7 @@ export default function Personal() {
   const person = currentUser ? getPersonInfo(currentUser) : null
   const { role, setRoleOverride, clearRoleOverride, isRoleInitialized, markRoleInitialized } = useUserRole()
 
-  const { data: allTasks = [] } = useTasks()
+  const { data: allTasks = [], isLoading: tasksLoading } = useTasks()
   const { data: healthData } = useProjectHealth()
   const { data: activity = [] } = useActivity(10)
   const { data: notifications = [] } = useNotifications(currentUser || '')
@@ -189,6 +190,8 @@ export default function Personal() {
 
   // Show role selector when authenticated OR in dev mode
   const showRoleSelector = isAuthenticated || import.meta.env.DEV
+
+  if (tasksLoading) return <CardSkeleton count={4} />
 
   return (
     <div>

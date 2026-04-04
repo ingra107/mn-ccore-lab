@@ -7,16 +7,19 @@ import {
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
+import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useMeetingsApi } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
 
 export default function MeetingNotesPage() {
   const [showCreate, setShowCreate] = useState(false)
-  const { data: meetings = [] } = useMeetingsApi()
+  const { data: meetings = [], isLoading } = useMeetingsApi()
 
   // Stats from meetings that have notes
   const processedCount = meetings.filter((m) => m.notes).length
   const totalCount = meetings.length
+
+  if (isLoading) return <TableSkeleton rows={5} cols={3} />
 
   return (
     <div>
