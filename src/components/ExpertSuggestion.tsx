@@ -24,7 +24,7 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
           <Sparkles size={16} style={{ color: 'var(--gold)' }} />
           <h3
             className="text-sm font-normal"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+            style={{ color: 'var(--ink)' }}
           >
             Who can help?
           </h3>
@@ -63,7 +63,7 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="text-xs"
-            style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)' }}
+            style={{ color: 'var(--slate)' }}
           >
             Searching...
           </motion.p>
@@ -76,7 +76,7 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="text-xs"
-            style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)', opacity: 0.7 }}
+            style={{ color: 'var(--slate)', opacity: 0.7 }}
           >
             No experts found for "{searchTopic}"
           </motion.p>
@@ -125,7 +125,6 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
                         background: 'rgba(201,168,76,0.12)',
                         color: 'var(--gold)',
                         fontSize: '10px',
-                        fontFamily: 'var(--font-sans)',
                         fontWeight: 600,
                       }}
                     >
@@ -146,7 +145,6 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
                           key={i}
                           className="text-[10px] px-1.5 py-0 rounded-full"
                           style={{
-                            fontFamily: 'var(--font-sans)',
                             background: source === 'publications'
                               ? 'rgba(59,130,246,0.08)'
                               : 'rgba(201,168,76,0.08)',

@@ -35,7 +35,6 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
       {/* Title */}
       <p
         style={{
-          fontFamily: 'var(--font-sans)',
           fontSize: 16,
           fontWeight: 500,
           color: 'var(--ink)',
@@ -50,7 +49,6 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
       {subtitle && (
         <p
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: 13,
             fontWeight: 400,
             color: 'var(--slate)',
@@ -79,7 +77,6 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
             borderRadius: 8,
             border: '1px solid var(--border-subtle)',
             background: 'none',
-            fontFamily: 'var(--font-sans)',
             fontSize: 13,
             fontWeight: 500,
             color: 'var(--ink)',

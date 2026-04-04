@@ -73,7 +73,6 @@ export default function BentoCard({
               position: 'absolute',
               top: 12,
               right: 12,
-              fontFamily: 'var(--font-sans)',
               fontSize: '9px',
               fontWeight: 500,
               textTransform: 'uppercase',
@@ -109,7 +108,6 @@ export default function BentoCard({
           <div className="min-w-0 flex-1">
             <h3
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontWeight: 400,
                 fontSize: '15px',
                 lineHeight: 1.3,

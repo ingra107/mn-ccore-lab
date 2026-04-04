@@ -311,7 +311,6 @@ export default function Meetings() {
   }
 
   const labelStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-sans)',
     fontSize: '10px',
     color: 'var(--slate)',
     opacity: 0.7,
@@ -332,7 +331,6 @@ export default function Meetings() {
             </div>
             <h1
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontWeight: 800,
                 fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
                 color: 'var(--ink)',
@@ -395,7 +393,7 @@ export default function Meetings() {
               </h2>
               <p
                 className="text-xs mt-0.5"
-                style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}
+                style={{ color: 'var(--slate)', opacity: 0.7 }}
               >
                 {nextMeeting.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
@@ -404,7 +402,7 @@ export default function Meetings() {
                 const fSlug = getMeetingFacilitator(dateStr)
                 const fInfo = fSlug ? getPersonInfo(fSlug) : null
                 return fInfo ? (
-                  <p className="flex items-center gap-1.5 text-xs mt-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', margin: '4px 0 0 0' }}>
+                  <p className="flex items-center gap-1.5 text-xs mt-1" style={{ color: 'var(--teal)', margin: '4px 0 0 0' }}>
                     <UserCheck size={12} />
                     Facilitated by {fInfo.name}
                   </p>
@@ -416,7 +414,7 @@ export default function Meetings() {
                 <Clock size={14} style={{ color: 'var(--gold)' }} />
                 <span
                   className="text-sm font-semibold"
-                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+                  style={{ color: 'var(--ink)' }}
                 >
                   {daysUntil === 0
                     ? 'Today'
@@ -443,7 +441,7 @@ export default function Meetings() {
             </p>
             <div className="flex flex-wrap gap-2 mt-2">
               {cadence.reasons.map((r, i) => (
-                <span key={i} style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
+                <span key={i} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
                   {'\u2022'} {r}
                 </span>
               ))}
@@ -455,7 +453,7 @@ export default function Meetings() {
         <div className="mb-8">
           <h2
             className="text-lg font-medium mb-3"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+            style={{ color: 'var(--ink)' }}
           >
             Action Items
           </h2>
@@ -465,7 +463,7 @@ export default function Meetings() {
             <div className="mb-4">
               <h3
                 className="text-xs font-normal uppercase tracking-wider mb-2"
-                style={{ color: 'var(--gold)', fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}
+                style={{ color: 'var(--gold)', letterSpacing: '0.06em' }}
               >
                 Pending ({pendingActions.length})
               </h3>
@@ -532,7 +530,7 @@ export default function Meetings() {
                           {item.dueDate && (
                             <span
                               className="text-xs"
-                              style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-sans)' }}
+                              style={{ color: 'var(--slate)', opacity: 0.6 }}
                             >
                               due {formatShortDate(item.dueDate)}
                             </span>
@@ -543,7 +541,6 @@ export default function Meetings() {
                               style={{
                                 background: 'var(--ice)',
                                 color: 'var(--slate)',
-                                fontFamily: 'var(--font-sans)',
                                 fontSize: '10px',
                               }}
                             >
@@ -705,7 +702,7 @@ export default function Meetings() {
             <div>
               <h3
                 className="text-xs font-normal uppercase tracking-wider mb-2"
-                style={{ color: 'var(--teal)', fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}
+                style={{ color: 'var(--teal)', letterSpacing: '0.06em' }}
               >
                 Completed ({completedActions.length})
               </h3>
@@ -778,7 +775,7 @@ export default function Meetings() {
                           </div>
                           <span
                             className="text-xs"
-                            style={{ color: 'var(--slate)', opacity: 0.4, fontFamily: 'var(--font-sans)' }}
+                            style={{ color: 'var(--slate)', opacity: 0.4 }}
                           >
                             from {formatShortDate(item.meetingDate)}
                           </span>
@@ -825,7 +822,7 @@ export default function Meetings() {
           <div className="flex items-center justify-between mb-3">
             <h2
               className="text-lg font-medium"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+              style={{ color: 'var(--ink)' }}
             >
               Meeting Archive
             </h2>
@@ -922,7 +919,7 @@ export default function Meetings() {
                       <div key={i} className="flex items-center gap-2">
                         <span
                           className="shrink-0 text-xs"
-                          style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5, width: '18px' }}
+                          style={{ color: 'var(--slate)', opacity: 0.5, width: '18px' }}
                         >
                           {i + 1}.
                         </span>
@@ -961,7 +958,6 @@ export default function Meetings() {
                         background: 'none',
                         border: 'none',
                         color: 'var(--gold)',
-                        fontFamily: 'var(--font-sans)',
                         padding: '4px 0',
                       }}
                     >
@@ -985,7 +981,6 @@ export default function Meetings() {
                   onClick={() => setFilter(f.key)}
                   className="cursor-pointer inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     minHeight: '44px',
                     background: filter === f.key ? 'var(--gold)' : 'var(--ice)',
                     color: filter === f.key ? '#0f1923' : 'var(--slate)',
@@ -1063,7 +1058,7 @@ export default function Meetings() {
           <div className="mt-4 text-center">
             <span
               className="text-xs"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}
+              style={{ color: 'var(--slate)', opacity: 0.4 }}
             >
               {meetings.length} meetings &middot; {allActionItems.length} action items &middot;{' '}
               {meetings.reduce((acc, m) => acc + (m.decisions?.length ?? 0), 0)} decisions

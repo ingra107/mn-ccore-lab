@@ -114,14 +114,14 @@ export default function UpcomingCard() {
               <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', margin: '2px 0 0 0', lineHeight: 1.3 }}>
                 {nextMeeting.title.split(':')[0]}
               </p>
-              <p style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.7, margin: '2px 0 0 0' }}>
+              <p style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7, margin: '2px 0 0 0' }}>
                 {new Date(nextMeeting.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
               </p>
               {(() => {
                 const fSlug = getMeetingFacilitator(nextMeeting.date)
                 const fInfo = fSlug ? getPersonInfo(fSlug) : null
                 return fInfo ? (
-                  <p className="flex items-center gap-1" style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--teal)', margin: '2px 0 0 0' }}>
+                  <p className="flex items-center gap-1" style={{ fontSize: '10px', color: 'var(--teal)', margin: '2px 0 0 0' }}>
                     <UserCheck size={10} />
                     {fInfo.name.split(' ')[0]}
                   </p>
@@ -155,7 +155,6 @@ export default function UpcomingCard() {
             >
               <span style={{ fontSize: '10px', lineHeight: 1 }}>{cadence.emoji}</span>
               <span style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '9px',
                 color: 'var(--slate)',
                 opacity: 0.8,
@@ -169,7 +168,7 @@ export default function UpcomingCard() {
             {meetingActionCounts.total > 0 && (
               <div className="flex items-center gap-1.5">
                 <ListChecks size={11} style={{ color: 'var(--teal)', opacity: 0.8 }} />
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>
                   {meetingActionCounts.pending}/{meetingActionCounts.total} pending
                 </span>
               </div>
@@ -178,7 +177,6 @@ export default function UpcomingCard() {
               to={`/meetings/${nextMeeting.id}`}
               className="inline-flex items-center gap-1"
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '10px',
                 color: 'var(--gold)',
                 textDecoration: 'none',
@@ -232,7 +230,6 @@ export default function UpcomingCard() {
                     : isUrgent
                       ? 'rgba(201, 168, 76, 0.12)'
                       : 'rgba(100, 116, 139, 0.06)',
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   fontWeight: 600,
                   color: isOverdue
@@ -282,7 +279,6 @@ export default function UpcomingCard() {
                   />
                   <span
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       fontSize: '9px',
                       color: 'var(--slate)',
                       opacity: 0.5,

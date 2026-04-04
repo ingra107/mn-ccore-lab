@@ -250,7 +250,6 @@ function NodeDetail({
             <span
               className="text-xs"
               style={{
-                fontFamily: 'var(--font-sans)',
                 color: 'rgba(255, 255, 255, 0.4)',
                 fontSize: '10px',
                 textTransform: 'uppercase',
@@ -281,7 +280,6 @@ function NodeDetail({
           <div
             className="text-xs mt-0.5"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: 'rgba(255, 255, 255, 0.4)',
               fontSize: '10px',
             }}
@@ -299,7 +297,6 @@ function NodeDetail({
           <div
             className="text-xs mt-0.5"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: 'rgba(255, 255, 255, 0.4)',
               fontSize: '10px',
             }}
@@ -344,7 +341,6 @@ function NodeDetail({
           <h4
             className="text-xs uppercase mb-3"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: 'rgba(255, 255, 255, 0.4)',
               letterSpacing: '0.1em',
               fontSize: '10px',
@@ -384,7 +380,6 @@ function NodeDetail({
                   <span
                     className="text-xs flex-shrink-0 ml-2"
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       color: 'rgba(201, 168, 76, 0.6)',
                       fontSize: '10px',
                     }}
@@ -439,7 +434,6 @@ function EdgeDetail({
           <span
             className="text-xs mt-1"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: 'rgba(201, 168, 76, 0.6)',
               fontSize: '10px',
             }}
@@ -478,7 +472,6 @@ function EdgeDetail({
         <h4
           className="text-xs uppercase mb-3"
           style={{
-            fontFamily: 'var(--font-sans)',
             color: 'rgba(255, 255, 255, 0.4)',
             letterSpacing: '0.1em',
             fontSize: '10px',
@@ -506,7 +499,6 @@ function EdgeDetail({
               <span
                 className="text-xs mt-1.5 inline-block"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   color: 'rgba(201, 168, 76, 0.5)',
                   fontSize: '10px',
                 }}

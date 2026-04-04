@@ -80,7 +80,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
-          <span className="text-xs uppercase tracking-wider" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+          <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 0.5 }}>
             Task Detail
           </span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
@@ -169,7 +169,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
           )}
 
           {/* Meta info */}
-          <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+          <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 0.4 }}>
             {task.source && <span>Source: {task.source}</span>}
             {task.created_at && <span>Created {formatRelativeTime(task.created_at)}</span>}
             {task.completed_at && <span>Completed {formatRelativeTime(task.completed_at)}</span>}

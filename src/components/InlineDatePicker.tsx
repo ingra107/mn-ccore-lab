@@ -60,7 +60,6 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           onBlur={() => setEditing(false)}
           onKeyDown={handleKeyDown}
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '12px',
             color: 'var(--ink)',
             background: 'var(--cream)',
@@ -86,7 +85,6 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           border: '1px solid transparent',
           background: 'none',
           cursor: 'pointer',
-          fontFamily: 'var(--font-sans)',
           fontSize: '12px',
           fontWeight: isOverdue ? 500 : 400,
           color: isOverdue ? 'var(--maroon)' : value ? 'var(--slate)' : 'var(--slate)',

@@ -97,7 +97,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
 
       {sorted.length === 0 && (
         <div style={{ padding: '48px 16px', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
+          <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
             No tasks match the current filters
           </p>
         </div>
@@ -258,7 +258,6 @@ function TaskGridRow({
             </span>
           )}
           <span style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '13px',
             fontWeight: 400,
             color: 'var(--ink)',
@@ -375,7 +374,6 @@ function InlineCellSelect({
           border: '1px solid transparent',
           background: 'none',
           cursor: 'pointer',
-          fontFamily: 'var(--font-sans)',
           fontSize: '12px',
           fontWeight: 400,
         }}
@@ -407,7 +405,7 @@ function InlineCellSelect({
                   display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
                   padding: '7px 12px', border: 'none', cursor: 'pointer',
                   background: opt.value === value ? 'rgba(45,138,138,0.06)' : 'none',
-                  fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: opt.value === value ? 500 : 400,
+                  fontSize: '12px', fontWeight: opt.value === value ? 500 : 400,
                   color: opt.color || 'var(--ink)', textAlign: 'left',
                   transition: 'background 0.1s',
                 }}

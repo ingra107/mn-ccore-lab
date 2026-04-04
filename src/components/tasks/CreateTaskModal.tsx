@@ -16,7 +16,6 @@ interface CreateTaskModalProps {
 }
 
 const selectStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-sans)',
   fontSize: '13px',
   color: 'var(--ink)',
   backgroundColor: 'var(--cream)',
@@ -81,7 +80,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
         >
           <h3
             className="text-lg"
-            style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--ink)' }}
+            style={{ fontWeight: 400, color: 'var(--ink)' }}
           >
             Create New Task
           </h3>
@@ -99,7 +98,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           <div>
             <label
               className="block text-xs font-medium mb-1"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+              style={{ color: 'var(--slate)' }}
             >
               Title *
             </label>
@@ -121,7 +120,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           <div>
             <label
               className="block text-xs font-medium mb-1"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+              style={{ color: 'var(--slate)' }}
             >
               Description
             </label>
@@ -140,7 +139,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             <div>
               <label
                 className="block text-xs font-medium mb-1"
-                style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+                style={{ color: 'var(--slate)' }}
               >
                 Owner * <span style={{ fontWeight: 400, opacity: 0.5 }}>(responsible)</span>
               </label>
@@ -159,7 +158,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             <div>
               <label
                 className="block text-xs font-medium mb-1"
-                style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+                style={{ color: 'var(--slate)' }}
               >
                 Priority
               </label>
@@ -182,7 +181,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             <div>
               <label
                 className="block text-xs font-medium mb-1"
-                style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+                style={{ color: 'var(--slate)' }}
               >
                 Project <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span>
               </label>
@@ -201,7 +200,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             <div>
               <label
                 className="block text-xs font-medium mb-1"
-                style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+                style={{ color: 'var(--slate)' }}
               >
                 Due Date
               </label>
@@ -217,7 +216,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
 
           {/* Submit */}
           <div className="flex items-center justify-between gap-2 mt-2">
-            <p className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+            <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
               Tasks can also be created from meetings and project pages
             </p>
           </div>
@@ -227,7 +226,6 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               onClick={onClose}
               className="px-4 py-2 rounded-md text-sm transition-colors"
               style={{
-                fontFamily: 'var(--font-sans)',
                 color: 'var(--slate)',
                 cursor: 'pointer',
                 background: 'none',
@@ -241,7 +239,6 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               disabled={!title.trim() || !assignee}
               className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
               style={{
-                fontFamily: 'var(--font-sans)',
                 backgroundColor: !title.trim() || !assignee ? 'var(--border-light)' : 'var(--teal)',
                 color: !title.trim() || !assignee ? 'var(--slate)' : 'white',
                 cursor: !title.trim() || !assignee ? 'not-allowed' : 'pointer',

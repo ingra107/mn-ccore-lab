@@ -143,7 +143,7 @@ export default function AnalyticsPage() {
           <button
             onClick={exportCSV}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
+            style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
           >
             <Download size={14} />
             Export CSV
@@ -162,7 +162,7 @@ export default function AnalyticsPage() {
         </button>
         <div className="flex items-center gap-2">
           <Calendar size={14} style={{ color: 'var(--teal)' }} />
-          <span className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+          <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
             {formatWeekRange(selectedWeekStart)}
           </span>
         </div>
@@ -178,7 +178,7 @@ export default function AnalyticsPage() {
           <button
             onClick={() => setWeekOffset(0)}
             className="px-3 py-1 rounded-lg text-xs font-medium border transition-colors"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', background: 'none', cursor: 'pointer' }}
+            style={{ color: 'var(--teal)', borderColor: 'var(--teal)', background: 'none', cursor: 'pointer' }}
           >
             This Week
           </button>
@@ -198,19 +198,19 @@ export default function AnalyticsPage() {
         <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'var(--maroon)', borderLeftWidth: 3 }}>
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={14} style={{ color: 'var(--maroon)' }} />
-            <h3 className="text-sm font-normal" style={{ fontFamily: 'var(--font-sans)', color: 'var(--maroon)' }}>
+            <h3 className="text-sm font-normal" style={{ color: 'var(--maroon)' }}>
               Attention Required
             </h3>
-            <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+            <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>
               {weekStats.overdue} overdue task{weekStats.overdue > 1 ? 's' : ''} need attention
             </span>
           </div>
           <div className="flex flex-col gap-1">
             {tasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()).slice(0, 5).map(t => (
-              <div key={t.id} className="flex items-center gap-2 text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+              <div key={t.id} className="flex items-center gap-2 text-xs" style={{ color: 'var(--ink)' }}>
                 <Circle size={10} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
                 <span className="truncate">{t.title}</span>
-                {t.due_date && <span style={{ color: 'var(--maroon)', fontFamily: 'var(--font-sans)', fontSize: '10px', flexShrink: 0 }}>Due {new Date(t.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                {t.due_date && <span style={{ color: 'var(--maroon)', fontSize: '10px', flexShrink: 0 }}>Due {new Date(t.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
               </div>
             ))}
           </div>
@@ -218,8 +218,8 @@ export default function AnalyticsPage() {
       ) : (
         <div className="mt-4 rounded-xl border p-4 text-center" style={{ borderColor: 'var(--border-subtle)' }}>
           <CheckCircle2 size={24} style={{ color: 'var(--green, #22c55e)', margin: '0 auto 6px' }} />
-          <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>All caught up!</p>
-          <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>No overdue tasks. Keep up the momentum.</p>
+          <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>All caught up!</p>
+          <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>No overdue tasks. Keep up the momentum.</p>
         </div>
       )}
 
@@ -237,10 +237,10 @@ export default function AnalyticsPage() {
         {isPi ? (
           <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
             <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-sm font-normal" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+              <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>
                 Team Task Overview
               </h3>
-              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', backgroundColor: 'var(--border-light)' }}>
+              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ color: 'var(--slate)', backgroundColor: 'var(--border-light)' }}>
                 PI only
               </span>
             </div>
@@ -252,18 +252,18 @@ export default function AnalyticsPage() {
                     <div style={{ width: 28, height: 28 }}>
                       <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
                     </div>
-                    <span className="text-sm w-28 truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                    <span className="text-sm w-28 truncate" style={{ color: 'var(--ink)' }}>
                       {person.name}
                     </span>
                     {/* Progress bar */}
                     <div className="flex-1 h-4 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
                       <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, backgroundColor: rate > 70 ? 'var(--green, #22c55e)' : rate > 40 ? 'var(--gold)' : 'var(--maroon)' }} />
                     </div>
-                    <span className="text-[11px] w-16 text-right" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+                    <span className="text-[11px] w-16 text-right" style={{ color: 'var(--slate)' }}>
                       {done}/{total}
                     </span>
                     {overdue > 0 && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-sans)', color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
                         {overdue} overdue
                       </span>
                     )}
@@ -271,23 +271,23 @@ export default function AnalyticsPage() {
                 )
               })}
               {completionByPerson.length === 0 && (
-                <p className="text-center py-6 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>No task data yet</p>
+                <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>No task data yet</p>
               )}
             </div>
           </div>
         ) : (
           <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-            <h3 className="text-sm font-normal mb-4" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+            <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>
               Lab Progress This Week
             </h3>
             <div className="text-center py-6">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <span className="text-3xl font-bold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}>
+                <span className="text-3xl font-bold" style={{ color: 'var(--teal)' }}>
                   {tasks.filter(t => t.completed_at && t.completed_at >= new Date(Date.now() - 7 * 86400000).toISOString()).length}
                 </span>
-                <span className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>tasks completed</span>
+                <span className="text-sm" style={{ color: 'var(--slate)' }}>tasks completed</span>
               </div>
-              <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+              <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>
                 {pendingTasks} still pending across the lab
               </p>
             </div>
@@ -301,7 +301,7 @@ export default function AnalyticsPage() {
 
         {/* Projects by stage */}
         <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-sm font-normal mb-4" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+          <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>
             Project Pipeline Distribution
           </h3>
           <div className="flex flex-col gap-2">
@@ -318,10 +318,10 @@ export default function AnalyticsPage() {
               }
               return (
                 <div key={stage} className="flex items-center gap-3">
-                  <span className="text-xs w-28" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{stage}</span>
+                  <span className="text-xs w-28" style={{ color: 'var(--ink)' }}>{stage}</span>
                   <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
                     <div className="h-full rounded transition-all flex items-center px-2" style={{ width: `${width}%`, backgroundColor: stageColors[stage] || 'var(--teal)', minWidth: 24 }}>
-                      <span className="text-[9px] font-semibold" style={{ color: 'white', fontFamily: 'var(--font-sans)' }}>{count}</span>
+                      <span className="text-[9px] font-semibold" style={{ color: 'white' }}>{count}</span>
                     </div>
                   </div>
                 </div>
@@ -330,7 +330,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Priority distribution */}
-          <h4 className="text-xs font-semibold mt-6 mb-3" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+          <h4 className="text-xs font-semibold mt-6 mb-3" style={{ color: 'var(--ink)' }}>
             Active Task Priority
           </h4>
           <div className="flex items-center gap-3">
@@ -340,8 +340,8 @@ export default function AnalyticsPage() {
               return (
                 <div key={p} className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded" style={{ backgroundColor: colors[p] }} />
-                  <span className="text-xs capitalize" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{p}</span>
-                  <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-sans)', color: colors[p] }}>{count}</span>
+                  <span className="text-xs capitalize" style={{ color: 'var(--ink)' }}>{p}</span>
+                  <span className="text-xs font-semibold" style={{ color: colors[p] }}>{count}</span>
                 </div>
               )
             })}
@@ -351,7 +351,7 @@ export default function AnalyticsPage() {
 
       {/* Lab-wide Activity Heatmap */}
       <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-        <h3 className="text-sm font-normal mb-4" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+        <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>
           Lab Activity
         </h3>
         <ActivityHeatmap days={90} />

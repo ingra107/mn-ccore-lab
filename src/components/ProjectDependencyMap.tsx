@@ -419,7 +419,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
               }}
             >
               <div style={{ fontWeight: 600, marginBottom: '2px' }}>{node.title}</div>
-              <div style={{ opacity: 0.6, fontFamily: 'var(--font-sans)', fontSize: '10px' }}>
+              <div style={{ opacity: 0.6, fontSize: '10px' }}>
                 {node.stage} &middot; {incoming.length} incoming &middot; {outgoing.length} outgoing
               </div>
             </motion.div>
@@ -434,7 +434,6 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
       >
         <span
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '10px',
             color: 'var(--slate)',
             opacity: 0.5,
@@ -448,7 +447,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
           <span
             key={type}
             className="inline-flex items-center gap-1.5"
-            style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)' }}
+            style={{ fontSize: '10px', color: 'var(--slate)' }}
           >
             <span
               style={{
@@ -463,14 +462,14 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
             {label}
           </span>
         ))}
-        <span style={{ marginLeft: '8px', fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           Stages:
         </span>
         {Object.entries(STAGE_COLORS).map(([stage, color]) => (
           <span
             key={stage}
             className="inline-flex items-center gap-1"
-            style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)' }}
+            style={{ fontSize: '10px', color: 'var(--slate)' }}
           >
             <span
               style={{

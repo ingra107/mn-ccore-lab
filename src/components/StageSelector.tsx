@@ -34,7 +34,6 @@ function StageSelectorFull({ currentStage, onChange }: { currentStage: Stage; on
             onClick={() => onChange(stage)}
             className="cursor-pointer inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium stage-pill"
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '11px',
               background: isCurrent
                 ? 'var(--gold)'
@@ -89,7 +88,6 @@ function StageSelectorCompact({ currentStage, onChange }: { currentStage: Stage;
         }}
         className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs stage-move-button"
         style={{
-          fontFamily: 'var(--font-sans)',
           fontSize: '10px',
           background: 'rgba(201,168,76,0.1)',
           color: 'var(--gold)',
@@ -141,7 +139,6 @@ function StageSelectorCompact({ currentStage, onChange }: { currentStage: Stage;
                   }}
                   className="cursor-pointer w-full text-left px-3 py-2 text-xs stage-dropdown-item"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     background: isCurrent ? 'rgba(201,168,76,0.15)' : 'transparent',
                     color: isCurrent ? 'var(--gold)' : 'var(--ink)',

@@ -36,7 +36,6 @@ const STAGES = [
 ]
 
 const selectStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-sans)',
   fontSize: '13px',
   color: 'var(--ink)',
   backgroundColor: 'var(--cream)',
@@ -93,7 +92,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
         >
           <h3
             className="text-lg"
-            style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--ink)' }}
+            style={{ fontWeight: 400, color: 'var(--ink)' }}
           >
             New Project
           </h3>
@@ -111,7 +110,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
           <div>
             <label
               className="block text-xs font-medium mb-1"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+              style={{ color: 'var(--slate)' }}
             >
               Title *
             </label>
@@ -134,7 +133,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
             <div>
               <label
                 className="block text-xs font-medium mb-1"
-                style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+                style={{ color: 'var(--slate)' }}
               >
                 Category
               </label>
@@ -152,7 +151,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
             <div>
               <label
                 className="block text-xs font-medium mb-1"
-                style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+                style={{ color: 'var(--slate)' }}
               >
                 Stage
               </label>
@@ -173,7 +172,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
           <div>
             <label
               className="block text-xs font-medium mb-1"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+              style={{ color: 'var(--slate)' }}
             >
               PI <span style={{ fontWeight: 400, opacity: 0.5 }}>(slug, e.g. nick)</span>
             </label>
@@ -194,7 +193,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
           <div>
             <label
               className="block text-xs font-medium mb-1"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+              style={{ color: 'var(--slate)' }}
             >
               Description <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span>
             </label>
@@ -215,7 +214,6 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               onClick={onClose}
               className="px-4 py-2 rounded-md text-sm transition-colors"
               style={{
-                fontFamily: 'var(--font-sans)',
                 color: 'var(--slate)',
                 cursor: 'pointer',
                 background: 'none',
@@ -229,7 +227,6 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               disabled={!title.trim()}
               className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
               style={{
-                fontFamily: 'var(--font-sans)',
                 backgroundColor: !title.trim() ? 'var(--border-light)' : 'var(--gold)',
                 color: !title.trim() ? 'var(--slate)' : 'var(--ink)',
                 cursor: !title.trim() ? 'not-allowed' : 'pointer',

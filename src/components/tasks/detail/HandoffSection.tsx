@@ -112,7 +112,6 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
   }
 
   const inputStyle = {
-    fontFamily: 'var(--font-sans)',
     color: 'var(--ink)',
     borderColor: 'var(--border-light)',
     backgroundColor: 'var(--cream)',
@@ -210,7 +209,6 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                   color: (!toSlug || !situation.trim()) ? 'var(--slate)' : 'white',
                   border: 'none',
                   cursor: (!toSlug || !situation.trim()) ? 'not-allowed' : 'pointer',
-                  fontFamily: 'var(--font-sans)',
                   opacity: createHandoff.isPending ? 0.6 : 1,
                 }}
               >
@@ -221,7 +219,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                 type="button"
                 onClick={() => setShowForm(false)}
                 className="px-3 py-1.5 rounded-md text-xs"
-                style={{ background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer', color: 'var(--slate)', fontFamily: 'var(--font-sans)' }}
+                style={{ background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer', color: 'var(--slate)' }}
               >
                 Cancel
               </button>
@@ -233,7 +231,6 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
           onClick={() => setShowForm(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors"
           style={{
-            fontFamily: 'var(--font-sans)',
             color: 'var(--teal)',
             background: 'rgba(45,138,138,0.06)',
             border: '1px solid rgba(45,138,138,0.15)',
@@ -249,7 +246,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
       {/* Handoff History Timeline */}
       {handoffs.length > 0 && (
         <div className="mt-3">
-          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.5 }}>
             <ArrowRightLeft size={10} />
             Handoff History ({handoffs.length})
           </label>
@@ -273,19 +270,19 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                       </div>
                       <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{to.name}</span>
                     </div>
-                    <span className="text-[9px] ml-auto" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+                    <span className="text-[9px] ml-auto" style={{ color: 'var(--slate)', opacity: 0.4 }}>
                       {formatRelativeTime(h.created_at)}
                     </span>
                   </div>
-                  <div className="flex flex-col gap-1 text-[12px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
-                    <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>S:</span> {h.situation}</p>
-                    {h.background && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>B:</span> {h.background}</p>}
-                    {h.assessment && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>A:</span> {h.assessment}</p>}
-                    {h.recommendation && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>R:</span> {h.recommendation}</p>}
+                  <div className="flex flex-col gap-1 text-[12px]" style={{ color: 'var(--ink)' }}>
+                    <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontSize: '10px' }}>S:</span> {h.situation}</p>
+                    {h.background && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontSize: '10px' }}>B:</span> {h.background}</p>}
+                    {h.assessment && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontSize: '10px' }}>A:</span> {h.assessment}</p>}
+                    {h.recommendation && <p className="m-0"><span style={{ fontWeight: 600, color: 'var(--teal)', fontSize: '10px' }}>R:</span> {h.recommendation}</p>}
                   </div>
                   <div className="mt-2">
                     {h.acknowledged ? (
-                      <span className="flex items-center gap-1 text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', opacity: 0.6 }}>
+                      <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--teal)', opacity: 0.6 }}>
                         <Check size={10} /> Acknowledged {h.acknowledged_at ? formatRelativeTime(h.acknowledged_at) : ''}
                       </span>
                     ) : (
@@ -293,7 +290,6 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                         onClick={() => acknowledgeHandoff.mutate(h.id)}
                         className="flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors"
                         style={{
-                          fontFamily: 'var(--font-sans)',
                           color: 'var(--gold)',
                           background: 'rgba(201,168,76,0.08)',
                           border: '1px solid rgba(201,168,76,0.2)',

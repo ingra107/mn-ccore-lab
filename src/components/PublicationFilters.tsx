@@ -44,7 +44,6 @@ function Pill({
       onClick={onClick}
       className="cursor-pointer inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
       style={{
-        fontFamily: 'var(--font-sans)',
         minHeight: '32px',
         background: active ? 'var(--gold)' : 'var(--ice)',
         color: active ? '#0f1923' : 'var(--slate)',
@@ -132,7 +131,6 @@ export default function PublicationFilters({
         <span
           className="text-xs"
           style={{
-            fontFamily: 'var(--font-sans)',
             color: 'var(--slate)',
           }}
         >
@@ -151,7 +149,6 @@ export default function PublicationFilters({
               transition={{ duration: 0.15 }}
               className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium"
               style={{
-                fontFamily: 'var(--font-sans)',
                 color: 'var(--slate)',
                 background: 'transparent',
                 border: '1px solid rgba(201, 168, 76, 0.2)',

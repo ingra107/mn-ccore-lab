@@ -13,7 +13,6 @@ export default function FilterChip({ value, onChange, options, className }: Filt
   const isActive = !!value
 
   const style: CSSProperties = {
-    fontFamily: 'var(--font-sans)',
     fontSize: '12px',
     color: isActive ? 'var(--teal)' : 'var(--slate)',
     backgroundColor: isActive ? 'rgba(45,138,138,0.06)' : 'transparent',

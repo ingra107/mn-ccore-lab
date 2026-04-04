@@ -95,7 +95,6 @@ export default function CollapsibleSection({
         {badge != null && badge !== '' && badge !== 0 && (
           <span
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '10px',
               color: 'var(--teal)',
               opacity: 0.7,

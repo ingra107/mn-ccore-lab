@@ -51,7 +51,7 @@ export default function AskTheLab() {
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+            style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
           >
             <Plus size={16} />
             New Question
@@ -138,7 +138,7 @@ function QuestionCard({
           {/* Question text */}
           <p
             className="font-semibold leading-snug"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontSize: 15 }}
+            style={{ color: 'var(--ink)', fontSize: 15 }}
           >
             {question.question}
           </p>
@@ -147,7 +147,7 @@ function QuestionCard({
           {question.context && !expanded && (
             <p
               className="mt-1 truncate"
-              style={{ fontFamily: 'var(--font-sans)', fontStyle: 'italic', fontSize: 13, color: 'var(--slate)', opacity: 0.6 }}
+              style={{ fontStyle: 'italic', fontSize: 13, color: 'var(--slate)', opacity: 0.6 }}
             >
               {question.context}
             </p>
@@ -159,19 +159,19 @@ function QuestionCard({
               <div style={{ width: 20, height: 20 }}>
                 <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
               </div>
-              <span className="text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+              <span className="text-[11px]" style={{ color: 'var(--slate)' }}>
                 {person.name}
               </span>
             </div>
 
-            <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
               {formatRelativeTime(question.created_at)}
             </span>
 
             {question.project_slug && (
               <span
                 className="text-[9px] px-1.5 py-0.5 rounded-full"
-                style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}
+                style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}
               >
                 {question.project_slug}
               </span>
@@ -184,7 +184,7 @@ function QuestionCard({
           {/* Answer count badge */}
           <div className="flex items-center gap-1" style={{ color: answerCount > 0 ? 'var(--teal)' : 'var(--slate)', opacity: answerCount > 0 ? 1 : 0.4 }}>
             <MessageSquare size={14} />
-            <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-sans)' }}>
+            <span className="text-xs font-medium">
               {answerCount}
             </span>
           </div>
@@ -192,7 +192,7 @@ function QuestionCard({
           {/* Status pill */}
           <span
             className="text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap"
-            style={{ fontFamily: 'var(--font-sans)', color: status.color, backgroundColor: status.bg }}
+            style={{ color: status.color, backgroundColor: status.bg }}
           >
             {status.label}
           </span>
@@ -255,7 +255,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
           <p className="text-[11px] mb-1" style={{ fontFamily: 'var(--font-body)', color: 'var(--gold)', fontWeight: 500 }}>
             Context
           </p>
-          <p className="text-sm leading-relaxed" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontStyle: 'italic' }}>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', fontStyle: 'italic' }}>
             {detail.context}
           </p>
         </div>
@@ -283,14 +283,14 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                 >
                   <div className="flex items-center gap-1.5 mb-1">
                     <Sparkles size={12} style={{ color: 'var(--gold)' }} />
-                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--gold)' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--gold)' }}>
                       AI Co-Scientist
                     </span>
-                    <span className="ml-auto" style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                    <span className="ml-auto" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
                       {formatRelativeTime(answer.created_at)}
                     </span>
                   </div>
-                  <p className="text-sm leading-relaxed" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', margin: 0 }}>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', margin: 0 }}>
                     {answer.content}
                   </p>
                 </div>
@@ -311,20 +311,20 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                    <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>
                       {answerPerson.name}
                     </span>
-                    <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+                    <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                       {formatRelativeTime(answer.created_at)}
                     </span>
                     {answer.is_accepted === 1 && (
-                      <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.1)' }}>
+                      <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.1)' }}>
                         <Check size={10} />
                         Accepted
                       </span>
                     )}
                   </div>
-                  <p className="text-sm leading-relaxed" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)' }}>
                     {answer.content}
                   </p>
 
@@ -333,7 +333,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                     <button
                       onClick={() => acceptAnswerMut.mutate(answer.id)}
                       className="mt-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-colors hover:bg-black/5"
-                      style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', background: 'none', border: '1px solid rgba(45,138,138,0.2)', cursor: 'pointer' }}
+                      style={{ color: 'var(--teal)', background: 'none', border: '1px solid rgba(45,138,138,0.2)', cursor: 'pointer' }}
                     >
                       <Check size={12} />
                       Accept Answer
@@ -347,7 +347,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
       )}
 
       {detail.answers.length === 0 && (
-        <p className="mt-4 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5, fontStyle: 'italic' }}>
+        <p className="mt-4 text-sm" style={{ color: 'var(--slate)', opacity: 0.5, fontStyle: 'italic' }}>
           No answers yet. Be the first to help.
         </p>
       )}
@@ -361,14 +361,13 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
             placeholder="Write your answer..."
             rows={2}
             className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none resize-none"
-            style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
+            style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
           />
           <button
             type="submit"
             disabled={!answerText.trim() || createAnswerMut.isPending}
             className="self-end flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
-              fontFamily: 'var(--font-sans)',
               backgroundColor: !answerText.trim() ? 'var(--border-light)' : 'var(--teal)',
               color: !answerText.trim() ? 'var(--slate)' : 'white',
               cursor: !answerText.trim() ? 'not-allowed' : 'pointer',
@@ -424,7 +423,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-lg" style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--ink)' }}>
+          <h3 className="text-lg" style={{ fontWeight: 400, color: 'var(--ink)' }}>
             New Question
           </h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
@@ -434,7 +433,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
 
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-3.5">
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Question *
             </label>
             <textarea
@@ -443,13 +442,13 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
               placeholder="What do you want to know?"
               rows={3}
               className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-              style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)' }}
+              style={{ borderColor: 'var(--border-light)' }}
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Context
             </label>
             <textarea
@@ -458,19 +457,19 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
               placeholder="Help others understand your question"
               rows={2}
               className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-              style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)' }}
+              style={{ borderColor: 'var(--border-light)' }}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Related Project
             </label>
             <select
               value={projectSlug}
               onChange={(e) => setProjectSlug(e.target.value)}
               className="w-full rounded-md border px-2.5 py-2 text-sm"
-              style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)', cursor: 'pointer' }}
+              style={{ borderColor: 'var(--border-light)', cursor: 'pointer' }}
             >
               <option value="">None (general question)</option>
               {projects.map((p) => (
@@ -480,7 +479,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
           </div>
 
           <div className="flex justify-end gap-2 mt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
               Cancel
             </button>
             <button
@@ -488,7 +487,6 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
               disabled={!questionText.trim()}
               className="px-4 py-2 rounded-md text-sm font-medium"
               style={{
-                fontFamily: 'var(--font-sans)',
                 backgroundColor: !questionText.trim() ? 'var(--border-light)' : 'var(--teal)',
                 color: !questionText.trim() ? 'var(--slate)' : 'white',
                 cursor: !questionText.trim() ? 'not-allowed' : 'pointer',

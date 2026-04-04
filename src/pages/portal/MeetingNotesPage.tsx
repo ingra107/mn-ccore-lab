@@ -32,7 +32,7 @@ export default function MeetingNotesPage() {
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+            style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
           >
             <Upload size={16} />
             Upload Audio
@@ -50,7 +50,7 @@ export default function MeetingNotesPage() {
 
       {/* How it works */}
       <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
-        <h3 className="text-sm font-normal mb-3 flex items-center gap-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+        <h3 className="text-sm font-normal mb-3 flex items-center gap-2" style={{ color: 'var(--ink)' }}>
           <Brain size={16} style={{ color: 'var(--teal)' }} />
           How AI Meeting Notes Works
         </h3>
@@ -67,8 +67,8 @@ export default function MeetingNotesPage() {
                 <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(45,138,138,0.08)' }}>
                   <Icon size={18} style={{ color: 'var(--teal)' }} />
                 </div>
-                <h4 className="text-xs font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{item.title}</h4>
-                <p className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>{item.desc}</p>
+                <h4 className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</h4>
+                <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>{item.desc}</p>
               </div>
             )
           })}
@@ -77,7 +77,7 @@ export default function MeetingNotesPage() {
 
       {/* Recent meetings with notes */}
       <div className="mt-6">
-        <h3 className="text-sm font-normal mb-3" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+        <h3 className="text-sm font-normal mb-3" style={{ color: 'var(--ink)' }}>
           Recent Meetings
         </h3>
         <div className="flex flex-col gap-2">
@@ -92,17 +92,17 @@ export default function MeetingNotesPage() {
                 {m.notes ? <CheckCircle2 size={16} style={{ color: 'var(--green, #22c55e)' }} /> : <FileText size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{m.title}</p>
-                <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+                <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{m.title}</p>
+                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                   {formatMediumDate(m.date)}
                 </span>
               </div>
               {m.notes ? (
-                <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--green, #22c55e)', backgroundColor: 'rgba(34,197,94,0.08)' }}>
+                <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ color: 'var(--green, #22c55e)', backgroundColor: 'rgba(34,197,94,0.08)' }}>
                   Notes available
                 </span>
               ) : (
-                <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
+                <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
                   No notes
                 </span>
               )}
@@ -179,7 +179,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(15,25,35,0.5)' }} onClick={onClose}>
       <div className="rounded-xl shadow-xl border w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
         <div className="px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
-          <h3 className="text-lg flex items-center gap-2" style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--ink)' }}>
+          <h3 className="text-lg flex items-center gap-2" style={{ fontWeight: 400, color: 'var(--ink)' }}>
             <Brain size={18} style={{ color: 'var(--teal)' }} />
             Process Meeting
           </h3>
@@ -198,7 +198,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
                 borderColor: mode === 'transcript' ? 'var(--teal)' : 'var(--border-light)',
                 backgroundColor: mode === 'transcript' ? 'rgba(45,138,138,0.1)' : 'transparent',
                 color: mode === 'transcript' ? 'var(--teal)' : 'var(--slate)',
-                fontFamily: 'var(--font-sans)', cursor: 'pointer',
+                cursor: 'pointer',
               }}
             >
               <FileText size={14} />
@@ -211,7 +211,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
                 borderColor: mode === 'audio' ? 'var(--teal)' : 'var(--border-light)',
                 backgroundColor: mode === 'audio' ? 'rgba(45,138,138,0.1)' : 'transparent',
                 color: mode === 'audio' ? 'var(--teal)' : 'var(--slate)',
-                fontFamily: 'var(--font-sans)', cursor: 'pointer',
+                cursor: 'pointer',
               }}
             >
               <Mic size={14} />
@@ -221,14 +221,14 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
 
           {/* Link to meeting */}
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Link to Meeting (optional)
             </label>
             <select
               value={meetingId}
               onChange={(e) => setMeetingId(e.target.value)}
               className="w-full rounded-md border px-3 py-2 text-sm"
-              style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)', cursor: 'pointer' }}
+              style={{ borderColor: 'var(--border-light)', cursor: 'pointer' }}
             >
               <option value="">Select meeting...</option>
               {meetings.map((m) => (
@@ -240,7 +240,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
           {/* Input area */}
           {mode === 'transcript' ? (
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
                 Paste Transcript
               </label>
               <textarea
@@ -249,7 +249,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
                 placeholder="Paste your meeting transcript here..."
                 rows={8}
                 className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-                style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)' }}
+                style={{ borderColor: 'var(--border-light)' }}
               />
             </div>
           ) : (
@@ -258,13 +258,13 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               style={{ borderColor: 'var(--border-light)' }}
             >
               <Upload size={32} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 8px' }} />
-              <p className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+              <p className="text-sm" style={{ color: 'var(--slate)' }}>
                 Click to upload audio file
               </p>
-              <p className="text-[10px] mt-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.4 }}>
                 MP3, M4A, WAV, or MP4 (max 25MB)
               </p>
-              <p className="text-[10px] mt-2 px-4 py-1.5 rounded-full inline-block" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}>
+              <p className="text-[10px] mt-2 px-4 py-1.5 rounded-full inline-block" style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}>
                 Audio upload requires AI API key — use "Paste Transcript" for now
               </p>
             </div>
@@ -273,14 +273,14 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
           {/* Results */}
           {result && (
             <div className="rounded-lg border p-4" style={{ borderColor: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.02)' }}>
-              <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}>
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5" style={{ color: 'var(--teal)' }}>
                 <Sparkles size={14} />
                 AI Insights
               </h4>
               {result.summary && (
                 <div className="mb-3">
                   <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>Summary</span>
-                  <p className="text-sm mt-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{result.summary}</p>
+                  <p className="text-sm mt-1" style={{ color: 'var(--ink)' }}>{result.summary}</p>
                 </div>
               )}
               {result.actions.length > 0 && (
@@ -288,7 +288,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
                   <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>Action Items ({result.actions.length})</span>
                   <ul className="mt-1 flex flex-col gap-1">
                     {result.actions.map((a, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                      <li key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--ink)' }}>
                         <CheckCircle2 size={12} style={{ color: 'var(--teal)', marginTop: 3, flexShrink: 0 }} />
                         {a}
                       </li>
@@ -301,7 +301,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
                   <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>Decisions ({result.decisions.length})</span>
                   <ul className="mt-1 flex flex-col gap-1">
                     {result.decisions.map((d, i) => (
-                      <li key={i} className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>• {d}</li>
+                      <li key={i} className="text-sm" style={{ color: 'var(--ink)' }}>• {d}</li>
                     ))}
                   </ul>
                 </div>
@@ -311,14 +311,14 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
 
           {/* Submit */}
           <div className="flex justify-end gap-2">
-            <button onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
+            <button onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
               Cancel
             </button>
             <button
               onClick={handleProcess}
               disabled={!transcript.trim() || processing}
               className="px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-              style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'var(--teal)', color: 'white', cursor: 'pointer', border: 'none', opacity: (!transcript.trim() || processing) ? 0.5 : 1 }}
+              style={{ backgroundColor: 'var(--teal)', color: 'white', cursor: 'pointer', border: 'none', opacity: (!transcript.trim() || processing) ? 0.5 : 1 }}
             >
               {processing ? <Clock size={14} className="animate-spin" /> : <Brain size={14} />}
               {processing ? 'Processing...' : 'Process with AI'}

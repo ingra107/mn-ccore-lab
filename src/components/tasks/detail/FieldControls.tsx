@@ -49,7 +49,7 @@ export function EditableTitle({ value, onSave }: { value: string; onSave: (v: st
         onBlur={save}
         onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
         className="w-full text-lg font-semibold outline-none border-b-2 pb-1"
-        style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--teal)', background: 'none' }}
+        style={{ color: 'var(--ink)', borderColor: 'var(--teal)', background: 'none' }}
       />
     )
   }
@@ -58,7 +58,7 @@ export function EditableTitle({ value, onSave }: { value: string; onSave: (v: st
     <h3
       onClick={() => setEditing(true)}
       className="text-lg font-normal cursor-text hover:bg-black/[0.02] dark:hover:bg-white/[0.04] rounded px-1 -mx-1 py-0.5 transition-colors"
-      style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+      style={{ color: 'var(--ink)' }}
     >
       {value}
     </h3>
@@ -90,7 +90,7 @@ export function EditableTextarea({ value, onSave, placeholder }: { value: string
         onKeyDown={(e) => { if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
         rows={3}
         className="w-full text-sm outline-none border rounded-md px-3 py-2 resize-none"
-        style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--teal)', background: 'none' }}
+        style={{ color: 'var(--ink)', borderColor: 'var(--teal)', background: 'none' }}
       />
     )
   }
@@ -99,7 +99,7 @@ export function EditableTextarea({ value, onSave, placeholder }: { value: string
     <div
       onClick={() => setEditing(true)}
       className="text-sm cursor-text hover:bg-black/[0.02] dark:hover:bg-white/[0.04] rounded px-3 py-2 -mx-1 transition-colors min-h-[60px]"
-      style={{ fontFamily: 'var(--font-sans)', color: value ? 'var(--ink)' : 'var(--slate)', opacity: value ? 1 : 0.5, whiteSpace: 'pre-wrap' }}
+      style={{ color: value ? 'var(--ink)' : 'var(--slate)', opacity: value ? 1 : 0.5, whiteSpace: 'pre-wrap' }}
     >
       {value || placeholder}
     </div>
@@ -120,7 +120,6 @@ export function StatusSelect({ value, onChange }: { value: string; onChange: (v:
             onClick={() => onChange(s.value)}
             className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs border transition-colors status-transition"
             style={{
-              fontFamily: 'var(--font-sans)',
               fontWeight: active ? 600 : 400,
               color: active ? s.color : 'var(--slate)',
               borderColor: active ? s.color : 'var(--border-light)',
@@ -151,7 +150,6 @@ export function PrioritySelect({ value, onChange }: { value: string; onChange: (
             onClick={() => onChange(p.value)}
             className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs border transition-colors status-transition"
             style={{
-              fontFamily: 'var(--font-sans)',
               fontWeight: active ? 600 : 400,
               color: active ? p.color : 'var(--slate)',
               borderColor: active ? p.color : 'var(--border-light)',

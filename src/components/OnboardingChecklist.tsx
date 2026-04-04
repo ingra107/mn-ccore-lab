@@ -71,7 +71,6 @@ export default function OnboardingChecklist() {
           </div>
           <div className="flex-1">
             <h3 style={{
-              fontFamily: 'var(--font-sans)',
               fontWeight: 400,
               fontSize: 16,
               color: 'var(--ink)',
@@ -80,7 +79,6 @@ export default function OnboardingChecklist() {
               Welcome to the team!
             </h3>
             <p style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: 13,
               color: 'var(--slate)',
               margin: '4px 0 0 0',
@@ -124,7 +122,6 @@ export default function OnboardingChecklist() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5">
               <span style={{
-                fontFamily: 'var(--font-sans)',
                 fontWeight: 600,
                 fontSize: 13,
                 color: 'var(--ink)',
@@ -132,7 +129,6 @@ export default function OnboardingChecklist() {
                 Onboarding
               </span>
               <span style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: 10,
                 color: 'var(--teal)',
                 fontWeight: 600,
@@ -160,7 +156,6 @@ export default function OnboardingChecklist() {
             </div>
             {nextStep && (
               <p className="mt-1.5 text-xs truncate" style={{
-                fontFamily: 'var(--font-sans)',
                 color: 'var(--slate)',
                 opacity: 0.7,
               }}>
@@ -214,7 +209,6 @@ export default function OnboardingChecklist() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <h3 style={{
-              fontFamily: 'var(--font-sans)',
               fontWeight: 400,
               fontSize: 16,
               color: 'var(--ink)',
@@ -224,7 +218,6 @@ export default function OnboardingChecklist() {
             </h3>
             <div className="flex items-center gap-2">
               <span style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: 11,
                 color: 'var(--teal)',
                 fontWeight: 600,
@@ -242,7 +235,6 @@ export default function OnboardingChecklist() {
             </div>
           </div>
           <p style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: 12,
             color: 'var(--slate)',
             margin: '2px 0 0 0',
@@ -257,7 +249,6 @@ export default function OnboardingChecklist() {
       <div className="mb-4">
         <div className="flex items-center justify-between mb-1.5">
           <span style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: 10,
             color: 'var(--slate)',
             opacity: 0.6,
@@ -265,7 +256,6 @@ export default function OnboardingChecklist() {
             Progress
           </span>
           <span style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: 10,
             color: 'var(--teal)',
             fontWeight: 600,
@@ -315,7 +305,6 @@ export default function OnboardingChecklist() {
                   }}
                 />
                 <span style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: 10,
                   fontWeight: 600,
                   color: allDone ? 'var(--teal)' : unlocked ? 'var(--ink)' : 'var(--slate)',
@@ -380,7 +369,6 @@ export default function OnboardingChecklist() {
                               style={{ color: meta.color, opacity: done ? 0.5 : 0.7, flexShrink: 0 }}
                             />
                             <span style={{
-                              fontFamily: 'var(--font-sans)',
                               fontSize: 13,
                               fontWeight: 500,
                               color: done ? 'var(--slate)' : 'var(--ink)',
@@ -391,7 +379,6 @@ export default function OnboardingChecklist() {
                             </span>
                           </div>
                           <p style={{
-                            fontFamily: 'var(--font-sans)',
                             fontSize: 11,
                             color: 'var(--slate)',
                             margin: '2px 0 0 0',
@@ -408,7 +395,6 @@ export default function OnboardingChecklist() {
                             to={step.link}
                             className="flex items-center gap-1 px-2 py-1 rounded-md transition-colors hover:bg-[rgba(45,138,138,0.06)] flex-shrink-0"
                             style={{
-                              fontFamily: 'var(--font-sans)',
                               fontSize: 10,
                               color: 'var(--teal)',
                               textDecoration: 'none',
@@ -434,7 +420,6 @@ export default function OnboardingChecklist() {
         style={{ borderTop: '1px solid rgba(201,168,76,0.1)' }}
       >
         <span style={{
-          fontFamily: 'var(--font-sans)',
           fontSize: 10,
           color: 'var(--slate)',
           opacity: 0.4,
@@ -445,7 +430,6 @@ export default function OnboardingChecklist() {
           onClick={dismiss}
           className="text-xs px-2.5 py-1 rounded-md transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: 10,
             color: 'var(--slate)',
             opacity: 0.5,

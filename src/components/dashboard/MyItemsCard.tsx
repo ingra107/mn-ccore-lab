@@ -47,7 +47,7 @@ export default function MyItemsCard() {
         <div className="flex items-center gap-4 mb-1">
           <div className="flex items-center gap-1.5">
             <Circle size={12} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
               {pending.length}
             </span>
             <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
@@ -57,7 +57,7 @@ export default function MyItemsCard() {
           {overdueCount > 0 && (
             <div className="flex items-center gap-1.5">
               <AlertTriangle size={12} style={{ color: 'var(--maroon)' }} />
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 700, color: 'var(--maroon)' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--maroon)' }}>
                 {overdueCount}
               </span>
               <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--maroon)', opacity: 0.7 }}>
@@ -76,7 +76,7 @@ export default function MyItemsCard() {
                   display: 'inline-block',
                 }}
               />
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 700, color: 'var(--gold)' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold)' }}>
                 {unreadCount}
               </span>
               <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
@@ -116,7 +116,6 @@ export default function MyItemsCard() {
                 </div>
                 <div
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     color: overdue ? 'var(--maroon)' : 'var(--slate)',
                     opacity: overdue ? 1 : 0.5,
@@ -144,7 +143,6 @@ export default function MyItemsCard() {
           to="/my-items"
           className="inline-flex items-center gap-1 mt-auto pt-2"
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '10px',
             color: 'var(--gold)',
             textDecoration: 'none',

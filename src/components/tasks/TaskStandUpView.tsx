@@ -62,16 +62,16 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
       {/* Team summary bar */}
       {grouped.length > 1 && (
         <div className="flex items-center gap-4 p-3 rounded-lg" style={{ background: 'rgba(201,168,76,0.03)', border: '1px solid rgba(201,168,76,0.08)' }}>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)' }}>
+          <span style={{ fontSize: '11px', color: 'var(--slate)' }}>
             Team: {totalOpen} open across {grouped.length} people
           </span>
           {totalOverdue > 0 && (
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--maroon)', fontWeight: 600 }}>
+            <span style={{ fontSize: '11px', color: 'var(--maroon)', fontWeight: 600 }}>
               {totalOverdue} overdue
             </span>
           )}
           {totalBlocked > 0 && (
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--maroon)' }}>
+            <span style={{ fontSize: '11px', color: 'var(--maroon)' }}>
               {totalBlocked} blocked
             </span>
           )}
@@ -105,7 +105,7 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
               <div className="flex-1">
                 <span
                   className="text-sm font-semibold"
-                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+                  style={{ color: 'var(--ink)' }}
                 >
                   {person.name}
                 </span>
@@ -113,7 +113,6 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
                   <span
                     className="text-[10px] px-1.5 py-0.5 rounded"
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       color: activeCount > 8 ? 'var(--maroon)' : activeCount > 5 ? 'var(--orange)' : 'var(--teal)',
                       backgroundColor: activeCount > 8 ? 'rgba(122,0,25,0.08)' : activeCount > 5 ? 'rgba(194,65,12,0.08)' : 'rgba(45,138,138,0.08)',
                       fontWeight: activeCount > 5 ? 600 : 400,
@@ -126,18 +125,18 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
                       (t) => t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()
                     ).length
                     return overdueCount > 0 ? (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-sans)', color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
                         {overdueCount} overdue
                       </span>
                     ) : null
                   })()}
                   {groups.blocked.length > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-sans)', color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.06)' }}>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.06)' }}>
                       {groups.blocked.length} blocked
                     </span>
                   )}
                   {nextDeadline && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}>
                       next: {formatShortDate(nextDeadline)}
                     </span>
                   )}
@@ -188,7 +187,7 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
                 <div style={{ opacity: 0.5 }}>
                   <span
                     className="text-[10px] uppercase tracking-wider"
-                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+                    style={{ color: 'var(--slate)' }}
                   >
                     Completed ({groups.done.length})
                   </span>
@@ -198,7 +197,7 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
               {activeCount === 0 && (
                 <div
                   className="text-center py-4 text-sm"
-                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}
+                  style={{ color: 'var(--slate)', opacity: 0.5 }}
                 >
                   All caught up
                 </div>
@@ -211,7 +210,7 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
       {grouped.length === 0 && (
         <div
           className="text-center py-12 text-sm"
-          style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}
+          style={{ color: 'var(--slate)', opacity: 0.6 }}
         >
           No tasks match the current filters
         </div>
@@ -240,7 +239,7 @@ function TaskSection({
         <Icon size={12} style={{ color: config.color }} />
         <span
           className="text-[10px] uppercase tracking-wider font-semibold"
-          style={{ fontFamily: 'var(--font-sans)', color: config.color }}
+          style={{ color: config.color }}
         >
           {label}
         </span>
@@ -256,7 +255,7 @@ function TaskSection({
             >
               <span
                 className="text-sm flex-1"
-                style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+                style={{ color: 'var(--ink)' }}
               >
                 {task.title || task.description}
               </span>
@@ -264,7 +263,6 @@ function TaskSection({
                 <span
                   className="text-[10px] flex-shrink-0"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
                     fontWeight: isOverdue ? 600 : 400,
                     opacity: isOverdue ? 1 : 0.5,

@@ -81,7 +81,6 @@ function MiniAvatar({ slug }: { slug: string }) {
         background: info.photoUrl ? 'transparent' : 'rgba(201, 168, 76, 0.15)',
         border: '1px solid rgba(201, 168, 76, 0.2)',
         fontSize: '9px',
-        fontFamily: 'var(--font-sans)',
         color: 'var(--gold)',
         fontWeight: 500,
       }}
@@ -104,7 +103,6 @@ function StageBadge({ stage }: { stage: string }) {
     <span
       className="inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase tracking-wider"
       style={{
-        fontFamily: 'var(--font-sans)',
         color,
         background: `color-mix(in srgb, ${color} 12%, transparent)`,
         border: `1px solid color-mix(in srgb, ${color} 20%, transparent)`,
@@ -126,7 +124,7 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className="inline-flex items-center gap-1 text-[11px]"
-      style={{ color: config.color, fontFamily: 'var(--font-sans)', fontWeight: 400 }}
+      style={{ color: config.color, fontWeight: 400 }}
     >
       <Icon size={11} />
       {config.label}
@@ -141,7 +139,7 @@ function PriorityDot({ priority }: { priority: string }) {
   return (
     <span
       className="inline-flex items-center gap-1 text-[11px] capitalize"
-      style={{ color, fontFamily: 'var(--font-sans)', fontWeight: 400 }}
+      style={{ color, fontWeight: 400 }}
     >
       <Flag size={10} />
       {priority}
@@ -160,7 +158,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
         <FolderKanban size={14} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0, opacity: 0.8 }} />
         <span
           className="text-[13px] leading-tight"
-          style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontWeight: 400 }}
+          style={{ color: 'var(--ink)', fontWeight: 400 }}
         >
           {data.title}
         </span>
@@ -170,7 +168,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
       <div className="flex items-center gap-2 flex-wrap">
         {data.stage && <StageBadge stage={data.stage} />}
         {data.category && (
-          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-sans)' }}>
+          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
             {data.category}
           </span>
         )}
@@ -180,7 +178,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
       {data.description && (
         <p
           className="text-[11px] leading-relaxed line-clamp-2"
-          style={{ color: 'var(--slate)', opacity: 0.7, fontFamily: 'var(--font-sans)', fontWeight: 400, margin: 0 }}
+          style={{ color: 'var(--slate)', opacity: 0.7, fontWeight: 400, margin: 0 }}
         >
           {data.description}
         </p>
@@ -192,7 +190,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
           {piInfo && (
             <div className="flex items-center gap-1.5">
               <MiniAvatar slug={data.pi!} />
-              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-sans)' }}>
+              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
                 {piInfo.name.split(' ')[0]}
               </span>
             </div>
@@ -203,7 +201,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
                 <MiniAvatar key={slug} slug={slug} />
               ))}
               {data.team.length > 3 && (
-                <span className="text-[9px] pl-1" style={{ color: 'var(--slate)', opacity: 0.5, fontFamily: 'var(--font-sans)' }}>
+                <span className="text-[9px] pl-1" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                   +{data.team.length - 3}
                 </span>
               )}
@@ -211,7 +209,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
           )}
         </div>
         {data.updated_at && (
-          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4, fontFamily: 'var(--font-sans)' }}>
+          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
             {formatRelativeTime(data.updated_at)}
           </span>
         )}
@@ -230,7 +228,6 @@ function MemberContent({ data }: { data: MemberCardData }) {
           background: data.photoUrl ? 'transparent' : 'rgba(201, 168, 76, 0.15)',
           border: '1px solid rgba(201, 168, 76, 0.25)',
           fontSize: '12px',
-          fontFamily: 'var(--font-sans)',
           color: 'var(--gold)',
           fontWeight: 500,
         }}
@@ -247,12 +244,12 @@ function MemberContent({ data }: { data: MemberCardData }) {
         <div>
           <div
             className="text-[13px] leading-tight"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontWeight: 400 }}
+            style={{ color: 'var(--ink)', fontWeight: 400 }}
           >
             {data.name}
           </div>
           {data.role && (
-            <div className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-sans)' }}>
+            <div className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
               {data.role}
             </div>
           )}
@@ -266,7 +263,6 @@ function MemberContent({ data }: { data: MemberCardData }) {
                 key={tag}
                 className="inline-flex px-1.5 py-0.5 rounded text-[9px]"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   color: 'var(--teal)',
                   background: 'rgba(45, 138, 138, 0.1)',
                   border: '1px solid rgba(45, 138, 138, 0.15)',
@@ -281,7 +277,7 @@ function MemberContent({ data }: { data: MemberCardData }) {
 
         {/* Publication count */}
         {data.publicationCount !== undefined && data.publicationCount > 0 && (
-          <div className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5, fontFamily: 'var(--font-sans)' }}>
+          <div className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
             <BookOpen size={10} />
             {data.publicationCount} publication{data.publicationCount !== 1 ? 's' : ''}
           </div>
@@ -298,7 +294,7 @@ function TaskContent({ data }: { data: TaskCardData }) {
       {/* Title */}
       <span
         className="text-[13px] leading-tight"
-        style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontWeight: 400 }}
+        style={{ color: 'var(--ink)', fontWeight: 400 }}
       >
         {data.title}
       </span>
@@ -314,13 +310,13 @@ function TaskContent({ data }: { data: TaskCardData }) {
         {assigneeInfo && (
           <div className="flex items-center gap-1.5">
             <MiniAvatar slug={data.assignee!} />
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-sans)' }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
               {assigneeInfo.name.split(' ')[0]}
             </span>
           </div>
         )}
         {data.due_date && (
-          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5, fontFamily: 'var(--font-sans)' }}>
+          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
             Due {formatRelativeTime(data.due_date)}
           </span>
         )}

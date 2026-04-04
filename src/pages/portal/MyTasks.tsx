@@ -107,7 +107,6 @@ export default function MyTasks() {
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
-              fontFamily: 'var(--font-sans)',
               backgroundColor: 'var(--teal)',
               color: 'white',
               border: 'none',
@@ -130,13 +129,12 @@ export default function MyTasks() {
           <div className="flex-1" />
 
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>Group by:</span>
+            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>Group by:</span>
             <select
               value={groupBy}
               onChange={(e) => setGroupBy(e.target.value as GroupBy)}
               className="rounded-full border px-2.5 py-1 text-xs"
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '12px',
                 color: groupBy !== 'none' ? 'var(--teal)' : 'var(--slate)',
                 backgroundColor: groupBy !== 'none' ? 'rgba(45,138,138,0.06)' : 'transparent',
@@ -155,13 +153,12 @@ export default function MyTasks() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>Sort:</span>
+            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortBy)}
               className="rounded-full border px-2.5 py-1 text-xs"
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '12px',
                 color: 'var(--slate)',
                 borderColor: 'var(--border-light)',
@@ -184,7 +181,6 @@ export default function MyTasks() {
         <div
           className="mt-4 px-4 py-3 rounded-lg border text-sm"
           style={{
-            fontFamily: 'var(--font-sans)',
             borderColor: 'var(--gold)',
             backgroundColor: 'rgba(201,168,76,0.06)',
             color: 'var(--ink)',
@@ -303,10 +299,10 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
         <div key={label}>
           <div className="flex items-center gap-2 mb-2">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: groupColors[label] || 'var(--slate)', opacity: groupColors[label] ? 1 : 0.3 }} />
-            <h3 className="text-xs font-normal uppercase tracking-wider" style={{ fontFamily: 'var(--font-sans)', color: groupColors[label] || 'var(--ink)' }}>
+            <h3 className="text-xs font-normal uppercase tracking-wider" style={{ color: groupColors[label] || 'var(--ink)' }}>
               {label}
             </h3>
-            <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
               {items.length}
             </span>
           </div>
@@ -339,7 +335,6 @@ function ViewDropdown({ view, setView, views }: { view: ViewMode; setView: (v: V
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
         style={{
-          fontFamily: 'var(--font-sans)',
           color: currentView ? 'var(--teal)' : 'var(--slate)',
           backgroundColor: currentView ? 'rgba(45,138,138,0.08)' : 'transparent',
           borderColor: currentView ? 'var(--teal)' : 'var(--border-light)',
@@ -367,10 +362,10 @@ function ViewDropdown({ view, setView, views }: { view: ViewMode; setView: (v: V
               >
                 <Icon size={16} style={{ color: view === v.key ? 'var(--teal)' : 'var(--slate)', marginTop: 1, flexShrink: 0 }} />
                 <div>
-                  <div className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: view === v.key ? 'var(--teal)' : 'var(--ink)' }}>
+                  <div className="text-sm font-medium" style={{ color: view === v.key ? 'var(--teal)' : 'var(--ink)' }}>
                     {v.label}
                   </div>
-                  <div className="text-[11px] mt-0.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+                  <div className="text-[11px] mt-0.5" style={{ color: 'var(--slate)', opacity: 0.7 }}>
                     {v.description}
                   </div>
                 </div>

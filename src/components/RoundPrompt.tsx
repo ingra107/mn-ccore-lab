@@ -83,12 +83,12 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
       <div className="flex items-center gap-1.5 mb-2">
         <MessageCircle size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
         <span style={{
-          fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--gold)',
+          fontSize: '10px', color: 'var(--gold)',
           textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600,
         }}>
           Opening Round
         </span>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
           · {categoryLabel}
         </span>
       </div>
@@ -106,7 +106,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               if (e.key === 'Escape') cancelEdit()
             }}
             style={{
-              flex: 1, fontFamily: 'var(--font-sans)', fontSize: '15px', color: 'var(--ink)',
+              flex: 1, fontSize: '15px', color: 'var(--ink)',
               background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.25)',
               borderRadius: '8px', padding: '8px 12px', outline: 'none',
               resize: 'vertical', lineHeight: 1.5,
@@ -148,7 +148,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             exit={{ opacity: 0, y: -3 }}
             transition={{ duration: 0.18 }}
             style={{
-              fontFamily: 'var(--font-sans)', fontWeight: 600,
+              fontWeight: 600,
               fontSize: 'clamp(14px, 2.2vw, 16px)',
               color: 'var(--ink)', lineHeight: 1.45, margin: 0,
             }}
@@ -167,7 +167,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             title="Try a different prompt"
             className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[rgba(201,168,76,0.08)]"
             style={{
-              fontFamily: 'var(--font-sans)', color: 'var(--slate)',
+              color: 'var(--slate)',
               background: 'transparent', borderColor: 'rgba(201, 168, 76, 0.2)', cursor: 'pointer',
             }}
           >
@@ -180,7 +180,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             title={isCustom ? 'Edit custom prompt' : 'Write a custom prompt'}
             className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[rgba(201,168,76,0.08)]"
             style={{
-              fontFamily: 'var(--font-sans)', color: 'var(--slate)',
+              color: 'var(--slate)',
               background: 'transparent', borderColor: 'rgba(201, 168, 76, 0.2)', cursor: 'pointer',
             }}
           >
@@ -194,7 +194,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               title="Restore generated prompt"
               className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[rgba(201,168,76,0.08)]"
               style={{
-                fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6,
+                color: 'var(--slate)', opacity: 0.6,
                 background: 'transparent', borderColor: 'rgba(201, 168, 76, 0.15)', cursor: 'pointer',
               }}
             >

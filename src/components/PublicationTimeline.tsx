@@ -94,7 +94,6 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
                   <div
                     className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       fontSize: '11px',
                       color: 'var(--gold)',
                       fontWeight: 600,
@@ -109,7 +108,6 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
               <span
                 className="text-center"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   color: 'rgba(255, 255, 255, 0.6)',
                   writingMode: yearData.length > 8 ? 'vertical-rl' : undefined,
@@ -127,13 +125,13 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
       <div className="flex items-center gap-4 mt-3 justify-center">
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 0.9 }} />
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
+          <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
             Published
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 0.4 }} />
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
+          <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
             In Review / Prep
           </span>
         </div>

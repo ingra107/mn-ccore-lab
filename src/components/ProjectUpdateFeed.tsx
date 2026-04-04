@@ -49,11 +49,11 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
     >
       <div className="flex items-center gap-2 mb-3">
         <MessageCircle size={16} style={{ color: 'var(--teal)' }} />
-        <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+        <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
           Project Updates
         </h2>
         {updates.length > 0 && (
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
             {updates.length}
           </span>
         )}
@@ -74,7 +74,6 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
                   onClick={() => setUpdateType(key)}
                   className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     background: isActive ? config.bg : 'transparent',
                     color: isActive ? config.color : 'var(--slate)',
@@ -170,10 +169,10 @@ function UpdateCard({ update }: { update: ProjectUpdateRow }) {
               {person.name}
             </span>
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs"
-              style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', background: config.bg, color: config.color }}>
+              style={{ fontSize: '9px', background: config.bg, color: config.color }}>
               <Icon size={9} /> {config.label}
             </span>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
               {formatRelativeTime(update.created_at)}
             </span>
           </div>

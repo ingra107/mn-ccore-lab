@@ -87,7 +87,7 @@ export default function Ideas() {
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+            style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
           >
             <Plus size={16} />
             New Idea
@@ -100,7 +100,7 @@ export default function Ideas() {
             const cfg = statusConfig[s]
             return (
               <span key={s} className="flex items-center gap-1">
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: cfg.color, backgroundColor: cfg.bg }}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: cfg.color, backgroundColor: cfg.bg }}>
                   {cfg.label}
                 </span>
                 {i < 3 && <span className="text-[8px]" style={{ color: 'var(--slate)', opacity: 0.3 }}>&#8594;</span>}
@@ -136,7 +136,7 @@ export default function Ideas() {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="rounded-full border px-3 py-1.5 text-xs"
             style={{
-              fontFamily: 'var(--font-sans)', fontSize: '12px',
+              fontSize: '12px',
               color: filterStatus ? 'var(--teal)' : 'var(--slate)',
               backgroundColor: filterStatus ? 'rgba(45,138,138,0.06)' : 'transparent',
               borderColor: filterStatus ? 'var(--teal)' : 'var(--border-light)',
@@ -205,24 +205,24 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
     <div className="rounded-xl border p-4 flex flex-col" style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}>
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ fontFamily: 'var(--font-sans)', color: status.color, backgroundColor: status.bg }}>
+        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ color: status.color, backgroundColor: status.bg }}>
           {status.label}
         </span>
         {idea.research_area && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}>
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}>
             {idea.research_area}
           </span>
         )}
       </div>
 
       {/* Title */}
-      <h4 className="text-sm font-semibold mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+      <h4 className="text-sm font-semibold mb-1" style={{ color: 'var(--ink)' }}>
         {idea.title}
       </h4>
 
       {/* Description */}
       {idea.description && (
-        <p className="text-xs leading-relaxed mb-3 flex-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+        <p className="text-xs leading-relaxed mb-3 flex-1" style={{ color: 'var(--slate)', opacity: 0.7 }}>
           {idea.description.length > 120 ? idea.description.slice(0, 120) + '...' : idea.description}
         </p>
       )}
@@ -233,7 +233,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
           <div style={{ width: 20, height: 20 }}>
             <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
           </div>
-          <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
             {formatRelativeTime(idea.created_at)}
           </span>
         </div>
@@ -244,7 +244,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}
         >
           <ThumbsUp size={13} />
-          <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-sans)' }}>
+          <span className="text-xs font-medium">
             {idea.votes}
           </span>
         </button>
@@ -261,11 +261,11 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
     <div className="table-container">
       {/* Column headers — hidden on mobile */}
       <div className="hidden sm:grid" style={{ gridTemplateColumns: gridCols, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center' }}>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em', textAlign: 'center' as const }}>
+        <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em', textAlign: 'center' as const }}>
           VOTES
         </span>
         {['TITLE', 'AREA', 'STATUS', 'BY'].map((col) => (
-          <span key={col} style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+          <span key={col} style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
             {col}
           </span>
         ))}
@@ -290,23 +290,23 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}
               >
                 <ThumbsUp size={13} />
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600 }}>{idea.votes}</span>
+                <span style={{ fontSize: '11px', fontWeight: 600 }}>{idea.votes}</span>
               </button>
 
               {/* Title + description */}
               <div style={{ minWidth: 0, paddingRight: '12px' }}>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 400, color: 'var(--ink)', display: 'block' }}>
+                <span style={{ fontSize: '13px', fontWeight: 400, color: 'var(--ink)', display: 'block' }}>
                   {idea.title}
                 </span>
                 {idea.description && (
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, display: 'block' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, display: 'block' }}>
                     {idea.description}
                   </span>
                 )}
               </div>
 
               {/* Research area */}
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', opacity: idea.research_area ? 0.7 : 0.3 }}>
+              <span style={{ fontSize: '11px', color: 'var(--gold)', opacity: idea.research_area ? 0.7 : 0.3 }}>
                 {idea.research_area || '—'}
               </span>
 
@@ -336,7 +336,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
               style={{ padding: '12px 16px' }}
             >
               {/* Title */}
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 500, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
+              <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
                 {idea.title}
               </span>
               {/* Metadata row */}
@@ -347,13 +347,13 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)', padding: 0 }}
                 >
                   <ThumbsUp size={11} />
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600 }}>{idea.votes}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 600 }}>{idea.votes}</span>
                 </button>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: status.color }}>
+                <span style={{ fontSize: '11px', fontWeight: 500, color: status.color }}>
                   {status.label}
                 </span>
                 {idea.research_area && (
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)', opacity: 0.7 }}>
+                  <span style={{ fontSize: '11px', color: 'var(--gold)', opacity: 0.7 }}>
                     {idea.research_area}
                   </span>
                 )}
@@ -369,7 +369,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
       {ideas.length === 0 && (
         <div className="text-center py-16">
           <Lightbulb size={24} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 8px' }} />
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
+          <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
             No ideas yet
           </p>
         </div>
@@ -417,7 +417,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-lg" style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--ink)' }}>
+          <h3 className="text-lg" style={{ fontWeight: 400, color: 'var(--ink)' }}>
             New Idea
           </h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
@@ -427,7 +427,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
 
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-3.5">
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Title *
             </label>
             <input
@@ -436,13 +436,13 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What's the idea?"
               className="w-full rounded-md border px-3 py-2 text-sm outline-none"
-              style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)' }}
+              style={{ borderColor: 'var(--border-light)' }}
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Description
             </label>
             <textarea
@@ -451,19 +451,19 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
               placeholder="Why is this interesting? What would it involve?"
               rows={3}
               className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-              style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)' }}
+              style={{ borderColor: 'var(--border-light)' }}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Research Area
             </label>
             <select
               value={researchArea}
               onChange={(e) => setResearchArea(e.target.value)}
               className="w-full rounded-md border px-2.5 py-2 text-sm"
-              style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)', cursor: 'pointer' }}
+              style={{ borderColor: 'var(--border-light)', cursor: 'pointer' }}
             >
               <option value="">Select area (optional)</option>
               {researchAreas.map((a) => (
@@ -473,10 +473,10 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
           </div>
 
           <div className="flex justify-end gap-2 mt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
               Cancel
             </button>
-            <button type="submit" disabled={!title.trim()} className="px-4 py-2 rounded-md text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', backgroundColor: !title.trim() ? 'var(--border-light)' : 'var(--teal)', color: !title.trim() ? 'var(--slate)' : 'white', cursor: !title.trim() ? 'not-allowed' : 'pointer', border: 'none' }}>
+            <button type="submit" disabled={!title.trim()} className="px-4 py-2 rounded-md text-sm font-medium" style={{ backgroundColor: !title.trim() ? 'var(--border-light)' : 'var(--teal)', color: !title.trim() ? 'var(--slate)' : 'white', cursor: !title.trim() ? 'not-allowed' : 'pointer', border: 'none' }}>
               Submit Idea
             </button>
           </div>

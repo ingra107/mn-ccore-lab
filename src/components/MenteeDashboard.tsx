@@ -35,7 +35,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
     <div style={{ marginTop: '2rem', marginBottom: '2rem' }}>
       <div style={{ height: '1px', background: 'linear-gradient(to right, var(--teal), transparent)', opacity: 0.3, marginBottom: '1.5rem' }} />
 
-      <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--ink)', marginBottom: '1rem' }}>
+      <h2 style={{ fontWeight: 500, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--ink)', marginBottom: '1rem' }}>
         {firstName}'s Dashboard
       </h2>
 
@@ -54,7 +54,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
                 <MenteeProjectLink key={p.slug} project={p} />
               ))}
               {myProjects.length > 4 && (
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
                   +{myProjects.length - 4} more
                 </span>
               )}
@@ -74,7 +74,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
               Action Items
             </span>
             {myPending.length > 0 && (
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--gold)', fontWeight: 600 }}>
+              <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 600 }}>
                 {myPending.length}
               </span>
             )}
@@ -111,7 +111,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
               Publications
             </span>
           </div>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: '28px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
+          <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
             {myPubs.length}
           </div>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6, margin: '4px 0 0' }}>
@@ -121,7 +121,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
           </p>
           {myPubs.length > 0 && (
             <Link to="/publications" className="inline-flex items-center gap-1 mt-2"
-              style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
+              style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
               View all <ArrowRight size={9} />
             </Link>
           )}
@@ -138,19 +138,19 @@ export default function MenteeDashboard({ slug, name }: Props) {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)' }}>Projects</span>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>{myProjects.length}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>{myProjects.length}</span>
             </div>
             <div className="flex items-center justify-between">
               <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)' }}>Publications</span>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>{myPubs.length}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>{myPubs.length}</span>
             </div>
             <div className="flex items-center justify-between">
               <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)' }}>Actions pending</span>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, color: myPending.length > 0 ? 'var(--gold)' : 'var(--teal)' }}>{myPending.length}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: myPending.length > 0 ? 'var(--gold)' : 'var(--teal)' }}>{myPending.length}</span>
             </div>
             <div className="flex items-center justify-between">
               <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)' }}>Actions completed</span>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, color: 'var(--teal)' }}>{myCompleted.length}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--teal)' }}>{myCompleted.length}</span>
             </div>
           </div>
         </div>
@@ -181,7 +181,7 @@ function MenteeProjectLink({ project }: { project: { slug: string; title: string
       onMouseEnter={hoverCard.handlers.onMouseEnter}
       onMouseLeave={hoverCard.handlers.onMouseLeave}
     >
-      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--gold)', marginRight: '4px' }}>
+      <span style={{ fontSize: '9px', color: 'var(--gold)', marginRight: '4px' }}>
         {project.stage || project.status}
       </span>
       {project.title.length > 50 ? project.title.slice(0, 47) + '...' : project.title}

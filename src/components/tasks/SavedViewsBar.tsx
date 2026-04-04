@@ -86,7 +86,6 @@ export default function SavedViewsBar({
   const pillBase: React.CSSProperties = {
     height: 32,
     borderRadius: 20,
-    fontFamily: 'var(--font-sans)',
     fontSize: '12px',
     whiteSpace: 'nowrap',
     display: 'inline-flex',
@@ -178,7 +177,6 @@ export default function SavedViewsBar({
                     onBlur={commitRename}
                     onClick={(e) => e.stopPropagation()}
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       fontSize: '12px',
                       background: 'transparent',
                       border: 'none',
@@ -298,7 +296,6 @@ export default function SavedViewsBar({
                 }}
                 placeholder="View name..."
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '12px',
                   background: 'transparent',
                   border: 'none',

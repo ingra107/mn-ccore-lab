@@ -83,7 +83,6 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
       onClick={() => handleSort(field)}
       className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-colors"
       style={{
-        fontFamily: 'var(--font-sans)',
         color: sortKey === field ? 'var(--teal)' : 'var(--slate)',
         fontWeight: sortKey === field ? 600 : 400,
         cursor: 'pointer',
@@ -100,7 +99,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
     <div className="table-container" style={{ padding: '16px 20px' }}>
       {/* Sort bar */}
       <div className="flex items-center gap-1 mb-3 pb-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
-        <span className="text-[11px] uppercase tracking-wider mr-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+        <span className="text-[11px] uppercase tracking-wider mr-1" style={{ color: 'var(--slate)', opacity: 0.5 }}>
           Sort:
         </span>
         <SortButton label="Priority" field="priority" />
@@ -148,10 +147,10 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
             >
               <CheckCircle2 size={24} style={{ color: 'var(--teal)', opacity: 0.5 }} />
             </div>
-            <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+            <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
               No tasks match the current filters
             </p>
-            <p className="text-xs mt-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+            <p className="text-xs mt-1" style={{ color: 'var(--slate)', opacity: 0.5 }}>
               Try adjusting your sort or filter settings
             </p>
           </div>

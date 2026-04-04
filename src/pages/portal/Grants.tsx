@@ -73,7 +73,7 @@ export default function Grants() {
       {/* Upcoming milestones */}
       {upcomingMilestones.length > 0 && (
         <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
-          <h3 className="text-sm font-normal mb-3" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+          <h3 className="text-sm font-normal mb-3" style={{ color: 'var(--ink)' }}>
             Upcoming Milestones
           </h3>
           <div className="flex flex-col gap-1.5">
@@ -84,13 +84,13 @@ export default function Grants() {
                 <div key={m.id}>
                   <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
                     <Diamond size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-                    <span className="flex-1 text-sm truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                    <span className="flex-1 text-sm truncate" style={{ color: 'var(--ink)' }}>
                       {m.title}
                     </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
                       {m.grantMechanism}
                     </span>
-                    <span className="text-[11px] flex-shrink-0 w-20 text-right" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+                    <span className="text-[11px] flex-shrink-0 w-20 text-right" style={{ color: 'var(--slate)', opacity: 0.6 }}>
                       {formatMediumDate(m.target_date)}
                     </span>
                   </div>
@@ -144,7 +144,7 @@ export default function Grants() {
           <Link
             to="/grants"
             className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:opacity-80"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', textDecoration: 'none' }}
+            style={{ color: 'var(--teal)', textDecoration: 'none' }}
           >
             View full Gantt timeline
             <ArrowRight size={14} />
@@ -156,7 +156,7 @@ export default function Grants() {
       <div className="mt-6 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Telescope size={16} style={{ color: 'var(--gold)' }} />
-          <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+          <h3 style={{ fontWeight: 400, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
             Grant Landscape (NIH RePORTER)
           </h3>
         </div>
@@ -186,7 +186,6 @@ export default function Grants() {
               border: 'none',
               borderRadius: 8,
               padding: '8px 16px',
-              fontFamily: 'var(--font-sans)',
               fontSize: '13px',
               fontWeight: 600,
               cursor: 'pointer',
@@ -199,7 +198,7 @@ export default function Grants() {
         {/* Loading state */}
         {similarGrants.isLoading && (
           <div className="text-center py-6">
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.6 }}>
+            <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.6 }}>
               Searching NIH RePORTER...
             </p>
           </div>
@@ -217,12 +216,12 @@ export default function Grants() {
                 <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
                   {grant.title}
                 </p>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)' }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)' }}>
                   {grant.project_num} &middot; {grant.pi} &middot; {grant.organization} &middot; FY{grant.fiscal_year}
                 </span>
               </div>
               {grant.award_amount > 0 && (
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--teal)', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '11px', color: 'var(--teal)', whiteSpace: 'nowrap' }}>
                   ${(grant.award_amount / 1000).toFixed(0)}K
                 </span>
               )}
@@ -237,14 +236,14 @@ export default function Grants() {
 
         {/* Total count */}
         {similarGrants.data && similarGrants.data.total > 0 && !similarGrants.isLoading && (
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5, marginTop: '8px' }}>
+          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5, marginTop: '8px' }}>
             Showing {similarGrants.data.data.length} of {similarGrants.data.total.toLocaleString()} results
           </p>
         )}
 
         {/* Empty state after search */}
         {activeSearch && similarGrants.data?.data?.length === 0 && !similarGrants.isLoading && (
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)', opacity: 0.6, textAlign: 'center', padding: '16px 0' }}>
+          <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.6, textAlign: 'center', padding: '16px 0' }}>
             No funded grants found for "{activeSearch}"
           </p>
         )}
@@ -283,12 +282,12 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
         <div className="flex flex-col items-center gap-1 flex-shrink-0 pt-0.5">
           <span
             className="text-xs font-bold px-2.5 py-1 rounded-lg"
-            style={{ fontFamily: 'var(--font-sans)', backgroundColor: mc.bg, color: mc.color }}
+            style={{ backgroundColor: mc.bg, color: mc.color }}
           >
             {grant.mechanism}
           </span>
           {grant.proposed && (
-            <span className="text-[8px] uppercase tracking-wider font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}>
+            <span className="text-[8px] uppercase tracking-wider font-semibold" style={{ color: 'var(--gold)' }}>
               Proposed
             </span>
           )}
@@ -296,7 +295,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
 
         {/* Center: content */}
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-semibold leading-tight" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+          <h4 className="text-sm font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
             {grant.title}
           </h4>
 
@@ -306,19 +305,19 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
               <div style={{ width: 20, height: 20 }}>
                 <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
               </div>
-              <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+              <span className="text-xs" style={{ color: 'var(--slate)' }}>
                 {pi.name}
               </span>
             </div>
 
             {/* Agency */}
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
               {grant.agency}
             </span>
 
             {/* Dates */}
             {(grant.start_date || grant.end_date) && (
-              <span className="text-xs flex items-center gap-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+              <span className="text-xs flex items-center gap-1" style={{ color: 'var(--slate)', opacity: 0.6 }}>
                 <Calendar size={10} />
                 {grant.start_date ? formatMediumDate(grant.start_date) : '?'}
                 {' \u2013 '}
@@ -328,7 +327,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
 
             {/* Funding */}
             {grant.total_funding ? (
-              <span className="text-xs font-medium flex items-center gap-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}>
+              <span className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--teal)' }}>
                 <Banknote size={10} />
                 {formatFunding(grant.total_funding)}
               </span>
@@ -347,7 +346,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
                   }}
                 />
               </div>
-              <span className="text-[10px] flex-shrink-0" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+              <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                 {Math.round(progress)}%
               </span>
             </div>
@@ -360,7 +359,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
                 <span
                   key={m.id}
                   className="text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1"
-                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}
+                  style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}
                 >
                   <Diamond size={8} />
                   {m.title}
@@ -368,7 +367,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
                 </span>
               ))}
               {pendingMilestones.length > 3 && (
-                <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
                   +{pendingMilestones.length - 3} more
                 </span>
               )}

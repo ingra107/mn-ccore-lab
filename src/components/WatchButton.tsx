@@ -30,7 +30,7 @@ export default function WatchButton({ id, type, label, slug, compact }: WatchBut
         color: watching ? 'var(--teal)' : 'var(--slate)',
         opacity: watching ? 1 : 0.5,
         display: 'flex', alignItems: 'center', gap: 4,
-        fontFamily: 'var(--font-sans)', fontSize: '11px',
+        fontSize: '11px',
       }}
     >
       {watching ? <Eye size={12} /> : <EyeOff size={12} />}

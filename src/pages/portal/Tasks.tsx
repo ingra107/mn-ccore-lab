@@ -235,7 +235,6 @@ export default function Tasks() {
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
-              fontFamily: 'var(--font-sans)',
               backgroundColor: 'var(--teal)',
               color: 'white',
               border: 'none',
@@ -270,7 +269,6 @@ export default function Tasks() {
               onClick={() => setShowCompleted(!showCompleted)}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
               style={{
-                fontFamily: 'var(--font-sans)',
                 backgroundColor: showCompleted ? 'rgba(34,197,94,0.1)' : 'transparent',
                 color: showCompleted ? 'var(--green)' : 'var(--slate)',
                 border: `1px solid ${showCompleted ? 'rgba(34,197,94,0.3)' : 'var(--border-light)'}`,
@@ -288,7 +286,6 @@ export default function Tasks() {
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
             style={{
-              fontFamily: 'var(--font-sans)',
               backgroundColor: showFilters || activeFilterCount > 0 ? 'rgba(45,138,138,0.08)' : 'transparent',
               color: showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--slate)',
               border: `1px solid ${showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--border-light)'}`,

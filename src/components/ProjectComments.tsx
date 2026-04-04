@@ -46,7 +46,6 @@ export default function ProjectComments({ projectSlug }: Props) {
         <MessageSquare size={16} style={{ color: 'var(--gold)' }} />
         <h2
           style={{
-            fontFamily: 'var(--font-sans)',
             fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
@@ -58,7 +57,6 @@ export default function ProjectComments({ projectSlug }: Props) {
         {comments.length > 0 && (
           <span
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '11px',
               color: 'var(--slate)',
               opacity: 0.6,
@@ -129,7 +127,6 @@ export default function ProjectComments({ projectSlug }: Props) {
           </div>
           <p
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '10px',
               color: 'var(--slate)',
               opacity: 0.4,
@@ -179,7 +176,6 @@ export default function ProjectComments({ projectSlug }: Props) {
                             <Sparkles size={12} style={{ color: 'var(--gold)' }} />
                             <span
                               style={{
-                                fontFamily: 'var(--font-sans)',
                                 fontSize: '10px',
                                 color: 'var(--gold)',
                               }}
@@ -188,7 +184,6 @@ export default function ProjectComments({ projectSlug }: Props) {
                             </span>
                             <span
                               style={{
-                                fontFamily: 'var(--font-sans)',
                                 fontSize: '10px',
                                 color: 'var(--slate)',
                                 opacity: 0.5,
@@ -238,7 +233,6 @@ export default function ProjectComments({ projectSlug }: Props) {
                             </span>
                             <span
                               style={{
-                                fontFamily: 'var(--font-sans)',
                                 fontSize: '10px',
                                 color: 'var(--slate)',
                                 opacity: 0.5,

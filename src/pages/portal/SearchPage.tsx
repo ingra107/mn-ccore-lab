@@ -71,7 +71,6 @@ export default function SearchPage() {
         <div className="flex flex-col items-center justify-center" style={{ minHeight: '50vh', paddingTop: '8vh' }}>
           <h1
             style={{
-              fontFamily: 'var(--font-sans)',
               fontWeight: 800,
               fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
               color: 'var(--ink)',
@@ -81,7 +80,7 @@ export default function SearchPage() {
           >
             Search Everything
           </h1>
-          <p className="text-sm mb-6" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+          <p className="text-sm mb-6" style={{ color: 'var(--slate)', opacity: 0.6 }}>
             Full-text search across tasks, projects, meetings, ideas, and more
           </p>
           <div className="w-full max-w-lg relative">
@@ -93,17 +92,17 @@ export default function SearchPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search tasks, projects, meetings, ideas..."
               className="w-full rounded-xl border px-4 py-3.5 pl-11 text-sm outline-none"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--ice)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--ice)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
             />
           </div>
           <div className="flex items-center justify-center gap-3 mt-5 flex-wrap">
             {['tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity'].map((t) => (
-              <span key={t} className="text-[10px] px-2.5 py-1 rounded-full border capitalize" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.4 }}>
+              <span key={t} className="text-[10px] px-2.5 py-1 rounded-full border capitalize" style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.4 }}>
                 {t}
               </span>
             ))}
           </div>
-          <p className="text-[10px] mt-4" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.3 }}>
+          <p className="text-[10px] mt-4" style={{ color: 'var(--slate)', opacity: 0.3 }}>
             Powered by D1 full-text search
           </p>
         </div>
@@ -119,7 +118,7 @@ export default function SearchPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search tasks, projects, meetings, ideas..."
               className="w-full rounded-xl border px-4 py-3 pl-11 text-sm outline-none"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--ice)' }}
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--ice)' }}
             />
             {query && (
               <button
@@ -151,7 +150,7 @@ export default function SearchPage() {
 
         {!isLoading && results.length > 0 && (
           <div className="flex flex-col gap-6">
-            <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+            <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.5 }}>
               {results.length} result{results.length !== 1 ? 's' : ''} for "{debouncedQuery}"
             </p>
 
@@ -165,7 +164,7 @@ export default function SearchPage() {
                 <div key={type}>
                   <div className="flex items-center gap-2 mb-2">
                     <Icon size={14} style={{ color: config.color }} />
-                    <span className="text-xs uppercase tracking-wider font-semibold" style={{ fontFamily: 'var(--font-sans)', color: config.color }}>
+                    <span className="text-xs uppercase tracking-wider font-semibold" style={{ color: config.color }}>
                       {config.label}s ({items.length})
                     </span>
                   </div>
@@ -181,11 +180,11 @@ export default function SearchPage() {
                           <Icon size={14} style={{ color: config.color }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm truncate" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                          <p className="text-sm truncate" style={{ color: 'var(--ink)' }}>
                             {formatBrandName(item.title)}
                           </p>
                           {item.subtitle && (
-                            <p className="text-[10px] truncate mt-0.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+                            <p className="text-[10px] truncate mt-0.5" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                               {formatBrandName(item.subtitle)}
                             </p>
                           )}

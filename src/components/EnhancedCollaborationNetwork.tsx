@@ -604,7 +604,6 @@ export default function EnhancedCollaborationNetwork({
               backdropFilter: 'blur(8px)',
               border: '1px solid rgba(201, 168, 76, 0.3)',
               color: 'rgba(255, 255, 255, 0.6)',
-              fontFamily: 'var(--font-sans)',
             }}
             aria-label="Reset view"
           >
@@ -623,7 +622,7 @@ export default function EnhancedCollaborationNetwork({
             className="inline-block w-3 h-3 rounded-full"
             style={{ background: '#c9a84c' }}
           />
-          <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>
+          <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '10px' }}>
             MNCCORE
           </span>
         </div>
@@ -633,7 +632,7 @@ export default function EnhancedCollaborationNetwork({
               className="inline-block w-3 h-3 rounded-full"
               style={{ background: '#60a5b5' }}
             />
-            <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>
+            <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '10px' }}>
               CLIF
             </span>
           </div>
@@ -644,7 +643,7 @@ export default function EnhancedCollaborationNetwork({
               className="inline-block w-3 h-3 rounded-full"
               style={{ background: '#64748b' }}
             />
-            <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>
+            <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '10px' }}>
               External
             </span>
           </div>

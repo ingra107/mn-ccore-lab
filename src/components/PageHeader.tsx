@@ -43,7 +43,6 @@ export default function PageHeader({
           )}
           <h1
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: 20,
               fontWeight: 500,
               color: 'var(--ink)',
@@ -59,7 +58,6 @@ export default function PageHeader({
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontFamily: 'var(--font-sans)',
                 fontSize: 11,
                 fontWeight: 600,
                 color: 'var(--slate)',
@@ -77,7 +75,6 @@ export default function PageHeader({
           {subtitle && (
             <span
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: 13,
                 fontWeight: 400,
                 color: 'var(--slate)',

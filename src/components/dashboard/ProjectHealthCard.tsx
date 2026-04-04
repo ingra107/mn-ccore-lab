@@ -34,7 +34,6 @@ function FactorTooltip({ factors, score }: { factors: HealthFactors; score: numb
         borderRadius: '8px',
         padding: '10px 14px',
         fontSize: '11px',
-        fontFamily: 'var(--font-sans)',
         fontWeight: 400,
         lineHeight: 1.6,
         whiteSpace: 'nowrap',
@@ -100,7 +99,6 @@ export default function ProjectHealthCard() {
               />
               <span
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '13px',
                   fontWeight: 700,
                   color: 'var(--ink)',
@@ -111,7 +109,6 @@ export default function ProjectHealthCard() {
               </span>
               <span
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '9px',
                   color: 'var(--slate)',
                   opacity: 0.5,
@@ -147,7 +144,6 @@ export default function ProjectHealthCard() {
                   border: 'none',
                   padding: '10px 0',
                   minHeight: '44px',
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   color: 'var(--slate)',
                   opacity: 0.6,
@@ -175,7 +171,6 @@ export default function ProjectHealthCard() {
               <HeartPulse size={24} style={{ color: 'var(--teal)', marginBottom: '8px' }} />
               <p
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '12px',
                   color: 'var(--slate)',
                   margin: 0,
@@ -192,7 +187,6 @@ export default function ProjectHealthCard() {
           to="/projects"
           className="flex items-center gap-1 mt-3 pt-2"
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '11px',
             color: 'var(--gold)',
             textDecoration: 'none',
@@ -253,7 +247,6 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
         onMouseEnter={hoverCard.handlers.onMouseEnter}
         onMouseLeave={hoverCard.handlers.onMouseLeave}
         style={{
-          fontFamily: 'var(--font-sans)',
           fontSize: '12px',
           color: 'var(--ink)',
           fontWeight: isBad ? 600 : 400,
@@ -306,7 +299,6 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
         {/* Score number */}
         <span
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '10px',
             fontWeight: 500,
             color: isBad ? color : 'var(--slate)',
@@ -321,7 +313,6 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
         {/* Status label */}
         <span
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '9px',
             padding: '1px 5px',
             borderRadius: '3px',

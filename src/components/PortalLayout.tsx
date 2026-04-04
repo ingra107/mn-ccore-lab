@@ -153,7 +153,6 @@ export default function PortalLayout() {
                       onClick={() => { setTheme(key); setShowThemeMenu(false) }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                       style={{
-                        fontFamily: 'var(--font-sans)',
                         color: mode === key ? 'var(--teal)' : 'var(--ink)',
                         fontWeight: mode === key ? 500 : 400,
                         background: 'none',
@@ -193,7 +192,7 @@ export default function PortalLayout() {
         <button
           onClick={() => setFocusMode(false)}
           className="fixed top-3 right-3 z-50 px-2.5 py-1 rounded-full text-[10px] font-medium border transition-opacity opacity-30 hover:opacity-100"
-          style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', borderColor: 'var(--teal)', background: 'var(--cream)', cursor: 'pointer' }}
+          style={{ color: 'var(--teal)', borderColor: 'var(--teal)', background: 'var(--cream)', cursor: 'pointer' }}
         >
           Focus · F to exit
         </button>
@@ -223,7 +222,7 @@ export default function PortalLayout() {
       {/* G-key pending indicator */}
       {gPending && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-full shadow-lg border" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--teal)' }}>
-          <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}>
+          <span className="text-xs" style={{ color: 'var(--teal)' }}>
             G → press a key to navigate...
           </span>
         </div>

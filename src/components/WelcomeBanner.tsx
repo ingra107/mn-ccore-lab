@@ -42,7 +42,7 @@ export default function WelcomeBanner() {
               position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <span style={{
-                fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 600, color: 'var(--teal)',
+                fontSize: 11, fontWeight: 600, color: 'var(--teal)',
               }}>
                 {completedCount}/{totalSteps}
               </span>
@@ -54,14 +54,14 @@ export default function WelcomeBanner() {
             <div className="flex items-center gap-2">
               <Rocket size={14} style={{ color: 'var(--teal)' }} />
               <span style={{
-                fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 500, color: 'var(--ink)',
+                fontSize: 14, fontWeight: 500, color: 'var(--ink)',
               }}>
                 Welcome to MN-CCORE Hub
               </span>
             </div>
             {nextStep && (
               <p style={{
-                fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--slate)',
+                fontSize: 12, color: 'var(--slate)',
                 margin: '4px 0 0 0', opacity: 0.7,
               }}>
                 Next: {nextStep.title}
@@ -74,7 +74,6 @@ export default function WelcomeBanner() {
             to="/personal"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: 'var(--teal)',
               border: '1px solid rgba(45,138,138,0.2)',
               textDecoration: 'none',

@@ -274,7 +274,7 @@ function StackedBar({ segments, height = 28 }: {
         {segments.filter(s => s.value > 0).map((seg, i) => (
           <div key={i} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: seg.color }} />
-            <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)' }}>
               {seg.label} ({seg.value})
             </span>
           </div>
@@ -363,11 +363,11 @@ export default function PIAnalytics() {
         </div>
         <h2
           className="text-xl font-medium mb-2"
-          style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+          style={{ color: 'var(--ink)' }}
         >
           PI Access Only
         </h2>
-        <p className="text-sm max-w-md" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+        <p className="text-sm max-w-md" style={{ color: 'var(--slate)' }}>
           This dashboard contains leadership analytics and is restricted to principal investigators.
         </p>
       </div>
@@ -441,7 +441,7 @@ export default function PIAnalytics() {
             <Target size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
+              style={{ color: 'var(--gold)' }}
             >
               Commitment Scorecard
             </h3>
@@ -453,13 +453,13 @@ export default function PIAnalytics() {
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span
                     className="text-2xl font-bold"
-                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+                    style={{ color: 'var(--ink)' }}
                   >
                     {commitRate}%
                   </span>
                   <span
                     className="text-[10px]"
-                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+                    style={{ color: 'var(--slate)' }}
                   >
                     kept
                   </span>
@@ -490,11 +490,11 @@ export default function PIAnalytics() {
             <Clock size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
+              style={{ color: 'var(--gold)' }}
             >
               Response Time
             </h3>
-            <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
               Task creation to completion
             </span>
           </div>
@@ -504,11 +504,11 @@ export default function PIAnalytics() {
                 <div className="flex items-center gap-2">
                   <span
                     className="text-3xl font-bold"
-                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+                    style={{ color: 'var(--ink)' }}
                   >
                     {data?.responseMetrics.avg_days || 0}
                   </span>
-                  <span className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+                  <span className="text-sm" style={{ color: 'var(--slate)' }}>
                     days avg
                   </span>
                 </div>
@@ -516,21 +516,21 @@ export default function PIAnalytics() {
                   {data?.responseMetrics.trend === 'improving' ? (
                     <>
                       <TrendingDown size={14} style={{ color: 'var(--green, #22c55e)' }} />
-                      <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--green, #22c55e)' }}>
+                      <span className="text-xs" style={{ color: 'var(--green, #22c55e)' }}>
                         Improving
                       </span>
                     </>
                   ) : data?.responseMetrics.trend === 'slowing' ? (
                     <>
                       <TrendingUp size={14} style={{ color: 'var(--maroon)' }} />
-                      <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--maroon)' }}>
+                      <span className="text-xs" style={{ color: 'var(--maroon)' }}>
                         Slowing
                       </span>
                     </>
                   ) : (
                     <>
                       <Minus size={14} style={{ color: 'var(--slate)', opacity: 0.5 }} />
-                      <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+                      <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                         Stable
                       </span>
                     </>
@@ -539,23 +539,23 @@ export default function PIAnalytics() {
               </div>
               <div className="flex-1 grid grid-cols-2 gap-3">
                 <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(45, 138, 138, 0.04)' }}>
-                  <span className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+                  <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)' }}>
                     Last 90 days
                   </span>
                   <div
                     className="text-lg font-semibold"
-                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}
+                    style={{ color: 'var(--teal)' }}
                   >
                     {data?.responseMetrics.avg_days_recent || 0}d
                   </div>
                 </div>
                 <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(100, 116, 139, 0.04)' }}>
-                  <span className="text-[10px] uppercase tracking-wider" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+                  <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)' }}>
                     Prior 90 days
                   </span>
                   <div
                     className="text-lg font-semibold"
-                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}
+                    style={{ color: 'var(--slate)' }}
                   >
                     {data?.responseMetrics.avg_days_prior || 0}d
                   </div>
@@ -564,7 +564,7 @@ export default function PIAnalytics() {
             </div>
             <p
               className="text-xs"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}
+              style={{ color: 'var(--slate)', opacity: 0.6 }}
             >
               Based on {data?.responseMetrics.total_tasks || 0} completed tasks
             </p>
@@ -580,11 +580,11 @@ export default function PIAnalytics() {
             <Users size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
+              style={{ color: 'var(--gold)' }}
             >
               Team Engagement
             </h3>
-            <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
               Last 30 days
             </span>
           </div>
@@ -608,7 +608,7 @@ export default function PIAnalytics() {
                       </div>
                       <span
                         className="text-xs w-28 truncate"
-                        style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}
+                        style={{ color: 'var(--ink)' }}
                       >
                         {person.name}
                       </span>
@@ -628,7 +628,7 @@ export default function PIAnalytics() {
                         >
                           <span
                             className="text-[9px] font-semibold"
-                            style={{ color: 'white', fontFamily: 'var(--font-sans)' }}
+                            style={{ color: 'white' }}
                           >
                             {member.actions}
                           </span>
@@ -636,7 +636,7 @@ export default function PIAnalytics() {
                       </div>
                       <span
                         className="text-[10px] w-8 text-right"
-                        style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}
+                        style={{ color: 'var(--teal)' }}
                         title={`Score: ${member.score}`}
                       >
                         {member.score}
@@ -645,7 +645,7 @@ export default function PIAnalytics() {
                   )
                 })}
                 <div className="flex items-center gap-2 mt-1 pt-2" style={{ borderTop: '1px dashed var(--border-light)' }}>
-                  <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+                  <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                     Score = comments x3 + updates x2 + completions x1
                   </span>
                 </div>
@@ -653,7 +653,7 @@ export default function PIAnalytics() {
             ) : (
               <p
                 className="text-center py-6 text-sm"
-                style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}
+                style={{ color: 'var(--slate)', opacity: 0.5 }}
               >
                 No activity data for the last 30 days
               </p>
@@ -667,7 +667,7 @@ export default function PIAnalytics() {
             <BookOpen size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
+              style={{ color: 'var(--gold)' }}
             >
               Mentee Publication Velocity
             </h3>
@@ -677,16 +677,16 @@ export default function PIAnalytics() {
               <table className="w-full">
                 <thead>
                   <tr>
-                    <th className="text-left text-[10px] uppercase tracking-wider pb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+                    <th className="text-left text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)' }}>
                       Mentee
                     </th>
-                    <th className="text-right text-[10px] uppercase tracking-wider pb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+                    <th className="text-right text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)' }}>
                       Papers
                     </th>
-                    <th className="text-right text-[10px] uppercase tracking-wider pb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+                    <th className="text-right text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)' }}>
                       Rate
                     </th>
-                    <th className="text-right text-[10px] uppercase tracking-wider pb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+                    <th className="text-right text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)' }}>
                       Status
                     </th>
                   </tr>
@@ -708,15 +708,15 @@ export default function PIAnalytics() {
                                 className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]"
                               />
                             </div>
-                            <span className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                            <span className="text-sm" style={{ color: 'var(--ink)' }}>
                               {mentee.name}
                             </span>
                           </div>
                         </td>
-                        <td className="text-right text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                        <td className="text-right text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                           {mentee.pub_count}
                         </td>
-                        <td className="text-right text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}>
+                        <td className="text-right text-sm" style={{ color: 'var(--teal)' }}>
                           {mentee.rate > 0 ? `${mentee.rate}/yr` : '--'}
                         </td>
                         <td className="text-right">
@@ -724,7 +724,6 @@ export default function PIAnalytics() {
                             <span
                               className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded"
                               style={{
-                                fontFamily: 'var(--font-sans)',
                                 color: 'var(--green, #22c55e)',
                                 backgroundColor: 'rgba(34, 197, 94, 0.08)',
                               }}
@@ -736,7 +735,6 @@ export default function PIAnalytics() {
                             <span
                               className="text-[10px] px-1.5 py-0.5 rounded"
                               style={{
-                                fontFamily: 'var(--font-sans)',
                                 color: 'var(--slate)',
                                 backgroundColor: 'var(--border-light)',
                               }}
@@ -751,7 +749,7 @@ export default function PIAnalytics() {
                 </tbody>
               </table>
             ) : (
-              <p className="text-center py-6 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+              <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                 No trainees/fellows in the system
               </p>
             )}
@@ -767,7 +765,7 @@ export default function PIAnalytics() {
             <BarChart3 size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
+              style={{ color: 'var(--gold)' }}
             >
               Publications per Quarter
             </h3>
@@ -783,7 +781,7 @@ export default function PIAnalytics() {
                 height={150}
               />
             ) : (
-              <p className="text-center py-6 text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+              <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                 No publication data
               </p>
             )}
@@ -796,7 +794,7 @@ export default function PIAnalytics() {
             <DollarSign size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
+              style={{ color: 'var(--gold)' }}
             >
               Grant Pipeline & Projects
             </h3>
@@ -804,7 +802,7 @@ export default function PIAnalytics() {
           <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
             {/* Grants: submitted vs funded */}
             <div className="mb-5">
-              <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+              <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)' }}>
                 Grants: Submitted vs Funded
               </h4>
               <div className="grid grid-cols-2 gap-3">
@@ -826,7 +824,7 @@ export default function PIAnalytics() {
                       }}
                     />
                   </div>
-                  <span className="text-[10px] mt-1" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>
+                  <span className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.6 }}>
                     {Math.round((data.grantsFunnel.funded / data.grantsFunnel.submitted) * 100)}% success rate
                   </span>
                 </div>
@@ -836,7 +834,7 @@ export default function PIAnalytics() {
             {/* Projects by stage */}
             {data && data.projectsByStage.length > 0 && (
               <div>
-                <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+                <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)' }}>
                   Active Projects by Stage
                 </h4>
                 <StackedBar
@@ -858,7 +856,7 @@ export default function PIAnalytics() {
           <Lightbulb size={14} style={{ color: 'var(--gold)' }} />
           <h3
             className="text-xs font-normal uppercase tracking-wider"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}
+            style={{ color: 'var(--gold)' }}
           >
             Leadership Insights
           </h3>
@@ -910,7 +908,7 @@ export default function PIAnalytics() {
           ) : (
             <p
               className="text-center py-4 text-sm"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}
+              style={{ color: 'var(--slate)', opacity: 0.5 }}
             >
               Not enough data to generate insights yet
             </p>

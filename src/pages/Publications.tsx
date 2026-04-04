@@ -200,7 +200,6 @@ export default function Publications() {
               <h2
                 className="text-sm"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
                   color: 'var(--gold)',
@@ -220,7 +219,6 @@ export default function Publications() {
                   <span
                     className="flex-shrink-0 text-xs mt-0.5 px-1.5 py-0.5 rounded"
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       background: 'rgba(201, 168, 76, 0.12)',
                       color: 'var(--gold)',
                       fontSize: '10px',
@@ -323,7 +321,6 @@ export default function Publications() {
                 <span
                   className="text-xs font-normal"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     color: 'var(--slate)',
                   }}
                 >

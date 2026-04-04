@@ -14,7 +14,6 @@ export default function ToggleButton({ active, onClick, children, className }: T
         borderColor: active ? 'var(--teal)' : 'var(--border-subtle)',
         backgroundColor: active ? 'rgba(45,138,138,0.1)' : 'transparent',
         color: active ? 'var(--teal)' : 'var(--slate)',
-        fontFamily: 'var(--font-sans)',
         fontWeight: active ? 500 : 400,
         cursor: 'pointer',
       }}

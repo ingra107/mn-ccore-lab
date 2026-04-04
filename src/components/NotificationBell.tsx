@@ -90,7 +90,6 @@ export default function NotificationBell() {
               right: '2px',
               background: 'var(--gold)',
               color: '#0f1923',
-              fontFamily: 'var(--font-sans)',
               fontSize: '9px',
               lineHeight: '16px',
               minWidth: '16px',
@@ -145,7 +144,6 @@ export default function NotificationBell() {
             >
               <span
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontWeight: 600,
                   fontSize: '14px',
                   color: 'var(--ink)',
@@ -159,7 +157,6 @@ export default function NotificationBell() {
                   disabled={markAllRead.isPending}
                   className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md transition-colors duration-150"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     color: 'var(--gold)',
                     background: 'rgba(201, 168, 76, 0.08)',
@@ -210,7 +207,6 @@ export default function NotificationBell() {
                     <div
                       style={{
                         padding: '6px 16px 4px',
-                        fontFamily: 'var(--font-sans)',
                         fontSize: '10px',
                         color: group.label === 'Today' ? 'var(--teal)' : 'var(--slate)',
                         opacity: group.label === 'Today' ? 1 : 0.5,
@@ -302,7 +298,6 @@ export default function NotificationBell() {
                             )}
                             <div
                               style={{
-                                fontFamily: 'var(--font-sans)',
                                 fontSize: '10px',
                                 color: 'var(--slate)',
                                 opacity: 0.5,
@@ -353,7 +348,6 @@ export default function NotificationBell() {
                 display: 'block',
                 padding: '10px 16px',
                 textAlign: 'center',
-                fontFamily: 'var(--font-sans)',
                 fontSize: '11px',
                 color: 'var(--gold)',
                 textDecoration: 'none',

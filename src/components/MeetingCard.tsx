@@ -50,7 +50,6 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
         >
           <span
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '10px',
               color: 'var(--gold)',
               textTransform: 'uppercase',
@@ -62,7 +61,6 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
           </span>
           <span
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '20px',
               fontWeight: 700,
               color: 'var(--ink)',
@@ -88,7 +86,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
           <div className="flex items-center gap-3 mt-1">
             <span
               className="flex items-center gap-1 text-xs"
-              style={{ color: 'var(--slate)', opacity: 0.7, fontFamily: 'var(--font-sans)' }}
+              style={{ color: 'var(--slate)', opacity: 0.7 }}
             >
               <Users size={12} />
               {meeting.attendees?.length ?? 0}
@@ -98,7 +96,6 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 className="flex items-center gap-1 text-xs"
                 style={{
                   color: pendingActions > 0 ? 'var(--gold)' : 'var(--teal)',
-                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 <ListChecks size={12} />
@@ -109,7 +106,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
               const fSlug = getMeetingFacilitator(meeting.date)
               const fInfo = fSlug ? getPersonInfo(fSlug) : null
               return fInfo ? (
-                <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--teal)', fontFamily: 'var(--font-sans)' }}>
+                <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--teal)' }}>
                   <UserCheck size={12} />
                   {fInfo.name.split(' ')[0]}
                 </span>
@@ -138,7 +135,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
           {(meeting.attendees?.length ?? 0) > 4 && (
             <span
               className="text-xs pl-2"
-              style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-sans)' }}
+              style={{ color: 'var(--slate)', opacity: 0.6 }}
             >
               +{(meeting.attendees?.length ?? 0) - 4}
             </span>
@@ -174,7 +171,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
               {/* Date line */}
               <p
                 className="text-xs mt-3 mb-3"
-                style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-sans)' }}
+                style={{ color: 'var(--slate)', opacity: 0.6 }}
               >
                 {formatFullDate(meeting.date)}
               </p>
@@ -184,7 +181,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 <div className="mb-4">
                   <h4
                     className="text-xs font-semibold uppercase tracking-wider mb-2"
-                    style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}
+                    style={{ color: 'var(--slate)', opacity: 0.6, letterSpacing: '0.06em' }}
                   >
                     Attendees
                   </h4>
@@ -221,7 +218,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 <div className="mb-4">
                   <h4
                     className="text-xs font-semibold uppercase tracking-wider mb-2"
-                    style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}
+                    style={{ color: 'var(--slate)', opacity: 0.6, letterSpacing: '0.06em' }}
                   >
                     Agenda
                   </h4>
@@ -244,7 +241,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 <div className="mb-4">
                   <h4
                     className="text-xs font-semibold uppercase tracking-wider mb-2"
-                    style={{ color: 'var(--gold)', fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}
+                    style={{ color: 'var(--gold)', letterSpacing: '0.06em' }}
                   >
                     Decisions
                   </h4>
@@ -273,7 +270,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 <div className="mb-4">
                   <h4
                     className="text-xs font-semibold uppercase tracking-wider mb-2"
-                    style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}
+                    style={{ color: 'var(--slate)', opacity: 0.6, letterSpacing: '0.06em' }}
                   >
                     Action Items
                   </h4>
@@ -343,7 +340,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                               {item.dueDate && (
                                 <span
                                   className="text-xs"
-                                  style={{ color: 'var(--slate)', opacity: 0.5, fontFamily: 'var(--font-sans)' }}
+                                  style={{ color: 'var(--slate)', opacity: 0.5 }}
                                 >
                                   due {formatShortDate(item.dueDate)}
                                 </span>
@@ -362,7 +359,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 <div className="mb-4">
                   <h4
                     className="text-xs font-semibold uppercase tracking-wider mb-2"
-                    style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}
+                    style={{ color: 'var(--slate)', opacity: 0.6, letterSpacing: '0.06em' }}
                   >
                     Notes
                   </h4>
@@ -380,7 +377,6 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 to={`/meetings/${meeting.id}`}
                 className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md text-xs font-medium"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   background: 'var(--gold)',
                   color: '#0f1923',

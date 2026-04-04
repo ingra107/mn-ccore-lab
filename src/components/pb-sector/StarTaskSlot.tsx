@@ -22,7 +22,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-2">
         <Star size={14} style={{ color: 'var(--gold)', fill: 'var(--gold)' }} />
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
+        <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
           Your One Thing
         </span>
       </div>
@@ -80,7 +80,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                   {task.title || task.description}
                 </button>
                 {task.project_title && (
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--gold)', opacity: 0.7 }}>
+                  <span style={{ fontSize: '10px', color: 'var(--gold)', opacity: 0.7 }}>
                     {task.project_title}
                   </span>
                 )}
@@ -109,7 +109,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201,168,76,0.04)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: suggestion._isCarried ? 'var(--teal)' : 'var(--gold)', opacity: 0.5, textTransform: 'uppercase', flexShrink: 0 }}>
+                  <span style={{ fontSize: '9px', color: suggestion._isCarried ? 'var(--teal)' : 'var(--gold)', opacity: 0.5, textTransform: 'uppercase', flexShrink: 0 }}>
                     {suggestion._isCarried ? 'Carried' : 'Suggested'}
                   </span>
                   <span className="truncate" style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink)', opacity: 0.4 }}>

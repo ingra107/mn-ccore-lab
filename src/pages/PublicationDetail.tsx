@@ -40,7 +40,6 @@ export default function PublicationDetail() {
           to="/publications"
           className="inline-flex items-center gap-2 mb-6"
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '14px',
             color: 'var(--slate)',
             textDecoration: 'none',
@@ -60,7 +59,7 @@ export default function PublicationDetail() {
         >
           Publication not found
         </h1>
-        <p style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', marginTop: '0.5rem' }}>
+        <p style={{ color: 'var(--slate)', marginTop: '0.5rem' }}>
           No publication matches the ID &ldquo;{decodedId}&rdquo;.
         </p>
       </div>
@@ -87,7 +86,6 @@ export default function PublicationDetail() {
             to="/publications"
             className="inline-flex items-center gap-2"
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '14px',
               color: 'var(--slate)',
               textDecoration: 'none',
@@ -112,7 +110,6 @@ export default function PublicationDetail() {
             <span
               className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '11px',
                 background: 'rgba(201, 168, 76, 0.1)',
                 color: 'var(--gold)',
@@ -124,7 +121,6 @@ export default function PublicationDetail() {
             <span
               className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '11px',
                 background: sc.bg,
                 color: sc.color,
@@ -136,7 +132,6 @@ export default function PublicationDetail() {
               <span
                 className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   background: 'rgba(45,138,138,0.1)',
                   color: 'var(--teal)',
@@ -164,7 +159,6 @@ export default function PublicationDetail() {
           {/* Authors */}
           <p
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '14px',
               color: 'var(--slate)',
               margin: '0 0 6px 0',
@@ -202,7 +196,6 @@ export default function PublicationDetail() {
           {/* Journal */}
           <p
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '14px',
               color: 'var(--slate)',
               fontStyle: 'italic',
@@ -239,7 +232,6 @@ export default function PublicationDetail() {
             {pub.abstract && (
               <p
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '14px',
                   color: 'var(--ink)',
                   lineHeight: 1.7,
@@ -258,7 +250,6 @@ export default function PublicationDetail() {
                     to={`/publications?topic=${encodeURIComponent(t)}`}
                     className="inline-flex items-center px-2.5 py-1 rounded-full transition-colors hover:opacity-80"
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       fontSize: '11px',
                       background: 'rgba(201, 168, 76, 0.1)',
                       color: 'var(--gold)',
@@ -279,7 +270,6 @@ export default function PublicationDetail() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors hover:opacity-80"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     background: 'rgba(201, 168, 76, 0.1)',
                     color: 'var(--gold)',
                     border: '1px solid rgba(201, 168, 76, 0.2)',
@@ -297,7 +287,6 @@ export default function PublicationDetail() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors hover:opacity-80"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     background: 'rgba(45, 138, 138, 0.08)',
                     color: 'var(--teal)',
                     border: '1px solid rgba(45, 138, 138, 0.15)',

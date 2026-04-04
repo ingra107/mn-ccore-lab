@@ -359,7 +359,6 @@ export default function CollaborationGraph({
           width: '100%',
           height: fullPage ? '100%' : '400px',
           color: 'rgba(255, 255, 255, 0.4)',
-          fontFamily: 'var(--font-sans)',
           fontSize: '13px',
         }}
       >
@@ -413,7 +412,7 @@ export default function CollaborationGraph({
             className="inline-block w-3 h-3 rounded-full"
             style={{ background: GOLD }}
           />
-          <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>
+          <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '10px' }}>
             MNCCORE
           </span>
         </div>
@@ -423,7 +422,7 @@ export default function CollaborationGraph({
               className="inline-block w-3 h-3 rounded-full"
               style={{ background: CLIF_BLUE }}
             />
-            <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>
+            <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '10px' }}>
               CLIF
             </span>
           </div>
@@ -434,7 +433,7 @@ export default function CollaborationGraph({
               className="inline-block w-3 h-3 rounded-full"
               style={{ background: EXTERNAL_GRAY }}
             />
-            <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'var(--font-sans)', fontSize: '10px' }}>
+            <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '10px' }}>
               External
             </span>
           </div>

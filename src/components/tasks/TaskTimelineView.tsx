@@ -95,7 +95,7 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
     return (
       <div
         className="text-center py-12 text-sm"
-        style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}
+        style={{ color: 'var(--slate)', opacity: 0.6 }}
       >
         No tasks match the current filters
       </div>
@@ -187,7 +187,7 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
                       {person.photoUrl ? (
                         <img src={person.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <span style={{ fontSize: 7, fontFamily: 'var(--font-sans)', color: 'var(--slate)', fontWeight: 600 }}>{person.initials}</span>
+                        <span style={{ fontSize: 7, color: 'var(--slate)', fontWeight: 600 }}>{person.initials}</span>
                       )}
                     </div>
                   </foreignObject>
@@ -208,10 +208,10 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
                 maxWidth: 260,
               }}
             >
-              <p className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+              <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
                 {tooltip.task.title || tooltip.task.description}
               </p>
-              <div className="flex items-center gap-2 mt-1 text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+              <div className="flex items-center gap-2 mt-1 text-[10px]" style={{ color: 'var(--slate)' }}>
                 <span>{getPersonInfo(tooltip.task.assignee).name}</span>
                 <span style={{ opacity: 0.3 }}>|</span>
                 <span>Due {formatShortDate(tooltip.task.due_date!)}</span>
@@ -228,7 +228,7 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
         <div className="mt-4">
           <p
             className="text-xs uppercase tracking-wider mb-2"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}
+            style={{ color: 'var(--slate)', opacity: 0.6 }}
           >
             No due date ({undatedTasks.length})
           </p>
@@ -241,7 +241,6 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
                   className="flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs"
                   style={{
                     borderColor: 'var(--border-light)',
-                    fontFamily: 'var(--font-sans)',
                     color: 'var(--ink)',
                   }}
                 >

@@ -74,7 +74,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
       <div className="flex flex-col gap-3">
         {/* Blocked by section */}
         <div>
-          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--maroon)', opacity: 0.7 }}>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ color: 'var(--maroon)', opacity: 0.7 }}>
             <AlertTriangle size={10} />
             Blocked by
           </label>
@@ -87,12 +87,11 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
                   <button
                     onClick={() => onOpenTask(bt)}
                     className="flex-1 min-w-0 text-left truncate text-sm"
-                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 400 }}
+                    style={{ color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 400 }}
                   >
                     {bt.title || bt.description}
                   </button>
                   <span className="text-[10px] px-1.5 py-0.5 rounded" style={{
-                    fontFamily: 'var(--font-sans)',
                     color: bt.status === 'done' ? 'var(--green)' : bt.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)',
                     background: bt.status === 'done' ? 'rgba(34,197,94,0.1)' : bt.status === 'in_progress' ? 'rgba(45,138,138,0.1)' : 'rgba(100,116,139,0.1)',
                   }}>
@@ -110,7 +109,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
               ))}
             </div>
           ) : (
-            <p className="text-[11px] mb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4, margin: '0 0 8px 0' }}>
+            <p className="text-[11px] mb-2" style={{ color: 'var(--slate)', opacity: 0.4, margin: '0 0 8px 0' }}>
               No blockers
             </p>
           )}
@@ -129,7 +128,6 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
               onClick={() => setShowSearch(true)}
               className="flex items-center gap-1.5 text-xs transition-colors"
               style={{
-                fontFamily: 'var(--font-sans)',
                 color: 'var(--teal)',
                 background: 'none',
                 border: 'none',
@@ -148,7 +146,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
         {/* Blocks section (reverse lookup) */}
         {hasBlocking && (
           <div>
-            <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', opacity: 0.7 }}>
+            <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ color: 'var(--gold)', opacity: 0.7 }}>
               <Ban size={10} />
               Blocks
             </label>
@@ -159,12 +157,11 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
                   <button
                     onClick={() => onOpenTask(bt)}
                     className="flex-1 min-w-0 text-left truncate text-sm"
-                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 400 }}
+                    style={{ color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 400 }}
                   >
                     {bt.title || bt.description}
                   </button>
                   <span className="text-[10px] px-1.5 py-0.5 rounded" style={{
-                    fontFamily: 'var(--font-sans)',
                     color: 'var(--maroon)',
                     background: 'rgba(122,0,25,0.06)',
                   }}>
@@ -231,7 +228,7 @@ export function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onS
           }}
           placeholder="Search tasks to add as blocker..."
           className="flex-1 text-sm outline-none bg-transparent"
-          style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', border: 'none' }}
+          style={{ color: 'var(--ink)', border: 'none' }}
         />
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0 }}>
           <X size={14} />
@@ -248,7 +245,7 @@ export function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onS
               key={t.id}
               onClick={() => onSelect(t.id)}
               className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+              style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
             >
               <Link2 size={12} style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0 }} />
               <span className="flex-1 truncate">{t.title || t.description}</span>
@@ -261,7 +258,7 @@ export function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onS
       )}
 
       {query && candidates.length === 0 && (
-        <div className="mt-1 py-3 text-center text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+        <div className="mt-1 py-3 text-center text-[11px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
           No matching tasks
         </div>
       )}

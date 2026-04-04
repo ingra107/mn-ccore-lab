@@ -55,7 +55,6 @@ export default function ActivityPage() {
             onChange={(e) => setFilterType(e.target.value)}
             className="rounded-full border px-3 py-1.5 text-xs"
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '12px',
               color: filterType ? 'var(--teal)' : 'var(--slate)',
               backgroundColor: filterType ? 'rgba(45,138,138,0.06)' : 'transparent',
@@ -96,7 +95,7 @@ export default function ActivityPage() {
           const label = isToday ? 'Today' : isYesterday ? 'Yesterday' : formatMediumDate(date)
           return (
             <div key={date}>
-              <h3 className="text-sm font-normal mb-2" style={{ fontFamily: 'var(--font-sans)', color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
+              <h3 className="text-sm font-normal mb-2" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
                 {label}
               </h3>
               <div className="flex flex-col gap-1 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)' }}>
@@ -108,19 +107,19 @@ export default function ActivityPage() {
                         <ActivityAvatar slug={item.actor!} />
                       ) : (
                         <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--ice)' }}>
-                          <span className="text-[8px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>SYS</span>
+                          <span className="text-[8px]" style={{ color: 'var(--slate)' }}>SYS</span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                        <p className="text-sm" style={{ color: 'var(--ink)' }}>
                           {person && <span className="font-medium">{person.name} </span>}
                           {item.description}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}>
                             {item.type}
                           </span>
-                          <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+                          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
                             {formatRelativeTime(item.timestamp)}
                           </span>
                         </div>

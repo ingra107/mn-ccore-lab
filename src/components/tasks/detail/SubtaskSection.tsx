@@ -92,7 +92,6 @@ export function SubtaskChecklist({ taskId }: { taskId: string }) {
               <span
                 className="flex-1 text-sm min-w-0 truncate"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   color: s.completed ? 'var(--slate)' : 'var(--ink)',
                   textDecoration: s.completed ? 'line-through' : 'none',
                   opacity: s.completed ? 0.5 : 1,
@@ -124,7 +123,7 @@ export function SubtaskChecklist({ taskId }: { taskId: string }) {
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Add subtask..."
           className="flex-1 text-sm outline-none bg-transparent py-1"
-          style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', border: 'none' }}
+          style={{ color: 'var(--ink)', border: 'none' }}
         />
       </form>
     </div>

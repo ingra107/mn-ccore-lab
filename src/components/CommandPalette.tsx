@@ -312,7 +312,7 @@ export default function CommandPalette() {
             onKeyDown={handleKeyDown}
             placeholder="Search tasks, projects, people, or type a command..."
             className="flex-1 text-sm outline-none"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', background: 'none', border: 'none' }}
+            style={{ color: 'var(--ink)', background: 'none', border: 'none' }}
           />
           <kbd className="text-[10px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.5 }}>
             esc
@@ -325,7 +325,7 @@ export default function CommandPalette() {
             .sort(([a], [b]) => (categoryOrder[a] || 9) - (categoryOrder[b] || 9))
             .map(([category, items]) => (
               <div key={category}>
-                <div className="px-4 py-1.5 text-[9px] uppercase tracking-wider" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+                <div className="px-4 py-1.5 text-[9px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 0.4 }}>
                   {categoryLabels[category] || category}
                 </div>
                 {items.map((item) => {
@@ -345,11 +345,11 @@ export default function CommandPalette() {
                     >
                       <Icon size={15} style={{ color: isSelected ? 'var(--teal)' : 'var(--slate)', opacity: isSelected ? 1 : 0.4, flexShrink: 0 }} />
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm truncate block" style={{ fontFamily: 'var(--font-sans)', color: isSelected ? 'var(--teal)' : 'var(--ink)', fontWeight: isSelected ? 500 : 400 }}>
+                        <span className="text-sm truncate block" style={{ color: isSelected ? 'var(--teal)' : 'var(--ink)', fontWeight: isSelected ? 500 : 400 }}>
                           {item.label}
                         </span>
                         {item.sublabel && (
-                          <span className="text-[10px] truncate block" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+                          <span className="text-[10px] truncate block" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                             {item.sublabel}
                           </span>
                         )}
@@ -366,14 +366,14 @@ export default function CommandPalette() {
               </div>
             ))}
           {filtered.length === 0 && (
-            <div className="px-4 py-8 text-center text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+            <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>
               No results for "{query}"
             </div>
           )}
         </div>
 
         {/* Footer hint */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 0.4 }}>
           <span>↑↓ navigate</span>
           <span>↵ select</span>
           <span>esc close</span>

@@ -190,7 +190,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             {!collapsed && (
               <div
                 className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider"
-                style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)', opacity: 0.5, letterSpacing: '0.08em' }}
+                style={{ color: 'var(--slate)', opacity: 0.5, letterSpacing: '0.08em' }}
               >
                 {group.title}
               </div>
@@ -207,7 +207,6 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   style={{
                     backgroundColor: active ? 'rgba(45,138,138,0.12)' : 'transparent',
                     color: active ? 'var(--teal)' : 'var(--slate)',
-                    fontFamily: 'var(--font-sans)',
                     fontWeight: active ? 500 : 400,
                   }}
                   title={collapsed ? item.label : undefined}
@@ -236,7 +235,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           <a
             href="mailto:ningraha@umn.edu?subject=MN-CCORE%20Hub%20Bug%20Report"
             className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-            style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)', textDecoration: 'none', opacity: 0.6 }}
+            style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.6 }}
           >
             <Bug size={16} />
             <span>Report a Bug</span>
@@ -248,7 +247,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           <Link
             to="/search"
             className="flex items-center gap-2.5 px-2.5 py-2 mb-1 rounded-md text-sm transition-colors"
-            style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)', opacity: 0.6 }}
+            style={{ color: 'var(--slate)', opacity: 0.6 }}
           >
             <Search size={16} />
             <span className="flex-1">Search</span>
@@ -265,7 +264,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         <Link
           to="/"
           className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors"
-          style={{ color: 'var(--slate)', fontFamily: 'var(--font-sans)' }}
+          style={{ color: 'var(--slate)' }}
           title={collapsed ? 'Back to Website' : undefined}
         >
           <ExternalLink size={16} />
@@ -277,7 +276,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           <Link
             to={`/team/${userSlug}`}
             className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-            style={{ color: 'var(--ink)', fontFamily: 'var(--font-sans)', textDecoration: 'none' }}
+            style={{ color: 'var(--ink)', textDecoration: 'none' }}
           >
             <div style={{ width: 24, height: 24, flexShrink: 0 }}>
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="gold" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[8px]" />
@@ -296,7 +295,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           style={{ color: 'var(--slate)', background: 'none', border: 'none', cursor: 'pointer' }}
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-          {!collapsed && <span style={{ fontFamily: 'var(--font-sans)' }}>Collapse</span>}
+          {!collapsed && <span>Collapse</span>}
         </button>
       </div>
     </aside>

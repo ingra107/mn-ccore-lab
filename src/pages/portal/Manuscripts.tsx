@@ -121,7 +121,6 @@ export default function Manuscripts() {
               style={{
                 background: 'transparent',
                 color: 'var(--teal)',
-                fontFamily: 'var(--font-sans)',
                 fontSize: '13px',
                 fontWeight: 600,
                 border: '1px solid var(--border-subtle)',
@@ -152,7 +151,6 @@ export default function Manuscripts() {
               onChange={(e) => setFilterPI(e.target.value)}
               className="rounded-md border px-3 py-1.5 text-xs"
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '12px',
                 color: filterPI ? 'var(--teal)' : 'var(--slate)',
                 backgroundColor: 'transparent',

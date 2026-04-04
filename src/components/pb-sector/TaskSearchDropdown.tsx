@@ -102,14 +102,14 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                         {task.title || task.description}
                       </span>
                       {task.project_title && (
-                        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--gold)', opacity: 0.6 }}>
+                        <span style={{ fontSize: '10px', color: 'var(--gold)', opacity: 0.6 }}>
                           {task.project_title}
                         </span>
                       )}
                     </div>
 
                     {task.due_date && (
-                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5, flexShrink: 0 }}>
+                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5, flexShrink: 0 }}>
                         {task.due_date}
                       </span>
                     )}

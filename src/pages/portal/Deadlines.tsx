@@ -143,7 +143,6 @@ export default function Deadlines() {
             onChange={(e) => setFilterType(e.target.value)}
             className="rounded-full border px-3 py-1.5 text-xs"
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '12px',
               color: filterType ? 'var(--teal)' : 'var(--slate)',
               backgroundColor: filterType ? 'rgba(45,138,138,0.06)' : 'transparent',
@@ -180,7 +179,7 @@ export default function Deadlines() {
               }}
             >
               {['TITLE', 'DUE DATE', 'ASSIGNEE', 'TYPE'].map((col) => (
-                <span key={col} style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+                <span key={col} style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
                   {col}
                 </span>
               ))}
@@ -231,10 +230,10 @@ function DeadlineTableSection({ title, items, color }: { title: string; items: D
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '12px 16px 6px', textAlign: 'left' }}
       >
         <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.6, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+        <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.6, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
           {title}
         </span>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.35 }}>
+        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.35 }}>
           {items.length}
         </span>
         <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
@@ -256,7 +255,7 @@ function DeadlineTableSection({ title, items, color }: { title: string; items: D
             >
               {/* Title */}
               <span style={{
-                fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 400,
+                fontSize: '13px', fontWeight: 400,
                 color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
                 paddingRight: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
               }}>
@@ -265,7 +264,7 @@ function DeadlineTableSection({ title, items, color }: { title: string; items: D
 
               {/* Due date */}
               <span style={{
-                fontFamily: 'var(--font-sans)', fontSize: '12px',
+                fontSize: '12px',
                 color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
                 fontWeight: item.isOverdue ? 500 : 400,
               }}>
@@ -279,13 +278,13 @@ function DeadlineTableSection({ title, items, color }: { title: string; items: D
                     <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
                   </div>
                 ) : (
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
+                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
                 )}
               </div>
 
               {/* Type badge */}
               <span style={{
-                fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500,
+                fontSize: '10px', fontWeight: 500,
                 color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
                 opacity: 0.7,
               }}>
@@ -300,7 +299,7 @@ function DeadlineTableSection({ title, items, color }: { title: string; items: D
             >
               {/* Title */}
               <span style={{
-                fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 500,
+                fontSize: '14px', fontWeight: 500,
                 color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
                 display: 'block', marginBottom: '4px',
               }}>
@@ -309,14 +308,14 @@ function DeadlineTableSection({ title, items, color }: { title: string; items: D
               {/* Metadata row */}
               <div className="flex items-center gap-3 flex-wrap">
                 <span style={{
-                  fontFamily: 'var(--font-sans)', fontSize: '11px',
+                  fontSize: '11px',
                   color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
                   fontWeight: item.isOverdue ? 500 : 400,
                 }}>
                   {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
                 </span>
                 <span style={{
-                  fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 500,
+                  fontSize: '10px', fontWeight: 500,
                   color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
                   opacity: 0.7,
                 }}>
@@ -386,7 +385,6 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         <span
           className="flex-1 text-sm truncate"
           style={{
-            fontFamily: 'var(--font-sans)',
             color: 'var(--ink)',
             textDecoration: isDone ? 'line-through' : 'none',
           }}
@@ -400,7 +398,6 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             onClick={() => setEditingNote(true)}
             className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: 'var(--gold)',
               opacity: 0.6,
               background: 'none',
@@ -416,14 +413,14 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 
         {/* Project */}
         {item.project && (
-          <span className="text-[10px] hidden sm:block" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)', opacity: 0.6 }}>
+          <span className="text-[10px] hidden sm:block" style={{ color: 'var(--gold)', opacity: 0.6 }}>
             {item.project}
           </span>
         )}
 
         {/* Priority */}
         {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ fontFamily: 'var(--font-sans)', color: item.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: item.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
+          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ color: item.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: item.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
             {item.priority}
           </span>
         )}
@@ -439,7 +436,6 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         <span
           className="text-[11px] flex-shrink-0 w-16 text-right"
           style={{
-            fontFamily: 'var(--font-sans)',
             color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
             fontWeight: item.isOverdue ? 600 : 400,
             opacity: item.isOverdue ? 1 : 0.6,
@@ -481,7 +477,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {isMilestone && item.future_note && !isDueSoon && !isDone && (
         <div className="ml-8 mr-3 mt-0.5 mb-1 flex items-center gap-1.5">
           <Clock size={9} style={{ color: 'var(--gold)', opacity: 0.4 }} />
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.4 }}>
+          <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.4 }}>
             Future Me note attached
           </span>
           <button
@@ -530,7 +526,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             <button
               onClick={() => { setEditingNote(false); setNoteText(item.future_note || '') }}
               className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', background: 'none', border: 'none', cursor: 'pointer' }}
+              style={{ color: 'var(--slate)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <X size={11} />
               Cancel
@@ -540,7 +536,6 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               disabled={saving}
               className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
               style={{
-                fontFamily: 'var(--font-sans)',
                 color: 'var(--gold)',
                 background: 'rgba(201,168,76,0.1)',
                 border: '1px solid rgba(201,168,76,0.2)',
@@ -611,7 +606,7 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
 
             {/* Week label */}
             <div className="mb-2">
-              <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+              <span className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>
                 {formatShortDate(weekStart)} — {formatShortDate(weekEnd.toISOString().split('T')[0])}
               </span>
             </div>

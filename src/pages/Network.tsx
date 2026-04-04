@@ -121,7 +121,6 @@ export default function Network() {
           <p
             className="hidden sm:block text-xs"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: 'rgba(255, 255, 255, 0.35)',
               letterSpacing: '0.05em',
             }}
@@ -168,7 +167,6 @@ export default function Network() {
           <span
             className="text-xs px-3 py-1 rounded-full"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: 'rgba(255, 255, 255, 0.4)',
               background: 'rgba(15, 25, 35, 0.6)',
               fontSize: '10px',

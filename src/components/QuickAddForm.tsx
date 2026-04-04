@@ -38,7 +38,6 @@ export default function QuickAddForm({
             onClick={onToggle}
             className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium quick-add-trigger"
             style={{
-              fontFamily: 'var(--font-sans)',
               background: 'var(--ice)',
               color: 'var(--slate)',
               border: '1px dashed rgba(201,168,76,0.3)',
@@ -86,7 +85,6 @@ export default function QuickAddForm({
                   onClick={onCancel}
                   className="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     background: 'transparent',
                     color: 'var(--slate)',
                     border: '1px solid rgba(201,168,76,0.15)',
@@ -100,7 +98,6 @@ export default function QuickAddForm({
                   onClick={onSubmit}
                   className="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     background: 'var(--gold)',
                     color: '#0f1923',
                     border: 'none',

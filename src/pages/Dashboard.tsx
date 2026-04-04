@@ -124,7 +124,6 @@ export default function Dashboard() {
               />
               <span
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   color: 'var(--slate)',
                   opacity: 0.6,
@@ -141,7 +140,6 @@ export default function Dashboard() {
               onClick={() => setShowCustomize(!showCustomize)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
               style={{
-                fontFamily: 'var(--font-sans)',
                 color: showCustomize ? 'var(--teal)' : 'var(--slate)',
                 backgroundColor: showCustomize ? 'rgba(45,138,138,0.08)' : 'transparent',
                 border: '1px solid',
@@ -157,7 +155,6 @@ export default function Dashboard() {
 
           <h1
             style={{
-              fontFamily: 'var(--font-sans)',
               fontWeight: 600,
               fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
               color: 'var(--ink)',
@@ -200,7 +197,7 @@ export default function Dashboard() {
             className="rounded-xl border p-4 mb-4 customize-panel"
             style={{ borderColor: 'var(--border-light)' }}
           >
-            <p className="text-xs font-medium mb-3" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+            <p className="text-xs font-medium mb-3" style={{ color: 'var(--ink)' }}>
               Toggle cards visible on your dashboard
             </p>
             <div className="flex flex-wrap gap-2">
@@ -210,7 +207,6 @@ export default function Dashboard() {
                     onClick={() => toggleCard(card.id)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       color: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--slate)',
                       backgroundColor: visibleCards.has(card.id) ? 'rgba(45,138,138,0.08)' : 'transparent',
                       borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-light)',
@@ -247,7 +243,7 @@ export default function Dashboard() {
           <Link
             to="/tasks?create=true"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
-            style={{ fontFamily: 'var(--font-sans)', color: 'white', backgroundColor: 'var(--teal)', textDecoration: 'none' }}
+            style={{ color: 'white', backgroundColor: 'var(--teal)', textDecoration: 'none' }}
           >
             <Plus size={14} />
             New Task
@@ -255,7 +251,7 @@ export default function Dashboard() {
           <Link
             to="/meetings"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', textDecoration: 'none' }}
+            style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', textDecoration: 'none' }}
           >
             <CalendarPlus size={14} />
             Schedule Meeting
@@ -263,7 +259,7 @@ export default function Dashboard() {
           <Link
             to="/ideas?create=true"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', borderColor: 'var(--border-light)', textDecoration: 'none' }}
+            style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', textDecoration: 'none' }}
           >
             <FolderPlus size={14} />
             Submit Idea
@@ -277,7 +273,6 @@ export default function Dashboard() {
               <Pin size={14} style={{ color: 'var(--gold)' }} />
               <span
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
@@ -352,7 +347,6 @@ export default function Dashboard() {
                 onClick={() => setShowMore(true)}
                 className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-medium transition-colors border"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   color: 'var(--slate)',
                   borderColor: 'var(--border-light)',
                   backgroundColor: 'transparent',
@@ -397,7 +391,6 @@ export default function Dashboard() {
                   onClick={() => setShowMore(false)}
                   className="w-full mt-4 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-colors"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     color: 'var(--slate)',
                     backgroundColor: 'transparent',
                     border: 'none',
@@ -416,7 +409,7 @@ export default function Dashboard() {
         {/* Empty state if all cards hidden */}
         {pinnedVisibleCards.length === 0 && unpinnedPrimaryCards.length === 0 && unpinnedSecondaryCards.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+            <p className="text-sm" style={{ color: 'var(--slate)' }}>
               All cards are hidden. Click "Customize" to add cards back.
             </p>
           </div>

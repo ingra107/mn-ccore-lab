@@ -66,7 +66,6 @@ export default function RecentActivity() {
           <h2
             className="text-2xl sm:text-3xl"
             style={{
-              fontFamily: 'var(--font-sans)',
               fontWeight: 500,
               color: 'var(--ink)',
             }}
@@ -77,7 +76,6 @@ export default function RecentActivity() {
             to="/publications"
             className="text-xs flex items-center gap-1 transition-colors duration-200"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: 'var(--gold)',
               textDecoration: 'none',
             }}
@@ -123,7 +121,6 @@ export default function RecentActivity() {
                 <span
                   className="flex-shrink-0 text-xs"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     color: 'var(--slate)',
                     opacity: 0.7,
                     fontSize: '10px',

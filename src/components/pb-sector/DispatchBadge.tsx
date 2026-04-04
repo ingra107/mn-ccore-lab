@@ -37,7 +37,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
         }}
       >
         <MessageSquare size={12} style={{ color: 'var(--gold)' }} />
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, color: 'var(--gold)' }}>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--gold)' }}>
           {count}
         </span>
         <ChevronDown size={10} style={{ color: 'var(--gold)', opacity: 0.6, transform: expanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
@@ -56,7 +56,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
           >
             {/* Header */}
             <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: '1px solid rgba(201,168,76,0.1)' }}>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
+              <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
                 Dispatch Queue
               </span>
               <button onClick={() => setExpanded(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
@@ -85,7 +85,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                         {item.comment}
                       </span>
                       {item.task_title && (
-                        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.6 }}>
+                        <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.6 }}>
                           {item.task_title}
                         </span>
                       )}
@@ -102,7 +102,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                 disabled={isSending || count === 0}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors"
                 style={{
-                  fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600,
+                  fontSize: '11px', fontWeight: 600,
                   background: 'var(--gold)', color: '#fff',
                   border: 'none', cursor: isSending ? 'wait' : 'pointer',
                   opacity: isSending ? 0.7 : 1,

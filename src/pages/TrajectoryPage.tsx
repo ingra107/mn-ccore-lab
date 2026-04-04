@@ -109,10 +109,10 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span style={{ fontSize: '11px', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Cumulative Publications Over Time
         </span>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '20px', fontWeight: 700, color: 'var(--teal)' }}>
+        <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--teal)' }}>
           {maxCount}
         </span>
       </div>
@@ -130,7 +130,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
               <text
                 x={padding.left - 8} y={yScale(v) + 4}
                 textAnchor="end"
-                style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', fill: 'var(--slate)' }}
+                style={{ fontSize: '9px', fill: 'var(--slate)' }}
                 opacity={0.5}
               >
                 {v}
@@ -145,7 +145,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
               x={xScale(idx)}
               y={height - 6}
               textAnchor="middle"
-              style={{ fontFamily: 'var(--font-sans)', fontSize: '8px', fill: 'var(--slate)' }}
+              style={{ fontSize: '8px', fill: 'var(--slate)' }}
               opacity={0.5}
             >
               {points[idx]?.month.slice(2).replace('-', '/')}
@@ -198,10 +198,10 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span style={{ fontSize: '11px', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Time in Pipeline
         </span>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
           days in current stage / total days
         </span>
       </div>
@@ -246,7 +246,6 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                     padding: '2px 8px',
                     borderRadius: '9999px',
                     fontSize: '10px',
-                    fontFamily: 'var(--font-sans)',
                     fontWeight: 500,
                     color: stageColor,
                     background: `${stageColor}15`,
@@ -295,7 +294,6 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
 
                 <span
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: 'var(--slate)',
                     whiteSpace: 'nowrap',
@@ -384,7 +382,6 @@ function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] })
             />
             <div
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '1.75rem',
                 fontWeight: 700,
                 color: 'var(--ink)',
@@ -395,7 +392,6 @@ function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] })
             </div>
             <div
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '10px',
                 color: 'var(--slate)',
                 textTransform: 'uppercase',
@@ -408,7 +404,6 @@ function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] })
             {card.subtitle && (
               <div
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   color: 'var(--slate)',
                   opacity: 0.5,
@@ -515,7 +510,6 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
               {pub.journal && (
                 <span
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: 'var(--teal)',
                     fontStyle: 'italic',
@@ -530,7 +524,6 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
               {pub.pub_date && (
                 <span
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: 'var(--slate)',
                     opacity: 0.7,
@@ -546,7 +539,6 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '11px',
                   color: 'var(--teal)',
                   textDecoration: 'none',
@@ -621,7 +613,6 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
       >
         <span
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '11px',
             color: 'var(--slate)',
             textTransform: 'uppercase',
@@ -632,7 +623,6 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
         </span>
         <span
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '20px',
             fontWeight: 700,
             color: 'var(--gold)',
@@ -672,7 +662,6 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
                 y={chartHeight - 2}
                 textAnchor="middle"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '3.5px',
                   fill: 'var(--slate)',
                   opacity: 0.5,
@@ -687,7 +676,6 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
                   y={chartHeight - height - 20}
                   textAnchor="middle"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '3.5px',
                     fill: isCurrent ? 'var(--teal)' : 'var(--gold)',
                     fontWeight: 600,
@@ -773,7 +761,6 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
                     padding: '2px 8px',
                     borderRadius: '9999px',
                     fontSize: '11px',
-                    fontFamily: 'var(--font-sans)',
                     fontWeight: 500,
                     color: stageColor,
                     background: `${stageColor}15`,
@@ -784,7 +771,6 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
                 {project.category && (
                   <span
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       fontSize: '11px',
                       color: 'var(--slate)',
                       opacity: 0.6,
@@ -866,7 +852,6 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
                 </h4>
                 <span
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: 'var(--slate)',
                     opacity: 0.6,
@@ -878,7 +863,6 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
               {ms.due_date && (
                 <span
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     fontWeight: isOverdue || isUpcoming ? 600 : 400,
                     color: dateColor,
@@ -914,7 +898,6 @@ function SectionHeader({
       <Icon size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
       <h2
         style={{
-          fontFamily: 'var(--font-sans)',
           fontWeight: 500,
           fontSize: '1.25rem',
           color: 'var(--ink)',
@@ -926,7 +909,6 @@ function SectionHeader({
       {count !== undefined && count > 0 && (
         <span
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '11px',
             color: 'var(--slate)',
             opacity: 0.6,
@@ -974,7 +956,6 @@ function PeriodSelector({
             key={days}
             onClick={() => onChange(days)}
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '11px',
               fontWeight: active ? 600 : 400,
               padding: '4px 10px',
@@ -1023,7 +1004,6 @@ function ContribMetricCard({
       />
       <div
         style={{
-          fontFamily: 'var(--font-sans)',
           fontSize: '2rem',
           fontWeight: 700,
           color: 'var(--ink)',
@@ -1034,7 +1014,6 @@ function ContribMetricCard({
       </div>
       <div
         style={{
-          fontFamily: 'var(--font-sans)',
           fontSize: '10px',
           color: 'var(--slate)',
           textTransform: 'uppercase',
@@ -1225,7 +1204,6 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                     <Icon size={13} style={{ color: config.color, flexShrink: 0 }} />
                     <span
                       style={{
-                        fontFamily: 'var(--font-sans)',
                         fontSize: '10px',
                         color: config.color,
                         textTransform: 'uppercase',
@@ -1250,7 +1228,6 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                   {entry.subtitle && (
                     <span
                       style={{
-                        fontFamily: 'var(--font-sans)',
                         fontSize: '11px',
                         color: 'var(--slate)',
                         opacity: 0.6,
@@ -1262,7 +1239,6 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                 </div>
                 <span
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '11px',
                     color: 'var(--slate)',
                     opacity: 0.6,
@@ -1330,7 +1306,6 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
       >
         <span
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '12px',
             color: 'var(--slate)',
           }}
@@ -1344,7 +1319,6 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
       <div className="contributions-print-header" style={{ display: 'none' }}>
         <h2
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '16pt',
             fontWeight: 500,
             margin: '0 0 4pt',
@@ -1352,7 +1326,7 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
         >
           Contribution Portfolio -- {memberName}
         </h2>
-        <p style={{ fontFamily: 'var(--font-sans)', fontSize: '10pt', color: '#666', margin: 0 }}>
+        <p style={{ fontSize: '10pt', color: '#666', margin: 0 }}>
           {period === 365 ? '1 year' : `${period} days`} ending {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
         </p>
       </div>
@@ -1424,7 +1398,6 @@ export default function TrajectoryPage() {
         to={`/team/${slug}`}
         className="inline-flex items-center gap-1.5 mb-6 no-print"
         style={{
-          fontFamily: 'var(--font-sans)',
           fontSize: '12px',
           color: 'var(--slate)',
           textDecoration: 'none',
@@ -1476,7 +1449,6 @@ export default function TrajectoryPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontFamily: 'var(--font-sans)',
                 fontSize: '18px',
                 fontWeight: 700,
                 color: 'white',
@@ -1489,7 +1461,6 @@ export default function TrajectoryPage() {
           <div>
             <h1
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '1.75rem',
                 fontWeight: 700,
                 color: 'var(--ink)',
@@ -1517,7 +1488,6 @@ export default function TrajectoryPage() {
           onClick={() => window.print()}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium no-print"
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '12px',
             background: 'var(--ice)',
             color: 'var(--slate)',
@@ -1561,7 +1531,6 @@ export default function TrajectoryPage() {
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.75rem 1.25rem',
-                fontFamily: 'var(--font-sans)',
                 fontSize: '12px',
                 fontWeight: active ? 600 : 400,
                 color: active ? 'var(--gold)' : 'var(--slate)',

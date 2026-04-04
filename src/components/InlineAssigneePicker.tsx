@@ -70,7 +70,6 @@ export default function InlineAssigneePicker({ value, onChange }: InlineAssignee
           border: '1px solid transparent',
           background: 'none',
           cursor: 'pointer',
-          fontFamily: 'var(--font-sans)',
           fontSize: '12px',
           fontWeight: 400,
           color: 'var(--ink)',
@@ -96,7 +95,6 @@ export default function InlineAssigneePicker({ value, onChange }: InlineAssignee
           />
         </div>
         <span style={{
-          fontFamily: 'var(--font-sans)',
           fontSize: '12px',
           color: 'var(--slate)',
           overflow: 'hidden',
@@ -150,7 +148,6 @@ export default function InlineAssigneePicker({ value, onChange }: InlineAssignee
                     border: 'none',
                     cursor: 'pointer',
                     background: isSelected ? 'rgba(45,138,138,0.06)' : 'none',
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '12px',
                     fontWeight: isSelected ? 500 : 400,
                     color: 'var(--ink)',

@@ -197,7 +197,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
     if (groupBy === 'priority') {
       const cfg = priorityConfig[key] || priorityConfig.medium
       return (
-        <span className="flex items-center gap-2" style={{ color: cfg.color, fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 500 }}>
+        <span className="flex items-center gap-2" style={{ color: cfg.color, fontSize: '13px', fontWeight: 500 }}>
           <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: cfg.color, opacity: 0.7 }} />
           {cfg.label}
         </span>
@@ -206,7 +206,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
     if (groupBy === 'assignee') {
       const person = getPersonInfo(key)
       return (
-        <span className="flex items-center gap-2" style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>
+        <span className="flex items-center gap-2" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>
           <div style={{ width: 20, height: 20 }}>
             <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]" />
           </div>
@@ -214,7 +214,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
         </span>
       )
     }
-    return <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>{key}</span>
+    return <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>{key}</span>
   }
 
   return (
@@ -228,7 +228,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
       {/* Group By selector */}
       <div className="flex items-center gap-2 mb-3">
         <Layers size={13} style={{ color: 'var(--slate)', opacity: 0.5 }} />
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
           Group by:
         </span>
         {(['status', 'priority', 'assignee'] as const).map((field) => (
@@ -244,7 +244,6 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
               border: groupBy === field ? '1px solid var(--teal)' : '1px solid transparent',
               background: groupBy === field ? 'rgba(45,138,138,0.08)' : 'none',
               color: groupBy === field ? 'var(--teal)' : 'var(--slate)',
-              fontFamily: 'var(--font-sans)',
               fontSize: '11px',
               fontWeight: groupBy === field ? 500 : 400,
               cursor: 'pointer',
@@ -297,13 +296,13 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                       <ChevronDown size={12} />
                     </button>
                     <Icon size={14} style={{ color: col.color }} />
-                    <span className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: col.color }}>
+                    <span className="text-sm font-medium" style={{ color: col.color }}>
                       {col.label}
                     </span>
                   </div>
                   <span
                     className="text-xs px-1.5 py-0.5 rounded-full"
-                    style={{ fontFamily: 'var(--font-sans)', backgroundColor: col.bg, color: col.color, fontWeight: 600 }}
+                    style={{ backgroundColor: col.bg, color: col.color, fontWeight: 600 }}
                   >
                     {columnTasks.length}
                   </span>
@@ -327,7 +326,6 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                           borderColor: 'var(--border-light)',
                           color: 'var(--slate)',
                           opacity: 0.4,
-                          fontFamily: 'var(--font-sans)',
                           fontSize: '12px',
                         }}
                       >
@@ -370,7 +368,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                   {renderLaneLabel(lane.key)}
                   <span
                     className="text-xs px-1.5 py-0.5 rounded-full ml-1"
-                    style={{ fontFamily: 'var(--font-sans)', background: 'var(--ice)', color: 'var(--slate)', fontWeight: 500 }}
+                    style={{ background: 'var(--ice)', color: 'var(--slate)', fontWeight: 500 }}
                   >
                     {lane.tasks.length}
                   </span>
@@ -392,11 +390,11 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                           >
                             <div className="flex items-center gap-1.5">
                               <Icon size={12} style={{ color: col.color, opacity: 0.7 }} />
-                              <span className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: col.color, opacity: 0.8 }}>
+                              <span className="text-xs" style={{ color: col.color, opacity: 0.8 }}>
                                 {col.label}
                               </span>
                             </div>
-                            <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: col.color, opacity: 0.6 }}>
+                            <span className="text-[10px]" style={{ color: col.color, opacity: 0.6 }}>
                               {columnTasks.length}
                             </span>
                           </div>
@@ -417,7 +415,6 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                                     borderColor: 'var(--border-light)',
                                     color: 'var(--slate)',
                                     opacity: 0.3,
-                                    fontFamily: 'var(--font-sans)',
                                     fontSize: '10px',
                                   }}
                                 >
@@ -503,7 +500,6 @@ function CollapsedColumn({
         style={{
           writingMode: 'vertical-rl',
           textOrientation: 'mixed',
-          fontFamily: 'var(--font-sans)',
           fontSize: '12px',
           fontWeight: 500,
           color,
@@ -519,7 +515,6 @@ function CollapsedColumn({
       <span
         className="rounded-full px-1.5 py-0.5 text-[10px]"
         style={{
-          fontFamily: 'var(--font-sans)',
           fontWeight: 600,
           color,
           background: `color-mix(in srgb, ${color} 12%, transparent)`,

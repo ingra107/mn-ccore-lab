@@ -108,7 +108,7 @@ export default function SettingsPage() {
               value={settings.lab_type || 'clinical_research'}
               onChange={(e) => updateSettings.mutate({ lab_type: e.target.value })}
               className="w-full rounded-md border px-3 py-2 text-sm cursor-pointer"
-              style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)', color: 'var(--ink)' }}
+              style={{ borderColor: 'var(--border-light)', color: 'var(--ink)' }}
             >
               <option value="clinical_research">Clinical Research</option>
               <option value="basic_science">Basic Science</option>
@@ -127,11 +127,11 @@ export default function SettingsPage() {
               return (
                 <div key={template.id} className="rounded-lg border p-4" style={{ borderColor: 'var(--border-light)' }}>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-semibold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                    <span className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                       {template.name}
                     </span>
                     {template.is_default === 1 && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
                         Default
                       </span>
                     )}
@@ -153,7 +153,6 @@ export default function SettingsPage() {
                           key={i}
                           className="text-[11px] px-2.5 py-1 rounded-full border font-medium"
                           style={{
-                            fontFamily: 'var(--font-sans)',
                             color: c.text,
                             backgroundColor: c.bg,
                             borderColor: c.border,
@@ -164,7 +163,7 @@ export default function SettingsPage() {
                       )
                     })}
                   </div>
-                  <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+                  <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                     {stages.length} stage{stages.length !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -186,14 +185,14 @@ export default function SettingsPage() {
                     <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-8 !h-8 !min-w-0 !min-h-0 !text-[9px]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{person.name}</div>
-                    <div className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>{member.role}</div>
+                    <div className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{person.name}</div>
+                    <div className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>{member.role}</div>
                   </div>
                   <input
                     type="text"
                     placeholder="e.g., stats expert, IRB contact, data lead"
                     className="w-48 rounded-md border px-2 py-1 text-xs outline-none"
-                    style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', borderColor: 'var(--border-light)', color: 'var(--ink)' }}
+                    style={{ fontSize: '11px', borderColor: 'var(--border-light)', color: 'var(--ink)' }}
                     defaultValue=""
                   />
                 </div>
@@ -202,7 +201,7 @@ export default function SettingsPage() {
           </div>
           <div className="flex items-start gap-2 mt-3 px-1">
             <Info size={12} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0 }} />
-            <p className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6, lineHeight: 1.5 }}>
+            <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6, lineHeight: 1.5 }}>
               Expertise notes help AI meeting notes recognize who should be assigned which tasks. These are used when AI processes meeting transcripts.
             </p>
           </div>
@@ -212,7 +211,7 @@ export default function SettingsPage() {
         {saved && (
           <div className="fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg border" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--teal)' }}>
             <Check size={14} style={{ color: 'var(--teal)' }} />
-            <span className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}>Saved</span>
+            <span className="text-sm" style={{ color: 'var(--teal)' }}>Saved</span>
           </div>
         )}
       </div>
@@ -230,8 +229,8 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
           <Icon size={16} style={{ color: 'var(--teal)' }} />
         </div>
         <div>
-          <h3 className="text-sm font-normal" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{title}</h3>
-          <p className="text-xs" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>{subtitle}</p>
+          <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>{title}</h3>
+          <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>{subtitle}</p>
         </div>
       </div>
       <div className="flex flex-col gap-4">
@@ -246,11 +245,11 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
 function SettingsField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-0.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>
+      <label className="block text-xs font-medium mb-0.5" style={{ color: 'var(--slate)' }}>
         {label}
       </label>
       {hint && (
-        <p className="text-[11px] mb-1.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+        <p className="text-[11px] mb-1.5" style={{ color: 'var(--slate)', opacity: 0.5 }}>
           {hint}
         </p>
       )}
@@ -270,7 +269,6 @@ function SettingsInput({ value, onSave, placeholder, multiline }: { value: strin
   }
 
   const inputStyle = {
-    fontFamily: 'var(--font-sans)',
     fontSize: '14px',
     color: 'var(--ink)',
     borderColor: 'var(--border-light)',
@@ -329,7 +327,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
       <button
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors hover:bg-black/5 mt-2"
-        style={{ borderColor: 'var(--border-light)', color: 'var(--teal)', fontFamily: 'var(--font-sans)', cursor: 'pointer', background: 'none' }}
+        style={{ borderColor: 'var(--border-light)', color: 'var(--teal)', cursor: 'pointer', background: 'none' }}
       >
         <Plus size={14} />
         Create Custom Template
@@ -340,7 +338,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
   return (
     <div className="mt-2 rounded-lg border p-4" style={{ borderColor: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.02)' }}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>New Workflow Template</span>
+        <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>New Workflow Template</span>
         <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
           <X size={16} />
         </button>
@@ -353,12 +351,12 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
           onChange={(e) => setName(e.target.value)}
           placeholder="Template name (e.g., Clinical Trial)"
           className="w-full rounded-md border px-3 py-2 text-sm outline-none"
-          style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)' }}
+          style={{ borderColor: 'var(--border-light)' }}
           autoFocus
         />
 
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)' }}>Stages (in order)</span>
+          <span className="text-xs font-medium" style={{ color: 'var(--slate)' }}>Stages (in order)</span>
           {stages.map((stage, i) => (
             <div key={i} className="flex items-center gap-2">
               <GripVertical size={12} style={{ color: 'var(--slate)', opacity: 0.3 }} />
@@ -368,7 +366,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
                 onChange={(e) => updateStage(i, e.target.value)}
                 placeholder={`Stage ${i + 1}`}
                 className="flex-1 rounded-md border px-3 py-1.5 text-sm outline-none"
-                style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)' }}
+                style={{ borderColor: 'var(--border-light)' }}
               />
               {stages.length > 1 && (
                 <button onClick={() => removeStage(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.5 }}>
@@ -380,21 +378,21 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
           <button
             onClick={addStage}
             className="flex items-center gap-1 text-xs px-2 py-1 rounded self-start"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', cursor: 'pointer', background: 'none', border: 'none' }}
+            style={{ color: 'var(--teal)', cursor: 'pointer', background: 'none', border: 'none' }}
           >
             <Plus size={12} /> Add stage
           </button>
         </div>
 
         <div className="flex justify-end gap-2 mt-1">
-          <button onClick={() => setOpen(false)} className="px-3 py-1.5 rounded-md text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
+          <button onClick={() => setOpen(false)} className="px-3 py-1.5 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={!name.trim() || stages.filter((s) => s.trim()).length < 2}
             className="px-3 py-1.5 rounded-md text-sm font-medium"
-            style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'var(--teal)', color: 'white', cursor: 'pointer', border: 'none', opacity: (!name.trim() || stages.filter((s) => s.trim()).length < 2) ? 0.5 : 1 }}
+            style={{ backgroundColor: 'var(--teal)', color: 'white', cursor: 'pointer', border: 'none', opacity: (!name.trim() || stages.filter((s) => s.trim()).length < 2) ? 0.5 : 1 }}
           >
             Create Template
           </button>

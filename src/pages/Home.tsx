@@ -209,7 +209,6 @@ export default function Home() {
             <p
               className="mb-3 sm:mb-4 transition-all duration-700"
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '11px',
                 color: 'var(--gold)',
                 letterSpacing: '0.2em',
@@ -286,7 +285,6 @@ export default function Home() {
                     <HeroStat value={stat.value} suffix={stat.suffix} />
                   </div>
                   <div style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     color: 'rgba(255, 255, 255, 0.5)',
                     textTransform: 'uppercase',
@@ -376,7 +374,6 @@ export default function Home() {
           <p
             className="fade-in-up text-xs mb-3"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: 'var(--gold)',
               textTransform: 'uppercase',
               letterSpacing: '0.15em',
@@ -445,7 +442,6 @@ export default function Home() {
                     <span
                       className="inline-block text-xs px-2.5 py-1 rounded-full"
                       style={{
-                        fontFamily: 'var(--font-sans)',
                         fontSize: '10px',
                         letterSpacing: '0.04em',
                         background: `${pillar.color}12`,
@@ -487,7 +483,6 @@ export default function Home() {
             <p
               className="text-xs sm:text-sm mb-4"
               style={{
-                fontFamily: 'var(--font-sans)',
                 color: 'var(--slate)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.15em',

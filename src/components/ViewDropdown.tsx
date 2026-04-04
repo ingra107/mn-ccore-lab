@@ -35,7 +35,6 @@ export default function ViewDropdown({ currentView, onSelect, views }: ViewDropd
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
         style={{
-          fontFamily: 'var(--font-sans)',
           color: currentOption ? 'var(--teal)' : 'var(--slate)',
           backgroundColor: currentOption ? 'rgba(45,138,138,0.08)' : 'transparent',
           borderColor: currentOption ? 'var(--teal)' : 'var(--border-light)',
@@ -63,10 +62,10 @@ export default function ViewDropdown({ currentView, onSelect, views }: ViewDropd
               >
                 <Icon size={16} style={{ color: currentView === v.key ? 'var(--teal)' : 'var(--slate)', marginTop: 1, flexShrink: 0 }} />
                 <div>
-                  <div className="text-sm font-medium" style={{ fontFamily: 'var(--font-sans)', color: currentView === v.key ? 'var(--teal)' : 'var(--ink)' }}>
+                  <div className="text-sm font-medium" style={{ color: currentView === v.key ? 'var(--teal)' : 'var(--ink)' }}>
                     {v.label}
                   </div>
-                  <div className="text-[11px] mt-0.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.7 }}>
+                  <div className="text-[11px] mt-0.5" style={{ color: 'var(--slate)', opacity: 0.7 }}>
                     {v.description}
                   </div>
                 </div>

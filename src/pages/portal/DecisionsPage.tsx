@@ -105,7 +105,6 @@ export default function DecisionsPage() {
                 onClick={() => setViewMode('list')}
                 className="px-3 py-1.5 text-xs"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontWeight: 500,
                   color: viewMode === 'list' ? 'var(--teal)' : 'var(--slate)',
                   backgroundColor: viewMode === 'list' ? 'rgba(45,138,138,0.08)' : 'transparent',
@@ -120,7 +119,6 @@ export default function DecisionsPage() {
                 onClick={() => setViewMode('timeline')}
                 className="px-3 py-1.5 text-xs"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontWeight: 500,
                   color: viewMode === 'timeline' ? 'var(--teal)' : 'var(--slate)',
                   backgroundColor: viewMode === 'timeline' ? 'rgba(45,138,138,0.08)' : 'transparent',
@@ -135,7 +133,7 @@ export default function DecisionsPage() {
             <button
               onClick={() => setShowCreate(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+              style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
             >
               <Plus size={16} />
               Log Decision
@@ -156,7 +154,6 @@ export default function DecisionsPage() {
               onClick={() => setFilterStatus(f.key)}
               className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
               style={{
-                fontFamily: 'var(--font-sans)',
                 color: filterStatus === f.key ? 'var(--teal)' : 'var(--slate)',
                 backgroundColor: filterStatus === f.key ? 'rgba(45,138,138,0.1)' : 'transparent',
                 border: `1px solid ${filterStatus === f.key ? 'rgba(45,138,138,0.25)' : 'var(--border-light)'}`,
@@ -177,7 +174,6 @@ export default function DecisionsPage() {
                 onClick={() => setFilterTag('')}
                 className="px-2 py-0.5 rounded-full text-[10px] font-medium"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   color: 'var(--maroon)',
                   backgroundColor: 'rgba(128,0,0,0.06)',
                   border: '1px solid rgba(128,0,0,0.15)',
@@ -193,7 +189,6 @@ export default function DecisionsPage() {
                 onClick={() => setFilterTag(filterTag === tc.tag ? '' : tc.tag)}
                 className="px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   color: filterTag === tc.tag ? 'white' : 'var(--teal)',
                   backgroundColor: filterTag === tc.tag ? 'var(--teal)' : 'rgba(45,138,138,0.06)',
                   border: `1px solid ${filterTag === tc.tag ? 'var(--teal)' : 'rgba(45,138,138,0.15)'}`,
@@ -214,7 +209,6 @@ export default function DecisionsPage() {
             <AlertTriangle size={16} style={{ color: 'var(--gold)' }} />
             <h2
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontWeight: 500,
                 fontSize: '16px',
                 color: 'var(--ink)',
@@ -225,7 +219,7 @@ export default function DecisionsPage() {
             </h2>
             <span
               className="text-xs px-2 py-0.5 rounded-full"
-              style={{ fontFamily: 'var(--font-sans)', backgroundColor: 'rgba(201,168,76,0.12)', color: 'var(--gold)' }}
+              style={{ backgroundColor: 'rgba(201,168,76,0.12)', color: 'var(--gold)' }}
             >
               {reviewDecisions.length}
             </span>
@@ -242,7 +236,6 @@ export default function DecisionsPage() {
       <div className="mt-8">
         <h2
           style={{
-            fontFamily: 'var(--font-sans)',
             fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
@@ -302,7 +295,6 @@ function SentimentBadge({ sentiment }: { sentiment: string | null }) {
     <span
       className="text-[10px] px-1.5 py-0.5 rounded-full"
       style={{
-        fontFamily: 'var(--font-sans)',
         fontWeight: 500,
         color: config.color,
         backgroundColor: config.bg,
@@ -338,7 +330,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome }: { decision: Decis
       <div className="p-4">
         <div className="flex items-center gap-2 mb-2">
           <Scale size={14} style={{ color: 'var(--gold)' }} />
-          <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '15px', color: 'var(--ink)' }}>
+          <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--ink)' }}>
             {decision.title}
           </span>
           {decision.outcome_sentiment && decision.outcome_sentiment !== 'pending' && (
@@ -393,7 +385,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome }: { decision: Decis
 
         {/* Metadata row */}
         <div className="flex items-center gap-3 flex-wrap mt-2">
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
             <Clock size={11} style={{ display: 'inline', verticalAlign: '-1px', marginRight: '3px' }} />
             {formatRelativeTime(decision.created_at)}
           </span>
@@ -422,7 +414,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome }: { decision: Decis
             <span
               key={tag}
               className="text-[10px] px-1.5 py-0.5 rounded-full"
-              style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}
+              style={{ fontWeight: 400, color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}
             >
               {tag}
             </span>
@@ -432,7 +424,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome }: { decision: Decis
         {/* Linked projects */}
         {linkedProjects.length > 0 && (
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>Linked:</span>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>Linked:</span>
             {linkedProjects.map((slug) => {
               const title = projects.find((p) => p.slug === slug)?.title || slug
               return (
@@ -440,7 +432,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome }: { decision: Decis
                   key={slug}
                   to={`/projects/${slug}`}
                   className="text-[10px] px-1.5 py-0.5 rounded-full hover:underline"
-                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.04)', textDecoration: 'none' }}
+                  style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.04)', textDecoration: 'none' }}
                 >
                   {title}
                 </Link>
@@ -531,7 +523,7 @@ function SimilarDecisionsPanel({ decisionId, projects }: { decisionId: string; p
                 </p>
               )}
               <div className="flex items-center gap-2 flex-wrap">
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
                   {new Date(d.created_at).toLocaleDateString()}
                 </span>
                 {projTitle && (
@@ -543,7 +535,7 @@ function SimilarDecisionsPanel({ decisionId, projects }: { decisionId: string; p
                   <span
                     key={tag}
                     className="text-[9px] px-1 py-0.5 rounded-full"
-                    style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}
+                    style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}
                   >
                     {tag}
                   </span>
@@ -605,7 +597,6 @@ function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; p
                 left: '-110px',
                 top: '2px',
                 width: '75px',
-                fontFamily: 'var(--font-sans)',
                 fontSize: '10px',
                 color: 'var(--slate)',
                 opacity: 0.5,
@@ -620,7 +611,7 @@ function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; p
               style={{ background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.1)' }}
             >
               <div className="flex items-center gap-2 flex-wrap">
-                <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '14px', color: 'var(--ink)' }}>
+                <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--ink)' }}>
                   {decision.title}
                 </span>
                 <SentimentBadge sentiment={sentiment} />
@@ -628,7 +619,7 @@ function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; p
                   <span
                     key={tag}
                     className="text-[10px] px-1.5 py-0.5 rounded-full"
-                    style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}
+                    style={{ fontWeight: 400, color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}
                   >
                     {tag}
                   </span>
@@ -698,7 +689,7 @@ function ReviewCard({
       <div className="p-4" style={{ background: 'var(--cream)' }}>
         <div className="flex items-center gap-2 mb-2">
           <Scale size={14} style={{ color: 'var(--gold)' }} />
-          <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '15px', color: 'var(--ink)' }}>
+          <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--ink)' }}>
             {decision.title}
           </span>
         </div>
@@ -796,7 +787,6 @@ function ReviewCard({
               background: outcome.trim() ? 'var(--gold)' : 'rgba(201,168,76,0.2)',
               color: outcome.trim() ? '#0f1923' : 'var(--slate)',
               border: 'none',
-              fontFamily: 'var(--font-sans)',
               opacity: outcome.trim() ? 1 : 0.5,
             }}
             whileTap={{ scale: 0.95 }}
@@ -873,7 +863,6 @@ function CreateDecisionModal({
   }
 
   const labelStyle = {
-    fontFamily: 'var(--font-sans)',
     fontSize: '10px',
     color: 'var(--slate)',
     opacity: 0.7,
@@ -915,7 +904,7 @@ function CreateDecisionModal({
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
           <div className="flex items-center gap-2">
             <Scale size={18} style={{ color: 'var(--gold)' }} />
-            <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, fontSize: '17px', color: 'var(--ink)', margin: 0 }}>
+            <h3 style={{ fontWeight: 400, fontSize: '17px', color: 'var(--ink)', margin: 0 }}>
               Log a Decision
             </h3>
           </div>
@@ -962,7 +951,7 @@ function CreateDecisionModal({
                         Outcome: {d.outcome}
                       </p>
                     )}
-                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                    <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
                       {new Date(d.created_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -1019,7 +1008,7 @@ function CreateDecisionModal({
               {/* Tag auto-suggestions */}
               {newSuggestions.length > 0 && (
                 <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Suggested:
                   </span>
                   {newSuggestions.map((tag) => (
@@ -1029,7 +1018,6 @@ function CreateDecisionModal({
                       onClick={() => addTag(tag)}
                       className="text-[10px] px-1.5 py-0.5 rounded-full transition-colors"
                       style={{
-                        fontFamily: 'var(--font-sans)',
                         color: 'var(--teal)',
                         backgroundColor: 'rgba(45,138,138,0.06)',
                         border: '1px dashed rgba(45,138,138,0.2)',
@@ -1055,7 +1043,7 @@ function CreateDecisionModal({
                     <span
                       key={slug}
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]"
-                      style={{ backgroundColor: 'rgba(45,138,138,0.08)', color: 'var(--teal)', fontFamily: 'var(--font-sans)' }}
+                      style={{ backgroundColor: 'rgba(45,138,138,0.08)', color: 'var(--teal)' }}
                     >
                       {projTitle}
                       <button
@@ -1121,7 +1109,7 @@ function CreateDecisionModal({
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg text-sm"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer' }}
+            style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer' }}
           >
             Cancel
           </button>
@@ -1131,7 +1119,6 @@ function CreateDecisionModal({
             disabled={!title.trim()}
             className="cursor-pointer px-4 py-2 rounded-lg text-sm font-medium"
             style={{
-              fontFamily: 'var(--font-sans)',
               background: title.trim() ? 'var(--teal)' : 'var(--ice)',
               color: title.trim() ? 'white' : 'var(--slate)',
               border: 'none',

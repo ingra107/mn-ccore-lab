@@ -77,7 +77,7 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
-          <h3 className="text-sm font-normal" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+          <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>
             Keyboard Shortcuts
           </h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
@@ -88,13 +88,13 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
         <div className="p-5 max-h-[60vh] overflow-y-auto flex flex-col gap-4">
           {shortcuts.map((group) => (
             <div key={group.category}>
-              <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+              <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                 {group.category}
               </h4>
               <div className="flex flex-col gap-1">
                 {group.items.map((item) => (
                   <div key={item.keys} className="flex items-center justify-between py-1">
-                    <span className="text-sm" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+                    <span className="text-sm" style={{ color: 'var(--ink)' }}>
                       {item.action}
                     </span>
                     <div className="flex items-center gap-1">

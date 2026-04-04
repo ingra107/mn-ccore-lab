@@ -78,7 +78,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
 
   return (
     <div>
-      <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+      <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.5 }}>
         <MessageSquare size={10} />
         Comments ({comments.length})
       </label>
@@ -94,10 +94,10 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{person.name}</span>
-                  <span className="text-[9px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>{formatRelativeTime(c.created_at)}</span>
+                  <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>{person.name}</span>
+                  <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>{formatRelativeTime(c.created_at)}</span>
                 </div>
-                <p className="text-sm mt-0.5" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>{c.content}</p>
+                <p className="text-sm mt-0.5" style={{ color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>{c.content}</p>
                 <ReactionBar targetType="task_comment" targetId={c.id} compact />
               </div>
             </div>
@@ -114,7 +114,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Add a comment..."
             className="flex-1 rounded-md border px-3 py-1.5 text-sm outline-none"
-            style={{ fontFamily: 'var(--font-sans)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)', color: 'var(--ink)' }}
+            style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)', color: 'var(--ink)' }}
           />
           {newComment.trim() && (
             <button type="submit" className="p-1.5 rounded-md" style={{ backgroundColor: forClaude ? 'var(--gold)' : 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer', transition: 'background-color 0.15s' }}>
@@ -128,7 +128,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
             onClick={() => setForClaude(!forClaude)}
             className="flex items-center gap-1.5 self-start px-2 py-0.5 rounded-full transition-colors"
             style={{
-              fontFamily: 'var(--font-sans)', fontSize: '9px', fontWeight: 600,
+              fontSize: '9px', fontWeight: 600,
               background: forClaude ? 'rgba(201,168,76,0.15)' : 'rgba(100,116,139,0.06)',
               color: forClaude ? 'var(--gold)' : 'var(--slate)',
               border: `1px solid ${forClaude ? 'rgba(201,168,76,0.3)' : 'rgba(100,116,139,0.1)'}`,
@@ -167,15 +167,15 @@ export function TaskActivity({ taskId }: { taskId: string }) {
 
   return (
     <div>
-      <label className="text-[10px] uppercase tracking-wider mb-2 block" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.5 }}>
+      <label className="text-[10px] uppercase tracking-wider mb-2 block" style={{ color: 'var(--slate)', opacity: 0.5 }}>
         Activity
       </label>
       <div className="flex flex-col gap-1">
         {activity.slice(0, 8).map((a) => (
           <div key={a.id} className="flex items-start gap-2 py-0.5">
             <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: 'var(--teal)', opacity: 0.3 }} />
-            <span className="text-[11px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.6 }}>{a.description}</span>
-            <span className="text-[9px] ml-auto flex-shrink-0" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.3 }}>{formatRelativeTime(a.timestamp)}</span>
+            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>{a.description}</span>
+            <span className="text-[9px] ml-auto flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.3 }}>{formatRelativeTime(a.timestamp)}</span>
           </div>
         ))}
       </div>
@@ -218,12 +218,12 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
           >
             <div className="flex items-center gap-2 mb-1">
               <Scale size={11} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-              <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>
+              <span style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>
                 {d.title}
               </span>
               <span
                 className="text-[9px] px-1 py-0.5 rounded-full ml-auto"
-                style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, color: badge.color, backgroundColor: badge.bg }}
+                style={{ fontWeight: 500, color: badge.color, backgroundColor: badge.bg }}
               >
                 {sentiment}
               </span>
@@ -234,14 +234,14 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
               </p>
             )}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.4 }}>
+              <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.4 }}>
                 {formatRelativeTime(d.created_at)}
               </span>
               {tags.map(tag => (
                 <span
                   key={tag}
                   className="text-[9px] px-1 py-0.5 rounded-full"
-                  style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}
+                  style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}
                 >
                   {tag}
                 </span>
@@ -251,7 +251,7 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
         )
       })}
       {decisions.length > 5 && (
-        <p className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4, textAlign: 'center' }}>
+        <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4, textAlign: 'center' }}>
           + {decisions.length - 5} more decisions
         </p>
       )}

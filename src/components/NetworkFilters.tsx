@@ -44,7 +44,6 @@ function Pill({
       onClick={onClick}
       className="cursor-pointer inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
       style={{
-        fontFamily: 'var(--font-sans)',
         fontSize: '11px',
         minHeight: '28px',
         background: active ? 'rgba(201, 168, 76, 0.9)' : 'rgba(255, 255, 255, 0.08)',
@@ -128,7 +127,6 @@ export default function NetworkFilters({
         <span
           className="text-xs"
           style={{
-            fontFamily: 'var(--font-sans)',
             color: 'rgba(255, 255, 255, 0.4)',
             fontSize: '10px',
             textTransform: 'uppercase',
@@ -157,7 +155,6 @@ export default function NetworkFilters({
         <span
           className="text-xs tabular-nums"
           style={{
-            fontFamily: 'var(--font-sans)',
             color: 'rgba(255, 255, 255, 0.5)',
             fontSize: '11px',
             minWidth: '55px',
@@ -224,7 +221,6 @@ export default function NetworkFilters({
         onClick={() => onChange({ ...filters, mnccoreOnly: !filters.mnccoreOnly })}
         className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
         style={{
-          fontFamily: 'var(--font-sans)',
           fontSize: '11px',
           minHeight: '28px',
           background: filters.mnccoreOnly
@@ -256,7 +252,6 @@ export default function NetworkFilters({
           animate={{ opacity: 1, scale: 1 }}
           className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs ml-auto"
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '10px',
             color: 'rgba(255, 255, 255, 0.5)',
             background: 'transparent',

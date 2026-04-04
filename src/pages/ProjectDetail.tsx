@@ -81,7 +81,6 @@ export default function ProjectDetail() {
         </Link>
         <h1
           style={{
-            fontFamily: 'var(--font-sans)',
             fontWeight: 800,
             fontSize: '1.75rem',
             color: 'var(--ink)',
@@ -241,7 +240,6 @@ function ProjectDetailInner({ project }: InnerProps) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontWeight: 700,
                 fontSize: 'clamp(1.25rem, 3vw, 1.75rem)',
                 color: 'var(--ink)',
@@ -269,7 +267,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         <div className="flex flex-wrap items-center gap-3">
           <span
             className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium"
-            style={{ background: cat.bg, color: cat.text, fontFamily: 'var(--font-sans)', letterSpacing: '0.04em' }}
+            style={{ background: cat.bg, color: cat.text, letterSpacing: '0.04em' }}
           >
             {cat.label}
           </span>
@@ -278,7 +276,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             <div style={{ width: 24, height: 24, flexShrink: 0 }}>
               <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm" variant="gold" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[8px]" />
             </div>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--slate)' }}>{pi.name}</span>
+            <span style={{ fontSize: '13px', color: 'var(--slate)' }}>{pi.name}</span>
           </div>
 
           <div style={{ width: '1px', height: '16px', background: 'var(--border-subtle)' }} />
@@ -307,7 +305,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                 background: showAgendaForm ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
                 color: showAgendaForm ? '#0f1923' : 'var(--gold)',
                 border: '1px solid rgba(201,168,76,0.2)',
-                fontFamily: 'var(--font-sans)',
                 fontWeight: 500,
                 cursor: 'pointer',
               }}
@@ -320,7 +317,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           {pendingTasks.length > 0 && (
             <span
               className="inline-flex items-center gap-1 text-[11px]"
-              style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)', fontWeight: 500 }}
+              style={{ color: 'var(--teal)', fontWeight: 500 }}
             >
               <CheckCircle2 size={12} />
               {pendingTasks.length} task{pendingTasks.length !== 1 ? 's' : ''}
@@ -351,7 +348,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                 <div className="flex items-center justify-between mb-2">
                   <span
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       fontSize: '10px',
                       color: 'var(--slate)',
                       opacity: 0.6,
@@ -439,7 +435,6 @@ function ProjectDetailInner({ project }: InnerProps) {
             onClick={() => setActiveTab(tab.id)}
             className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: activeTab === tab.id ? 'var(--teal)' : 'var(--slate)',
               backgroundColor: activeTab === tab.id ? 'rgba(45,138,138,0.08)' : 'transparent',
               border: 'none',
@@ -470,7 +465,6 @@ function ProjectDetailInner({ project }: InnerProps) {
               <Compass size={14} style={{ color: 'var(--gold)' }} />
               <span
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
@@ -486,7 +480,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                 onClick={() => { setStrategicDraft(project.strategic_context ?? ''); setEditingStrategic(true) }}
                 className="text-[10px] px-2 py-0.5 rounded"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   color: 'var(--slate)',
                   opacity: 0.5,
                   background: 'none',
@@ -545,7 +538,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 >
                   Cancel
                 </button>
-                <span className="text-[10px]" style={{ fontFamily: 'var(--font-sans)', color: 'var(--slate)', opacity: 0.4 }}>
+                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
                   Ctrl+Enter to save
                 </span>
               </div>
@@ -589,7 +582,6 @@ function ProjectDetailInner({ project }: InnerProps) {
       >
         <h2
           style={{
-            fontFamily: 'var(--font-sans)',
             fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
@@ -672,7 +664,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                 />
                 <span
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     color: isCurrent ? 'var(--gold)' : isFuture ? 'var(--slate)' : 'var(--ink)',
                     opacity: isCurrent ? 1 : isFuture ? 0.4 : 0.7,
@@ -769,7 +760,6 @@ function ProjectDetailInner({ project }: InnerProps) {
         >
           <h2
             style={{
-              fontFamily: 'var(--font-sans)',
               fontWeight: 500,
               fontSize: '16px',
               color: 'var(--ink)',
@@ -791,7 +781,6 @@ function ProjectDetailInner({ project }: InnerProps) {
             <div style={{ marginBottom: '16px' }}>
               <label
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   color: 'var(--slate)',
                   opacity: 0.6,
@@ -871,7 +860,6 @@ function ProjectDetailInner({ project }: InnerProps) {
               <div style={{ marginBottom: '16px' }}>
                 <label
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     color: 'var(--slate)',
                     opacity: 0.6,
@@ -923,7 +911,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '12px',
                     color: 'var(--gold)',
                     textDecoration: 'none',
@@ -938,7 +925,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                 <span
                   className="inline-flex items-center gap-1.5"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '12px',
                     color: 'var(--slate)',
                     opacity: 0.7,
@@ -952,7 +938,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                 <span
                   className="inline-flex items-center gap-1.5"
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '12px',
                     color: 'var(--slate)',
                     opacity: 0.7,
@@ -975,7 +960,6 @@ function ProjectDetailInner({ project }: InnerProps) {
         >
           <h2
             style={{
-              fontFamily: 'var(--font-sans)',
               fontWeight: 500,
               fontSize: '16px',
               color: 'var(--ink)',
@@ -1064,7 +1048,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                     >
                       <span
                         style={{
-                          fontFamily: 'var(--font-sans)',
                           fontSize: '10px',
                           color: 'var(--slate)',
                           opacity: 0.5,
@@ -1118,7 +1101,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           {pendingTasks.length === 0 && completedTasks.length === 0 ? (
             <div className="text-center py-12">
               <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 12px' }} />
-              <p style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', color: 'var(--slate)', opacity: 0.5 }}>
+              <p style={{ fontSize: '14px', color: 'var(--slate)', opacity: 0.5 }}>
                 No tasks for this project
               </p>
             </div>
@@ -1126,7 +1109,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             <>
               {pendingTasks.length > 0 && (
                 <div className="flex flex-col gap-2 mb-4">
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     Active ({pendingTasks.length})
                   </span>
                   {pendingTasks.map((task) => (
@@ -1140,7 +1123,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               )}
               {completedTasks.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.35, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.35, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     Done ({completedTasks.length})
                   </span>
                   {completedTasks.slice(0, 5).map((task) => (
@@ -1151,7 +1134,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     />
                   ))}
                   {completedTasks.length > 5 && (
-                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'var(--slate)', opacity: 0.4, paddingLeft: '4px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4, paddingLeft: '4px' }}>
                       +{completedTasks.length - 5} more completed
                     </span>
                   )}
@@ -1190,7 +1173,6 @@ function ProjectDetailInner({ project }: InnerProps) {
           <BookOpen size={16} style={{ color: 'var(--gold)' }} />
           <h2
             style={{
-              fontFamily: 'var(--font-sans)',
               fontWeight: 500,
               fontSize: '16px',
               color: 'var(--ink)',
@@ -1201,7 +1183,6 @@ function ProjectDetailInner({ project }: InnerProps) {
           </h2>
           <span
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '11px',
               color: 'var(--slate)',
               opacity: 0.6,
@@ -1242,7 +1223,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                       {p.journal && (
                         <span
                           style={{
-                            fontFamily: 'var(--font-sans)',
                             fontSize: '10px',
                             color: 'var(--slate)',
                             opacity: 0.7,
@@ -1254,7 +1234,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                       {p.pub_date && (
                         <span
                           style={{
-                            fontFamily: 'var(--font-sans)',
                             fontSize: '10px',
                             color: 'var(--slate)',
                             opacity: 0.5,
@@ -1287,7 +1266,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                         className="inline-flex items-center gap-1 text-xs"
                         style={{
                           color: 'var(--gold)',
-                          fontFamily: 'var(--font-sans)',
                           fontSize: '10px',
                           textDecoration: 'none',
                         }}
@@ -1347,7 +1325,6 @@ function ProjectDetailInner({ project }: InnerProps) {
       >
         <h2
           style={{
-            fontFamily: 'var(--font-sans)',
             fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
@@ -1413,7 +1390,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                     <div className="flex flex-wrap items-center gap-3 mt-1">
                       <span
                         style={{
-                          fontFamily: 'var(--font-sans)',
                           fontSize: '10px',
                           color: 'var(--slate)',
                           opacity: 0.5,
@@ -1424,7 +1400,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                       {item.action.dueDate && (
                         <span
                           style={{
-                            fontFamily: 'var(--font-sans)',
                             fontSize: '10px',
                             color: 'var(--slate)',
                             opacity: 0.5,
@@ -1435,7 +1410,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                       )}
                       <span
                         style={{
-                          fontFamily: 'var(--font-sans)',
                           fontSize: '10px',
                           color: 'var(--slate)',
                           opacity: 0.35,
@@ -1497,7 +1471,6 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
       <div className="flex items-center justify-between mb-3">
         <h2
           style={{
-            fontFamily: 'var(--font-sans)',
             fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
@@ -1510,7 +1483,6 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
         <Link
           to="/decisions"
           style={{
-            fontFamily: 'var(--font-sans)',
             fontSize: '11px',
             color: 'var(--teal)',
             textDecoration: 'none',
@@ -1553,7 +1525,6 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
                   <span
                     className="text-[9px] px-1.5 py-0.5 rounded-full"
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       color: decision.outcome_status === 'recorded' ? 'var(--teal)' : 'var(--gold)',
                       backgroundColor: decision.outcome_status === 'recorded' ? 'rgba(45,138,138,0.08)' : 'rgba(201,168,76,0.08)',
                     }}
@@ -1590,7 +1561,6 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
               )}
               <span
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontSize: '10px',
                   color: 'var(--slate)',
                   opacity: 0.5,
@@ -1608,7 +1578,6 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
             <Link
               to="/decisions"
               style={{
-                fontFamily: 'var(--font-sans)',
                 fontSize: '11px',
                 color: 'var(--teal)',
                 textDecoration: 'none',
@@ -1698,7 +1667,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
       <div className="flex items-center justify-between mb-3">
         <h2
           style={{
-            fontFamily: 'var(--font-sans)',
             fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
@@ -1714,7 +1682,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
             onClick={() => setShowAddForm(true)}
             className="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs"
             style={{
-              fontFamily: 'var(--font-sans)',
               fontSize: '11px',
               background: 'rgba(45, 138, 138, 0.08)',
               color: 'var(--teal)',
@@ -1751,7 +1718,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                 <div>
                   <label
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       fontSize: '9px',
                       color: 'var(--slate)',
                       opacity: 0.6,
@@ -1786,7 +1752,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                 <div>
                   <label
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       fontSize: '9px',
                       color: 'var(--slate)',
                       opacity: 0.6,
@@ -1822,7 +1787,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                 <div style={{ flex: 1, minWidth: '160px' }}>
                   <label
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       fontSize: '9px',
                       color: 'var(--slate)',
                       opacity: 0.6,
@@ -1951,7 +1915,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
               >
                 <span
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     color: REL_COLORS[dep.relationship_type] || 'var(--slate)',
                     textTransform: 'uppercase',
@@ -1978,7 +1941,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                 {dep.note && (
                   <span
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       fontSize: '10px',
                       color: 'var(--slate)',
                       opacity: 0.5,
@@ -2036,7 +1998,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                 <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 0.4, flexShrink: 0 }} />
                 <span
                   style={{
-                    fontFamily: 'var(--font-sans)',
                     fontSize: '10px',
                     color: REL_COLORS[dep.relationship_type] || 'var(--slate)',
                     textTransform: 'uppercase',
@@ -2061,7 +2022,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                 {dep.note && (
                   <span
                     style={{
-                      fontFamily: 'var(--font-sans)',
                       fontSize: '10px',
                       color: 'var(--slate)',
                       opacity: 0.5,

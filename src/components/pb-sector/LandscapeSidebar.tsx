@@ -40,14 +40,14 @@ function SidebarCard({ title, icon: Icon, iconColor, children, linkTo, linkLabel
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-1.5">
           <Icon size={12} style={{ color: iconColor, opacity: 0.7 }} />
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: iconColor }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: iconColor }}>
             {title}
           </span>
         </div>
         {linkTo && linkLabel && (
           <Link
             to={linkTo}
-            style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--teal)', textDecoration: 'none', opacity: 0.6 }}
+            style={{ fontSize: '9px', color: 'var(--teal)', textDecoration: 'none', opacity: 0.6 }}
           >
             {linkLabel}
           </Link>
@@ -78,7 +78,7 @@ function MilestoneRow({ milestone }: { milestone: any }) {
         <span className="block truncate" style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--ink)', lineHeight: 1.3 }}>
           {milestone.title || milestone.description}
         </span>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.7 }}>
+        <span style={{ fontSize: '9px', color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.7 }}>
           {milestone.project_title && `${milestone.project_title} · `}
           {daysUntil !== null ? (
             isOverdue ? `${Math.abs(daysUntil)}d overdue` : daysUntil === 0 ? 'Today' : `${daysUntil}d`
@@ -196,7 +196,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
           {deepWorkHours !== null && (
             <div className="flex items-center gap-2 py-1 mt-1" style={{ borderTop: '1px solid rgba(201,168,76,0.06)', paddingTop: 6 }}>
               <Clock size={10} style={{ color: 'var(--teal)', opacity: 0.6, flexShrink: 0 }} />
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--teal)', opacity: 0.7 }}>
+              <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.7 }}>
                 {deepWorkHours}h deep work available
               </span>
             </div>
@@ -215,7 +215,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
                   {c.description || c.commitment}
                 </span>
                 {c.due_date && (
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: c.due_date <= today ? 'var(--maroon)' : 'var(--slate)', opacity: 0.6 }}>
+                  <span style={{ fontSize: '9px', color: c.due_date <= today ? 'var(--maroon)' : 'var(--slate)', opacity: 0.6 }}>
                     Due {c.due_date}
                   </span>
                 )}

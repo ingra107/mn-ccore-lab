@@ -46,7 +46,7 @@ export default function TeamPulseCard() {
               animation: activeThisWeek > 0 ? 'status-pulse 2s ease-in-out infinite' : 'none',
             }}
           />
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
+          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
             {activeThisWeek}
           </span>
           <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.7 }}>
@@ -76,7 +76,7 @@ export default function TeamPulseCard() {
             <>
               {totalUpdates > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 700, color: 'var(--teal)' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--teal)' }}>
                     {totalUpdates}
                   </span>
                   <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
@@ -86,7 +86,7 @@ export default function TeamPulseCard() {
               )}
               {totalCompletions > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 700, color: 'var(--gold)' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold)' }}>
                     {totalCompletions}
                   </span>
                   <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
@@ -124,7 +124,7 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
           <img src={photoUrl} alt={name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <span style={{
-            fontFamily: 'var(--font-sans)', fontSize: '10px', fontWeight: 700,
+            fontSize: '10px', fontWeight: 700,
             color: isActive ? 'var(--green-light)' : 'var(--slate)', opacity: isActive ? 1 : 0.45,
           }}>
             {initials}

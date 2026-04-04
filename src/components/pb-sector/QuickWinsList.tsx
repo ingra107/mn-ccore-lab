@@ -68,7 +68,7 @@ function SortableQuickWin({ task, onComplete, onClickTitle }: {
         </button>
 
         {task.project_title && (
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.5, flexShrink: 0 }}>
+          <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.5, flexShrink: 0 }}>
             {task.project_title}
           </span>
         )}
@@ -89,11 +89,11 @@ export default function QuickWinsList({ tasks, onComplete, onClickTitle, onAddCl
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-2">
         <Zap size={13} style={{ color: 'var(--slate)', opacity: 0.6 }} />
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--slate)', opacity: 0.7 }}>
+        <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--slate)', opacity: 0.7 }}>
           Quick Wins
         </span>
         {tasks.length > 0 && (
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>
+          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>
             {tasks.length}
           </span>
         )}
@@ -132,7 +132,7 @@ export default function QuickWinsList({ tasks, onComplete, onClickTitle, onAddCl
           whileHover={{ backgroundColor: 'rgba(100,116,139,0.03)' }}
         >
           <Plus size={12} style={{ color: 'var(--slate)', opacity: 0.3 }} />
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>
+          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>
             Add quick win
           </span>
         </motion.button>

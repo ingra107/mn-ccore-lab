@@ -106,7 +106,7 @@ export default function MeetingDetail() {
           style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
           <ArrowLeft size={16} /> Back to Meetings
         </Link>
-        <h1 style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: '1.75rem', color: 'var(--ink)' }}>
+        <h1 style={{ fontWeight: 800, fontSize: '1.75rem', color: 'var(--ink)' }}>
           Meeting not found
         </h1>
       </div>
@@ -151,10 +151,10 @@ export default function MeetingDetail() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs"
-              style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', background: statusStyle.bg, color: statusStyle.text }}>
+              style={{ fontSize: '11px', background: statusStyle.bg, color: statusStyle.text }}>
               <Calendar size={12} /> {meeting.status}
             </span>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
               {meeting.type}
             </span>
             <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
@@ -162,7 +162,7 @@ export default function MeetingDetail() {
               to={`/meetings/${meeting.id}/prep`}
               className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs transition-colors"
               style={{
-                fontFamily: 'var(--font-sans)', fontSize: '11px',
+                fontSize: '11px',
                 color: 'var(--teal)', textDecoration: 'none',
                 border: '1px solid rgba(45,138,138,0.2)',
                 background: 'rgba(45,138,138,0.05)',
@@ -172,7 +172,7 @@ export default function MeetingDetail() {
             </Link>
           </div>
 
-          <h1 style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
+          <h1 style={{ fontWeight: 800, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
             {meeting.title}
           </h1>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--slate)', marginTop: '6px' }}>
@@ -186,7 +186,7 @@ export default function MeetingDetail() {
             return facilitatorInfo ? (
               <div className="flex items-center gap-2 mt-2">
                 <UserCheck size={14} style={{ color: 'var(--teal)' }} />
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--teal)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--teal)' }}>
                   Facilitator:
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -220,7 +220,7 @@ export default function MeetingDetail() {
           <motion.div className="order-2 lg:order-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
             <div className="flex items-center gap-2 mb-3">
               <ListChecks size={16} style={{ color: 'var(--gold)' }} />
-              <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+              <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
                 Agenda
               </h2>
             </div>
@@ -270,10 +270,10 @@ export default function MeetingDetail() {
           <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }}>
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
-              <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+              <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
                 Action Items
               </h2>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
                 {completedActions.length}/{actionItems.length}
               </span>
             </div>
@@ -313,7 +313,7 @@ export default function MeetingDetail() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }} className="mt-8">
           <div className="flex items-center gap-2 mb-3">
             <Scale size={16} style={{ color: 'var(--gold)' }} />
-            <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+            <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
               Decisions
             </h2>
             {isAuthenticated && (
@@ -322,7 +322,7 @@ export default function MeetingDetail() {
                 style={{
                   marginLeft: 'auto', background: 'none', border: '1px solid var(--border-light)',
                   borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
-                  fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--gold)',
+                  fontSize: '11px', color: 'var(--gold)',
                   display: 'flex', alignItems: 'center', gap: '4px',
                 }}
               >
@@ -386,14 +386,14 @@ export default function MeetingDetail() {
                   <div className="flex gap-2">
                     <button
                       type="submit"
-                      style={{ background: 'var(--gold)', color: '#0f1923', border: 'none', borderRadius: 6, padding: '5px 14px', fontFamily: 'var(--font-sans)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                      style={{ background: 'var(--gold)', color: '#0f1923', border: 'none', borderRadius: 6, padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                     >
                       Save
                     </button>
                     <button
                       type="button"
                       onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale('') }}
-                      style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 6, padding: '5px 14px', fontFamily: 'var(--font-sans)', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}
+                      style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 6, padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}
                     >
                       Cancel
                     </button>
@@ -421,7 +421,7 @@ export default function MeetingDetail() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.25 }} className="mt-8">
           <div className="flex items-center gap-2 mb-3">
             <FileText size={16} style={{ color: 'var(--gold)' }} />
-            <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+            <h3 style={{ fontWeight: 400, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
               Meeting Notes
             </h3>
           </div>
@@ -460,17 +460,17 @@ export default function MeetingDetail() {
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     onClick={() => { updateNotes.mutate(notesDraft); setEditingNotes(false) }}
-                    style={{ background: 'var(--gold)', color: 'var(--ink)', border: 'none', borderRadius: 6, padding: '6px 16px', fontFamily: 'var(--font-sans)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                    style={{ background: 'var(--gold)', color: 'var(--ink)', border: 'none', borderRadius: 6, padding: '6px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                   >
                     Save Notes
                   </button>
                   <button
                     onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(false) }}
-                    style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 6, padding: '6px 16px', fontFamily: 'var(--font-sans)', fontSize: '13px', cursor: 'pointer', color: 'var(--slate)' }}
+                    style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 6, padding: '6px 16px', fontSize: '13px', cursor: 'pointer', color: 'var(--slate)' }}
                   >
                     Cancel
                   </button>
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                  <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
                     Ctrl+Enter to save · Esc to cancel
                   </span>
                 </div>
@@ -490,7 +490,7 @@ export default function MeetingDetail() {
                 <button
                   onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
                   className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: 'var(--gold)', fontFamily: 'var(--font-sans)', fontSize: '11px' }}
+                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: 'var(--gold)', fontSize: '11px' }}
                 >
                   Edit
                 </button>
@@ -536,7 +536,7 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
       <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
           Added by {item.added_by}
           {item.document_url && (
             <> · <a href={item.document_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)' }}>View document</a></>
@@ -616,7 +616,7 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
             <div style={{ width: 16, height: 16 }}>
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[7px]" />
             </div>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{person.name.split(' ')[0]}</span>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{person.name.split(' ')[0]}</span>
             <HoverCard
               data={memberData}
               isVisible={hoverCard.isVisible}
@@ -626,12 +626,12 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
             />
           </div>
           {item.due_date && (
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
+            <span style={{ fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
               {isOverdue ? 'Overdue: ' : 'Due '}{formatShortDate(item.due_date)}
             </span>
           )}
           {item.project_id && (
-            <Link to={`/projects/${item.project_id}`} onClick={(e) => e.stopPropagation()} style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
+            <Link to={`/projects/${item.project_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
               {item.project_id}
             </Link>
           )}
@@ -698,7 +698,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
               type="url" value={docUrl} onChange={(e) => setDocUrl(e.target.value)}
               placeholder="Document URL (Google Doc, PDF, etc.)"
               style={{
-                width: '100%', fontFamily: 'var(--font-sans)', fontSize: '12px', color: 'var(--ink)',
+                width: '100%', fontSize: '12px', color: 'var(--ink)',
                 background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: '8px',
                 padding: '6px 10px', outline: 'none', marginTop: '6px',
               }}

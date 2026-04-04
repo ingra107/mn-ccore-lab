@@ -104,7 +104,6 @@ export default function Team() {
                 onClick={() => setSearchParams({})}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] transition-colors"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontWeight: 400,
                   background: 'var(--teal)',
                   color: 'white',
@@ -122,7 +121,6 @@ export default function Team() {
                 onClick={() => setSearchParams({ expertise: tag })}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] transition-all hover:opacity-80"
                 style={{
-                  fontFamily: 'var(--font-sans)',
                   fontWeight: 400,
                   background: 'rgba(45,138,138,0.10)',
                   color: 'var(--teal)',
@@ -194,7 +192,6 @@ export default function Team() {
                       className="mb-0.5"
                       style={{
                         color: 'var(--gold)',
-                        fontFamily: 'var(--font-sans)',
                         fontSize: '11px',
                       }}
                     >
@@ -219,7 +216,6 @@ export default function Team() {
                             key={t.id}
                             className="inline-block px-2 py-0.5 rounded-full text-[11px]"
                             style={{
-                              fontFamily: 'var(--font-sans)',
                               fontWeight: 400,
                               background: 'rgba(45,138,138,0.10)',
                               color: 'var(--teal)',
@@ -232,7 +228,6 @@ export default function Team() {
                     )}
                     <p
                       style={{
-                        fontFamily: 'var(--font-sans)',
                         fontSize: '12px',
                         color: 'var(--gold)',
                       }}
@@ -296,7 +291,7 @@ export default function Team() {
                     >
                       {member.name}{member.credentials ? `, ${member.credentials}` : ''}
                     </h3>
-                    <p className="text-sm" style={{ color: 'var(--gold)', fontFamily: 'var(--font-sans)', fontSize: '12px' }}>
+                    <p className="text-sm" style={{ color: 'var(--gold)', fontSize: '12px' }}>
                       {member.role}
                     </p>
                     {tags.length > 0 && (
@@ -306,7 +301,6 @@ export default function Team() {
                             key={t.id}
                             className="inline-block px-2 py-0.5 rounded-full text-[11px] cursor-pointer transition-opacity hover:opacity-80"
                             style={{
-                              fontFamily: 'var(--font-sans)',
                               fontWeight: 400,
                               background: 'rgba(45,138,138,0.10)',
                               color: 'var(--teal)',
@@ -379,7 +373,6 @@ export default function Team() {
                         key={t.id}
                         className="inline-block px-1.5 py-0.5 rounded-full text-[10px]"
                         style={{
-                          fontFamily: 'var(--font-sans)',
                           fontWeight: 400,
                           background: 'rgba(45,138,138,0.10)',
                           color: 'var(--teal)',
@@ -449,7 +442,6 @@ export default function Team() {
                         key={t.id}
                         className="inline-block px-1.5 py-0.5 rounded-full text-[10px]"
                         style={{
-                          fontFamily: 'var(--font-sans)',
                           fontWeight: 400,
                           background: 'rgba(45,138,138,0.10)',
                           color: 'var(--teal)',

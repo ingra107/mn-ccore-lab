@@ -89,7 +89,6 @@ export default function PublicationSearch({
         <span
           className="block mt-1.5 text-xs"
           style={{
-            fontFamily: 'var(--font-sans)',
             color: 'var(--slate)',
           }}
         >

@@ -68,7 +68,7 @@ export default function MeetingPrep() {
           style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
           <ArrowLeft size={16} /> Back to Meetings
         </Link>
-        <h1 style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: '1.75rem', color: 'var(--ink)' }}>
+        <h1 style={{ fontWeight: 600, fontSize: '1.75rem', color: 'var(--ink)' }}>
           Meeting not found
         </h1>
       </div>
@@ -90,11 +90,11 @@ export default function MeetingPrep() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <div className="flex items-center gap-2 mb-2">
             <ListChecks size={16} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>
+            <span style={{ fontSize: 11, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>
               Facilitator Prep
             </span>
           </div>
-          <h1 style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--ink)', margin: 0 }}>
+          <h1 style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--ink)', margin: 0 }}>
             {meeting.title}
           </h1>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--slate)', marginTop: 4 }}>
@@ -126,7 +126,7 @@ export default function MeetingPrep() {
             <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 12, padding: '12px 16px' }}>
               {pendingPrev.length > 0 && (
                 <div className="mb-3">
-                  <p style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 500, color: 'var(--orange)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--orange)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Still pending ({pendingPrev.length})
                   </p>
                   {pendingPrev.map(item => (
@@ -136,7 +136,7 @@ export default function MeetingPrep() {
               )}
               {completedPrev.length > 0 && (
                 <div>
-                  <p style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 500, color: 'var(--green)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--green)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Completed ({completedPrev.length})
                   </p>
                   {completedPrev.map(item => (
@@ -159,7 +159,7 @@ export default function MeetingPrep() {
               {/* Overdue items first */}
               {overdueTasks.length > 0 && (
                 <div className="mb-3">
-                  <p style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 500, color: 'var(--maroon)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--maroon)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Discuss: Overdue items
                   </p>
                   {overdueTasks.slice(0, 5).map(task => {
@@ -180,12 +180,12 @@ export default function MeetingPrep() {
               {/* Team-added agenda items */}
               {agendaItems.length > 0 && (
                 <div className="mb-3">
-                  <p style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 500, color: 'var(--teal)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--teal)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Team agenda ({agendaItems.length})
                   </p>
                   {agendaItems.map((item, i) => (
                     <div key={item.id} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < agendaItems.length - 1 ? '1px solid rgba(201,168,76,0.04)' : 'none' }}>
-                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, color: 'var(--slate)', opacity: 0.4, marginTop: 2, flexShrink: 0 }}>{i + 1}.</span>
+                      <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.4, marginTop: 2, flexShrink: 0 }}>{i + 1}.</span>
                       <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--ink)' }}>{item.content}</span>
                     </div>
                   ))}
@@ -195,7 +195,7 @@ export default function MeetingPrep() {
               {/* Pending carry-forwards */}
               {pendingPrev.length > 0 && (
                 <div>
-                  <p style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 500, color: 'var(--orange)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--orange)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Carry forward ({pendingPrev.length})
                   </p>
                   {pendingPrev.map(item => {
@@ -232,7 +232,7 @@ export default function MeetingPrep() {
                     <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
                       <Calendar size={10} style={{ color: 'var(--teal)', flexShrink: 0 }} />
                       <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
-                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, color: 'var(--slate)', opacity: 0.5 }}>{formatShortDate(task.due_date)}</span>
+                      <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.5 }}>{formatShortDate(task.due_date)}</span>
                       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                         <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
                       </div>
@@ -273,7 +273,7 @@ export default function MeetingPrep() {
         <div className="mt-8 text-center">
           <Link
             to={`/meetings/${meeting.id}`}
-            style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}
+            style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}
           >
             Back to meeting details
           </Link>
@@ -298,10 +298,10 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
     >
       <div style={{ color, opacity: 0.7 }}>{icon}</div>
       <div>
-        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 18, fontWeight: 600, color: value > 0 ? color : 'var(--slate)', lineHeight: 1 }}>
+        <div style={{ fontSize: 18, fontWeight: 600, color: value > 0 ? color : 'var(--slate)', lineHeight: 1 }}>
           {value}
         </div>
-        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10, color: 'var(--slate)', opacity: 0.5, marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.5, marginTop: 2 }}>
           {label}
         </div>
       </div>
@@ -313,11 +313,11 @@ function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title
   return (
     <div className="flex items-center gap-2 mb-2">
       <span style={{ color: 'var(--gold)' }}>{icon}</span>
-      <h2 style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: 14, color: 'var(--ink)', margin: 0 }}>
+      <h2 style={{ fontWeight: 500, fontSize: 14, color: 'var(--ink)', margin: 0 }}>
         {title}
       </h2>
       {subtitle && (
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.5 }}>
           {subtitle}
         </span>
       )}

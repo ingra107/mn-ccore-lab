@@ -43,14 +43,14 @@ export default function NarrativesPage() {
               {/* Header */}
               <div className="flex items-center gap-2 mb-3">
                 <BookOpen size={16} style={{ color: 'var(--gold)' }} />
-                <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, fontSize: '18px', color: 'var(--ink)', margin: 0 }}>
+                <h3 style={{ fontWeight: 400, fontSize: '18px', color: 'var(--ink)', margin: 0 }}>
                   {arc.title}
                 </h3>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
                   {arc.projectCount} project{arc.projectCount !== 1 ? 's' : ''}
                 </span>
                 {arc.connectedCount > 0 && (
-                  <span className="flex items-center gap-1" style={{ fontFamily: 'var(--font-sans)', fontSize: '11px', color: 'var(--teal)' }}>
+                  <span className="flex items-center gap-1" style={{ fontSize: '11px', color: 'var(--teal)' }}>
                     <GitBranch size={10} />
                     {arc.connectedCount} linked
                   </span>
@@ -71,13 +71,13 @@ export default function NarrativesPage() {
                       transition: 'all 0.2s',
                     }} title={`${s.stage}: ${s.count}`} />
                     {s.count > 0 && (
-                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: STAGE_COLORS[s.stage], fontWeight: 600 }}>
+                      <span style={{ fontSize: '9px', color: STAGE_COLORS[s.stage], fontWeight: 600 }}>
                         {s.count}
                       </span>
                     )}
                   </div>
                 ))}
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: '9px', color: 'var(--slate)', opacity: 0.4, marginLeft: 8 }}>
+                <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.4, marginLeft: 8 }}>
                   Idea → Published
                 </span>
               </div>
@@ -95,7 +95,7 @@ export default function NarrativesPage() {
                     <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', flex: 1 }}>
                       {p.title}
                     </span>
-                    <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: STAGE_COLORS[p.stage], opacity: 0.7 }}>
+                    <span style={{ fontSize: '10px', color: STAGE_COLORS[p.stage], opacity: 0.7 }}>
                       {p.stage}
                     </span>
                   </Link>
@@ -109,7 +109,7 @@ export default function NarrativesPage() {
                     <span
                       key={t.topic}
                       className="px-2 py-0.5 rounded-full text-[10px]"
-                      style={{ fontFamily: 'var(--font-sans)', background: 'rgba(201,168,76,0.1)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.15)' }}
+                      style={{ background: 'rgba(201,168,76,0.1)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.15)' }}
                     >
                       {t.topic} ({t.count})
                     </span>
@@ -131,7 +131,7 @@ export default function NarrativesPage() {
                       <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', opacity: 0.7 }}>
                         {p.title}
                       </span>
-                      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', color: 'var(--slate)', opacity: 0.4, marginLeft: 8 }}>
+                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4, marginLeft: 8 }}>
                         {p.pub_date}
                       </span>
                     </Link>
