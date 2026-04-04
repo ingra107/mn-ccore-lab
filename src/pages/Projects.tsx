@@ -13,7 +13,10 @@ import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
 import Avatar from '../components/Avatar'
-import { getPersonInfo } from '../data/team'
+import HoverCard from '../components/HoverCard'
+import type { HoverCardData } from '../components/HoverCard'
+import { useHoverCard } from '../hooks/useHoverCard'
+import { getPersonInfo, getMemberBySlug, directors } from '../data/team'
 import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import type { Stage } from '../components/StageSelector'
@@ -332,7 +335,6 @@ export default function Projects() {
                 {(() => {
                   let lastStage = ''
                   return filtered.map((project, index) => {
-                    const pi = getPersonInfo(project.pi)
                     const catLabel = CATEGORY_LABEL[project.category] ?? project.category
                     const projectHealth = healthBySlug.get(project.slug)
                     const showStageHeader = project.stage !== lastStage
@@ -454,29 +456,8 @@ export default function Projects() {
                               onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
                             />
 
-                            {/* PI */}
-                            <div className="flex items-center gap-1.5">
-                              <div style={{ width: 22, height: 22, flexShrink: 0 }}>
-                                <Avatar
-                                  name={pi.name}
-                                  initials={pi.initials}
-                                  photoUrl={pi.photoUrl}
-                                  size="sm"
-                                  variant="ice"
-                                  className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[8px]"
-                                />
-                              </div>
-                              <span
-                                style={{
-                                  fontFamily: 'var(--font-body)',
-                                  fontSize: '12px',
-                                  color: 'var(--slate)',
-                                  opacity: 0.6,
-                                }}
-                              >
-                                {pi.name.split(' ').pop()}
-                              </span>
-                            </div>
+                            {/* PI (with HoverCard) */}
+                            <PIHoverAvatar slug={project.pi} />
 
                             {/* Category */}
                             <span
@@ -811,6 +792,45 @@ export default function Projects() {
           background: rgba(201, 168, 76, 0.12) !important;
         }
       `}</style>
+    </div>
+  )
+}
+
+// ── PI Avatar with HoverCard ────────────────────────────────
+
+function PIHoverAvatar({ slug }: { slug: string }) {
+  const p = getPersonInfo(slug)
+  const hoverCard = useHoverCard()
+  const dir = directors.find(d => d.slug === slug)
+  const member = getMemberBySlug(slug)
+  const data: HoverCardData = {
+    type: 'member',
+    name: p.name,
+    role: dir?.role || member?.role,
+    photoUrl: p.photoUrl,
+    initials: p.initials,
+  }
+
+  return (
+    <div
+      ref={hoverCard.triggerRef as React.RefObject<HTMLDivElement>}
+      className="flex items-center gap-1.5"
+      onMouseEnter={hoverCard.handlers.onMouseEnter}
+      onMouseLeave={hoverCard.handlers.onMouseLeave}
+    >
+      <div style={{ width: 22, height: 22, flexShrink: 0 }}>
+        <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[8px]" />
+      </div>
+      <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
+        {p.name.split(' ').pop()}
+      </span>
+      <HoverCard
+        data={data}
+        isVisible={hoverCard.isVisible}
+        position={hoverCard.position}
+        cardRef={hoverCard.cardRef}
+        cardHandlers={hoverCard.cardHandlers}
+      />
     </div>
   )
 }
