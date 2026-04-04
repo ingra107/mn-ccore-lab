@@ -1,10 +1,11 @@
-import { Circle, CheckCircle2, Clock, AlertTriangle, CalendarDays, FolderKanban, Flag, RotateCcw, Eye } from 'lucide-react'
+import { CalendarDays, FolderKanban, Flag, RotateCcw, Eye, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useUndoToast } from '../UndoToast'
 import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 import { formatBrandName } from '../BrandName'
 import { updateTask } from '../../lib/api'
+import { STATUS_OPTIONS, PRIORITY_CONFIG, PRIORITY_COLORS, STATUS_CYCLE } from '../../lib/taskConstants'
 import type { TaskRow } from '../../lib/api'
 
 function hasBlockers(task: TaskRow): boolean {
@@ -21,40 +22,17 @@ interface TaskCardProps {
   onMouseLeave?: () => void
 }
 
-const statusOptions = [
-  { value: 'todo', label: 'To Do', icon: Circle, color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--teal)' },
-  { value: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--green, #22c55e)' },
-  { value: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--maroon)' },
-]
-
-const priorityConfig: Record<string, { label: string; color: string; bg: string }> = {
-  urgent: { label: 'Urgent', color: 'var(--maroon)', bg: 'rgba(122, 0, 25, 0.1)' },
-  high: { label: 'High', color: 'var(--orange)', bg: 'rgba(194, 65, 12, 0.1)' },
-  medium: { label: 'Med', color: 'var(--gold)', bg: 'rgba(201, 168, 76, 0.1)' },
-  low: { label: 'Low', color: 'var(--slate)', bg: 'rgba(100, 116, 139, 0.1)' },
-}
-
-const PRIORITY_ORDER = ['low', 'medium', 'high', 'urgent'] as const
-const PRIORITY_COLORS: Record<string, string> = {
-  low: 'var(--slate)',
-  medium: 'var(--gold)',
-  high: 'var(--orange)',
-  urgent: 'var(--maroon)',
-}
-
-const STATUS_CYCLE = ['todo', 'in_progress', 'done'] as const
-
 export default function TaskCard({ task, onStatusChange, onPriorityChange, compact = false, onClick, onMouseEnter, onMouseLeave }: TaskCardProps) {
   const { showUndo } = useUndoToast()
   const person = getPersonInfo(task.assignee)
-  const priority = priorityConfig[task.priority] || priorityConfig.medium
+  const priority = PRIORITY_CONFIG[task.priority as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.medium
   const isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
   const isDone = task.status === 'done'
 
+  const PRIORITY_CYCLE = ['low', 'medium', 'high', 'urgent'] as const
   const cyclePriority = () => {
-    const idx = PRIORITY_ORDER.indexOf(task.priority as typeof PRIORITY_ORDER[number])
-    const next = PRIORITY_ORDER[(idx + 1) % PRIORITY_ORDER.length]
+    const idx = PRIORITY_CYCLE.indexOf(task.priority as typeof PRIORITY_CYCLE[number])
+    const next = PRIORITY_CYCLE[(idx + 1) % PRIORITY_CYCLE.length]
     if (onPriorityChange) {
       onPriorityChange(task.id, next)
     } else {
@@ -63,7 +41,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
   }
 
   const isBlocked = hasBlockers(task)
-  const statusColor = (statusOptions.find((s) => s.value === task.status) || statusOptions[0]).color
+  const statusColor = (STATUS_OPTIONS.find((s) => s.value === task.status) || STATUS_OPTIONS[0]).color
   const effectiveBorderColor = isBlocked && !isDone ? 'var(--maroon)' : statusColor
 
   return (
@@ -100,11 +78,11 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
               showUndo(`Marked "${(task.title || task.description).slice(0, 30)}..." as ${label}`, () => onStatusChange(task.id, prev))
             }}
             className="cursor-pointer"
-            title={`Status: ${(statusOptions.find((s) => s.value === task.status) || statusOptions[0]).label} — click to advance`}
+            title={`Status: ${(STATUS_OPTIONS.find((s) => s.value === task.status) || STATUS_OPTIONS[0]).label} — click to advance`}
             style={{ background: 'none', border: 'none', padding: '4px', margin: '-4px' }}
           >
             {(() => {
-              const opt = statusOptions.find((s) => s.value === task.status) || statusOptions[0]
+              const opt = STATUS_OPTIONS.find((s) => s.value === task.status) || STATUS_OPTIONS[0]
               const Icon = opt.icon
               return <Icon size={18} className="status-transition" style={{ color: opt.color }} />
             })()}
@@ -279,4 +257,5 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
   )
 }
 
-export { statusOptions, priorityConfig }
+// Re-export from shared constants for backwards compatibility
+export { STATUS_OPTIONS, PRIORITY_CONFIG } from '../../lib/taskConstants'

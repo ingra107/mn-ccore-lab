@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Circle, CheckCircle2, Clock, AlertTriangle, ChevronDown, ChevronUp, Pencil, Archive, CalendarPlus, Link2 } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronUp, Pencil, Archive, CalendarPlus, Link2 } from 'lucide-react'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
 import { formatBrandName } from '../BrandName'
 import TaskContextMenu from './TaskContextMenu'
 import { useContextMenu } from '../../hooks/useContextMenu'
+import { STATUS_OPTIONS, PRIORITY_OPTIONS, PRIORITY_ORDER, STATUS_ORDER } from '../../lib/taskConstants'
 import type { TaskRow } from '../../lib/api'
 
 interface TaskGridViewProps {
@@ -29,23 +30,6 @@ function parseBlockedByIds(blockedBy: string | null): string[] {
 
 type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title'
 
-const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
-const statusOrder: Record<string, number> = { blocked: 0, in_progress: 1, todo: 2, done: 3 }
-
-const STATUS_OPTIONS = [
-  { value: 'todo', label: 'To Do', icon: Circle, color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--teal)' },
-  { value: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--maroon)' },
-  { value: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--green)' },
-]
-
-const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low', color: 'var(--slate)' },
-  { value: 'medium', label: 'Medium', color: 'var(--gold)' },
-  { value: 'high', label: 'High', color: 'var(--orange)' },
-  { value: 'urgent', label: 'Urgent', color: 'var(--maroon)' },
-]
-
 export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
   const [sortKey, setSortKey] = useState<SortKey>('priority')
@@ -61,8 +45,8 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
       if (a.completed !== b.completed) return a.completed - b.completed
       let cmp = 0
       switch (sortKey) {
-        case 'priority': cmp = (priorityOrder[a.priority] ?? 2) - (priorityOrder[b.priority] ?? 2); break
-        case 'status': cmp = (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2); break
+        case 'priority': cmp = (PRIORITY_ORDER[a.priority] ?? 2) - (PRIORITY_ORDER[b.priority] ?? 2); break
+        case 'status': cmp = (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2); break
         case 'due_date': cmp = (a.due_date || '9999').localeCompare(b.due_date || '9999'); break
         case 'assignee': cmp = (a.assignee || '').localeCompare(b.assignee || ''); break
         case 'title': cmp = (a.title || a.description || '').localeCompare(b.title || b.description || ''); break
