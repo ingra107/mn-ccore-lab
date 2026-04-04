@@ -9,7 +9,7 @@ import TaskBoardView from '../../components/tasks/TaskBoardView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import { useTasks } from '../../hooks/useApiData'
-import { useCreateTask, useUpdateTaskStatus } from '../../hooks/useMutations'
+import { useCreateTask, useUpdateTaskStatus, useUpdateTask } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 
 type ViewMode = 'list' | 'board' | 'timeline'
@@ -49,6 +49,10 @@ export default function MyTasks() {
   const { data: allTasks = [], isLoading } = useTasks()
   const createTask = useCreateTask()
   const updateStatus = useUpdateTaskStatus()
+  const updateTask = useUpdateTask()
+  const handleFieldChange = (id: string, field: string, value: unknown) => {
+    updateTask.mutate({ id, fields: { [field]: value } })
+  }
 
   // Get current user slug from JWT cookie (or fallback to showing prompt)
   const currentUser = useMemo(() => {
@@ -209,9 +213,9 @@ export default function MyTasks() {
             {view === 'timeline' && <TaskTimelineView tasks={tasks} onStatusChange={handleStatusChange} />}
           </>
         ) : groupBy === 'none' ? (
-          <TaskGridView tasks={sortTasks(tasks, sortBy)} onStatusChange={handleStatusChange} />
+          <TaskGridView tasks={sortTasks(tasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} />
         ) : (
-          <GroupedTaskList tasks={tasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} />
+          <GroupedTaskList tasks={tasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} />
         )}
       </div>
 
@@ -235,11 +239,12 @@ function sortTasks(tasks: any[], sortBy: SortBy) {
 }
 
 // ── Grouped Task List ──────────────────────────────────────────
-function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange }: {
+function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange }: {
   tasks: any[]
   groupBy: GroupBy
   sortBy: SortBy
   onStatusChange: (id: string, status: string) => void
+  onFieldChange: (id: string, field: string, value: unknown) => void
 }) {
   const groups = useMemo(() => {
     const map = new Map<string, any[]>()
@@ -305,7 +310,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange }: {
               {items.length}
             </span>
           </div>
-          <TaskGridView tasks={items} onStatusChange={onStatusChange} />
+          <TaskGridView tasks={items} onStatusChange={onStatusChange} onFieldChange={onFieldChange} />
         </div>
       ))}
     </div>

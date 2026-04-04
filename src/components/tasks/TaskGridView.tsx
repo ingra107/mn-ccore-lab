@@ -13,7 +13,7 @@ interface TaskGridViewProps {
   tasks: TaskRow[]
   allTasks?: TaskRow[] // for resolving blocker names
   onStatusChange: (id: string, status: string) => void
-  onFieldChange?: (id: string, field: string, value: unknown) => void
+  onFieldChange: (id: string, field: string, value: unknown) => void
   onSelect?: (task: TaskRow) => void
   onOpenDetail?: (task: TaskRow) => void
   onPeek?: (task: TaskRow) => void
@@ -170,7 +170,7 @@ function TaskGridRow({
   index: number
   colStyle: React.CSSProperties
   onStatusChange: (id: string, status: string) => void
-  onFieldChange?: (id: string, field: string, value: unknown) => void
+  onFieldChange: (id: string, field: string, value: unknown) => void
   onSelect?: (task: TaskRow) => void
   onOpenDetail?: (task: TaskRow) => void
   showUndo: (msg: string, onUndo: () => void) => void
@@ -274,13 +274,7 @@ function TaskGridRow({
       <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
         <InlineAssigneePicker
           value={task.assignee}
-          onChange={(slug) => {
-            if (onFieldChange) {
-              onFieldChange(task.id, 'assignee', slug)
-            } else {
-              import('../../lib/api').then(({ updateTask }) => updateTask(task.id, { assignee: slug }))
-            }
-          }}
+          onChange={(slug) => onFieldChange(task.id, 'assignee', slug)}
         />
       </div>
 
@@ -288,13 +282,7 @@ function TaskGridRow({
       <div onClick={(e) => e.stopPropagation()}>
         <InlineDatePicker
           value={task.due_date}
-          onChange={(date) => {
-            if (onFieldChange) {
-              onFieldChange(task.id, 'due_date', date)
-            } else {
-              import('../../lib/api').then(({ updateTask }) => updateTask(task.id, { due_date: date }))
-            }
-          }}
+          onChange={(date) => onFieldChange(task.id, 'due_date', date)}
         />
       </div>
 
@@ -325,13 +313,7 @@ function TaskGridRow({
       <InlineCellSelect
         value={task.priority}
         options={PRIORITY_OPTIONS}
-        onChange={(val) => {
-          if (onFieldChange) {
-            onFieldChange(task.id, 'priority', val)
-          } else {
-            import('../../lib/api').then(({ updateTask }) => updateTask(task.id, { priority: val }))
-          }
-        }}
+        onChange={(val) => onFieldChange(task.id, 'priority', val)}
         renderValue={(val) => {
           const opt = PRIORITY_OPTIONS.find(o => o.value === val) || PRIORITY_OPTIONS[1]
           return <span className="status-transition" style={{ color: opt.color }}>{opt.label}</span>

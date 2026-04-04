@@ -1,6 +1,17 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions } from '../helpers';
 
+// GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
+export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
+  const assignee = url.searchParams.get('assignee')
+  const today = new Date().toISOString().split('T')[0]
+  let query = 'SELECT COUNT(*) as count FROM tasks WHERE completed = 0 AND due_date < ?'
+  const params: string[] = [today]
+  if (assignee) { query += ' AND assignee = ?'; params.push(assignee) }
+  const result = await env.DB.prepare(query).bind(...params).first<{ count: number }>()
+  return json({ data: { count: result?.count ?? 0 } })
+}
+
 // GET /api/tasks?assignee=&status=&priority=&project=&meeting=&completed=&source=
 export async function handleTasks(url: URL, env: Env): Promise<Response> {
   const assignee = url.searchParams.get('assignee');

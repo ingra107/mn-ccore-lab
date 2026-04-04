@@ -27,9 +27,9 @@ import {
   Inbox,
   ScrollText,
 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
 import { useUnreadCount } from '../hooks/useNotifications'
-import { useTasks } from '../hooks/useApiData'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
 
@@ -110,13 +110,19 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const person = userSlug ? getPersonInfo(userSlug) : null
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
 
-  // Badge counts
+  // Badge counts — lightweight queries, NOT full task list
   const { data: unreadCount = 0 } = useUnreadCount(userSlug || '')
-  const { data: allTasks = [] } = useTasks()
-  const myOverdue = allTasks.filter(t =>
-    !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date() &&
-    (!userSlug || t.assignee === userSlug)
-  ).length
+  const { data: overdueData } = useQuery({
+    queryKey: ['overdue-count', userSlug],
+    queryFn: async () => {
+      const params = userSlug ? `?assignee=${userSlug}` : ''
+      const res = await fetch(`/api/tasks/overdue-count${params}`)
+      const json = await res.json() as { data: { count: number } }
+      return json.data
+    },
+    staleTime: 60_000,
+  })
+  const myOverdue = overdueData?.count ?? 0
 
   // Conditionally include PI Tools section
   const allGroups: NavGroup[] = isPi

@@ -2,7 +2,7 @@ import type { Env } from './types';
 import { corsHeaders, json, error, getAuthUser } from './helpers';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleTasks, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleBatchUpdateTasks } from './routes/tasks';
+import { handleTasks, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleBatchUpdateTasks } from './routes/tasks';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
 import { handleMeetings, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline } from './routes/publications';
@@ -214,6 +214,8 @@ export default {
             return await handleActivity(url, env);
           case '/api/meetings':
             return await handleMeetings(env);
+          case '/api/tasks/overdue-count':
+            return await handleOverdueCount(url, env);
           case '/api/tasks':
             return await handleTasks(url, env);
           case '/api/action-items':
