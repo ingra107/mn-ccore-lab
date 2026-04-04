@@ -18,6 +18,7 @@ import TaskPeekOverlay from '../../components/tasks/TaskPeekOverlay'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import ToggleButton from '../../components/ToggleButton'
+import PageTooltip from '../../components/PageTooltip'
 import { useTasks } from '../../hooks/useApiData'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useSavedViews } from '../../hooks/useSavedViews'
@@ -302,6 +303,7 @@ export default function Tasks() {
             <Filter size={10} />
             Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
           </button>
+          <PageTooltip id="tasks-filter" text="Press F to toggle filters" />
         </div>
 
         {/* Collapsible filter panel (F key or button toggle) */}

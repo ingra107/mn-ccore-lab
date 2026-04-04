@@ -5,6 +5,7 @@ import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { getUserRole, ROLE_DEFAULTS } from '../lib/roleDefaults'
+import WelcomeBanner from '../components/WelcomeBanner'
 import PipelineCard from '../components/dashboard/PipelineCard'
 import StatsCard from '../components/dashboard/StatsCard'
 import UpcomingCard from '../components/dashboard/UpcomingCard'
@@ -189,6 +190,9 @@ export default function Dashboard() {
             }}
           />
         </div>
+
+        {/* Welcome banner (first-visit onboarding) */}
+        <WelcomeBanner />
 
         {/* Customize panel */}
         {showCustomize && (
