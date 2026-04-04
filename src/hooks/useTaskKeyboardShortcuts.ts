@@ -25,6 +25,8 @@ interface UseTaskKeyboardShortcutsOptions {
   addBlocker?: () => void
   /** Toggle filter panel visibility */
   toggleFilters?: () => void
+  /** Toggle subtask expand/collapse for focused task */
+  toggleExpand?: () => void
 }
 
 /**
@@ -36,6 +38,8 @@ interface UseTaskKeyboardShortcutsOptions {
  * S = cycle status (todo -> in_progress -> done)
  * X = toggle selection
  * B = add blocker (opens detail panel with blocker search)
+ * → = expand subtasks for focused task
+ * ← = collapse subtasks for focused task
  * Escape = close overlay/panel
  */
 export function useTaskKeyboardShortcuts({
@@ -51,6 +55,7 @@ export function useTaskKeyboardShortcuts({
   closeOverlay,
   addBlocker,
   toggleFilters,
+  toggleExpand,
 }: UseTaskKeyboardShortcutsOptions) {
   // Use refs to avoid stale closures in the event handler
   const focusedIndexRef = useRef(focusedIndex)
@@ -167,8 +172,24 @@ export function useTaskKeyboardShortcuts({
         }
         break
       }
+
+      case 'ArrowRight': {
+        if (idx >= 0 && toggleExpand) {
+          e.preventDefault()
+          toggleExpand()
+        }
+        break
+      }
+
+      case 'ArrowLeft': {
+        if (idx >= 0 && toggleExpand) {
+          e.preventDefault()
+          toggleExpand()
+        }
+        break
+      }
     }
-  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker, toggleFilters])
+  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker, toggleFilters, toggleExpand])
 
   useEffect(() => {
     document.addEventListener('keydown', handler)

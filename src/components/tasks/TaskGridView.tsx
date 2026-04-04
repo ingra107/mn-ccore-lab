@@ -1,11 +1,14 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
-import { CheckCircle2, ChevronDown, ChevronUp, Pencil, Archive, CalendarPlus, Link2 } from 'lucide-react'
+import { useState, useMemo, useEffect, useRef, Fragment } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Pencil, Archive, CalendarPlus, Link2, Plus } from 'lucide-react'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
 import { formatBrandName } from '../BrandName'
 import TaskContextMenu from './TaskContextMenu'
 import { useContextMenu } from '../../hooks/useContextMenu'
+import { useSubtasks } from '../../hooks/useApiData'
+import { useCreateSubtask, useToggleSubtask } from '../../hooks/useMutations'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS, PRIORITY_ORDER, STATUS_ORDER } from '../../lib/taskConstants'
 import type { TaskRow } from '../../lib/api'
 
@@ -21,6 +24,8 @@ interface TaskGridViewProps {
   onToggleSelect?: (id: string) => void
   focusedIndex?: number
   onFocusIndex?: (index: number) => void
+  expandedTasks?: Set<string>
+  onToggleExpand?: (id: string) => void
 }
 
 function parseBlockedByIds(blockedBy: string | null): string[] {
@@ -30,11 +35,26 @@ function parseBlockedByIds(blockedBy: string | null): string[] {
 
 type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title'
 
-export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex }: TaskGridViewProps) {
+export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortAsc, setSortAsc] = useState(true)
+  const [internalExpanded, setInternalExpanded] = useState<Set<string>>(new Set())
   const { state: contextMenuState, openMenu: openContextMenu, closeMenu: closeContextMenu } = useContextMenu()
+
+  const expandedTasks = controlledExpanded ?? internalExpanded
+  const toggleExpand = (id: string) => {
+    if (controlledToggleExpand) {
+      controlledToggleExpand(id)
+    } else {
+      setInternalExpanded(prev => {
+        const next = new Set(prev)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        return next
+      })
+    }
+  }
   const contextMenuTask = useMemo(
     () => (contextMenuState.taskId ? tasks.find(t => t.id === contextMenuState.taskId) ?? null : null),
     [contextMenuState.taskId, tasks]
@@ -76,23 +96,31 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
 
       {/* Rows */}
       {sorted.map((task, index) => (
-        <TaskGridRow
-          key={task.id}
-          task={task}
-          allTasks={allTasks || tasks}
-          index={index}
-          colStyle={colStyle}
-          onStatusChange={onStatusChange}
-          onFieldChange={onFieldChange}
-          onSelect={onSelect}
-          onOpenDetail={onOpenDetail}
-          showUndo={showUndo}
-          selected={selectedIds?.has(task.id)}
-          onToggleSelect={onToggleSelect}
-          isFocused={focusedIndex === index}
-          onFocusIndex={onFocusIndex}
-          onContextMenu={openContextMenu}
-        />
+        <Fragment key={task.id}>
+          <TaskGridRow
+            task={task}
+            allTasks={allTasks || tasks}
+            index={index}
+            colStyle={colStyle}
+            onStatusChange={onStatusChange}
+            onFieldChange={onFieldChange}
+            onSelect={onSelect}
+            onOpenDetail={onOpenDetail}
+            showUndo={showUndo}
+            selected={selectedIds?.has(task.id)}
+            onToggleSelect={onToggleSelect}
+            isFocused={focusedIndex === index}
+            onFocusIndex={onFocusIndex}
+            onContextMenu={openContextMenu}
+            expanded={expandedTasks.has(task.id)}
+            onToggleExpand={() => toggleExpand(task.id)}
+          />
+          <AnimatePresence>
+            {expandedTasks.has(task.id) && (
+              <InlineSubtaskRow key={`sub-${task.id}`} taskId={task.id} />
+            )}
+          </AnimatePresence>
+        </Fragment>
       ))}
 
       {sorted.length === 0 && (
@@ -129,6 +157,12 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           text-transform: uppercase;
           letter-spacing: 0.06em;
         }
+        .task-grid-row:hover .subtask-expand-btn {
+          opacity: 0.5 !important;
+        }
+        .task-grid-row:hover .subtask-expand-btn:hover {
+          opacity: 0.8 !important;
+        }
       `}</style>
     </div>
   )
@@ -163,7 +197,7 @@ function SortableColumnHeader({ label, field, active, asc, onSort }: { label: st
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu,
+  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand,
 }: {
   task: TaskRow
   allTasks: TaskRow[]
@@ -179,6 +213,8 @@ function TaskGridRow({
   isFocused?: boolean
   onFocusIndex?: (index: number) => void
   onContextMenu?: (e: React.MouseEvent, taskId: string) => void
+  expanded?: boolean
+  onToggleExpand?: () => void
 }) {
   const isDone = task.status === 'done'
   const blockerIds = useMemo(() => parseBlockedByIds(task.blocked_by), [task.blocked_by])
@@ -251,7 +287,20 @@ function TaskGridRow({
 
       {/* Title */}
       <div style={{ minWidth: 0, paddingRight: '12px' }}>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleExpand?.() }}
+            className="subtask-expand-btn"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+              display: 'flex', alignItems: 'center', flexShrink: 0,
+              color: 'var(--slate)', opacity: expanded ? 0.7 : 0.25,
+              transition: 'opacity var(--transition-fast) ease',
+            }}
+            title={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
+          >
+            <ChevronRight size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform var(--transition-fast) ease' }} />
+          </button>
           {hasBlockers && (
             <span title={`Blocked by: ${blockerNames}`} style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
               <Link2 size={12} style={{ color: 'var(--maroon)', opacity: 0.7 }} />
@@ -349,6 +398,101 @@ function TaskGridRow({
         </button>
       </div>
     </div>
+  )
+}
+
+// ── Inline Subtask Row (Linear-style expand) ─────────────────
+
+function InlineSubtaskRow({ taskId }: { taskId: string }) {
+  const { data: subtasks = [] } = useSubtasks(taskId)
+  const createSubtask = useCreateSubtask(taskId)
+  const toggleSubtask = useToggleSubtask(taskId)
+  const [newTitle, setNewTitle] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const completed = subtasks.filter((s) => s.completed).length
+  const total = subtasks.length
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newTitle.trim()) return
+    createSubtask.mutate(newTitle.trim())
+    setNewTitle('')
+    inputRef.current?.focus()
+  }
+
+  return (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.2, ease: [0, 0, 0.2, 1] }}
+      style={{ overflow: 'hidden' }}
+    >
+      <div
+        style={{
+          padding: '6px 16px 10px 64px',
+          borderBottom: '1px solid var(--border-subtle)',
+          background: 'rgba(45, 138, 138, 0.02)',
+        }}
+      >
+        {/* Progress indicator */}
+        {total > 0 && (
+          <div className="flex items-center gap-2 mb-1.5">
+            <div style={{ flex: 1, height: 2, borderRadius: 1, background: 'rgba(201,168,76,0.12)', overflow: 'hidden' }}>
+              <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: completed === total ? 'var(--teal)' : 'var(--gold)', borderRadius: 1, transition: 'width 0.3s ease' }} />
+            </div>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>{completed}/{total}</span>
+          </div>
+        )}
+
+        {/* Subtask list */}
+        {subtasks.map((s) => (
+          <div
+            key={s.id}
+            className="flex items-center gap-2 py-1 group"
+            style={{ transition: 'opacity 150ms ease' }}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleSubtask.mutate(s.id) }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
+            >
+              {s.completed ? (
+                <CheckCircle2 size={14} style={{ color: 'var(--teal)' }} />
+              ) : (
+                <Circle size={14} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+              )}
+            </button>
+            <span
+              style={{
+                fontSize: '12px',
+                color: s.completed ? 'var(--slate)' : 'var(--ink)',
+                textDecoration: s.completed ? 'line-through' : 'none',
+                opacity: s.completed ? 0.5 : 0.8,
+              }}
+            >
+              {s.title}
+            </span>
+          </div>
+        ))}
+
+        {/* Add subtask input */}
+        <form onSubmit={handleAdd} className="flex items-center gap-2 mt-0.5" onClick={(e) => e.stopPropagation()}>
+          <Plus size={12} style={{ color: 'var(--slate)', opacity: 0.25, flexShrink: 0 }} />
+          <input
+            ref={inputRef}
+            type="text"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="Add subtask..."
+            style={{
+              flex: 1, fontSize: '12px', background: 'none', border: 'none',
+              outline: 'none', color: 'var(--ink)', padding: '3px 0',
+            }}
+          />
+        </form>
+      </div>
+    </motion.div>
   )
 }
 

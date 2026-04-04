@@ -48,7 +48,17 @@ export default function Tasks() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [focusedTaskIndex, setFocusedTaskIndex] = useState(-1)
   const [showFilters, setShowFilters] = useState(false)
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set())
   const bulkUpdate = useBulkUpdateTasks()
+
+  const toggleExpandTask = useCallback((id: string) => {
+    setExpandedTasks(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
 
   // Auto-open create modal from URL params (keyboard shortcut C)
   useEffect(() => {
@@ -221,6 +231,9 @@ export default function Tasks() {
     closeOverlay,
     addBlocker: addBlockerForFocused,
     toggleFilters: useCallback(() => setShowFilters(prev => !prev), []),
+    toggleExpand: useCallback(() => {
+      if (focusedTask) toggleExpandTask(focusedTask.id)
+    }, [focusedTask, toggleExpandTask]),
   })
 
   return (
@@ -378,6 +391,8 @@ export default function Tasks() {
                 onToggleSelect={toggleSelect}
                 focusedIndex={focusedTaskIndex}
                 onFocusIndex={setFocusedTaskIndex}
+                expandedTasks={expandedTasks}
+                onToggleExpand={toggleExpandTask}
               />
             )}
             {view === 'board' && <TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}

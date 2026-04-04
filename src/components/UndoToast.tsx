@@ -89,6 +89,9 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
 
       {/* Toast container — fixed bottom-center */}
       <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
         style={{
           position: 'fixed',
           bottom: '24px',

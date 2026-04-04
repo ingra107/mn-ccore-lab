@@ -51,9 +51,31 @@ export default function CommandPalette() {
     return () => document.removeEventListener('keydown', handler)
   }, [open])
 
-  // Focus input when opening
+  // Focus input when opening + trap focus within palette
+  const paletteRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 50)
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 50)
+      // Focus trap: Tab cycles within the palette
+      const handler = (e: KeyboardEvent) => {
+        if (e.key !== 'Tab' || !paletteRef.current) return
+        const focusable = paletteRef.current.querySelectorAll<HTMLElement>(
+          'input, button, [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+      document.addEventListener('keydown', handler)
+      return () => document.removeEventListener('keydown', handler)
+    }
   }, [open])
 
   // Build command items
@@ -294,6 +316,10 @@ export default function CommandPalette() {
       onClick={() => setOpen(false)}
     >
       <motion.div
+        ref={paletteRef}
+        role="dialog"
+        aria-label="Command palette"
+        aria-modal="true"
         className="w-full max-w-lg rounded-xl shadow-2xl border overflow-hidden"
         initial={{ opacity: 0, scale: 0.95, y: -8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
