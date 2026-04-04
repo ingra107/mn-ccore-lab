@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { Plus, LayoutGrid, List, ThumbsUp, X, Lightbulb } from 'lucide-react'
 import { CardSkeleton, TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
@@ -138,9 +139,16 @@ export default function Ideas() {
         {isLoading ? (
           view === 'grid' ? <CardSkeleton count={6} /> : <TableSkeleton rows={6} cols={5} />
         ) : view === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            initial="hidden"
+            animate="visible"
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}
+          >
             {ideas.map((idea) => (
-              <IdeaCard key={idea.id} idea={idea} onVote={() => vote.mutate(idea.id)} onStatusChange={(status) => updateIdea.mutate({ id: idea.id, fields: { status } })} />
+              <motion.div key={idea.id} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
+                <IdeaCard idea={idea} onVote={() => vote.mutate(idea.id)} onStatusChange={(status) => updateIdea.mutate({ id: idea.id, fields: { status } })} />
+              </motion.div>
             ))}
             {ideas.length === 0 && (
               <div className="col-span-3">
@@ -152,7 +160,7 @@ export default function Ideas() {
                 />
               </div>
             )}
-          </div>
+          </motion.div>
         ) : (
           <IdeaListView ideas={ideas} onVote={(id) => vote.mutate(id)} onStatusChange={(id, status) => updateIdea.mutate({ id, fields: { status } })} />
         )}

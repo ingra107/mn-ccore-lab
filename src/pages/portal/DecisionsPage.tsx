@@ -254,11 +254,19 @@ export default function DecisionsPage() {
         ) : viewMode === 'timeline' ? (
           <DecisionTimeline decisions={filteredDecisions} projects={projects} />
         ) : (
-          <div className="table-container flex flex-col gap-3" style={{ padding: '16px 20px' }}>
+          <motion.div
+            className="table-container flex flex-col gap-3"
+            style={{ padding: '16px 20px' }}
+            initial="hidden"
+            animate="visible"
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}
+          >
             {filteredDecisions.map((decision) => (
-              <DecisionCard key={decision.id} decision={decision} projects={projects} />
+              <motion.div key={decision.id} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
+                <DecisionCard decision={decision} projects={projects} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
 

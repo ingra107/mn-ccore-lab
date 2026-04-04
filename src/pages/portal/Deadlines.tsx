@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
@@ -178,15 +179,19 @@ export default function Deadlines() {
             </div>
 
             {/* Grouped rows */}
-            {[
-              { title: 'Overdue', items: overdue, color: 'var(--maroon)' },
-              { title: 'This Week', items: thisWeek, color: 'var(--teal)' },
-              { title: 'Next Week', items: nextWeek, color: 'var(--gold)' },
-              { title: 'Later', items: later, color: 'var(--slate)' },
-              { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
-            ].filter(g => g.items.length > 0).map((group) => (
-              <DeadlineTableSection key={group.title} title={group.title} items={group.items} color={group.color} />
-            ))}
+            <motion.div initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
+              {[
+                { title: 'Overdue', items: overdue, color: 'var(--maroon)' },
+                { title: 'This Week', items: thisWeek, color: 'var(--teal)' },
+                { title: 'Next Week', items: nextWeek, color: 'var(--gold)' },
+                { title: 'Later', items: later, color: 'var(--slate)' },
+                { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
+              ].filter(g => g.items.length > 0).map((group) => (
+                <motion.div key={group.title} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}>
+                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} />
+                </motion.div>
+              ))}
+            </motion.div>
 
             {deadlines.length === 0 && (
               <EmptyState

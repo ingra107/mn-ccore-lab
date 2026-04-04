@@ -1026,14 +1026,21 @@ export default function Meetings() {
           </div>
 
           {/* Meeting list */}
-          <div className="table-container space-y-3" style={{ padding: '16px 20px' }}>
+          <motion.div
+            className="table-container space-y-3"
+            style={{ padding: '16px 20px' }}
+            initial="hidden"
+            animate="visible"
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}
+          >
             {filteredMeetings.length > 0 ? (
               filteredMeetings.map((meeting) => (
-                <MeetingCard
-                  key={meeting.id}
-                  meeting={meeting}
-                  onToggleAction={handleToggleAction}
-                />
+                <motion.div key={meeting.id} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
+                  <MeetingCard
+                    meeting={meeting}
+                    onToggleAction={handleToggleAction}
+                  />
+                </motion.div>
               ))
             ) : (
               <div className="py-12 text-center">
@@ -1042,7 +1049,7 @@ export default function Meetings() {
                 </p>
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Stats footer */}
           <div className="mt-4 text-center">
