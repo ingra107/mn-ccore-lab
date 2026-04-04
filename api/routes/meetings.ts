@@ -80,6 +80,59 @@ export async function handleUpdateMeetingNotes(meetingId: string, request: Reque
   return json({ data: updated });
 }
 
+// GET /api/meetings/:id/prep — facilitator prep view data
+export async function handleMeetingPrep(meetingId: string, env: Env): Promise<Response> {
+  const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first();
+  if (!meeting) return error('Meeting not found', 404);
+
+  // Find the previous meeting (for carry-forward context)
+  const prevMeeting = await env.DB.prepare(
+    'SELECT id, date, title FROM meetings WHERE date < ? ORDER BY date DESC LIMIT 1'
+  ).bind(meeting.date as string).first();
+
+  // Action items from previous meeting (if any)
+  const prevActionItems = prevMeeting
+    ? (await env.DB.prepare(
+        'SELECT id, description, assignee, completed, due_date FROM tasks WHERE meeting_id = ? ORDER BY completed ASC, assignee'
+      ).bind(prevMeeting.id).all()).results
+    : [];
+
+  // Recent project activity (last 14 days) — stage changes, completed tasks, comments
+  const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+  const recentActivity = (await env.DB.prepare(
+    'SELECT type, description, actor, entity_id, entity_type, created_at FROM activity WHERE created_at > ? ORDER BY created_at DESC LIMIT 30'
+  ).bind(twoWeeksAgo).all()).results;
+
+  // Upcoming deadlines (next 14 days)
+  const twoWeeksOut = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+  const upcomingDeadlines = (await env.DB.prepare(
+    'SELECT id, title, description, assignee, due_date, priority, status FROM tasks WHERE due_date BETWEEN ? AND ? AND completed = 0 ORDER BY due_date'
+  ).bind(today, twoWeeksOut).all()).results;
+
+  // Current meeting's agenda items
+  const agendaItems = (await env.DB.prepare(
+    'SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at'
+  ).bind(meetingId).all()).results;
+
+  // Overdue tasks
+  const overdueTasks = (await env.DB.prepare(
+    'SELECT id, title, description, assignee, due_date, priority FROM tasks WHERE due_date < ? AND completed = 0 ORDER BY due_date'
+  ).bind(today).all()).results;
+
+  return json({
+    data: {
+      meeting,
+      previousMeeting: prevMeeting,
+      previousActionItems: prevActionItems,
+      recentActivity,
+      upcomingDeadlines,
+      overdueTasks,
+      agendaItems,
+    },
+  });
+}
+
 // POST /api/meetings — create meeting
 export async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { date: string; title: string; type?: string; attendees?: string[] };

@@ -158,6 +158,18 @@ export default function MeetingDetail() {
               {meeting.type}
             </span>
             <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
+            <Link
+              to={`/meetings/${meeting.id}/prep`}
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs transition-colors"
+              style={{
+                fontFamily: 'var(--font-sans)', fontSize: '11px',
+                color: 'var(--teal)', textDecoration: 'none',
+                border: '1px solid rgba(45,138,138,0.2)',
+                background: 'rgba(45,138,138,0.05)',
+              }}
+            >
+              <ListChecks size={11} /> Prep View
+            </Link>
           </div>
 
           <h1 style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>

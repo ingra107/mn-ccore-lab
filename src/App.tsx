@@ -98,6 +98,7 @@ const Projects = lazy(() => import('./pages/Projects'))
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'))
 const Meetings = lazy(() => import('./pages/Meetings'))
 const MeetingDetail = lazy(() => import('./pages/MeetingDetail'))
+const MeetingPrep = lazy(() => import('./pages/MeetingPrep'))
 const Digest = lazy(() => import('./pages/Digest'))
 const CVPage = lazy(() => import('./pages/CVPage'))
 const TrajectoryPage = lazy(() => import('./pages/TrajectoryPage'))
@@ -195,6 +196,7 @@ export default function App() {
                   {/* Meetings */}
                   <Route path="/meetings" element={<ErrorBoundary><Meetings /></ErrorBoundary>} />
                   <Route path="/meetings/:id" element={<ErrorBoundary><MeetingDetail /></ErrorBoundary>} />
+                  <Route path="/meetings/:id/prep" element={<ErrorBoundary><MeetingPrep /></ErrorBoundary>} />
                   <Route path="/meeting-notes" element={<ErrorBoundary><MeetingNotesPage /></ErrorBoundary>} />
 
                   {/* Lab */}

@@ -4,7 +4,7 @@ import { corsHeaders, json, error, getAuthUser } from './helpers';
 // ── Route modules ──────────────────────────────────────────
 import { handleTasks, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleBatchUpdateTasks } from './routes/tasks';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
-import { handleMeetings, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes } from './routes/meetings';
+import { handleMeetings, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline } from './routes/publications';
 import { handleTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
 import { handleDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper } from './routes/digest';
@@ -363,6 +363,12 @@ export default {
         // POST /api/action-items — backward compat alias
         if (request.method === 'POST' && path === '/api/action-items') {
           return await handleCreateTask(request, user, env);
+        }
+
+        // GET /api/meetings/:id/prep — facilitator prep view
+        const meetingPrepMatch = path.match(/^\/api\/meetings\/([^/]+)\/prep$/);
+        if (request.method === 'GET' && meetingPrepMatch) {
+          return await handleMeetingPrep(meetingPrepMatch[1], env);
         }
 
         // POST /api/meetings/:id/notes — update meeting notes
