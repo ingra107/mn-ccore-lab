@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import RoundPrompt from '../components/RoundPrompt'
@@ -26,7 +26,9 @@ import { CSS } from '@dnd-kit/utilities'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMeetingDetail } from '../hooks/useApiData'
 import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks/useApiData'
-import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision } from '../hooks/useMutations'
+import { useQueryClient } from '@tanstack/react-query'
+import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask } from '../hooks/useMutations'
+import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../hooks/useToast'
 import Avatar from '../components/Avatar'
@@ -279,6 +281,13 @@ export default function MeetingDetail() {
             </div>
 
             <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px' }} className="detail-card">
+              {/* Inline add action item */}
+              <AddActionItemForm
+                meetingId={meeting.id}
+                isAuthenticated={isAuthenticated}
+                onSuccess={() => showSuccess('Action item added')}
+              />
+
               {/* Pending items */}
               {pendingActions.length > 0 && (
                 <div className="mb-3">
@@ -302,7 +311,7 @@ export default function MeetingDetail() {
 
               {actionItems.length === 0 && (
                 <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
-                  No action items yet
+                  No action items yet — type above to add one
                 </p>
               )}
             </div>
@@ -638,6 +647,117 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
         </div>
       </div>
     </div>
+  )
+}
+
+// ── Add Action Item (NLP quick-add) ─────────────────────────
+
+const PRIORITY_LABELS: Record<number, string> = { 1: 'Urgent', 2: 'High', 3: 'Medium' }
+const PRIORITY_COLORS: Record<number, string> = { 1: 'var(--maroon)', 2: 'var(--orange)', 3: 'var(--gold)' }
+
+function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingId: string; isAuthenticated: boolean; onSuccess: () => void }) {
+  const [text, setText] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const createTask = useCreateTask()
+  const queryClient = useQueryClient()
+
+  const parsed = text.trim() ? parseQuickAddInput(text) : null
+  const hasContent = parsed && parsed.title.trim().length > 0
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!parsed || !hasContent) return
+
+    createTask.mutate({
+      title: parsed.title,
+      description: parsed.title,
+      assignee: parsed.assigneeSlug ?? 'nick',
+      meeting_id: meetingId,
+      due_date: parsed.dueDate ?? undefined,
+      priority: parsed.priority === 1 ? 'urgent' : parsed.priority === 2 ? 'high' : parsed.priority === 3 ? 'medium' : 'medium',
+    }, {
+      onSuccess: () => {
+        setText('')
+        queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
+        onSuccess()
+        inputRef.current?.focus()
+      },
+    })
+  }
+
+  return (
+    <form onSubmit={handleSubmit} style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid rgba(45,138,138,0.08)' }}>
+      <div className="flex items-center gap-2">
+        <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0 }} />
+        <input
+          ref={inputRef}
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder={isAuthenticated || !import.meta.env.PROD ? '@nick Review draft p2 Friday' : 'Sign in to add items'}
+          disabled={!isAuthenticated && import.meta.env.PROD}
+          style={{
+            flex: 1, fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+            background: 'var(--cream)', border: '1px solid rgba(45,138,138,0.12)', borderRadius: 8,
+            padding: '8px 12px', outline: 'none', transition: 'border-color 0.15s',
+          }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(45,138,138,0.12)')}
+          onKeyDown={(e) => { if (e.key === 'Escape') { setText(''); e.currentTarget.blur() } }}
+        />
+        {hasContent && (
+          <motion.button
+            type="submit"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex-shrink-0 p-2 rounded-lg cursor-pointer"
+            style={{ background: 'var(--teal)', color: 'white', border: 'none' }}
+          >
+            <Plus size={14} />
+          </motion.button>
+        )}
+      </div>
+
+      {/* Token preview chips */}
+      {parsed && (parsed.assigneeName || parsed.priority || parsed.dueDate || parsed.projectTitle) && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="flex flex-wrap items-center gap-1.5 mt-1.5 ml-6"
+        >
+          {parsed.assigneeName && (
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 4, background: 'rgba(201,168,76,0.12)', color: 'var(--gold)' }}>
+              @{parsed.assigneeName}
+            </span>
+          )}
+          {parsed.priority && (
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 4, background: 'rgba(122,0,25,0.1)', color: PRIORITY_COLORS[parsed.priority] }}>
+              P{parsed.priority} {PRIORITY_LABELS[parsed.priority]}
+            </span>
+          )}
+          {parsed.dueDate && (
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 4, background: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}>
+              Due {parsed.dueDate}
+            </span>
+          )}
+          {parsed.projectTitle && (
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 4, background: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}>
+              #{parsed.projectTitle}
+            </span>
+          )}
+        </motion.div>
+      )}
+
+      {/* Hint text */}
+      {!text && (
+        <div className="flex items-center gap-3 mt-1.5 ml-6" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.35 }}>
+          <span>@name</span>
+          <span>#project</span>
+          <span>p1-p3</span>
+          <span>Apr 15</span>
+        </div>
+      )}
+    </form>
   )
 }
 
