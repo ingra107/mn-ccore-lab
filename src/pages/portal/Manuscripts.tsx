@@ -11,6 +11,7 @@ import { useCreateProject } from '../../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../../lib/api'
 import InlineSelect from '../../components/InlineSelect'
+import { useUndoToast } from '../../components/UndoToast'
 import { getPersonInfo } from '../../data/team'
 import type { Project } from '../../data/types'
 import PageHeader from '../../components/PageHeader'
@@ -51,11 +52,17 @@ export default function Manuscripts() {
   const { data: tasks = [] } = useTasks()
   const createProject = useCreateProject()
   const queryClient = useQueryClient()
+  const { showUndo } = useUndoToast()
   const inlineUpdate = useMutation({
     mutationFn: ({ slug, fields }: { slug: string; fields: Record<string, unknown> }) =>
       updateProject(slug, fields),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
   })
+
+  const handleFieldChange = (slug: string, field: string, value: unknown, prev: unknown) => {
+    inlineUpdate.mutate({ slug, fields: { [field]: value } })
+    showUndo(`${field} → ${value}`, () => inlineUpdate.mutate({ slug, fields: { [field]: prev } }))
+  }
 
   const manuscripts = useMemo(() => {
     let filtered = projects.filter((p) => p.status !== 'Published' || p.stage === 'Published')
@@ -259,14 +266,14 @@ export default function Manuscripts() {
                               { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
                               { value: 'Completed', label: 'Done', color: 'var(--slate)' },
                             ]}
-                            onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
+                            onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
                           />
 
                           {/* Stage (inline editable) */}
                           <InlineSelect
                             value={project.stage || 'Idea'}
                             options={STAGES.map((s) => ({ value: s, label: s }))}
-                            onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
+                            onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
                           />
 
                           <div className="flex items-center gap-1.5">
@@ -320,12 +327,12 @@ export default function Manuscripts() {
                                 { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
                                 { value: 'Completed', label: 'Done', color: 'var(--slate)' },
                               ]}
-                              onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
+                              onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
                             />
                             <InlineSelect
                               value={project.stage || 'Idea'}
                               options={STAGES.map((s) => ({ value: s, label: s }))}
-                              onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
+                              onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
                             />
                             <span
                               style={{

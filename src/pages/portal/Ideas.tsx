@@ -7,6 +7,7 @@ import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
+import { useUndoToast } from '../../components/UndoToast'
 import { useIdeas } from '../../hooks/useApiData'
 import { useCreateIdea, useVoteIdea, useUpdateIdea } from '../../hooks/useMutations'
 import { useToast } from '../../hooks/useToast'
@@ -53,6 +54,12 @@ export default function Ideas() {
   const { data: ideas = [], isLoading } = useIdeas(filterStatus ? { status: filterStatus } : undefined)
   const vote = useVoteIdea()
   const updateIdea = useUpdateIdea()
+  const { showUndo } = useUndoToast()
+
+  const handleIdeaStatusChange = (id: string, status: string, prevStatus: string) => {
+    updateIdea.mutate({ id, fields: { status } })
+    showUndo(`Idea → ${status.replace('_', ' ')}`, () => updateIdea.mutate({ id, fields: { status: prevStatus } }))
+  }
 
   const activeCount = ideas.filter((i) => i.status !== 'archived' && i.status !== 'parked').length
 
@@ -147,7 +154,7 @@ export default function Ideas() {
           >
             {ideas.map((idea) => (
               <motion.div key={idea.id} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
-                <IdeaCard idea={idea} onVote={() => vote.mutate(idea.id)} onStatusChange={(status) => updateIdea.mutate({ id: idea.id, fields: { status } })} />
+                <IdeaCard idea={idea} onVote={() => vote.mutate(idea.id)} onStatusChange={(status) => handleIdeaStatusChange(idea.id, status, idea.status)} />
               </motion.div>
             ))}
             {ideas.length === 0 && (
@@ -162,7 +169,10 @@ export default function Ideas() {
             )}
           </motion.div>
         ) : (
-          <IdeaListView ideas={ideas} onVote={(id) => vote.mutate(id)} onStatusChange={(id, status) => updateIdea.mutate({ id, fields: { status } })} />
+          <IdeaListView ideas={ideas} onVote={(id) => vote.mutate(id)} onStatusChange={(id, status) => {
+            const prev = ideas.find(i => i.id === id)?.status || 'new'
+            handleIdeaStatusChange(id, status, prev)
+          }} />
         )}
       </div>
 
