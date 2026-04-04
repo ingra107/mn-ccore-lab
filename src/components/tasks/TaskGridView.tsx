@@ -410,6 +410,12 @@ function InlineSubtaskRow({ taskId }: { taskId: string }) {
   const [newTitle, setNewTitle] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Auto-focus input when row appears
+  useEffect(() => {
+    const timer = setTimeout(() => inputRef.current?.focus(), 200)
+    return () => clearTimeout(timer)
+  }, [])
+
   const completed = subtasks.filter((s) => s.completed).length
   const total = subtasks.length
 

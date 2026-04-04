@@ -231,9 +231,12 @@ export default function Tasks() {
     closeOverlay,
     addBlocker: addBlockerForFocused,
     toggleFilters: useCallback(() => setShowFilters(prev => !prev), []),
-    toggleExpand: useCallback(() => {
-      if (focusedTask) toggleExpandTask(focusedTask.id)
-    }, [focusedTask, toggleExpandTask]),
+    expandFocused: useCallback(() => {
+      if (focusedTask && !expandedTasks.has(focusedTask.id)) toggleExpandTask(focusedTask.id)
+    }, [focusedTask, expandedTasks, toggleExpandTask]),
+    collapseFocused: useCallback(() => {
+      if (focusedTask && expandedTasks.has(focusedTask.id)) toggleExpandTask(focusedTask.id)
+    }, [focusedTask, expandedTasks, toggleExpandTask]),
   })
 
   return (

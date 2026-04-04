@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { useTeam, useProjects } from '../../hooks/useApiData'
 
@@ -60,6 +60,31 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
     onClose()
   }
 
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  // Focus trap
+  useEffect(() => {
+    if (!open || !modalRef.current) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return
+      const focusable = modalRef.current!.querySelectorAll<HTMLElement>(
+        'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
+      )
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [open])
+
   if (!open) return null
 
   return (
@@ -69,6 +94,10 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
       onClick={onClose}
     >
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-label="Create new task"
+        aria-modal="true"
         className="rounded-xl shadow-xl border w-full max-w-lg mx-4"
         style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}

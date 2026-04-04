@@ -25,8 +25,10 @@ interface UseTaskKeyboardShortcutsOptions {
   addBlocker?: () => void
   /** Toggle filter panel visibility */
   toggleFilters?: () => void
-  /** Toggle subtask expand/collapse for focused task */
-  toggleExpand?: () => void
+  /** Expand subtasks for focused task */
+  expandFocused?: () => void
+  /** Collapse subtasks for focused task */
+  collapseFocused?: () => void
 }
 
 /**
@@ -38,8 +40,8 @@ interface UseTaskKeyboardShortcutsOptions {
  * S = cycle status (todo -> in_progress -> done)
  * X = toggle selection
  * B = add blocker (opens detail panel with blocker search)
- * → = expand subtasks for focused task
- * ← = collapse subtasks for focused task
+ * → = expand subtasks for focused task (no-op if already expanded)
+ * ← = collapse subtasks for focused task (no-op if already collapsed)
  * Escape = close overlay/panel
  */
 export function useTaskKeyboardShortcuts({
@@ -55,7 +57,8 @@ export function useTaskKeyboardShortcuts({
   closeOverlay,
   addBlocker,
   toggleFilters,
-  toggleExpand,
+  expandFocused,
+  collapseFocused,
 }: UseTaskKeyboardShortcutsOptions) {
   // Use refs to avoid stale closures in the event handler
   const focusedIndexRef = useRef(focusedIndex)
@@ -174,22 +177,22 @@ export function useTaskKeyboardShortcuts({
       }
 
       case 'ArrowRight': {
-        if (idx >= 0 && toggleExpand) {
+        if (idx >= 0 && expandFocused) {
           e.preventDefault()
-          toggleExpand()
+          expandFocused()
         }
         break
       }
 
       case 'ArrowLeft': {
-        if (idx >= 0 && toggleExpand) {
+        if (idx >= 0 && collapseFocused) {
           e.preventDefault()
-          toggleExpand()
+          collapseFocused()
         }
         break
       }
     }
-  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker, toggleFilters, toggleExpand])
+  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker, toggleFilters, expandFocused, collapseFocused])
 
   useEffect(() => {
     document.addEventListener('keydown', handler)
