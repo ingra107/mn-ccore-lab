@@ -170,16 +170,8 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 ~~**Block 2 (30 min): Empty State Personality**~~ DONE (53026b0)
 ~~**Block 3 (30 min): Transition Constants**~~ DONE (part of Block 0 — f942985)
 
-**Block 4 (1.5 hrs): Welcome Banner + First Visit**
-- New: WelcomeBanner.tsx on Dashboard (teal bg, progress ring, dismissible)
-- New: PageTooltip.tsx (single-use contextual tooltips, localStorage "seen" state)
-- Wire onboarding checklist as top card on Personal Hub
-
-**Block 5 (3-4 hrs): Meeting Prep View — Demo Showpiece**
-- New route: /meetings/:id/prep
-- New: functions/api/meetings/[id]/prep.ts (aggregate: prev meeting action items + activity + deadlines)
-- New: MeetingPrep.tsx (facilitator view: action items, project updates, upcoming deadlines, suggested agenda)
-- Add "Prep View" button on MeetingDetail.tsx
+~~**Block 4 (1.5 hrs): Welcome Banner + First Visit**~~ DONE (1b42056)
+~~**Block 5 (3-4 hrs): Meeting Prep View — Demo Showpiece**~~ DONE (ce14aa1)
 
 **Remaining Phase 21 items (after Blocks 1-5):**
 6. Hardcoded white: ~50 instances → CSS variable
