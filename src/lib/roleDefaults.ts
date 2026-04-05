@@ -101,7 +101,7 @@ export const ROLE_DASHBOARD_DEFAULTS: Record<UserRole, {
     showAnalytics: false,
   },
   default: {
-    dashboardCards: ['upcoming', 'stats'],
+    dashboardCards: ['action-board', 'upcoming', 'project-health', 'pipeline', 'activity', 'stats'],
     taskView: 'list',
     showAnalytics: false,
   },

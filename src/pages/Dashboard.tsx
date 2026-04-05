@@ -35,6 +35,8 @@ const CARD_REGISTRY = [
 
 const STORAGE_KEY = 'mnccore-dashboard-cards'
 const PINNED_KEY = 'mnccore-dashboard-pinned'
+const DEFAULTS_VERSION_KEY = 'mnccore-dashboard-version'
+const CURRENT_DEFAULTS_VERSION = 2 // bump to reset localStorage to new defaults
 
 function getPinnedCards(): Set<string> {
   try {
@@ -46,10 +48,18 @@ function getPinnedCards(): Set<string> {
 
 function getVisibleCards(roleCards?: string[]): Set<string> {
   try {
+    // Reset localStorage if defaults version changed
+    const storedVersion = localStorage.getItem(DEFAULTS_VERSION_KEY)
+    if (storedVersion && Number(storedVersion) < CURRENT_DEFAULTS_VERSION) {
+      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(PINNED_KEY)
+      localStorage.setItem(DEFAULTS_VERSION_KEY, String(CURRENT_DEFAULTS_VERSION))
+    }
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) return new Set(JSON.parse(stored))
   } catch { /* use defaults */ }
   // Role-based defaults when no localStorage preferences exist
+  localStorage.setItem(DEFAULTS_VERSION_KEY, String(CURRENT_DEFAULTS_VERSION))
   if (roleCards) return new Set(roleCards)
   return new Set(CARD_REGISTRY.filter(c => c.defaultVisible).map(c => c.id))
 }
