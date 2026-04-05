@@ -133,10 +133,18 @@ export async function handleMeetingPrep(meetingId: string, env: Env): Promise<Re
   });
 }
 
-// POST /api/meetings — create meeting
+// POST /api/meetings — create meeting (dedup by date+title)
 export async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { date: string; title: string; type?: string; attendees?: string[] };
   if (!body.date || !body.title) return error('date and title required', 400);
+
+  // Dedup: return existing meeting if same date+title already exists
+  const existing = await env.DB.prepare(
+    'SELECT * FROM meetings WHERE date = ? AND title = ?'
+  ).bind(body.date, body.title).first();
+  if (existing) {
+    return json({ data: existing }, 200);
+  }
 
   const id = `mtg-${body.date}-${generateId().slice(0, 8)}`;
   await env.DB.prepare(
