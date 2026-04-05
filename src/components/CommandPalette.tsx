@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, LayoutDashboard, User, CheckSquare, ListTodo, Calendar,
@@ -17,7 +17,7 @@ interface CommandItem {
   sublabel?: string
   icon: typeof Search
   action: () => void
-  category: 'navigation' | 'task' | 'project' | 'person' | 'meeting' | 'action' | 'filter'
+  category: 'navigation' | 'task' | 'project' | 'person' | 'meeting' | 'action' | 'filter' | 'context'
   shortcut?: string
 }
 
@@ -28,6 +28,7 @@ export default function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+  const location = useLocation()
 
   const { data: tasks = [] } = useTasks()
   const { data: projects = [] } = useProjects()
@@ -181,6 +182,61 @@ export default function CommandPalette() {
       category: 'filter',
     })
 
+    // Contextual actions based on current page
+    const currentPath = location.pathname
+    if (currentPath === '/tasks' || currentPath === '/my-tasks') {
+      items.push({
+        id: 'ctx-tasks-filter-mine',
+        label: 'Show My Tasks Only',
+        sublabel: `${tasks.filter(t => !t.completed && t.assignee === 'nick').length} tasks assigned to you`,
+        icon: User,
+        action: () => { navigate('/tasks?assignee=nick'); setOpen(false) },
+        category: 'context',
+      })
+      items.push({
+        id: 'ctx-tasks-blocked',
+        label: 'Show Blocked Tasks',
+        sublabel: `${tasks.filter(t => t.status === 'blocked').length} tasks blocked`,
+        icon: AlertTriangle,
+        action: () => { navigate('/tasks?status=blocked'); setOpen(false) },
+        category: 'context',
+      })
+    }
+    if (currentPath === '/projects') {
+      items.push({
+        id: 'ctx-projects-clif',
+        label: 'Filter CLIF Projects',
+        icon: FolderKanban,
+        action: () => { navigate('/projects?category=CLIF'); setOpen(false) },
+        category: 'context',
+      })
+      items.push({
+        id: 'ctx-projects-lab',
+        label: 'Filter Lab Projects',
+        icon: FolderKanban,
+        action: () => { navigate('/projects?category=Lab'); setOpen(false) },
+        category: 'context',
+      })
+    }
+    if (currentPath.startsWith('/meetings')) {
+      items.push({
+        id: 'ctx-meetings-next',
+        label: 'Go to Next Meeting',
+        sublabel: meetings[0]?.title,
+        icon: Calendar,
+        action: () => { if (meetings[0]) navigate(`/meetings/${meetings[0].id}`); setOpen(false) },
+        category: 'context',
+      })
+      items.push({
+        id: 'ctx-meetings-prep',
+        label: 'Open Meeting Prep View',
+        sublabel: 'Facilitator dashboard',
+        icon: ListTodo,
+        action: () => { if (meetings[0]) navigate(`/meetings/${meetings[0].id}/prep`); setOpen(false) },
+        category: 'context',
+      })
+    }
+
     // Tasks (pending only)
     for (const task of tasks.filter((t) => !t.completed).slice(0, 20)) {
       const person = getPersonInfo(task.assignee)
@@ -236,8 +292,8 @@ export default function CommandPalette() {
   // Filter by query (fuzzy)
   const filtered = useMemo(() => {
     if (!query.trim()) {
-      // Show actions + filters + navigation when no query
-      return allItems.filter((i) => i.category === 'action' || i.category === 'filter' || i.category === 'navigation')
+      // Show context + actions + filters + navigation when no query
+      return allItems.filter((i) => i.category === 'context' || i.category === 'action' || i.category === 'filter' || i.category === 'navigation')
     }
     const q = query.toLowerCase()
     return allItems
@@ -284,7 +340,7 @@ export default function CommandPalette() {
     }
   }, [filtered, selectedIndex])
 
-  const categoryOrder: Record<string, number> = { action: 0, filter: 1, navigation: 2, task: 3, project: 4, person: 5, meeting: 6 }
+  const categoryOrder: Record<string, number> = { context: 0, action: 1, filter: 2, navigation: 3, task: 4, project: 5, person: 6, meeting: 7 }
   const grouped = open ? filtered.reduce((acc, item) => {
     if (!acc[item.category]) acc[item.category] = []
     acc[item.category].push(item)
@@ -292,6 +348,7 @@ export default function CommandPalette() {
   }, {} as Record<string, CommandItem[]>) : {}
 
   const categoryLabels: Record<string, string> = {
+    context: 'This Page',
     action: 'Actions',
     filter: 'Quick Filters',
     navigation: 'Go To',
