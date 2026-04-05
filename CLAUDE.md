@@ -149,40 +149,17 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - Fixed: Portal h1 fonts changed from Fraunces to DM Sans (Dashboard, Projects)
 - Fixed: Duplicate action item empty states on Meetings page
 
-**Phase 21: Visual Perfection** (audit-verified + expert playbook 2026-04-03, deployed 53026b0):
+**Phase 21: COMPLETE** (13 commits + expert playbook). Visual perfection:
+- Blocks 0-5: Spring physics, progressive disclosure (F key), column sort, empty states, transition constants, welcome banner, meeting prep view
+- Tier 1.5: TaskDetailPanel split, Sidebar perf, dynamic import cleanup, fontFamily purge (1107 across 131 files), loading skeletons (9 pages), taskConfig consolidation, inline editing expansion, undo toast expansion, J/K nav (5 pages), HoverCards (6 surfaces), stagger animations (4 pages)
+- Hardcoded white audit: confirmed correct (white-on-accent), no changes needed
 
-~~**Block 0: Expert Quick Wins**~~ DONE (f942985) — Spring physics, CommandPalette animation, TaskCard hover CSS, orphan pages in sidebar, Dashboard title fix, Log Decision on MeetingDetail, TailwindCSS Motion, OKLCH colors, transition constants
-
-> **SELF-EXECUTING SESSION INSTRUCTIONS:**
-> When `/work-on MN-CCORE Lab Hub` loads this file, execute Phase 21 blocks in order.
-> DO NOT ask questions. All decisions have been made. All file paths are specified.
-> Read `Projects/mn-ccore-lab-hub/phase21-implementation-playbook.md` (PB repo) for full details.
-> Also read: `expert-code-review-2026-04-03.md` for spring physics code + detailed specs.
-> Also read: `nicks-vision-and-priorities.md` for design philosophy and priorities.
-> Start with **Block 0** (expert quick wins), then Block 1, etc.
-> Deploy once at end of session. Commit at natural checkpoints.
->
-> **AFTER EVERY BLOCK/FEATURE:** Update docs per the Documentation Protocol in the playbook.
-> Minimum: mark item BUILT in hub-future-ideas.md, strikethrough in CLAUDE.md, update PROJECT.md next_action.
-> This keeps the stream of consciousness alive across sessions.
-
-~~**Block 1 (2.5 hrs): Progressive Disclosure + Column Sort**~~ DONE (b7ef18a)
-~~**Block 2 (30 min): Empty State Personality**~~ DONE (53026b0)
-~~**Block 3 (30 min): Transition Constants**~~ DONE (part of Block 0 — f942985)
-
-~~**Block 4 (1.5 hrs): Welcome Banner + First Visit**~~ DONE (1b42056)
-~~**Block 5 (3-4 hrs): Meeting Prep View — Demo Showpiece**~~ DONE (ce14aa1)
-
-**Remaining Phase 21 items (after Blocks 1-5):**
-6. Hardcoded white: ~50 instances → CSS variable
-7. Extract shared taskConfig.ts (4+ duplicate config files)
-8. Loading skeletons: 10 pages
-9. Inline editing expansion: Ideas, Decisions + "▾"
-10. Undo toast expansion
-11. J/K keyboard nav expansion (6+ pages)
-12. HoverCard expansion (5+ surfaces)
-13. Stagger animations expansion
-14. Accent color discipline
+**Post-Phase 21: Showcase Features** (2026-04-04, 5 deploys):
+- **Inline subtask expand/collapse** (81da23b): Linear-style chevrons on TaskGridView. AnimatePresence expand with progress bar, inline toggle, add input. Keyboard: → expand, ← collapse (directional, not toggle). Auto-focus input on expand.
+- **Meeting NLP action items** (ce04ebf): Inline quick-add on MeetingDetail. Type `@nick Review draft p2 Friday` → parses assignee, priority, due date, project via `parseQuickAddInput`. Token preview chips. Creates task linked to meeting with `meeting_id`. Invalidates meeting query for instant refresh.
+- **Accessibility** (be80679): CommandPalette focus trapping + aria-modal. CreateTaskModal focus trapping + aria-modal. UndoToast `role="status"` + `aria-live="polite"`. ShortcutHelp spring animation + aria-modal.
+- **Dashboard 6-card default** (b502053): Default role showed 2 cards (upcoming+stats). Now shows 6 (action-board, upcoming, project-health, pipeline, activity, stats). localStorage version key resets stale preferences.
+- **Meeting dedup** (6a1fd06): API dedup by date+title before INSERT. UNIQUE index on meetings(date, title). Cleaned 123 duplicates from D1 (139→16).
 
 **Phase 19: COMPLETE** (4 commits). Differentiation features:
 - Trainee Development Trajectories: per-member page with pub curve, project velocity, task metrics, activity heatmap
@@ -235,10 +212,12 @@ Track which shared components are used where. Expand coverage as Phase 21 progre
 Currently good: aria-hidden on icons, aria-label on interactive elements, aria-pressed on toggles, skip-to-content link, focus-visible styling, prefers-reduced-motion in 5 locations.
 
 **Gaps to fix:**
-- UndoToast needs `role="alert"` and `aria-live="polite"`
-- CommandPalette and CreateProjectModal need focus trapping
+- ~~UndoToast needs `role="alert"` and `aria-live="polite"`~~ DONE (be80679)
+- ~~CommandPalette needs focus trapping~~ DONE (81da23b)
+- ~~CreateTaskModal needs focus trapping~~ DONE (be80679)
+- CreateProjectModal needs focus trapping
 - No `aria-live` regions for dynamic content updates
-- Toast notifications not announced to screen readers
+- Toast notifications not announced to screen readers (UndoToast fixed, success toasts TBD)
 
 ## Known Gotchas
 
@@ -246,7 +225,7 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 |---------|-----|
 | Hero cards render loop | Use `<a>` tags, not Router Link |
 | initialData flash | Use factory functions: `() => data` |
-| Meeting ID collision | IDs include random suffix |
+| Meeting ID collision | IDs include random suffix. API dedup by date+title prevents duplicates. UNIQUE index enforced. |
 | Tailwind v4 group-hover | Use CSS rule in index.css, not arbitrary value |
 | --border-light vs --border-subtle | Gold=semantic, Neutral=structural. Don't mix. |
 | TaskCard status cycling | todo→in_progress→done (skips blocked) |
