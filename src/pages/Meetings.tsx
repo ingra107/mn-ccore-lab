@@ -7,6 +7,7 @@ import { useListKeyboardNav } from '../hooks/useListKeyboardNav'
 import { useMeetingsApi, useActionItems, useMeetingCadence } from '../hooks/useApiData'
 import type { MeetingRow, ActionItemRow } from '../hooks/useApiData'
 import { useToggleActionItem, useCreateActionItem } from '../hooks/useMutations'
+import { useUndoToast } from '../components/UndoToast'
 import { directors, getAllMembers, getPersonInfo } from '../data/team'
 import { projects as projectOptions } from '../data/projects'
 import MeetingCard from '../components/MeetingCard'
@@ -128,7 +129,13 @@ export default function Meetings() {
   const { data: actionItemRows = [] } = useActionItems()
   const { data: cadence } = useMeetingCadence()
   const toggleMutation = useToggleActionItem()
+  const { showUndo } = useUndoToast()
   const createActionMutation = useCreateActionItem()
+
+  const toggleWithUndo = (id: string) => {
+    toggleMutation.mutate(id)
+    showUndo('Action item toggled', () => toggleMutation.mutate(id))
+  }
 
   // Transform D1 rows → Meeting objects
   const meetings = useMemo(
@@ -227,7 +234,7 @@ export default function Meetings() {
 
   // Handlers
   function handleToggleAction(_meetingId: string, actionId: string) {
-    toggleMutation.mutate(actionId)
+    toggleWithUndo(actionId)
   }
 
   function handleAddActionItem() {
@@ -496,7 +503,7 @@ export default function Meetings() {
                           minWidth: '44px',
                           minHeight: '44px',
                         }}
-                        onClick={() => item.id && toggleMutation.mutate(item.id)}
+                        onClick={() => item.id && toggleWithUndo(item.id)}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'scale(1.2)'
                         }}
@@ -734,7 +741,7 @@ export default function Meetings() {
                           minWidth: '44px',
                           minHeight: '44px',
                         }}
-                        onClick={() => item.id && toggleMutation.mutate(item.id)}
+                        onClick={() => item.id && toggleWithUndo(item.id)}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = 'scale(1.2)'
                         }}
