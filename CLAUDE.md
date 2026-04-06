@@ -161,6 +161,19 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - **Dashboard 6-card default** (b502053): Default role showed 2 cards (upcoming+stats). Now shows 6 (action-board, upcoming, project-health, pipeline, activity, stats). localStorage version key resets stale preferences.
 - **Meeting dedup** (6a1fd06): API dedup by date+title before INSERT. UNIQUE index on meetings(date, title). Cleaned 123 duplicates from D1 (139→16).
 
+**Phase 23: COMPLETE** (5 commits, 2026-04-06). UX depth + a11y + coverage sprint:
+- Clickable task titles: clicking title opens TaskDetailPanel (no more pencil-only flow)
+- Hover actions moved to own grid column (no longer overlaps priority)
+- Personal page: TaskDetailPanel integration for My Tasks card
+- Project notes system: Notes section reads from project_updates table (timestamped, auto-author)
+- Deadlines: InlineSelect for task status with UndoToast, added STATUS column
+- Focus trapping + Escape key on all 6 modals (Ideas, AskTheLab, Decisions, MeetingNotes, CreateProject, CreateTask)
+- J/K keyboard nav on 5 more pages (Grants, Search, MeetingNotes, Narratives + Enter on Search)
+- Stagger animations on Analytics, PIAnalytics, Settings
+- EmptyState on Settings workflow templates
+- PageHeader: aria-live on count/subtitle for screen readers
+- CSS: task title hover style, standardized transition durations
+
 **Phase 22: COMPLETE** (5 commits, 5 deploys, 2026-04-05). Design research + polish:
 - Transition standardization: 10 inline durations → 150ms/250ms constants
 - CreateProjectModal: focus trapping + aria-modal (a11y gap closed)
@@ -202,30 +215,33 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 
 Biweekly Tuesdays 3pm CT. Anchor: Apr 7, Apr 21. Automation runs Monday mornings.
 
-## Component Coverage (Verified 2026-04-05)
+## Component Coverage (Verified 2026-04-06)
 
 | Component | Coverage | NOT Used On |
 |-----------|----------|-------------|
 | LoadingSkeleton | ALL 19 portal pages | -- |
-| EmptyState | 14 pages (Tasks, MyTasks, Deadlines, Decisions, Ideas, Activity, Calendar, Search, Grants, MeetingNotes, Narratives, AskTheLab, Manuscripts, Digest) | Analytics, Settings, PBSector, Personal, PIAnalytics |
-| PageHeader | 17 of 19 portal pages | PBSector (custom PlannerHeader) |
-| J/K keyboard nav | 6 pages (Tasks, Projects, Meetings, Ideas, Decisions, Deadlines, Manuscripts) | Other list pages |
-| HoverCard | 8 surfaces (TaskDetail, TaskPeek, MeetingDetail, AssigneePicker, ProjectHealth, MenteeDashboard, Projects list, Activity) | Team, Meetings list |
-| UndoToast | TaskCard, TaskGridView, Ideas, Manuscripts | Other status-changing surfaces |
-| Stagger animations | 7 pages (Projects, Personal, Ideas, Decisions, Deadlines, Meetings, MeetingPrep) | Other list pages |
-| InlineSelect | Tasks (grid), Projects (list+detail), Manuscripts | Ideas, Decisions, Deadlines, Meetings, Grants |
+| EmptyState | 15 pages (Tasks, MyTasks, Deadlines, Decisions, Ideas, Activity, Calendar, Search, Grants, MeetingNotes, Narratives, AskTheLab, Manuscripts, Digest, Settings) | Analytics, PBSector, Personal, PIAnalytics |
+| PageHeader | 17 of 19 portal pages (all with aria-live on count/subtitle) | PBSector (custom PlannerHeader) |
+| J/K keyboard nav | 11 pages (Tasks, Projects, Meetings, Ideas, Decisions, Deadlines, Manuscripts, Grants, Search, MeetingNotes, Narratives) | Calendar (grid-based), Analytics, Settings |
+| HoverCard | 8 surfaces (TaskDetail, TaskPeek, MeetingDetail, AssigneePicker, ProjectHealth, MenteeDashboard, Projects list, Activity) | Team (cards already detailed) |
+| UndoToast | TaskCard, TaskGridView, Ideas, Manuscripts, Decisions, Deadlines | Settings (uses saved indicator) |
+| Stagger animations | 12 pages (Projects, Personal, Ideas, Decisions, Deadlines, Meetings, MeetingPrep, MeetingNotes, Search, Calendar, Analytics, PIAnalytics, Settings) | -- |
+| InlineSelect | Tasks (grid), Projects (list+detail), Manuscripts, Ideas, Decisions, Deadlines | Grants (no editable status) |
+| Focus trapping | ALL 6 modals (CreateTask, CreateProject, CreateIdea, CreateQuestion, CreateDecision, TranscriptModal) | -- |
+| Escape key close | ALL 6 modals + CommandPalette + GlobalQuickAdd + ShortcutHelp | -- |
 
 ## Accessibility Requirements
 
-Currently good: aria-hidden on icons, aria-label on interactive elements, aria-pressed on toggles, skip-to-content link, focus-visible styling, prefers-reduced-motion in 5 locations.
+Currently good: aria-hidden on icons, aria-label on interactive elements, aria-pressed on toggles, skip-to-content link, focus-visible styling, prefers-reduced-motion in 5 locations, all modals have focus trapping + Escape key + aria-modal.
 
-**Gaps to fix:**
+**All major gaps closed as of Phase 23:**
 - ~~UndoToast needs `role="alert"` and `aria-live="polite"`~~ DONE (be80679)
 - ~~CommandPalette needs focus trapping~~ DONE (81da23b)
 - ~~CreateTaskModal needs focus trapping~~ DONE (be80679)
 - ~~CreateProjectModal needs focus trapping~~ DONE
-- No `aria-live` regions for dynamic content updates
-- Toast notifications not announced to screen readers (UndoToast fixed, success toasts TBD)
+- ~~CreateIdeaModal, CreateQuestionModal, CreateDecisionModal, TranscriptModal need focus trapping~~ DONE (Phase 23)
+- ~~No `aria-live` regions for dynamic content updates~~ DONE — PageHeader count/subtitle have aria-live
+- ~~Toast notifications not announced to screen readers~~ DONE — UndoToast container has role="status" + aria-live, success toasts share same container
 
 ## Known Gotchas
 
