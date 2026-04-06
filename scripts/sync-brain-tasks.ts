@@ -46,22 +46,10 @@ const SLUG_REMAP: Record<string, string> = {
   'decision-making-styles-of-medical': 'decision-making-survey-gdms',
 };
 
-// Privacy: patterns to strip from notes before writing to D1 description
-const PRIVATE_PATTERNS = [
-  /https?:\/\/mail\.google\.com\/[^\s)]+/g,  // Gmail URLs
-  /C:\\Users\\[^\s)]+/g,                       // Windows file paths
-  /\/c\/Users\/[^\s)]+/g,                      // MSYS file paths
-];
-
+// Sanitize: strip local file paths (useless outside Nick's machine)
 function sanitizeDescription(notes: string | null): string | null {
   if (!notes) return null;
-  let desc = notes;
-  for (const pattern of PRIVATE_PATTERNS) {
-    desc = desc.replace(pattern, '[redacted]');
-  }
-  // Collapse multiple [redacted] in a row
-  desc = desc.replace(/(\[redacted\]\s*){2,}/g, '[redacted] ');
-  return desc.trim() || null;
+  return notes.trim() || null;
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────
