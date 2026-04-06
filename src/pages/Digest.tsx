@@ -150,9 +150,8 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                 href={pubmedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="transition-colors hover:!text-[var(--gold)]"
                 style={{ color: 'inherit', textDecoration: 'none' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink)')}
               >
                 {paper.title}
               </a>
@@ -417,7 +416,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                       setLinkSuccess(proj.title)
                       setTimeout(() => setLinkSuccess(null), 2000)
                     }}
-                    className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150"
+                    className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150 hover:bg-[rgba(201,168,76,0.08)]"
                     style={{
                       fontSize: '12px',
                       color: 'var(--ink)',
@@ -426,8 +425,6 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                       borderTop: '1px solid rgba(201, 168, 76, 0.06)',
                       display: 'block',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201, 168, 76, 0.08)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                   >
                     {proj.title}
                   </button>

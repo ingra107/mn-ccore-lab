@@ -24,16 +24,13 @@ export default function Breadcrumb({ backTo, backLabel, current, maxLength = 40 
       )}
       <Link
         to={backTo}
-        className="inline-flex items-center gap-2 mt-1"
+        className="inline-flex items-center gap-2 mt-1 hover:!opacity-100 transition-opacity"
         style={{
           fontSize: '14px',
           color: 'var(--slate)',
           textDecoration: 'none',
           opacity: 0.7,
-          transition: 'opacity 0.2s',
         }}
-        onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '1' }}
-        onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.7' }}
       >
         <ArrowLeft size={16} />
         Back to {backLabel}

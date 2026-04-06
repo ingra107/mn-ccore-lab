@@ -92,15 +92,11 @@ export default function Network() {
           <div className="flex items-center gap-3">
             <Link
               to="/"
-              className="flex items-center gap-1.5 text-sm transition-colors duration-200"
+              className="flex items-center gap-1.5 text-sm transition-colors duration-200 hover:!text-[var(--gold)]"
               style={{
                 color: 'rgba(255, 255, 255, 0.5)',
                 textDecoration: 'none',
-                }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)')
-              }
+              }}
             >
               <ArrowLeft size={14} />
               Home

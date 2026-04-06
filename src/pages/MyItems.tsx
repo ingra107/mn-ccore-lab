@@ -740,6 +740,7 @@ export default function MyItems() {
         <div style={{ paddingTop: '0.25rem', marginBottom: '0.5rem' }}>
           <Link
             to="/dashboard"
+            className="hover:!opacity-100 transition-opacity"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -748,10 +749,7 @@ export default function MyItems() {
               color: 'var(--slate)',
               opacity: 0.6,
               textDecoration: 'none',
-              transition: 'opacity 0.2s',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6' }}
           >
             <ArrowLeft size={14} />
             Back to Dashboard
@@ -860,6 +858,7 @@ export default function MyItems() {
               <button
                 onClick={() => markAllRead.mutate()}
                 disabled={markAllRead.isPending}
+                className="hover:!opacity-100 transition-opacity"
                 style={{
                   background: 'none',
                   border: 'none',
@@ -870,13 +869,10 @@ export default function MyItems() {
                   fontSize: '11px',
                   color: 'var(--teal)',
                   opacity: markAllRead.isPending ? 0.5 : 0.8,
-                  transition: 'opacity 0.2s',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   padding: '4px 0',
                 }}
-                onMouseEnter={(e) => { if (!markAllRead.isPending) e.currentTarget.style.opacity = '1' }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.8' }}
               >
                 <CheckCheck size={14} />
                 Mark all read

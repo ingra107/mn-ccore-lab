@@ -84,16 +84,13 @@ export default function PublicationDetail() {
         <div style={{ paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
           <Link
             to="/publications"
-            className="inline-flex items-center gap-2"
+            className="inline-flex items-center gap-2 hover:!opacity-100 transition-opacity"
             style={{
               fontSize: '14px',
               color: 'var(--slate)',
               textDecoration: 'none',
               opacity: 0.7,
-              transition: 'opacity 0.2s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
           >
             <ArrowLeft size={16} />
             Back to Publications

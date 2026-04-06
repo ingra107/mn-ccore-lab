@@ -723,21 +723,13 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
           >
             <Link
               to={`/projects/${project.slug}`}
-              className="card block"
+              className="card block trajectory-project-card"
               style={{
                 padding: '1.25rem',
                 textDecoration: 'none',
                 borderLeft: `3px solid ${stageColor}`,
                 transition: 'border-color 0.2s, box-shadow 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderLeftColor = 'var(--gold)'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderLeftColor = stageColor
-                e.currentTarget.style.boxShadow = ''
-              }}
+              } as React.CSSProperties}
             >
               <h4
                 style={{
@@ -1391,16 +1383,13 @@ export default function TrajectoryPage() {
       {/* Back link */}
       <Link
         to={`/team/${slug}`}
-        className="inline-flex items-center gap-1.5 mb-6 no-print"
+        className="inline-flex items-center gap-1.5 mb-6 no-print hover:!opacity-100 transition-opacity"
         style={{
           fontSize: '12px',
           color: 'var(--slate)',
           textDecoration: 'none',
           opacity: 0.7,
-          transition: 'opacity 0.2s',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
-        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7' }}
       >
         <ArrowLeft size={14} />
         Back to profile
@@ -1480,22 +1469,13 @@ export default function TrajectoryPage() {
         {/* Export button */}
         <button
           onClick={() => window.print()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium no-print"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium no-print hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors"
           style={{
             fontSize: '12px',
             background: 'var(--ice)',
             color: 'var(--slate)',
             border: '1px solid var(--border-light, #e8eff5)',
             cursor: 'pointer',
-            transition: 'border-color 0.2s, color 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--gold)'
-            e.currentTarget.style.color = 'var(--gold)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border-light, #e8eff5)'
-            e.currentTarget.style.color = 'var(--slate)'
           }}
         >
           <Printer size={14} />

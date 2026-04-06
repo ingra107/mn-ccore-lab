@@ -548,6 +548,15 @@ a:hover {
     transform: scale(1);
   }
 }
+.context-menu-item:hover {
+  background: rgba(201, 168, 76, 0.06);
+}
+
+/* Trajectory project cards: gold border + shadow on hover */
+.trajectory-project-card:hover {
+  border-left-color: var(--gold) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
 
 /* ── Task Interaction Layer ── */
 

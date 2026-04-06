@@ -607,11 +607,9 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
     >
       {/* Touch target: 44px invisible hit area around the 20px circle */}
       <div className="flex-shrink-0 relative" style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <button type="button" className="cursor-pointer"
+        <button type="button" className="cursor-pointer hover:scale-110 transition-transform"
           onClick={(e) => { e.stopPropagation(); onToggle?.(item.id) }}
-          style={{ background: 'none', border: 'none', padding: 0, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: item.completed ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: item.completed ? 1 : 0.5, transition: 'transform 0.15s' }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.15)')}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          style={{ background: 'none', border: 'none', padding: 0, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: item.completed ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: item.completed ? 1 : 0.5 }}
           title={item.completed ? 'Mark as pending' : 'Mark as completed'}>
           {item.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
         </button>

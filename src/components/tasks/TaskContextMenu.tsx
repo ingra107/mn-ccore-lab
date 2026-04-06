@@ -113,9 +113,8 @@ function MenuItem({
 }) {
   return (
     <button
+      className="context-menu-item"
       style={{ ...itemStyles, ...style }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(201,168,76,0.06)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
       onClick={onClick}
     >
       {children}

@@ -104,10 +104,8 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
               {suggestion ? (
                 <button
                   onClick={() => onAcceptSuggestion?.(suggestion)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[rgba(201,168,76,0.04)]"
                   style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201,168,76,0.04)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
                   <span style={{ fontSize: '9px', color: suggestion._isCarried ? 'var(--teal)' : 'var(--gold)', opacity: 0.5, textTransform: 'uppercase', flexShrink: 0 }}>
                     {suggestion._isCarried ? 'Carried' : 'Suggested'}

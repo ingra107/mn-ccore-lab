@@ -167,6 +167,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                       onBulkAction('assign', member.slug)
                       setShowAssign(false)
                     }}
+                    className="transition-colors hover:bg-[rgba(255,255,255,0.08)]"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -181,8 +182,6 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                       cursor: 'pointer',
                       textAlign: 'left',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span
                       style={{
@@ -246,6 +245,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                       onBulkAction('priority', opt.value)
                       setShowPriority(false)
                     }}
+                    className="transition-colors hover:bg-[rgba(255,255,255,0.08)]"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -260,8 +260,6 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                       cursor: 'pointer',
                       textAlign: 'left',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span
                       style={{

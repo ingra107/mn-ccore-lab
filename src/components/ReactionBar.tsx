@@ -135,7 +135,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
                   setShowPicker(false)
                 }}
                 title={label}
-                className="flex items-center justify-center rounded transition-colors"
+                className="flex items-center justify-center rounded transition-colors hover:bg-[rgba(0,0,0,0.05)]"
                 style={{
                   width: 28,
                   height: 28,
@@ -144,8 +144,6 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
                   border: 'none',
                   background: 'none',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.05)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
               >
                 {emoji}
               </button>

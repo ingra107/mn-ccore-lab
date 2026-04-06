@@ -138,7 +138,7 @@ export default function ProjectHealthCard() {
               <button
                 type="button"
                 onClick={() => setShowHealthy(!showHealthy)}
-                className="cursor-pointer flex items-center gap-2 w-full py-2 mt-1"
+                className="cursor-pointer flex items-center gap-2 w-full py-2 mt-1 hover:!opacity-100 transition-opacity"
                 style={{
                   background: 'none',
                   border: 'none',
@@ -147,10 +147,7 @@ export default function ProjectHealthCard() {
                   fontSize: '11px',
                   color: 'var(--slate)',
                   opacity: 0.6,
-                  transition: 'opacity 0.15s',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
               >
                 {showHealthy ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 {showHealthy ? 'Hide' : 'Show'} {healthyProjects.length} healthy project{healthyProjects.length !== 1 ? 's' : ''}
@@ -216,18 +213,15 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   return (
     <Link
       to={`/projects/${project.slug}`}
-      className="flex items-center gap-2.5 py-2 group"
+      className="flex items-center gap-2.5 py-2 group transition-colors hover:bg-[rgba(201,168,76,0.04)]"
       style={{
         textDecoration: 'none',
         borderBottom: '1px solid rgba(201, 168, 76, 0.04)',
-        transition: 'background 0.15s',
         borderRadius: '4px',
         padding: '8px 4px',
         margin: '0 -4px',
         minHeight: '44px',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201, 168, 76, 0.04)')}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
     >
       {/* Health dot */}
       <div
