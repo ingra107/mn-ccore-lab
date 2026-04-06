@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
   Search, CheckSquare, FolderKanban, Users, Lightbulb,
   MessageSquare, Activity, ArrowRight, X,
@@ -9,6 +10,7 @@ import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { formatBrandName } from '../../components/BrandName'
+import { staggerContainer, staggerItem } from '../../lib/animations'
 
 interface SearchResult {
   id: string
@@ -168,31 +170,32 @@ export default function SearchPage() {
                       {config.label}s ({items.length})
                     </span>
                   </div>
-                  <div className="flex flex-col gap-1">
+                  <motion.div className="flex flex-col gap-1" variants={staggerContainer} initial="hidden" animate="visible">
                     {items.map((item) => (
-                      <Link
-                        key={item.id}
-                        to={item.url || '#'}
-                        className="flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-colors hover:shadow-sm"
-                        style={{ borderColor: 'var(--border-light)', textDecoration: 'none' }}
-                      >
-                        <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.color + '14' }}>
-                          <Icon size={14} style={{ color: config.color }} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm truncate" style={{ color: 'var(--ink)' }}>
-                            {formatBrandName(item.title)}
-                          </p>
-                          {item.subtitle && (
-                            <p className="text-[10px] truncate mt-0.5" style={{ color: 'var(--slate)', opacity: 0.5 }}>
-                              {formatBrandName(item.subtitle)}
+                      <motion.div key={item.id} variants={staggerItem}>
+                        <Link
+                          to={item.url || '#'}
+                          className="flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-colors hover:shadow-sm"
+                          style={{ borderColor: 'var(--border-light)', textDecoration: 'none' }}
+                        >
+                          <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.color + '14' }}>
+                            <Icon size={14} style={{ color: config.color }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm truncate" style={{ color: 'var(--ink)' }}>
+                              {formatBrandName(item.title)}
                             </p>
-                          )}
-                        </div>
-                        <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.2, flexShrink: 0 }} />
-                      </Link>
+                            {item.subtitle && (
+                              <p className="text-[10px] truncate mt-0.5" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                                {formatBrandName(item.subtitle)}
+                              </p>
+                            )}
+                          </div>
+                          <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.2, flexShrink: 0 }} />
+                        </Link>
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               )
             })}

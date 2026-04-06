@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
+import EmptyState from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
@@ -132,6 +133,23 @@ export default function AnalyticsPage() {
   }
 
   if (tasksLoading || projectsLoading) return <CardSkeleton count={6} />
+
+  if (tasks.length === 0 && projects.length === 0) {
+    return (
+      <div>
+        <PageHeader
+          icon={<BarChart3 size={20} />}
+          title="Lab Analytics"
+          subtitle="Track lab performance and trends"
+        />
+        <EmptyState
+          icon={<BarChart3 size={40} />}
+          title="No analytics data yet"
+          subtitle="Analytics appear as projects and tasks are tracked."
+        />
+      </div>
+    )
+  }
 
   return (
     <div>

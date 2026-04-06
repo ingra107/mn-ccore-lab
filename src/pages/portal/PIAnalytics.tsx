@@ -16,9 +16,11 @@ import {
   ArrowDown,
   Minus,
   BarChart3,
+  LineChart,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
+import EmptyState from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
@@ -375,6 +377,23 @@ export default function PIAnalytics() {
   }
 
   if (isLoading) return <CardSkeleton count={6} />
+
+  if (!data) {
+    return (
+      <div>
+        <PageHeader
+          icon={<Shield size={20} />}
+          title="PI Dashboard"
+          subtitle="Evidence-based leadership metrics"
+        />
+        <EmptyState
+          icon={<LineChart size={40} />}
+          title="No PI analytics available"
+          subtitle="Metrics appear as your team logs activity, tasks, and publications."
+        />
+      </div>
+    )
+  }
 
   const commitRate = data && data.commitments.total > 0
     ? Math.round((data.commitments.completed / data.commitments.total) * 100)

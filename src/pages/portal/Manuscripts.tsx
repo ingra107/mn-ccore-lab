@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FileText, Plus, List, GitBranch } from 'lucide-react'
@@ -83,6 +83,9 @@ export default function Manuscripts() {
     setFocusedIndex,
     disabled: showCreate,
   })
+
+  // Reset focus when filters or view change
+  useEffect(() => { setFocusedIndex(-1) }, [filterPI, view])
 
   const taskCounts = useMemo(() => {
     const map = new Map<string, number>()
@@ -202,12 +205,15 @@ export default function Manuscripts() {
             {manuscripts.length > 0 ? (
               (() => {
                 let lastStage = ''
+                let flatIndex = 0
                 return manuscripts.map((project) => {
                   const pi = getPersonInfo(project.pi)
                   const catLabel = CATEGORY_LABEL[project.category] ?? project.category
                   const showStageHeader = project.stage !== lastStage
                   lastStage = project.stage ?? ''
                   const tc = taskCounts.get(project.slug) || 0
+                  const isFocused = focusedIndex === flatIndex
+                  flatIndex++
 
                   return (
                     <div key={project.slug}>
@@ -234,7 +240,7 @@ export default function Manuscripts() {
                         </div>
                       )}
 
-                      <Link to={`/projects/${project.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
+                      <Link to={`/projects/${project.slug}`} className={isFocused ? 'task-row-focused' : ''} style={{ textDecoration: 'none', display: 'block' }}>
                         {/* Desktop: 5-column grid */}
                         <div
                           className="manuscript-list-row hidden sm:grid"

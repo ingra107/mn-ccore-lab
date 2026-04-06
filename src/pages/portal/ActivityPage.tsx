@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { Activity as ActivityIcon } from 'lucide-react'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { useActivity } from '../../hooks/useApiData'
@@ -6,10 +7,12 @@ import Avatar from '../../components/Avatar'
 import HoverCard from '../../components/HoverCard'
 import type { HoverCardData } from '../../components/HoverCard'
 import { useHoverCard } from '../../hooks/useHoverCard'
+import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo, getMemberBySlug, directors } from '../../data/team'
 import { formatRelativeTime, formatMediumDate } from '../../lib/dateUtils'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
+import { staggerContainer, staggerItem } from '../../lib/animations'
 
 const typeOptions = [
   { value: '', label: 'All Types' },
@@ -41,6 +44,17 @@ export default function ActivityPage() {
     }
     return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]))
   }, [filtered])
+
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+
+  useListKeyboardNav({
+    itemCount: filtered.length,
+    focusedIndex,
+    setFocusedIndex,
+  })
+
+  // Reset focus when filter changes
+  useEffect(() => { setFocusedIndex(-1) }, [filterType])
 
   return (
     <div>
@@ -87,50 +101,55 @@ export default function ActivityPage() {
             ))}
           </div>
         )}
-        {!isLoading && grouped.map(([date, items]) => {
-          const today = new Date().toISOString().split('T')[0]
-          const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
-          const isToday = date === today
-          const isYesterday = date === yesterday
-          const label = isToday ? 'Today' : isYesterday ? 'Yesterday' : formatMediumDate(date)
-          return (
-            <div key={date}>
-              <h3 className="text-sm font-normal mb-2" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
-                {label}
-              </h3>
-              <div className="flex flex-col gap-1 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)' }}>
-                {items.map((item) => {
-                  const person = item.actor ? getPersonInfo(item.actor) : null
-                  return (
-                    <div key={item.id} className="flex items-start gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-                      {person ? (
-                        <ActivityAvatar slug={item.actor!} />
-                      ) : (
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--ice)' }}>
-                          <span className="text-[8px]" style={{ color: 'var(--slate)' }}>SYS</span>
+        {!isLoading && (() => {
+          let flatIndex = 0
+          return grouped.map(([date, items]) => {
+            const today = new Date().toISOString().split('T')[0]
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+            const isToday = date === today
+            const isYesterday = date === yesterday
+            const label = isToday ? 'Today' : isYesterday ? 'Yesterday' : formatMediumDate(date)
+            return (
+              <div key={date}>
+                <h3 className="text-sm font-normal mb-2" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
+                  {label}
+                </h3>
+                <motion.div className="flex flex-col gap-1 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)' }} variants={staggerContainer} initial="hidden" animate="visible">
+                  {items.map((item) => {
+                    const person = item.actor ? getPersonInfo(item.actor) : null
+                    const isFocused = focusedIndex === flatIndex
+                    flatIndex++
+                    return (
+                      <motion.div key={item.id} variants={staggerItem} className={`flex items-start gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors${isFocused ? ' task-row-focused' : ''}`}>
+                        {person ? (
+                          <ActivityAvatar slug={item.actor!} />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--ice)' }}>
+                            <span className="text-[8px]" style={{ color: 'var(--slate)' }}>SYS</span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm" style={{ color: 'var(--ink)' }}>
+                            {person && <span className="font-medium">{person.name} </span>}
+                            {item.description}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}>
+                              {item.type}
+                            </span>
+                            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+                              {formatRelativeTime(item.timestamp)}
+                            </span>
+                          </div>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm" style={{ color: 'var(--ink)' }}>
-                          {person && <span className="font-medium">{person.name} </span>}
-                          {item.description}
-                        </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}>
-                            {item.type}
-                          </span>
-                          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
-                            {formatRelativeTime(item.timestamp)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                      </motion.div>
+                    )
+                  })}
+                </motion.div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })
+        })()}
         {!isLoading && grouped.length === 0 && (
           <EmptyState
             icon={<ActivityIcon size={40} />}

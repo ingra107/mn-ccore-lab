@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { Calendar, ChevronLeft, ChevronRight, Users, CheckSquare, Diamond, Download } from 'lucide-react'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
@@ -10,6 +11,7 @@ import { useCalendarEvents } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import { formatLongDate, formatShortDate } from '../../lib/dateUtils'
 import type { CalendarEvent } from '../../lib/api'
+import { staggerContainer, staggerItem } from '../../lib/animations'
 
 type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 
@@ -349,7 +351,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
 
       <div className="p-4">
         {dayEvents.length > 0 ? (
-          <div className="flex flex-col gap-3">
+          <motion.div className="flex flex-col gap-3" variants={staggerContainer} initial="hidden" animate="visible">
             {dayEvents.map((e) => {
               const config = eventColors[e.type] || eventColors.task
               const Icon = eventIcons[e.type] || Calendar
@@ -358,23 +360,25 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
               const wrapperProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
 
               return (
-                <Wrapper key={e.id} {...wrapperProps} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm" style={{ borderColor: 'var(--border-light)', textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }}>
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
-                    <Icon size={18} style={{ color: config.color }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{formatBrandName(e.title)}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
-                      {assignee && (
-                        <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>{getPersonInfo(assignee).name}</span>
-                      )}
+                <motion.div key={e.id} variants={staggerItem}>
+                  <Wrapper {...wrapperProps} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm" style={{ borderColor: 'var(--border-light)', textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }}>
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
+                      <Icon size={18} style={{ color: config.color }} />
                     </div>
-                  </div>
-                </Wrapper>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{formatBrandName(e.title)}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
+                        {assignee && (
+                          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>{getPersonInfo(assignee).name}</span>
+                        )}
+                      </div>
+                    </div>
+                  </Wrapper>
+                </motion.div>
               )
             })}
-          </div>
+          </motion.div>
         ) : (
           <EmptyState
             icon={<Calendar size={40} />}
@@ -415,7 +419,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                 {isToday ? 'Today' : formatLongDate(date)}
               </span>
             </div>
-            <div className="flex flex-col gap-1.5 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-light)' }}>
+            <motion.div className="flex flex-col gap-1.5 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-light)' }} variants={staggerContainer} initial="hidden" animate="visible">
               {dayEvents.map((e) => {
                 const config = eventColors[e.type] || eventColors.task
                 const Icon = eventIcons[e.type] || Calendar
@@ -423,19 +427,21 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                 const AgendaWrapper = e.type === 'meeting' ? Link : 'div' as any
                 const agendaProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
                 return (
-                  <AgendaWrapper key={e.id} {...agendaProps} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors" style={{ textDecoration: 'none' }}>
-                    <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
-                      <Icon size={12} style={{ color: config.color }} />
-                    </div>
-                    <span className="flex-1 text-sm" style={{ color: 'var(--ink)' }}>{formatBrandName(e.title)}</span>
-                    {assignee && (
-                      <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>{getPersonInfo(assignee).name.split(' ')[0]}</span>
-                    )}
-                    <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
-                  </AgendaWrapper>
+                  <motion.div key={e.id} variants={staggerItem}>
+                    <AgendaWrapper {...agendaProps} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors" style={{ textDecoration: 'none' }}>
+                      <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
+                        <Icon size={12} style={{ color: config.color }} />
+                      </div>
+                      <span className="flex-1 text-sm" style={{ color: 'var(--ink)' }}>{formatBrandName(e.title)}</span>
+                      {assignee && (
+                        <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>{getPersonInfo(assignee).name.split(' ')[0]}</span>
+                      )}
+                      <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
+                    </AgendaWrapper>
+                  </motion.div>
                 )
               })}
-            </div>
+            </motion.div>
           </div>
         )
       })}
