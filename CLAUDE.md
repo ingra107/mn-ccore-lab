@@ -161,6 +161,16 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - **Dashboard 6-card default** (b502053): Default role showed 2 cards (upcoming+stats). Now shows 6 (action-board, upcoming, project-health, pipeline, activity, stats). localStorage version key resets stale preferences.
 - **Meeting dedup** (6a1fd06): API dedup by date+title before INSERT. UNIQUE index on meetings(date, title). Cleaned 123 duplicates from D1 (139→16).
 
+**Phase 22: COMPLETE** (5 commits, 5 deploys, 2026-04-05). Design research + polish:
+- Transition standardization: 10 inline durations → 150ms/250ms constants
+- CreateProjectModal: focus trapping + aria-modal (a11y gap closed)
+- Mobile responsive TaskGridView: stacked card layout below 768px
+- Button secondary variant: CSS vars for light mode compat
+- Calculations row: Notion-style count/status summary on Tasks, Projects, Deadlines tables
+- Status badge pills: 12% opacity tinted backgrounds (Kraken/Notion pattern, STATUS_BG map)
+- CSS polish (Linear/Raycast research): luminance-stepping elevation, +0.01em dark letter-spacing, --muted 4th opacity tier, semi-transparent white borders
+- Design patterns reference saved: `Projects/mn-ccore-lab-hub/design-patterns-reference.md`
+
 **Phase 19: COMPLETE** (4 commits). Differentiation features:
 - Trainee Development Trajectories: per-member page with pub curve, project velocity, task metrics, activity heatmap
 - Decision Replay System: tags, similar decisions search, outcomes tracking, project linking, timeline view
