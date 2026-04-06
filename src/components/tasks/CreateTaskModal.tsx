@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
-import { X } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { X, Sparkles } from 'lucide-react'
 import { useTeam, useProjects } from '../../hooks/useApiData'
+import { suggestTaskFields, type AutofillSuggestions, type FieldSuggestion } from '../../lib/taskAutofill'
 
 interface CreateTaskModalProps {
   open: boolean
@@ -33,6 +34,58 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
   const [dueDate, setDueDate] = useState('')
   const [priority, setPriority] = useState('medium')
 
+  // Autofill suggestions
+  const [suggestions, setSuggestions] = useState<AutofillSuggestions>({
+    project: null,
+    priority: null,
+    assignee: null,
+  })
+  const [acceptedFields, setAcceptedFields] = useState<Set<string>>(new Set())
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const runAutofill = useCallback(
+    (value: string) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => {
+        const result = suggestTaskFields(value, projects, team)
+        setSuggestions(result)
+      }, 300)
+    },
+    [projects, team],
+  )
+
+  // Clean up debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setTitle(value)
+    setAcceptedFields(new Set()) // reset accepted on new typing
+    runAutofill(value)
+  }
+
+  const acceptSuggestion = (suggestion: FieldSuggestion) => {
+    if (suggestion.field === 'project') {
+      setProjectId(suggestion.value)
+    } else if (suggestion.field === 'priority') {
+      setPriority(suggestion.value)
+    } else if (suggestion.field === 'assignee') {
+      setAssignee(suggestion.value)
+    }
+    setAcceptedFields((prev) => new Set(prev).add(suggestion.field))
+  }
+
+  // Collect visible suggestions (not already accepted)
+  const visibleSuggestions = (
+    [suggestions.project, suggestions.priority, suggestions.assignee].filter(
+      (s): s is FieldSuggestion => s !== null && !acceptedFields.has(s.field),
+    )
+  )
+
   const memberOptions = team
     .filter((m) => m.slug)
     .sort((a, b) => a.name.localeCompare(b.name))
@@ -57,6 +110,8 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
     setProjectId('')
     setDueDate('')
     setPriority('medium')
+    setSuggestions({ project: null, priority: null, assignee: null })
+    setAcceptedFields(new Set())
     onClose()
   }
 
@@ -135,7 +190,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={handleTitleChange}
               placeholder="e.g., Complete BMI subgroup analysis for AJRCCM revision"
               className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1"
               style={{
@@ -144,6 +199,39 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               }}
               autoFocus
             />
+            {/* Autofill suggestion chips */}
+            {visibleSuggestions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                <Sparkles size={12} style={{ color: 'var(--teal)', opacity: 0.6, flexShrink: 0 }} />
+                {visibleSuggestions.map((s) => (
+                  <button
+                    key={s.field}
+                    type="button"
+                    onClick={() => acceptSuggestion(s)}
+                    className="rounded-full px-2.5 py-0.5 transition-colors"
+                    style={{
+                      fontSize: '11px',
+                      lineHeight: '18px',
+                      color: 'var(--teal)',
+                      border: '1px solid var(--teal)',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      opacity: 0.85,
+                      whiteSpace: 'nowrap',
+                      maxWidth: '220px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                    title={`Set ${s.field}: ${s.label}`}
+                  >
+                    {s.field === 'project' && '\u{1F4C1} '}
+                    {s.field === 'priority' && '\u{26A1} '}
+                    {s.field === 'assignee' && '\u{1F464} '}
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Description */}
