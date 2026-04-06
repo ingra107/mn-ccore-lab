@@ -84,8 +84,8 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
 
   return (
     <div className="table-container">
-      {/* Column headers — clickable for sort */}
-      <div style={{ ...colStyle, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
+      {/* Column headers — clickable for sort, hidden on mobile */}
+      <div className="task-grid-header" style={{ ...colStyle, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
         <div />
         <SortableColumnHeader label="TITLE" field="title" active={sortKey} asc={sortAsc} onSort={handleSort} />
         <SortableColumnHeader label="ASSIGNEE" field="assignee" active={sortKey} asc={sortAsc} onSort={handleSort} />
@@ -162,6 +162,35 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         }
         .task-grid-row:hover .subtask-expand-btn:hover {
           opacity: 0.8 !important;
+        }
+        @media (max-width: 768px) {
+          .task-grid-header {
+            display: none !important;
+          }
+          .task-grid-row {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 6px 12px !important;
+            padding: 12px 16px !important;
+            align-items: center !important;
+          }
+          .task-grid-row .task-row-checkbox {
+            display: none !important;
+          }
+          .task-grid-row .task-row-title {
+            order: 1 !important;
+            width: 100% !important;
+            padding-right: 0 !important;
+          }
+          .task-grid-row .task-row-meta {
+            order: 2 !important;
+          }
+          .task-grid-row .task-row-status {
+            order: 3 !important;
+          }
+          .task-grid-row .task-row-priority {
+            order: 4 !important;
+          }
         }
       `}</style>
     </div>
@@ -272,7 +301,7 @@ function TaskGridRow({
       onContextMenu={(e) => onContextMenu?.(e, task.id)}
     >
       {/* Checkbox */}
-      <div onClick={(e) => { e.stopPropagation(); onToggleSelect?.(task.id) }} style={{ cursor: 'pointer' }}>
+      <div className="task-row-checkbox" onClick={(e) => { e.stopPropagation(); onToggleSelect?.(task.id) }} style={{ cursor: 'pointer' }}>
         {onToggleSelect ? (
           <div style={{
             width: 16, height: 16, borderRadius: 4,
@@ -286,7 +315,7 @@ function TaskGridRow({
       </div>
 
       {/* Title */}
-      <div style={{ minWidth: 0, paddingRight: '12px' }}>
+      <div className="task-row-title" style={{ minWidth: 0, paddingRight: '12px' }}>
         <div className="flex items-center gap-1">
           <button
             onClick={(e) => { e.stopPropagation(); onToggleExpand?.() }}
@@ -318,8 +347,8 @@ function TaskGridRow({
         </div>
       </div>
 
-      {/* Assignee — inline picker */}
-      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+      {/* Metadata row — wraps on mobile */}
+      <div className="task-row-meta flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
         <InlineAssigneePicker
           value={task.assignee}
           onChange={(slug) => onFieldChange(task.id, 'assignee', slug)}
@@ -327,7 +356,7 @@ function TaskGridRow({
       </div>
 
       {/* Due date — inline date picker */}
-      <div onClick={(e) => e.stopPropagation()}>
+      <div className="task-row-meta" onClick={(e) => e.stopPropagation()}>
         <InlineDatePicker
           value={task.due_date}
           onChange={(date) => onFieldChange(task.id, 'due_date', date)}
@@ -335,6 +364,7 @@ function TaskGridRow({
       </div>
 
       {/* Status — inline dropdown (show Blocked label for tasks with blockers) */}
+      <div className="task-row-status">
       <InlineCellSelect
         value={task.status}
         options={STATUS_OPTIONS}
@@ -356,8 +386,10 @@ function TaskGridRow({
           )
         }}
       />
+      </div>
 
       {/* Priority — inline dropdown */}
+      <div className="task-row-priority">
       <InlineCellSelect
         value={task.priority}
         options={PRIORITY_OPTIONS}
@@ -367,6 +399,7 @@ function TaskGridRow({
           return <span className="status-transition" style={{ color: opt.color }}>{opt.label}</span>
         }}
       />
+      </div>
 
       {/* Hover row actions */}
       <div className="task-grid-row-actions" onClick={(e) => e.stopPropagation()}>
