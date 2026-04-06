@@ -161,18 +161,22 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - **Dashboard 6-card default** (b502053): Default role showed 2 cards (upcoming+stats). Now shows 6 (action-board, upcoming, project-health, pipeline, activity, stats). localStorage version key resets stale preferences.
 - **Meeting dedup** (6a1fd06): API dedup by date+title before INSERT. UNIQUE index on meetings(date, title). Cleaned 123 duplicates from D1 (139→16).
 
-**Phase 23: COMPLETE** (5 commits, 2026-04-06). UX depth + a11y + coverage sprint:
-- Clickable task titles: clicking title opens TaskDetailPanel (no more pencil-only flow)
+**Phase 23: COMPLETE** (14 commits, 2026-04-06). UX depth + a11y + undo-everywhere sprint:
+- **Clickable task titles everywhere**: clicking title opens TaskDetailPanel on Tasks, MyTasks, Personal, Deadlines, ProjectDetail
+- **Undo on EVERY status change**: TaskGridView, TaskStandUpView, TaskDetailPanel, Tasks, MyTasks, Personal, Deadlines, Dashboard ActionBoard, MeetingDetail, ProjectDetail, MyItems, Meetings
+- **TaskDetailPanel wired to all views**: Grid, Board, StandUp, Timeline views on both Tasks and MyTasks pages, plus Personal, Deadlines, ProjectDetail
 - Hover actions moved to own grid column (no longer overlaps priority)
-- Personal page: TaskDetailPanel integration for My Tasks card
 - Project notes system: Notes section reads from project_updates table (timestamped, auto-author)
-- Deadlines: InlineSelect for task status with UndoToast, added STATUS column
-- Focus trapping + Escape key on all 6 modals (Ideas, AskTheLab, Decisions, MeetingNotes, CreateProject, CreateTask)
+- Deadlines: InlineSelect for task status, clickable task titles, TaskDetailPanel
+- Focus trapping + Escape key on all 6 modals
 - J/K keyboard nav on 5 more pages (Grants, Search, MeetingNotes, Narratives + Enter on Search)
 - Stagger animations on Analytics, PIAnalytics, Settings
 - EmptyState on Settings workflow templates
 - PageHeader: aria-live on count/subtitle for screen readers
-- CSS: task title hover style, standardized transition durations
+- Success toasts on task creation, idea capture, answer submission
+- Removed 366 redundant fontFamily declarations across 77 files
+- TaskStandUpView: separated status circle from title click with undo
+- TaskTimelineView: bar click opens detail panel instead of cycling status
 
 **Phase 22: COMPLETE** (5 commits, 5 deploys, 2026-04-05). Design research + polish:
 - Transition standardization: 10 inline durations → 150ms/250ms constants
