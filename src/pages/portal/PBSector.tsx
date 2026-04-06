@@ -11,8 +11,9 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { AlertTriangle, GripVertical } from 'lucide-react'
+import { GripVertical, LayoutDashboard } from 'lucide-react'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
+import EmptyState from '../../components/EmptyState'
 import { usePBCommandCenter, useDispatchPending } from '../../hooks/useApiData'
 import {
   usePBCapture, useUpdateTaskStatus,
@@ -291,10 +292,11 @@ export default function PBSector() {
   if (!data) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-3">
-          <AlertTriangle size={24} style={{ color: 'var(--maroon)', opacity: 0.5 }} />
-          <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>Could not load planner data.</span>
-        </div>
+        <EmptyState
+          icon={<LayoutDashboard size={32} />}
+          title="No daily plan loaded"
+          subtitle="PB Sector shows your daily plan when connected to the Peripheral Brain system."
+        />
       </div>
     )
   }

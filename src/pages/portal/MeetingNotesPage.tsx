@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
   Brain, Mic, Upload, FileText, CheckCircle2, Clock, ArrowRight,
   Sparkles, Users,
 } from 'lucide-react'
+import { staggerContainer, staggerItem } from '../../lib/animations'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
@@ -80,34 +82,35 @@ export default function MeetingNotesPage() {
         <h3 className="text-sm font-normal mb-3" style={{ color: 'var(--ink)' }}>
           Recent Meetings
         </h3>
-        <div className="flex flex-col gap-2">
+        <motion.div className="flex flex-col gap-2" variants={staggerContainer} initial="hidden" animate="visible">
           {meetings.slice(0, 10).map((m) => (
-            <Link
-              key={m.id}
-              to={`/meetings/${m.id}`}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm"
-              style={{ borderColor: 'var(--border-light)', textDecoration: 'none' }}
-            >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: m.notes ? 'rgba(34,197,94,0.08)' : 'rgba(100,116,139,0.06)' }}>
-                {m.notes ? <CheckCircle2 size={16} style={{ color: 'var(--green, #22c55e)' }} /> : <FileText size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{m.title}</p>
-                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
-                  {formatMediumDate(m.date)}
-                </span>
-              </div>
-              {m.notes ? (
-                <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ color: 'var(--green, #22c55e)', backgroundColor: 'rgba(34,197,94,0.08)' }}>
-                  Notes available
-                </span>
-              ) : (
-                <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
-                  No notes
-                </span>
-              )}
-              <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.3 }} />
-            </Link>
+            <motion.div key={m.id} variants={staggerItem}>
+              <Link
+                to={`/meetings/${m.id}`}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm"
+                style={{ borderColor: 'var(--border-light)', textDecoration: 'none' }}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: m.notes ? 'rgba(34,197,94,0.08)' : 'rgba(100,116,139,0.06)' }}>
+                  {m.notes ? <CheckCircle2 size={16} style={{ color: 'var(--green, #22c55e)' }} /> : <FileText size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{m.title}</p>
+                  <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                    {formatMediumDate(m.date)}
+                  </span>
+                </div>
+                {m.notes ? (
+                  <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ color: 'var(--green, #22c55e)', backgroundColor: 'rgba(34,197,94,0.08)' }}>
+                    Notes available
+                  </span>
+                ) : (
+                  <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
+                    No notes
+                  </span>
+                )}
+                <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+              </Link>
+            </motion.div>
           ))}
           {meetings.length === 0 && (
             <EmptyState
@@ -116,7 +119,7 @@ export default function MeetingNotesPage() {
               subtitle="Meeting notes, decisions, and action items live here. Once the first meeting is logged, this becomes the lab's institutional memory."
             />
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* Upload/Paste Modal */}

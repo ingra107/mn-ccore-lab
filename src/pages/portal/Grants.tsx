@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { Wallet, Calendar, Banknote, Diamond, ArrowRight, Clock, Telescope } from 'lucide-react'
+import { staggerContainer, staggerItem } from '../../lib/animations'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
@@ -129,12 +131,14 @@ export default function Grants() {
             subtitle="Active and pending grants with timelines, milestones, and budget tracking will appear here as they're added."
           />
         ) : (
-          <div className="table-container flex flex-col gap-3" style={{ padding: '16px 20px' }}>
+          <motion.div className="table-container flex flex-col gap-3" style={{ padding: '16px 20px' }} variants={staggerContainer} initial="hidden" animate="visible">
             {/* Active grants first, then proposed */}
             {[...active, ...proposed].map((grant) => (
-              <GrantCard key={grant.id} grant={grant} />
+              <motion.div key={grant.id} variants={staggerItem}>
+                <GrantCard grant={grant} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
 

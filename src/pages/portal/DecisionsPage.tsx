@@ -10,6 +10,7 @@ import { useDecisions, useDecisionsForReview, useSimilarDecisions, useSimilarDec
 import { useCreateDecision, useUpdateDecisionOutcome } from '../../hooks/useMutations'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useToast } from '../../hooks/useToast'
+import { useUndoToast } from '../../components/UndoToast'
 import { useProjects } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import InlineSelect from '../../components/InlineSelect'
@@ -74,6 +75,16 @@ export default function DecisionsPage() {
   const { data: tagCounts = [] } = useDecisionTags()
   const createDecision = useCreateDecision()
   const updateOutcome = useUpdateDecisionOutcome()
+  const { showUndo } = useUndoToast()
+
+  const handleStatusChange = (decision: DecisionRow, newStatus: string) => {
+    const prevStatus = decision.outcome_status || 'pending'
+    const statusLabels: Record<string, string> = { pending: 'Pending', recorded: 'Recorded', revisited: 'Revisited' }
+    updateOutcome.mutate({ id: decision.id, outcome: decision.outcome || '', outcome_status: newStatus })
+    showUndo(`Status → ${statusLabels[newStatus] || newStatus}`, () =>
+      updateOutcome.mutate({ id: decision.id, outcome: decision.outcome || '', outcome_status: prevStatus })
+    )
+  }
 
   // Filter decisions by status
   const filteredDecisions = filterStatus
@@ -266,7 +277,7 @@ export default function DecisionsPage() {
           >
             {filteredDecisions.map((decision) => (
               <motion.div key={decision.id} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
-                <DecisionCard decision={decision} projects={projects} onUpdateOutcome={updateOutcome} />
+                <DecisionCard decision={decision} projects={projects} onUpdateOutcome={updateOutcome} onStatusChange={handleStatusChange} />
               </motion.div>
             ))}
           </motion.div>
@@ -307,7 +318,7 @@ function SentimentBadge({ sentiment }: { sentiment: string | null }) {
 
 // ── Decision Card ─────────────────────────────────────────────
 
-function DecisionCard({ decision, projects, onUpdateOutcome }: { decision: DecisionRow; projects: { slug: string; title: string }[]; onUpdateOutcome?: { mutate: (input: { id: string; outcome: string; outcome_status: string; outcome_sentiment?: string }) => void } }) {
+function DecisionCard({ decision, projects, onUpdateOutcome, onStatusChange }: { decision: DecisionRow; projects: { slug: string; title: string }[]; onUpdateOutcome?: { mutate: (input: { id: string; outcome: string; outcome_status: string; outcome_sentiment?: string }) => void }; onStatusChange?: (decision: DecisionRow, newStatus: string) => void }) {
   const [expanded, setExpanded] = useState(false)
   const person = decision.decided_by ? getPersonInfo(decision.decided_by) : null
   const projectTitle = decision.project_slug
@@ -343,7 +354,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome }: { decision: Decis
               { value: 'recorded', label: 'Recorded', color: 'var(--teal)' },
               { value: 'revisited', label: 'Revisited', color: 'var(--slate)' },
             ]}
-            onChange={(val) => onUpdateOutcome?.mutate({ id: decision.id, outcome: decision.outcome || '', outcome_status: val })}
+            onChange={(val) => onStatusChange ? onStatusChange(decision, val) : onUpdateOutcome?.mutate({ id: decision.id, outcome: decision.outcome || '', outcome_status: val })}
           />
           <button
             onClick={() => setExpanded(!expanded)}

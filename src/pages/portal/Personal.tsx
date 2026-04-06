@@ -10,6 +10,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import OnboardingChecklist from '../../components/OnboardingChecklist'
 import BentoCard from '../../components/dashboard/BentoCard'
@@ -217,15 +218,12 @@ export default function Personal() {
       </div>
 
       {!currentUser && (
-        <div
-          className="mt-3 px-4 py-2.5 rounded-lg border text-sm"
-          style={{
-            borderColor: 'var(--gold)',
-            backgroundColor: 'rgba(201,168,76,0.06)',
-            color: 'var(--ink)',
-          }}
-        >
-          Sign in with @umn.edu to see your personalized dashboard.
+        <div className="mt-3">
+          <EmptyState
+            icon={<User size={32} />}
+            title="Your hub is ready"
+            subtitle="Sign in with @umn.edu to see your tasks, notifications, and watchlist."
+          />
         </div>
       )}
 
