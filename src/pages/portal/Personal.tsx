@@ -31,6 +31,7 @@ import { ROLE_CARD_CONFIGS, ROLE_LABELS } from '../../lib/roleDefaults'
 import type { PersonalCardId, UserRole } from '../../lib/roleDefaults'
 import type { WatchItem } from '../../hooks/useWatchlist'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
+import { useUndoToast } from '../../components/UndoToast'
 import type { TaskRow } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 
@@ -466,11 +467,14 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
 function QuickCapture() {
   const [value, setValue] = useState('')
   const createIdea = useCreateIdea()
+  const { showSuccess } = useUndoToast()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!value.trim()) return
-    createIdea.mutate({ title: value.trim() })
+    createIdea.mutate({ title: value.trim() }, {
+      onSuccess: () => showSuccess('Idea captured'),
+    })
     setValue('')
   }
 

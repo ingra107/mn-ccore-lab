@@ -8,6 +8,7 @@ import TaskGridView from '../../components/tasks/TaskGridView'
 import TaskBoardView from '../../components/tasks/TaskBoardView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
+import { useUndoToast } from '../../components/UndoToast'
 import { useTasks } from '../../hooks/useApiData'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
@@ -50,6 +51,7 @@ export default function MyTasks() {
   const createTask = useCreateTask()
   const updateStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()
+  const { showSuccess } = useUndoToast()
   const handleFieldChange = (id: string, field: string, value: unknown) => {
     updateTask.mutate({ id, fields: { [field]: value } })
   }
@@ -89,7 +91,9 @@ export default function MyTasks() {
     due_date?: string
     priority?: string
   }) => {
-    createTask.mutate(task)
+    createTask.mutate(task, {
+      onSuccess: () => showSuccess('Task created'),
+    })
   }
 
   const pendingCount = tasks.filter((t) => !t.completed).length

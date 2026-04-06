@@ -19,6 +19,7 @@ import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import ToggleButton from '../../components/ToggleButton'
 import PageTooltip from '../../components/PageTooltip'
+import { useUndoToast } from '../../components/UndoToast'
 import { useTasks } from '../../hooks/useApiData'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useSavedViews } from '../../hooks/useSavedViews'
@@ -50,6 +51,7 @@ export default function Tasks() {
   const [showFilters, setShowFilters] = useState(false)
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set())
   const bulkUpdate = useBulkUpdateTasks()
+  const { showSuccess } = useUndoToast()
 
   const toggleExpandTask = useCallback((id: string) => {
     setExpandedTasks(prev => {
@@ -123,7 +125,9 @@ export default function Tasks() {
     due_date?: string
     priority?: string
   }) => {
-    createTask.mutate(task)
+    createTask.mutate(task, {
+      onSuccess: () => showSuccess('Task created'),
+    })
   }
 
   const toggleSelect = (id: string) => {

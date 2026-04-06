@@ -15,7 +15,9 @@ import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 import { useQueryClient } from '@tanstack/react-query'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
+import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import PageTooltip from '../../components/PageTooltip'
+import type { TaskRow } from '../../lib/api'
 
 interface DeadlineItem {
   id: string
@@ -43,7 +45,14 @@ export default function Deadlines() {
   const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
   const updateTaskStatus = useUpdateTaskStatus()
   const { showUndo } = useUndoToast()
+  const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const isLoading = tasksLoading || grantsLoading
+
+  const handleOpenDetail = useCallback((item: DeadlineItem) => {
+    if (item.type !== 'task') return
+    const task = tasks.find(t => t.id === item.id)
+    if (task) setSelectedTask(task)
+  }, [tasks])
 
   const handleStatusChange = useCallback((id: string, newStatus: string, prevStatus: string) => {
     updateTaskStatus.mutate({ id, status: newStatus })
@@ -208,7 +217,7 @@ export default function Deadlines() {
                 { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
               ].filter(g => g.items.length > 0).map((group) => (
                 <motion.div key={group.title} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}>
-                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} />
+                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onOpenDetail={handleOpenDetail} />
                 </motion.div>
               ))}
             </motion.div>
@@ -254,6 +263,14 @@ export default function Deadlines() {
           <DeadlineTimeline items={[...overdue, ...thisWeek, ...nextWeek, ...later]} />
         )}
       </div>
+
+      {/* Task Detail Panel */}
+      {selectedTask && (
+        <TaskDetailPanel
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
     </div>
   )
 }
@@ -267,7 +284,7 @@ const STATUS_OPTIONS = [
   { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
 ]
 
-function DeadlineTableSection({ title, items, color, onStatusChange }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void }) {
+function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetail }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onOpenDetail?: (item: DeadlineItem) => void }) {
   const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
 
   return (
@@ -302,12 +319,19 @@ function DeadlineTableSection({ title, items, color, onStatusChange }: { title: 
                 alignItems: 'center',
               }}
             >
-              {/* Title */}
-              <span style={{
-                fontSize: '13px', fontWeight: 400,
-                color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
-                paddingRight: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
-              }}>
+              {/* Title — clickable for tasks */}
+              <span
+                onClick={item.type === 'task' && onOpenDetail ? () => onOpenDetail(item) : undefined}
+                className={item.type === 'task' ? 'task-title-clickable' : ''}
+                style={{
+                  fontSize: '13px', fontWeight: 400,
+                  color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
+                  paddingRight: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+                  cursor: item.type === 'task' && onOpenDetail ? 'pointer' : 'default',
+                  borderRadius: '3px', padding: '1px 4px', margin: '-1px -4px',
+                  transition: 'background var(--transition-fast) ease',
+                }}
+              >
                 {item.title}
               </span>
 
