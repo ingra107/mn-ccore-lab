@@ -573,6 +573,35 @@ export default function Projects() {
                 </span>
               </div>
             )}
+
+            {/* Calculations row */}
+            {filtered.length > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 20,
+                  padding: '8px 24px',
+                  borderTop: '1px solid var(--border-subtle)',
+                  background: 'rgba(45, 138, 138, 0.02)',
+                }}
+              >
+                {[
+                  { label: 'Count', value: filtered.length },
+                  ...Object.entries(
+                    filtered.reduce((acc, p) => {
+                      const stage = p.stage || 'Unknown'
+                      acc[stage] = (acc[stage] || 0) + 1
+                      return acc
+                    }, {} as Record<string, number>)
+                  ).map(([stage, count]) => ({ label: stage, value: count })),
+                ].map(s => (
+                  <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                    {s.label}{' '}
+                    <span style={{ fontWeight: 600, opacity: 1 }}>{s.value}</span>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

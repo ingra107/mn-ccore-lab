@@ -207,6 +207,35 @@ export default function Deadlines() {
                 subtitle="A rare and beautiful thing. Deadlines appear as tasks and grant milestones are scheduled."
               />
             )}
+
+            {/* Calculations row */}
+            {deadlines.length > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 20,
+                  padding: '8px 16px',
+                  borderTop: '1px solid var(--border-subtle)',
+                  background: 'rgba(45, 138, 138, 0.02)',
+                }}
+              >
+                {[
+                  { label: 'Total', value: deadlines.length },
+                  ...(overdue.length > 0 ? [{ label: 'Overdue', value: overdue.length, color: 'var(--maroon)' }] : []),
+                  { label: 'This Week', value: thisWeek.length },
+                  { label: 'Next Week', value: nextWeek.length },
+                  { label: 'Later', value: later.length },
+                  { label: 'Done', value: completed.length, color: 'var(--green, #16a34a)' },
+                ].map(s => (
+                  <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                    {s.label}{' '}
+                    <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)', opacity: 1 }}>
+                      {s.value}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <DeadlineTimeline items={[...overdue, ...thisWeek, ...nextWeek, ...later]} />

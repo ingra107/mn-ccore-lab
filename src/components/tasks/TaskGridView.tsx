@@ -9,7 +9,7 @@ import TaskContextMenu from './TaskContextMenu'
 import { useContextMenu } from '../../hooks/useContextMenu'
 import { useSubtasks } from '../../hooks/useApiData'
 import { useCreateSubtask, useToggleSubtask } from '../../hooks/useMutations'
-import { STATUS_OPTIONS, PRIORITY_OPTIONS, PRIORITY_ORDER, STATUS_ORDER } from '../../lib/taskConstants'
+import { STATUS_OPTIONS, STATUS_BG, PRIORITY_OPTIONS, PRIORITY_ORDER, STATUS_ORDER } from '../../lib/taskConstants'
 import type { TaskRow } from '../../lib/api'
 
 interface TaskGridViewProps {
@@ -382,7 +382,15 @@ function TaskGridRow({
           const Icon = (STATUS_OPTIONS.find(o => o.value === effectiveStatus) || STATUS_OPTIONS[0])
           const IconComp = Icon.icon
           return (
-            <span className={`flex items-center gap-1.5 status-transition ${completingAnim && opt === 'done' ? 'task-complete-anim' : ''}`} style={{ color: Icon.color }}>
+            <span
+              className={`flex items-center gap-1.5 status-transition ${completingAnim && opt === 'done' ? 'task-complete-anim' : ''}`}
+              style={{
+                color: Icon.color,
+                background: STATUS_BG[effectiveStatus] || STATUS_BG.todo,
+                padding: '2px 8px',
+                borderRadius: '9999px',
+              }}
+            >
               <IconComp size={13} />
               <span>{(hasBlockers && opt !== 'done' && opt !== 'blocked') ? 'Blocked' : Icon.label}</span>
             </span>

@@ -16,6 +16,13 @@ export const STATUS_OPTIONS = [
   { value: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--green)' },
 ]
 
+export const STATUS_BG: Record<string, string> = {
+  todo: 'rgba(148, 163, 184, 0.12)',
+  in_progress: 'rgba(45, 138, 138, 0.12)',
+  done: 'rgba(22, 163, 74, 0.12)',
+  blocked: 'rgba(122, 0, 25, 0.12)',
+}
+
 export const STATUS_ORDER: Record<string, number> = { blocked: 0, in_progress: 1, todo: 2, done: 3 }
 export const STATUS_CYCLE = ['todo', 'in_progress', 'done'] as const
 
