@@ -26,3 +26,6 @@ dist-ssr
 test-results/
 playwright-report/
 .claude/
+
+# Generated SQL (contains brain.db data, regenerated on demand)
+scripts/sync-tasks.sql
