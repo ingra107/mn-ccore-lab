@@ -36,6 +36,9 @@ import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } fr
 import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector'
 import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleGetActiveRevisions } from './routes/revisions';
 import { handleMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone, handleCompleteMenteeMilestone } from './routes/mentee-milestones';
+import { handleGetCascade, handleGetImpact, handleGetAllCascades, handleCreateDeadlineDependency, handleDeleteDeadlineDependency } from './routes/deadline-cascade';
+import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, handleDeleteSubmission, handleGetActiveSubmissions } from './routes/submissions';
+import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRenewRegulatoryItem } from './routes/regulatory';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -164,6 +167,14 @@ export default {
           return await handleGetRevisionComments(revisionCommentsGet[1], env);
         }
 
+        // Submission lifecycle events (must come before parameterized :id)
+        if (url.pathname === '/api/submissions/active') {
+          return await handleGetActiveSubmissions(env);
+        }
+        if (url.pathname === '/api/submissions') {
+          return await handleGetSubmissions(url, env);
+        }
+
         // Grant intelligence — NIH RePORTER proxy
         if (url.pathname === '/api/grants/similar') {
           return await handleSimilarGrants(url, env);
@@ -283,6 +294,17 @@ export default {
           return await handleContributions(contributionsGet[1], url, env);
         }
 
+        // Deadline cascade — dependency chain views
+        if (url.pathname === '/api/deadline-cascade/all') {
+          return await handleGetAllCascades(env);
+        }
+        if (url.pathname === '/api/deadline-cascade/impact') {
+          return await handleGetImpact(url, env);
+        }
+        if (url.pathname === '/api/deadline-cascade') {
+          return await handleGetCascade(url, env);
+        }
+
         // GET /api/mentee-milestones/overview — PI dashboard overview
         if (url.pathname === '/api/mentee-milestones/overview') {
           return await handleMenteeMilestoneOverview(env);
@@ -296,6 +318,14 @@ export default {
         // GET /api/milestones?project_id=...&grant_id=...
         if (url.pathname === '/api/milestones') {
           return await handleGetMilestones(url, env);
+        }
+
+        // Regulatory & Compliance
+        if (url.pathname === '/api/regulatory/expiring') {
+          return await handleGetExpiringItems(url, env);
+        }
+        if (url.pathname === '/api/regulatory') {
+          return await handleGetRegulatoryItems(url, env);
         }
 
         // GET /api/reactions?target_type=...&target_id=...
@@ -703,6 +733,25 @@ export default {
           return await handleUpdateRevision(revisionUpdateMatch[1], request, user, env);
         }
 
+        // ── Submission lifecycle ──
+
+        // POST /api/submissions — create submission event
+        if (request.method === 'POST' && path === '/api/submissions') {
+          return await handleCreateSubmission(request, user, env);
+        }
+
+        // POST /api/submissions/:id/delete — soft delete
+        const submissionDeleteMatch = path.match(/^\/api\/submissions\/([^/]+)\/delete$/);
+        if (request.method === 'POST' && submissionDeleteMatch) {
+          return await handleDeleteSubmission(submissionDeleteMatch[1], user, env);
+        }
+
+        // POST /api/submissions/:id — update submission event
+        const submissionUpdateMatch = path.match(/^\/api\/submissions\/([^/]+)$/);
+        if (request.method === 'POST' && submissionUpdateMatch) {
+          return await handleUpdateSubmission(submissionUpdateMatch[1], request, user, env);
+        }
+
         // ── Mentee milestones ──
 
         // POST /api/mentee-milestones/:id/complete — mark milestone completed
@@ -720,6 +769,38 @@ export default {
         // POST /api/mentee-milestones — create milestone
         if (request.method === 'POST' && path === '/api/mentee-milestones') {
           return await handleCreateMenteeMilestone(request, user, env);
+        }
+
+        // ── Regulatory & Compliance ──
+
+        // POST /api/regulatory/:id/renew — renew item (must come before :id match)
+        const regulatoryRenewMatch = path.match(/^\/api\/regulatory\/([^/]+)\/renew$/);
+        if (request.method === 'POST' && regulatoryRenewMatch) {
+          return await handleRenewRegulatoryItem(regulatoryRenewMatch[1], request, user, env);
+        }
+
+        // POST /api/regulatory/:id — update item
+        const regulatoryUpdateMatch = path.match(/^\/api\/regulatory\/([^/]+)$/);
+        if (request.method === 'POST' && regulatoryUpdateMatch) {
+          return await handleUpdateRegulatoryItem(regulatoryUpdateMatch[1], request, user, env);
+        }
+
+        // POST /api/regulatory — create item
+        if (request.method === 'POST' && path === '/api/regulatory') {
+          return await handleCreateRegulatoryItem(request, user, env);
+        }
+
+        // ── Deadline cascade dependencies ──
+
+        // POST /api/deadline-dependencies — create dependency link
+        if (request.method === 'POST' && path === '/api/deadline-dependencies') {
+          return await handleCreateDeadlineDependency(request, env);
+        }
+
+        // POST /api/deadline-dependencies/:id/delete — remove dependency link
+        const deadlineDepDeleteMatch = path.match(/^\/api\/deadline-dependencies\/([^/]+)\/delete$/);
+        if (request.method === 'POST' && deadlineDepDeleteMatch) {
+          return await handleDeleteDeadlineDependency(deadlineDepDeleteMatch[1], env);
         }
 
         // POST /api/admin/migrate — apply schema migrations
@@ -797,6 +878,74 @@ export default {
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_mentee_milestones_due ON mentee_milestones(due_date)').run(); results.push('created idx_mentee_milestones_due'); } catch (e) { results.push(`index error: ${e}`); }
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_mentee_milestones_status ON mentee_milestones(status)').run(); results.push('created idx_mentee_milestones_status'); } catch (e) { results.push(`index error: ${e}`); }
             return json({ data: { version: 24, results } });
+          }
+          if (body.version === 25) {
+            const results: string[] = [];
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS deadline_dependencies (
+                  id TEXT PRIMARY KEY,
+                  upstream_id TEXT NOT NULL,
+                  upstream_type TEXT NOT NULL,
+                  downstream_id TEXT NOT NULL,
+                  downstream_type TEXT NOT NULL,
+                  lag_days INTEGER DEFAULT 0,
+                  notes TEXT,
+                  created_at TEXT DEFAULT (datetime('now'))
+                )
+              `).run();
+              results.push('created deadline_dependencies');
+            } catch (e) { results.push(`deadline_dependencies: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_deadline_deps_upstream ON deadline_dependencies(upstream_id)').run(); results.push('created idx_deadline_deps_upstream'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_deadline_deps_downstream ON deadline_dependencies(downstream_id)').run(); results.push('created idx_deadline_deps_downstream'); } catch (e) { results.push(`index error: ${e}`); }
+            return json({ data: { version: 25, results } });
+          }
+          if (body.version === 26) {
+            const results: string[] = [];
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS submission_events (
+                  id TEXT PRIMARY KEY,
+                  project_id TEXT NOT NULL,
+                  event_type TEXT NOT NULL,
+                  event_date TEXT NOT NULL,
+                  journal TEXT,
+                  notes TEXT,
+                  deleted_at TEXT,
+                  created_at TEXT DEFAULT (datetime('now'))
+                )
+              `).run();
+              results.push('created submission_events');
+            } catch (e) { results.push(`submission_events: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_submission_events_project ON submission_events(project_id)').run(); results.push('created idx_submission_events_project'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_submission_events_date ON submission_events(event_date)').run(); results.push('created idx_submission_events_date'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_submission_events_type ON submission_events(event_type)').run(); results.push('created idx_submission_events_type'); } catch (e) { results.push(`index error: ${e}`); }
+            return json({ data: { version: 26, results } });
+          }
+          if (body.version === 27) {
+            const results: string[] = [];
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS regulatory_items (
+                  id TEXT PRIMARY KEY,
+                  project_id TEXT NOT NULL,
+                  item_type TEXT NOT NULL,
+                  title TEXT NOT NULL,
+                  protocol_number TEXT,
+                  approved_date TEXT,
+                  expiration_date TEXT,
+                  renewal_due TEXT,
+                  status TEXT DEFAULT 'active',
+                  notes TEXT,
+                  created_at TEXT DEFAULT (datetime('now'))
+                )
+              `).run();
+              results.push('created regulatory_items');
+            } catch (e) { results.push(`regulatory_items: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_regulatory_project ON regulatory_items(project_id)').run(); results.push('created idx_regulatory_project'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_regulatory_expiration ON regulatory_items(expiration_date)').run(); results.push('created idx_regulatory_expiration'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_regulatory_status ON regulatory_items(status)').run(); results.push('created idx_regulatory_status'); } catch (e) { results.push(`index error: ${e}`); }
+            return json({ data: { version: 27, results } });
           }
           return error(`Unknown migration version: ${body.version}`, 400);
         }

@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -158,6 +159,19 @@ export default function Deadlines() {
               )
             })}
           </div>
+          <Link
+            to="/deadline-cascade"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
+            style={{
+              fontSize: '12px',
+              color: 'var(--teal)',
+              border: '1px solid rgba(45,138,138,0.2)',
+              textDecoration: 'none',
+            }}
+          >
+            <GitBranch size={12} />
+            Cascade View
+          </Link>
           <PageTooltip id="deadlines-timeline-hint" text="Switch to Timeline for a visual map" />
 
           <select

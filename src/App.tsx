@@ -124,6 +124,7 @@ const AskTheLab = lazy(() => import('./pages/portal/AskTheLab'))
 const PIAnalytics = lazy(() => import('./pages/portal/PIAnalytics'))
 const PBSector = lazy(() => import('./pages/portal/PBSector'))
 const MenteeMilestones = lazy(() => import('./pages/portal/MenteeMilestones'))
+const DeadlineCascadePage = lazy(() => import('./pages/portal/DeadlineCascadePage'))
 const Pulse = lazy(() => import('./pages/Pulse'))
 // GrantsPortal placeholder available when existing Grants page is fully migrated
 // const GrantsPortal = lazy(() => import('./pages/portal/Grants'))
@@ -181,6 +182,7 @@ export default function App() {
                   <Route path="/tasks" element={<ErrorBoundary><Tasks /></ErrorBoundary>} />
                   <Route path="/calendar" element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
                   <Route path="/deadlines" element={<ErrorBoundary><Deadlines /></ErrorBoundary>} />
+                  <Route path="/deadline-cascade" element={<ErrorBoundary><DeadlineCascadePage /></ErrorBoundary>} />
 
                   {/* Research */}
                   <Route path="/projects" element={<ErrorBoundary><Projects /></ErrorBoundary>} />

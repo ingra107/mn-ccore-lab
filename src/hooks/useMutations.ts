@@ -8,8 +8,8 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone } from '../lib/api'
-import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow } from '../lib/api'
+import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone, createDeadlineDependency, deleteDeadlineDependency, createSubmissionEvent, updateSubmissionEvent, deleteSubmissionEvent, createRegulatoryItem, updateRegulatoryItem, renewRegulatoryItem } from '../lib/api'
+import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, RegulatoryItemRow } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
 import type { Comment, SubtaskRow } from './useApiData'
@@ -1170,6 +1170,173 @@ export function useCompleteMenteeMilestone() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['mentee-milestones'] })
       queryClient.invalidateQueries({ queryKey: ['mentee-milestones-overview'] })
+    },
+  })
+}
+
+// ── Deadline cascade dependency mutations ──────────────────
+
+export function useCreateDeadlineDependency() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      upstream_id: string
+      upstream_type: string
+      downstream_id: string
+      downstream_type: string
+      lag_days?: number
+      notes?: string
+    }) => createDeadlineDependency(input),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['deadline-cascade'] })
+      queryClient.invalidateQueries({ queryKey: ['deadline-cascade-all'] })
+      queryClient.invalidateQueries({ queryKey: ['deadline-impact'] })
+    },
+  })
+}
+
+export function useDeleteDeadlineDependency() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => deleteDeadlineDependency(id),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['deadline-cascade'] })
+      queryClient.invalidateQueries({ queryKey: ['deadline-cascade-all'] })
+      queryClient.invalidateQueries({ queryKey: ['deadline-impact'] })
+    },
+  })
+}
+
+// ── Submission lifecycle mutations ────────────────────────────
+
+export function useCreateSubmissionEvent(projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      project_id: string
+      event_type: SubmissionEventType
+      event_date: string
+      journal?: string
+      notes?: string
+    }) => createSubmissionEvent(input),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['submission-events', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['submissions-active'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUpdateSubmissionEvent(projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, fields }: { id: string; fields: Partial<{ event_type: SubmissionEventType; event_date: string; journal: string; notes: string }> }) =>
+      updateSubmissionEvent(id, fields),
+    onMutate: async ({ id, fields }) => {
+      await queryClient.cancelQueries({ queryKey: ['submission-events', projectId] })
+      const previous = queryClient.getQueryData<SubmissionEventRow[]>(['submission-events', projectId])
+      if (previous) {
+        queryClient.setQueryData<SubmissionEventRow[]>(
+          ['submission-events', projectId],
+          previous.map((e) => e.id === id ? { ...e, ...fields } : e),
+        )
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['submission-events', projectId], context.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['submission-events', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['submissions-active'] })
+    },
+  })
+}
+
+export function useDeleteSubmissionEvent(projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => deleteSubmissionEvent(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['submission-events', projectId] })
+      const previous = queryClient.getQueryData<SubmissionEventRow[]>(['submission-events', projectId])
+      if (previous) {
+        queryClient.setQueryData<SubmissionEventRow[]>(
+          ['submission-events', projectId],
+          previous.filter((e) => e.id !== id),
+        )
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['submission-events', projectId], context.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['submission-events', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['submissions-active'] })
+    },
+  })
+}
+
+// ── Regulatory & Compliance mutations ─────────────────────────
+
+export function useCreateRegulatoryItem(projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      project_id: string
+      item_type: string
+      title: string
+      protocol_number?: string
+      approved_date?: string
+      expiration_date?: string
+      renewal_due?: string
+      status?: string
+      notes?: string
+    }) => createRegulatoryItem(input),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['regulatory', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['regulatory-expiring'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUpdateRegulatoryItem(projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, fields }: { id: string; fields: Partial<{ title: string; item_type: string; protocol_number: string; approved_date: string; expiration_date: string; renewal_due: string; status: string; notes: string }> }) =>
+      updateRegulatoryItem(id, fields),
+    onMutate: async ({ id, fields }) => {
+      await queryClient.cancelQueries({ queryKey: ['regulatory', projectId] })
+      const previous = queryClient.getQueryData<RegulatoryItemRow[]>(['regulatory', projectId])
+      if (previous) {
+        queryClient.setQueryData<RegulatoryItemRow[]>(
+          ['regulatory', projectId],
+          previous.map((r) => r.id === id ? { ...r, ...fields } : r),
+        )
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['regulatory', projectId], context.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['regulatory', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['regulatory-expiring'] })
+    },
+  })
+}
+
+export function useRenewRegulatoryItem(projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: { approved_date?: string; expiration_date?: string; renewal_due?: string; notes?: string } }) =>
+      renewRegulatoryItem(id, input),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['regulatory', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['regulatory-expiring'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
 }

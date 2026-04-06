@@ -27,6 +27,7 @@ import {
   Inbox,
   ScrollText,
   GraduationCap,
+  GitBranch,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
@@ -68,6 +69,7 @@ const navGroups: NavGroup[] = [
       { to: '/tasks', label: 'All Tasks', icon: ListTodo },
       { to: '/calendar', label: 'Calendar', icon: Calendar },
       { to: '/deadlines', label: 'Deadlines', icon: Clock },
+      { to: '/deadline-cascade', label: 'Cascade', icon: GitBranch },
     ],
   },
   {

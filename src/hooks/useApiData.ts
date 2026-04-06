@@ -33,6 +33,13 @@ import {
   fetchActiveRevisions,
   fetchMenteeMilestones,
   fetchMenteeOverview,
+  fetchDeadlineCascade,
+  fetchDeadlineImpact,
+  fetchAllCascades,
+  fetchSubmissionEvents,
+  fetchActiveSubmissions,
+  fetchRegulatoryItems,
+  fetchExpiringRegulatory,
 } from '../lib/api'
 import type {
   PublicationRow,
@@ -53,10 +60,16 @@ import type {
   ReviewerCommentRow,
   MenteeMilestoneRow,
   MenteeOverviewRow,
+  CascadeGraph,
+  ImpactResult,
+  SubmissionEventRow,
+  ActiveSubmissionRow,
+  RegulatoryItemRow,
+  ExpiringRegulatoryRow,
 } from '../lib/api'
 
 // Re-export row types for components that need them
-export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow }
+export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow, CascadeGraph, ImpactResult, SubmissionEventRow, ActiveSubmissionRow, RegulatoryItemRow, ExpiringRegulatoryRow }
 
 // Static data imports (fallback for local dev)
 import { publications as staticPublications } from '../data/publications'
@@ -1254,5 +1267,80 @@ export function useMenteeOverview() {
       return (res.data || []) as MenteeOverviewRow[]
     },
     staleTime: 60 * 1000,
+  })
+}
+
+// ── Deadline Cascade ────────────────────────────────────────
+
+export function useDeadlineCascade(projectId: string) {
+  return useQuery({
+    queryKey: ['deadline-cascade', projectId],
+    queryFn: async () => {
+      const res = await fetchDeadlineCascade(projectId)
+      return res.data as CascadeGraph
+    },
+    enabled: !!projectId,
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useDeadlineImpact(id: string | null, type: string | null, newDate: string | null) {
+  return useQuery({
+    queryKey: ['deadline-impact', id, type, newDate],
+    queryFn: async () => {
+      const res = await fetchDeadlineImpact(id!, type!, newDate!)
+      return res.data as ImpactResult[]
+    },
+    enabled: !!id && !!type && !!newDate,
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useAllCascades() {
+  return useQuery({
+    queryKey: ['deadline-cascade-all'],
+    queryFn: async () => {
+      const res = await fetchAllCascades()
+      return res.data as CascadeGraph
+    },
+    staleTime: 60 * 1000,
+  })
+}
+
+// ── Submission lifecycle ────────────────────────────────────
+
+export function useSubmissionEvents(projectId: string) {
+  return useQuery({
+    queryKey: ['submission-events', projectId],
+    queryFn: () => fetchSubmissionEvents(projectId).then((r) => r.data),
+    enabled: !!projectId,
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useActiveSubmissions() {
+  return useQuery({
+    queryKey: ['submissions-active'],
+    queryFn: () => fetchActiveSubmissions().then((r) => r.data),
+    staleTime: 60 * 1000,
+  })
+}
+
+// ── Regulatory & Compliance ────────────────────────────────
+
+export function useRegulatoryItems(projectId: string) {
+  return useQuery({
+    queryKey: ['regulatory', projectId],
+    queryFn: () => fetchRegulatoryItems(projectId).then((r) => r.data),
+    enabled: !!projectId,
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useExpiringRegulatory(days: number = 60) {
+  return useQuery({
+    queryKey: ['regulatory-expiring', days],
+    queryFn: () => fetchExpiringRegulatory(days).then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
   })
 }

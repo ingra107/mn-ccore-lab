@@ -677,4 +677,224 @@ export function completeMenteeMilestone(id: string) {
   })
 }
 
+// ── Deadline cascade ──────────────────────────────────────
+
+export interface DeadlineDepRow {
+  id: string
+  upstream_id: string
+  upstream_type: string
+  downstream_id: string
+  downstream_type: string
+  lag_days: number
+  notes: string | null
+  created_at: string
+}
+
+export interface DeadlineNode {
+  id: string
+  type: 'milestone' | 'task' | 'deadline'
+  title: string
+  due_date: string | null
+  status: string
+  project_id: string | null
+  project_title: string | null
+}
+
+export interface CascadeGraph {
+  nodes: DeadlineNode[]
+  dependencies: DeadlineDepRow[]
+}
+
+export interface ImpactResult {
+  id: string
+  type: string
+  title: string
+  original_date: string | null
+  projected_date: string
+  shift_days: number
+}
+
+export function fetchDeadlineCascade(projectId: string) {
+  return fetchApi<CascadeGraph>(`/api/deadline-cascade?project_id=${encodeURIComponent(projectId)}`)
+}
+
+export function fetchDeadlineImpact(id: string, type: string, newDate: string) {
+  return fetchApi<ImpactResult[]>(`/api/deadline-cascade/impact?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&new_date=${encodeURIComponent(newDate)}`)
+}
+
+export function fetchAllCascades() {
+  return fetchApi<CascadeGraph>('/api/deadline-cascade/all')
+}
+
+export function createDeadlineDependency(input: {
+  upstream_id: string
+  upstream_type: string
+  downstream_id: string
+  downstream_type: string
+  lag_days?: number
+  notes?: string
+}) {
+  return fetchApi<DeadlineDepRow>('/api/deadline-dependencies', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteDeadlineDependency(id: string) {
+  return fetchApi<{ deleted: boolean; id: string }>(`/api/deadline-dependencies/${id}/delete`, {
+    method: 'POST',
+  })
+}
+
+// ── Submission lifecycle ──────────────────────────────────
+
+export type SubmissionEventType =
+  | 'submitted'
+  | 'reviews_received'
+  | 'revision_due'
+  | 'resubmitted'
+  | 'accepted'
+  | 'rejected'
+  | 'withdrawn'
+
+export interface SubmissionEventRow {
+  id: string
+  project_id: string
+  event_type: SubmissionEventType
+  event_date: string
+  journal: string | null
+  notes: string | null
+  deleted_at: string | null
+  created_at: string
+}
+
+export interface ActiveSubmissionRow {
+  id: string
+  project_id: string
+  latest_event_type: SubmissionEventType
+  latest_event_date: string
+  journal: string | null
+  notes: string | null
+  project_title: string | null
+  project_slug: string | null
+  first_submitted_date: string | null
+  days_since_submission: number
+  revision_due_date: string | null
+  days_until_revision_due: number | null
+}
+
+export function fetchSubmissionEvents(projectId: string) {
+  return fetchApi<SubmissionEventRow[]>(`/api/submissions?project_id=${encodeURIComponent(projectId)}`)
+}
+
+export function fetchActiveSubmissions() {
+  return fetchApi<ActiveSubmissionRow[]>('/api/submissions/active')
+}
+
+export function createSubmissionEvent(input: {
+  project_id: string
+  event_type: SubmissionEventType
+  event_date: string
+  journal?: string
+  notes?: string
+}) {
+  return fetchApi<SubmissionEventRow>('/api/submissions', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateSubmissionEvent(id: string, fields: Partial<{
+  event_type: SubmissionEventType
+  event_date: string
+  journal: string
+  notes: string
+}>) {
+  return fetchApi<SubmissionEventRow>(`/api/submissions/${id}`, {
+    method: 'POST',
+    body: JSON.stringify(fields),
+  })
+}
+
+export function deleteSubmissionEvent(id: string) {
+  return fetchApi<{ id: string; deleted: boolean }>(`/api/submissions/${id}/delete`, {
+    method: 'POST',
+  })
+}
+
+// ── Regulatory & Compliance ──────────────────────────────────
+
+export interface RegulatoryItemRow {
+  id: string
+  project_id: string
+  item_type: string
+  title: string
+  protocol_number: string | null
+  approved_date: string | null
+  expiration_date: string | null
+  renewal_due: string | null
+  status: string
+  notes: string | null
+  created_at: string
+}
+
+export interface ExpiringRegulatoryRow extends RegulatoryItemRow {
+  project_title: string | null
+  project_slug: string | null
+  days_remaining: number
+}
+
+export function fetchRegulatoryItems(projectId: string) {
+  return fetchApi<RegulatoryItemRow[]>(`/api/regulatory?project_id=${encodeURIComponent(projectId)}`)
+}
+
+export function fetchExpiringRegulatory(days: number = 60) {
+  return fetchApi<ExpiringRegulatoryRow[]>(`/api/regulatory/expiring?days=${days}`)
+}
+
+export function createRegulatoryItem(input: {
+  project_id: string
+  item_type: string
+  title: string
+  protocol_number?: string
+  approved_date?: string
+  expiration_date?: string
+  renewal_due?: string
+  status?: string
+  notes?: string
+}) {
+  return fetchApi<RegulatoryItemRow>('/api/regulatory', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateRegulatoryItem(id: string, fields: Partial<{
+  title: string
+  item_type: string
+  protocol_number: string
+  approved_date: string
+  expiration_date: string
+  renewal_due: string
+  status: string
+  notes: string
+}>) {
+  return fetchApi<RegulatoryItemRow>(`/api/regulatory/${id}`, {
+    method: 'POST',
+    body: JSON.stringify(fields),
+  })
+}
+
+export function renewRegulatoryItem(id: string, input: {
+  approved_date?: string
+  expiration_date?: string
+  renewal_due?: string
+  notes?: string
+}) {
+  return fetchApi<RegulatoryItemRow>(`/api/regulatory/${id}/renew`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
 export { ApiError }

@@ -5,7 +5,7 @@ import {
   Search, LayoutDashboard, User, CheckSquare, ListTodo, Calendar,
   Clock, FolderKanban, FileText, Lightbulb, HelpCircle, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
-  CheckCircle2, AlertTriangle, Flag, CircleDot, Scale,
+  CheckCircle2, AlertTriangle, Flag, CircleDot, Scale, GitBranch,
 } from 'lucide-react'
 import { spring } from '../lib/animations'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
@@ -91,6 +91,7 @@ export default function CommandPalette() {
       { path: '/my-tasks', label: 'My Tasks', icon: CheckSquare },
       { path: '/calendar', label: 'Calendar', icon: Calendar, shortcut: 'G C' },
       { path: '/deadlines', label: 'Deadlines', icon: Clock },
+      { path: '/deadline-cascade', label: 'Deadline Cascade', icon: GitBranch },
       { path: '/projects', label: 'Projects', icon: FolderKanban, shortcut: 'G P' },
       { path: '/manuscripts', label: 'Manuscripts', icon: FileText },
       { path: '/ideas', label: 'Ideas', icon: Lightbulb },

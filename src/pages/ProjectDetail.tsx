@@ -41,6 +41,7 @@ import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
 import type { Project, ActionItem } from '../data/types'
 import type { TaskRow } from '../lib/api'
 import RevisionTracker from '../components/RevisionTracker'
+import SubmissionTimeline from '../components/SubmissionTimeline'
 
 type Tab = 'overview' | 'tasks' | 'revisions' | 'activity' | 'literature'
 
@@ -1161,9 +1162,17 @@ function ProjectDetailInner({ project }: InnerProps) {
 
       {/* ── REVISIONS TAB ── */}
       {activeTab === 'revisions' && (
-        <div className="table-container" style={{ padding: '16px 20px', marginBottom: '2rem' }}>
-          <RevisionTracker projectId={project.slug} />
-        </div>
+        <>
+          {/* Submission lifecycle timeline */}
+          <div className="table-container" style={{ padding: '16px 20px', marginBottom: '1rem' }}>
+            <SubmissionTimeline projectId={project.slug} />
+          </div>
+
+          {/* Existing revision tracker (reviewer comments) */}
+          <div className="table-container" style={{ padding: '16px 20px', marginBottom: '2rem' }}>
+            <RevisionTracker projectId={project.slug} />
+          </div>
+        </>
       )}
 
       {/* ── ACTIVITY TAB ── */}
