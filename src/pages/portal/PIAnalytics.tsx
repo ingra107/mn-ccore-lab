@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import {
   Shield,
@@ -22,6 +23,7 @@ import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
 import EmptyState from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
+import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
@@ -421,36 +423,36 @@ export default function PIAnalytics() {
       />
 
       {/* Top-line Metric Cards */}
-      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MetricCard
+      <motion.div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3" variants={staggerContainer} initial="hidden" animate="visible">
+        <motion.div variants={staggerItem}><MetricCard
           icon={Target}
           label="Commitments Kept"
           value={`${commitRate}%`}
           color={commitRate >= 80 ? 'var(--green, #22c55e)' : commitRate >= 60 ? 'var(--gold)' : 'var(--maroon)'}
           subtitle={`${data?.commitments.completed || 0} of ${data?.commitments.total || 0}`}
-        />
-        <MetricCard
+        /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard
           icon={Clock}
           label="Avg Response"
           value={`${data?.responseMetrics.avg_days || 0}d`}
           color="var(--teal)"
           subtitle={data?.responseMetrics.trend === 'improving' ? 'Getting faster' : data?.responseMetrics.trend === 'slowing' ? 'Getting slower' : 'Stable'}
-        />
-        <MetricCard
+        /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard
           icon={DollarSign}
           label="Active Funding"
           value={data?.grantPipeline.active_funding ? formatCurrency(data.grantPipeline.active_funding) : '$0'}
           color="var(--gold)"
           subtitle={`${data?.grantPipeline.active || 0} active grants`}
-        />
-        <MetricCard
+        /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard
           icon={BookOpen}
           label="Trainee Pubs"
           value={data?.menteeVelocity.reduce((s, m) => s + m.pub_count, 0) || 0}
           color="var(--green, #22c55e)"
           subtitle={`${data?.menteeVelocity.length || 0} trainees`}
-        />
-      </div>
+        /></motion.div>
+      </motion.div>
 
       {/* Two-column: Commitment Scorecard + Response Time */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
