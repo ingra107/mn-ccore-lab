@@ -374,6 +374,46 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
           </p>
         </div>
       )}
+
+      {/* Calculations row */}
+      {ideas.length > 0 && (() => {
+        const statusCounts = ideas.reduce<Record<string, number>>((acc, i) => {
+          acc[i.status] = (acc[i.status] || 0) + 1
+          return acc
+        }, {})
+        const voted = ideas.filter(i => i.votes > 0).length
+        const statusLabels: Record<string, string> = { new: 'New', under_review: 'Under Review', approved: 'Approved', parked: 'Parked', archived: 'Archived' }
+        const statusColors: Record<string, string> = { new: 'var(--teal)', under_review: 'var(--gold)', approved: 'var(--green, #22c55e)', parked: 'var(--slate)', archived: 'var(--slate)' }
+        const stats = [
+          { label: 'Count', value: ideas.length },
+          ...Object.entries(statusCounts).map(([key, count]) => ({
+            label: statusLabels[key] || key,
+            value: count,
+            color: statusColors[key],
+          })),
+          ...(voted > 0 ? [{ label: 'Voted', value: voted, color: 'var(--teal)' }] : []),
+        ]
+        return (
+          <div
+            style={{
+              display: 'flex',
+              gap: 20,
+              padding: '8px 16px',
+              borderTop: '1px solid var(--border-subtle)',
+              background: 'rgba(45, 138, 138, 0.02)',
+            }}
+          >
+            {stats.map(s => (
+              <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                {s.label}{' '}
+                <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)', opacity: 1 }}>
+                  {s.value}
+                </span>
+              </span>
+            ))}
+          </div>
+        )
+      })()}
     </div>
   )
 }

@@ -366,6 +366,42 @@ export default function Manuscripts() {
                 </span>
               </div>
             )}
+
+            {/* Calculations row */}
+            {manuscripts.length > 0 && (() => {
+              const stageCounts = manuscripts.reduce<Record<string, number>>((acc, p) => {
+                const stage = p.stage || 'Idea'
+                acc[stage] = (acc[stage] || 0) + 1
+                return acc
+              }, {})
+              const stats = [
+                { label: 'Count', value: manuscripts.length },
+                ...STAGES.filter(s => stageCounts[s]).map(s => ({
+                  label: s,
+                  value: stageCounts[s],
+                })),
+              ]
+              return (
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 20,
+                    padding: '8px 16px',
+                    borderTop: '1px solid var(--border-subtle)',
+                    background: 'rgba(45, 138, 138, 0.02)',
+                  }}
+                >
+                  {stats.map(s => (
+                    <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                      {s.label}{' '}
+                      <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)', opacity: 1 }}>
+                        {s.value}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         )}
 
