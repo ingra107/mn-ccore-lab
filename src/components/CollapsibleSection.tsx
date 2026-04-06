@@ -81,7 +81,6 @@ export default function CollapsibleSection({
         {icon}
         <span
           style={{
-            fontFamily: 'var(--font-body)',
             fontSize: '11px',
             fontWeight: 500,
             color: 'var(--slate)',

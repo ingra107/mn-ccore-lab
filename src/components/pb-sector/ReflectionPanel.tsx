@@ -113,7 +113,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   placeholder="What went well?"
                   className="w-full"
                   style={{
-                    fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+                    fontSize: '13px', color: 'var(--ink)',
                     background: 'transparent', border: 'none', borderBottom: '1px solid rgba(201,168,76,0.15)',
                     outline: 'none', padding: '4px 0',
                   }}
@@ -132,7 +132,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   placeholder="One takeaway from today..."
                   className="w-full"
                   style={{
-                    fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+                    fontSize: '13px', color: 'var(--ink)',
                     background: 'transparent', border: 'none', borderBottom: '1px solid rgba(201,168,76,0.15)',
                     outline: 'none', padding: '4px 0',
                   }}

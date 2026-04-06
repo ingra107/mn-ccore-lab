@@ -111,7 +111,6 @@ export default function ResearchImpact() {
                           className="text-xs truncate"
                           style={{
                             color: isHighImpact ? 'var(--gold)' : 'rgba(255, 255, 255, 0.7)',
-                            fontFamily: 'var(--font-body)',
                             fontWeight: isHighImpact ? 500 : 400,
                           }}
                         >

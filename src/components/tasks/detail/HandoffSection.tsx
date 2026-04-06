@@ -38,10 +38,10 @@ export function HandoffRecipientSelect({ value, onChange, members }: { value: st
             <div style={{ width: 24, height: 24 }}>
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[7px]" />
             </div>
-            <span className="text-sm" style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}>{person.name}</span>
+            <span className="text-sm" style={{ color: 'var(--ink)' }}>{person.name}</span>
           </>
         ) : (
-          <span className="text-sm px-1" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', opacity: 0.5 }}>Select team member...</span>
+          <span className="text-sm px-1" style={{ color: 'var(--slate)', opacity: 0.5 }}>Select team member...</span>
         )}
         <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--teal)', opacity: 0.6 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
@@ -57,7 +57,7 @@ export function HandoffRecipientSelect({ value, onChange, members }: { value: st
                 key={slug}
                 onClick={() => { onChange(slug); setOpen(false) }}
                 className="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+                style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
               >
                 <div style={{ width: 22, height: 22 }}>
                   <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
@@ -119,7 +119,6 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
   }
 
   const labelStyle = {
-    fontFamily: 'var(--font-body)',
     fontSize: '11px' as const,
     fontWeight: 500,
     color: 'var(--slate)',
@@ -135,7 +134,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
           <div className="p-4 rounded-xl" style={{ background: 'rgba(45,138,138,0.04)', border: '1px solid rgba(45,138,138,0.15)' }}>
             <div className="flex items-center gap-2 mb-3">
               <ArrowRightLeft size={14} style={{ color: 'var(--teal)' }} />
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--teal)' }}>
+              <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--teal)' }}>
                 Handoff to...
               </span>
             </div>

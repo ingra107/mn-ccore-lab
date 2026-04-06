@@ -45,7 +45,6 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
             placeholder="Search by topic, e.g. ventilation, sepsis..."
             className="w-full pl-8 pr-3 py-2 rounded-md text-sm"
             style={{
-              fontFamily: 'var(--font-body)',
               background: 'var(--ice)',
               color: 'var(--ink)',
               border: '1px solid rgba(201,168,76,0.15)',
@@ -135,7 +134,7 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
                   <div className="flex-1 min-w-0">
                     <div
                       className="text-sm font-medium truncate"
-                      style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
+                      style={{ color: 'var(--ink)' }}
                     >
                       {person.name}
                     </div>

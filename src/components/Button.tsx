@@ -77,7 +77,6 @@ export default function Button({
   const baseClasses = `inline-flex items-center justify-center gap-2 rounded-md cursor-pointer font-semibold ${sizeClasses[size]} ${className ?? ''}`
   const style = {
     ...variantStyles[variant],
-    fontFamily: 'var(--font-body)',
     transition: 'all 150ms ease',
     minHeight: '44px',
     textDecoration: 'none',

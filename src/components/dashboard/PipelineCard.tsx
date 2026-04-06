@@ -64,7 +64,6 @@ export default function PipelineCard() {
                 <div className="flex items-baseline justify-between mb-1.5">
                   <span
                     style={{
-                      fontFamily: 'var(--font-body)',
                       fontSize: '13px',
                       fontWeight: 500,
                       color: 'var(--ink)',

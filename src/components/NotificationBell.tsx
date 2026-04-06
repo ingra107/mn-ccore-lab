@@ -190,7 +190,6 @@ export default function NotificationBell() {
                   />
                   <p
                     style={{
-                      fontFamily: 'var(--font-body)',
                       fontSize: '13px',
                       color: 'var(--slate)',
                       opacity: 0.5,
@@ -268,7 +267,6 @@ export default function NotificationBell() {
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div
                               style={{
-                                fontFamily: 'var(--font-body)',
                                 fontSize: '13px',
                                 fontWeight: isUnread ? 600 : 400,
                                 color: 'var(--ink)',
@@ -283,7 +281,6 @@ export default function NotificationBell() {
                             {notification.body && (
                               <div
                                 style={{
-                                  fontFamily: 'var(--font-body)',
                                   fontSize: '12px',
                                   color: 'var(--slate)',
                                   lineHeight: 1.4,

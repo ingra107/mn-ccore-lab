@@ -96,7 +96,7 @@ export default function NarrativesPage() {
                     style={{ textDecoration: 'none' }}
                   >
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: STAGE_COLORS[p.stage] || '#64748b', flexShrink: 0 }} />
-                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', flex: 1 }}>
+                    <span style={{ fontSize: '13px', color: 'var(--ink)', flex: 1 }}>
                       {p.title}
                     </span>
                     <span style={{ fontSize: '10px', color: STAGE_COLORS[p.stage], opacity: 0.7 }}>
@@ -126,13 +126,13 @@ export default function NarrativesPage() {
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <FileText size={10} style={{ color: 'var(--slate)', opacity: 0.5 }} />
-                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
+                    <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
                       Related publications
                     </span>
                   </div>
                   {arc.relatedPubs.map((p) => (
                     <Link key={p.id} to={`/publications/${p.id}`} className="block py-1" style={{ textDecoration: 'none' }}>
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', opacity: 0.7 }}>
+                      <span style={{ fontSize: '12px', color: 'var(--ink)', opacity: 0.7 }}>
                         {p.title}
                       </span>
                       <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4, marginLeft: 8 }}>

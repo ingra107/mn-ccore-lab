@@ -142,7 +142,6 @@ export default function ActivityFeedCard() {
                     <p
                       className="leading-snug"
                       style={{
-                        fontFamily: 'var(--font-body)',
                         fontSize: '12.5px',
                         color: 'var(--ink)',
                         margin: 0,
@@ -152,7 +151,6 @@ export default function ActivityFeedCard() {
                     </p>
                     <p
                       style={{
-                        fontFamily: 'var(--font-body)',
                         fontSize: '11px',
                         color: 'var(--slate)',
                         fontStyle: 'italic',

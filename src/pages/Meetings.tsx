@@ -303,7 +303,6 @@ export default function Meetings() {
     background: 'var(--ice)',
     border: '1px solid rgba(201,168,76,0.15)',
     color: 'var(--ink)',
-    fontFamily: 'var(--font-body)',
     fontSize: '13px',
     outline: 'none',
     borderRadius: '8px',
@@ -344,7 +343,6 @@ export default function Meetings() {
           </div>
           <p
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '15px',
               color: 'var(--slate)',
               opacity: 0.7,
@@ -388,7 +386,7 @@ export default function Meetings() {
             <div>
               <h2
                 className="text-sm font-medium"
-                style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)', margin: 0 }}
+                style={{ color: 'var(--ink)', margin: 0 }}
               >
                 Next Meeting
               </h2>
@@ -434,11 +432,11 @@ export default function Meetings() {
           <div className="p-4 rounded-xl mb-4" style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.12)' }}>
             <div className="flex items-center gap-2 mb-2">
               <Activity size={14} style={{ color: 'var(--gold)' }} />
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+              <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
                 Meeting Cadence
               </span>
             </div>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink)', fontWeight: 600 }}>
+            <p style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600 }}>
               {cadence.emoji} {cadence.recommendation}
             </p>
             <div className="flex flex-wrap gap-2 mt-2">
@@ -510,7 +508,7 @@ export default function Meetings() {
                         <Circle size={16} style={{ color: 'var(--gold)' }} />
                       </button>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm leading-snug" style={{ color: 'var(--ink)', fontFamily: 'var(--font-body)' }}>
+                        <p className="text-sm leading-snug" style={{ color: 'var(--ink)' }}>
                           {item.description}
                         </p>
                         <div className="flex flex-wrap items-center gap-3 mt-1.5">
@@ -525,7 +523,7 @@ export default function Meetings() {
                                 className="!w-[18px] !h-[18px] !min-w-0 !min-h-0"
                               />
                             </div>
-                            <span className="text-xs" style={{ color: 'var(--slate)', fontFamily: 'var(--font-body)' }}>
+                            <span className="text-xs" style={{ color: 'var(--slate)' }}>
                               {info.name}
                             </span>
                           </div>
@@ -752,7 +750,6 @@ export default function Meetings() {
                           className="text-sm leading-snug"
                           style={{
                             color: 'var(--ink)',
-                            fontFamily: 'var(--font-body)',
                             textDecoration: 'line-through',
                             opacity: 0.6,
                           }}
@@ -771,7 +768,7 @@ export default function Meetings() {
                                 className="!w-4 !h-4 !min-w-0 !min-h-0"
                               />
                             </div>
-                            <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-body)' }}>
+                            <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>
                               {info.name}
                             </span>
                           </div>
@@ -888,7 +885,6 @@ export default function Meetings() {
                           onClick={() => toggleAttendee(m.slug)}
                           className="cursor-pointer inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
                           style={{
-                            fontFamily: 'var(--font-body)',
                             fontSize: '11px',
                             background: selected ? 'rgba(201,168,76,0.2)' : 'var(--ice)',
                             color: selected ? 'var(--ink)' : 'var(--slate)',
@@ -1016,7 +1012,6 @@ export default function Meetings() {
                   background: 'var(--ice)',
                   border: '1px solid rgba(201,168,76,0.15)',
                   color: 'var(--ink)',
-                  fontFamily: 'var(--font-body)',
                   outline: 'none',
                   minHeight: '44px',
                 }}
@@ -1049,7 +1044,7 @@ export default function Meetings() {
               ))
             ) : (
               <div className="py-12 text-center">
-                <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.5, fontFamily: 'var(--font-body)' }}>
+                <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                   {searchQuery ? 'No meetings match your search.' : 'No meetings found.'}
                 </p>
               </div>

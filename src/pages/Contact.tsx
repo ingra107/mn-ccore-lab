@@ -72,7 +72,6 @@ export default function Contact() {
                   <h3
                     className="text-base font-normal mb-2"
                     style={{
-                      fontFamily: 'var(--font-body)',
                       color: 'var(--ink)',
                     }}
                   >
@@ -108,7 +107,6 @@ export default function Contact() {
                   <h3
                     className="text-base font-normal mb-2"
                     style={{
-                      fontFamily: 'var(--font-body)',
                       color: 'var(--ink)',
                     }}
                   >

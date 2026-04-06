@@ -96,8 +96,7 @@ export default function Network() {
               style={{
                 color: 'rgba(255, 255, 255, 0.5)',
                 textDecoration: 'none',
-                fontFamily: 'var(--font-body)',
-              }}
+                }}
               onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
               onMouseLeave={(e) =>
                 (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)')

@@ -359,7 +359,7 @@ export default function Team() {
                 </div>
                 <h3
                   className="text-xs sm:text-sm font-normal mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
-                  style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
+                  style={{ color: 'var(--ink)' }}
                 >
                   {member.name}{member.credentials ? `, ${member.credentials}` : ''}
                 </h3>
@@ -428,7 +428,7 @@ export default function Team() {
                 </div>
                 <h3
                   className="text-xs sm:text-sm font-normal mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
-                  style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
+                  style={{ color: 'var(--ink)' }}
                 >
                   {member.name}{member.credentials ? `, ${member.credentials}` : ''}
                 </h3>

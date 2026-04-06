@@ -79,7 +79,6 @@ export default function SectionHeader({
         <p
           className="text-sm"
           style={{
-            fontFamily: 'var(--font-body)',
             fontWeight: 400,
             color: 'var(--slate)',
             opacity: 0.7,

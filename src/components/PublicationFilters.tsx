@@ -179,7 +179,6 @@ function FilterRow({
       <span
         className="text-xs uppercase flex-shrink-0"
         style={{
-          fontFamily: 'var(--font-body)',
           fontSize: '11px',
           letterSpacing: '0.05em',
           color: 'var(--slate)',

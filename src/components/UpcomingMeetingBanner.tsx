@@ -136,7 +136,6 @@ export default function UpcomingMeetingBanner() {
                   <span
                     className="text-sm"
                     style={{
-                      fontFamily: 'var(--font-body)',
                       color: 'var(--slate)',
                       whiteSpace: 'nowrap',
                     }}
@@ -149,7 +148,6 @@ export default function UpcomingMeetingBanner() {
                 <span
                   className="text-sm font-medium hidden sm:inline"
                   style={{
-                    fontFamily: 'var(--font-body)',
                     color: 'var(--gold)',
                   }}
                 >

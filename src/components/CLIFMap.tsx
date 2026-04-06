@@ -120,7 +120,6 @@ export default function CLIFMap() {
           <p
             className="text-base sm:text-lg"
             style={{
-              fontFamily: 'var(--font-body)',
               color: 'rgba(255, 255, 255, 0.8)',
             }}
           >
@@ -244,7 +243,6 @@ export default function CLIFMap() {
               textAnchor="middle"
               fill="rgba(255,255,255,0.7)"
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '11px',
               }}
             >
@@ -256,7 +254,6 @@ export default function CLIFMap() {
               textAnchor="middle"
               fill="rgba(255,255,255,0.7)"
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '11px',
               }}
             >
@@ -268,7 +265,6 @@ export default function CLIFMap() {
               textAnchor="middle"
               fill="rgba(255,255,255,0.7)"
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '11px',
               }}
             >
@@ -307,7 +303,6 @@ export default function CLIFMap() {
                 <p
                   className="text-xs"
                   style={{
-                    fontFamily: 'var(--font-body)',
                     color: 'var(--slate)',
                   }}
                 >

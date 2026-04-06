@@ -43,7 +43,6 @@ function MiniStat({ icon: Icon, value, label, suffix = '', delay }: StatItem & {
         </div>
         <div
           style={{
-            fontFamily: 'var(--font-body)',
             fontSize: '11px',
             color: 'var(--slate)',
             opacity: 0.7,

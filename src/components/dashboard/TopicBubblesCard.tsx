@@ -181,7 +181,6 @@ export default function TopicBubblesCard() {
                   textAnchor="middle"
                   dominantBaseline="central"
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: hovered === b.topic ? '10px' : '8px',
                     fill: '#fff',
                     fontWeight: 600,

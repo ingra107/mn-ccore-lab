@@ -108,10 +108,10 @@ export default function UpcomingCard() {
         >
           <div className="flex items-start justify-between gap-2 mb-1.5">
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 600, color: 'var(--ink)', margin: 0, lineHeight: 1.3 }}>
+              <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)', margin: 0, lineHeight: 1.3 }}>
                 Next Meeting
               </p>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', margin: '2px 0 0 0', lineHeight: 1.3 }}>
+              <p style={{ fontSize: '12px', color: 'var(--ink)', margin: '2px 0 0 0', lineHeight: 1.3 }}>
                 {nextMeeting.title.split(':')[0]}
               </p>
               <p style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7, margin: '2px 0 0 0' }}>
@@ -197,7 +197,7 @@ export default function UpcomingCard() {
           }}
         >
           <CalendarOff size={14} style={{ color: 'var(--slate)', opacity: 0.4 }} />
-          <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.5 }}>
+          <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.5 }}>
             No meeting scheduled
           </span>
         </div>
@@ -248,7 +248,6 @@ export default function UpcomingCard() {
                 <p
                   className="flex items-center gap-1"
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '12px',
                     color: 'var(--ink)',
                     margin: 0,

@@ -74,7 +74,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                   className="block w-full text-left truncate"
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                    fontFamily: 'var(--font-body)', fontSize: '15px', fontWeight: 600, color: 'var(--ink)',
+                    fontSize: '15px', fontWeight: 600, color: 'var(--ink)',
                   }}
                 >
                   {task.title || task.description}
@@ -112,7 +112,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                   <span style={{ fontSize: '9px', color: suggestion._isCarried ? 'var(--teal)' : 'var(--gold)', opacity: 0.5, textTransform: 'uppercase', flexShrink: 0 }}>
                     {suggestion._isCarried ? 'Carried' : 'Suggested'}
                   </span>
-                  <span className="truncate" style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink)', opacity: 0.4 }}>
+                  <span className="truncate" style={{ fontSize: '14px', color: 'var(--ink)', opacity: 0.4 }}>
                     {suggestion.title || suggestion.description}
                   </span>
                   <Plus size={14} style={{ color: 'var(--gold)', opacity: 0.4, flexShrink: 0 }} />
@@ -124,7 +124,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                   style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                 >
                   <Plus size={16} style={{ color: 'var(--gold)', opacity: 0.4 }} />
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--gold)', opacity: 0.5, fontStyle: 'italic' }}>
+                  <span style={{ fontSize: '14px', color: 'var(--gold)', opacity: 0.5, fontStyle: 'italic' }}>
                     What is the ONE thing you must do today?
                   </span>
                 </button>

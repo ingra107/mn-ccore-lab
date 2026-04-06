@@ -63,7 +63,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
         style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
       >
         <TrendingUp size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>
+        <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No publications with dates yet
         </p>
       </div>
@@ -186,7 +186,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
         style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
       >
         <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>
+        <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No active projects to track velocity
         </p>
       </div>
@@ -225,7 +225,6 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                 <Link
                   to={`/projects/${project.slug}`}
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '13px',
                     fontWeight: 500,
                     color: 'var(--ink)',
@@ -430,7 +429,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
         style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
       >
         <BookOpen size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>
+        <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No publications yet
         </p>
       </div>
@@ -488,7 +487,6 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
           >
             <h4
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '14px',
                 fontWeight: 600,
                 color: 'var(--ink)',
@@ -591,7 +589,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
         style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
       >
         <BarChart3 size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>
+        <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No task completions in the last 12 months
         </p>
       </div>
@@ -702,7 +700,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
         style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
       >
         <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>
+        <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No active projects
         </p>
       </div>
@@ -743,7 +741,6 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
             >
               <h4
                 style={{
-                  fontFamily: 'var(--font-body)',
                   fontSize: '14px',
                   fontWeight: 600,
                   color: 'var(--ink)',
@@ -798,7 +795,7 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
         style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
       >
         <Flag size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>
+        <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No milestones tracked
         </p>
       </div>
@@ -840,7 +837,6 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h4
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '14px',
                     fontWeight: 600,
                     color: 'var(--ink)',
@@ -1122,7 +1118,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
         style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
       >
         <ClipboardList size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>
+        <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No contributions in this period
         </p>
       </div>
@@ -1216,7 +1212,6 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                   </div>
                   <p
                     style={{
-                      fontFamily: 'var(--font-body)',
                       fontSize: '13px',
                       color: 'var(--ink)',
                       margin: 0,
@@ -1282,7 +1277,7 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
   if (!contributions) {
     return (
       <div className="py-16 text-center">
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>
+        <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           Unable to load contribution data. Try refreshing the page.
         </p>
       </div>
@@ -1472,7 +1467,6 @@ export default function TrajectoryPage() {
             </h1>
             <p
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '14px',
                 color: 'var(--slate)',
                 margin: '0.25rem 0 0',
@@ -1652,7 +1646,7 @@ export default function TrajectoryPage() {
             {/* Empty state (no data at all and not loading) */}
             {!isLoading && !trajectory && (
               <div className="py-16 text-center">
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)' }}>
+                <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
                   Unable to load trajectory data. Try refreshing the page.
                 </p>
               </div>

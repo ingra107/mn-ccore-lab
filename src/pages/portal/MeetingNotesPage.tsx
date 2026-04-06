@@ -302,13 +302,13 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               </h4>
               {result.summary && (
                 <div className="mb-3">
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>Summary</span>
+                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>Summary</span>
                   <p className="text-sm mt-1" style={{ color: 'var(--ink)' }}>{result.summary}</p>
                 </div>
               )}
               {result.actions.length > 0 && (
                 <div className="mb-3">
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>Action Items ({result.actions.length})</span>
+                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>Action Items ({result.actions.length})</span>
                   <ul className="mt-1 flex flex-col gap-1">
                     {result.actions.map((a, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--ink)' }}>
@@ -321,7 +321,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               )}
               {result.decisions.length > 0 && (
                 <div>
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>Decisions ({result.decisions.length})</span>
+                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>Decisions ({result.decisions.length})</span>
                   <ul className="mt-1 flex flex-col gap-1">
                     {result.decisions.map((d, i) => (
                       <li key={i} className="text-sm" style={{ color: 'var(--ink)' }}>• {d}</li>

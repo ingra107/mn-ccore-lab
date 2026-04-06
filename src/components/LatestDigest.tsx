@@ -61,7 +61,6 @@ function PaperCard({ paper }: { paper: DigestPaper }) {
           <span
             className="text-xs truncate"
             style={{
-              fontFamily: 'var(--font-body)',
               color: 'var(--slate)',
               fontStyle: 'italic',
               maxWidth: '60%',
@@ -77,7 +76,6 @@ function PaperCard({ paper }: { paper: DigestPaper }) {
       <h4
         className="text-sm font-medium mb-3 leading-snug flex-1"
         style={{
-          fontFamily: 'var(--font-body)',
           color: 'var(--ink)',
           display: '-webkit-box',
           WebkitLineClamp: 3,
@@ -163,7 +161,6 @@ export default function LatestDigest() {
             to="/digest"
             className="inline-flex items-center gap-2 text-sm font-medium transition-opacity duration-200 hover:opacity-80"
             style={{
-              fontFamily: 'var(--font-body)',
               color: 'var(--gold)',
               textDecoration: 'none',
             }}

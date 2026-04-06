@@ -181,7 +181,6 @@ export default function LabPageLayout({
                             onClick={() => handleAnchorClick(section.id)}
                             className="cursor-pointer w-full text-left uppercase tracking-wider transition-all duration-200"
                             style={{
-                              fontFamily: 'var(--font-body)',
                               fontSize: '11px',
                               letterSpacing: '0.05em',
                               padding: '6px 12px',
@@ -251,7 +250,6 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
               <h3
                 className="text-base font-normal"
                 style={{
-                  fontFamily: 'var(--font-body)',
                   color: 'var(--ink)',
                 }}
               >
@@ -294,7 +292,6 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
                   <h3
                     className="text-sm font-normal"
                     style={{
-                      fontFamily: 'var(--font-body)',
                       color: 'var(--ink)',
                     }}
                   >
@@ -360,7 +357,6 @@ function ProjectCardItem({ project }: { project: ProjectCard }) {
         <h3
           className="text-sm sm:text-base font-normal leading-snug"
           style={{
-            fontFamily: 'var(--font-body)',
             color: 'var(--ink)',
           }}
         >
@@ -486,7 +482,6 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
             <h3
               className="text-base font-normal leading-tight"
               style={{
-                fontFamily: 'var(--font-body)',
                 color: 'var(--ink)',
               }}
             >
@@ -569,7 +564,6 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
                   <span
                     className="text-xs truncate"
                     style={{
-                      fontFamily: 'var(--font-body)',
                       color: 'var(--ink)',
                       fontWeight: 500,
                     }}
@@ -613,7 +607,7 @@ export function MenteesSection({ mentees, id, title = 'MNCCORE Trainees' }: { me
           {title}
         </h2>
       </div>
-      <p className="text-sm mb-6" style={{ color: 'var(--slate)', fontFamily: 'var(--font-body)' }}>
+      <p className="text-sm mb-6" style={{ color: 'var(--slate)' }}>
         Trainees are shared across MNCCORE — we mentor as a team.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

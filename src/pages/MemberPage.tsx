@@ -81,7 +81,6 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '15px',
               color: 'var(--ink)',
               lineHeight: 1.4,
@@ -348,7 +347,6 @@ export default function MemberPage() {
                     style={{
                       background: 'rgba(201, 168, 76, 0.1)',
                       color: 'var(--gold)',
-                      fontFamily: 'var(--font-body)',
                       fontWeight: 500,
                       border: '1px solid rgba(201, 168, 76, 0.2)',
                     }}
@@ -405,7 +403,7 @@ export default function MemberPage() {
                   <div className="flex items-center justify-between gap-3 mb-2">
                     <h3
                       className="text-sm sm:text-base font-normal"
-                      style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}
+                      style={{ color: 'var(--ink)' }}
                     >
                       {project.title}
                     </h3>
@@ -560,7 +558,6 @@ export default function MemberPage() {
                   autoFocus
                   className="px-3 py-1.5 rounded-md text-sm"
                   style={{
-                    fontFamily: 'var(--font-body)',
                     background: 'var(--ice)',
                     color: 'var(--ink)',
                     border: '1px solid rgba(201,168,76,0.2)',
@@ -602,7 +599,7 @@ export default function MemberPage() {
             )}
 
             {expertiseTags.length === 0 && !showAddTag && (
-              <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.6, fontFamily: 'var(--font-body)' }}>
+              <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.6 }}>
                 No expertise tags yet.{isAuthenticated ? ' Click + Add to tag areas of expertise.' : ''}
               </p>
             )}
@@ -656,7 +653,6 @@ export default function MemberPage() {
                   style={{
                     background: `${TOPIC_COLORS[topic] ?? 'var(--gold)'}15`,
                     color: TOPIC_COLORS[topic] ?? 'var(--gold)',
-                    fontFamily: 'var(--font-body)',
                     fontWeight: 500,
                   }}
                 >
@@ -745,7 +741,7 @@ export default function MemberPage() {
       {memberPubs.length === 0 && (
         <div
           className="py-8 text-center"
-          style={{ color: 'var(--slate)', fontFamily: 'var(--font-body)' }}
+          style={{ color: 'var(--slate)' }}
         >
           <p className="text-sm">
             Publications for {member.name} will appear here as they are added to

@@ -26,7 +26,6 @@ export default function Breadcrumb({ backTo, backLabel, current, maxLength = 40 
         to={backTo}
         className="inline-flex items-center gap-2 mt-1"
         style={{
-          fontFamily: 'var(--font-body)',
           fontSize: '14px',
           color: 'var(--slate)',
           textDecoration: 'none',

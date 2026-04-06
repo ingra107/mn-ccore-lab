@@ -92,7 +92,6 @@ export default function ProjectComments({ projectSlug }: Props) {
               }}
               style={{
                 width: '100%',
-                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
                 color: 'var(--ink)',
                 background: 'var(--cream)',
@@ -195,7 +194,6 @@ export default function ProjectComments({ projectSlug }: Props) {
                           </div>
                           <p
                             style={{
-                              fontFamily: 'var(--font-body)',
                               fontSize: '13px',
                               color: 'var(--ink)',
                               lineHeight: 1.5,
@@ -223,7 +221,6 @@ export default function ProjectComments({ projectSlug }: Props) {
                           <div className="flex items-baseline gap-2">
                             <span
                               style={{
-                                fontFamily: 'var(--font-body)',
                                 fontSize: '13px',
                                 fontWeight: 600,
                                 color: 'var(--ink)',
@@ -243,7 +240,6 @@ export default function ProjectComments({ projectSlug }: Props) {
                           </div>
                           <p
                             style={{
-                              fontFamily: 'var(--font-body)',
                               fontSize: '13px',
                               color: 'var(--ink)',
                               lineHeight: 1.5,
@@ -265,7 +261,6 @@ export default function ProjectComments({ projectSlug }: Props) {
         ) : (
           <p
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '12px',
               color: 'var(--slate)',
               opacity: 0.4,

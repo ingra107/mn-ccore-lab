@@ -163,7 +163,6 @@ export default function Projects() {
               style={{
                 background: 'transparent',
                 color: 'var(--teal)',
-                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
                 fontWeight: 600,
                 border: '1px solid var(--border-subtle)',
@@ -191,7 +190,6 @@ export default function Projects() {
                 onClick={() => setViewMode('list')}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
                 style={{
-                  fontFamily: 'var(--font-body)',
                   fontWeight: 500,
                   background: viewMode === 'list' ? 'var(--teal)' : 'transparent',
                   color: viewMode === 'list' ? '#ffffff' : 'var(--slate)',
@@ -206,7 +204,6 @@ export default function Projects() {
                 onClick={() => setViewMode('pipeline')}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
                 style={{
-                  fontFamily: 'var(--font-body)',
                   fontWeight: 500,
                   background: viewMode === 'pipeline' ? 'var(--teal)' : 'transparent',
                   color: viewMode === 'pipeline' ? '#ffffff' : 'var(--slate)',
@@ -229,7 +226,6 @@ export default function Projects() {
                   onClick={() => setActiveCategory(f.key)}
                   className="cursor-pointer inline-flex items-center px-2.5 py-1 text-xs filter-pill"
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontWeight: 500,
                     fontSize: '12px',
                     borderRadius: '6px',
@@ -250,7 +246,6 @@ export default function Projects() {
             <span
               className="text-xs"
               style={{
-                fontFamily: 'var(--font-body)',
                 color: 'var(--slate)',
                 whiteSpace: 'nowrap',
               }}
@@ -263,7 +258,6 @@ export default function Projects() {
                 onClick={() => setShowDeps(!showDeps)}
                 className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
                 style={{
-                  fontFamily: 'var(--font-body)',
                   fontSize: '11px',
                   fontWeight: 500,
                   background: showDeps ? 'var(--teal)' : 'transparent',
@@ -312,7 +306,6 @@ export default function Projects() {
                 <span
                   key={col}
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '11px',
                     fontWeight: 500,
                     color: 'var(--slate)',
@@ -355,7 +348,6 @@ export default function Projects() {
                           >
                             <span
                               style={{
-                                fontFamily: 'var(--font-body)',
                                 fontSize: '11px',
                                 fontWeight: 500,
                                 color: 'var(--slate)',
@@ -369,7 +361,6 @@ export default function Projects() {
                             </span>
                             <span
                               style={{
-                                fontFamily: 'var(--font-body)',
                                 fontSize: '11px',
                                 color: 'var(--slate)',
                                 opacity: 0.35,
@@ -414,7 +405,6 @@ export default function Projects() {
                               />
                               <span
                                 style={{
-                                  fontFamily: 'var(--font-body)',
                                   fontSize: '14px',
                                   fontWeight: 500,
                                   color: 'var(--ink)',
@@ -463,7 +453,6 @@ export default function Projects() {
                             {/* Category */}
                             <span
                               style={{
-                                fontFamily: 'var(--font-body)',
                                 fontSize: '11px',
                                 color: 'var(--slate)',
                                 opacity: 0.4,
@@ -498,7 +487,6 @@ export default function Projects() {
                               />
                               <span
                                 style={{
-                                  fontFamily: 'var(--font-body)',
                                   fontSize: '14px',
                                   fontWeight: 500,
                                   color: 'var(--ink)',
@@ -539,7 +527,6 @@ export default function Projects() {
                               />
                               <span
                                 style={{
-                                  fontFamily: 'var(--font-body)',
                                   fontSize: '11px',
                                   color: 'var(--slate)',
                                   opacity: 0.4,
@@ -565,7 +552,6 @@ export default function Projects() {
               >
                 <span
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '14px',
                     color: 'var(--slate)',
                     opacity: 0.4,
@@ -674,7 +660,6 @@ export default function Projects() {
                       <div className="flex items-center justify-between">
                         <h3
                           style={{
-                            fontFamily: 'var(--font-body)',
                             fontWeight: 400,
                             fontSize: '13px',
                             color: 'var(--ink)',
@@ -685,7 +670,6 @@ export default function Projects() {
                         </h3>
                         <span
                           style={{
-                            fontFamily: 'var(--font-body)',
                             fontSize: '12px',
                             color: 'var(--slate)',
                             opacity: 0.4,
@@ -725,7 +709,6 @@ export default function Projects() {
                           >
                             <span
                               style={{
-                                fontFamily: 'var(--font-body)',
                                 fontSize: '12px',
                                 color: 'var(--slate)',
                                 opacity: 0.3,
@@ -851,7 +834,7 @@ function PIHoverAvatar({ slug }: { slug: string }) {
       <div style={{ width: 22, height: 22, flexShrink: 0 }}>
         <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[8px]" />
       </div>
-      <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
+      <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
         {p.name.split(' ').pop()}
       </span>
       <HoverCard

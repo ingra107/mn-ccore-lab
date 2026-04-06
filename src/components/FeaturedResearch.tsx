@@ -79,7 +79,6 @@ export default function FeaturedResearch() {
                 </span>
                 <span
                   className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(pub.status)}`}
-                  style={{ fontFamily: 'var(--font-body)' }}
                 >
                   {pub.status}
                 </span>
@@ -89,7 +88,6 @@ export default function FeaturedResearch() {
               <h3
                 className="text-base font-normal mb-2 leading-snug"
                 style={{
-                  fontFamily: 'var(--font-body)',
                   color: 'var(--ink)',
                 }}
               >
@@ -134,7 +132,6 @@ export default function FeaturedResearch() {
                   to="/publications"
                   className="inline-flex items-center gap-1.5 text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
                   style={{
-                    fontFamily: 'var(--font-body)',
                     color: 'var(--gold)',
                     textDecoration: 'none',
                   }}
@@ -153,7 +150,6 @@ export default function FeaturedResearch() {
             to="/publications"
             className="inline-flex items-center gap-2 text-sm font-medium cursor-pointer transition-opacity duration-200 hover:opacity-80"
             style={{
-              fontFamily: 'var(--font-body)',
               color: 'var(--gold)',
               textDecoration: 'none',
             }}

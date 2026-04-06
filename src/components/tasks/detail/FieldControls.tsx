@@ -16,7 +16,7 @@ import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
 export function FieldBlock({ label, icon: Icon, children }: { label: string; icon: typeof Circle; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3">
-      <label className="flex items-center gap-1.5 text-[11px] pt-1.5 shrink-0 w-[88px]" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
+      <label className="flex items-center gap-1.5 text-[11px] pt-1.5 shrink-0 w-[88px]" style={{ color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
         <Icon size={12} style={{ opacity: 0.7 }} />
         {label}
       </label>
@@ -195,7 +195,7 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
         <div style={{ width: 28, height: 28 }}>
           <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
         </div>
-        <span className="text-sm" style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)' }}>{person.name}</span>
+        <span className="text-sm" style={{ color: 'var(--ink)' }}>{person.name}</span>
         <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 0.5 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
       {open && (
@@ -209,7 +209,7 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
                 key={slug}
                 onClick={() => { onChange(slug); setOpen(false) }}
                 className="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+                style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
               >
                 <div style={{ width: 24, height: 24 }}>
                   <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[7px]" />
@@ -241,7 +241,6 @@ export function DateInput({ value, onChange }: { value: string; onChange: (v: st
         onClick={() => inputRef.current?.showPicker()}
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
         style={{
-          fontFamily: 'var(--font-body)',
           color: isOverdue ? 'var(--maroon)' : formatted ? 'var(--ink)' : 'var(--slate)',
           fontWeight: isOverdue ? 600 : 400,
           cursor: 'pointer',
@@ -322,7 +321,6 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
         onMouseLeave={current && !open ? hoverCard.handlers.onMouseLeave : undefined}
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
         style={{
-          fontFamily: 'var(--font-body)',
           color: current ? 'var(--teal)' : 'var(--slate)',
           cursor: 'pointer',
           background: current ? 'rgba(45,138,138,0.06)' : 'none',
@@ -349,7 +347,7 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
           <button
             onClick={() => { onChange(''); setOpen(false) }}
             className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-            style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.6 }}
+            style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.6 }}
           >
             No project
             {!value && <Check size={14} style={{ color: 'var(--teal)', marginLeft: 'auto' }} />}
@@ -361,7 +359,7 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
                 key={p.slug}
                 onClick={() => { onChange(p.slug); setOpen(false) }}
                 className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+                style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
               >
                 <span className="flex-1 truncate">{p.title}</span>
                 {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}

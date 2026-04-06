@@ -489,7 +489,7 @@ export default function PIAnalytics() {
               <div className="flex-1 min-w-[200px]">
                 <p
                   className="text-sm mb-3"
-                  style={{ fontFamily: 'var(--font-body)', color: 'var(--ink)', lineHeight: 1.5 }}
+                  style={{ color: 'var(--ink)', lineHeight: 1.5 }}
                 >
                   You kept{' '}
                   <strong style={{ color: 'var(--teal)' }}>{data?.commitments.completed || 0}</strong>{' '}
@@ -915,7 +915,6 @@ export default function PIAnalytics() {
                     <p
                       className="text-sm"
                       style={{
-                        fontFamily: 'var(--font-body)',
                         color: 'var(--ink)',
                         lineHeight: 1.5,
                       }}

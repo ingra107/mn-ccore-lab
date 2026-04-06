@@ -61,7 +61,7 @@ function SortableQuickWin({ task, onComplete, onClickTitle }: {
           className="flex-1 text-left truncate"
           style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-            fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+            fontSize: '13px', color: 'var(--ink)',
           }}
         >
           {task.title || task.description}

@@ -44,7 +44,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <FlaskConical size={14} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
+            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
               Projects
             </span>
           </div>
@@ -60,7 +60,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
               )}
             </div>
           ) : (
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.4, margin: 0 }}>
+            <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4, margin: 0 }}>
               No projects assigned
             </p>
           )}
@@ -70,7 +70,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <ListChecks size={14} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
+            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
               Action Items
             </span>
             {myPending.length > 0 && (
@@ -86,7 +86,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
                 return (
                   <div key={item.id} className="flex items-start gap-1.5">
                     <Circle size={10} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.4, marginTop: '3px', flexShrink: 0 }} />
-                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--ink)', lineHeight: 1.3 }}>
+                    <span style={{ fontSize: '11px', color: 'var(--ink)', lineHeight: 1.3 }}>
                       {item.description.length > 60 ? item.description.slice(0, 57) + '...' : item.description}
                     </span>
                   </div>
@@ -96,7 +96,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
           ) : (
             <div className="flex items-center gap-1.5">
               <CheckCircle2 size={12} style={{ color: 'var(--teal)' }} />
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
                 All caught up ({myCompleted.length} done)
               </span>
             </div>
@@ -107,14 +107,14 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <BookOpen size={14} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
+            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
               Publications
             </span>
           </div>
           <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
             {myPubs.length}
           </div>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6, margin: '4px 0 0' }}>
+          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, margin: '4px 0 0' }}>
             {myPubs.filter((p) => p.status === 'Published').length} published
             {myPubs.filter((p) => p.status !== 'Published').length > 0 &&
               ` · ${myPubs.filter((p) => p.status !== 'Published').length} in progress`}
@@ -131,25 +131,25 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={14} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
+            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
               Summary
             </span>
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)' }}>Projects</span>
+              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>Projects</span>
               <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>{myProjects.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)' }}>Publications</span>
+              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>Publications</span>
               <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>{myPubs.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)' }}>Actions pending</span>
+              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>Actions pending</span>
               <span style={{ fontSize: '13px', fontWeight: 600, color: myPending.length > 0 ? 'var(--gold)' : 'var(--teal)' }}>{myPending.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)' }}>Actions completed</span>
+              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>Actions completed</span>
               <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--teal)' }}>{myCompleted.length}</span>
             </div>
           </div>
@@ -176,7 +176,7 @@ function MenteeProjectLink({ project }: { project: { slug: string; title: string
     <Link
       ref={hoverCard.triggerRef as React.RefObject<HTMLAnchorElement>}
       to={`/projects/${project.slug}`}
-      style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', textDecoration: 'none', lineHeight: 1.3 }}
+      style={{ fontSize: '12px', color: 'var(--ink)', textDecoration: 'none', lineHeight: 1.3 }}
       className="hover:opacity-80"
       onMouseEnter={hoverCard.handlers.onMouseEnter}
       onMouseLeave={hoverCard.handlers.onMouseLeave}

@@ -826,7 +826,7 @@ function WatchingCard({ items, onUnwatch }: { items: WatchItem[]; onUnwatch: (id
         {items.map(item => (
           <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.06)' }}>
             {getWatchTypeIcon(item.type)}
-            <Link to={getWatchItemUrl(item)} style={{ flex: 1, fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', textDecoration: 'none' }}>
+            <Link to={getWatchItemUrl(item)} style={{ flex: 1, fontSize: '13px', color: 'var(--ink)', textDecoration: 'none' }}>
               {item.label}
             </Link>
             <button onClick={() => onUnwatch(item.id, item.type)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.3, padding: 2 }}>

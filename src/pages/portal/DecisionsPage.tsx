@@ -365,7 +365,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome, onStatusChange }: {
         </div>
 
         {decision.rationale && (
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--slate)', lineHeight: 1.5, marginBottom: '8px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--slate)', lineHeight: 1.5, marginBottom: '8px' }}>
             {decision.rationale}
           </p>
         )}
@@ -375,7 +375,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome, onStatusChange }: {
             className="mb-2 px-3 py-2 rounded-lg"
             style={{ background: 'rgba(45,138,138,0.04)', borderLeft: '3px solid var(--teal)' }}
           >
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>
+            <p style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>
               <span style={{ fontWeight: 600 }}>Outcome:</span> {decision.outcome}
             </p>
           </div>
@@ -388,7 +388,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome, onStatusChange }: {
             style={{ background: 'rgba(201,168,76,0.06)', borderLeft: '3px solid var(--gold)' }}
           >
             <AlertTriangle size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--gold)', fontWeight: 500 }}>
+            <span style={{ fontSize: '12px', color: 'var(--gold)', fontWeight: 500 }}>
               This decision was made {days} days ago. Consider recording the outcome.
             </span>
           </div>
@@ -404,7 +404,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome, onStatusChange }: {
           {person && (
             <span className="flex items-center gap-1.5">
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="gold" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>
                 {person.name.split(' ')[0]}
               </span>
             </span>
@@ -414,7 +414,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome, onStatusChange }: {
             <Link
               to={`/projects/${decision.project_slug}`}
               className="flex items-center gap-1 hover:underline"
-              style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--teal)', textDecoration: 'none' }}
+              style={{ fontSize: '11px', color: 'var(--teal)', textDecoration: 'none' }}
             >
               <FolderKanban size={11} />
               {projectTitle}
@@ -478,7 +478,7 @@ function SimilarDecisionsPanel({ decisionId, projects }: { decisionId: string; p
   if (isLoading) {
     return (
       <div className="px-4 pb-4" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.5, padding: '8px 0' }}>
+        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.5, padding: '8px 0' }}>
           Finding related decisions...
         </p>
       </div>
@@ -488,7 +488,7 @@ function SimilarDecisionsPanel({ decisionId, projects }: { decisionId: string; p
   if (similar.length === 0) {
     return (
       <div className="px-4 pb-4" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.5, padding: '8px 0' }}>
+        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.5, padding: '8px 0' }}>
           No similar decisions found.
         </p>
       </div>
@@ -499,7 +499,7 @@ function SimilarDecisionsPanel({ decisionId, projects }: { decisionId: string; p
     <div className="px-4 pb-4" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
       <div className="flex items-center gap-1.5 mt-3 mb-2">
         <History size={12} style={{ color: 'var(--gold)' }} />
-        <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+        <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
           Related Decisions
         </span>
       </div>
@@ -513,7 +513,7 @@ function SimilarDecisionsPanel({ decisionId, projects }: { decisionId: string; p
               style={{ background: 'rgba(201,168,76,0.03)', border: '1px dashed rgba(201,168,76,0.12)' }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
                   {d.title}
                 </span>
                 {d.outcome_sentiment && d.outcome_sentiment !== 'pending' && (
@@ -529,7 +529,7 @@ function SimilarDecisionsPanel({ decisionId, projects }: { decisionId: string; p
                 )}
               </div>
               {d.outcome && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--teal)', marginTop: 2, marginBottom: 2 }}>
+                <p style={{ fontSize: '12px', color: 'var(--teal)', marginTop: 2, marginBottom: 2 }}>
                   Outcome: {d.outcome}
                 </p>
               )}
@@ -538,7 +538,7 @@ function SimilarDecisionsPanel({ decisionId, projects }: { decisionId: string; p
                   {new Date(d.created_at).toLocaleDateString()}
                 </span>
                 {projTitle && (
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '10px', color: 'var(--teal)' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--teal)' }}>
                     {projTitle}
                   </span>
                 )}
@@ -638,7 +638,7 @@ function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; p
               </div>
 
               {decision.outcome && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--teal)', marginTop: '4px', marginBottom: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--teal)', marginTop: '4px', marginBottom: 0 }}>
                   Outcome: {decision.outcome}
                 </p>
               )}
@@ -647,7 +647,7 @@ function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; p
                 <Link
                   to={`/projects/${decision.project_slug}`}
                   className="flex items-center gap-1 mt-1"
-                  style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--teal)', textDecoration: 'none', opacity: 0.7 }}
+                  style={{ fontSize: '11px', color: 'var(--teal)', textDecoration: 'none', opacity: 0.7 }}
                 >
                   <FolderKanban size={10} />
                   {projTitle}
@@ -705,7 +705,7 @@ function ReviewCard({
           </span>
         </div>
         {decision.rationale && (
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--slate)', lineHeight: 1.5, margin: 0 }}>
+          <p style={{ fontSize: '13px', color: 'var(--slate)', lineHeight: 1.5, margin: 0 }}>
             {decision.rationale}
           </p>
         )}
@@ -713,7 +713,7 @@ function ReviewCard({
           {person && (
             <span className="flex items-center gap-1.5">
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="gold" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>
                 {person.name.split(' ')[0]}
               </span>
             </span>
@@ -722,7 +722,7 @@ function ReviewCard({
             <Link
               to={`/projects/${decision.project_slug}`}
               className="flex items-center gap-1"
-              style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--teal)', textDecoration: 'none' }}
+              style={{ fontSize: '11px', color: 'var(--teal)', textDecoration: 'none' }}
             >
               <FolderKanban size={11} />
               {projectTitle}
@@ -742,7 +742,6 @@ function ReviewCard({
       >
         <p
           style={{
-            fontFamily: 'var(--font-body)',
             fontSize: '13px',
             color: 'var(--ink)',
             marginBottom: '10px',
@@ -758,7 +757,6 @@ function ReviewCard({
           rows={3}
           style={{
             width: '100%',
-            fontFamily: 'var(--font-body)',
             fontSize: '13px',
             color: 'var(--ink)',
             background: 'var(--cream)',
@@ -775,7 +773,6 @@ function ReviewCard({
             value={sentiment}
             onChange={(e) => setSentiment(e.target.value)}
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '12px',
               color: 'var(--ink)',
               background: 'var(--cream)',
@@ -904,7 +901,6 @@ function CreateDecisionModal({
 
   const inputStyle = {
     width: '100%',
-    fontFamily: 'var(--font-body)',
     fontSize: '13px',
     color: 'var(--ink)',
     background: 'var(--cream)',
@@ -966,14 +962,14 @@ function CreateDecisionModal({
               <div className="mt-3 p-3 rounded-lg" style={{ background: 'rgba(201,168,76,0.04)', border: '1px dashed rgba(201,168,76,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-2">
                   <History size={12} style={{ color: 'var(--gold)' }} />
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
                     Similar past decisions
                   </span>
                 </div>
                 {similarDecisions.map(d => (
                   <div key={d.id} className="py-2" style={{ borderBottom: '1px solid rgba(201,168,76,0.06)' }}>
                     <div className="flex items-center gap-2">
-                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
+                      <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
                         {d.title}
                       </p>
                       {d.outcome_sentiment && d.outcome_sentiment !== 'pending' && (
@@ -981,7 +977,7 @@ function CreateDecisionModal({
                       )}
                     </div>
                     {d.outcome && (
-                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--teal)', marginTop: 2, marginBottom: 0 }}>
+                      <p style={{ fontSize: '12px', color: 'var(--teal)', marginTop: 2, marginBottom: 0 }}>
                         Outcome: {d.outcome}
                       </p>
                     )}
@@ -1101,7 +1097,6 @@ function CreateDecisionModal({
                     border: 'none',
                     outline: 'none',
                     background: 'transparent',
-                    fontFamily: 'var(--font-body)',
                     fontSize: '13px',
                     color: 'var(--ink)',
                     padding: '4px',
@@ -1120,7 +1115,6 @@ function CreateDecisionModal({
                       onClick={() => { toggleLinkedProject(p.slug); setProjectSearchQuery('') }}
                       className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 transition-colors"
                       style={{
-                        fontFamily: 'var(--font-body)',
                         color: 'var(--ink)',
                         border: 'none',
                         background: 'transparent',

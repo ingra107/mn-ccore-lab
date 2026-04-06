@@ -65,7 +65,7 @@ export default function MeetingPrep() {
     return (
       <div className="content-container" style={{ paddingTop: '2rem' }}>
         <Link to="/meetings" className="inline-flex items-center gap-2 mb-6"
-          style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
+          style={{ fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
           <ArrowLeft size={16} /> Back to Meetings
         </Link>
         <h1 style={{ fontWeight: 600, fontSize: '1.75rem', color: 'var(--ink)' }}>
@@ -97,7 +97,7 @@ export default function MeetingPrep() {
           <h1 style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--ink)', margin: 0 }}>
             {meeting.title}
           </h1>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--slate)', marginTop: 4 }}>
+          <p style={{ fontSize: 14, color: 'var(--slate)', marginTop: 4 }}>
             {formatLongDate(meeting.date)}
             {facilitator && ` — Facilitated by ${facilitator.name}`}
           </p>
@@ -145,7 +145,7 @@ export default function MeetingPrep() {
                 </div>
               )}
               {previousActionItems.length === 0 && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
                   No previous meeting found
                 </p>
               )}
@@ -167,7 +167,7 @@ export default function MeetingPrep() {
                     return (
                       <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
                         <Flag size={10} style={{ color: priorityColors[task.priority] || 'var(--slate)', flexShrink: 0 }} />
-                        <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
+                        <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                           <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
                         </div>
@@ -186,7 +186,7 @@ export default function MeetingPrep() {
                   {agendaItems.map((item, i) => (
                     <div key={item.id} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < agendaItems.length - 1 ? '1px solid rgba(201,168,76,0.04)' : 'none' }}>
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.4, marginTop: 2, flexShrink: 0 }}>{i + 1}.</span>
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--ink)' }}>{item.content}</span>
+                      <span style={{ fontSize: 12, color: 'var(--ink)' }}>{item.content}</span>
                     </div>
                   ))}
                 </div>
@@ -203,7 +203,7 @@ export default function MeetingPrep() {
                     return (
                       <div key={item.id} className="flex items-center gap-2 py-1.5">
                         <Circle size={10} style={{ color: 'var(--orange)', flexShrink: 0 }} />
-                        <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--ink)', flex: 1 }}>{item.description}</span>
+                        <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{item.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                           <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
                         </div>
@@ -214,7 +214,7 @@ export default function MeetingPrep() {
               )}
 
               {agendaItems.length === 0 && overdueTasks.length === 0 && pendingPrev.length === 0 && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
                   No agenda items yet. The team can add items from the meeting page.
                 </p>
               )}
@@ -231,7 +231,7 @@ export default function MeetingPrep() {
                   return (
                     <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
                       <Calendar size={10} style={{ color: 'var(--teal)', flexShrink: 0 }} />
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
+                      <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.5 }}>{formatShortDate(task.due_date)}</span>
                       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                         <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
@@ -240,7 +240,7 @@ export default function MeetingPrep() {
                   )
                 })
               ) : (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '12px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '12px 0', margin: 0 }}>
                   No deadlines in the next two weeks.
                 </p>
               )}
@@ -256,12 +256,12 @@ export default function MeetingPrep() {
                       <div style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }}>
                         <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
                       </div>
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--ink)', flex: 1, lineHeight: 1.4 }}>{act.description}</span>
+                      <span style={{ fontSize: 11, color: 'var(--ink)', flex: 1, lineHeight: 1.4 }}>{act.description}</span>
                     </div>
                   )
                 })
               ) : (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '12px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '12px 0', margin: 0 }}>
                   No recent activity.
                 </p>
               )}
@@ -336,7 +336,7 @@ function ActionRow({ item }: { item: { id: string; description: string; assignee
         <Circle size={12} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.5, flexShrink: 0 }} />
       )}
       <span style={{
-        fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--ink)', flex: 1,
+        fontSize: 12, color: 'var(--ink)', flex: 1,
         textDecoration: item.completed ? 'line-through' : 'none',
         opacity: item.completed ? 0.5 : 1,
       }}>

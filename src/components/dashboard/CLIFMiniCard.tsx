@@ -125,7 +125,6 @@ export default function CLIFMiniCard() {
           </div>
           <div
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '12px',
               color: 'var(--slate)',
               opacity: 0.7,

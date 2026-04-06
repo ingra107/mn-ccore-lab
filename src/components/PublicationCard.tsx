@@ -220,7 +220,6 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
             <h3
               className="text-sm sm:text-base font-normal leading-tight mb-1.5"
               style={{
-                fontFamily: 'var(--font-body)',
                 color: 'var(--ink)',
               }}
             >
@@ -229,7 +228,6 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
             <p
               className="text-xs"
               style={{
-                fontFamily: 'var(--font-body)',
                 fontStyle: 'italic',
                 color: 'var(--slate)',
               }}

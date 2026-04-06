@@ -312,7 +312,7 @@ export default function AnalyticsPage() {
               </p>
             </div>
             <div className="text-center pt-3 mt-3" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--slate)', opacity: 0.6 }}>
+              <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.6 }}>
                 Individual performance metrics are visible to PIs only
               </p>
             </div>

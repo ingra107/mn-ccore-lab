@@ -282,7 +282,6 @@ export default function MentionInput({
                   alignItems: 'center',
                   gap: '8px',
                   padding: '8px 12px',
-                  fontFamily: 'var(--font-body)',
                   fontSize: '13px',
                   color: 'var(--ink)',
                   background: index === selectedIndex ? 'rgba(201, 168, 76, 0.08)' : 'transparent',

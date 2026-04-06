@@ -182,7 +182,6 @@ export default function Layout() {
               to="/"
               className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap"
               style={{
-                fontFamily: 'var(--font-body)',
                 color: location.pathname === '/' ? 'var(--gold)' : 'var(--slate)',
                 borderBottom: location.pathname === '/' ? '2px solid var(--gold)' : '2px solid transparent',
               }}
@@ -201,7 +200,6 @@ export default function Layout() {
                 onClick={() => setResearchOpen(!researchOpen)}
                 className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap flex items-center gap-1"
                 style={{
-                  fontFamily: 'var(--font-body)',
                   color: isResearchActive ? 'var(--gold)' : 'var(--slate)',
                   borderBottom: isResearchActive ? '2px solid var(--gold)' : '2px solid transparent',
                   background: 'none',
@@ -243,7 +241,6 @@ export default function Layout() {
                     to={link.to}
                     className="block px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors duration-150"
                     style={{
-                      fontFamily: 'var(--font-body)',
                       color: location.pathname === link.to ? 'var(--gold)' : 'var(--ink)',
                       borderLeft: location.pathname === link.to
                         ? '3px solid var(--gold)'
@@ -314,7 +311,6 @@ export default function Layout() {
                 to={link.to}
                 className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap"
                 style={{
-                  fontFamily: 'var(--font-body)',
                   color:
                     location.pathname === link.to && !link.isJoin
                       ? 'var(--gold)'
@@ -380,7 +376,6 @@ export default function Layout() {
               onClick={() => setMenuOpen(false)}
               className="block px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
               style={{
-                fontFamily: 'var(--font-body)',
                 color: location.pathname === '/' ? 'var(--gold)' : 'var(--ink)',
                 background: location.pathname === '/' ? 'rgba(201, 168, 76, 0.1)' : 'transparent',
                 minHeight: '44px',
@@ -396,7 +391,6 @@ export default function Layout() {
               onClick={() => setMobileResearchOpen(!mobileResearchOpen)}
               className="w-full px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
               style={{
-                fontFamily: 'var(--font-body)',
                 color: isResearchActive ? 'var(--gold)' : 'var(--ink)',
                 background: isResearchActive ? 'rgba(201, 168, 76, 0.1)' : 'transparent',
                 minHeight: '44px',
@@ -433,7 +427,6 @@ export default function Layout() {
                   onClick={() => setMenuOpen(false)}
                   className="block py-2.5 rounded-md cursor-pointer text-sm font-medium transition-colors duration-200"
                   style={{
-                    fontFamily: 'var(--font-body)',
                     color: location.pathname === link.to ? 'var(--gold)' : 'var(--ink)',
                     background: location.pathname === link.to ? 'rgba(201, 168, 76, 0.08)' : 'transparent',
                     minHeight: '40px',
@@ -493,7 +486,6 @@ export default function Layout() {
                 onClick={() => setMenuOpen(false)}
                 className="block px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
                 style={{
-                  fontFamily: 'var(--font-body)',
                   color:
                     location.pathname === link.to && !link.isJoin
                       ? 'var(--gold)'

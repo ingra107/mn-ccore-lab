@@ -107,11 +107,11 @@ export default function Grants() {
                     }}>
                       <div className="flex items-center gap-1.5 mb-1">
                         <Clock size={10} style={{ color: 'var(--gold)' }} />
-                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
                           Note from past you
                         </span>
                       </div>
-                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', margin: 0 }}>
+                      <p style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', margin: 0 }}>
                         {m.future_note}
                       </p>
                     </div>
@@ -179,7 +179,6 @@ export default function Grants() {
               padding: '8px 12px',
               borderRadius: 8,
               border: '1px solid var(--border-light)',
-              fontFamily: 'var(--font-body)',
               fontSize: '13px',
               background: 'var(--cream)',
               color: 'var(--ink)',
@@ -220,7 +219,7 @@ export default function Grants() {
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
+                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
                   {grant.title}
                 </p>
                 <span style={{ fontSize: '10px', color: 'var(--slate)' }}>
@@ -234,7 +233,7 @@ export default function Grants() {
               )}
             </div>
             {grant.abstract && (
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.7, marginTop: '4px', lineHeight: 1.4, marginBottom: 0 }}>
+              <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7, marginTop: '4px', lineHeight: 1.4, marginBottom: 0 }}>
                 {grant.abstract}...
               </p>
             )}

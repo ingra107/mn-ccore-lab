@@ -207,7 +207,6 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
       >
         <p
           style={{
-            fontFamily: 'var(--font-body)',
             fontSize: '14px',
             color: 'var(--slate)',
             opacity: 0.5,
@@ -370,7 +369,6 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
                 color: 'var(--cream)',
                 padding: '6px 12px',
                 borderRadius: '8px',
-                fontFamily: 'var(--font-body)',
                 fontSize: '12px',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
@@ -411,7 +409,6 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
                 color: 'var(--cream)',
                 padding: '8px 14px',
                 borderRadius: '8px',
-                fontFamily: 'var(--font-body)',
                 fontSize: '12px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                 zIndex: 10,

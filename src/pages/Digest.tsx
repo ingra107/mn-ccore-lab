@@ -419,7 +419,6 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                     }}
                     className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150"
                     style={{
-                      fontFamily: 'var(--font-body)',
                       fontSize: '12px',
                       color: 'var(--ink)',
                       background: 'none',
@@ -636,7 +635,6 @@ export default function Digest() {
                       }}
                       className="cursor-pointer rounded-full px-3 py-1.5 text-sm transition-all duration-200"
                       style={{
-                        fontFamily: 'var(--font-body)',
                         fontWeight: isActive ? 600 : 400,
                         background: isActive ? 'var(--gold)' : 'rgba(201, 168, 76, 0.08)',
                         color: isActive ? 'var(--cream)' : 'var(--ink)',
@@ -692,7 +690,6 @@ export default function Digest() {
                     onClick={() => setStatusFilter(tab.key)}
                     className="cursor-pointer rounded-md px-3 py-1.5 text-sm transition-all duration-200"
                     style={{
-                      fontFamily: 'var(--font-body)',
                       fontWeight: isActive ? 600 : 400,
                       background: isActive ? 'var(--cream)' : 'transparent',
                       color: isActive ? 'var(--ink)' : 'var(--slate)',
@@ -723,7 +720,6 @@ export default function Digest() {
                 onClick={() => setForYouFilter(!forYouFilter)}
                 className="cursor-pointer rounded-full px-3 py-1.5 text-sm transition-all duration-200 flex items-center gap-1.5"
                 style={{
-                  fontFamily: 'var(--font-body)',
                   fontWeight: forYouFilter ? 600 : 400,
                   background: forYouFilter ? 'var(--teal)' : 'rgba(0, 128, 128, 0.06)',
                   color: forYouFilter ? 'var(--cream)' : 'var(--teal)',

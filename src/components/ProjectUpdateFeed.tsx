@@ -103,7 +103,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
                 }
               }}
               style={{
-                fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+                fontSize: '13px', color: 'var(--ink)',
                 background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)',
                 borderRadius: '8px', padding: '10px 12px', resize: 'none', outline: 'none',
                 lineHeight: 1.5, transition: 'border-color 0.2s', width: '100%',
@@ -131,7 +131,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
             </AnimatePresence>
           </div>
         ) : (
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '12px 0', margin: 0 }}>
+          <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '12px 0', margin: 0 }}>
             No updates yet — post the first one to keep the team informed
           </p>
         )}
@@ -165,7 +165,7 @@ function UpdateCard({ update }: { update: ProjectUpdateRow }) {
         </div>
         <div style={{ flex: 1 }}>
           <div className="flex items-center gap-2 mb-1">
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
               {person.name}
             </span>
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs"
@@ -176,7 +176,7 @@ function UpdateCard({ update }: { update: ProjectUpdateRow }) {
               {formatRelativeTime(update.created_at)}
             </span>
           </div>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
+          <p style={{ fontSize: '13px', color: 'var(--ink)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
             {update.content}
           </p>
 

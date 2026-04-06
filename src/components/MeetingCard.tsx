@@ -76,7 +76,6 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
           <h3
             className="text-sm sm:text-base font-normal leading-snug truncate"
             style={{
-              fontFamily: 'var(--font-body)',
               color: 'var(--ink)',
               margin: 0,
             }}
@@ -202,7 +201,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                           </div>
                           <span
                             className="text-xs"
-                            style={{ color: 'var(--ink)', fontFamily: 'var(--font-body)' }}
+                            style={{ color: 'var(--ink)' }}
                           >
                             {info.name}
                           </span>
@@ -227,7 +226,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                       <li
                         key={i}
                         className="text-sm leading-relaxed"
-                        style={{ color: 'var(--ink)', fontFamily: 'var(--font-body)' }}
+                        style={{ color: 'var(--ink)' }}
                       >
                         {item}
                       </li>
@@ -254,8 +253,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                           background: 'rgba(201,168,76,0.08)',
                           border: '1px solid rgba(201,168,76,0.2)',
                           color: 'var(--ink)',
-                          fontFamily: 'var(--font-body)',
-                        }}
+                          }}
                       >
                         <span style={{ color: 'var(--gold)', flexShrink: 0, marginTop: '1px' }}>&#9670;</span>
                         {decision}
@@ -281,7 +279,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                         <div
                           key={i}
                           className="flex items-start gap-2 text-sm"
-                          style={{ color: 'var(--ink)', fontFamily: 'var(--font-body)' }}
+                          style={{ color: 'var(--ink)' }}
                         >
                           <button
                             type="button"
@@ -365,7 +363,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                   </h4>
                   <p
                     className="text-sm leading-relaxed"
-                    style={{ color: 'var(--slate)', fontFamily: 'var(--font-body)' }}
+                    style={{ color: 'var(--slate)' }}
                   >
                     {meeting.notes}
                   </p>

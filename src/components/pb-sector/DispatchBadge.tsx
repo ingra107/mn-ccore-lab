@@ -81,7 +81,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                       }}
                     />
                     <div className="flex-1 min-w-0">
-                      <span className="block" style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', lineHeight: 1.4 }}>
+                      <span className="block" style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: 1.4 }}>
                         {item.comment}
                       </span>
                       {item.task_title && (

@@ -120,7 +120,6 @@ export default function BentoCard({
             {subtitle && (
               <p
                 style={{
-                  fontFamily: 'var(--font-body)',
                   fontSize: '12px',
                   color: 'var(--slate)',
                   margin: '2px 0 0 0',

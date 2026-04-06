@@ -542,7 +542,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
           <div className="flex items-center justify-between gap-1.5 mb-1">
             <div className="flex items-center gap-1.5">
               <Clock size={10} style={{ color: 'var(--gold)' }} />
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+              <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
                 Note from past you
               </span>
             </div>
@@ -554,7 +554,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               <Pencil size={9} style={{ color: 'var(--slate)', opacity: 0.4 }} />
             </button>
           </div>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', margin: 0 }}>
+          <p style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', margin: 0 }}>
             {item.future_note}
           </p>
         </div>
@@ -585,7 +585,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         }}>
           <div className="flex items-center gap-1.5 mb-2">
             <Pencil size={10} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
               Note to future me
             </span>
           </div>
@@ -595,7 +595,6 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             placeholder="What should you remember when this milestone arrives? Context, decisions, things to watch for..."
             rows={3}
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '12px',
               color: 'var(--ink)',
               lineHeight: 1.5,

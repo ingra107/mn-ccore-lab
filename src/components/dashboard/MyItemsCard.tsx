@@ -50,7 +50,7 @@ export default function MyItemsCard() {
             <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
               {pending.length}
             </span>
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
               pending
             </span>
           </div>
@@ -60,7 +60,7 @@ export default function MyItemsCard() {
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--maroon)' }}>
                 {overdueCount}
               </span>
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--maroon)', opacity: 0.7 }}>
+              <span style={{ fontSize: '11px', color: 'var(--maroon)', opacity: 0.7 }}>
                 overdue
               </span>
             </div>
@@ -79,7 +79,7 @@ export default function MyItemsCard() {
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold)' }}>
                 {unreadCount}
               </span>
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
+              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
                 notifications
               </span>
             </div>
@@ -103,7 +103,6 @@ export default function MyItemsCard() {
               <div className="min-w-0 flex-1">
                 <div
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '12px',
                     color: 'var(--ink)',
                     lineHeight: 1.4,
@@ -132,7 +131,7 @@ export default function MyItemsCard() {
         {pending.length === 0 && (
           <div className="flex items-center gap-2 py-3">
             <CheckCircle2 size={14} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
               All caught up
             </span>
           </div>

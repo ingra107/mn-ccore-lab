@@ -251,7 +251,6 @@ export default function Home() {
             <p
               className="mt-2 sm:mt-3 mb-6 sm:mb-8 transition-all duration-700"
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: 'clamp(1rem, 2vw, 1.3rem)',
                 lineHeight: 1.5,
                 color: 'rgba(255, 255, 255, 0.6)',
@@ -340,7 +339,7 @@ export default function Home() {
                   <div className="flex-1 min-w-0">
                     <h3
                       className="text-base font-normal"
-                      style={{ fontFamily: 'var(--font-body)', fontWeight: 400, color: '#ffffff', lineHeight: 1.2 }}
+                      style={{ fontWeight: 400, color: '#ffffff', lineHeight: 1.2 }}
                     >
                       {path.title}
                     </h3>
@@ -535,7 +534,6 @@ export default function Home() {
                   <div
                     className="text-xs"
                     style={{
-                      fontFamily: 'var(--font-body)',
                       color: 'var(--slate)',
                       maxWidth: '140px',
                       lineHeight: 1.3,
@@ -600,7 +598,6 @@ export default function Home() {
                   <h3
                     className="text-sm sm:text-base font-normal"
                     style={{
-                      fontFamily: 'var(--font-body)',
                       color: 'var(--ink)',
                     }}
                   >

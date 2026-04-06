@@ -82,7 +82,6 @@ export default function GrantTimelineCard() {
                   {/* PI name */}
                   <span
                     style={{
-                      fontFamily: 'var(--font-body)',
                       fontSize: '10px',
                       color: g.proposed ? 'var(--slate)' : 'rgba(255,255,255,0.8)',
                       whiteSpace: 'nowrap',

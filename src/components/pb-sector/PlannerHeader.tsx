@@ -52,7 +52,7 @@ function EditableField({ value, placeholder, onSave, icon: Icon }: {
           autoFocus
           className="flex-1"
           style={{
-            fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+            fontSize: '13px', color: 'var(--ink)',
             background: 'transparent', border: 'none', borderBottom: '1px solid var(--gold)',
             outline: 'none', padding: '2px 0',
           }}
@@ -64,7 +64,7 @@ function EditableField({ value, placeholder, onSave, icon: Icon }: {
           className="flex-1 text-left"
           style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0',
-            fontFamily: 'var(--font-body)', fontSize: '13px',
+            fontSize: '13px',
             color: value ? 'var(--ink)' : 'var(--slate)',
             opacity: value ? 1 : 0.4,
             fontStyle: value ? 'normal' : 'italic',
@@ -164,7 +164,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
           </h1>
           {quote && (
             <p style={{
-              fontFamily: 'var(--font-body)', fontSize: '12.5px', fontStyle: 'italic',
+              fontSize: '12.5px', fontStyle: 'italic',
               color: 'var(--slate)', opacity: 0.6, margin: '4px 0 0 0', lineHeight: 1.4,
             }}>
               "{quote.text}" — {quote.author}

@@ -107,7 +107,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
 
           {/* Description (always visible) */}
           <div>
-            <label className="block text-[11px] mb-1.5" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
+            <label className="block text-[11px] mb-1.5" style={{ color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
               Description
             </label>
             <EditableTextarea

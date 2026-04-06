@@ -178,7 +178,6 @@ export default function Dashboard() {
           </h1>
           <p
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '15px',
               color: 'var(--slate)',
               opacity: 0.7,

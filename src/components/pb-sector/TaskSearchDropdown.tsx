@@ -64,7 +64,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                 }}
                 className="flex-1"
                 style={{
-                  fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink)',
+                  fontSize: '14px', color: 'var(--ink)',
                   background: 'transparent', border: 'none', outline: 'none',
                 }}
               />
@@ -77,7 +77,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
             <div className="max-h-64 overflow-y-auto">
               {filtered.length === 0 ? (
                 <div className="px-4 py-6 text-center">
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--slate)', opacity: 0.5 }}>
+                  <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.5 }}>
                     {query ? 'No matching tasks' : 'No available tasks'}
                   </span>
                 </div>
@@ -98,7 +98,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                     }} />
 
                     <div className="flex-1 min-w-0">
-                      <span className="block truncate" style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)' }}>
+                      <span className="block truncate" style={{ fontSize: '13px', color: 'var(--ink)' }}>
                         {task.title || task.description}
                       </span>
                       {task.project_title && (

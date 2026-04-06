@@ -51,7 +51,6 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         />
         <h4
           style={{
-            fontFamily: 'var(--font-body)',
             fontWeight: 600,
             fontSize: '13px',
             color: 'var(--ink)',
@@ -80,7 +79,6 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         </div>
         <span
           style={{
-            fontFamily: 'var(--font-body)',
             fontSize: '11px',
             color: 'var(--slate)',
             opacity: 0.6,

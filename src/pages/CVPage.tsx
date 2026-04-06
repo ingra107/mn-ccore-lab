@@ -42,7 +42,7 @@ function CitationBlock({ pub, index }: { pub: CVData['publications'][0]; index: 
       >
         {index}.
       </span>
-      <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', lineHeight: 1.6, color: 'var(--ink)' }}>
+      <span style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--ink)' }}>
         {pub.authors}.{' '}
         <span style={{ fontStyle: 'italic' }}>"{pub.title}."</span>{' '}
         {pub.journal && <>{pub.journal}. </>}
@@ -120,7 +120,6 @@ function GrantBlock({ grant, slug }: { grant: CVData['grants'][0]; slug: string 
       <h4
         className="mt-1"
         style={{
-          fontFamily: 'var(--font-body)',
           fontSize: '14px',
           fontWeight: 600,
           color: 'var(--ink)',
@@ -221,7 +220,6 @@ export default function CVPage() {
           to={`/team/${slug || ''}`}
           className="inline-flex items-center gap-2 mb-6"
           style={{
-            fontFamily: 'var(--font-body)',
             fontSize: '14px',
             color: 'var(--slate)',
             textDecoration: 'none',
@@ -259,7 +257,6 @@ export default function CVPage() {
             to={`/team/${slug || ''}`}
             className="inline-flex items-center gap-2"
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '14px',
               color: 'var(--slate)',
               textDecoration: 'none',
@@ -287,7 +284,6 @@ export default function CVPage() {
           {member.title && (
             <p
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '15px',
                 color: 'var(--ink)',
                 lineHeight: 1.4,
@@ -299,7 +295,6 @@ export default function CVPage() {
           {member.department && (
             <p
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '14px',
                 color: 'var(--slate)',
                 lineHeight: 1.4,
@@ -310,7 +305,6 @@ export default function CVPage() {
           )}
           <p
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '14px',
               color: 'var(--slate)',
               lineHeight: 1.4,
@@ -434,7 +428,6 @@ export default function CVPage() {
                 <div key={mentee.slug} className="flex items-baseline gap-3">
                   <span
                     style={{
-                      fontFamily: 'var(--font-body)',
                       fontSize: '14px',
                       fontWeight: 600,
                       color: 'var(--ink)',

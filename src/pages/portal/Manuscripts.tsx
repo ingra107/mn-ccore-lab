@@ -187,7 +187,6 @@ export default function Manuscripts() {
                 <span
                   key={col}
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '11px',
                     fontWeight: 500,
                     color: 'var(--slate)',
@@ -221,7 +220,6 @@ export default function Manuscripts() {
                         <div className="flex items-center" style={{ padding: '20px 24px 8px', gap: '8px' }}>
                           <span
                             style={{
-                              fontFamily: 'var(--font-body)',
                               fontSize: '11px',
                               fontWeight: 500,
                               color: 'var(--slate)',
@@ -233,7 +231,7 @@ export default function Manuscripts() {
                           >
                             {project.stage}
                           </span>
-                          <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.35, flexShrink: 0 }}>
+                          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.35, flexShrink: 0 }}>
                             {manuscripts.filter((p) => p.stage === project.stage).length}
                           </span>
                           <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
@@ -261,11 +259,11 @@ export default function Manuscripts() {
                                 flexShrink: 0, opacity: 0.7, marginTop: '-1px',
                               }}
                             />
-                            <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.4 }}>
+                            <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.4 }}>
                               {project.title}
                             </span>
                             {tc > 0 && (
-                              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--teal)', opacity: 0.7, flexShrink: 0 }}>
+                              <span style={{ fontSize: '11px', color: 'var(--teal)', opacity: 0.7, flexShrink: 0 }}>
                                 {tc}
                               </span>
                             )}
@@ -293,12 +291,12 @@ export default function Manuscripts() {
                             <div style={{ width: 22, height: 22, flexShrink: 0 }}>
                               <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[8px]" />
                             </div>
-                            <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
+                            <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
                               {pi.name.split(' ').pop()}
                             </span>
                           </div>
 
-                          <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>
+                          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>
                             {catLabel}
                           </span>
                         </div>
@@ -322,11 +320,11 @@ export default function Manuscripts() {
                                 flexShrink: 0, opacity: 0.7, marginTop: '6px',
                               }}
                             />
-                            <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.4, flex: 1 }}>
+                            <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.4, flex: 1 }}>
                               {project.title}
                             </span>
                             {tc > 0 && (
-                              <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--teal)', opacity: 0.7, flexShrink: 0, marginTop: '4px' }}>
+                              <span style={{ fontSize: '11px', color: 'var(--teal)', opacity: 0.7, flexShrink: 0, marginTop: '4px' }}>
                                 {tc}
                               </span>
                             )}
@@ -349,7 +347,6 @@ export default function Manuscripts() {
                             />
                             <span
                               style={{
-                                fontFamily: 'var(--font-body)',
                                 fontSize: '11px',
                                 color: 'var(--slate)',
                                 opacity: 0.4,
@@ -367,7 +364,7 @@ export default function Manuscripts() {
               })()
             ) : (
               <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-                <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)', opacity: 0.4 }}>
+                <span style={{ fontSize: '14px', color: 'var(--slate)', opacity: 0.4 }}>
                   No manuscripts found
                 </span>
               </div>
@@ -436,10 +433,10 @@ export default function Manuscripts() {
                   }}
                 >
                   <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
-                    <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
+                    <h3 style={{ fontWeight: 400, fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
                       {stage}
                     </h3>
-                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.4, fontWeight: 500 }}>
+                    <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4, fontWeight: 500 }}>
                       {stageProjects.length}
                     </span>
                   </div>
@@ -467,7 +464,7 @@ export default function Manuscripts() {
                             >
                               <div className="flex items-start gap-2">
                                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0, opacity: 0.7, marginTop: '5px' }} />
-                                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
+                                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
                                   {p.title}
                                 </p>
                               </div>
@@ -475,7 +472,7 @@ export default function Manuscripts() {
                                 <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                                   <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
                                 </div>
-                                <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
                                   {pi.name.split(' ').pop()}
                                 </span>
                               </div>
@@ -486,7 +483,7 @@ export default function Manuscripts() {
                     </AnimatePresence>
                     {stageProjects.length === 0 && (
                       <div style={{ padding: '24px 8px', textAlign: 'center' }}>
-                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.3 }}>
+                        <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.3 }}>
                           No projects
                         </span>
                       </div>

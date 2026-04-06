@@ -43,7 +43,7 @@ export default function ActionBoardCard() {
                       <div style={{ width: 20, height: 20 }}>
                         <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
                       </div>
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>
                         {person.name}
                       </span>
                       <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.5 }}>
@@ -66,7 +66,7 @@ export default function ActionBoardCard() {
                             <StatusIcon size={14} />
                           </button>
                           <div style={{ flex: 1 }}>
-                            <p style={{ fontFamily: 'var(--font-body)', fontSize: '11.5px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
+                            <p style={{ fontSize: '11.5px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
                               {item.title || item.description}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
@@ -99,7 +99,7 @@ export default function ActionBoardCard() {
           ) : (
             <div className="flex flex-col items-center justify-center py-8" style={{ opacity: 0.4 }}>
               <CheckCircle2 size={24} style={{ color: 'var(--teal)', marginBottom: '8px' }} />
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', margin: 0 }}>
+              <p style={{ fontSize: '12px', color: 'var(--slate)', margin: 0 }}>
                 All caught up
               </p>
             </div>

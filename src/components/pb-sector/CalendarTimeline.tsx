@@ -110,7 +110,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
                 overflow: 'hidden',
               }}
             >
-              <span className="block truncate" style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--teal)', fontWeight: 500 }}>
+              <span className="block truncate" style={{ fontSize: '11px', color: 'var(--teal)', fontWeight: 500 }}>
                 {event.title}
               </span>
             </Link>

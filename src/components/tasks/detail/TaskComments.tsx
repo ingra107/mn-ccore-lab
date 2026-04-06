@@ -197,7 +197,7 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
 
   if (decisions.length === 0) {
     return (
-      <p className="text-xs" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', opacity: 0.4 }}>
+      <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.4 }}>
         No decisions linked to this project.
       </p>
     )
@@ -229,7 +229,7 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
               </span>
             </div>
             {d.outcome && (
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--teal)', margin: '2px 0 0 0' }}>
+              <p style={{ fontSize: '11px', color: 'var(--teal)', margin: '2px 0 0 0' }}>
                 {d.outcome}
               </p>
             )}

@@ -252,7 +252,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
       {/* Full context */}
       {detail.context && (
         <div className="mt-4 px-3 py-2.5 rounded-lg" style={{ backgroundColor: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.1)' }}>
-          <p className="text-[11px] mb-1" style={{ fontFamily: 'var(--font-body)', color: 'var(--gold)', fontWeight: 500 }}>
+          <p className="text-[11px] mb-1" style={{ color: 'var(--gold)', fontWeight: 500 }}>
             Context
           </p>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', fontStyle: 'italic' }}>
@@ -264,7 +264,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
       {/* Answers */}
       {detail.answers.length > 0 && (
         <div className="mt-4 flex flex-col gap-3">
-          <p className="text-[11px]" style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', fontWeight: 500 }}>
+          <p className="text-[11px]" style={{ color: 'var(--slate)', fontWeight: 500 }}>
             {detail.answers.length} Answer{detail.answers.length !== 1 ? 's' : ''}
           </p>
           {detail.answers.map((answer) => {

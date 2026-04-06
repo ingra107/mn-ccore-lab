@@ -316,7 +316,6 @@ function NodeDetail({
             border: '1px solid rgba(201, 168, 76, 0.2)',
             color: 'var(--gold)',
             textDecoration: 'none',
-            fontFamily: 'var(--font-body)',
             fontSize: '13px',
             fontWeight: 500,
           }}

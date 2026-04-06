@@ -380,7 +380,7 @@ export default function PBSector() {
                 style={{ background: 'var(--cream)', border: '2px solid var(--gold)', maxWidth: 400 }}
               >
                 <GripVertical size={14} style={{ color: 'var(--gold)', opacity: 0.5 }} />
-                <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--ink)' }}>
+                <span style={{ fontSize: '14px', color: 'var(--ink)' }}>
                   {activeTask.title || activeTask.description}
                 </span>
               </div>
@@ -416,7 +416,6 @@ export default function PBSector() {
               onKeyDown={(e) => { if (e.key === 'Enter') handleCapture() }}
               className="w-full px-4 py-3 rounded-xl text-sm transition-all"
               style={{
-                fontFamily: 'var(--font-body)',
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',

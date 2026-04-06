@@ -50,7 +50,6 @@ export default function PublicationSearch({
           placeholder="Search publications..."
           className="w-full pl-10 pr-10 py-2 rounded-md text-sm"
           style={{
-            fontFamily: 'var(--font-body)',
             fontSize: '14px',
             background: 'var(--cream)',
             color: 'var(--ink)',
