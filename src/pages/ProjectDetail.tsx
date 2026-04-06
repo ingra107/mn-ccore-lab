@@ -37,7 +37,9 @@ import WatchButton from '../components/WatchButton'
 import ProjectComments from '../components/ProjectComments'
 import ProjectUpdateFeed from '../components/ProjectUpdateFeed'
 import TaskCard from '../components/tasks/TaskCard'
+import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
 import type { Project, ActionItem } from '../data/types'
+import type { TaskRow } from '../lib/api'
 
 type Tab = 'overview' | 'tasks' | 'activity' | 'literature'
 
@@ -161,6 +163,9 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Note input
   const [noteText, setNoteText] = useState('')
+
+  // Task detail panel
+  const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
 
   // Add to meeting agenda
   const [showAgendaForm, setShowAgendaForm] = useState(false)
@@ -1104,7 +1109,12 @@ function ProjectDetailInner({ project }: InnerProps) {
                     <TaskCard
                       key={task.id}
                       task={task}
-                      onStatusChange={(id, status) => updateTaskStatus.mutate({ id, status })}
+                      onStatusChange={(id, status) => {
+                        const prev = task.status
+                        updateTaskStatus.mutate({ id, status })
+                        showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
+                      }}
+                      onClick={() => setSelectedTask(task)}
                     />
                   ))}
                 </div>
@@ -1118,7 +1128,12 @@ function ProjectDetailInner({ project }: InnerProps) {
                     <TaskCard
                       key={task.id}
                       task={task}
-                      onStatusChange={(id, status) => updateTaskStatus.mutate({ id, status })}
+                      onStatusChange={(id, status) => {
+                        const prev = task.status
+                        updateTaskStatus.mutate({ id, status })
+                        showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
+                      }}
+                      onClick={() => setSelectedTask(task)}
                     />
                   ))}
                   {completedTasks.length > 5 && (
@@ -1428,6 +1443,14 @@ function ProjectDetailInner({ project }: InnerProps) {
       </motion.div>
 
       </>)}
+
+      {/* Task Detail Panel */}
+      {selectedTask && (
+        <TaskDetailPanel
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
 
       {/* Scoped dark mode styles */}
       <style>{`
