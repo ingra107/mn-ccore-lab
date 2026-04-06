@@ -131,6 +131,9 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         </div>
       )}
 
+      {/* Calculations row — Notion-style summary */}
+      {sorted.length > 0 && <CalculationsRow tasks={sorted} />}
+
       {/* Context menu */}
       <TaskContextMenu
         state={contextMenuState}
@@ -601,6 +604,44 @@ function InlineCellSelect({
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+// ── Calculations Row (Notion-style summary) ──────────────────
+
+function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
+  const overdueCount = tasks.filter(t => !t.completed && t.due_date && t.due_date < new Date().toISOString().split('T')[0]).length
+  const todoCount = tasks.filter(t => t.status === 'todo').length
+  const inProgressCount = tasks.filter(t => t.status === 'in_progress').length
+  const doneCount = tasks.filter(t => t.completed).length
+
+  const stats = [
+    { label: 'Count', value: tasks.length },
+    ...(overdueCount > 0 ? [{ label: 'Overdue', value: overdueCount, color: 'var(--maroon)' }] : []),
+    { label: 'To Do', value: todoCount },
+    { label: 'In Progress', value: inProgressCount, color: 'var(--teal)' },
+    { label: 'Done', value: doneCount, color: 'var(--green, #16a34a)' },
+  ]
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: 20,
+        padding: '8px 16px',
+        borderTop: '1px solid var(--border-subtle)',
+        background: 'rgba(45, 138, 138, 0.02)',
+      }}
+    >
+      {stats.map(s => (
+        <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+          {s.label}{' '}
+          <span style={{ fontWeight: 600, color: s.color || 'var(--slate)', opacity: 1 }}>
+            {s.value}
+          </span>
+        </span>
+      ))}
     </div>
   )
 }
