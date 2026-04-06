@@ -21,6 +21,7 @@ import type { ActionItemRow } from '../hooks/useApiData'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import type { NotificationRow } from '../hooks/useNotifications'
 import { useToggleActionItem } from '../hooks/useMutations'
+import { useUndoToast } from '../components/UndoToast'
 import { useCommitments } from '../hooks/useCommitments'
 import type { CommitmentRow } from '../hooks/useCommitments'
 import { getPersonInfo } from '../data/team'
@@ -85,7 +86,6 @@ function SignInPrompt() {
         </h2>
         <p
           style={{
-            fontFamily: 'var(--font-body)',
             fontSize: '15px',
             color: 'var(--slate)',
             lineHeight: 1.6,
@@ -255,7 +255,6 @@ function ActionItemCard({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '15px',
               color: 'var(--ink)',
               lineHeight: 1.4,
@@ -404,7 +403,6 @@ function NotificationCard({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '14px',
               fontWeight: isUnread ? 600 : 400,
               color: 'var(--ink)',
@@ -416,7 +414,6 @@ function NotificationCard({
           {notification.body && (
             <div
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
                 color: 'var(--slate)',
                 opacity: 0.7,
@@ -508,7 +505,6 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '15px',
               color: 'var(--ink)',
               lineHeight: 1.4,
@@ -631,6 +627,14 @@ export default function MyItems() {
   const markRead = useMarkRead(userSlug)
   const markAllRead = useMarkAllRead(userSlug)
   const toggleAction = useToggleActionItem()
+  const { showUndo } = useUndoToast()
+
+  const handleToggle = (id: string) => {
+    const item = allActionItems.find(a => a.id === id)
+    const wasCompleted = item?.completed === 1
+    toggleAction.mutate(id)
+    showUndo(wasCompleted ? 'Reopened action item' : 'Completed action item', () => toggleAction.mutate(id))
+  }
   const { data: allCommitments = [] } = useCommitments()
 
   // Split commitments into open vs done, sort open by due date (overdue first)
@@ -769,7 +773,6 @@ export default function MyItems() {
           </h1>
           <p
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '15px',
               color: 'var(--slate)',
               opacity: 0.7,
@@ -829,7 +832,6 @@ export default function MyItems() {
               style={{
                 padding: '2rem',
                 textAlign: 'center',
-                fontFamily: 'var(--font-body)',
                 fontSize: '14px',
                 color: 'var(--slate)',
                 opacity: 0.6,
@@ -843,7 +845,7 @@ export default function MyItems() {
                 <ActionItemCard
                   key={item.id}
                   item={item}
-                  onToggle={(id) => toggleAction.mutate(id)}
+                  onToggle={handleToggle}
                 />
               ))}
             </AnimatePresence>
@@ -888,7 +890,6 @@ export default function MyItems() {
               style={{
                 padding: '2rem',
                 textAlign: 'center',
-                fontFamily: 'var(--font-body)',
                 fontSize: '14px',
                 color: 'var(--slate)',
                 opacity: 0.6,
@@ -920,7 +921,6 @@ export default function MyItems() {
                 style={{
                   padding: '2rem',
                   textAlign: 'center',
-                  fontFamily: 'var(--font-body)',
                   fontSize: '14px',
                   color: 'var(--slate)',
                   opacity: 0.6,
@@ -1000,7 +1000,7 @@ export default function MyItems() {
                     <ActionItemCard
                       key={item.id}
                       item={item}
-                      onToggle={(id) => toggleAction.mutate(id)}
+                      onToggle={handleToggle}
                     />
                   ))}
                 </motion.div>
