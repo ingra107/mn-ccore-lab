@@ -9,7 +9,7 @@ import TaskContextMenu from './TaskContextMenu'
 import { useContextMenu } from '../../hooks/useContextMenu'
 import { useSubtasks } from '../../hooks/useApiData'
 import { useCreateSubtask, useToggleSubtask } from '../../hooks/useMutations'
-import { STATUS_OPTIONS, STATUS_BG, PRIORITY_OPTIONS, PRIORITY_ORDER, STATUS_ORDER } from '../../lib/taskConstants'
+import { STATUS_OPTIONS, STATUS_BG, PRIORITY_OPTIONS, PRIORITY_CONFIG, PRIORITY_ORDER, STATUS_ORDER } from '../../lib/taskConstants'
 import type { TaskRow } from '../../lib/api'
 
 interface TaskGridViewProps {
@@ -407,7 +407,17 @@ function TaskGridRow({
         onChange={(val) => onFieldChange(task.id, 'priority', val)}
         renderValue={(val) => {
           const opt = PRIORITY_OPTIONS.find(o => o.value === val) || PRIORITY_OPTIONS[1]
-          return <span className="status-transition" style={{ color: opt.color }}>{opt.label}</span>
+          const cfg = PRIORITY_CONFIG[val as keyof typeof PRIORITY_CONFIG]
+          return (
+            <span className="status-transition" style={{
+              color: opt.color,
+              background: cfg?.bg || 'rgba(100, 116, 139, 0.1)',
+              padding: '2px 8px',
+              borderRadius: '9999px',
+            }}>
+              {opt.label}
+            </span>
+          )
         }}
       />
       </div>
