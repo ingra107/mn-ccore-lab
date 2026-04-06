@@ -26,6 +26,7 @@ import {
   Terminal,
   Inbox,
   ScrollText,
+  GraduationCap,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
@@ -94,6 +95,7 @@ const navGroups: NavGroup[] = [
     title: 'Lab',
     items: [
       { to: '/team', label: 'Team', icon: UsersIcon },
+      { to: '/mentee-milestones', label: 'Mentee Milestones', icon: GraduationCap },
       { to: '/activity', label: 'Activity', icon: Activity },
       { to: '/analytics', label: 'Analytics', icon: BarChart3 },
       { to: '/settings', label: 'Settings', icon: Settings },

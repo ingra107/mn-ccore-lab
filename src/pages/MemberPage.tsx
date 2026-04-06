@@ -7,7 +7,8 @@ import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
 import ActivityHeatmap from '../components/ActivityHeatmap'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { usePublications, useExpertise } from '../hooks/useApiData'
+import { usePublications, useExpertise, useMenteeMilestones } from '../hooks/useApiData'
+import type { MenteeMilestoneRow } from '../hooks/useApiData'
 import { useCommitments } from '../hooks/useCommitments'
 import { useAddExpertise, useRemoveExpertise } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
@@ -686,6 +687,11 @@ export default function MemberPage() {
       {/* Dashboard — projects, action items, publication count, summary */}
       {slug && <MenteeDashboard slug={slug} name={member.name} />}
 
+      {/* Milestones — for fellows and research team members */}
+      {slug && (mentee || member.role?.includes('Fellow') || member.role?.includes('Researcher')) && (
+        <MemberMilestones slug={slug} />
+      )}
+
       {/* Commitments to this person */}
       {hasCommitments && (
         <>
@@ -750,5 +756,150 @@ export default function MemberPage() {
         </div>
       )}
     </LabPageLayout>
+  )
+}
+
+// ── Member Milestones Section ──────────────────────────────
+
+const MILESTONE_TYPE_LABELS: Record<string, string> = {
+  committee_meeting: 'Committee Meeting',
+  scholarly_project: 'Scholarly Project',
+  irb_submission: 'IRB Submission',
+  irb_renewal: 'IRB Renewal',
+  program_eval: 'Program Evaluation',
+  presentation: 'Presentation',
+  publication: 'Publication',
+  other: 'Other',
+}
+
+const MILESTONE_STATUS_COLORS: Record<string, string> = {
+  upcoming: 'var(--slate)',
+  in_progress: 'var(--teal)',
+  completed: 'var(--green, #16a34a)',
+  overdue: 'var(--maroon)',
+}
+
+function MemberMilestones({ slug }: { slug: string }) {
+  const { data: milestones = [], isLoading } = useMenteeMilestones({ mentee: slug })
+
+  if (isLoading || milestones.length === 0) return null
+
+  const now = new Date()
+  const enriched = milestones.map((m: MenteeMilestoneRow) => {
+    const isOverdueCalc = m.due_date && m.status !== 'completed'
+      ? new Date(m.due_date + 'T23:59:59') < now
+      : false
+    return { ...m, _isOverdue: isOverdueCalc || m.status === 'overdue' }
+  })
+
+  const open = enriched.filter((m) => m.status !== 'completed')
+  const completed = enriched.filter((m) => m.status === 'completed')
+
+  return (
+    <>
+      <SectionDivider />
+      <div className="py-4" />
+      <section className="mb-8" id="milestones">
+        <div className="flex items-center gap-3 mb-4">
+          <GraduationCap size={20} style={{ color: 'var(--teal)' }} aria-hidden="true" />
+          <h2
+            className="text-xl sm:text-2xl"
+            style={{ fontWeight: 500, color: 'var(--ink)' }}
+          >
+            Milestones
+          </h2>
+          {open.length > 0 && (
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+              {open.length} upcoming
+            </span>
+          )}
+          <Link
+            to="/mentee-milestones"
+            style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--teal)', textDecoration: 'none' }}
+          >
+            View all
+          </Link>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          {open.map((m) => (
+            <MilestoneMiniCard key={m.id} milestone={m} isOverdue={m._isOverdue} />
+          ))}
+          {completed.slice(0, 3).map((m) => (
+            <MilestoneMiniCard key={m.id} milestone={m} isOverdue={false} />
+          ))}
+        </div>
+      </section>
+    </>
+  )
+}
+
+function MilestoneMiniCard({
+  milestone,
+  isOverdue,
+}: {
+  milestone: MenteeMilestoneRow
+  isOverdue: boolean
+}) {
+  const isDone = milestone.status === 'completed'
+  const borderColor = isDone ? 'var(--green, #16a34a)' : isOverdue ? 'var(--maroon)' : 'var(--teal)'
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.2 }}
+      className="card"
+      style={{
+        padding: '0.75rem 1rem',
+        borderLeft: `3px solid ${borderColor}`,
+        opacity: isDone ? 0.5 : 1,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: '13px',
+              fontWeight: 400,
+              color: 'var(--ink)',
+              textDecoration: isDone ? 'line-through' : 'none',
+            }}
+          >
+            {milestone.title}
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--gold)', opacity: 0.7 }}>
+              {MILESTONE_TYPE_LABELS[milestone.milestone_type] || milestone.milestone_type}
+            </span>
+            {milestone.due_date && (
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
+                  fontWeight: isOverdue ? 500 : 400,
+                  opacity: isOverdue ? 1 : 0.6,
+                }}
+              >
+                {isOverdue ? 'Overdue' : formatShortDate(milestone.due_date)}
+              </span>
+            )}
+          </div>
+        </div>
+        <span
+          className="px-2 py-0.5 rounded-full"
+          style={{
+            fontSize: '10px',
+            fontWeight: 500,
+            color: MILESTONE_STATUS_COLORS[milestone.status] || 'var(--slate)',
+            background: `color-mix(in srgb, ${MILESTONE_STATUS_COLORS[milestone.status] || 'var(--slate)'} 12%, transparent)`,
+            flexShrink: 0,
+          }}
+        >
+          {milestone.status === 'in_progress' ? 'In Progress' : milestone.status.charAt(0).toUpperCase() + milestone.status.slice(1)}
+        </span>
+      </div>
+    </motion.div>
   )
 }
