@@ -9,10 +9,10 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (400+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (470+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
-| Data | TanStack Query v5 + Cloudflare D1 (33 tables, 90+ endpoints) -- ALL LIVE |
+| Data | TanStack Query v5 + Cloudflare D1 (39 tables, 110+ endpoints) -- ALL LIVE |
 | D1 database | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM) |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
@@ -99,7 +99,7 @@ Airtable ←CRDT→ brain.db ←LWW→ D1 (mnccore-lab) ←API→ React + TanSta
 ```
 
 - **Data:** TanStack Query v5 → D1 API (prod), static TS fallback (dev)
-- **API:** Cloudflare Worker, 90+ endpoints, auth-gated writes
+- **API:** Cloudflare Worker, 110+ endpoints, auth-gated writes
 - **Auth:** Open now. Cloudflare Access for April 7 launch (@umn.edu)
 - **Email:** Worker cron + SendGrid (dormant -- needs API key)
 - **Sync:** `sync_d1_push.py` / `sync_d1_pull.py` in PB, scheduled + /process-triggered
@@ -208,6 +208,15 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 - **Sync flow:** `/process` runs push+pull. Scheduled 2:35 AM push, 2:40 AM pull. Delta sync via `updated_at` timestamps.
 - **Admin endpoint:** `POST /api/admin/migrate` for schema changes without wrangler D1 access.
 
+**Phase 25: COMPLETE** (2026-04-06). Showcase + academic workflow features:
+- Virtual scrolling on TaskGridView (@tanstack/react-virtual) — 537 tasks performant
+- AI autofill on CreateTaskModal — heuristic project/priority/assignee suggestions
+- **Paper Revision Tracker** (schema-v23): per-round reviewer comments, progress bars, ProjectDetail tab
+- **Mentee Milestone Dashboard** (schema-v24): /mentee-milestones page, MemberPage integration, PI overview
+- **Deadline Cascade View** (schema-v25): dependency graph, impact simulation, /deadline-cascade page
+- **Paper Submission Lifecycle** (schema-v26): submission events timeline, active submissions widget
+- **IRB/Regulatory Tracking** (schema-v27): regulatory items, expiration alerts on Personal page
+
 **Phase 22: COMPLETE** (5 commits, 5 deploys, 2026-04-05). Design research + polish:
 - Transition standardization: 10 inline durations → 150ms/250ms constants
 - CreateProjectModal: focus trapping + aria-modal (a11y gap closed)
@@ -302,3 +311,7 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 - **CRDT engine:** `scripts/db/crdt.py` -- field-level LWW for Airtable sync (extend to D1)
 - **Meeting automation:** `scripts/scheduled/meeting_automation.py`
 - **Archived plans:** `Projects/mn-ccore-lab-hub/_archived/` + `Archive/Scratch/hub-plans-consolidated/`
+
+## Session Notes
+<!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
+
