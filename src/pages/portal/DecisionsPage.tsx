@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Scale, Plus, X, Clock, AlertTriangle, FolderKanban, History, Tag, List, GitCommitVertical, ChevronDown, ChevronUp, Search } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -873,6 +873,25 @@ function CreateDecisionModal({
     onClose()
   }
 
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  // Focus trap + Escape
+  useEffect(() => {
+    if (!modalRef.current) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key !== 'Tab') return
+      const focusable = modalRef.current!.querySelectorAll<HTMLElement>('input, select, textarea, button, [tabindex]:not([tabindex="-1"])')
+      if (focusable.length === 0) return
+      const first = focusable[0], last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+    }
+    document.addEventListener('keydown', handler)
+    modalRef.current.querySelector<HTMLElement>('input')?.focus()
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClose])
+
   const labelStyle = {
     fontSize: '10px',
     color: 'var(--slate)',
@@ -905,6 +924,10 @@ function CreateDecisionModal({
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Record Decision"
         initial={{ opacity: 0, scale: 0.95, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 8 }}

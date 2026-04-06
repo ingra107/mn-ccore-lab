@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Send, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -392,6 +392,24 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
   const createQuestion = useCreateQuestion()
   const { data: projects = [] } = useProjects()
   const { showSuccess } = useToast()
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  // Focus trap + Escape
+  useEffect(() => {
+    if (!open || !modalRef.current) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key !== 'Tab') return
+      const focusable = modalRef.current!.querySelectorAll<HTMLElement>('input, select, textarea, button, [tabindex]:not([tabindex="-1"])')
+      if (focusable.length === 0) return
+      const first = focusable[0], last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+    }
+    document.addEventListener('keydown', handler)
+    modalRef.current.querySelector<HTMLElement>('textarea')?.focus()
+    return () => document.removeEventListener('keydown', handler)
+  }, [open, onClose])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -418,6 +436,10 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
       onClick={onClose}
     >
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="New Question"
         className="rounded-xl shadow-xl border w-full max-w-md mx-4"
         style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}

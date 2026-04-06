@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -138,6 +138,23 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
   const [meetingId, setMeetingId] = useState('')
   const [processing, setProcessing] = useState(false)
   const [result, setResult] = useState<{ summary: string; actions: string[]; decisions: string[] } | null>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  // Focus trap + Escape
+  useEffect(() => {
+    if (!modalRef.current) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key !== 'Tab') return
+      const focusable = modalRef.current!.querySelectorAll<HTMLElement>('input, select, textarea, button, [tabindex]:not([tabindex="-1"])')
+      if (focusable.length === 0) return
+      const first = focusable[0], last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClose])
 
   const handleProcess = async () => {
     if (!transcript.trim()) return
@@ -180,7 +197,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(15,25,35,0.5)' }} onClick={onClose}>
-      <div className="rounded-xl shadow-xl border w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
+      <div ref={modalRef} role="dialog" aria-modal="true" aria-label="Process Meeting Notes" className="rounded-xl shadow-xl border w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
         <div className="px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
           <h3 className="text-lg flex items-center gap-2" style={{ fontWeight: 400, color: 'var(--ink)' }}>
             <Brain size={18} style={{ color: 'var(--teal)' }} />

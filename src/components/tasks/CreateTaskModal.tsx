@@ -62,10 +62,11 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
 
   const modalRef = useRef<HTMLDivElement>(null)
 
-  // Focus trap
+  // Focus trap + Escape
   useEffect(() => {
     if (!open || !modalRef.current) return
     const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return }
       if (e.key !== 'Tab') return
       const focusable = modalRef.current!.querySelectorAll<HTMLElement>(
         'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
