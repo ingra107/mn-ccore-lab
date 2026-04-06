@@ -224,6 +224,7 @@ function QuestionCard({
 function QuestionExpanded({ questionId }: { questionId: string }) {
   const { data: detail, isLoading } = useQuestionDetail(questionId)
   const { user } = useAuth()
+  const { showSuccess } = useToast()
   const userSlug = user?.email?.split('@')[0]?.toLowerCase()
   const [answerText, setAnswerText] = useState('')
   const createAnswerMut = useCreateAnswer(questionId)
@@ -232,7 +233,9 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
   const handleSubmitAnswer = (e: React.FormEvent) => {
     e.preventDefault()
     if (!answerText.trim()) return
-    createAnswerMut.mutate(answerText.trim())
+    createAnswerMut.mutate(answerText.trim(), {
+      onSuccess: () => showSuccess('Answer posted'),
+    })
     setAnswerText('')
   }
 
