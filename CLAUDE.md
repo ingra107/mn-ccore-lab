@@ -92,14 +92,38 @@ Competitive reference: LabSync (JC Rojas) — friend, learn from, never compete.
 ## Architecture
 
 ```
-Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack Query
+Airtable ←CRDT→ brain.db ←LWW→ D1 (mnccore-lab) ←API→ React + TanStack Query
+                   ↑                    ↑
+            Nick's CLI              Team's Hub
+          (single user)          (20+ team members)
 ```
 
 - **Data:** TanStack Query v5 → D1 API (prod), static TS fallback (dev)
 - **API:** Cloudflare Worker, 90+ endpoints, auth-gated writes
 - **Auth:** Open now. Cloudflare Access for April 7 launch (@umn.edu)
 - **Email:** Worker cron + SendGrid (dormant -- needs API key)
-- **Sync:** `sync_d1_push.py` / `sync_d1_pull.py` in PB, scheduled
+- **Sync:** `sync_d1_push.py` / `sync_d1_pull.py` in PB, scheduled + /process-triggered
+
+### Sync Architecture (Decision: 2026-04-06)
+
+brain.db is the **sync hub**. Airtable and D1 never talk directly — changes propagate through brain.db.
+
+**Sync model:** Field-level last-write-wins (LWW) with timestamps. Both D1 and brain.db are authoritative — whoever changed a field last wins. Conflicts logged to `sync_log`.
+
+**Sync triggers:**
+- /process: push to D1 (step 4b) + pull from D1 (step 0c)
+- Scheduled: 2:35 AM push, 2:40 AM pull, 12:05 PM push+pull
+- Machine swap: Airtable only (not D1)
+
+**Key rules:**
+- Brain.db tasks use `recXXX` IDs (Airtable). Hub-created tasks use hex IDs. Both coexist.
+- Hub-created tasks pull to brain.db but do NOT push to Airtable (Airtable is Nick-only).
+- `notes` (brain.db) is private. `description` (D1) is team-visible. They do NOT sync bidirectionally.
+- Task deletion uses soft-delete (`deleted_at` column) to prevent zombie re-creation.
+- `completed` field is bidirectional — Hub can reopen tasks, brain.db accepts it.
+
+**Implementation:** See plan at `~/.claude/plans/graceful-meandering-thimble.md`
+**Peripheral Brain sync scripts:** `scripts/db/sync_d1_push.py`, `sync_d1_pull.py`
 
 ## Critical Rules
 
@@ -178,6 +202,21 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 - TaskStandUpView: separated status circle from title click with undo
 - TaskTimelineView: bar click opens detail panel instead of cycling status
 
+**Phase 24: IN PROGRESS** (database alignment, 2026-04-06). brain.db ↔ D1 full sync:
+- **Plan:** `~/.claude/plans/graceful-meandering-thimble.md` (audited by 3 agents)
+- **Phase A:** Initial bulk load — 537 brain.db tasks → D1 via SQL/wrangler
+  - Create `scripts/sync-brain-tasks.ts` (follows seed-d1.ts pattern)
+  - Add `assignee` column to brain.db (migration)
+  - DELETE 19 test tasks, INSERT OR REPLACE all brain.db tasks
+  - Dry-run first, Nick approves before execution
+- **Phase B:** Ongoing bidirectional sync — field-level LWW
+  - Add `updated_at` + `deleted_at` to D1 tasks (schema-v22)
+  - Modify 5 write paths in `api/routes/tasks.ts`
+  - Rewrite `sync_d1_push.py` and `sync_d1_pull.py` for delta sync
+  - Relax `crdt.py` monotonic constraint for task reopening
+- **Tables:** tasks (BIDIR-MUTABLE), projects/milestones/team/grants/ideas (BIDIR-MUTABLE), project_updates/comments/decisions/activity (BIDIR-APPEND), commitments (PUSH-ONLY)
+- **Status:** Plan complete and audited. Ready for Phase A execution.
+
 **Phase 22: COMPLETE** (5 commits, 5 deploys, 2026-04-05). Design research + polish:
 - Transition standardization: 10 inline durations → 150ms/250ms constants
 - CreateProjectModal: focus trapping + aria-modal (a11y gap closed)
@@ -228,7 +267,7 @@ Biweekly Tuesdays 3pm CT. Anchor: Apr 7, Apr 21. Automation runs Monday mornings
 | PageHeader | 17 of 19 portal pages (all with aria-live on count/subtitle) | PBSector (custom PlannerHeader) |
 | J/K keyboard nav | 11 pages (Tasks, Projects, Meetings, Ideas, Decisions, Deadlines, Manuscripts, Grants, Search, MeetingNotes, Narratives) | Calendar (grid-based), Analytics, Settings |
 | HoverCard | 8 surfaces (TaskDetail, TaskPeek, MeetingDetail, AssigneePicker, ProjectHealth, MenteeDashboard, Projects list, Activity) | Team (cards already detailed) |
-| UndoToast | TaskCard, TaskGridView, Ideas, Manuscripts, Decisions, Deadlines | Settings (uses saved indicator) |
+| UndoToast | ALL task surfaces (TaskGridView, StandUp, Timeline, Board, Detail, Tasks, MyTasks, Personal, Deadlines, Dashboard ActionBoard, MeetingDetail, ProjectDetail, MyItems, Meetings) + Ideas, Manuscripts, Decisions | Settings (uses saved indicator) |
 | Stagger animations | 12 pages (Projects, Personal, Ideas, Decisions, Deadlines, Meetings, MeetingPrep, MeetingNotes, Search, Calendar, Analytics, PIAnalytics, Settings) | -- |
 | InlineSelect | Tasks (grid), Projects (list+detail), Manuscripts, Ideas, Decisions, Deadlines | Grants (no editable status) |
 | Focus trapping | ALL 6 modals (CreateTask, CreateProject, CreateIdea, CreateQuestion, CreateDecision, TranscriptModal) | -- |
@@ -267,6 +306,8 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 - **Research:** `Projects/mn-ccore-lab-hub/competitive-landscape-lab-management-2026.md` + `task-management-ux-patterns-research.md`
 - **Design decision:** `Context/Decisions/2026-04-01_hub-design-ethos-pivot.md`
 - **Memory:** `memory/project_mnccore-website-redesign.md`
-- **Sync:** `scripts/db/sync_d1_push.py` / `sync_d1_pull.py`
+- **Sync scripts:** `scripts/db/sync_d1_push.py` / `sync_d1_pull.py` -- push/pull brain.db ↔ D1
+- **Sync plan:** `~/.claude/plans/graceful-meandering-thimble.md` -- full database alignment (Phase 24)
+- **CRDT engine:** `scripts/db/crdt.py` -- field-level LWW for Airtable sync (extend to D1)
 - **Meeting automation:** `scripts/scheduled/meeting_automation.py`
 - **Archived plans:** `Projects/mn-ccore-lab-hub/_archived/` + `Archive/Scratch/hub-plans-consolidated/`
