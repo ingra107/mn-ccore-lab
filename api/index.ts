@@ -2,7 +2,7 @@ import type { Env } from './types';
 import { corsHeaders, json, error, getAuthUser } from './helpers';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleTasks, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleBatchUpdateTasks } from './routes/tasks';
+import { handleTasks, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleBatchUpdateTasks, handleSyncBulkTasks } from './routes/tasks';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
 import { handleMeetings, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline } from './routes/publications';
@@ -332,6 +332,11 @@ export default {
         const teamMatch = path.match(/^\/api\/team\/([^/]+)$/);
         if (request.method === 'PUT' && teamMatch) {
           return await handleUpdateTeamMember(teamMatch[1], request, user, env);
+        }
+
+        // POST /api/tasks/sync-bulk — bulk upsert from brain.db
+        if (request.method === 'POST' && path === '/api/tasks/sync-bulk') {
+          return await handleSyncBulkTasks(request, user, env);
         }
 
         // POST /api/tasks/batch — batch update tasks

@@ -273,3 +273,57 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 
   return json({ data: { ok: true, count: body.ids.length } })
 }
+
+// POST /api/tasks/sync-bulk — bulk upsert tasks from brain.db sync
+// Accepts array of tasks with their own IDs. Clears existing tasks first.
+export async function handleSyncBulkTasks(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    tasks: Array<{
+      id: string; title: string; description?: string | null;
+      assignee: string; assigned_by?: string | null;
+      due_date?: string | null; priority?: string;
+      status?: string; source?: string;
+      completed?: number; completed_at?: string | null;
+      completed_by?: string | null; created_at?: string | null;
+      project_id?: string | null; meeting_id?: string | null;
+    }>;
+    clear_existing?: boolean;
+  };
+
+  if (!body.tasks?.length) return error('tasks array required', 400);
+
+  // Safety: require explicit clear flag
+  if (body.clear_existing) {
+    // Delete related data first (tables may not exist in all environments)
+    try { await env.DB.prepare('DELETE FROM task_comments').run(); } catch { /* table may not exist */ }
+    try { await env.DB.prepare('DELETE FROM task_subtasks').run(); } catch { /* table may not exist */ }
+    await env.DB.prepare('DELETE FROM tasks').run();
+  }
+
+  // D1 batch: up to 100 statements per batch
+  const BATCH_SIZE = 50;
+  let inserted = 0;
+
+  for (let i = 0; i < body.tasks.length; i += BATCH_SIZE) {
+    const batch = body.tasks.slice(i, i + BATCH_SIZE);
+    const stmts = batch.map(t =>
+      env.DB.prepare(
+        'INSERT OR REPLACE INTO tasks (id, meeting_id, project_id, title, description, assignee, assigned_by, due_date, priority, status, source, completed, completed_at, completed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(
+        t.id, t.meeting_id ?? null, t.project_id ?? null,
+        t.title, t.description ?? null, t.assignee,
+        t.assigned_by ?? null, t.due_date ?? null,
+        t.priority ?? 'medium', t.status ?? 'todo',
+        t.source ?? 'sync', t.completed ?? 0,
+        t.completed_at ?? null, t.completed_by ?? null,
+        t.created_at ?? null
+      )
+    );
+    await env.DB.batch(stmts);
+    inserted += batch.length;
+  }
+
+  await logActivity(env, 'sync', `Bulk sync: ${inserted} tasks loaded from brain.db`, user.email, null, null);
+
+  return json({ data: { ok: true, inserted } });
+}

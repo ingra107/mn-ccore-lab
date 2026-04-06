@@ -90,7 +90,7 @@ interface BrainProject {
 
 // ── Main ──────────────────────────────────────────────────────────────────
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
 
   // Parse args
@@ -98,14 +98,18 @@ function main() {
   const dryRun = args.includes('--dry-run');
   const activeOnly = args.includes('--active-only');
   const all = args.includes('--all');
+  const useApi = args.includes('--api');
 
   if (!dbPath) {
-    console.error('Usage: npx tsx scripts/sync-brain-tasks.ts <brain-db-path> [--dry-run] [--active-only|--all]');
+    console.error('Usage: npx tsx scripts/sync-brain-tasks.ts <brain-db-path> [--dry-run] [--active-only|--all] [--api]');
     console.error('');
     console.error('Examples:');
     console.error('  npx tsx scripts/sync-brain-tasks.ts /c/Users/ingra/Peripheral-Brain/data/brain.db --dry-run');
     console.error('  npx tsx scripts/sync-brain-tasks.ts /c/Users/ingra/Peripheral-Brain/data/brain.db --active-only');
     console.error('  npx tsx scripts/sync-brain-tasks.ts /c/Users/ingra/Peripheral-Brain/data/brain.db --all');
+    console.error('  npx tsx scripts/sync-brain-tasks.ts /c/Users/ingra/Peripheral-Brain/data/brain.db --all --api');
+    console.error('');
+    console.error('--api: POST to Hub API instead of generating SQL (no wrangler needed)');
     process.exit(1);
   }
 
@@ -286,9 +290,46 @@ function main() {
     console.log('=== DRY RUN — no SQL file generated ===');
     console.log(`Would generate ${d1Tasks.length} INSERT statements.`);
     console.log('Run with --active-only or --all to generate SQL.');
+    console.log('Add --api to POST directly to Hub API (no wrangler needed).');
     db.close();
     return;
   }
+
+  // ── API mode: POST directly to Hub ──────────────────────────────────────
+
+  if (useApi) {
+    console.log('=== API MODE — posting to Hub ===');
+    const API_URL = 'https://mn-ccore-lab.pages.dev/api/tasks/sync-bulk';
+
+    const payload = {
+      tasks: d1Tasks,
+      clear_existing: true,
+    };
+
+    console.log(`  Endpoint: ${API_URL}`);
+    console.log(`  Tasks: ${d1Tasks.length}`);
+    console.log(`  clear_existing: true`);
+    console.log('  Sending...');
+
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await resp.json();
+    if (resp.ok) {
+      console.log(`  SUCCESS: ${JSON.stringify(result)}`);
+    } else {
+      console.error(`  FAILED (${resp.status}): ${JSON.stringify(result)}`);
+      process.exit(1);
+    }
+
+    db.close();
+    return;
+  }
+
+  // ── SQL mode: generate file for wrangler ────────────────────────────────
 
   const lines: string[] = [];
   lines.push('-- MN-CCORE Lab Hub — brain.db → D1 Task Sync (Phase A)');
