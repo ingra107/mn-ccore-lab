@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { BookOpen, GitBranch, FileText } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader'
@@ -5,6 +6,7 @@ import EmptyState from '../../components/EmptyState'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useNarratives } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
+import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 const STAGE_COLORS: Record<string, string> = {
   Idea: '#64748b',
@@ -18,6 +20,8 @@ const STAGE_COLORS: Record<string, string> = {
 export default function NarrativesPage() {
   usePageMeta('Research Narratives | MN-CCORE Lab', 'Auto-detected research arcs across the lab.')
   const { data: narratives = [], isLoading } = useNarratives()
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  useListKeyboardNav({ itemCount: narratives.length, focusedIndex, setFocusedIndex })
 
   return (
     <div>

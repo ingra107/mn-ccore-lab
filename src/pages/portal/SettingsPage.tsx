@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
 import { Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
+import EmptyState from '../../components/EmptyState'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
+import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useTeam } from '../../hooks/useApiData'
 import Avatar from '../../components/Avatar'
 import { getPersonInfo } from '../../data/team'
@@ -121,11 +124,18 @@ export default function SettingsPage() {
 
         {/* Workflow Templates */}
         <SettingsSection title="Workflow Templates" subtitle="Define the stages your projects move through (e.g., Idea → Analysis → Writing → Published)" icon={Layers}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {templates.length === 0 && (
+            <EmptyState
+              icon={<Layers size={32} />}
+              title="No workflow templates"
+              subtitle="Create a template to define custom project stages."
+            />
+          )}
+          <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-4" variants={staggerContainer} initial="hidden" animate="visible">
             {templates.map((template) => {
               const stages: string[] = JSON.parse(template.stages)
               return (
-                <div key={template.id} className="rounded-lg border p-4" style={{ borderColor: 'var(--border-light)' }}>
+                <motion.div key={template.id} variants={staggerItem} className="rounded-lg border p-4" style={{ borderColor: 'var(--border-light)' }}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                       {template.name}
@@ -166,10 +176,10 @@ export default function SettingsPage() {
                   <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
                     {stages.length} stage{stages.length !== 1 ? 's' : ''}
                   </span>
-                </div>
+                </motion.div>
               )
             })}
-          </div>
+          </motion.div>
 
           <CreateTemplateForm onSubmit={(name, stages) => createTemplate.mutate({ name, stages })} />
         </SettingsSection>

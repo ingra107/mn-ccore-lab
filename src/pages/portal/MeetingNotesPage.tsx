@@ -12,10 +12,13 @@ import MetricCard from '../../components/MetricCard'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useMeetingsApi } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
+import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 export default function MeetingNotesPage() {
   const [showCreate, setShowCreate] = useState(false)
   const { data: meetings = [], isLoading } = useMeetingsApi()
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  useListKeyboardNav({ itemCount: meetings.length, focusedIndex, setFocusedIndex })
 
   // Stats from meetings that have notes
   const processedCount = meetings.filter((m) => m.notes).length

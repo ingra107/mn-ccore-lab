@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -11,6 +11,7 @@ import EmptyState from '../../components/EmptyState'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { formatBrandName } from '../../components/BrandName'
 import { staggerContainer, staggerItem } from '../../lib/animations'
+import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 interface SearchResult {
   id: string
@@ -54,6 +55,13 @@ export default function SearchPage() {
   })
 
   const results = data?.data || []
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  const handleSearchEnter = useCallback(() => {
+    if (focusedIndex >= 0 && results[focusedIndex]?.url) {
+      window.location.href = results[focusedIndex].url!
+    }
+  }, [focusedIndex, results])
+  useListKeyboardNav({ itemCount: results.length, focusedIndex, setFocusedIndex, onEnter: handleSearchEnter })
 
   const grouped = results.reduce((acc, r) => {
     if (!acc[r.type]) acc[r.type] = []

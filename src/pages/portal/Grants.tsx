@@ -13,6 +13,7 @@ import type { GrantTimelineItem } from '../../hooks/useGrantTimeline'
 import { useSimilarGrants } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import { formatMediumDate } from '../../lib/dateUtils'
+import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 function formatFunding(amount: number): string {
   if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`
@@ -33,6 +34,8 @@ export default function Grants() {
   const { data: grants = [], isLoading } = useGrantTimeline()
   const [searchKeywords, setSearchKeywords] = useState('')
   const [activeSearch, setActiveSearch] = useState('')
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  useListKeyboardNav({ itemCount: grants.length, focusedIndex, setFocusedIndex })
   const similarGrants = useSimilarGrants(activeSearch)
 
   const active = useMemo(() => grants.filter((g) => !g.proposed), [grants])

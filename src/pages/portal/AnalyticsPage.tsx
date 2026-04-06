@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
 import EmptyState from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
+import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
@@ -204,12 +206,12 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Weekly Summary Cards */}
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} color="var(--green, #22c55e)" />
-        <MetricCard icon={Plus} label="Created" value={weekStats.created} color="var(--teal)" />
-        <MetricCard icon={AlertTriangle} label="Overdue" value={weekStats.overdue} color="var(--maroon)" />
-        <MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} color="var(--gold)" />
-      </div>
+      <motion.div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3" variants={staggerContainer} initial="hidden" animate="visible">
+        <motion.div variants={staggerItem}><MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} color="var(--green, #22c55e)" /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={Plus} label="Created" value={weekStats.created} color="var(--teal)" /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={AlertTriangle} label="Overdue" value={weekStats.overdue} color="var(--maroon)" /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} color="var(--gold)" /></motion.div>
+      </motion.div>
 
       {/* Attention Required — positive empty state when clear */}
       {weekStats.overdue > 0 ? (
