@@ -204,18 +204,18 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 
 **Phase 24: IN PROGRESS** (database alignment, 2026-04-06). brain.db ↔ D1 full sync:
 - **Plan:** `~/.claude/plans/graceful-meandering-thimble.md` (audited by 3 agents)
-- **Phase A:** Initial bulk load — 537 brain.db tasks → D1 via SQL/wrangler
-  - Create `scripts/sync-brain-tasks.ts` (follows seed-d1.ts pattern)
-  - Add `assignee` column to brain.db (migration)
-  - DELETE 19 test tasks, INSERT OR REPLACE all brain.db tasks
-  - Dry-run first, Nick approves before execution
-- **Phase B:** Ongoing bidirectional sync — field-level LWW
+- **Phase A: COMPLETE** (2026-04-06). Initial bulk load — 537 brain.db tasks → D1.
+  - `scripts/sync-brain-tasks.ts` — reads brain.db, maps fields, privacy redaction
+  - `POST /api/tasks/sync-bulk` endpoint — batched INSERT OR REPLACE (bypasses wrangler D1 auth)
+  - `assignee` column added to brain.db (migration 022)
+  - 537 tasks loaded: 19 active, 518 completed. All recXXX IDs preserved. Gmail URLs redacted.
+  - Supports `--api` (HTTP) and `--sql` (wrangler) modes
+- **Phase B:** Ongoing bidirectional sync — field-level LWW (NOT YET STARTED)
   - Add `updated_at` + `deleted_at` to D1 tasks (schema-v22)
   - Modify 5 write paths in `api/routes/tasks.ts`
   - Rewrite `sync_d1_push.py` and `sync_d1_pull.py` for delta sync
   - Relax `crdt.py` monotonic constraint for task reopening
 - **Tables:** tasks (BIDIR-MUTABLE), projects/milestones/team/grants/ideas (BIDIR-MUTABLE), project_updates/comments/decisions/activity (BIDIR-APPEND), commitments (PUSH-ONLY)
-- **Status:** Plan complete and audited. Ready for Phase A execution.
 
 **Phase 22: COMPLETE** (5 commits, 5 deploys, 2026-04-05). Design research + polish:
 - Transition standardization: 10 inline durations → 150ms/250ms constants
