@@ -95,6 +95,7 @@ export default function Personal() {
   const { data: commitments = [] } = useCommitments(currentUser || undefined)
   const { data: grants = [] } = useGrantTimeline()
   const updateStatus = useUpdateTaskStatus()
+  const { showUndo } = useUndoToast()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
 
   // Filter tasks for current user (or show all if no auth)
@@ -163,7 +164,13 @@ export default function Personal() {
     'my-tasks': () => (
       <MyTasksCard
         tasks={pendingTasks}
-        onStatusChange={(id, s) => updateStatus.mutate({ id, status: s })}
+        onStatusChange={(id, s) => {
+          const task = pendingTasks.find(t => t.id === id)
+          const prev = task?.status || 'todo'
+          updateStatus.mutate({ id, status: s })
+          const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done' }
+          showUndo(`Status → ${labels[s] || s}`, () => updateStatus.mutate({ id, status: prev }))
+        }}
         onOpenDetail={setSelectedTask}
         large={isPrimary('my-tasks')}
       />

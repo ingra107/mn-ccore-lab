@@ -6,6 +6,7 @@ import type { TaskRow } from '../../lib/api'
 interface TaskTimelineViewProps {
   tasks: TaskRow[]
   onStatusChange: (id: string, status: string) => void
+  onOpenDetail?: (task: TaskRow) => void
 }
 
 // ── Constants ──────────────────────────────────────────────────
@@ -30,7 +31,7 @@ const priorityOpacity: Record<string, number> = {
   low: 0.55,
 }
 
-export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimelineViewProps) {
+export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }: TaskTimelineViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [tooltip, setTooltip] = useState<{ task: TaskRow; x: number; y: number } | null>(null)
 
@@ -151,7 +152,7 @@ export default function TaskTimelineView({ tasks, onStatusChange }: TaskTimeline
                     }
                   }}
                   onMouseLeave={() => setTooltip(null)}
-                  onClick={() => onStatusChange(task.id, task.status === 'todo' ? 'in_progress' : task.status === 'in_progress' ? 'done' : 'todo')}
+                  onClick={() => onOpenDetail?.(task)}
                 >
                   {/* Label */}
                   <text

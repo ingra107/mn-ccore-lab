@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { CheckCircle2, Circle, Clock, AlertTriangle } from 'lucide-react'
 import Avatar from '../Avatar'
+import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 import type { TaskRow } from '../../lib/api'
@@ -8,6 +9,7 @@ import type { TaskRow } from '../../lib/api'
 interface TaskStandUpViewProps {
   tasks: TaskRow[]
   onStatusChange: (id: string, status: string) => void
+  onOpenDetail?: (task: TaskRow) => void
 }
 
 const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
@@ -19,7 +21,8 @@ const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
 
 const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
 
-export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpViewProps) {
+export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }: TaskStandUpViewProps) {
+  const { showUndo } = useUndoToast()
   // Group by assignee, excluding done tasks
   const grouped = useMemo(() => {
     const map = new Map<string, { todo: TaskRow[]; in_progress: TaskRow[]; blocked: TaskRow[]; done: TaskRow[] }>()
@@ -159,6 +162,8 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
                   tasks={groups.in_progress}
                   status="in_progress"
                   onStatusChange={onStatusChange}
+                  onOpenDetail={onOpenDetail}
+                  showUndo={showUndo}
                 />
               )}
 
@@ -169,6 +174,8 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
                   tasks={groups.blocked}
                   status="blocked"
                   onStatusChange={onStatusChange}
+                  onOpenDetail={onOpenDetail}
+                  showUndo={showUndo}
                 />
               )}
 
@@ -179,6 +186,8 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
                   tasks={groups.todo}
                   status="todo"
                   onStatusChange={onStatusChange}
+                  onOpenDetail={onOpenDetail}
+                  showUndo={showUndo}
                 />
               )}
 
@@ -219,19 +228,31 @@ export default function TaskStandUpView({ tasks, onStatusChange }: TaskStandUpVi
   )
 }
 
+const STATUS_LABELS: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked' }
+
 function TaskSection({
   label,
   tasks,
   status,
   onStatusChange,
+  onOpenDetail,
+  showUndo,
 }: {
   label: string
   tasks: TaskRow[]
   status: string
   onStatusChange: (id: string, status: string) => void
+  onOpenDetail?: (task: TaskRow) => void
+  showUndo: (msg: string, onUndo: () => void) => void
 }) {
   const config = statusIcon[status] || statusIcon.todo
   const Icon = config.icon
+
+  const cycleStatus = (task: TaskRow) => {
+    const next = status === 'todo' ? 'in_progress' : status === 'in_progress' ? 'done' : 'todo'
+    onStatusChange(task.id, next)
+    showUndo(`Status → ${STATUS_LABELS[next] || next}`, () => onStatusChange(task.id, status))
+  }
 
   return (
     <div>
@@ -250,12 +271,20 @@ function TaskSection({
           return (
             <div
               key={task.id}
-              className="flex items-center gap-2 py-1 group cursor-pointer"
-              onClick={() => onStatusChange(task.id, status === 'todo' ? 'in_progress' : status === 'in_progress' ? 'done' : 'todo')}
+              className="flex items-center gap-2 py-1 group cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02] rounded-md px-1 -mx-1 transition-colors"
+              onClick={() => onOpenDetail?.(task)}
             >
+              {/* Status circle — click to cycle */}
+              <button
+                onClick={(e) => { e.stopPropagation(); cycleStatus(task) }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex', flexShrink: 0 }}
+                title="Cycle status"
+              >
+                <Circle size={14} style={{ color: config.color, opacity: 0.5 }} />
+              </button>
               <span
-                className="text-sm flex-1"
-                style={{ color: 'var(--ink)' }}
+                className="text-sm flex-1 task-title-clickable"
+                style={{ color: 'var(--ink)', borderRadius: '3px', padding: '1px 4px', margin: '-1px -4px', transition: 'background var(--transition-fast) ease' }}
               >
                 {task.title || task.description}
               </span>

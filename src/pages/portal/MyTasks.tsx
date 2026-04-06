@@ -7,9 +7,11 @@ import ToggleButton from '../../components/ToggleButton'
 import TaskGridView from '../../components/tasks/TaskGridView'
 import TaskBoardView from '../../components/tasks/TaskBoardView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
+import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import { useUndoToast } from '../../components/UndoToast'
 import { useTasks } from '../../hooks/useApiData'
+import type { TaskRow } from '../../lib/api'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 
@@ -52,6 +54,7 @@ export default function MyTasks() {
   const updateStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()
   const { showSuccess } = useUndoToast()
+  const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const handleFieldChange = (id: string, field: string, value: unknown) => {
     updateTask.mutate({ id, fields: { [field]: value } })
   }
@@ -209,13 +212,13 @@ export default function MyTasks() {
           />
         ) : view !== 'list' ? (
           <>
-            {view === 'board' && <TaskBoardView tasks={tasks} onStatusChange={handleStatusChange} />}
-            {view === 'timeline' && <TaskTimelineView tasks={tasks} onStatusChange={handleStatusChange} />}
+            {view === 'board' && <TaskBoardView tasks={tasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
+            {view === 'timeline' && <TaskTimelineView tasks={tasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} />}
           </>
         ) : groupBy === 'none' ? (
-          <TaskGridView tasks={sortTasks(tasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} />
+          <TaskGridView tasks={sortTasks(tasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} />
         ) : (
-          <GroupedTaskList tasks={tasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} />
+          <GroupedTaskList tasks={tasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} />
         )}
       </div>
 
@@ -225,6 +228,14 @@ export default function MyTasks() {
         onClose={() => setShowCreate(false)}
         onCreate={handleCreate}
       />
+
+      {/* Detail panel */}
+      {selectedTask && (
+        <TaskDetailPanel
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
     </div>
   )
 }
@@ -239,12 +250,13 @@ function sortTasks(tasks: any[], sortBy: SortBy) {
 }
 
 // ── Grouped Task List ──────────────────────────────────────────
-function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange }: {
+function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange, onOpenDetail }: {
   tasks: any[]
   groupBy: GroupBy
   sortBy: SortBy
   onStatusChange: (id: string, status: string) => void
   onFieldChange: (id: string, field: string, value: unknown) => void
+  onOpenDetail?: (task: TaskRow) => void
 }) {
   const groups = useMemo(() => {
     const map = new Map<string, any[]>()
@@ -310,7 +322,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
               {items.length}
             </span>
           </div>
-          <TaskGridView tasks={items} onStatusChange={onStatusChange} onFieldChange={onFieldChange} />
+          <TaskGridView tasks={items} onStatusChange={onStatusChange} onFieldChange={onFieldChange} onOpenDetail={onOpenDetail} />
         </div>
       ))}
     </div>

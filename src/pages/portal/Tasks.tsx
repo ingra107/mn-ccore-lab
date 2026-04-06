@@ -403,8 +403,8 @@ export default function Tasks() {
               />
             )}
             {view === 'board' && <TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
-            {view === 'standup' && <TaskStandUpView tasks={displayTasks} onStatusChange={handleStatusChange} />}
-            {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} />}
+            {view === 'standup' && <TaskStandUpView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={(task) => { setPeekTask(null); setSelectedTask(task) }} />}
+            {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={(task) => { setPeekTask(null); setSelectedTask(task) }} />}
           </>
         )}
       </div>
