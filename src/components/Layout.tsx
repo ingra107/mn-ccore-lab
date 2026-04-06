@@ -234,7 +234,7 @@ export default function Layout() {
                   opacity: researchOpen ? 1 : 0,
                   transform: researchOpen ? 'translateY(0)' : 'translateY(-4px)',
                   pointerEvents: researchOpen ? 'auto' : 'none',
-                  transition: 'opacity 200ms ease, transform 200ms ease',
+                  transition: 'opacity 250ms ease, transform 250ms ease',
                 }}
               >
                 {researchDropdownLinks.map((link) => (

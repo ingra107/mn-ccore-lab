@@ -58,7 +58,7 @@ export default function PublicationSearch({
             minHeight: '44px',
             outline: 'none',
             transitionProperty: 'border-color',
-            transitionDuration: '200ms',
+            transitionDuration: '150ms',
           }}
           onFocus={(e) => {
             e.currentTarget.style.borderColor = 'var(--gold)'

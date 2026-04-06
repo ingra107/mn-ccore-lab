@@ -78,7 +78,7 @@ export default function Button({
   const style = {
     ...variantStyles[variant],
     fontFamily: 'var(--font-body)',
-    transition: 'all 200ms ease',
+    transition: 'all 150ms ease',
     minHeight: '44px',
     textDecoration: 'none',
   }

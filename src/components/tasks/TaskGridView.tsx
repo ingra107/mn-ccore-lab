@@ -261,7 +261,7 @@ function TaskGridRow({
         borderBottom: '1px solid var(--border-subtle)',
         cursor: onSelect ? 'pointer' : 'default',
         opacity: isDone ? 0.5 : 1,
-        transition: 'background 120ms ease, opacity 200ms ease',
+        transition: 'background 150ms ease, opacity 150ms ease',
         position: 'relative',
       }}
       className={`task-grid-row hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${isFocused ? 'task-row-focused' : ''} ${rowFadeAnim ? 'task-row-complete-fade' : ''}`}

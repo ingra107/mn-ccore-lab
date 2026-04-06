@@ -986,7 +986,7 @@ export default function Meetings() {
                     color: filter === f.key ? '#0f1923' : 'var(--slate)',
                     border: 'none',
                     transitionProperty: 'background-color, color',
-                    transitionDuration: '200ms',
+                    transitionDuration: '150ms',
                     transitionTimingFunction: 'ease',
                   }}
                   whileTap={{ scale: 0.95 }}

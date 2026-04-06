@@ -49,7 +49,7 @@ function Pill({
         color: active ? '#0f1923' : 'var(--slate)',
         border: 'none',
         transitionProperty: 'background-color, color',
-        transitionDuration: '200ms',
+        transitionDuration: '150ms',
         transitionTimingFunction: 'ease',
       }}
       whileTap={{ scale: 0.95 }}
@@ -154,7 +154,7 @@ export default function PublicationFilters({
                 border: '1px solid rgba(201, 168, 76, 0.2)',
                 minHeight: '32px',
                 transitionProperty: 'border-color, color',
-                transitionDuration: '200ms',
+                transitionDuration: '150ms',
               }}
             >
               <X size={12} aria-hidden="true" />

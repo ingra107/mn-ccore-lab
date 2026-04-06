@@ -61,7 +61,7 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 - `--transition-fast: 150ms` — hover, toggle, status change, row highlight
 - `--transition-panel: 250ms` — sidebar, detail panel, modal, card shadow
 - Card hover: -1px lift.
-- NOTE: Currently 7+ different durations exist inline (120/150/200/250/300ms). Standardize to these 2.
+- Inline durations standardized to 150ms (fast) / 250ms (panel) as of 2026-04-05.
 
 ### Sidebar
 - Font-weight 400 for nav items, 500 for active only
@@ -192,20 +192,18 @@ Nick's CLI (brain.db)  ←sync→  D1 (mnccore-lab)  ←API→  React + TanStack
 
 Biweekly Tuesdays 3pm CT. Anchor: Apr 7, Apr 21. Automation runs Monday mornings.
 
-## Component Coverage Gaps (Verified 2026-04-03)
+## Component Coverage (Verified 2026-04-05)
 
-Track which shared components are used where. Expand coverage as Phase 21 progresses.
-
-| Component | Used On | NOT Used On |
-|-----------|---------|-------------|
-| LoadingSkeleton | Tasks, MyTasks, Deadlines, Manuscripts, Decisions, Ideas, Activity, Calendar, Search | Analytics, PIAnalytics, Personal, Settings, Grants, MeetingNotes, Narratives, PBSector, AskTheLab |
-| EmptyState | Tasks, MyTasks, Deadlines, Decisions, Ideas, Activity, Calendar, Search, Grants, MeetingNotes, Narratives, AskTheLab | Analytics, Settings, PBSector, Personal, PIAnalytics. Digest has local duplicate. |
-| PageHeader | 17 of 19 portal pages | PBSector (has custom PlannerHeader) |
+| Component | Coverage | NOT Used On |
+|-----------|----------|-------------|
+| LoadingSkeleton | ALL 19 portal pages | -- |
+| EmptyState | 14 pages (Tasks, MyTasks, Deadlines, Decisions, Ideas, Activity, Calendar, Search, Grants, MeetingNotes, Narratives, AskTheLab, Manuscripts, Digest) | Analytics, Settings, PBSector, Personal, PIAnalytics |
+| PageHeader | 17 of 19 portal pages | PBSector (custom PlannerHeader) |
+| J/K keyboard nav | 6 pages (Tasks, Projects, Meetings, Ideas, Decisions, Deadlines, Manuscripts) | Other list pages |
+| HoverCard | 8 surfaces (TaskDetail, TaskPeek, MeetingDetail, AssigneePicker, ProjectHealth, MenteeDashboard, Projects list, Activity) | Team, Meetings list |
+| UndoToast | TaskCard, TaskGridView, Ideas, Manuscripts | Other status-changing surfaces |
+| Stagger animations | 7 pages (Projects, Personal, Ideas, Decisions, Deadlines, Meetings, MeetingPrep) | Other list pages |
 | InlineSelect | Tasks (grid), Projects (list+detail), Manuscripts | Ideas, Decisions, Deadlines, Meetings, Grants |
-| J/K keyboard nav | Tasks, Projects | All other list pages |
-| HoverCard | TaskDetail, TaskPeek, MeetingDetail, AssigneePicker, ProjectHealth, MenteeDashboard | Projects list, Team, Meetings list, Activity |
-| UndoToast | TaskCard, TaskGridView | All other status-changing surfaces |
-| Stagger animations | Projects, Personal | All other list pages |
 
 ## Accessibility Requirements
 
@@ -215,7 +213,7 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 - ~~UndoToast needs `role="alert"` and `aria-live="polite"`~~ DONE (be80679)
 - ~~CommandPalette needs focus trapping~~ DONE (81da23b)
 - ~~CreateTaskModal needs focus trapping~~ DONE (be80679)
-- CreateProjectModal needs focus trapping
+- ~~CreateProjectModal needs focus trapping~~ DONE
 - No `aria-live` regions for dynamic content updates
 - Toast notifications not announced to screen readers (UndoToast fixed, success toasts TBD)
 

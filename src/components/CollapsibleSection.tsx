@@ -110,7 +110,7 @@ export default function CollapsibleSection({
         style={{
           height: height !== undefined ? `${height}px` : 'auto',
           overflow: 'hidden',
-          transition: 'height 200ms ease',
+          transition: 'height 250ms ease',
         }}
       >
         <div style={{ paddingTop: 6 }}>

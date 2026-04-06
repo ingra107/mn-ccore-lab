@@ -52,7 +52,7 @@ function Pill({
           ? '1px solid rgba(201, 168, 76, 0.6)'
           : '1px solid rgba(255, 255, 255, 0.1)',
         transitionProperty: 'background-color, color, border-color',
-        transitionDuration: '200ms',
+        transitionDuration: '150ms',
         transitionTimingFunction: 'ease',
       }}
       whileTap={{ scale: 0.95 }}
@@ -231,7 +231,7 @@ export default function NetworkFilters({
             ? '1px solid rgba(201, 168, 76, 0.6)'
             : '1px solid rgba(255, 255, 255, 0.1)',
           transitionProperty: 'background-color, color, border-color',
-          transitionDuration: '200ms',
+          transitionDuration: '150ms',
         }}
         whileTap={{ scale: 0.95 }}
         aria-pressed={filters.mnccoreOnly}
