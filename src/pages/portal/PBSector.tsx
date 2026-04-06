@@ -14,7 +14,7 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { GripVertical, LayoutDashboard } from 'lucide-react'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import EmptyState from '../../components/EmptyState'
-import { usePBCommandCenter, useDispatchPending } from '../../hooks/useApiData'
+import { usePBCommandCenter, useDispatchPending, usePBHealth } from '../../hooks/useApiData'
 import {
   usePBCapture, useUpdateTaskStatus,
   useSaveDailyPlan, useReorderPlan, useSaveReflection, useStartPomodoro,
@@ -29,6 +29,7 @@ import TaskSearchDropdown from '../../components/pb-sector/TaskSearchDropdown'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import DispatchBadge from '../../components/pb-sector/DispatchBadge'
 import LandscapeSidebar from '../../components/pb-sector/LandscapeSidebar'
+import SystemHealthCard from '../../components/pb-sector/SystemHealthCard'
 import { getDailyQuote } from '../../data/daily-quotes'
 
 // ── Helpers ────────────────────────────────────────────────
@@ -55,6 +56,7 @@ export default function PBSector() {
   const startPomodoro = useStartPomodoro()
   const sendDispatch = useSendDispatch()
   const { data: dispatchData } = useDispatchPending()
+  const { data: healthData, isLoading: healthLoading } = usePBHealth()
 
   const [captureText, setCaptureText] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -388,19 +390,22 @@ export default function PBSector() {
           </DragOverlay>
         </DndContext>
 
-        {/* Right Column — Landscape Sidebar */}
-        <LandscapeSidebar
-          mode={mode}
-          events={todayEvents}
-          milestones={data.milestones || []}
-          commitments={data.commitments || []}
-          projects={data.projects || []}
-          stats={stats}
-          recentlyCompleted={data.sections.recentlyCompleted || []}
-          meetings={data.meetings || []}
-          selectedDate={selectedDate}
-          today={today}
-        />
+        {/* Right Column — Landscape Sidebar + System Health */}
+        <div className="flex flex-col gap-4">
+          <LandscapeSidebar
+            mode={mode}
+            events={todayEvents}
+            milestones={data.milestones || []}
+            commitments={data.commitments || []}
+            projects={data.projects || []}
+            stats={stats}
+            recentlyCompleted={data.sections.recentlyCompleted || []}
+            meetings={data.meetings || []}
+            selectedDate={selectedDate}
+            today={today}
+          />
+          <SystemHealthCard data={healthData} isLoading={healthLoading} />
+        </div>
       </div>
 
       {/* Quick Capture */}

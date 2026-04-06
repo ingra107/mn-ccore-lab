@@ -34,6 +34,8 @@ import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeam
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
 import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector'
+import { handleGetTodayMd, handleUpsertTodayMd } from './routes/pb-today'
+import { handlePBHealth } from './routes/pb-health'
 import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleGetActiveRevisions } from './routes/revisions';
 import { handleMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone, handleCompleteMenteeMilestone } from './routes/mentee-milestones';
 import { handleGetCascade, handleGetImpact, handleGetAllCascades, handleCreateDeadlineDependency, handleDeleteDeadlineDependency } from './routes/deadline-cascade';
@@ -82,6 +84,16 @@ export default {
         // PB Sector — dispatch queue pending items
         if (url.pathname === '/api/pb/dispatch/pending') {
           return await handleGetPendingDispatch(env);
+        }
+
+        // PB Sector — TODAY.md content
+        if (url.pathname === '/api/pb/today') {
+          return await handleGetTodayMd(env);
+        }
+
+        // PB Sector — system health overview
+        if (url.pathname === '/api/pb/health') {
+          return await handlePBHealth(env);
         }
 
         // PI Analytics — leadership dashboard data
@@ -719,6 +731,11 @@ export default {
         // POST /api/pb/dispatch/complete — mark dispatch item completed
         if (request.method === 'POST' && path === '/api/pb/dispatch/complete') {
           return await handleCompleteDispatchItem(request, env);
+        }
+
+        // POST /api/pb/today — upsert TODAY.md content
+        if (request.method === 'POST' && path === '/api/pb/today') {
+          return await handleUpsertTodayMd(request, env);
         }
 
         // POST /api/impact/check — scan for impact events and create notifications

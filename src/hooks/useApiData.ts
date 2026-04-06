@@ -1390,3 +1390,27 @@ export function useUpcomingConferences() {
     staleTime: 60 * 1000,
   })
 }
+
+// ── PB System Health ───────────────────────────────────────
+
+export interface PBHealthData {
+  tasks: { total: number; active: number; completed: number }
+  projects: { active: number }
+  recentActivityCount: number
+  d1TableCount: number
+  lastTaskSync: string | null
+  lastActivityTimestamp: string | null
+}
+
+export function usePBHealth() {
+  return useQuery({
+    queryKey: ['pb-health'],
+    queryFn: async () => {
+      const res = await fetch('/api/pb/health')
+      if (!res.ok) return null
+      return (await res.json()).data as PBHealthData
+    },
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+  })
+}
