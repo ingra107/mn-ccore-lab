@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useRef, Fragment } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, CalendarPlus, Link2, Plus } from 'lucide-react'
 import InlineAssigneePicker from '../InlineAssigneePicker'
@@ -82,10 +83,44 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
 
   const colStyle = { display: 'grid', gridTemplateColumns: '32px 1fr 120px 100px 120px 100px 80px', alignItems: 'center' } as const
 
+  const ROW_HEIGHT = 44
+  const parentRef = useRef<HTMLDivElement>(null)
+
+  // Estimate row size: expanded rows are taller to account for subtask section
+  const estimateSize = useCallback(
+    (index: number) => {
+      const task = sorted[index]
+      if (task && expandedTasks.has(task.id)) {
+        return ROW_HEIGHT + 160 // base row + estimated subtask section
+      }
+      return ROW_HEIGHT
+    },
+    [sorted, expandedTasks],
+  )
+
+  const virtualizer = useVirtualizer({
+    count: sorted.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize,
+    overscan: 15,
+  })
+
+  // Re-measure all rows when expandedTasks changes
+  useEffect(() => {
+    virtualizer.measure()
+  }, [expandedTasks, virtualizer])
+
+  // Scroll focused row into view within the virtual list
+  useEffect(() => {
+    if (focusedIndex != null && focusedIndex >= 0 && focusedIndex < sorted.length) {
+      virtualizer.scrollToIndex(focusedIndex, { align: 'auto', behavior: 'smooth' })
+    }
+  }, [focusedIndex, sorted.length, virtualizer])
+
   return (
-    <div className="table-container">
+    <div className="table-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Column headers — clickable for sort, hidden on mobile */}
-      <div className="task-grid-header" style={{ ...colStyle, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
+      <div className="task-grid-header" style={{ ...colStyle, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
         <div />
         <SortableColumnHeader label="TITLE" field="title" active={sortKey} asc={sortAsc} onSort={handleSort} />
         <SortableColumnHeader label="ASSIGNEE" field="assignee" active={sortKey} asc={sortAsc} onSort={handleSort} />
@@ -95,45 +130,76 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         <div /> {/* Actions column spacer */}
       </div>
 
-      {/* Rows */}
-      {sorted.map((task, index) => (
-        <Fragment key={task.id}>
-          <TaskGridRow
-            task={task}
-            allTasks={allTasks || tasks}
-            index={index}
-            colStyle={colStyle}
-            onStatusChange={onStatusChange}
-            onFieldChange={onFieldChange}
-            onSelect={onSelect}
-            onOpenDetail={onOpenDetail}
-            showUndo={showUndo}
-            selected={selectedIds?.has(task.id)}
-            onToggleSelect={onToggleSelect}
-            isFocused={focusedIndex === index}
-            onFocusIndex={onFocusIndex}
-            onContextMenu={openContextMenu}
-            expanded={expandedTasks.has(task.id)}
-            onToggleExpand={() => toggleExpand(task.id)}
-          />
-          <AnimatePresence>
-            {expandedTasks.has(task.id) && (
-              <InlineSubtaskRow key={`sub-${task.id}`} taskId={task.id} />
-            )}
-          </AnimatePresence>
-        </Fragment>
-      ))}
+      {/* Virtualized scrollable area */}
+      <div
+        ref={parentRef}
+        style={{ flex: 1, overflow: 'auto' }}
+      >
+        {sorted.length > 0 ? (
+          <div
+            style={{
+              height: virtualizer.getTotalSize(),
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const task = sorted[virtualRow.index]
+              const isExpanded = expandedTasks.has(task.id)
+              return (
+                <div
+                  key={task.id}
+                  data-index={virtualRow.index}
+                  ref={(el) => {
+                    // Dynamic measurement for expanded rows
+                    if (el) virtualizer.measureElement(el)
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <TaskGridRow
+                    task={task}
+                    allTasks={allTasks || tasks}
+                    index={virtualRow.index}
+                    colStyle={colStyle}
+                    onStatusChange={onStatusChange}
+                    onFieldChange={onFieldChange}
+                    onSelect={onSelect}
+                    onOpenDetail={onOpenDetail}
+                    showUndo={showUndo}
+                    selected={selectedIds?.has(task.id)}
+                    onToggleSelect={onToggleSelect}
+                    isFocused={focusedIndex === virtualRow.index}
+                    onFocusIndex={onFocusIndex}
+                    onContextMenu={openContextMenu}
+                    expanded={isExpanded}
+                    onToggleExpand={() => toggleExpand(task.id)}
+                  />
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <InlineSubtaskRow key={`sub-${task.id}`} taskId={task.id} />
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div style={{ padding: '48px 16px', textAlign: 'center' }}>
+            <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
+              No tasks match the current filters
+            </p>
+          </div>
+        )}
+      </div>
 
-      {sorted.length === 0 && (
-        <div style={{ padding: '48px 16px', textAlign: 'center' }}>
-          <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
-            No tasks match the current filters
-          </p>
-        </div>
-      )}
-
-      {/* Calculations row — Notion-style summary */}
-      {sorted.length > 0 && <CalculationsRow tasks={sorted} />}
+      {/* Calculations row — Notion-style summary (NOT virtualized, stays fixed at bottom) */}
+      {sorted.length > 0 && <div style={{ flexShrink: 0 }}><CalculationsRow tasks={sorted} /></div>}
 
       {/* Context menu */}
       <TaskContextMenu
@@ -269,12 +335,7 @@ function TaskGridRow({
   const [rowFadeAnim, setRowFadeAnim] = useState(false)
   const prevStatusRef = useRef(task.status)
 
-  // Scroll focused row into view
-  useEffect(() => {
-    if (isFocused && rowRef.current) {
-      rowRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-    }
-  }, [isFocused])
+  // Scroll-into-view is handled by the virtualizer at the parent level
 
   // Detect status change to 'done' for completion animation
   useEffect(() => {
