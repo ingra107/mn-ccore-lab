@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch } from 'lucide-react'
+import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -9,7 +9,7 @@ import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
-import { useTasks } from '../../hooks/useApiData'
+import { useTasks, useUpcomingConferences } from '../../hooks/useApiData'
 import { useUpdateTaskStatus } from '../../hooks/useMutations'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
@@ -277,6 +277,9 @@ export default function Deadlines() {
           <DeadlineTimeline items={[...overdue, ...thisWeek, ...nextWeek, ...later]} />
         )}
       </div>
+
+      {/* Upcoming Conferences */}
+      <UpcomingConferencesSection />
 
       {/* Task Detail Panel */}
       {selectedTask && (
@@ -649,6 +652,185 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Upcoming Conferences ────────────────────────────────────
+
+const CONF_STATUS_PILL: Record<string, { bg: string; color: string }> = {
+  planning: { bg: 'rgba(129,140,153,0.12)', color: 'var(--slate)' },
+  submitted: { bg: 'rgba(201,168,76,0.12)', color: 'var(--gold)' },
+  accepted: { bg: 'rgba(45,138,138,0.12)', color: 'var(--teal)' },
+  preparing: { bg: 'rgba(91,155,213,0.12)', color: '#5b9bd5' },
+  presented: { bg: 'rgba(52,168,83,0.12)', color: '#34a853' },
+  rejected: { bg: 'rgba(134,48,62,0.12)', color: 'var(--maroon)' },
+}
+
+const CONF_MATERIALS_LABEL: Record<string, string> = {
+  not_started: 'Not Started',
+  drafting: 'Drafting',
+  review: 'In Review',
+  final: 'Final',
+}
+
+function UpcomingConferencesSection() {
+  const { data: conferences = [], isLoading } = useUpcomingConferences()
+
+  if (isLoading || conferences.length === 0) return null
+
+  return (
+    <div
+      className="table-container"
+      style={{
+        padding: '16px 20px',
+        marginTop: '1.5rem',
+      }}
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <Presentation size={14} style={{ color: 'var(--teal)', opacity: 0.7 }} />
+        <span
+          style={{
+            fontSize: '11px',
+            fontWeight: 500,
+            color: 'var(--slate)',
+            opacity: 0.65,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+          }}
+        >
+          Upcoming Conferences
+        </span>
+        <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.7 }}>
+          ({conferences.length})
+        </span>
+      </div>
+
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+        <thead>
+          <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
+            {['Conference', 'Project', 'Deadline', 'Status', 'Prep'].map((h) => (
+              <th
+                key={h}
+                style={{
+                  textAlign: 'left',
+                  padding: '6px 8px',
+                  fontSize: '10px',
+                  fontWeight: 500,
+                  color: 'var(--slate)',
+                  opacity: 0.5,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {conferences.map((conf) => {
+            const pill = CONF_STATUS_PILL[conf.status] || CONF_STATUS_PILL.planning
+            const isOverdue = conf.days_until !== null && conf.days_until < 0 && conf.status === 'planning'
+            const relevantDate = conf.status === 'planning' && conf.abstract_due
+              ? conf.abstract_due
+              : conf.conference_date
+
+            return (
+              <tr key={conf.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                <td style={{ padding: '8px', fontWeight: 500, color: 'var(--ink)' }}>
+                  {conf.conference}
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      color: 'var(--slate)',
+                      opacity: 0.6,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '180px',
+                    }}
+                    title={conf.title}
+                  >
+                    {conf.title}
+                  </div>
+                </td>
+                <td style={{ padding: '8px' }}>
+                  {conf.project_slug ? (
+                    <Link
+                      to={`/projects/${conf.project_slug}`}
+                      style={{
+                        fontSize: '11px',
+                        color: 'var(--teal)',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      {conf.project_title || conf.project_slug}
+                    </Link>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>--</span>
+                  )}
+                </td>
+                <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>
+                  {relevantDate ? (
+                    <div>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          color: isOverdue ? 'var(--maroon)' : 'var(--ink)',
+                          fontWeight: isOverdue ? 600 : 400,
+                        }}
+                      >
+                        {formatShortDate(relevantDate)}
+                      </span>
+                      {conf.days_until !== null && (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
+                            opacity: isOverdue ? 0.8 : 0.5,
+                            marginLeft: '4px',
+                          }}
+                        >
+                          ({conf.days_until}d)
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>--</span>
+                  )}
+                </td>
+                <td style={{ padding: '8px' }}>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      padding: '2px 8px',
+                      borderRadius: '10px',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      background: pill.bg,
+                      color: pill.color,
+                      textTransform: 'capitalize',
+                    }}
+                  >
+                    {conf.status}
+                  </span>
+                </td>
+                <td style={{ padding: '8px' }}>
+                  {['accepted', 'preparing'].includes(conf.status) ? (
+                    <span style={{ fontSize: '11px', color: 'var(--ink)' }}>
+                      {CONF_MATERIALS_LABEL[conf.materials_status] || conf.materials_status}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>--</span>
+                  )}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }

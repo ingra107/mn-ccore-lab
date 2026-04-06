@@ -958,4 +958,93 @@ export function completeGrantMilestone(id: string) {
   })
 }
 
+// ── Conference Submissions ──────────────────────────────────
+
+export type ConferenceSubmissionType = 'abstract' | 'oral' | 'poster' | 'workshop' | 'invited'
+export type ConferenceStatus = 'planning' | 'submitted' | 'accepted' | 'preparing' | 'presented' | 'rejected'
+export type MaterialsStatus = 'not_started' | 'drafting' | 'review' | 'final'
+export type PresentationType = 'poster' | 'oral' | 'rapid' | 'workshop'
+
+export interface ConferenceSubmissionRow {
+  id: string
+  project_id: string | null
+  conference: string
+  conference_date: string | null
+  submission_type: ConferenceSubmissionType
+  title: string
+  authors: string | null
+  abstract_due: string | null
+  abstract_submitted_at: string | null
+  accepted_at: string | null
+  presentation_type: PresentationType | null
+  materials_status: MaterialsStatus
+  travel_booked: number
+  notes: string | null
+  status: ConferenceStatus
+  created_at: string
+}
+
+export interface UpcomingConferenceRow extends ConferenceSubmissionRow {
+  project_title: string | null
+  project_slug: string | null
+  days_until: number | null
+}
+
+export function fetchConferences(params?: { project_id?: string; status?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.project_id) qs.set('project_id', params.project_id)
+  if (params?.status) qs.set('status', params.status)
+  const query = qs.toString()
+  return fetchApi<ConferenceSubmissionRow[]>(`/api/conferences${query ? `?${query}` : ''}`)
+}
+
+export function fetchUpcomingConferences() {
+  return fetchApi<UpcomingConferenceRow[]>('/api/conferences/upcoming')
+}
+
+export function createConference(input: {
+  project_id?: string
+  conference: string
+  conference_date?: string
+  submission_type: ConferenceSubmissionType
+  title: string
+  authors?: string
+  abstract_due?: string
+  status?: ConferenceStatus
+  notes?: string
+}) {
+  return fetchApi<ConferenceSubmissionRow>('/api/conferences', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateConference(id: string, fields: Partial<{
+  project_id: string
+  conference: string
+  conference_date: string
+  submission_type: ConferenceSubmissionType
+  title: string
+  authors: string
+  abstract_due: string
+  abstract_submitted_at: string
+  accepted_at: string
+  presentation_type: PresentationType
+  materials_status: MaterialsStatus
+  travel_booked: number
+  notes: string
+  status: ConferenceStatus
+}>) {
+  return fetchApi<ConferenceSubmissionRow>(`/api/conferences/${id}`, {
+    method: 'POST',
+    body: JSON.stringify(fields),
+  })
+}
+
+export function deleteConference(id: string) {
+  return fetchApi<{ id: string; deleted: boolean }>(`/api/conferences/${id}/delete`, {
+    method: 'POST',
+  })
+}
+
 export { ApiError }

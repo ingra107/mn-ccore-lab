@@ -42,6 +42,7 @@ import type { Project, ActionItem } from '../data/types'
 import type { TaskRow } from '../lib/api'
 import RevisionTracker from '../components/RevisionTracker'
 import SubmissionTimeline from '../components/SubmissionTimeline'
+import ConferencePrep from '../components/ConferencePrep'
 
 type Tab = 'overview' | 'tasks' | 'revisions' | 'activity' | 'literature'
 
@@ -1096,6 +1097,11 @@ function ProjectDetailInner({ project }: InnerProps) {
             </div>
           </div>
         </motion.div>
+      </div>
+
+      {/* Conference Prep Tracking */}
+      <div style={{ marginTop: '1.5rem' }}>
+        <ConferencePrep projectId={project.slug} />
       </div>
 
       </>)}

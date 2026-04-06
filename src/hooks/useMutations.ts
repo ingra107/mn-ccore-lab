@@ -8,8 +8,8 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone, createDeadlineDependency, deleteDeadlineDependency, createSubmissionEvent, updateSubmissionEvent, deleteSubmissionEvent, createRegulatoryItem, updateRegulatoryItem, renewRegulatoryItem, createGrantMilestone, updateGrantMilestone, completeGrantMilestone } from '../lib/api'
-import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, RegulatoryItemRow, GrantMilestoneRow } from '../lib/api'
+import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone, createDeadlineDependency, deleteDeadlineDependency, createSubmissionEvent, updateSubmissionEvent, deleteSubmissionEvent, createRegulatoryItem, updateRegulatoryItem, renewRegulatoryItem, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference } from '../lib/api'
+import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, RegulatoryItemRow, GrantMilestoneRow, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
 import type { Comment, SubtaskRow } from './useApiData'
@@ -1396,6 +1396,97 @@ export function useCompleteGrantMilestone() {
       queryClient.invalidateQueries({ queryKey: ['grant-milestones'] })
       queryClient.invalidateQueries({ queryKey: ['grant-milestones-upcoming'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Conference submission mutations ─────────────────────────
+
+export function useCreateConference(projectId?: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      project_id?: string
+      conference: string
+      conference_date?: string
+      submission_type: ConferenceSubmissionType
+      title: string
+      authors?: string
+      abstract_due?: string
+      status?: ConferenceStatus
+      notes?: string
+    }) => createConference(input),
+    onSettled: () => {
+      if (projectId) queryClient.invalidateQueries({ queryKey: ['conferences', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['conferences-upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUpdateConference(projectId?: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, fields }: { id: string; fields: Partial<{
+      project_id: string
+      conference: string
+      conference_date: string
+      submission_type: ConferenceSubmissionType
+      title: string
+      authors: string
+      abstract_due: string
+      abstract_submitted_at: string
+      accepted_at: string
+      presentation_type: PresentationType
+      materials_status: MaterialsStatus
+      travel_booked: number
+      notes: string
+      status: ConferenceStatus
+    }> }) => updateConference(id, fields),
+    onMutate: async ({ id, fields }) => {
+      const key = projectId ? ['conferences', projectId] : ['conferences-upcoming']
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<ConferenceSubmissionRow[]>(key)
+      if (previous) {
+        queryClient.setQueryData<ConferenceSubmissionRow[]>(
+          key,
+          previous.map((c) => c.id === id ? { ...c, ...fields } as ConferenceSubmissionRow : c),
+        )
+      }
+      return { previous, key }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(context.key, context.previous)
+    },
+    onSettled: () => {
+      if (projectId) queryClient.invalidateQueries({ queryKey: ['conferences', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['conferences-upcoming'] })
+    },
+  })
+}
+
+export function useDeleteConference(projectId?: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => deleteConference(id),
+    onMutate: async (id) => {
+      const key = projectId ? ['conferences', projectId] : ['conferences-upcoming']
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<ConferenceSubmissionRow[]>(key)
+      if (previous) {
+        queryClient.setQueryData<ConferenceSubmissionRow[]>(
+          key,
+          previous.filter((c) => c.id !== id),
+        )
+      }
+      return { previous, key }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(context.key, context.previous)
+    },
+    onSettled: () => {
+      if (projectId) queryClient.invalidateQueries({ queryKey: ['conferences', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['conferences-upcoming'] })
     },
   })
 }

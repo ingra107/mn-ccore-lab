@@ -42,6 +42,8 @@ import {
   fetchExpiringRegulatory,
   fetchGrantMilestones,
   fetchUpcomingGrantMilestones,
+  fetchConferences,
+  fetchUpcomingConferences,
 } from '../lib/api'
 import type {
   PublicationRow,
@@ -70,10 +72,12 @@ import type {
   ExpiringRegulatoryRow,
   GrantMilestoneRow,
   UpcomingGrantMilestoneRow,
+  ConferenceSubmissionRow,
+  UpcomingConferenceRow,
 } from '../lib/api'
 
 // Re-export row types for components that need them
-export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow, CascadeGraph, ImpactResult, SubmissionEventRow, ActiveSubmissionRow, RegulatoryItemRow, ExpiringRegulatoryRow, GrantMilestoneRow, UpcomingGrantMilestoneRow }
+export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow, CascadeGraph, ImpactResult, SubmissionEventRow, ActiveSubmissionRow, RegulatoryItemRow, ExpiringRegulatoryRow, GrantMilestoneRow, UpcomingGrantMilestoneRow, ConferenceSubmissionRow, UpcomingConferenceRow }
 
 // Static data imports (fallback for local dev)
 import { publications as staticPublications } from '../data/publications'
@@ -1364,6 +1368,25 @@ export function useUpcomingGrantMilestones(days: number = 90) {
   return useQuery({
     queryKey: ['grant-milestones-upcoming', days],
     queryFn: () => fetchUpcomingGrantMilestones(days).then((r) => r.data),
+    staleTime: 60 * 1000,
+  })
+}
+
+// ── Conference submissions ────────────────────────────────
+
+export function useConferences(projectId: string) {
+  return useQuery({
+    queryKey: ['conferences', projectId],
+    queryFn: () => fetchConferences({ project_id: projectId }).then((r) => r.data),
+    enabled: !!projectId,
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useUpcomingConferences() {
+  return useQuery({
+    queryKey: ['conferences-upcoming'],
+    queryFn: () => fetchUpcomingConferences().then((r) => r.data),
     staleTime: 60 * 1000,
   })
 }

@@ -827,6 +827,25 @@ export default {
           return await handleCreateRegulatoryItem(request, user, env);
         }
 
+        // ── Conference submissions ──
+
+        // POST /api/conferences/:id/delete — soft delete (must come before :id match)
+        const confDeleteMatch = path.match(/^\/api\/conferences\/([^/]+)\/delete$/);
+        if (request.method === 'POST' && confDeleteMatch) {
+          return await handleDeleteConference(confDeleteMatch[1], user, env);
+        }
+
+        // POST /api/conferences/:id — update fields
+        const confUpdateMatch = path.match(/^\/api\/conferences\/([^/]+)$/);
+        if (request.method === 'POST' && confUpdateMatch) {
+          return await handleUpdateConference(confUpdateMatch[1], request, user, env);
+        }
+
+        // POST /api/conferences — create submission
+        if (request.method === 'POST' && path === '/api/conferences') {
+          return await handleCreateConference(request, user, env);
+        }
+
         // ── Deadline cascade dependencies ──
 
         // POST /api/deadline-dependencies — create dependency link
@@ -983,6 +1002,36 @@ export default {
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_regulatory_expiration ON regulatory_items(expiration_date)').run(); results.push('created idx_regulatory_expiration'); } catch (e) { results.push(`index error: ${e}`); }
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_regulatory_status ON regulatory_items(status)').run(); results.push('created idx_regulatory_status'); } catch (e) { results.push(`index error: ${e}`); }
             return json({ data: { version: 27, results } });
+          }
+          if (body.version === 28) {
+            const results: string[] = [];
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS conference_submissions (
+                  id TEXT PRIMARY KEY,
+                  project_id TEXT,
+                  conference TEXT NOT NULL,
+                  conference_date TEXT,
+                  submission_type TEXT NOT NULL,
+                  title TEXT NOT NULL,
+                  authors TEXT,
+                  abstract_due TEXT,
+                  abstract_submitted_at TEXT,
+                  accepted_at TEXT,
+                  presentation_type TEXT,
+                  materials_status TEXT DEFAULT 'not_started',
+                  travel_booked INTEGER DEFAULT 0,
+                  notes TEXT,
+                  status TEXT DEFAULT 'planning',
+                  created_at TEXT DEFAULT (datetime('now'))
+                )
+              `).run();
+              results.push('created conference_submissions');
+            } catch (e) { results.push(`conference_submissions: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_conf_sub_project ON conference_submissions(project_id)').run(); results.push('created idx_conf_sub_project'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_conf_sub_conference ON conference_submissions(conference)').run(); results.push('created idx_conf_sub_conference'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_conf_sub_status ON conference_submissions(status)').run(); results.push('created idx_conf_sub_status'); } catch (e) { results.push(`index error: ${e}`); }
+            return json({ data: { version: 28, results } });
           }
           if (body.version === 29) {
             const results: string[] = [];
