@@ -24,7 +24,7 @@ import {
   Scale,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useProjects, useMeetingsApi, useActionItems, useProjectPapers, useProjectDependencies, useDecisions, useTasks } from '../hooks/useApiData'
+import { useProjects, useMeetingsApi, useActionItems, useProjectPapers, useProjectDependencies, useDecisions, useTasks, useProjectUpdates } from '../hooks/useApiData'
 import type { DecisionRow } from '../hooks/useApiData'
 import { useUpdateProject, useAddAgendaItem, useToggleActionItem, usePostProjectUpdate, useUnlinkPaper, useCreateDependency, useDeleteDependency, useUpdateTaskStatus } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
@@ -113,6 +113,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   const d1Update = useUpdateProject(project.slug)
   const toggleAction = useToggleActionItem()
   const postUpdate = usePostProjectUpdate(project.slug)
+  const { data: projectUpdates = [] } = useProjectUpdates(project.slug)
   const { isAuthenticated, user } = useAuth()
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
 
@@ -1027,13 +1028,13 @@ function ProjectDetailInner({ project }: InnerProps) {
               )}
             </div>
 
-            {/* Notes list */}
+            {/* Notes list — from project_updates table */}
             <div className="flex flex-col gap-2">
               <AnimatePresence mode="popLayout">
-                {project.notes && project.notes.length > 0 ? (
-                  [...project.notes].reverse().map((note, i) => (
+                {projectUpdates.length > 0 ? (
+                  [...projectUpdates].reverse().map((update) => (
                     <motion.div
-                      key={note.timestamp + i}
+                      key={update.id}
                       layout
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -1055,8 +1056,8 @@ function ProjectDetailInner({ project }: InnerProps) {
                           marginBottom: '4px',
                         }}
                       >
-                        {formatTimestamp(note.timestamp)}
-                        {note.author && ` -- ${note.author}`}
+                        {formatTimestamp(update.created_at)}
+                        {update.author && ` — ${getPersonInfo(update.author).name}`}
                       </span>
                       <p
                         style={{
@@ -1068,7 +1069,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                           whiteSpace: 'pre-wrap',
                         }}
                       >
-                        {note.content}
+                        {update.content}
                       </p>
                     </motion.div>
                   ))
@@ -1084,7 +1085,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       margin: 0,
                     }}
                   >
-                    No notes yet
+                    No notes yet — add one above
                   </p>
                 )}
               </AnimatePresence>

@@ -599,18 +599,19 @@ a:hover {
   background: rgba(61, 184, 184, 0.06) !important;
 }
 
-/* Hover row actions */
+/* Task title clickable hover */
+.task-title-clickable:hover {
+  background: rgba(45, 138, 138, 0.06);
+}
+.dark .task-title-clickable:hover {
+  background: rgba(61, 184, 184, 0.08);
+}
+
+/* Hover row actions — in-flow grid column */
 .task-grid-row-actions {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 2px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms ease;
+  transition: opacity var(--transition-fast) ease;
 }
 
 .task-grid-row:hover .task-grid-row-actions,
@@ -633,7 +634,7 @@ a:hover {
   font-weight: 400;
   color: var(--teal);
   white-space: nowrap;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background var(--transition-fast) ease, border-color var(--transition-fast) ease;
 }
 
 .task-grid-row-action-btn:hover {

@@ -54,6 +54,8 @@ export default function PageHeader({
           </h1>
           {count !== undefined && (
             <span
+              aria-live="polite"
+              aria-atomic="true"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -74,6 +76,7 @@ export default function PageHeader({
           )}
           {subtitle && (
             <span
+              aria-live="polite"
               style={{
                 fontSize: 13,
                 fontWeight: 400,

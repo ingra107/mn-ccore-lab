@@ -6,7 +6,10 @@ import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
+import InlineSelect from '../../components/InlineSelect'
+import { useUndoToast } from '../../components/UndoToast'
 import { useTasks } from '../../hooks/useApiData'
+import { useUpdateTaskStatus } from '../../hooks/useMutations'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
@@ -38,7 +41,15 @@ export default function Deadlines() {
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
   const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
+  const updateTaskStatus = useUpdateTaskStatus()
+  const { showUndo } = useUndoToast()
   const isLoading = tasksLoading || grantsLoading
+
+  const handleStatusChange = useCallback((id: string, newStatus: string, prevStatus: string) => {
+    updateTaskStatus.mutate({ id, status: newStatus })
+    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked' }
+    showUndo(`Status → ${labels[newStatus] || newStatus}`, () => updateTaskStatus.mutate({ id, status: prevStatus }))
+  }, [updateTaskStatus, showUndo])
 
   const now = new Date()
 
@@ -175,12 +186,12 @@ export default function Deadlines() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: '1fr 120px 100px 80px',
+                gridTemplateColumns: '1fr 120px 100px 100px 80px',
                 padding: '8px 16px',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
-              {['TITLE', 'DUE DATE', 'ASSIGNEE', 'TYPE'].map((col) => (
+              {['TITLE', 'DUE DATE', 'ASSIGNEE', 'STATUS', 'TYPE'].map((col) => (
                 <span key={col} style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
                   {col}
                 </span>
@@ -197,7 +208,7 @@ export default function Deadlines() {
                 { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
               ].filter(g => g.items.length > 0).map((group) => (
                 <motion.div key={group.title} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}>
-                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} />
+                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} />
                 </motion.div>
               ))}
             </motion.div>
@@ -249,7 +260,14 @@ export default function Deadlines() {
 
 // ── Deadline Table Section (columnar) ────────────────────────
 
-function DeadlineTableSection({ title, items, color }: { title: string; items: DeadlineItem[]; color: string }) {
+const STATUS_OPTIONS = [
+  { value: 'todo', label: 'To Do', color: 'var(--slate)' },
+  { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
+  { value: 'done', label: 'Done', color: 'var(--green)' },
+  { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
+]
+
+function DeadlineTableSection({ title, items, color, onStatusChange }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void }) {
   const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
 
   return (
@@ -279,7 +297,7 @@ function DeadlineTableSection({ title, items, color }: { title: string; items: D
             <div
               className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
               style={{
-                gridTemplateColumns: '1fr 120px 100px 80px',
+                gridTemplateColumns: '1fr 120px 100px 100px 80px',
                 padding: '8px 16px',
                 alignItems: 'center',
               }}
@@ -308,6 +326,20 @@ function DeadlineTableSection({ title, items, color }: { title: string; items: D
                   <div style={{ width: 20, height: 20, flexShrink: 0 }}>
                     <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
                   </div>
+                ) : (
+                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
+                )}
+              </div>
+
+              {/* Status — InlineSelect for tasks */}
+              <div onClick={(e) => e.stopPropagation()}>
+                {item.type === 'task' && onStatusChange ? (
+                  <InlineSelect
+                    value={item.status}
+                    options={STATUS_OPTIONS}
+                    onChange={(val) => onStatusChange(item.id, val, item.status)}
+                    size="sm"
+                  />
                 ) : (
                   <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
                 )}

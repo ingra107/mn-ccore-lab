@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Pencil, Archive, CalendarPlus, Link2, Plus } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, CalendarPlus, Link2, Plus } from 'lucide-react'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
@@ -80,7 +80,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     else { setSortKey(key); setSortAsc(true) }
   }
 
-  const colStyle = { display: 'grid', gridTemplateColumns: '32px 1fr 120px 100px 120px 100px', alignItems: 'center' } as const
+  const colStyle = { display: 'grid', gridTemplateColumns: '32px 1fr 120px 100px 120px 100px 80px', alignItems: 'center' } as const
 
   return (
     <div className="table-container">
@@ -92,6 +92,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         <SortableColumnHeader label="DUE DATE" field="due_date" active={sortKey} asc={sortAsc} onSort={handleSort} />
         <SortableColumnHeader label="STATUS" field="status" active={sortKey} asc={sortAsc} onSort={handleSort} />
         <SortableColumnHeader label="PRIORITY" field="priority" active={sortKey} asc={sortAsc} onSort={handleSort} />
+        <div /> {/* Actions column spacer */}
       </div>
 
       {/* Rows */}
@@ -193,6 +194,9 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           }
           .task-grid-row .task-row-priority {
             order: 4 !important;
+          }
+          .task-grid-row .task-grid-row-actions {
+            display: none !important;
           }
         }
       `}</style>
@@ -338,13 +342,25 @@ function TaskGridRow({
               <Link2 size={12} style={{ color: 'var(--maroon)', opacity: 0.7 }} />
             </span>
           )}
-          <span style={{
-            fontSize: '13px',
-            fontWeight: 400,
-            color: 'var(--ink)',
-            textDecoration: isDone ? 'line-through' : 'none',
-            lineHeight: 1.4,
-          }}>
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => { e.stopPropagation(); onOpenDetail?.(task) }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOpenDetail?.(task) } }}
+            style={{
+              fontSize: '13px',
+              fontWeight: 400,
+              color: 'var(--ink)',
+              textDecoration: isDone ? 'line-through' : 'none',
+              lineHeight: 1.4,
+              cursor: onOpenDetail ? 'pointer' : 'default',
+              borderRadius: '3px',
+              padding: '1px 4px',
+              margin: '-1px -4px',
+              transition: 'background var(--transition-fast) ease',
+            }}
+            className="task-title-clickable"
+          >
             {formatBrandName(task.title || task.description)}
           </span>
         </div>
@@ -422,16 +438,8 @@ function TaskGridRow({
       />
       </div>
 
-      {/* Hover row actions */}
-      <div className="task-grid-row-actions" onClick={(e) => e.stopPropagation()}>
-        <button
-          className="task-grid-row-action-btn"
-          onClick={() => onOpenDetail?.(task)}
-          title="Edit task"
-        >
-          <Pencil size={12} />
-          Edit
-        </button>
+      {/* Row actions — own grid column, not absolute */}
+      <div className="task-grid-row-actions" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2px' }}>
         <button
           className="task-grid-row-action-btn"
           onClick={() => {

@@ -30,6 +30,7 @@ import { useWatchlist } from '../../hooks/useWatchlist'
 import { ROLE_CARD_CONFIGS, ROLE_LABELS } from '../../lib/roleDefaults'
 import type { PersonalCardId, UserRole } from '../../lib/roleDefaults'
 import type { WatchItem } from '../../hooks/useWatchlist'
+import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import type { TaskRow } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 
@@ -93,6 +94,7 @@ export default function Personal() {
   const { data: commitments = [] } = useCommitments(currentUser || undefined)
   const { data: grants = [] } = useGrantTimeline()
   const updateStatus = useUpdateTaskStatus()
+  const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
 
   // Filter tasks for current user (or show all if no auth)
   const myTasks = useMemo(() => {
@@ -161,6 +163,7 @@ export default function Personal() {
       <MyTasksCard
         tasks={pendingTasks}
         onStatusChange={(id, s) => updateStatus.mutate({ id, status: s })}
+        onOpenDetail={setSelectedTask}
         large={isPrimary('my-tasks')}
       />
     ),
@@ -320,6 +323,14 @@ export default function Personal() {
           </motion.div>
         ))}
       </motion.div>
+
+      {/* Task Detail Panel */}
+      {selectedTask && (
+        <TaskDetailPanel
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
 
       <style>{`
         .bento-grid {
@@ -516,7 +527,7 @@ function QuickStat({ label, value, color, icon: Icon }: { label: string; value: 
 
 // ── My Tasks Card ────────────────────────────────────────────
 
-function MyTasksCard({ tasks, onStatusChange, large }: { tasks: TaskRow[]; onStatusChange: (id: string, status: string) => void; large?: boolean }) {
+function MyTasksCard({ tasks, onStatusChange, onOpenDetail, large }: { tasks: TaskRow[]; onStatusChange: (id: string, status: string) => void; onOpenDetail?: (task: TaskRow) => void; large?: boolean }) {
   const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
   const sorted = [...tasks]
     .sort((a, b) => (priorityOrder[a.priority] ?? 2) - (priorityOrder[b.priority] ?? 2))
@@ -531,9 +542,15 @@ function MyTasksCard({ tasks, onStatusChange, large }: { tasks: TaskRow[]; onSta
             <div
               key={task.id}
               className="flex items-center gap-2 py-1.5 px-1 rounded-md transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02] cursor-pointer"
-              onClick={() => onStatusChange(task.id, task.status === 'todo' ? 'in_progress' : 'done')}
+              onClick={() => onOpenDetail?.(task)}
             >
-              <Circle size={14} style={{ color: task.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)', opacity: 0.5, flexShrink: 0 }} />
+              <button
+                onClick={(e) => { e.stopPropagation(); onStatusChange(task.id, task.status === 'todo' ? 'in_progress' : 'done') }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
+                title="Cycle status"
+              >
+                <Circle size={14} style={{ color: task.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)', opacity: 0.5 }} />
+              </button>
               <span className="flex-1 text-sm truncate" style={{ color: 'var(--ink)' }}>
                 {task.title || task.description}
               </span>
