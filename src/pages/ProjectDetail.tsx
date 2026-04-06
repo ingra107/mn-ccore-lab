@@ -27,6 +27,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useMeetingsApi, useActionItems, useProjectPapers, useProjectDependencies, useDecisions, useTasks, useProjectUpdates } from '../hooks/useApiData'
 import type { DecisionRow } from '../hooks/useApiData'
 import { useUpdateProject, useAddAgendaItem, useToggleActionItem, usePostProjectUpdate, useUnlinkPaper, useCreateDependency, useDeleteDependency, useUpdateTaskStatus } from '../hooks/useMutations'
+import { useUndoToast } from '../components/UndoToast'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import { formatMediumDate, formatTimestamp } from '../lib/dateUtils'
@@ -70,7 +71,6 @@ export default function ProjectDetail() {
           to="/projects"
           className="inline-flex items-center gap-2 mb-6"
           style={{
-            fontFamily: 'var(--font-body)',
             fontSize: '14px',
             color: 'var(--slate)',
             textDecoration: 'none',
@@ -88,7 +88,7 @@ export default function ProjectDetail() {
         >
           Project not found
         </h1>
-        <p style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', marginTop: '0.5rem' }}>
+        <p style={{ color: 'var(--slate)', marginTop: '0.5rem' }}>
           No project matches the slug "{slug}".
         </p>
       </div>
@@ -112,6 +112,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   // D1 mutations
   const d1Update = useUpdateProject(project.slug)
   const toggleAction = useToggleActionItem()
+  const { showUndo } = useUndoToast()
   const postUpdate = usePostProjectUpdate(project.slug)
   const { data: projectUpdates = [] } = useProjectUpdates(project.slug)
   const { isAuthenticated, user } = useAuth()
@@ -389,7 +390,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                     autoFocus
                     style={{
                       flex: 1,
-                      fontFamily: 'var(--font-body)',
                       fontSize: '13px',
                       color: 'var(--ink)',
                       background: 'var(--cream)',
@@ -502,7 +502,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                 autoFocus
                 style={{
                   width: '100%',
-                  fontFamily: 'var(--font-body)',
                   fontSize: '14px',
                   color: 'var(--ink)',
                   background: 'var(--cream)',
@@ -528,14 +527,14 @@ function ProjectDetailInner({ project }: InnerProps) {
                 <button
                   onClick={() => { d1Update.mutate({ strategic_context: strategicDraft.trim() || undefined }); setEditingStrategic(false) }}
                   className="px-3 py-1 rounded-md text-xs font-medium"
-                  style={{ fontFamily: 'var(--font-body)', background: 'var(--gold)', color: '#0f1923', border: 'none', cursor: 'pointer' }}
+                  style={{ background: 'var(--gold)', color: '#0f1923', border: 'none', cursor: 'pointer' }}
                 >
                   Save
                 </button>
                 <button
                   onClick={() => setEditingStrategic(false)}
                   className="px-3 py-1 rounded-md text-xs"
-                  style={{ fontFamily: 'var(--font-body)', color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer' }}
+                  style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>
@@ -547,7 +546,6 @@ function ProjectDetailInner({ project }: InnerProps) {
           ) : project.strategic_context ? (
             <p
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '14px',
                 color: 'var(--ink)',
                 lineHeight: 1.6,
@@ -559,7 +557,6 @@ function ProjectDetailInner({ project }: InnerProps) {
           ) : isPi ? (
             <p
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
                 color: 'var(--slate)',
                 opacity: 0.5,
@@ -704,7 +701,6 @@ function ProjectDetailInner({ project }: InnerProps) {
             >
               <span
                 style={{
-                  fontFamily: 'var(--font-body)',
                   fontSize: '14px',
                   color: 'var(--ink)',
                   flex: 1,
@@ -721,8 +717,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     background: 'var(--gold)',
                     color: '#0f1923',
                     border: 'none',
-                    fontFamily: 'var(--font-body)',
-                  }}
+                    }}
                   whileTap={{ scale: 0.95 }}
                 >
                   Confirm
@@ -735,8 +730,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     background: 'transparent',
                     color: 'var(--slate)',
                     border: '1px solid var(--ice)',
-                    fontFamily: 'var(--font-body)',
-                  }}
+                    }}
                   whileTap={{ scale: 0.95 }}
                 >
                   Cancel
@@ -813,7 +807,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                   rows={3}
                   style={{
                     width: '100%',
-                    fontFamily: 'var(--font-body)',
                     fontSize: '14px',
                     color: 'var(--ink)',
                     background: 'var(--cream)',
@@ -832,7 +825,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                     setEditingDescription(true)
                   }}
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '14px',
                     color: project.description ? 'var(--ink)' : 'var(--slate)',
                     lineHeight: 1.6,
@@ -889,7 +881,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                         </div>
                         <span
                           style={{
-                            fontFamily: 'var(--font-body)',
                             fontSize: '13px',
                             color: 'var(--ink)',
                           }}
@@ -994,7 +985,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                   }}
                   style={{
                     flex: 1,
-                    fontFamily: 'var(--font-body)',
                     fontSize: '13px',
                     color: 'var(--ink)',
                     background: 'var(--cream)',
@@ -1018,8 +1008,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     background: 'var(--gold)',
                     color: '#0f1923',
                     border: 'none',
-                    fontFamily: 'var(--font-body)',
-                  }}
+                    }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <Plus size={12} />
@@ -1061,7 +1050,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                       </span>
                       <p
                         style={{
-                          fontFamily: 'var(--font-body)',
                           fontSize: '13px',
                           color: 'var(--ink)',
                           lineHeight: 1.5,
@@ -1076,7 +1064,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                 ) : (
                   <p
                     style={{
-                      fontFamily: 'var(--font-body)',
                       fontSize: '12px',
                       color: 'var(--slate)',
                       opacity: 0.4,
@@ -1211,7 +1198,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p
                       style={{
-                        fontFamily: 'var(--font-body)',
                         fontSize: '13px',
                         color: 'var(--ink)',
                         lineHeight: 1.5,
@@ -1247,7 +1233,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                     {p.note && (
                       <p
                         style={{
-                          fontFamily: 'var(--font-body)',
                           fontSize: '11px',
                           color: 'var(--teal)',
                           fontStyle: 'italic',
@@ -1298,7 +1283,6 @@ function ProjectDetailInner({ project }: InnerProps) {
           ) : (
             <p
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '12px',
                 color: 'var(--slate)',
                 opacity: 0.4,
@@ -1357,7 +1341,11 @@ function ProjectDetailInner({ project }: InnerProps) {
                 >
                   <motion.button
                     type="button"
-                    onClick={() => item.action.id && toggleAction.mutate(item.action.id)}
+                    onClick={() => {
+                      if (!item.action.id) return
+                      toggleAction.mutate(item.action.id)
+                      showUndo('Action item toggled', () => toggleAction.mutate(item.action.id!))
+                    }}
                     className="cursor-pointer flex-shrink-0 mt-0.5"
                     style={{
                       background: 'none',
@@ -1377,7 +1365,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                   <div style={{ flex: 1 }}>
                     <p
                       style={{
-                        fontFamily: 'var(--font-body)',
                         fontSize: '13px',
                         color: 'var(--ink)',
                         margin: 0,
@@ -1426,7 +1413,6 @@ function ProjectDetailInner({ project }: InnerProps) {
           ) : (
             <p
               style={{
-                fontFamily: 'var(--font-body)',
                 fontSize: '12px',
                 color: 'var(--slate)',
                 opacity: 0.4,
@@ -1514,7 +1500,6 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
                 <Scale size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
                 <span
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '13px',
                     color: 'var(--ink)',
                     fontWeight: 600,
@@ -1537,7 +1522,6 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
               {decision.rationale && (
                 <p
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '12px',
                     color: 'var(--slate)',
                     lineHeight: 1.5,
@@ -1550,7 +1534,6 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
               {decision.outcome && (
                 <p
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '11px',
                     color: 'var(--teal)',
                     margin: '4px 0 0 20px',
@@ -1734,7 +1717,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                     value={newDirection}
                     onChange={(e) => setNewDirection(e.target.value as 'outgoing' | 'incoming')}
                     style={{
-                      fontFamily: 'var(--font-body)',
                       fontSize: '12px',
                       color: 'var(--ink)',
                       background: 'var(--cream)',
@@ -1768,7 +1750,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                     value={newRelType}
                     onChange={(e) => setNewRelType(e.target.value)}
                     style={{
-                      fontFamily: 'var(--font-body)',
                       fontSize: '12px',
                       color: 'var(--ink)',
                       background: 'var(--cream)',
@@ -1804,7 +1785,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                     onChange={(e) => setNewTarget(e.target.value)}
                     style={{
                       width: '100%',
-                      fontFamily: 'var(--font-body)',
                       fontSize: '12px',
                       color: 'var(--ink)',
                       background: 'var(--cream)',
@@ -1830,7 +1810,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                 placeholder="Optional note..."
                 style={{
                   width: '100%',
-                  fontFamily: 'var(--font-body)',
                   fontSize: '12px',
                   color: 'var(--ink)',
                   background: 'var(--cream)',
@@ -1852,7 +1831,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                     background: newTarget ? 'var(--teal)' : 'var(--ice)',
                     color: newTarget ? '#ffffff' : 'var(--slate)',
                     border: 'none',
-                    fontFamily: 'var(--font-body)',
                     opacity: newTarget ? 1 : 0.5,
                   }}
                   whileTap={{ scale: 0.95 }}
@@ -1864,7 +1842,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                   onClick={() => { setShowAddForm(false); setNewTarget(''); setNewNote('') }}
                   className="px-3 py-1.5 rounded-md text-xs"
                   style={{
-                    fontFamily: 'var(--font-body)',
                     color: 'var(--slate)',
                     background: 'none',
                     border: '1px solid var(--border-light)',
@@ -1891,7 +1868,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
         {outgoing.length === 0 && incoming.length === 0 ? (
           <p
             style={{
-              fontFamily: 'var(--font-body)',
               fontSize: '12px',
               color: 'var(--slate)',
               opacity: 0.4,
@@ -1930,7 +1906,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                 <Link
                   to={`/projects/${dep.to_slug}`}
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '13px',
                     color: 'var(--ink)',
                     textDecoration: 'none',
@@ -1988,7 +1963,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                 <Link
                   to={`/projects/${dep.from_slug}`}
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '13px',
                     color: 'var(--ink)',
                     textDecoration: 'none',
@@ -2011,7 +1985,6 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
                 </span>
                 <span
                   style={{
-                    fontFamily: 'var(--font-body)',
                     fontSize: '13px',
                     color: 'var(--slate)',
                     opacity: 0.6,

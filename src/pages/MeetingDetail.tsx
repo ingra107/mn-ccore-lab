@@ -31,6 +31,7 @@ import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreate
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../hooks/useToast'
+import { useUndoToast } from '../components/UndoToast'
 import Avatar from '../components/Avatar'
 import WatchButton from '../components/WatchButton'
 import HoverCard from '../components/HoverCard'
@@ -78,6 +79,11 @@ export default function MeetingDetail() {
   const { showSuccess } = useToast()
   // Hooks must be called unconditionally (before any conditional returns)
   const toggleAction = useToggleActionItem()
+  const { showUndo } = useUndoToast()
+  const handleToggleAction = (id: string) => {
+    toggleAction.mutate(id)
+    showUndo('Action item toggled', () => toggleAction.mutate(id))
+  }
   const addAgenda = useAddAgendaItem(meeting?.id || '')
   const updateNotes = useUpdateMeetingNotes(meeting?.id || '')
   const createDecision = useCreateDecision()
@@ -105,7 +111,7 @@ export default function MeetingDetail() {
     return (
       <div className="content-container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
         <Link to="/meetings" className="inline-flex items-center gap-2 mb-6"
-          style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
+          style={{ fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
           <ArrowLeft size={16} /> Back to Meetings
         </Link>
         <h1 style={{ fontWeight: 800, fontSize: '1.75rem', color: 'var(--ink)' }}>
@@ -177,7 +183,7 @@ export default function MeetingDetail() {
           <h1 style={{ fontWeight: 800, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
             {meeting.title}
           </h1>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '15px', color: 'var(--slate)', marginTop: '6px' }}>
+          <p style={{ fontSize: '15px', color: 'var(--slate)', marginTop: '6px' }}>
             {formatLongDate(meeting.date)}
           </p>
 
@@ -195,7 +201,7 @@ export default function MeetingDetail() {
                   <div style={{ width: 20, height: 20 }}>
                     <Avatar name={facilitatorInfo.name} initials={facilitatorInfo.initials} photoUrl={facilitatorInfo.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
                   </div>
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--ink)' }}>
                     {facilitatorInfo.name}
                   </span>
                 </div>
@@ -234,12 +240,12 @@ export default function MeetingDetail() {
               {/* Auto-generated agenda items */}
               {autoAgenda.length > 0 && (
                 <div className="mb-4">
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '8px' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '8px' }}>
                     Prepared agenda
                   </p>
                   <ol style={{ margin: 0, paddingLeft: '20px' }}>
                     {autoAgenda.map((item, i) => (
-                      <li key={i} style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', lineHeight: 1.6, marginBottom: '4px' }}>
+                      <li key={i} style={{ fontSize: '13px', color: 'var(--ink)', lineHeight: 1.6, marginBottom: '4px' }}>
                         {item}
                       </li>
                     ))}
@@ -250,7 +256,7 @@ export default function MeetingDetail() {
               {/* Team-added agenda items (drag-to-reorder) */}
               {teamAgendaItems.length > 0 && (
                 <div className="mb-4">
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '8px' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '8px' }}>
                     Team-added items
                   </p>
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAgendaDragEnd}>
@@ -292,7 +298,7 @@ export default function MeetingDetail() {
               {pendingActions.length > 0 && (
                 <div className="mb-3">
                   {pendingActions.map((item) => (
-                    <ActionItemRow key={item.id} item={item} onToggle={(id) => toggleAction.mutate(id)} />
+                    <ActionItemRow key={item.id} item={item} onToggle={handleToggleAction} />
                   ))}
                 </div>
               )}
@@ -300,17 +306,17 @@ export default function MeetingDetail() {
               {/* Completed items */}
               {completedActions.length > 0 && (
                 <div>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '6px' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '6px' }}>
                     Completed
                   </p>
                   {completedActions.map((item) => (
-                    <ActionItemRow key={item.id} item={item} onToggle={(id) => toggleAction.mutate(id)} />
+                    <ActionItemRow key={item.id} item={item} onToggle={handleToggleAction} />
                   ))}
                 </div>
               )}
 
               {actionItems.length === 0 && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
                   No action items yet — type above to add one
                 </p>
               )}
@@ -374,7 +380,7 @@ export default function MeetingDetail() {
                     placeholder="What was decided?"
                     autoFocus
                     style={{
-                      width: '100%', fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+                      width: '100%', fontSize: '13px', color: 'var(--ink)',
                       background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8,
                       padding: '8px 12px', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
                     }}
@@ -387,7 +393,7 @@ export default function MeetingDetail() {
                     onChange={(e) => setDecisionRationale(e.target.value)}
                     placeholder="Why? (optional rationale)"
                     style={{
-                      width: '100%', fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)',
+                      width: '100%', fontSize: '12px', color: 'var(--ink)',
                       background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.1)', borderRadius: 8,
                       padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
                     }}
@@ -414,12 +420,12 @@ export default function MeetingDetail() {
             {decisions.map((d, i) => (
               <div key={i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < decisions.length - 1 ? '1px solid rgba(201, 168, 76, 0.06)' : 'none' }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)', marginTop: '7px', flexShrink: 0 }} />
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>{d}</p>
+                <p style={{ fontSize: '13px', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>{d}</p>
               </div>
             ))}
 
             {decisions.length === 0 && !showDecisionForm && (
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+              <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
                 No decisions logged yet. Record one during the meeting so nobody forgets.
               </p>
             )}
@@ -443,7 +449,6 @@ export default function MeetingDetail() {
                   rows={12}
                   style={{
                     width: '100%',
-                    fontFamily: 'var(--font-body)',
                     fontSize: '14px',
                     lineHeight: 1.7,
                     color: 'var(--ink)',
@@ -487,11 +492,11 @@ export default function MeetingDetail() {
             ) : (
               <div className="relative group">
                 {meeting?.notes ? (
-                  <div style={{ fontFamily: 'var(--font-body)', fontSize: '14px', lineHeight: 1.7, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
+                  <div style={{ fontSize: '14px', lineHeight: 1.7, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
                     {meeting.notes}
                   </div>
                 ) : (
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--slate)', opacity: 0.5, fontStyle: 'italic', margin: 0, cursor: 'pointer' }}
+                  <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.5, fontStyle: 'italic', margin: 0, cursor: 'pointer' }}
                     onClick={() => { setNotesDraft(''); setEditingNotes(true) }}>
                     No notes yet. Click to add.
                   </p>
@@ -544,7 +549,7 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
       </button>
       <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
+        <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
         <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
           Added by {item.added_by}
           {item.document_url && (
@@ -573,7 +578,7 @@ function AttendeeChip({ slug }: { slug: string }) {
       <div style={{ width: 24, height: 24 }}>
         <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0" />
       </div>
-      <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{p.name.split(' ')[0]}</span>
+      <span style={{ fontSize: '12px', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{p.name.split(' ')[0]}</span>
       <HoverCard
         data={memberData}
         isVisible={hoverCard.isVisible}
@@ -612,7 +617,7 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
         </button>
       </div>
       <div style={{ flex: 1, paddingTop: '10px' }}>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)', margin: 0, lineHeight: 1.4, textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.5 : 1 }}>
+        <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0, lineHeight: 1.4, textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.5 : 1 }}>
           {item.description}
         </p>
         <div className="flex flex-wrap items-center gap-3 mt-1">
@@ -697,7 +702,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
           placeholder={isAuthenticated || !import.meta.env.PROD ? '@nick Review draft p2 Friday' : 'Sign in to add items'}
           disabled={!isAuthenticated && import.meta.env.PROD}
           style={{
-            flex: 1, fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+            flex: 1, fontSize: '13px', color: 'var(--ink)',
             background: 'var(--cream)', border: '1px solid rgba(45,138,138,0.12)', borderRadius: 8,
             padding: '8px 12px', outline: 'none', transition: 'border-color 0.15s',
           }}
@@ -786,7 +791,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             placeholder={isAuthenticated ? 'Add an agenda item...' : 'Sign in to add items'}
             disabled={!isAuthenticated && import.meta.env.PROD}
             style={{
-              width: '100%', fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--ink)',
+              width: '100%', fontSize: '13px', color: 'var(--ink)',
               background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: '8px',
               padding: '8px 12px', outline: 'none', transition: 'border-color 0.2s',
             }}
