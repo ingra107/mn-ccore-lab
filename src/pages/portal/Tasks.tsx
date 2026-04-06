@@ -51,7 +51,7 @@ export default function Tasks() {
   const [showFilters, setShowFilters] = useState(false)
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set())
   const bulkUpdate = useBulkUpdateTasks()
-  const { showSuccess } = useUndoToast()
+  const { showSuccess, showUndo } = useUndoToast()
 
   const toggleExpandTask = useCallback((id: string) => {
     setExpandedTasks(prev => {
@@ -110,7 +110,11 @@ export default function Tasks() {
   const activeFilterCount = Object.values(filters).filter(Boolean).length
 
   const handleStatusChange = (id: string, status: string) => {
+    const task = tasks.find(t => t.id === id)
+    const prev = task?.status || 'todo'
     updateStatus.mutate({ id, status })
+    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked' }
+    showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id, status: prev }))
   }
 
   const handleFieldChange = (id: string, field: string, value: unknown) => {

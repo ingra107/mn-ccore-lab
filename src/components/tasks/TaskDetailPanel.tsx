@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import CollapsibleSection from '../CollapsibleSection'
 import { useUpdateTask, useUpdateTaskStatus } from '../../hooks/useMutations'
+import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { TaskRow } from '../../lib/api'
 
@@ -24,6 +25,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
   const panelRef = useRef<HTMLDivElement>(null)
   const updateTask = useUpdateTask()
   const updateStatus = useUpdateTaskStatus()
+  const { showUndo } = useUndoToast()
 
   // Close on Escape
   useEffect(() => {
@@ -56,7 +58,10 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
   }
 
   const handleStatusChange = (status: string) => {
+    const prev = task.status
     updateStatus.mutate({ id: task.id, status })
+    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked' }
+    showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id: task.id, status: prev }))
   }
 
   return (

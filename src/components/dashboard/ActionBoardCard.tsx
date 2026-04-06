@@ -5,6 +5,7 @@ import Avatar from '../Avatar'
 import { useTasks } from '../../hooks/useApiData'
 import { formatBrandName } from '../BrandName'
 import { useUpdateTaskStatus } from '../../hooks/useMutations'
+import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 
@@ -17,6 +18,7 @@ const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
 export default function ActionBoardCard() {
   const { data: items = [] } = useTasks() // Already deduped by useTasks hook
   const updateStatus = useUpdateTaskStatus()
+  const { showUndo } = useUndoToast()
 
   const pending = items.filter((i) => !i.completed)
   const completed = items.filter((i) => i.completed)
@@ -57,12 +59,20 @@ export default function ActionBoardCard() {
                       return (
                         <div key={item.id} className="flex items-start gap-2 py-1.5 pl-7 action-board-row"
                           style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.04)', cursor: 'pointer', borderRadius: '4px', margin: '0 -4px', padding: '6px 4px 6px 28px', transition: 'background 0.15s' }}
-                          onClick={() => updateStatus.mutate({ id: item.id, status: item.status === 'todo' ? 'in_progress' : 'done' })}>
-                          <button type="button" className="cursor-pointer flex-shrink-0"
-                            onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: item.id, status: 'done' }) }}
-                            style={{ background: 'none', border: 'none', padding: '8px', margin: '-8px', color: si.color, opacity: 0.5, transition: 'all 0.15s', minWidth: '30px', minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--teal)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; e.currentTarget.style.color = si.color }}>
+                          onClick={() => {
+                            const next = item.status === 'todo' ? 'in_progress' : 'done'
+                            const prev = item.status
+                            updateStatus.mutate({ id: item.id, status: next })
+                            showUndo(`Status → ${next === 'done' ? 'Done' : 'In Progress'}`, () => updateStatus.mutate({ id: item.id, status: prev }))
+                          }}>
+                          <button type="button" className="cursor-pointer flex-shrink-0 action-board-status-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const prev = item.status
+                              updateStatus.mutate({ id: item.id, status: 'done' })
+                              showUndo('Completed task', () => updateStatus.mutate({ id: item.id, status: prev }))
+                            }}
+                            style={{ '--status-color': si.color, background: 'none', border: 'none', padding: '8px', margin: '-8px', color: si.color, opacity: 0.5, transition: 'all 0.15s', minWidth: '30px', minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' } as React.CSSProperties}>
                             <StatusIcon size={14} />
                           </button>
                           <div style={{ flex: 1 }}>
@@ -114,6 +124,7 @@ export default function ActionBoardCard() {
       <style>{`
         .action-board-row:active { background: rgba(201, 168, 76, 0.06); }
         .action-board-row:hover { background: rgba(201, 168, 76, 0.03); }
+        .action-board-status-btn:hover { opacity: 1 !important; color: var(--teal) !important; }
       `}</style>
     </BentoCard>
   )

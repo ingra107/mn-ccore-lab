@@ -53,7 +53,7 @@ export default function MyTasks() {
   const createTask = useCreateTask()
   const updateStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()
-  const { showSuccess } = useUndoToast()
+  const { showSuccess, showUndo } = useUndoToast()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const handleFieldChange = (id: string, field: string, value: unknown) => {
     updateTask.mutate({ id, fields: { [field]: value } })
@@ -83,7 +83,11 @@ export default function MyTasks() {
   }, [allTasks, currentUser])
 
   const handleStatusChange = (id: string, status: string) => {
+    const task = allTasks.find(t => t.id === id)
+    const prev = task?.status || 'todo'
     updateStatus.mutate({ id, status })
+    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked' }
+    showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id, status: prev }))
   }
 
   const handleCreate = (task: {
