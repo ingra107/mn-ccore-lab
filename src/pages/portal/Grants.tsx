@@ -1,19 +1,53 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Wallet, Calendar, Banknote, Diamond, ArrowRight, Clock, Telescope } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Wallet, Calendar, Banknote, Diamond, ArrowRight, Clock, Telescope, Plus, ClipboardList, X, Check, AlertTriangle } from 'lucide-react'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
+import InlineSelect from '../../components/InlineSelect'
+import { useUndoToast } from '../../components/UndoToast'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import type { GrantTimelineItem } from '../../hooks/useGrantTimeline'
-import { useSimilarGrants } from '../../hooks/useApiData'
+import { useSimilarGrants, useUpcomingGrantMilestones } from '../../hooks/useApiData'
+import { useUpdateGrantMilestone, useCompleteGrantMilestone } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { formatMediumDate } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
+
+// ── Grant Milestone Constants ──────────────────────────────
+
+const MILESTONE_TYPES = [
+  { value: 'progress_report', label: 'Progress Report' },
+  { value: 'continuing_review', label: 'Continuing Review' },
+  { value: 'nce_deadline', label: 'NCE Deadline' },
+  { value: 'budget_period', label: 'Budget Period' },
+  { value: 'irb_renewal', label: 'IRB Renewal' },
+  { value: 'subcontract', label: 'Subcontract' },
+  { value: 'other', label: 'Other' },
+]
+
+const MILESTONE_STATUS_OPTIONS = [
+  { value: 'upcoming', label: 'Upcoming', color: 'var(--slate)' },
+  { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
+  { value: 'completed', label: 'Completed', color: 'var(--green, #16a34a)' },
+  { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
+]
+
+function getMilestoneTypeLabel(type: string): string {
+  return MILESTONE_TYPES.find((t) => t.value === type)?.label || type
+}
+
+function isMilestoneOverdue(dueDate: string | null, status: string): boolean {
+  if (!dueDate || status === 'completed') return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dueDate + 'T23:59:59')
+  return due < today
+}
 
 function formatFunding(amount: number): string {
   if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`
@@ -35,8 +69,34 @@ export default function Grants() {
   const [searchKeywords, setSearchKeywords] = useState('')
   const [activeSearch, setActiveSearch] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [showAddMilestone, setShowAddMilestone] = useState(false)
   useListKeyboardNav({ itemCount: grants.length, focusedIndex, setFocusedIndex })
   const similarGrants = useSimilarGrants(activeSearch)
+
+  // Grant post-award milestones
+  const { data: upcomingMilestonesData = [], isLoading: milestonesLoading } = useUpcomingGrantMilestones(90)
+  const updateMilestone = useUpdateGrantMilestone()
+  const completeMilestone = useCompleteGrantMilestone()
+  const { showUndo } = useUndoToast()
+
+  const enrichedPostAward = useMemo(() => {
+    return upcomingMilestonesData.map((m) => ({
+      ...m,
+      _isOverdue: isMilestoneOverdue(m.due_date, m.status) || m.status === 'overdue',
+    }))
+  }, [upcomingMilestonesData])
+
+  const handleMilestoneStatusChange = useCallback((id: string, newStatus: string, prevStatus: string) => {
+    if (newStatus === 'completed') {
+      completeMilestone.mutate(id)
+    } else {
+      updateMilestone.mutate({ id, fields: { status: newStatus } })
+    }
+    const labels: Record<string, string> = { upcoming: 'Upcoming', in_progress: 'In Progress', completed: 'Completed', overdue: 'Overdue' }
+    showUndo(`Status changed to ${labels[newStatus] || newStatus}`, () => {
+      updateMilestone.mutate({ id, fields: { status: prevStatus } })
+    })
+  }, [updateMilestone, completeMilestone, showUndo])
 
   const active = useMemo(() => grants.filter((g) => !g.proposed), [grants])
   const proposed = useMemo(() => grants.filter((g) => g.proposed), [grants])
@@ -122,6 +182,161 @@ export default function Grants() {
           </div>
         </div>
       )}
+
+      {/* Post-Award Lifecycle Milestones */}
+      <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <ClipboardList size={14} style={{ color: 'var(--teal)' }} />
+            <h3 className="text-sm font-normal" style={{ color: 'var(--ink)', margin: 0 }}>
+              Post-Award Milestones
+            </h3>
+            {enrichedPostAward.filter((m) => m._isOverdue).length > 0 && (
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full"
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: 'var(--maroon)',
+                  background: 'rgba(122,0,25,0.12)',
+                }}
+              >
+                <AlertTriangle size={10} />
+                {enrichedPostAward.filter((m) => m._isOverdue).length} overdue
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => setShowAddMilestone(true)}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
+            style={{
+              background: 'var(--teal)',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <Plus size={12} />
+            Add Milestone
+          </button>
+        </div>
+
+        {milestonesLoading ? (
+          <TableSkeleton rows={3} cols={5} />
+        ) : enrichedPostAward.length === 0 ? (
+          <div className="text-center py-4">
+            <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
+              No upcoming post-award milestones. Add progress reports, continuing reviews, NCE deadlines, and budget periods.
+            </p>
+          </div>
+        ) : (
+          <div>
+            {/* Column headers */}
+            <div
+              className="hidden sm:grid"
+              style={{
+                gridTemplateColumns: '1fr 140px 1fr 100px 100px',
+                padding: '6px 12px',
+                borderBottom: '1px solid var(--border-subtle)',
+              }}
+            >
+              {['GRANT', 'TYPE', 'TITLE', 'DUE DATE', 'STATUS'].map((col) => (
+                <span
+                  key={col}
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 500,
+                    color: 'var(--slate)',
+                    opacity: 0.5,
+                    textTransform: 'uppercase' as const,
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  {col}
+                </span>
+              ))}
+            </div>
+
+            {/* Milestone rows */}
+            {enrichedPostAward.map((m) => {
+              const daysUntil = m.due_date
+                ? Math.ceil((new Date(m.due_date + 'T23:59:59').getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+                : null
+              return (
+                <div
+                  key={m.id}
+                  className="sm:grid items-center transition-colors"
+                  style={{
+                    gridTemplateColumns: '1fr 140px 1fr 100px 100px',
+                    padding: '8px 12px',
+                    borderBottom: '1px solid var(--border-subtle)',
+                    background: m._isOverdue ? 'rgba(122,0,25,0.04)' : 'transparent',
+                    borderLeft: m._isOverdue ? '3px solid var(--maroon)' : '3px solid transparent',
+                  }}
+                >
+                  {/* Grant name */}
+                  <span className="text-xs truncate" style={{ color: 'var(--ink)', fontWeight: 500 }}>
+                    {m.grant_mechanism && (
+                      <span
+                        className="inline-block mr-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold"
+                        style={{
+                          color: 'var(--teal)',
+                          background: 'rgba(45,138,138,0.1)',
+                        }}
+                      >
+                        {m.grant_mechanism}
+                      </span>
+                    )}
+                    {m.grant_title || m.grant_id}
+                  </span>
+
+                  {/* Type */}
+                  <span
+                    className="text-[11px] px-1.5 py-0.5 rounded-full inline-block w-fit"
+                    style={{
+                      color: 'var(--slate)',
+                      background: 'rgba(100,116,139,0.06)',
+                    }}
+                  >
+                    {getMilestoneTypeLabel(m.milestone_type)}
+                  </span>
+
+                  {/* Title */}
+                  <span className="text-xs truncate" style={{ color: 'var(--ink)' }}>
+                    {m.title}
+                  </span>
+
+                  {/* Due date */}
+                  <span className="text-[11px]" style={{
+                    color: m._isOverdue ? 'var(--maroon)' : (daysUntil !== null && daysUntil <= 14 ? 'var(--gold)' : 'var(--slate)'),
+                    opacity: m._isOverdue ? 1 : 0.7,
+                    fontWeight: m._isOverdue ? 600 : 400,
+                  }}>
+                    {m.due_date ? formatMediumDate(m.due_date) : '--'}
+                  </span>
+
+                  {/* Status inline select */}
+                  <InlineSelect
+                    value={m.status}
+                    options={MILESTONE_STATUS_OPTIONS}
+                    onChange={(newVal) => handleMilestoneStatusChange(m.id, newVal, m.status)}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Add Milestone Modal */}
+      <AnimatePresence>
+        {showAddMilestone && (
+          <AddGrantMilestoneModal
+            grants={grants}
+            onClose={() => setShowAddMilestone(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Grant cards */}
       <div className="mt-5">
@@ -382,5 +597,209 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
         </div>
       </div>
     </div>
+  )
+}
+
+// ── Add Grant Milestone Modal ──────────────────────────────
+
+function AddGrantMilestoneModal({
+  grants,
+  onClose,
+}: {
+  grants: GrantTimelineItem[]
+  onClose: () => void
+}) {
+  const createMilestone = useCreateGrantMilestone()
+  const [grantId, setGrantId] = useState(grants[0]?.id || '')
+  const [milestoneType, setMilestoneType] = useState('progress_report')
+  const [title, setTitle] = useState('')
+  const [dueDate, setDueDate] = useState('')
+  const [notes, setNotes] = useState('')
+
+  const handleSubmit = () => {
+    if (!grantId || !title.trim()) return
+    createMilestone.mutate(
+      {
+        grant_id: grantId,
+        milestone_type: milestoneType,
+        title: title.trim(),
+        due_date: dueDate || undefined,
+        notes: notes.trim() || undefined,
+      },
+      { onSuccess: () => onClose() },
+    )
+  }
+
+  const inputStyle = {
+    width: '100%',
+    padding: '8px 12px',
+    borderRadius: '8px',
+    border: '1px solid var(--border-light)',
+    fontSize: '13px',
+    background: 'var(--cream)',
+    color: 'var(--ink)',
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.4)',
+        zIndex: 100,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+      }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 8 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--cream)',
+          borderRadius: '16px',
+          border: '1px solid var(--border-light)',
+          padding: '24px',
+          width: '100%',
+          maxWidth: '480px',
+          boxShadow: 'var(--shadow-card-hover)',
+        }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 style={{ fontSize: '16px', fontWeight: 500, color: 'var(--ink)', margin: 0 }}>
+            Add Grant Milestone
+          </h3>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.5 }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {/* Grant */}
+          <div>
+            <label style={{ fontSize: '11px', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+              Grant
+            </label>
+            <select
+              value={grantId}
+              onChange={(e) => setGrantId(e.target.value)}
+              style={inputStyle}
+            >
+              {grants.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.mechanism} - {g.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Type */}
+          <div>
+            <label style={{ fontSize: '11px', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+              Milestone Type
+            </label>
+            <select
+              value={milestoneType}
+              onChange={(e) => setMilestoneType(e.target.value)}
+              style={inputStyle}
+            >
+              {MILESTONE_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Title */}
+          <div>
+            <label style={{ fontSize: '11px', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+              Title
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., Year 2 RPPR"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              style={inputStyle}
+              autoFocus
+            />
+          </div>
+
+          {/* Due date */}
+          <div>
+            <label style={{ fontSize: '11px', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+              Due Date
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label style={{ fontSize: '11px', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+              Notes (optional)
+            </label>
+            <textarea
+              placeholder="Any additional notes..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              style={{ ...inputStyle, resize: 'vertical' as const }}
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-2 mt-4">
+          <button
+            onClick={onClose}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-light)',
+              background: 'none',
+              fontSize: '13px',
+              color: 'var(--slate)',
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!grantId || !title.trim() || createMilestone.isPending}
+            className="flex items-center gap-1.5"
+            style={{
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: 'none',
+              background: !grantId || !title.trim() ? 'var(--border-light)' : 'var(--teal)',
+              color: !grantId || !title.trim() ? 'var(--slate)' : 'white',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: !grantId || !title.trim() ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <Check size={14} />
+            {createMilestone.isPending ? 'Adding...' : 'Add Milestone'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
