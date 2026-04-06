@@ -8,7 +8,7 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone, createDeadlineDependency, deleteDeadlineDependency, createSubmissionEvent, updateSubmissionEvent, deleteSubmissionEvent, createRegulatoryItem, updateRegulatoryItem, renewRegulatoryItem, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference } from '../lib/api'
+import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone, createDeadlineDependency, deleteDeadlineDependency, createSubmissionEvent, updateSubmissionEvent, deleteSubmissionEvent, createRegulatoryItem, updateRegulatoryItem, renewRegulatoryItem, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference, createPBSession, bulkCreatePBSessions } from '../lib/api'
 import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, RegulatoryItemRow, GrantMilestoneRow, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
@@ -1017,6 +1017,23 @@ export function useSendDispatch() {
   })
 }
 
+// ── TODAY.md mutations ────────────────────────────────────────
+
+export function useUpdateTodayMd() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (content: string) =>
+      fetch('/api/pb/today', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      }).then(r => r.json()),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-md'] })
+    },
+  })
+}
+
 // ── Revision tracker mutations ────────────────────────────────
 
 export function useCreateRevision(projectId: string) {
@@ -1487,6 +1504,54 @@ export function useDeleteConference(projectId?: string) {
     onSettled: () => {
       if (projectId) queryClient.invalidateQueries({ queryKey: ['conferences', projectId] })
       queryClient.invalidateQueries({ queryKey: ['conferences-upcoming'] })
+    },
+  })
+}
+
+// ── PB Sessions mutations ──────────────────────────────────
+
+export function useCreatePBSession() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: {
+      id?: string
+      started_at: string
+      ended_at?: string
+      machine?: string
+      project_name?: string
+      summary?: string
+      actions_count?: number
+      commits_count?: number
+      duration_minutes?: number
+    }) => createPBSession(input),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pb-sessions'] })
+      queryClient.invalidateQueries({ queryKey: ['pb-session-stats'] })
+    },
+  })
+}
+
+export function useBulkCreatePBSessions() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (sessions: Array<{
+      id?: string
+      started_at: string
+      ended_at?: string
+      machine?: string
+      project_name?: string
+      summary?: string
+      actions_count?: number
+      commits_count?: number
+      duration_minutes?: number
+    }>) => bulkCreatePBSessions(sessions),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['pb-sessions'] })
+      queryClient.invalidateQueries({ queryKey: ['pb-session-stats'] })
     },
   })
 }

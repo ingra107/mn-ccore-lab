@@ -11,7 +11,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { GripVertical, LayoutDashboard } from 'lucide-react'
+import { GripVertical, LayoutDashboard, FileText } from 'lucide-react'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import EmptyState from '../../components/EmptyState'
 import { usePBCommandCenter, useDispatchPending, usePBHealth } from '../../hooks/useApiData'
@@ -30,6 +30,7 @@ import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import DispatchBadge from '../../components/pb-sector/DispatchBadge'
 import LandscapeSidebar from '../../components/pb-sector/LandscapeSidebar'
 import SystemHealthCard from '../../components/pb-sector/SystemHealthCard'
+import TodayView from '../../components/pb-sector/TodayView'
 import { getDailyQuote } from '../../data/daily-quotes'
 
 // ── Helpers ────────────────────────────────────────────────
@@ -58,6 +59,7 @@ export default function PBSector() {
   const { data: dispatchData } = useDispatchPending()
   const { data: healthData, isLoading: healthLoading } = usePBHealth()
 
+  const [viewMode, setViewMode] = useState<'planner' | 'today'>('planner')
   const [captureText, setCaptureText] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchSlot, setSearchSlot] = useState<'star' | 'focus' | 'quick_win'>('focus')
@@ -330,7 +332,33 @@ export default function PBSector() {
         }
       />
 
+      {/* View toggle: Planner | Today */}
+      <div className="flex items-center gap-1 mb-5 mt-1">
+        {(['planner', 'today'] as const).map((mode) => (
+          <button
+            key={mode}
+            onClick={() => setViewMode(mode)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all"
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontWeight: viewMode === mode ? 500 : 400,
+              fontSize: '13px',
+              color: viewMode === mode ? 'var(--gold)' : 'var(--slate)',
+              background: viewMode === mode ? 'rgba(201,168,76,0.08)' : 'transparent',
+              border: viewMode === mode ? '1px solid rgba(201,168,76,0.2)' : '1px solid transparent',
+              cursor: 'pointer',
+            }}
+          >
+            {mode === 'planner' ? <LayoutDashboard size={13} /> : <FileText size={13} />}
+            {mode === 'planner' ? 'Planner' : 'Today'}
+          </button>
+        ))}
+      </div>
+
       {/* Main Grid */}
+      {viewMode === 'today' ? (
+        <TodayView />
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
         {/* Left Column — Planner Slots */}
         <DndContext
@@ -407,6 +435,7 @@ export default function PBSector() {
           <SystemHealthCard data={healthData} isLoading={healthLoading} />
         </div>
       </div>
+      )}
 
       {/* Quick Capture */}
       <div className="mt-10 mb-4">

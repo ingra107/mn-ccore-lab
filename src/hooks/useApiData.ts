@@ -44,6 +44,8 @@ import {
   fetchUpcomingGrantMilestones,
   fetchConferences,
   fetchUpcomingConferences,
+  fetchPBSessions,
+  fetchPBSessionStats,
 } from '../lib/api'
 import type {
   PublicationRow,
@@ -74,10 +76,12 @@ import type {
   UpcomingGrantMilestoneRow,
   ConferenceSubmissionRow,
   UpcomingConferenceRow,
+  PBSessionRow,
+  PBSessionStats,
 } from '../lib/api'
 
 // Re-export row types for components that need them
-export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow, CascadeGraph, ImpactResult, SubmissionEventRow, ActiveSubmissionRow, RegulatoryItemRow, ExpiringRegulatoryRow, GrantMilestoneRow, UpcomingGrantMilestoneRow, ConferenceSubmissionRow, UpcomingConferenceRow }
+export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow, CascadeGraph, ImpactResult, SubmissionEventRow, ActiveSubmissionRow, RegulatoryItemRow, ExpiringRegulatoryRow, GrantMilestoneRow, UpcomingGrantMilestoneRow, ConferenceSubmissionRow, UpcomingConferenceRow, PBSessionRow, PBSessionStats }
 
 // Static data imports (fallback for local dev)
 import { publications as staticPublications } from '../data/publications'
@@ -1226,6 +1230,22 @@ export function useDispatchPending() {
   })
 }
 
+// ── TODAY.md ────────────────────────────────────────────────
+
+export function useTodayMd() {
+  return useQuery({
+    queryKey: ['today-md'],
+    queryFn: async () => {
+      const res = await fetch('/api/pb/today')
+      if (!res.ok) return ''
+      const data = await res.json()
+      return (data.data?.content || '') as string
+    },
+    staleTime: 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+  })
+}
+
 // ── Revision tracker ────────────────────────────────────────
 
 export function useRevisions(projectId: string) {
@@ -1412,5 +1432,31 @@ export function usePBHealth() {
     },
     staleTime: 2 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
+  })
+}
+
+// ── PB Sessions hooks ────────────────────────────────────────
+
+export function usePBSessions(params?: { limit?: number; project?: string; since?: string }) {
+  return useQuery({
+    queryKey: ['pb-sessions', params],
+    queryFn: async () => {
+      const res = await fetchPBSessions(params)
+      return res.data
+    },
+    staleTime: STALE_TIME,
+    retry: false,
+  })
+}
+
+export function usePBSessionStats() {
+  return useQuery({
+    queryKey: ['pb-session-stats'],
+    queryFn: async () => {
+      const res = await fetchPBSessionStats()
+      return res.data
+    },
+    staleTime: STALE_TIME,
+    retry: false,
   })
 }

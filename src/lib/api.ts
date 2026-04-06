@@ -153,6 +153,30 @@ export interface DailyReflectionRow {
   created_at: string
 }
 
+export interface PBSessionRow {
+  id: string
+  started_at: string
+  ended_at: string | null
+  machine: string | null
+  project_name: string | null
+  summary: string | null
+  actions_count: number
+  commits_count: number
+  duration_minutes: number | null
+  created_at: string
+}
+
+export interface PBSessionStats {
+  total_sessions: number
+  total_hours: number
+  avg_minutes: number
+  sessions_this_week: number
+  total_actions: number
+  total_commits: number
+  per_project: { project_name: string; count: number; total_minutes: number }[]
+  per_day: { day: string; count: number; total_minutes: number }[]
+}
+
 interface ApiResponse<T> {
   data: T
   count?: number
@@ -1044,6 +1068,55 @@ export function updateConference(id: string, fields: Partial<{
 export function deleteConference(id: string) {
   return fetchApi<{ id: string; deleted: boolean }>(`/api/conferences/${id}/delete`, {
     method: 'POST',
+  })
+}
+
+// ── PB Sessions endpoints ────────────────────────────────���───
+
+export function fetchPBSessions(params?: { limit?: number; project?: string; since?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.limit) qs.set('limit', String(params.limit))
+  if (params?.project) qs.set('project', params.project)
+  if (params?.since) qs.set('since', params.since)
+  const query = qs.toString()
+  return fetchApi<PBSessionRow[]>(`/api/pb/sessions${query ? `?${query}` : ''}`)
+}
+
+export function fetchPBSessionStats() {
+  return fetchApi<PBSessionStats>('/api/pb/sessions/stats')
+}
+
+export function createPBSession(input: {
+  id?: string
+  started_at: string
+  ended_at?: string
+  machine?: string
+  project_name?: string
+  summary?: string
+  actions_count?: number
+  commits_count?: number
+  duration_minutes?: number
+}) {
+  return fetchApi<PBSessionRow>('/api/pb/sessions', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function bulkCreatePBSessions(sessions: Array<{
+  id?: string
+  started_at: string
+  ended_at?: string
+  machine?: string
+  project_name?: string
+  summary?: string
+  actions_count?: number
+  commits_count?: number
+  duration_minutes?: number
+}>) {
+  return fetchApi<{ created: number; updated: number; errors: string[] }>('/api/pb/sessions/bulk', {
+    method: 'POST',
+    body: JSON.stringify({ sessions }),
   })
 }
 

@@ -34,6 +34,7 @@ import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeam
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
 import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector'
+import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions'
 import { handleGetTodayMd, handleUpsertTodayMd } from './routes/pb-today'
 import { handlePBHealth } from './routes/pb-health'
 import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleGetActiveRevisions } from './routes/revisions';
@@ -89,6 +90,16 @@ export default {
         // PB Sector — TODAY.md content
         if (url.pathname === '/api/pb/today') {
           return await handleGetTodayMd(env);
+        }
+
+        // PB Sector — session history
+        if (url.pathname === '/api/pb/sessions') {
+          return await handlePBSessions(request, env);
+        }
+
+        // PB Sector — session stats
+        if (url.pathname === '/api/pb/sessions/stats') {
+          return await handlePBSessionStats(env);
         }
 
         // PB Sector — system health overview
@@ -733,6 +744,16 @@ export default {
           return await handleCompleteDispatchItem(request, env);
         }
 
+        // POST /api/pb/sessions — create/upsert a session
+        if (request.method === 'POST' && path === '/api/pb/sessions') {
+          return await handleCreatePBSession(request, user, env);
+        }
+
+        // POST /api/pb/sessions/bulk — bulk upsert sessions
+        if (request.method === 'POST' && path === '/api/pb/sessions/bulk') {
+          return await handleBulkCreatePBSessions(request, user, env);
+        }
+
         // POST /api/pb/today — upsert TODAY.md content
         if (request.method === 'POST' && path === '/api/pb/today') {
           return await handleUpsertTodayMd(request, env);
@@ -1072,6 +1093,29 @@ export default {
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_grant_milestones_due ON grant_milestones(due_date)').run(); results.push('created idx_grant_milestones_due'); } catch (e) { results.push(`index error: ${e}`); }
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_grant_milestones_status ON grant_milestones(status)').run(); results.push('created idx_grant_milestones_status'); } catch (e) { results.push(`index error: ${e}`); }
             return json({ data: { version: 29, results } });
+          }
+          if (body.version === 30) {
+            const results: string[] = [];
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS pb_sessions (
+                  id TEXT PRIMARY KEY,
+                  started_at TEXT NOT NULL,
+                  ended_at TEXT,
+                  machine TEXT,
+                  project_name TEXT,
+                  summary TEXT,
+                  actions_count INTEGER DEFAULT 0,
+                  commits_count INTEGER DEFAULT 0,
+                  duration_minutes INTEGER,
+                  created_at TEXT DEFAULT (datetime('now'))
+                )
+              `).run();
+              results.push('created pb_sessions');
+            } catch (e) { results.push(`pb_sessions: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_pb_sessions_started ON pb_sessions(started_at)').run(); results.push('created idx_pb_sessions_started'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_pb_sessions_project ON pb_sessions(project_name)').run(); results.push('created idx_pb_sessions_project'); } catch (e) { results.push(`index error: ${e}`); }
+            return json({ data: { version: 30, results } });
           }
           return error(`Unknown migration version: ${body.version}`, 400);
         }
