@@ -8,8 +8,8 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer } from '../lib/api'
-import type { DependencyRow, ExpertiseTag } from '../lib/api'
+import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone } from '../lib/api'
+import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
 import type { Comment, SubtaskRow } from './useApiData'
@@ -1013,6 +1013,163 @@ export function useSendDispatch() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['dispatch-pending'] })
       queryClient.invalidateQueries({ queryKey: ['pb-command-center'] })
+    },
+  })
+}
+
+// ── Revision tracker mutations ────────────────────────────────
+
+export function useCreateRevision(projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      project_id: string
+      round?: number
+      submitted_at?: string
+      response_due?: string
+      status?: string
+      journal?: string
+      notes?: string
+    }) => createRevision(input),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['revisions', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['revisions-active'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUpdateRevision(projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, fields }: { id: string; fields: Partial<{ submitted_at: string; response_due: string; status: string; journal: string; notes: string }> }) =>
+      updateRevision(id, fields),
+    onMutate: async ({ id, fields }) => {
+      await queryClient.cancelQueries({ queryKey: ['revisions', projectId] })
+      const previous = queryClient.getQueryData<RevisionRow[]>(['revisions', projectId])
+      if (previous) {
+        queryClient.setQueryData<RevisionRow[]>(
+          ['revisions', projectId],
+          previous.map((r) => r.id === id ? { ...r, ...fields } : r),
+        )
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['revisions', projectId], context.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['revisions', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['revisions-active'] })
+    },
+  })
+}
+
+export function useCreateRevisionComment(revisionId: string, projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      reviewer_number?: number
+      comment_text: string
+      assigned_to?: string
+      status?: string
+      response_text?: string
+    }) => createRevisionComment(revisionId, input),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['revision-comments', revisionId] })
+      queryClient.invalidateQueries({ queryKey: ['revisions', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['revisions-active'] })
+    },
+  })
+}
+
+export function useUpdateRevisionComment(revisionId: string, projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, fields }: { id: string; fields: Partial<{ status: string; response_text: string; assigned_to: string; comment_text: string }> }) =>
+      updateRevisionComment(id, fields),
+    onMutate: async ({ id, fields }) => {
+      await queryClient.cancelQueries({ queryKey: ['revision-comments', revisionId] })
+      const previous = queryClient.getQueryData<ReviewerCommentRow[]>(['revision-comments', revisionId])
+      if (previous) {
+        queryClient.setQueryData<ReviewerCommentRow[]>(
+          ['revision-comments', revisionId],
+          previous.map((c) => c.id === id ? { ...c, ...fields } : c),
+        )
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['revision-comments', revisionId], context.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['revision-comments', revisionId] })
+      queryClient.invalidateQueries({ queryKey: ['revisions', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['revisions-active'] })
+    },
+  })
+}
+
+// ── Mentee Milestone mutations ─────────────────────────────
+
+export function useCreateMenteeMilestone() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      mentee_slug: string
+      milestone_type: string
+      title: string
+      description?: string
+      due_date?: string
+      notes?: string
+      status?: string
+    }) => createMenteeMilestone(input),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['mentee-milestones'] })
+      queryClient.invalidateQueries({ queryKey: ['mentee-milestones-overview'] })
+    },
+  })
+}
+
+export function useUpdateMenteeMilestone() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, fields }: { id: string; fields: Partial<{ title: string; description: string; due_date: string; notes: string; status: string; milestone_type: string; mentee_slug: string }> }) =>
+      updateMenteeMilestone(id, fields),
+    onMutate: async ({ id, fields }) => {
+      await queryClient.cancelQueries({ queryKey: ['mentee-milestones'] })
+      const queries = queryClient.getQueriesData<MenteeMilestoneRow[]>({ queryKey: ['mentee-milestones'] })
+      for (const [key, data] of queries) {
+        if (data) {
+          queryClient.setQueryData<MenteeMilestoneRow[]>(
+            key,
+            data.map((m) => m.id === id ? { ...m, ...fields } : m),
+          )
+        }
+      }
+      return { queries }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.queries) {
+        for (const [key, data] of context.queries) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['mentee-milestones'] })
+      queryClient.invalidateQueries({ queryKey: ['mentee-milestones-overview'] })
+    },
+  })
+}
+
+export function useCompleteMenteeMilestone() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => completeMenteeMilestone(id),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['mentee-milestones'] })
+      queryClient.invalidateQueries({ queryKey: ['mentee-milestones-overview'] })
     },
   })
 }

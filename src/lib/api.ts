@@ -508,4 +508,173 @@ export function acceptAnswer(answerId: string) {
   )
 }
 
+// ── Revision tracker ────────────────────────────────────────
+
+export interface RevisionRow {
+  id: string
+  project_id: string
+  round: number
+  submitted_at: string | null
+  response_due: string | null
+  status: string
+  journal: string | null
+  notes: string | null
+  created_at: string
+  // Aggregated from JOIN
+  comment_count?: number
+  resolved_count?: number
+  project_title?: string
+  project_slug?: string
+}
+
+export interface ReviewerCommentRow {
+  id: string
+  revision_id: string
+  reviewer_number: number
+  comment_text: string
+  assigned_to: string
+  status: string
+  response_text: string | null
+  resolved_at: string | null
+  created_at: string
+}
+
+export function fetchRevisions(projectId: string) {
+  return fetchApi<RevisionRow[]>(`/api/revisions?project_id=${encodeURIComponent(projectId)}`)
+}
+
+export function fetchRevisionComments(revisionId: string) {
+  return fetchApi<ReviewerCommentRow[]>(`/api/revisions/${revisionId}/comments`)
+}
+
+export function fetchActiveRevisions() {
+  return fetchApi<RevisionRow[]>('/api/revisions/active')
+}
+
+export function createRevision(input: {
+  project_id: string
+  round?: number
+  submitted_at?: string
+  response_due?: string
+  status?: string
+  journal?: string
+  notes?: string
+}) {
+  return fetchApi<RevisionRow>('/api/revisions', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateRevision(id: string, fields: Partial<{
+  submitted_at: string
+  response_due: string
+  status: string
+  journal: string
+  notes: string
+}>) {
+  return fetchApi<RevisionRow>(`/api/revisions/${id}`, {
+    method: 'POST',
+    body: JSON.stringify(fields),
+  })
+}
+
+export function createRevisionComment(revisionId: string, input: {
+  reviewer_number?: number
+  comment_text: string
+  assigned_to?: string
+  status?: string
+  response_text?: string
+}) {
+  return fetchApi<ReviewerCommentRow>(`/api/revisions/${revisionId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateRevisionComment(commentId: string, fields: Partial<{
+  status: string
+  response_text: string
+  assigned_to: string
+  comment_text: string
+}>) {
+  return fetchApi<ReviewerCommentRow>(`/api/revisions/comments/${commentId}`, {
+    method: 'POST',
+    body: JSON.stringify(fields),
+  })
+}
+
+// ── Mentee milestones ──────────────────────────────────────
+
+export interface MenteeMilestoneRow {
+  id: string
+  mentee_slug: string
+  milestone_type: string
+  title: string
+  description: string | null
+  due_date: string | null
+  completed_at: string | null
+  status: string
+  notes: string | null
+  created_at: string
+}
+
+export interface MenteeOverviewRow {
+  mentee_slug: string
+  upcoming_count: number
+  overdue_count: number
+  completed_count: number
+  total_count: number
+  next_due_date: string | null
+}
+
+export function fetchMenteeMilestones(params?: { mentee?: string; status?: string; type?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.mentee) qs.set('mentee', params.mentee)
+  if (params?.status) qs.set('status', params.status)
+  if (params?.type) qs.set('type', params.type)
+  const query = qs.toString()
+  return fetchApi<MenteeMilestoneRow[]>(`/api/mentee-milestones${query ? `?${query}` : ''}`)
+}
+
+export function fetchMenteeOverview() {
+  return fetchApi<MenteeOverviewRow[]>('/api/mentee-milestones/overview')
+}
+
+export function createMenteeMilestone(input: {
+  mentee_slug: string
+  milestone_type: string
+  title: string
+  description?: string
+  due_date?: string
+  notes?: string
+  status?: string
+}) {
+  return fetchApi<MenteeMilestoneRow>('/api/mentee-milestones', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateMenteeMilestone(id: string, fields: Partial<{
+  title: string
+  description: string
+  due_date: string
+  notes: string
+  status: string
+  milestone_type: string
+  mentee_slug: string
+}>) {
+  return fetchApi<MenteeMilestoneRow>(`/api/mentee-milestones/${id}`, {
+    method: 'POST',
+    body: JSON.stringify(fields),
+  })
+}
+
+export function completeMenteeMilestone(id: string) {
+  return fetchApi<MenteeMilestoneRow>(`/api/mentee-milestones/${id}/complete`, {
+    method: 'POST',
+  })
+}
+
 export { ApiError }

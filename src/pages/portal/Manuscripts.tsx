@@ -6,7 +6,7 @@ import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
 import ToggleButton from '../../components/ToggleButton'
 import CreateProjectModal from '../../components/CreateProjectModal'
-import { useProjects, useTasks } from '../../hooks/useApiData'
+import { useProjects, useTasks, useActiveRevisions } from '../../hooks/useApiData'
 import { useCreateProject } from '../../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../../lib/api'
@@ -16,6 +16,7 @@ import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo } from '../../data/team'
 import type { Project } from '../../data/types'
 import PageHeader from '../../components/PageHeader'
+import { ActiveRevisionsDashboard } from '../../components/RevisionTracker'
 // EmptyState available if needed
 
 import { usePageMeta } from '../../hooks/usePageMeta'
@@ -52,6 +53,7 @@ export default function Manuscripts() {
 
   const { data: projects = [], isLoading } = useProjects()
   const { data: tasks = [] } = useTasks()
+  const { data: activeRevisions = [] } = useActiveRevisions()
   const createProject = useCreateProject()
   const queryClient = useQueryClient()
   const { showUndo } = useUndoToast()
@@ -167,6 +169,11 @@ export default function Manuscripts() {
             </select>
           </div>
         </PageHeader>
+
+        {/* Active Revisions section */}
+        {!isLoading && activeRevisions.length > 0 && (
+          <ActiveRevisionsDashboard revisions={activeRevisions} />
+        )}
 
         {/* Loading skeleton */}
         {isLoading && <TableSkeleton rows={6} cols={5} />}

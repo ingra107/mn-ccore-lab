@@ -28,6 +28,11 @@ import {
   fetchExpertSuggestions,
   fetchQuestions,
   fetchQuestionDetail,
+  fetchRevisions,
+  fetchRevisionComments,
+  fetchActiveRevisions,
+  fetchMenteeMilestones,
+  fetchMenteeOverview,
 } from '../lib/api'
 import type {
   PublicationRow,
@@ -44,10 +49,14 @@ import type {
   ExpertSuggestion,
   QuestionRow,
   QuestionDetail,
+  RevisionRow,
+  ReviewerCommentRow,
+  MenteeMilestoneRow,
+  MenteeOverviewRow,
 } from '../lib/api'
 
 // Re-export row types for components that need them
-export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail }
+export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow }
 
 // Static data imports (fallback for local dev)
 import { publications as staticPublications } from '../data/publications'
@@ -1193,5 +1202,57 @@ export function useDispatchPending() {
     },
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
+  })
+}
+
+// ── Revision tracker ────────────────────────────────────────
+
+export function useRevisions(projectId: string) {
+  return useQuery({
+    queryKey: ['revisions', projectId],
+    queryFn: () => fetchRevisions(projectId).then((r) => r.data),
+    enabled: !!projectId,
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useRevisionComments(revisionId: string) {
+  return useQuery({
+    queryKey: ['revision-comments', revisionId],
+    queryFn: () => fetchRevisionComments(revisionId).then((r) => r.data),
+    enabled: !!revisionId,
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useActiveRevisions() {
+  return useQuery({
+    queryKey: ['revisions-active'],
+    queryFn: () => fetchActiveRevisions().then((r) => r.data),
+    staleTime: 60 * 1000,
+  })
+}
+
+// ── Mentee Milestones ─────────────────────────────────────
+
+export function useMenteeMilestones(params?: { mentee?: string; status?: string; type?: string }) {
+  return useQuery({
+    queryKey: ['mentee-milestones', params],
+    queryFn: async () => {
+      const res = await fetchMenteeMilestones(params)
+      return (res.data || []) as MenteeMilestoneRow[]
+    },
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useMenteeOverview() {
+  return useQuery({
+    queryKey: ['mentee-milestones-overview'],
+    queryFn: async () => {
+      const res = await fetchMenteeOverview()
+      return (res.data || []) as MenteeOverviewRow[]
+    },
+    staleTime: 60 * 1000,
   })
 }

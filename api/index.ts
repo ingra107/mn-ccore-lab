@@ -33,7 +33,9 @@ import { handlePIAnalytics } from './routes/pi-analytics';
 import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeamEngagement, handleTeamByExpertise } from './routes/pi-dashboard';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
-import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
+import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector'
+import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleGetActiveRevisions } from './routes/revisions';
+import { handleMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone, handleCompleteMenteeMilestone } from './routes/mentee-milestones';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -147,6 +149,19 @@ export default {
 
         if (url.pathname === '/api/dependencies') {
           return await handleGetDependencies(env);
+        }
+
+        // Revision tracker — active revisions (must come before parameterized :id)
+        if (url.pathname === '/api/revisions/active') {
+          return await handleGetActiveRevisions(env);
+        }
+        if (url.pathname === '/api/revisions') {
+          return await handleGetRevisions(url, env);
+        }
+
+        const revisionCommentsGet = url.pathname.match(/^\/api\/revisions\/([^/]+)\/comments$/);
+        if (revisionCommentsGet) {
+          return await handleGetRevisionComments(revisionCommentsGet[1], env);
         }
 
         // Grant intelligence — NIH RePORTER proxy
@@ -266,6 +281,16 @@ export default {
         const contributionsGet = url.pathname.match(/^\/api\/team\/([^/]+)\/contributions$/);
         if (contributionsGet) {
           return await handleContributions(contributionsGet[1], url, env);
+        }
+
+        // GET /api/mentee-milestones/overview — PI dashboard overview
+        if (url.pathname === '/api/mentee-milestones/overview') {
+          return await handleMenteeMilestoneOverview(env);
+        }
+
+        // GET /api/mentee-milestones?mentee=&status=&type=
+        if (url.pathname === '/api/mentee-milestones') {
+          return await handleMenteeMilestones(url, env);
         }
 
         // GET /api/milestones?project_id=...&grant_id=...
@@ -653,6 +678,50 @@ export default {
           return await handleCheckImpact(env);
         }
 
+        // ── Revision tracker ──
+
+        // POST /api/revisions — create revision round
+        if (request.method === 'POST' && path === '/api/revisions') {
+          return await handleCreateRevision(request, user, env);
+        }
+
+        // POST /api/revisions/comments/:id — update a reviewer comment
+        const revisionCommentUpdateMatch = path.match(/^\/api\/revisions\/comments\/([^/]+)$/);
+        if (request.method === 'POST' && revisionCommentUpdateMatch) {
+          return await handleUpdateRevisionComment(revisionCommentUpdateMatch[1], request, user, env);
+        }
+
+        // POST /api/revisions/:id/comments — add comment to revision
+        const revisionCommentMatch = path.match(/^\/api\/revisions\/([^/]+)\/comments$/);
+        if (request.method === 'POST' && revisionCommentMatch) {
+          return await handleCreateRevisionComment(revisionCommentMatch[1], request, user, env);
+        }
+
+        // POST /api/revisions/:id — update revision fields
+        const revisionUpdateMatch = path.match(/^\/api\/revisions\/([^/]+)$/);
+        if (request.method === 'POST' && revisionUpdateMatch) {
+          return await handleUpdateRevision(revisionUpdateMatch[1], request, user, env);
+        }
+
+        // ── Mentee milestones ──
+
+        // POST /api/mentee-milestones/:id/complete — mark milestone completed
+        const menteeMilestoneCompleteMatch = path.match(/^\/api\/mentee-milestones\/([^/]+)\/complete$/);
+        if (request.method === 'POST' && menteeMilestoneCompleteMatch) {
+          return await handleCompleteMenteeMilestone(menteeMilestoneCompleteMatch[1], user, env);
+        }
+
+        // POST /api/mentee-milestones/:id — update milestone fields
+        const menteeMilestoneUpdateMatch = path.match(/^\/api\/mentee-milestones\/([^/]+)$/);
+        if (request.method === 'POST' && menteeMilestoneUpdateMatch) {
+          return await handleUpdateMenteeMilestone(menteeMilestoneUpdateMatch[1], request, user, env);
+        }
+
+        // POST /api/mentee-milestones — create milestone
+        if (request.method === 'POST' && path === '/api/mentee-milestones') {
+          return await handleCreateMenteeMilestone(request, user, env);
+        }
+
         // POST /api/admin/migrate — apply schema migrations
         if (request.method === 'POST' && path === '/api/admin/migrate') {
           const body = await request.json() as { version: number };
@@ -665,6 +734,69 @@ export default {
             await env.DB.prepare("UPDATE tasks SET updated_at = datetime('now') WHERE updated_at IS NULL").run();
             results.push('backfilled updated_at');
             return json({ data: { version: 22, results } });
+          }
+          if (body.version === 23) {
+            const results: string[] = [];
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS manuscript_revisions (
+                  id TEXT PRIMARY KEY,
+                  project_id TEXT NOT NULL,
+                  round INTEGER NOT NULL DEFAULT 1,
+                  submitted_at TEXT,
+                  response_due TEXT,
+                  status TEXT DEFAULT 'in_progress',
+                  journal TEXT,
+                  notes TEXT,
+                  created_at TEXT DEFAULT (datetime('now'))
+                )
+              `).run();
+              results.push('created manuscript_revisions');
+            } catch (e) { results.push(`manuscript_revisions: ${e}`); }
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS reviewer_comments (
+                  id TEXT PRIMARY KEY,
+                  revision_id TEXT NOT NULL,
+                  reviewer_number INTEGER DEFAULT 1,
+                  comment_text TEXT NOT NULL,
+                  assigned_to TEXT DEFAULT 'nick',
+                  status TEXT DEFAULT 'pending',
+                  response_text TEXT,
+                  resolved_at TEXT,
+                  created_at TEXT DEFAULT (datetime('now')),
+                  FOREIGN KEY (revision_id) REFERENCES manuscript_revisions(id) ON DELETE CASCADE
+                )
+              `).run();
+              results.push('created reviewer_comments');
+            } catch (e) { results.push(`reviewer_comments: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_revisions_project ON manuscript_revisions(project_id)').run(); results.push('created idx_revisions_project'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_comments_revision ON reviewer_comments(revision_id)').run(); results.push('created idx_comments_revision'); } catch (e) { results.push(`index error: ${e}`); }
+            return json({ data: { version: 23, results } });
+          }
+          if (body.version === 24) {
+            const results: string[] = [];
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS mentee_milestones (
+                  id TEXT PRIMARY KEY,
+                  mentee_slug TEXT NOT NULL,
+                  milestone_type TEXT NOT NULL,
+                  title TEXT NOT NULL,
+                  description TEXT,
+                  due_date TEXT,
+                  completed_at TEXT,
+                  status TEXT DEFAULT 'upcoming',
+                  notes TEXT,
+                  created_at TEXT DEFAULT (datetime('now'))
+                )
+              `).run();
+              results.push('created mentee_milestones');
+            } catch (e) { results.push(`mentee_milestones: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_mentee_milestones_mentee ON mentee_milestones(mentee_slug)').run(); results.push('created idx_mentee_milestones_mentee'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_mentee_milestones_due ON mentee_milestones(due_date)').run(); results.push('created idx_mentee_milestones_due'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_mentee_milestones_status ON mentee_milestones(status)').run(); results.push('created idx_mentee_milestones_status'); } catch (e) { results.push(`index error: ${e}`); }
+            return json({ data: { version: 24, results } });
           }
           return error(`Unknown migration version: ${body.version}`, 400);
         }

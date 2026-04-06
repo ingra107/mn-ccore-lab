@@ -24,7 +24,7 @@ import {
   Scale,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useProjects, useMeetingsApi, useActionItems, useProjectPapers, useProjectDependencies, useDecisions, useTasks, useProjectUpdates } from '../hooks/useApiData'
+import { useProjects, useMeetingsApi, useActionItems, useProjectPapers, useProjectDependencies, useDecisions, useTasks, useProjectUpdates, useRevisions } from '../hooks/useApiData'
 import type { DecisionRow } from '../hooks/useApiData'
 import { useUpdateProject, useAddAgendaItem, useToggleActionItem, usePostProjectUpdate, useUnlinkPaper, useCreateDependency, useDeleteDependency, useUpdateTaskStatus } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
@@ -40,8 +40,9 @@ import TaskCard from '../components/tasks/TaskCard'
 import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
 import type { Project, ActionItem } from '../data/types'
 import type { TaskRow } from '../lib/api'
+import RevisionTracker from '../components/RevisionTracker'
 
-type Tab = 'overview' | 'tasks' | 'activity' | 'literature'
+type Tab = 'overview' | 'tasks' | 'revisions' | 'activity' | 'literature'
 
 const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
 
@@ -120,8 +121,17 @@ function ProjectDetailInner({ project }: InnerProps) {
   const { isAuthenticated, user } = useAuth()
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
 
-  // Tabs
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
+  // Tabs — support ?tab= query param for deep linking
+  const initialTab = (() => {
+    const params = new URLSearchParams(window.location.search)
+    const tab = params.get('tab')
+    if (tab && ['overview', 'tasks', 'revisions', 'activity', 'literature'].includes(tab)) return tab as Tab
+    return 'overview' as Tab
+  })()
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab)
+
+  // Revisions for this project
+  const { data: revisions = [] } = useRevisions(project.slug)
 
   // Tasks for this project
   const { data: projectTasks = [] } = useTasks({ project: project.slug })
@@ -433,6 +443,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         {([
           { id: 'overview' as Tab, label: 'Overview' },
           { id: 'tasks' as Tab, label: `Tasks${pendingTasks.length ? ` (${pendingTasks.length})` : ''}` },
+          { id: 'revisions' as Tab, label: `Revisions${revisions.length ? ` (${revisions.length})` : ''}` },
           { id: 'activity' as Tab, label: 'Activity' },
           { id: 'literature' as Tab, label: 'Literature' },
         ]).map((tab) => (
@@ -1145,6 +1156,13 @@ function ProjectDetailInner({ project }: InnerProps) {
               )}
             </>
           )}
+        </div>
+      )}
+
+      {/* ── REVISIONS TAB ── */}
+      {activeTab === 'revisions' && (
+        <div className="table-container" style={{ padding: '16px 20px', marginBottom: '2rem' }}>
+          <RevisionTracker projectId={project.slug} />
         </div>
       )}
 
