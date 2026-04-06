@@ -39,6 +39,8 @@ import { handleMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMent
 import { handleGetCascade, handleGetImpact, handleGetAllCascades, handleCreateDeadlineDependency, handleDeleteDeadlineDependency } from './routes/deadline-cascade';
 import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, handleDeleteSubmission, handleGetActiveSubmissions } from './routes/submissions';
 import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRenewRegulatoryItem } from './routes/regulatory';
+import { handleGrantMilestones, handleUpcomingGrantMilestones, handleCreateGrantMilestone, handleUpdateGrantMilestone, handleCompleteGrantMilestone } from './routes/grant-milestones';
+import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -320,12 +322,28 @@ export default {
           return await handleGetMilestones(url, env);
         }
 
+        // Grant post-award milestones
+        if (url.pathname === '/api/grant-milestones/upcoming') {
+          return await handleUpcomingGrantMilestones(url, env);
+        }
+        if (url.pathname === '/api/grant-milestones') {
+          return await handleGrantMilestones(url, env);
+        }
+
         // Regulatory & Compliance
         if (url.pathname === '/api/regulatory/expiring') {
           return await handleGetExpiringItems(url, env);
         }
         if (url.pathname === '/api/regulatory') {
           return await handleGetRegulatoryItems(url, env);
+        }
+
+        // Conference submissions
+        if (url.pathname === '/api/conferences/upcoming') {
+          return await handleGetUpcomingConferences(env);
+        }
+        if (url.pathname === '/api/conferences') {
+          return await handleGetConferences(url, env);
         }
 
         // GET /api/reactions?target_type=...&target_id=...
@@ -771,6 +789,25 @@ export default {
           return await handleCreateMenteeMilestone(request, user, env);
         }
 
+        // ── Grant post-award milestones ──
+
+        // POST /api/grant-milestones/:id/complete — mark completed (must come before :id match)
+        const grantMilestoneCompleteMatch = path.match(/^\/api\/grant-milestones\/([^/]+)\/complete$/);
+        if (request.method === 'POST' && grantMilestoneCompleteMatch) {
+          return await handleCompleteGrantMilestone(grantMilestoneCompleteMatch[1], user, env);
+        }
+
+        // POST /api/grant-milestones/:id — update milestone
+        const grantMilestoneUpdateMatch = path.match(/^\/api\/grant-milestones\/([^/]+)$/);
+        if (request.method === 'POST' && grantMilestoneUpdateMatch) {
+          return await handleUpdateGrantMilestone(grantMilestoneUpdateMatch[1], request, user, env);
+        }
+
+        // POST /api/grant-milestones — create milestone
+        if (request.method === 'POST' && path === '/api/grant-milestones') {
+          return await handleCreateGrantMilestone(request, user, env);
+        }
+
         // ── Regulatory & Compliance ──
 
         // POST /api/regulatory/:id/renew — renew item (must come before :id match)
@@ -946,6 +983,29 @@ export default {
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_regulatory_expiration ON regulatory_items(expiration_date)').run(); results.push('created idx_regulatory_expiration'); } catch (e) { results.push(`index error: ${e}`); }
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_regulatory_status ON regulatory_items(status)').run(); results.push('created idx_regulatory_status'); } catch (e) { results.push(`index error: ${e}`); }
             return json({ data: { version: 27, results } });
+          }
+          if (body.version === 29) {
+            const results: string[] = [];
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS grant_milestones (
+                  id TEXT PRIMARY KEY,
+                  grant_id TEXT NOT NULL,
+                  milestone_type TEXT NOT NULL,
+                  title TEXT NOT NULL,
+                  due_date TEXT,
+                  completed_at TEXT,
+                  status TEXT DEFAULT 'upcoming',
+                  notes TEXT,
+                  created_at TEXT DEFAULT (datetime('now'))
+                )
+              `).run();
+              results.push('created grant_milestones');
+            } catch (e) { results.push(`grant_milestones: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_grant_milestones_grant ON grant_milestones(grant_id)').run(); results.push('created idx_grant_milestones_grant'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_grant_milestones_due ON grant_milestones(due_date)').run(); results.push('created idx_grant_milestones_due'); } catch (e) { results.push(`index error: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_grant_milestones_status ON grant_milestones(status)').run(); results.push('created idx_grant_milestones_status'); } catch (e) { results.push(`index error: ${e}`); }
+            return json({ data: { version: 29, results } });
           }
           return error(`Unknown migration version: ${body.version}`, 400);
         }

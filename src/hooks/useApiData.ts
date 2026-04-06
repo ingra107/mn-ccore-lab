@@ -40,6 +40,8 @@ import {
   fetchActiveSubmissions,
   fetchRegulatoryItems,
   fetchExpiringRegulatory,
+  fetchGrantMilestones,
+  fetchUpcomingGrantMilestones,
 } from '../lib/api'
 import type {
   PublicationRow,
@@ -66,10 +68,12 @@ import type {
   ActiveSubmissionRow,
   RegulatoryItemRow,
   ExpiringRegulatoryRow,
+  GrantMilestoneRow,
+  UpcomingGrantMilestoneRow,
 } from '../lib/api'
 
 // Re-export row types for components that need them
-export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow, CascadeGraph, ImpactResult, SubmissionEventRow, ActiveSubmissionRow, RegulatoryItemRow, ExpiringRegulatoryRow }
+export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow, CascadeGraph, ImpactResult, SubmissionEventRow, ActiveSubmissionRow, RegulatoryItemRow, ExpiringRegulatoryRow, GrantMilestoneRow, UpcomingGrantMilestoneRow }
 
 // Static data imports (fallback for local dev)
 import { publications as staticPublications } from '../data/publications'
@@ -1342,5 +1346,24 @@ export function useExpiringRegulatory(days: number = 60) {
     queryKey: ['regulatory-expiring', days],
     queryFn: () => fetchExpiringRegulatory(days).then((r) => r.data),
     staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ── Grant Post-Award Milestones ───────────────────────────────
+
+export function useGrantMilestones(grantId: string) {
+  return useQuery({
+    queryKey: ['grant-milestones', grantId],
+    queryFn: () => fetchGrantMilestones(grantId).then((r) => r.data),
+    enabled: !!grantId,
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useUpcomingGrantMilestones(days: number = 90) {
+  return useQuery({
+    queryKey: ['grant-milestones-upcoming', days],
+    queryFn: () => fetchUpcomingGrantMilestones(days).then((r) => r.data),
+    staleTime: 60 * 1000,
   })
 }

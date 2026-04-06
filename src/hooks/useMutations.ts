@@ -8,8 +8,8 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone, createDeadlineDependency, deleteDeadlineDependency, createSubmissionEvent, updateSubmissionEvent, deleteSubmissionEvent, createRegulatoryItem, updateRegulatoryItem, renewRegulatoryItem } from '../lib/api'
-import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, RegulatoryItemRow } from '../lib/api'
+import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone, createDeadlineDependency, deleteDeadlineDependency, createSubmissionEvent, updateSubmissionEvent, deleteSubmissionEvent, createRegulatoryItem, updateRegulatoryItem, renewRegulatoryItem, createGrantMilestone, updateGrantMilestone, completeGrantMilestone } from '../lib/api'
+import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, RegulatoryItemRow, GrantMilestoneRow } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
 import type { Comment, SubtaskRow } from './useApiData'
@@ -1336,6 +1336,65 @@ export function useRenewRegulatoryItem(projectId: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['regulatory', projectId] })
       queryClient.invalidateQueries({ queryKey: ['regulatory-expiring'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Grant Post-Award Milestone mutations ─────────────────────────
+
+export function useCreateGrantMilestone() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      grant_id: string
+      milestone_type: string
+      title: string
+      due_date?: string
+      notes?: string
+      status?: string
+    }) => createGrantMilestone(input),
+    onSettled: (_data, _err, input) => {
+      queryClient.invalidateQueries({ queryKey: ['grant-milestones', input.grant_id] })
+      queryClient.invalidateQueries({ queryKey: ['grant-milestones-upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useUpdateGrantMilestone() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, fields }: { id: string; fields: Partial<{ title: string; due_date: string; notes: string; status: string; milestone_type: string; grant_id: string }> }) =>
+      updateGrantMilestone(id, fields),
+    onMutate: async ({ id, fields }) => {
+      await queryClient.cancelQueries({ queryKey: ['grant-milestones-upcoming'] })
+      const previous = queryClient.getQueryData<GrantMilestoneRow[]>(['grant-milestones-upcoming'])
+      if (previous) {
+        queryClient.setQueryData<GrantMilestoneRow[]>(
+          ['grant-milestones-upcoming'],
+          previous.map((m) => m.id === id ? { ...m, ...fields } : m),
+        )
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['grant-milestones-upcoming'], context.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['grant-milestones'] })
+      queryClient.invalidateQueries({ queryKey: ['grant-milestones-upcoming'] })
+    },
+  })
+}
+
+export function useCompleteGrantMilestone() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => completeGrantMilestone(id),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['grant-milestones'] })
+      queryClient.invalidateQueries({ queryKey: ['grant-milestones-upcoming'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })

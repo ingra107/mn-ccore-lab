@@ -897,4 +897,65 @@ export function renewRegulatoryItem(id: string, input: {
   })
 }
 
+// ── Grant Post-Award Milestones ──────────────────────────────
+
+export interface GrantMilestoneRow {
+  id: string
+  grant_id: string
+  milestone_type: string
+  title: string
+  due_date: string | null
+  completed_at: string | null
+  status: string
+  notes: string | null
+  created_at: string
+}
+
+export interface UpcomingGrantMilestoneRow extends GrantMilestoneRow {
+  grant_title: string | null
+  grant_mechanism: string | null
+}
+
+export function fetchGrantMilestones(grantId: string) {
+  return fetchApi<GrantMilestoneRow[]>(`/api/grant-milestones?grant_id=${encodeURIComponent(grantId)}`)
+}
+
+export function fetchUpcomingGrantMilestones(days: number = 90) {
+  return fetchApi<UpcomingGrantMilestoneRow[]>(`/api/grant-milestones/upcoming?days=${days}`)
+}
+
+export function createGrantMilestone(input: {
+  grant_id: string
+  milestone_type: string
+  title: string
+  due_date?: string
+  notes?: string
+  status?: string
+}) {
+  return fetchApi<GrantMilestoneRow>('/api/grant-milestones', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateGrantMilestone(id: string, fields: Partial<{
+  title: string
+  due_date: string
+  notes: string
+  status: string
+  milestone_type: string
+  grant_id: string
+}>) {
+  return fetchApi<GrantMilestoneRow>(`/api/grant-milestones/${id}`, {
+    method: 'POST',
+    body: JSON.stringify(fields),
+  })
+}
+
+export function completeGrantMilestone(id: string) {
+  return fetchApi<GrantMilestoneRow>(`/api/grant-milestones/${id}/complete`, {
+    method: 'POST',
+  })
+}
+
 export { ApiError }
