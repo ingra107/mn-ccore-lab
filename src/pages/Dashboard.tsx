@@ -6,6 +6,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { getUserRole, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
+import PageTooltip from '../components/PageTooltip'
 import PipelineCard from '../components/dashboard/PipelineCard'
 import StatsCard from '../components/dashboard/StatsCard'
 import UpcomingCard from '../components/dashboard/UpcomingCard'
@@ -161,6 +162,7 @@ export default function Dashboard() {
               <Settings2 size={12} />
               Customize
             </button>
+            <PageTooltip id="dashboard-filter-hint" text="Press F to toggle filters on any page" />
           </div>
 
           <h1

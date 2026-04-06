@@ -514,7 +514,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
       <h3
         className="text-base font-normal leading-snug mb-3"
         style={{
-          fontFamily: 'var(--font-display)',
+          fontFamily: 'var(--font-sans)',
           fontWeight: 400,
           color: 'var(--ink)',
         }}
@@ -628,7 +628,7 @@ function GrantSummary({ grants }: { grants: GrantTimelineItem[] }) {
           <div
             className="text-2xl sm:text-3xl font-bold mb-1"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-sans)',
               color: stat.color,
               fontWeight: 800,
             }}
@@ -699,7 +699,7 @@ export default function Grants() {
         <h1
           className="text-3xl sm:text-4xl lg:text-5xl mb-3 sm:mb-4"
           style={{
-            fontFamily: 'var(--font-display)',
+            fontFamily: 'var(--font-sans)',
             fontWeight: 800,
             color: 'var(--ink)',
           }}
@@ -718,16 +718,16 @@ export default function Grants() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
             <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>Active Awards</div>
-              <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--teal)' }}>{activeCount}</div>
+              <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--teal)' }}>{activeCount}</div>
             </div>
             <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>Proposed</div>
-              <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)' }}>{proposedCount}</div>
+              <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--gold)' }}>{proposedCount}</div>
             </div>
             {totalFunding > 0 && (
               <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
                 <div className="text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>Total Funding</div>
-                <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{formatFunding(totalFunding)}</div>
+                <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>{formatFunding(totalFunding)}</div>
               </div>
             )}
             <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
@@ -879,7 +879,7 @@ export default function Grants() {
         {!isLoading && filteredGrants.length === 0 && (
           <div className="text-center py-12" style={{ color: 'var(--slate)' }}>
             <Banknote size={40} className="mx-auto mb-3" style={{ opacity: 0.3 }} />
-            <p className="text-lg mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <p className="text-lg mb-2" style={{ fontFamily: 'var(--font-sans)' }}>
               No grants to display.
             </p>
             <p className="text-sm">Grant data will appear here once the API is connected.</p>

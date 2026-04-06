@@ -13,6 +13,7 @@ import MeetingCard from '../components/MeetingCard'
 import QuickAddForm from '../components/QuickAddForm'
 import Avatar from '../components/Avatar'
 import { getMeetingFacilitator } from '../lib/facilitator'
+import PageTooltip from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 
 type FilterMode = 'all' | 'decisions' | 'actions'
@@ -425,6 +426,7 @@ export default function Meetings() {
               </div>
             </div>
           </div>
+          <PageTooltip id="meetings-prep-hint" text="Click a meeting for prep and actions" />
         </div>
 
         {/* Meeting Cadence */}

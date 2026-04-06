@@ -21,6 +21,7 @@ import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import type { Stage } from '../components/StageSelector'
 import { staggerContainer, staggerItem } from '../lib/animations'
+import PageTooltip from '../components/PageTooltip'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
 
@@ -217,6 +218,7 @@ export default function Projects() {
                 Pipeline
               </button>
             </div>
+            <PageTooltip id="projects-pipeline-hint" text="Try Pipeline view for a visual overview" />
 
             {/* Category filter pills */}
             <div className="flex flex-wrap items-center gap-1.5">

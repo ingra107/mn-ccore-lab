@@ -12,6 +12,7 @@ import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 import { useQueryClient } from '@tanstack/react-query'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
+import PageTooltip from '../../components/PageTooltip'
 
 interface DeadlineItem {
   id: string
@@ -137,6 +138,7 @@ export default function Deadlines() {
               )
             })}
           </div>
+          <PageTooltip id="deadlines-timeline-hint" text="Switch to Timeline for a visual map" />
 
           <select
             value={filterType}
