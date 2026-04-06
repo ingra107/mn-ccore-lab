@@ -653,6 +653,22 @@ export default {
           return await handleCheckImpact(env);
         }
 
+        // POST /api/admin/migrate — apply schema migrations
+        if (request.method === 'POST' && path === '/api/admin/migrate') {
+          const body = await request.json() as { version: number };
+          if (body.version === 22) {
+            const results: string[] = [];
+            try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN updated_at TEXT').run(); results.push('added updated_at'); } catch { results.push('updated_at already exists'); }
+            try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN deleted_at TEXT').run(); results.push('added deleted_at'); } catch { results.push('deleted_at already exists'); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_tasks_updated_at ON tasks(updated_at)').run(); results.push('created index'); } catch (e) { results.push(`index error: ${e}`); }
+            // Backfill updated_at for existing rows
+            await env.DB.prepare("UPDATE tasks SET updated_at = datetime('now') WHERE updated_at IS NULL").run();
+            results.push('backfilled updated_at');
+            return json({ data: { version: 22, results } });
+          }
+          return error(`Unknown migration version: ${body.version}`, 400);
+        }
+
         return error('Not found', 404);
       }
 

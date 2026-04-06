@@ -21,8 +21,9 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
   const meetingId = url.searchParams.get('meeting') || url.searchParams.get('meeting_id');
   const completed = url.searchParams.get('completed');
   const source = url.searchParams.get('source');
+  const updatedSince = url.searchParams.get('updated_since');
 
-  let query = 'SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE 1=1';
+  let query = 'SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE t.deleted_at IS NULL';
   const params: (string | number)[] = [];
 
   if (assignee) { query += ' AND t.assignee = ?'; params.push(assignee); }
@@ -35,6 +36,7 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
     query += ' AND t.completed = ?';
     params.push(completed === 'true' ? 1 : 0);
   }
+  if (updatedSince) { query += ' AND t.updated_at > ?'; params.push(updatedSince); }
 
   query += ' ORDER BY t.completed ASC, t.due_date ASC, t.created_at DESC';
 
@@ -57,7 +59,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
   const completedBy = completed ? user.email : null;
 
   await env.DB.prepare(
-    'UPDATE tasks SET status = ?, completed = ?, completed_at = ?, completed_by = ? WHERE id = ?'
+    "UPDATE tasks SET status = ?, completed = ?, completed_at = ?, completed_by = ?, updated_at = datetime('now') WHERE id = ?"
   ).bind(body.status, completed, completedAt, completedBy, id).run();
 
   await logActivity(env, 'task', `${body.status === 'done' ? 'Completed' : `Status → ${body.status}`}: "${item.title || item.description}"`, user.email, id, 'task');
@@ -84,7 +86,7 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
   const newCompleted = item.completed ? 0 : 1;
   const newStatus = newCompleted ? 'done' : 'todo';
   await env.DB.prepare(
-    'UPDATE tasks SET status = ?, completed = ?, completed_at = ?, completed_by = ? WHERE id = ?'
+    "UPDATE tasks SET status = ?, completed = ?, completed_at = ?, completed_by = ?, updated_at = datetime('now') WHERE id = ?"
   ).bind(newStatus, newCompleted, newCompleted ? new Date().toISOString() : null, newCompleted ? user.email : null, id).run();
 
   await logActivity(env, 'task', `${newCompleted ? 'Completed' : 'Reopened'}: "${item.title || item.description}"`, user.email, id, 'task');
@@ -120,6 +122,7 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
 
   if (updates.length === 0) return error('No valid fields to update', 400);
 
+  updates.push("updated_at = datetime('now')");
   params.push(id);
   await env.DB.prepare(`UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
 
@@ -236,20 +239,20 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
   switch (body.action) {
     case 'complete':
       await env.DB.prepare(
-        `UPDATE tasks SET status = 'done', completed = 1, completed_at = datetime('now'), completed_by = ? WHERE id IN (${placeholders})`
+        `UPDATE tasks SET status = 'done', completed = 1, completed_at = datetime('now'), completed_by = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
       ).bind(user.email, ...body.ids).run()
       break
 
     case 'uncomplete':
       await env.DB.prepare(
-        `UPDATE tasks SET status = 'todo', completed = 0, completed_at = NULL, completed_by = NULL WHERE id IN (${placeholders})`
+        `UPDATE tasks SET status = 'todo', completed = 0, completed_at = NULL, completed_by = NULL, updated_at = datetime('now') WHERE id IN (${placeholders})`
       ).bind(...body.ids).run()
       break
 
     case 'assign':
       if (!body.value) return error('value (assignee) required for assign action', 400)
       await env.DB.prepare(
-        `UPDATE tasks SET assignee = ? WHERE id IN (${placeholders})`
+        `UPDATE tasks SET assignee = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
       ).bind(body.value, ...body.ids).run()
       break
 
@@ -258,13 +261,13 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
         return error('value must be one of: low, medium, high, urgent', 400)
       }
       await env.DB.prepare(
-        `UPDATE tasks SET priority = ? WHERE id IN (${placeholders})`
+        `UPDATE tasks SET priority = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
       ).bind(body.value, ...body.ids).run()
       break
 
     case 'delete':
       await env.DB.prepare(
-        `DELETE FROM tasks WHERE id IN (${placeholders})`
+        `UPDATE tasks SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id IN (${placeholders})`
       ).bind(...body.ids).run()
       break
   }
