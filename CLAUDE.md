@@ -202,20 +202,11 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 - TaskStandUpView: separated status circle from title click with undo
 - TaskTimelineView: bar click opens detail panel instead of cycling status
 
-**Phase 24: IN PROGRESS** (database alignment, 2026-04-06). brain.db ↔ D1 full sync:
-- **Plan:** `~/.claude/plans/graceful-meandering-thimble.md` (audited by 3 agents)
-- **Phase A: COMPLETE** (2026-04-06). Initial bulk load — 537 brain.db tasks → D1.
-  - `scripts/sync-brain-tasks.ts` — reads brain.db, maps fields, privacy redaction
-  - `POST /api/tasks/sync-bulk` endpoint — batched INSERT OR REPLACE (bypasses wrangler D1 auth)
-  - `assignee` column added to brain.db (migration 022)
-  - 537 tasks loaded: 19 active, 518 completed. All recXXX IDs preserved. Gmail URLs redacted.
-  - Supports `--api` (HTTP) and `--sql` (wrangler) modes
-- **Phase B:** Ongoing bidirectional sync — field-level LWW (NOT YET STARTED)
-  - Add `updated_at` + `deleted_at` to D1 tasks (schema-v22)
-  - Modify 5 write paths in `api/routes/tasks.ts`
-  - Rewrite `sync_d1_push.py` and `sync_d1_pull.py` for delta sync
-  - Relax `crdt.py` monotonic constraint for task reopening
-- **Tables:** tasks (BIDIR-MUTABLE), projects/milestones/team/grants/ideas (BIDIR-MUTABLE), project_updates/comments/decisions/activity (BIDIR-APPEND), commitments (PUSH-ONLY)
+**Phase 24: COMPLETE** (database alignment, 2026-04-06). brain.db ↔ D1 full sync:
+- **Phase A** (bulk load): 537 brain.db tasks → D1 via `POST /api/tasks/sync-bulk`. `scripts/sync-brain-tasks.ts` with `--api`/`--sql` modes. recXXX IDs preserved. `assignee` column added to brain.db.
+- **Phase B** (ongoing sync): schema-v22 (`updated_at` + `deleted_at`), all 5 write paths set `updated_at`, batch delete → soft-delete, `updated_since` delta filter. `sync_d1_push.py` and `sync_d1_pull.py` rewritten for field-level LWW from main tasks table. `crdt.py` monotonic constraint relaxed for task reopening.
+- **Sync flow:** `/process` runs push+pull. Scheduled 2:35 AM push, 2:40 AM pull. Delta sync via `updated_at` timestamps.
+- **Admin endpoint:** `POST /api/admin/migrate` for schema changes without wrangler D1 access.
 
 **Phase 22: COMPLETE** (5 commits, 5 deploys, 2026-04-05). Design research + polish:
 - Transition standardization: 10 inline durations → 150ms/250ms constants
