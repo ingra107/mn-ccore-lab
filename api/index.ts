@@ -409,6 +409,13 @@ export default {
           return await handleGetTaskComments(taskCommentsGet[1], env);
         }
 
+        // GET /api/tasks/:id/files
+        const taskFilesGet = url.pathname.match(/^\/api\/tasks\/([^/]+)\/files$/);
+        if (taskFilesGet) {
+          const { results } = await env.DB.prepare('SELECT * FROM task_files WHERE task_id = ? ORDER BY created_at DESC').bind(taskFilesGet[1]).all();
+          return json({ data: results });
+        }
+
         // GET /api/tasks/:id/activity
         const taskActivityGet = url.pathname.match(/^\/api\/tasks\/([^/]+)\/activity$/);
         if (taskActivityGet) {
@@ -594,6 +601,34 @@ export default {
         const subtaskReorderMatch = path.match(/^\/api\/tasks\/([^/]+)\/subtasks\/reorder$/);
         if (request.method === 'POST' && subtaskReorderMatch) {
           return await handleReorderSubtasks(subtaskReorderMatch[1], request, env);
+        }
+
+        // POST /api/publications — create a new publication (e.g. from DOI lookup)
+        if (request.method === 'POST' && path === '/api/publications') {
+          const body = await request.json() as { title: string; authors: string; journal?: string; year?: number; doi?: string; pubmed?: string; abstract?: string; topics?: string[]; status?: string };
+          const id = crypto.randomUUID().slice(0, 8);
+          await env.DB.prepare(
+            `INSERT INTO publications (id, title, authors, journal, year, doi, pubmed, abstract, topics, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          ).bind(id, body.title, body.authors, body.journal || null, body.year || null, body.doi || null, body.pubmed || null, body.abstract || null, JSON.stringify(body.topics || []), body.status || 'Published').run();
+          return json({ data: { id, title: body.title } });
+        }
+
+        // POST /api/tasks/:id/files — add file link to task
+        const taskFileAddMatch = path.match(/^\/api\/tasks\/([^/]+)\/files$/);
+        if (request.method === 'POST' && taskFileAddMatch) {
+          const body = await request.json() as { filename: string; url: string; file_type?: string };
+          const id = crypto.randomUUID().slice(0, 8);
+          await env.DB.prepare(
+            'INSERT INTO task_files (id, task_id, filename, url, file_type, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)'
+          ).bind(id, taskFileAddMatch[1], body.filename, body.url, body.file_type || 'link', user).run();
+          return json({ data: { id, task_id: taskFileAddMatch[1], filename: body.filename, url: body.url } });
+        }
+
+        // POST /api/task-files/:id/delete — remove file link
+        const taskFileDeleteMatch = path.match(/^\/api\/task-files\/([^/]+)\/delete$/);
+        if (request.method === 'POST' && taskFileDeleteMatch) {
+          await env.DB.prepare('DELETE FROM task_files WHERE id = ?').bind(taskFileDeleteMatch[1]).run();
+          return json({ data: { deleted: taskFileDeleteMatch[1] } });
         }
 
         // POST /api/tasks/:id/handoffs — create handoff
@@ -1178,6 +1213,29 @@ export default {
             try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN acknowledged_at TEXT').run(); results.push('added acknowledged_at'); } catch { results.push('acknowledged_at already exists'); }
             try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN acknowledged_by TEXT').run(); results.push('added acknowledged_by'); } catch { results.push('acknowledged_by already exists'); }
             return json({ data: { version: 33, results } });
+          }
+          if (body.version === 34) {
+            const results: string[] = [];
+            try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN watchers TEXT').run(); results.push('added watchers'); } catch { results.push('watchers already exists'); }
+            try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN reminder_days INTEGER').run(); results.push('added reminder_days'); } catch { results.push('reminder_days already exists'); }
+            try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN instructions TEXT').run(); results.push('added instructions'); } catch { results.push('instructions already exists'); }
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS task_files (
+                  id TEXT PRIMARY KEY,
+                  task_id TEXT NOT NULL,
+                  filename TEXT NOT NULL,
+                  url TEXT NOT NULL,
+                  file_type TEXT DEFAULT 'link',
+                  uploaded_by TEXT,
+                  created_at TEXT DEFAULT (datetime('now')),
+                  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+                )
+              `).run();
+              results.push('created task_files');
+            } catch (e) { results.push(`task_files: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_task_files_task ON task_files(task_id)').run(); results.push('created index'); } catch (e) { results.push(`index: ${e}`); }
+            return json({ data: { version: 34, results } });
           }
           return error(`Unknown migration version: ${body.version}`, 400);
         }

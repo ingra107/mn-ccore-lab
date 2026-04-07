@@ -3,11 +3,14 @@ import {
   X, Circle, Clock, User, Flag, Scale,
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye,
+  Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink,
 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CollapsibleSection from '../CollapsibleSection'
 import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
+import { getPersonInfo } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
 
 // ── Detail sub-modules ──────────────────────────────────────
@@ -208,6 +211,38 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
               <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
             </FieldBlock>
 
+            {/* Watchers */}
+            <FieldBlock label="Watchers" icon={Users}>
+              <WatchersPicker value={task.watchers || ''} onChange={(v) => handleFieldUpdate('watchers', v || null)} />
+            </FieldBlock>
+
+            {/* Reminder */}
+            <FieldBlock label="Reminder (days before)" icon={Bell}>
+              <input
+                type="number"
+                min={0}
+                max={30}
+                value={task.reminder_days ?? ''}
+                placeholder="e.g. 2"
+                onChange={(e) => handleFieldUpdate('reminder_days', e.target.value ? Number(e.target.value) : null)}
+                className="w-20 text-xs px-2 py-1 rounded border bg-transparent"
+                style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
+              />
+            </FieldBlock>
+
+            {/* Instructions */}
+            <div>
+              <label className="flex items-center gap-1.5 text-[11px] mb-1.5" style={{ color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
+                <ClipboardList size={11} />
+                Instructions
+              </label>
+              <EditableTextarea
+                value={task.instructions || ''}
+                onSave={(v) => handleFieldUpdate('instructions', v || null)}
+                placeholder="Step-by-step instructions, protocols, or notes..."
+              />
+            </div>
+
             {/* Dependencies */}
             <TaskDependenciesSection task={task} onFieldUpdate={handleFieldUpdate} onOpenTask={() => {}} />
 
@@ -252,30 +287,8 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
           </div>
 
           {/* ── Files Tab ── */}
-          <div style={{ display: activeTab === 'files' ? 'flex' : 'none', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-              <Upload size={32} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
-              <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.6, margin: 0 }}>
-                No attachments yet
-              </p>
-              <button
-                className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-medium transition-colors mx-auto"
-                style={{
-                  backgroundColor: 'transparent',
-                  color: 'var(--teal)',
-                  border: '1px solid var(--teal)',
-                  cursor: 'pointer',
-                  opacity: 0.8,
-                }}
-                onClick={() => {
-                  // Placeholder — file upload requires R2 or external storage
-                  alert('File upload coming soon. For now, paste a link in the description or comments.')
-                }}
-              >
-                <Upload size={14} />
-                Upload File
-              </button>
-            </div>
+          <div style={{ display: activeTab === 'files' ? 'flex' : 'none', flexDirection: 'column', gap: '16px' }}>
+            <TaskFilesSection taskId={task.id} />
           </div>
 
           {/* ── Comments Tab ── */}
@@ -305,5 +318,202 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
         `}</style>
       </div>
     </>
+  )
+}
+
+// ── Watchers Picker ──────────────────────────────────────
+function WatchersPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [adding, setAdding] = useState(false)
+  const [input, setInput] = useState('')
+  const slugs = value ? value.split(',').map(s => s.trim()).filter(Boolean) : []
+
+  const addWatcher = () => {
+    const slug = input.trim().toLowerCase()
+    if (slug && !slugs.includes(slug)) {
+      onChange([...slugs, slug].join(','))
+    }
+    setInput('')
+    setAdding(false)
+  }
+
+  const removeWatcher = (slug: string) => {
+    onChange(slugs.filter(s => s !== slug).join(','))
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {slugs.map(slug => {
+        const p = getPersonInfo(slug)
+        return (
+          <span
+            key={slug}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px]"
+            style={{ backgroundColor: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}
+          >
+            {p.name.split(' ')[0]}
+            <button
+              onClick={() => removeWatcher(slug)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', padding: 0, lineHeight: 1 }}
+            >
+              <X size={10} />
+            </button>
+          </span>
+        )
+      })}
+      {adding ? (
+        <input
+          autoFocus
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') addWatcher(); if (e.key === 'Escape') setAdding(false) }}
+          onBlur={addWatcher}
+          placeholder="slug..."
+          className="text-[11px] px-1.5 py-0.5 rounded border bg-transparent w-20"
+          style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
+        />
+      ) : (
+        <button
+          onClick={() => setAdding(true)}
+          className="text-[10px] px-1.5 py-0.5 rounded-full"
+          style={{ background: 'none', border: '1px dashed var(--border-subtle)', cursor: 'pointer', color: 'var(--slate)', opacity: 0.6 }}
+        >
+          + Add
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── Task Files Section ──────────────────────────────────
+interface TaskFile { id: string; task_id: string; filename: string; url: string; file_type: string; uploaded_by: string | null; created_at: string }
+
+function TaskFilesSection({ taskId }: { taskId: string }) {
+  const queryClient = useQueryClient()
+  const [showAdd, setShowAdd] = useState(false)
+  const [filename, setFilename] = useState('')
+  const [url, setUrl] = useState('')
+
+  const { data: files = [] } = useQuery<TaskFile[]>({
+    queryKey: ['task-files', taskId],
+    queryFn: async () => {
+      const res = await fetch(`/api/tasks/${taskId}/files`)
+      const json = await res.json() as { data: TaskFile[] }
+      return json.data
+    },
+    staleTime: 30_000,
+  })
+
+  const addFile = useMutation({
+    mutationFn: async (input: { filename: string; url: string }) => {
+      const res = await fetch(`/api/tasks/${taskId}/files`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['task-files', taskId] })
+      setShowAdd(false)
+      setFilename('')
+      setUrl('')
+    },
+  })
+
+  const deleteFile = useMutation({
+    mutationFn: async (fileId: string) => {
+      await fetch(`/api/task-files/${fileId}/delete`, { method: 'POST' })
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['task-files', taskId] }),
+  })
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] font-medium" style={{ color: 'var(--slate)', opacity: 0.65 }}>
+          Attachments ({files.length})
+        </span>
+        <button
+          onClick={() => setShowAdd(true)}
+          className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg"
+          style={{ background: 'none', border: '1px solid var(--teal)', color: 'var(--teal)', cursor: 'pointer', opacity: 0.8 }}
+        >
+          <Plus size={11} />
+          Add Link
+        </button>
+      </div>
+
+      {showAdd && (
+        <div className="flex flex-col gap-2 p-3 rounded-lg mb-3" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
+          <input
+            autoFocus
+            value={filename}
+            onChange={e => setFilename(e.target.value)}
+            placeholder="File name (e.g. Protocol v2.docx)"
+            className="text-xs px-2 py-1.5 rounded border bg-transparent"
+            style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
+          />
+          <input
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+            placeholder="URL (paste link to document)"
+            className="text-xs px-2 py-1.5 rounded border bg-transparent"
+            style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={() => { if (filename && url) addFile.mutate({ filename, url }) }}
+              disabled={!filename || !url}
+              className="text-[11px] px-3 py-1 rounded-lg font-medium"
+              style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer', opacity: filename && url ? 1 : 0.4 }}
+            >
+              Add
+            </button>
+            <button
+              onClick={() => { setShowAdd(false); setFilename(''); setUrl('') }}
+              className="text-[11px] px-3 py-1 rounded-lg"
+              style={{ background: 'none', border: '1px solid var(--border-subtle)', color: 'var(--slate)', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {files.length > 0 ? (
+        <div className="flex flex-col gap-1">
+          {files.map(f => (
+            <div key={f.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
+              <Link2 size={13} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+              <a
+                href={f.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 text-xs truncate"
+                style={{ color: 'var(--ink)', textDecoration: 'none' }}
+              >
+                {f.filename}
+              </a>
+              <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                <ExternalLink size={12} />
+              </a>
+              <button
+                onClick={() => deleteFile.mutate(f.id)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.3, padding: '2px' }}
+              >
+                <Trash2 size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : !showAdd ? (
+        <div style={{ textAlign: 'center', padding: '24px 16px' }}>
+          <Upload size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 8px' }} />
+          <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, margin: 0 }}>
+            No attachments yet. Click "Add Link" to attach a document.
+          </p>
+        </div>
+      ) : null}
+    </div>
   )
 }

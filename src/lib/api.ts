@@ -114,6 +114,9 @@ export interface TaskRow {
   blocked_by: string | null
   acknowledged_at: string | null
   acknowledged_by: string | null
+  watchers: string | null
+  reminder_days: number | null
+  instructions: string | null
   created_at: string
   meeting_title?: string
   meeting_date?: string

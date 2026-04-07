@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
-import { BookOpen, Link2, X, Plus, Search } from 'lucide-react'
+import { BookOpen, Link2, X, Plus, Search, Loader2, CheckCircle2 } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useProjectPapers, usePublications } from '../../hooks/useApiData'
 import { useUnlinkPaper, useLinkPaper } from '../../hooks/useMutations'
 
@@ -193,8 +194,51 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
   onLink: (paperId: string) => void
   onClose: () => void
 }) {
+  const queryClient = useQueryClient()
   const { data: allPubs = [] } = usePublications()
   const [search, setSearch] = useState('')
+  const [tab, setTab] = useState<'search' | 'doi'>('search')
+  const [doi, setDoi] = useState('')
+  const [doiData, setDoiData] = useState<{ title: string; authors: string; journal: string; year: number } | null>(null)
+  const [doiLoading, setDoiLoading] = useState(false)
+  const [doiError, setDoiError] = useState('')
+
+  const createAndLink = useMutation({
+    mutationFn: async (data: { title: string; authors: string; journal: string; year: number; doi: string }) => {
+      const res = await fetch('/api/publications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, status: 'Published' }),
+      })
+      const json = await res.json() as { data: { id: string } }
+      return json.data.id
+    },
+    onSuccess: (paperId) => {
+      onLink(paperId)
+      queryClient.invalidateQueries({ queryKey: ['publications'] })
+    },
+  })
+
+  const lookupDoi = async () => {
+    const cleanDoi = doi.trim().replace(/^https?:\/\/doi\.org\//, '')
+    if (!cleanDoi) return
+    setDoiLoading(true)
+    setDoiError('')
+    setDoiData(null)
+    try {
+      const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(cleanDoi)}`)
+      if (!res.ok) throw new Error('DOI not found')
+      const json = await res.json()
+      const work = json.message
+      const authors = (work.author || []).map((a: { family?: string; given?: string }) => `${a.family || ''}${a.given ? ' ' + a.given[0] : ''}`).join(', ')
+      const journal = work['container-title']?.[0] || work.publisher || ''
+      const year = work.published?.['date-parts']?.[0]?.[0] || work.created?.['date-parts']?.[0]?.[0] || new Date().getFullYear()
+      setDoiData({ title: work.title?.[0] || '', authors, journal, year })
+    } catch {
+      setDoiError('Could not find paper. Check the DOI and try again.')
+    }
+    setDoiLoading(false)
+  }
 
   const results = useMemo(() => {
     const term = search.toLowerCase().trim()
@@ -220,7 +264,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
           left: '50%',
           transform: 'translate(-50%, -50%)',
           width: 'min(520px, 90vw)',
-          maxHeight: '70vh',
+          maxHeight: '75vh',
           backgroundColor: 'var(--cream)',
           borderRadius: '12px',
           border: '1px solid var(--border-light)',
@@ -228,64 +272,159 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
           flexDirection: 'column',
         }}
       >
-        {/* Search header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <Search size={16} style={{ color: 'var(--slate)', opacity: 0.55 }} />
-          <input
-            autoFocus
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search publications by title, author, or journal..."
-            className="flex-1 text-sm bg-transparent outline-none"
-            style={{ color: 'var(--ink)', border: 'none' }}
-          />
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
+        {/* Tab header */}
+        <div className="flex items-center border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+          <button
+            onClick={() => setTab('search')}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: tab === 'search' ? 'var(--teal)' : 'var(--slate)',
+              borderBottom: tab === 'search' ? '2px solid var(--teal)' : '2px solid transparent',
+              marginBottom: '-1px',
+            }}
+          >
+            <Search size={13} />
+            Search Existing
+          </button>
+          <button
+            onClick={() => setTab('doi')}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-medium"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: tab === 'doi' ? 'var(--teal)' : 'var(--slate)',
+              borderBottom: tab === 'doi' ? '2px solid var(--teal)' : '2px solid transparent',
+              marginBottom: '-1px',
+            }}
+          >
+            <Link2 size={13} />
+            Add by DOI
+          </button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '8px 12px' }}>
             <X size={16} />
           </button>
         </div>
 
-        {/* Results */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-          {results.length === 0 ? (
-            <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '24px 0' }}>
-              {search ? 'No matching publications found.' : 'No publications available.'}
-            </p>
-          ) : (
-            results.map(pub => {
-              const alreadyLinked = linkedPaperIds.includes(pub.id)
-              return (
-                <button
-                  key={pub.id}
-                  onClick={() => !alreadyLinked && onLink(pub.id)}
-                  disabled={alreadyLinked}
-                  className="w-full text-left px-4 py-2.5 transition-colors"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: alreadyLinked ? 'default' : 'pointer',
-                    opacity: alreadyLinked ? 0.4 : 1,
-                    borderBottom: '1px solid var(--border-subtle)',
-                  }}
-                  onMouseOver={e => { if (!alreadyLinked) (e.currentTarget.style.backgroundColor = 'rgba(45,138,138,0.05)') }}
-                  onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
-                    {pub.title}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    {pub.journal && (
-                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>{pub.journal}</span>
-                    )}
-                    {pub.year && (
-                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55 }}>{pub.year}</span>
-                    )}
-                    {alreadyLinked && (
-                      <span style={{ fontSize: '10px', color: 'var(--teal)', fontWeight: 500 }}>Already linked</span>
-                    )}
-                  </div>
-                </button>
-              )
-            })
+        {/* Search tab */}
+        <div style={{ display: tab === 'search' ? 'flex' : 'none', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+            <Search size={14} style={{ color: 'var(--slate)', opacity: 0.55 }} />
+            <input
+              autoFocus={tab === 'search'}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by title, author, or journal..."
+              className="flex-1 text-sm bg-transparent outline-none"
+              style={{ color: 'var(--ink)', border: 'none' }}
+            />
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+            {results.length === 0 ? (
+              <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '24px 0' }}>
+                {search ? 'No matching publications. Try the DOI tab to add a new one.' : 'No publications available.'}
+              </p>
+            ) : (
+              results.map(pub => {
+                const alreadyLinked = linkedPaperIds.includes(pub.id)
+                return (
+                  <button
+                    key={pub.id}
+                    onClick={() => !alreadyLinked && onLink(pub.id)}
+                    disabled={alreadyLinked}
+                    className="w-full text-left px-4 py-2.5 transition-colors"
+                    style={{
+                      background: 'none', border: 'none',
+                      cursor: alreadyLinked ? 'default' : 'pointer',
+                      opacity: alreadyLinked ? 0.4 : 1,
+                      borderBottom: '1px solid var(--border-subtle)',
+                    }}
+                    onMouseOver={e => { if (!alreadyLinked) (e.currentTarget.style.backgroundColor = 'rgba(45,138,138,0.05)') }}
+                    onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>{pub.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {pub.journal && <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>{pub.journal}</span>}
+                      {pub.year && <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55 }}>{pub.year}</span>}
+                      {alreadyLinked && <span style={{ fontSize: '10px', color: 'var(--teal)', fontWeight: 500 }}>Already linked</span>}
+                    </div>
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </div>
+
+        {/* DOI tab */}
+        <div style={{ display: tab === 'doi' ? 'flex' : 'none', flexDirection: 'column', flex: 1, padding: '16px 20px', gap: '12px' }}>
+          <p style={{ fontSize: '12px', color: 'var(--slate)', margin: 0 }}>
+            Enter a DOI to auto-fill citation data from CrossRef.
+          </p>
+          <div className="flex gap-2">
+            <input
+              autoFocus={tab === 'doi'}
+              value={doi}
+              onChange={e => setDoi(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') lookupDoi() }}
+              placeholder="10.1234/example or https://doi.org/..."
+              className="flex-1 text-sm px-3 py-2 rounded-lg border bg-transparent"
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
+            />
+            <button
+              onClick={lookupDoi}
+              disabled={doiLoading || !doi.trim()}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-medium"
+              style={{
+                backgroundColor: 'var(--teal)',
+                color: 'white',
+                border: 'none',
+                cursor: 'pointer',
+                opacity: doiLoading || !doi.trim() ? 0.5 : 1,
+              }}
+            >
+              {doiLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+              Auto-Fill
+            </button>
+          </div>
+
+          {doiError && (
+            <p style={{ fontSize: '12px', color: 'var(--maroon)', margin: 0 }}>{doiError}</p>
+          )}
+
+          {doiData && (
+            <div className="flex flex-col gap-2 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle2 size={14} style={{ color: 'var(--green)' }} />
+                <span className="text-[11px] font-medium" style={{ color: 'var(--green)' }}>Citation found</span>
+              </div>
+              <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0, fontWeight: 500, lineHeight: 1.4 }}>
+                {doiData.title}
+              </p>
+              <p style={{ fontSize: '11px', color: 'var(--slate)', margin: 0 }}>
+                {doiData.authors}
+              </p>
+              <div className="flex items-center gap-2">
+                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7, fontStyle: 'italic' }}>{doiData.journal}</span>
+                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.55 }}>{doiData.year}</span>
+              </div>
+              <button
+                onClick={() => {
+                  const cleanDoi = doi.trim().replace(/^https?:\/\/doi\.org\//, '')
+                  createAndLink.mutate({ ...doiData, doi: cleanDoi })
+                }}
+                disabled={createAndLink.isPending}
+                className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-medium w-fit"
+                style={{
+                  backgroundColor: 'var(--teal)',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'pointer',
+                  opacity: createAndLink.isPending ? 0.5 : 1,
+                }}
+              >
+                <Plus size={14} />
+                {createAndLink.isPending ? 'Adding...' : 'Add & Link to Project'}
+              </button>
+            </div>
           )}
         </div>
       </div>
