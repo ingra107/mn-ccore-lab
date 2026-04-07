@@ -117,6 +117,8 @@ export interface TaskRow {
   watchers: string | null
   reminder_days: number | null
   instructions: string | null
+  recurrence: string | null
+  recurrence_parent_id: string | null
   created_at: string
   meeting_title?: string
   meeting_date?: string

@@ -1237,6 +1237,12 @@ export default {
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_task_files_task ON task_files(task_id)').run(); results.push('created index'); } catch (e) { results.push(`index: ${e}`); }
             return json({ data: { version: 34, results } });
           }
+          if (body.version === 35) {
+            const results: string[] = [];
+            try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN recurrence TEXT').run(); results.push('added recurrence'); } catch { results.push('recurrence already exists'); }
+            try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN recurrence_parent_id TEXT').run(); results.push('added recurrence_parent_id'); } catch { results.push('recurrence_parent_id already exists'); }
+            return json({ data: { version: 35, results } });
+          }
           return error(`Unknown migration version: ${body.version}`, 400);
         }
 

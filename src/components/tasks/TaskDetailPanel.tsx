@@ -3,7 +3,7 @@ import {
   X, Circle, Clock, User, Flag, Scale,
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye,
-  Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink,
+  Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CollapsibleSection from '../CollapsibleSection'
@@ -229,6 +229,27 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
                 className="w-20 text-xs px-2 py-1 rounded border bg-transparent"
                 style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
               />
+            </FieldBlock>
+
+            {/* Recurrence */}
+            <FieldBlock label="Recurrence" icon={RefreshCw}>
+              <select
+                value={task.recurrence || 'none'}
+                onChange={(e) => handleFieldUpdate('recurrence', e.target.value === 'none' ? null : e.target.value)}
+                className="text-xs px-2 py-1 rounded border bg-transparent"
+                style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', cursor: 'pointer' }}
+              >
+                <option value="none">None</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Biweekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+              {task.recurrence && task.recurrence !== 'none' && (
+                <span className="text-[10px] ml-2" style={{ color: 'var(--teal)', opacity: 0.8 }}>
+                  Auto-creates next task when completed
+                </span>
+              )}
             </FieldBlock>
 
             {/* Instructions */}

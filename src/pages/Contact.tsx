@@ -46,8 +46,8 @@ export default function Contact() {
           className="text-base sm:text-lg max-w-2xl"
           style={{ color: 'var(--slate)' }}
         >
-          Interested in collaborating, joining our team, or learning more about
-          our research? We would love to hear from you.
+          Interested in collaborating or learning more about our research?
+          We would love to hear from you.
         </p>
       </section>
 
@@ -190,7 +190,7 @@ export default function Contact() {
             </div>
           </div>
 
-          {/* Right: Join Our Team */}
+          {/* Right: Research Focus Areas */}
           <div className="fade-in-up">
             <div
               className="p-4 sm:p-6 rounded-lg"
@@ -214,7 +214,7 @@ export default function Contact() {
                     color: 'var(--ink)',
                   }}
                 >
-                  Join Our Team
+                  Research Focus Areas
                 </h2>
               </div>
 
@@ -222,18 +222,16 @@ export default function Contact() {
                 className="text-sm sm:text-base leading-relaxed mb-4 sm:mb-6"
                 style={{ color: 'var(--slate)' }}
               >
-                We are always looking for motivated researchers, medical
-                students, residents, and fellows interested in critical care
-                outcomes research. Our lab offers mentored research experiences
-                in:
+                MN-CCORE conducts multi-center critical care outcomes research across several key domains:
               </p>
 
               <ul className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8">
                 {[
                   'Multi-center observational studies using the CLIF dataset',
-                  'Clinical decision-making and provider behavior research',
+                  'Clinical decision-making and provider variation in the ICU',
                   'ICU quality measurement and improvement',
                   'Health services research and data science methods',
+                  'Lung-protective ventilation and respiratory support',
                 ].map((item) => (
                   <li
                     key={item}
@@ -260,13 +258,13 @@ export default function Contact() {
                   className="text-sm font-medium mb-2"
                   style={{ color: 'var(--ink)' }}
                 >
-                  Get in touch
+                  Interested in collaborating?
                 </p>
                 <p
                   className="text-sm"
                   style={{ color: 'var(--slate)' }}
                 >
-                  To inquire about opportunities, please email{' '}
+                  For collaboration inquiries or research opportunities, email{' '}
                   <a
                     href="mailto:mnccore@umn.edu"
                     className="cursor-pointer font-medium transition-colors duration-200"
@@ -276,8 +274,7 @@ export default function Contact() {
                     }}
                   >
                     mnccore@umn.edu
-                  </a>{' '}
-                  with your CV and a brief description of your research interests.
+                  </a>
                 </p>
               </div>
             </div>

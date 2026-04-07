@@ -74,6 +74,33 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
     } catch (e) { console.error('Failed to create completion notification:', e); }
   }
 
+  // Auto-create next instance for recurring tasks
+  if (completed) {
+    try {
+      const fullTask = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<Record<string, unknown>>();
+      const recurrence = fullTask?.recurrence as string | null;
+      if (recurrence && recurrence !== 'none') {
+        const currentDue = fullTask?.due_date as string | null;
+        let nextDue: string | null = null;
+        if (currentDue) {
+          const d = new Date(currentDue + 'T12:00:00');
+          switch (recurrence) {
+            case 'daily': d.setDate(d.getDate() + 1); break;
+            case 'weekly': d.setDate(d.getDate() + 7); break;
+            case 'biweekly': d.setDate(d.getDate() + 14); break;
+            case 'monthly': d.setMonth(d.getMonth() + 1); break;
+          }
+          nextDue = d.toISOString().split('T')[0];
+        }
+        const nextId = generateId();
+        await env.DB.prepare(
+          `INSERT INTO tasks (id, title, description, assignee, project_id, due_date, priority, status, source, recurrence, recurrence_parent_id, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'todo', 'recurrence', ?, ?, datetime('now'), datetime('now'))`
+        ).bind(nextId, fullTask?.title, fullTask?.description || '', fullTask?.assignee || '', fullTask?.project_id || null, nextDue, fullTask?.priority || 'medium', recurrence, id).run();
+      }
+    } catch (e) { console.error('Failed to create recurring task:', e); }
+  }
+
   const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
   return json({ data: updated });
 }

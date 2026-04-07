@@ -437,6 +437,22 @@ function ProjectDetailInner({ project }: InnerProps) {
       {/* ── OVERVIEW TAB ── */}
       {activeTab === 'overview' && (<>
 
+      {/* Project Timeline */}
+      <div className="mt-6 mb-6" style={{ padding: '0 4px' }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Clock size={14} style={{ color: 'var(--gold)' }} />
+          <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Project Timeline
+          </span>
+        </div>
+        <ProjectTimeline
+          createdAt={project.startDate}
+          stage={project.stage}
+          tasks={projectTasks}
+          updates={projectUpdates}
+        />
+      </div>
+
       {/* Strategic Context — Why This Matters Now */}
       {(project.strategic_context || isPi) && (
         <div
@@ -1204,3 +1220,97 @@ function ProjectDetailInner({ project }: InnerProps) {
   )
 }
 
+// ── Project Timeline ─────────────────────────────────────
+function ProjectTimeline({ createdAt, stage, tasks, updates }: {
+  createdAt?: string
+  stage?: string
+  tasks: { completed_at: string | null; title: string; status: string }[]
+  updates: { created_at: string; content: string; author?: string }[]
+}) {
+  const events = useMemo(() => {
+    const items: { date: string; label: string; type: 'created' | 'stage' | 'task' | 'update'; color: string }[] = []
+
+    if (createdAt) {
+      items.push({ date: createdAt, label: 'Project created', type: 'created', color: 'var(--gold)' })
+    }
+
+    // Completed tasks as milestones
+    for (const t of tasks) {
+      if (t.completed_at) {
+        items.push({ date: t.completed_at, label: t.title, type: 'task', color: 'var(--green)' })
+      }
+    }
+
+    // Project updates as milestones
+    for (const u of updates) {
+      items.push({
+        date: u.created_at,
+        label: u.content.slice(0, 60) + (u.content.length > 60 ? '...' : ''),
+        type: 'update',
+        color: 'var(--teal)',
+      })
+    }
+
+    // Current stage marker
+    if (stage) {
+      items.push({ date: new Date().toISOString(), label: `Current: ${stage}`, type: 'stage', color: 'var(--gold)' })
+    }
+
+    return items.sort((a, b) => a.date.localeCompare(b.date)).slice(-8) // show last 8 events
+  }, [createdAt, stage, tasks, updates])
+
+  if (events.length === 0) {
+    return (
+      <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '12px 0' }}>
+        No timeline events yet.
+      </p>
+    )
+  }
+
+  return (
+    <div className="relative" style={{ paddingLeft: '20px' }}>
+      {/* Vertical line */}
+      <div
+        style={{
+          position: 'absolute',
+          left: '7px',
+          top: '4px',
+          bottom: '4px',
+          width: '2px',
+          background: 'var(--border-subtle)',
+          borderRadius: '1px',
+        }}
+      />
+      <div className="flex flex-col gap-3">
+        {events.map((event, i) => (
+          <div key={i} className="flex items-start gap-3 relative">
+            {/* Dot */}
+            <div
+              style={{
+                position: 'absolute',
+                left: '-17px',
+                top: '5px',
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: event.color,
+                border: '2px solid var(--cream)',
+                zIndex: 1,
+              }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: '12px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
+                {event.label}
+              </p>
+              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55 }}>
+                {formatShortDate(event.date)}
+                {event.type === 'task' && <span style={{ color: 'var(--green)', marginLeft: '6px' }}>completed</span>}
+                {event.type === 'update' && <span style={{ color: 'var(--teal)', marginLeft: '6px' }}>note</span>}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
