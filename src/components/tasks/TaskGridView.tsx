@@ -331,6 +331,9 @@ function TaskGridRow({
   }, [hasBlockers, blockerIds, allTasks])
   // isOverdue computed by InlineDatePicker now
   const rowRef = useRef<HTMLDivElement>(null)
+  const titleInputRef = useRef<HTMLInputElement>(null)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
   const [completingAnim, setCompletingAnim] = useState(false)
   const [rowFadeAnim, setRowFadeAnim] = useState(false)
   const prevStatusRef = useRef(task.status)
@@ -408,27 +411,55 @@ function TaskGridRow({
               <Link2 size={12} style={{ color: 'var(--maroon)', opacity: 0.7 }} />
             </span>
           )}
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => { e.stopPropagation(); onOpenDetail?.(task) }}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOpenDetail?.(task) } }}
-            style={{
-              fontSize: '13px',
-              fontWeight: 400,
-              color: 'var(--ink)',
-              textDecoration: isDone ? 'line-through' : 'none',
-              lineHeight: 1.4,
-              cursor: onOpenDetail ? 'pointer' : 'default',
-              borderRadius: '3px',
-              padding: '1px 4px',
-              margin: '-1px -4px',
-              transition: 'background var(--transition-fast) ease',
-            }}
-            className="task-title-clickable"
-          >
-            {formatBrandName(task.title || task.description)}
-          </span>
+          {editingTitle ? (
+            <input
+              ref={titleInputRef}
+              autoFocus
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { onFieldChange(task.id, 'title', titleDraft); setEditingTitle(false) }
+                if (e.key === 'Escape') setEditingTitle(false)
+                e.stopPropagation()
+              }}
+              onBlur={() => { if (titleDraft.trim() && titleDraft !== task.title) onFieldChange(task.id, 'title', titleDraft); setEditingTitle(false) }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                fontSize: '13px',
+                fontWeight: 400,
+                color: 'var(--ink)',
+                background: 'var(--cream)',
+                border: '1px solid var(--teal)',
+                borderRadius: '4px',
+                padding: '2px 6px',
+                outline: 'none',
+                width: '100%',
+              }}
+            />
+          ) : (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); onOpenDetail?.(task) }}
+              onDoubleClick={(e) => { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOpenDetail?.(task) } if (e.key === 'F2') { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) } }}
+              style={{
+                fontSize: '13px',
+                fontWeight: 400,
+                color: 'var(--ink)',
+                textDecoration: isDone ? 'line-through' : 'none',
+                lineHeight: 1.4,
+                cursor: onOpenDetail ? 'pointer' : 'default',
+                borderRadius: '3px',
+                padding: '1px 4px',
+                margin: '-1px -4px',
+                transition: 'background var(--transition-fast) ease',
+              }}
+              className="task-title-clickable"
+            >
+              {formatBrandName(task.title || task.description)}
+            </span>
+          )}
           {task.source && task.source !== 'manual' && (
             <span
               style={{

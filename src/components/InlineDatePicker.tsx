@@ -12,7 +12,13 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const isOverdue = value && new Date(value + 'T23:59:59') < new Date()
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const dueDate = value ? new Date(value + 'T12:00:00') : null
+  const isOverdue = dueDate && dueDate < today
+  const isToday = dueDate && dueDate.toDateString() === today.toDateString()
+  const isTomorrow = dueDate && dueDate.toDateString() === new Date(today.getTime() + 86400000).toDateString()
+  const isThisWeek = dueDate && !isOverdue && !isToday && !isTomorrow && dueDate < new Date(today.getTime() + 7 * 86400000)
 
   useEffect(() => {
     if (editing && inputRef.current) {
@@ -86,15 +92,15 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           background: 'none',
           cursor: 'pointer',
           fontSize: '12px',
-          fontWeight: isOverdue ? 500 : 400,
-          color: isOverdue ? 'var(--maroon)' : value ? 'var(--slate)' : 'var(--slate)',
+          fontWeight: isOverdue || isToday ? 500 : 400,
+          color: isOverdue ? 'var(--maroon)' : isToday ? 'var(--teal)' : isThisWeek ? 'var(--gold)' : value ? 'var(--slate)' : 'var(--slate)',
           opacity: value ? 1 : 0.3,
         }}
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'rgba(45,138,138,0.04)' }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' }}
       >
         <CalendarDays size={11} />
-        <span>{value ? (isOverdue ? 'Overdue' : formatShortDate(value)) : 'Set date'}</span>
+        <span>{!value ? 'Set date' : isOverdue ? formatShortDate(value) : isToday ? 'Today' : isTomorrow ? 'Tomorrow' : formatShortDate(value)}</span>
         <ChevronDown size={10} style={{ opacity: 0.3 }} />
       </button>
     </div>
