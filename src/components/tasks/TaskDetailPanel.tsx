@@ -10,7 +10,8 @@ import CollapsibleSection from '../CollapsibleSection'
 import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
-import { getPersonInfo } from '../../data/team'
+import { getPersonInfo, getAllMembers, directors } from '../../data/team'
+import Avatar from '../Avatar'
 import type { TaskRow } from '../../lib/api'
 
 // ── Detail sub-modules ──────────────────────────────────────
@@ -323,62 +324,94 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
 
 // ── Watchers Picker ──────────────────────────────────────
 function WatchersPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [adding, setAdding] = useState(false)
-  const [input, setInput] = useState('')
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
   const slugs = value ? value.split(',').map(s => s.trim()).filter(Boolean) : []
 
-  const addWatcher = () => {
-    const slug = input.trim().toLowerCase()
-    if (slug && !slugs.includes(slug)) {
-      onChange([...slugs, slug].join(','))
-    }
-    setInput('')
-    setAdding(false)
+  const allPeople = [...directors, ...getAllMembers()].filter(p => p.slug)
+  const uniquePeople = allPeople.filter((p, i) => allPeople.findIndex(x => x.slug === p.slug) === i)
+  const available = uniquePeople.filter(p => !slugs.includes(p.slug!))
+
+  const addWatcher = (slug: string) => {
+    onChange([...slugs, slug].join(','))
+    setOpen(false)
   }
 
   const removeWatcher = (slug: string) => {
     onChange(slugs.filter(s => s !== slug).join(','))
   }
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5" ref={ref} style={{ position: 'relative' }}>
       {slugs.map(slug => {
         const p = getPersonInfo(slug)
         return (
           <span
             key={slug}
-            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px]"
+            className="flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full text-[10px]"
             style={{ backgroundColor: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}
           >
+            <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" className="!w-[16px] !h-[16px] !min-w-0 !min-h-0 !text-[7px]" />
             {p.name.split(' ')[0]}
             <button
               onClick={() => removeWatcher(slug)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', padding: 0, lineHeight: 1 }}
             >
-              <X size={10} />
+              <X size={9} />
             </button>
           </span>
         )
       })}
-      {adding ? (
-        <input
-          autoFocus
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') addWatcher(); if (e.key === 'Escape') setAdding(false) }}
-          onBlur={addWatcher}
-          placeholder="slug..."
-          className="text-[11px] px-1.5 py-0.5 rounded border bg-transparent w-20"
-          style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
-        />
-      ) : (
-        <button
-          onClick={() => setAdding(true)}
-          className="text-[10px] px-1.5 py-0.5 rounded-full"
-          style={{ background: 'none', border: '1px dashed var(--border-subtle)', cursor: 'pointer', color: 'var(--slate)', opacity: 0.6 }}
+      <button
+        onClick={() => setOpen(!open)}
+        className="text-[10px] px-1.5 py-0.5 rounded-full"
+        style={{ background: 'none', border: '1px dashed var(--border-subtle)', cursor: 'pointer', color: 'var(--slate)', opacity: 0.6 }}
+      >
+        + Add
+      </button>
+
+      {open && available.length > 0 && (
+        <div
+          className="absolute z-20 rounded-lg shadow-lg border"
+          style={{
+            top: '100%',
+            left: 0,
+            marginTop: '4px',
+            backgroundColor: 'var(--cream)',
+            borderColor: 'var(--border-subtle)',
+            maxHeight: '200px',
+            overflowY: 'auto',
+            minWidth: '180px',
+          }}
         >
-          + Add
-        </button>
+          {available.map(person => {
+            const slug = person.slug!
+            const p = getPersonInfo(slug)
+            return (
+              <button
+                key={slug}
+                onClick={() => addWatcher(slug)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px] transition-colors"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink)', borderBottom: '1px solid var(--border-subtle)' }}
+                onMouseOver={e => (e.currentTarget.style.backgroundColor = 'rgba(45,138,138,0.05)')}
+                onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" className="!w-[20px] !h-[20px] !min-w-0 !min-h-0 !text-[8px]" />
+                {p.name}
+              </button>
+            )
+          })}
+        </div>
       )}
     </div>
   )

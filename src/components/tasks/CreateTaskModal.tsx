@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Sparkles } from 'lucide-react'
+import { X, Sparkles, FileText, Shield, DollarSign, BarChart3, ClipboardList } from 'lucide-react'
 import { useTeam, useProjects } from '../../hooks/useApiData'
 import { suggestTaskFields, type AutofillSuggestions, type FieldSuggestion } from '../../lib/taskAutofill'
 
@@ -15,6 +15,44 @@ interface CreateTaskModalProps {
     priority?: string
   }) => void
 }
+
+const TASK_TEMPLATES = [
+  {
+    icon: FileText,
+    label: 'Paper Review',
+    title: 'Review manuscript: ',
+    description: '1. Read full manuscript\n2. Check methods and statistics\n3. Review figures and tables\n4. Write reviewer comments\n5. Submit review',
+    priority: 'high',
+  },
+  {
+    icon: Shield,
+    label: 'IRB Submission',
+    title: 'Submit IRB protocol: ',
+    description: '1. Complete ETHOS application\n2. Upload protocol document\n3. Attach consent forms\n4. Add personnel and training docs\n5. Submit to IRB for review',
+    priority: 'high',
+  },
+  {
+    icon: DollarSign,
+    label: 'Grant Deadline',
+    title: 'Prepare grant submission: ',
+    description: '1. Finalize specific aims\n2. Complete research strategy\n3. Update biosketch and other support\n4. Prepare budget and justification\n5. Internal review and submission',
+    priority: 'urgent',
+  },
+  {
+    icon: BarChart3,
+    label: 'Data Analysis',
+    title: 'Run analysis: ',
+    description: '1. Pull and clean dataset\n2. Run primary analysis\n3. Sensitivity analyses\n4. Generate figures and tables\n5. Write methods and results sections',
+    priority: 'medium',
+  },
+  {
+    icon: ClipboardList,
+    label: 'Meeting Prep',
+    title: 'Prepare for meeting: ',
+    description: '1. Review agenda and prior notes\n2. Prepare updates on assigned items\n3. Draft discussion points\n4. Compile any documents to share',
+    priority: 'medium',
+  },
+]
 
 const selectStyle: React.CSSProperties = {
   fontSize: '13px',
@@ -177,8 +215,39 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           </button>
         </div>
 
+        {/* Template strip */}
+        <div className="flex gap-1.5 px-5 pt-3 pb-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {TASK_TEMPLATES.map(t => {
+            const Icon = t.icon
+            return (
+              <button
+                key={t.label}
+                type="button"
+                onClick={() => {
+                  setTitle(t.title)
+                  setDescription(t.description)
+                  setPriority(t.priority)
+                }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium flex-shrink-0 transition-colors"
+                style={{
+                  background: 'none',
+                  border: '1px solid var(--border-subtle)',
+                  cursor: 'pointer',
+                  color: 'var(--slate)',
+                  opacity: 0.7,
+                }}
+                onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)'; e.currentTarget.style.opacity = '1' }}
+                onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--slate)'; e.currentTarget.style.opacity = '0.7' }}
+              >
+                <Icon size={11} />
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-3.5">
+        <form onSubmit={handleSubmit} className="p-5 pt-3 flex flex-col gap-3.5">
           {/* Title */}
           <div>
             <label

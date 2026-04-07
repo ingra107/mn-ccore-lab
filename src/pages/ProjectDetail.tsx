@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions } from '../hooks/useApiData'
-import { useUpdateProject, useAddAgendaItem, usePostProjectUpdate, useUpdateTaskStatus } from '../hooks/useMutations'
+import { useUpdateProject, useAddAgendaItem, usePostProjectUpdate, useUpdateTaskStatus, useCreateTask } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
@@ -28,6 +28,7 @@ import Avatar from '../components/Avatar'
 import InlineSelect from '../components/InlineSelect'
 import WatchButton from '../components/WatchButton'
 import TaskCard from '../components/tasks/TaskCard'
+import CreateTaskModal from '../components/tasks/CreateTaskModal'
 import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
 import type { Project } from '../data/types'
 import type { TaskRow } from '../lib/api'
@@ -124,6 +125,8 @@ function ProjectDetailInner({ project }: InnerProps) {
     return 'overview' as Tab
   })()
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
+  const [showCreateTask, setShowCreateTask] = useState(false)
+  const createTask = useCreateTask()
 
   // Revisions for this project
   const { data: revisions = [] } = useRevisions(project.slug)
@@ -1077,11 +1080,24 @@ function ProjectDetailInner({ project }: InnerProps) {
       {/* ── TASKS TAB ── */}
       {activeTab === 'tasks' && (
         <div className="table-container" style={{ padding: '16px 20px', marginBottom: '2rem' }}>
+          <div className="flex items-center justify-between mb-4">
+            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Project Tasks
+            </span>
+            <button
+              onClick={() => setShowCreateTask(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+              style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+            >
+              <Plus size={13} />
+              New Task
+            </button>
+          </div>
           {pendingTasks.length === 0 && completedTasks.length === 0 ? (
             <div className="text-center py-12">
               <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 12px' }} />
-              <p style={{ fontSize: '14px', color: 'var(--slate)', opacity: 0.5 }}>
-                No tasks for this project
+              <p style={{ fontSize: '14px', color: 'var(--slate)', opacity: 0.55 }}>
+                No tasks for this project. Create one above.
               </p>
             </div>
           ) : (
@@ -1166,6 +1182,16 @@ function ProjectDetailInner({ project }: InnerProps) {
           onClose={() => setSelectedTask(null)}
         />
       )}
+
+      {/* Create Task Modal — pre-filled with project */}
+      <CreateTaskModal
+        open={showCreateTask}
+        onClose={() => setShowCreateTask(false)}
+        onCreate={(task) => {
+          createTask.mutate({ ...task, project_id: project.slug })
+          setShowCreateTask(false)
+        }}
+      />
 
       {/* Scoped dark mode styles */}
       <style>{`
