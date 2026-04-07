@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { GitBranch, Filter } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
@@ -26,7 +26,7 @@ export default function DeadlineCascadePage() {
   }, [])
 
   // Group nodes by project
-  const projectGroups = (() => {
+  const projectGroups = useMemo(() => {
     if (!allData) return []
     const groups = new Map<string, { title: string; nodes: DeadlineNode[]; deps: typeof allData.dependencies }>()
 
@@ -63,7 +63,7 @@ export default function DeadlineCascadePage() {
         } as CascadeGraph,
       }))
       .sort((a, b) => a.title.localeCompare(b.title))
-  })()
+  }, [allData])
 
   // Stats
   const totalNodes = allData?.nodes.length || 0

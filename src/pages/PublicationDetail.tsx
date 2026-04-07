@@ -67,7 +67,7 @@ export default function PublicationDetail() {
   }
 
   const statusColors: Record<string, { bg: string; color: string }> = {
-    Published: { bg: 'rgba(34,197,94,0.1)', color: 'var(--green, #22c55e)' },
+    Published: { bg: 'rgba(34,197,94,0.1)', color: 'var(--green)' },
     'In Review': { bg: 'rgba(201,168,76,0.1)', color: 'var(--gold)' },
     'In Preparation': { bg: 'rgba(100,116,139,0.1)', color: 'var(--slate)' },
   }

@@ -25,17 +25,11 @@ import { useUndoToast } from '../components/UndoToast'
 import { useCommitments } from '../hooks/useCommitments'
 import type { CommitmentRow } from '../hooks/useCommitments'
 import { getPersonInfo } from '../data/team'
-import { formatRelativeTime, formatShortDate } from '../lib/dateUtils'
+import { formatRelativeTime, formatShortDate, isOverdue } from '../lib/dateUtils'
 
 // ── Helpers ─────────────────────────────────────────────────
 
-function isOverdue(dueDate: string | null): boolean {
-  if (!dueDate) return false
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const due = new Date(dueDate + 'T12:00:00')
-  return due < today
-}
+// isOverdue imported from dateUtils
 
 function notificationIcon(type: string) {
   switch (type) {

@@ -722,7 +722,7 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
     ...(overdueCount > 0 ? [{ label: 'Overdue', value: overdueCount, color: 'var(--maroon)' }] : []),
     { label: 'To Do', value: todoCount },
     { label: 'In Progress', value: inProgressCount, color: 'var(--teal)' },
-    { label: 'Done', value: doneCount, color: 'var(--green, #16a34a)' },
+    { label: 'Done', value: doneCount, color: 'var(--green)' },
   ]
 
   return (

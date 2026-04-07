@@ -934,7 +934,7 @@ export default {
 
         // POST /api/deadline-dependencies — create dependency link
         if (request.method === 'POST' && path === '/api/deadline-dependencies') {
-          return await handleCreateDeadlineDependency(request, env);
+          return await handleCreateDeadlineDependency(request, user, env);
         }
 
         // POST /api/deadline-dependencies/:id/delete — remove dependency link

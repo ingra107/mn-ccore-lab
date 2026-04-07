@@ -20,7 +20,7 @@ interface Props {
 const statusConfig: Record<string, { label: string; icon: typeof Circle; color: string; bg: string }> = {
   todo: { label: 'To Do', icon: Circle, color: 'var(--slate)', bg: 'rgba(100,116,139,0.1)' },
   in_progress: { label: 'In Progress', icon: Clock, color: 'var(--teal)', bg: 'rgba(45,138,138,0.1)' },
-  done: { label: 'Done', icon: CheckCircle2, color: 'var(--green, #22c55e)', bg: 'rgba(34,197,94,0.1)' },
+  done: { label: 'Done', icon: CheckCircle2, color: 'var(--green)', bg: 'rgba(34,197,94,0.1)' },
   blocked: { label: 'Blocked', icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122,0,25,0.1)' },
 }
 

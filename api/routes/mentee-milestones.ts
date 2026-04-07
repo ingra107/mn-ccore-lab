@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
 
 // GET /api/mentee-milestones?mentee=&status=&type=
 export async function handleMenteeMilestones(url: URL, env: Env): Promise<Response> {
@@ -65,7 +65,7 @@ export async function handleCreateMenteeMilestone(request: Request, user: AuthUs
     'INSERT INTO mentee_milestones (id, mentee_slug, milestone_type, title, description, due_date, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(id, body.mentee_slug, body.milestone_type, body.title, body.description || null, body.due_date || null, body.notes || null, status).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'mentee_milestone', `New milestone for ${body.mentee_slug}: "${body.title}"`, actor, id, 'mentee_milestone');
 
   const created = await env.DB.prepare('SELECT * FROM mentee_milestones WHERE id = ?').bind(id).first();
@@ -76,20 +76,11 @@ export async function handleCreateMenteeMilestone(request: Request, user: AuthUs
 export async function handleUpdateMenteeMilestone(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
   const allowedFields = ['title', 'description', 'due_date', 'notes', 'status', 'milestone_type', 'mentee_slug'];
-  const updates: string[] = [];
-  const params: unknown[] = [];
+  const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);
 
-  for (const field of allowedFields) {
-    if (field in body) {
-      updates.push(`${field} = ?`);
-      params.push(body[field]);
-    }
-  }
+  if (!hasUpdates) return error('No valid fields to update', 400);
 
-  if (updates.length === 0) return error('No valid fields to update', 400);
-
-  params.push(id);
-  await env.DB.prepare(`UPDATE mentee_milestones SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+  await env.DB.prepare(`UPDATE mentee_milestones SET ${sql} WHERE id = ?`).bind(...params, id).run();
 
   const updated = await env.DB.prepare('SELECT * FROM mentee_milestones WHERE id = ?').bind(id).first();
   if (!updated) return error('Milestone not found', 404);
@@ -105,7 +96,7 @@ export async function handleCompleteMenteeMilestone(id: string, user: AuthUser, 
   const updated = await env.DB.prepare('SELECT * FROM mentee_milestones WHERE id = ?').bind(id).first();
   if (!updated) return error('Milestone not found', 404);
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'mentee_milestone', `Completed milestone: "${(updated as Record<string, unknown>).title}"`, actor, id, 'mentee_milestone');
 
   return json({ data: updated });

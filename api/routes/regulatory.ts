@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
 
 const VALID_TYPES = ['irb', 'irb_amendment', 'dua', 'dta', 'coi', 'training', 'other'] as const;
 const VALID_STATUSES = ['active', 'expired', 'pending', 'exempt'] as const;
@@ -95,7 +95,7 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
     body.notes || null,
   ).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'regulatory', `New regulatory item for ${body.project_id}: "${body.title}"`, actor, id, 'regulatory');
 
   const created = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first();
@@ -106,17 +106,9 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
 export async function handleUpdateRegulatoryItem(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
   const allowedFields = ['title', 'item_type', 'protocol_number', 'approved_date', 'expiration_date', 'renewal_due', 'status', 'notes'];
-  const updates: string[] = [];
-  const params: unknown[] = [];
+  const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);
 
-  for (const field of allowedFields) {
-    if (field in body) {
-      updates.push(`${field} = ?`);
-      params.push(body[field]);
-    }
-  }
-
-  if (updates.length === 0) return error('No valid fields to update', 400);
+  if (!hasUpdates) return error('No valid fields to update', 400);
 
   // Validate status if provided
   if (body.status && !VALID_STATUSES.includes(body.status as typeof VALID_STATUSES[number])) {
@@ -128,8 +120,7 @@ export async function handleUpdateRegulatoryItem(id: string, request: Request, u
     return error(`Invalid item_type. Must be one of: ${VALID_TYPES.join(', ')}`, 400);
   }
 
-  params.push(id);
-  await env.DB.prepare(`UPDATE regulatory_items SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+  await env.DB.prepare(`UPDATE regulatory_items SET ${sql} WHERE id = ?`).bind(...params, id).run();
 
   const updated = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first();
   if (!updated) return error('Regulatory item not found', 404);
@@ -171,7 +162,7 @@ export async function handleRenewRegulatoryItem(id: string, request: Request, us
     body.notes || null,
   ).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'regulatory', `Renewed regulatory item: "${existing.title}"`, actor, newId, 'regulatory');
 
   const created = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(newId).first();

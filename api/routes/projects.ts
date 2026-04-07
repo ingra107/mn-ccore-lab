@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions } from '../helpers';
+import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
 
 // ── AI Co-Scientist: detect @claude mentions and create pending request ──
 async function handleClaudeMention(
@@ -415,7 +415,7 @@ export async function handleAddComment(
 
   // Look up author by email → team member
   const member = await env.DB.prepare('SELECT id FROM team_members WHERE slug = ?')
-    .bind(user.email.split('@')[0].toLowerCase())
+    .bind(actorSlug(user.email))
     .first<{ id: string }>();
 
   const commentId = generateId();
@@ -434,7 +434,7 @@ export async function handleAddComment(
       ).bind(...mentions).all();
 
       const validSet = new Set((validSlugs.results || []).map((r: any) => r.slug));
-      const authorSlug = user.email.split('@')[0].toLowerCase();
+      const authorSlug = actorSlug(user.email);
 
       for (const slug of mentions) {
         if (!validSet.has(slug)) continue;
@@ -490,7 +490,7 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
       ).bind(...mentions).all();
 
       const validSet = new Set((validSlugs.results || []).map((r: any) => r.slug));
-      const authorSlug = user.email.split('@')[0].toLowerCase();
+      const authorSlug = actorSlug(user.email);
 
       for (const mentionSlug of mentions) {
         if (!validSet.has(mentionSlug)) continue;

@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 
 // GET /api/ideas?status=&submitted_by=&research_area=
 export async function handleIdeas(url: URL, env: Env): Promise<Response> {
@@ -26,7 +26,7 @@ export async function handleCreateIdea(request: Request, user: AuthUser, env: En
   if (!body.title) return error('title required', 400);
 
   const id = generateId();
-  const submittedBy = user.email.split('@')[0].toLowerCase();
+  const submittedBy = actorSlug(user.email);
 
   await env.DB.prepare(
     'INSERT INTO ideas (id, title, description, submitted_by, research_area) VALUES (?, ?, ?, ?, ?)'

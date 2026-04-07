@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json, generateId } from '../helpers';
+import { json, generateId, actorSlug } from '../helpers';
 
 // POST /api/impact/check — scan for impact events and create notifications
 // Called periodically or after certain actions (e.g., before morning pulse email)
@@ -26,7 +26,7 @@ export async function handleCheckImpact(env: Env): Promise<Response> {
     `).bind(change.project_slug).all();
 
     for (const contrib of (contributors.results || []) as any[]) {
-      const slug = (contrib.slug as string).split('@')[0].toLowerCase();
+      const slug = actorSlug(contrib.slug as string);
       // Check if we already sent this notification (dedup by recipient + source)
       const existing = await env.DB.prepare(
         "SELECT id FROM notifications WHERE recipient_slug = ? AND source_id = ? AND type = 'impact'"

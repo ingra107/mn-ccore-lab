@@ -48,7 +48,7 @@ export default function MeetingNotesPage() {
       {/* Stats */}
       <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
         <MetricCard icon={Sparkles} label="Processed Meetings" value={processedCount} color="var(--gold)" />
-        <MetricCard icon={CheckCircle2} label="With Notes" value={processedCount} color="var(--green, #22c55e)" />
+        <MetricCard icon={CheckCircle2} label="With Notes" value={processedCount} color="var(--green)" />
         <MetricCard icon={Clock} label="Pending" value={totalCount - processedCount} color="var(--slate)" />
         <MetricCard icon={Users} label="Total Meetings" value={totalCount} color="var(--teal)" />
       </div>
@@ -94,7 +94,7 @@ export default function MeetingNotesPage() {
                 style={{ borderColor: 'var(--border-light)', textDecoration: 'none' }}
               >
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: m.notes ? 'rgba(34,197,94,0.08)' : 'rgba(100,116,139,0.06)' }}>
-                  {m.notes ? <CheckCircle2 size={16} style={{ color: 'var(--green, #22c55e)' }} /> : <FileText size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} />}
+                  {m.notes ? <CheckCircle2 size={16} style={{ color: 'var(--green)' }} /> : <FileText size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{m.title}</p>
@@ -103,7 +103,7 @@ export default function MeetingNotesPage() {
                   </span>
                 </div>
                 {m.notes ? (
-                  <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ color: 'var(--green, #22c55e)', backgroundColor: 'rgba(34,197,94,0.08)' }}>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ color: 'var(--green)', backgroundColor: 'rgba(34,197,94,0.08)' }}>
                     Notes available
                   </span>
                 ) : (

@@ -22,7 +22,7 @@ type ViewMode = 'grid' | 'list'
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   new: { label: 'New', color: 'var(--teal)', bg: 'rgba(45,138,138,0.08)' },
   under_review: { label: 'Under Review', color: 'var(--gold)', bg: 'rgba(201,168,76,0.08)' },
-  approved: { label: 'Approved', color: 'var(--green, #22c55e)', bg: 'rgba(34,197,94,0.08)' },
+  approved: { label: 'Approved', color: 'var(--green)', bg: 'rgba(34,197,94,0.08)' },
   parked: { label: 'Parked', color: 'var(--slate)', bg: 'rgba(100,116,139,0.08)' },
   archived: { label: 'Archived', color: 'var(--slate)', bg: 'rgba(100,116,139,0.05)' },
 }
@@ -383,7 +383,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
         }, {})
         const voted = ideas.filter(i => i.votes > 0).length
         const statusLabels: Record<string, string> = { new: 'New', under_review: 'Under Review', approved: 'Approved', parked: 'Parked', archived: 'Archived' }
-        const statusColors: Record<string, string> = { new: 'var(--teal)', under_review: 'var(--gold)', approved: 'var(--green, #22c55e)', parked: 'var(--slate)', archived: 'var(--slate)' }
+        const statusColors: Record<string, string> = { new: 'var(--teal)', under_review: 'var(--gold)', approved: 'var(--green)', parked: 'var(--slate)', archived: 'var(--slate)' }
         const stats = [
           { label: 'Count', value: ideas.length },
           ...Object.entries(statusCounts).map(([key, count]) => ({

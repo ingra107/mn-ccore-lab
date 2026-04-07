@@ -6,14 +6,8 @@ import { useActionItems } from '../../hooks/useApiData'
 import type { ActionItemRow } from '../../hooks/useApiData'
 import { useUnreadCount } from '../../hooks/useNotifications'
 import { getPersonInfo } from '../../data/team'
+import { isOverdue } from '../../lib/dateUtils'
 import BentoCard from './BentoCard'
-
-function isOverdue(dueDate: string | null): boolean {
-  if (!dueDate) return false
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return new Date(dueDate + 'T12:00:00') < today
-}
 
 export default function MyItemsCard() {
   const { user } = useAuth()

@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
 
 // GET /api/decisions?project_slug=&status=pending|recorded|revisited&tag=
 export async function handleGetDecisions(url: URL, env: Env): Promise<Response> {
@@ -34,7 +34,7 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
   if (!body.title) return error('title required', 400);
 
   const id = generateId();
-  const decidedBy = user.email.split('@')[0].toLowerCase();
+  const decidedBy = actorSlug(user.email);
 
   await env.DB.prepare(
     'INSERT INTO decision_log (id, title, rationale, context, project_slug, meeting_id, decided_by, tags, linked_projects) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -82,7 +82,7 @@ export async function handleUpdateDecisionOutcome(id: string, request: Request, 
     "UPDATE decision_log SET outcome = ?, outcome_status = ?, outcome_sentiment = ?, outcome_date = datetime('now') WHERE id = ?"
   ).bind(body.outcome, body.outcome_status, sentiment, id).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'decision_outcome', `Outcome recorded for decision`, actor, id, 'decision');
 
   const updated = await env.DB.prepare('SELECT * FROM decision_log WHERE id = ?').bind(id).first();
@@ -95,24 +95,15 @@ export async function handleUpdateDecision(id: string, request: Request, user: A
   const body = await request.json() as Record<string, unknown>;
 
   const allowedFields = ['title', 'rationale', 'context', 'project_slug', 'tags', 'linked_projects', 'outcome_sentiment'];
-  const updates: string[] = [];
-  const values: unknown[] = [];
+  const { sql, params: values, hasUpdates } = buildUpdate(body, allowedFields);
 
-  for (const field of allowedFields) {
-    if (field in body) {
-      updates.push(`${field} = ?`);
-      values.push(body[field] ?? null);
-    }
-  }
+  if (!hasUpdates) return error('No valid fields to update', 400);
 
-  if (updates.length === 0) return error('No valid fields to update', 400);
-
-  values.push(id);
   await env.DB.prepare(
-    `UPDATE decision_log SET ${updates.join(', ')} WHERE id = ?`
-  ).bind(...values).run();
+    `UPDATE decision_log SET ${sql} WHERE id = ?`
+  ).bind(...values, id).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'decision_update', `Decision updated`, actor, id, 'decision');
 
   const updated = await env.DB.prepare('SELECT * FROM decision_log WHERE id = ?').bind(id).first();

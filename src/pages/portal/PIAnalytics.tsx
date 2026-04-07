@@ -110,7 +110,7 @@ function CompletionRing({ rate, size = 120 }: { rate: number; size?: number }) {
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (rate / 100) * circumference
-  const color = rate >= 80 ? 'var(--green, #22c55e)' : rate >= 60 ? 'var(--gold)' : 'var(--maroon)'
+  const color = rate >= 80 ? 'var(--green)' : rate >= 60 ? 'var(--gold)' : 'var(--maroon)'
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
@@ -290,7 +290,7 @@ function StackedBar({ segments, height = 28 }: {
 
 // Trend arrow component
 export function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' | string }) {
-  if (trend === 'up') return <ArrowUp size={12} style={{ color: 'var(--green, #22c55e)' }} />
+  if (trend === 'up') return <ArrowUp size={12} style={{ color: 'var(--green)' }} />
   if (trend === 'down') return <ArrowDown size={12} style={{ color: 'var(--maroon)' }} />
   return <Minus size={12} style={{ color: 'var(--slate)', opacity: 0.5 }} />
 }
@@ -409,9 +409,9 @@ export default function PIAnalytics() {
     'Data Collection': 'var(--teal)',
     'Analysis': 'var(--gold)',
     'Writing': 'var(--maroon)',
-    'Review': '#d97706',
-    'Published': 'var(--green, #22c55e)',
-    'Submitted': '#9333ea',
+    'Review': 'var(--gold)',
+    'Published': 'var(--green)',
+    'Submitted': 'var(--teal)',
   }
 
   return (
@@ -428,7 +428,7 @@ export default function PIAnalytics() {
           icon={Target}
           label="Commitments Kept"
           value={`${commitRate}%`}
-          color={commitRate >= 80 ? 'var(--green, #22c55e)' : commitRate >= 60 ? 'var(--gold)' : 'var(--maroon)'}
+          color={commitRate >= 80 ? 'var(--green)' : commitRate >= 60 ? 'var(--gold)' : 'var(--maroon)'}
           subtitle={`${data?.commitments.completed || 0} of ${data?.commitments.total || 0}`}
         /></motion.div>
         <motion.div variants={staggerItem}><MetricCard
@@ -449,7 +449,7 @@ export default function PIAnalytics() {
           icon={BookOpen}
           label="Trainee Pubs"
           value={data?.menteeVelocity.reduce((s, m) => s + m.pub_count, 0) || 0}
-          color="var(--green, #22c55e)"
+          color="var(--green)"
           subtitle={`${data?.menteeVelocity.length || 0} trainees`}
         /></motion.div>
       </motion.div>
@@ -496,7 +496,7 @@ export default function PIAnalytics() {
                   of <strong>{data?.commitments.total || 0}</strong> promises to your team.
                 </p>
                 <div className="grid grid-cols-3 gap-3">
-                  <MetricCard icon={CheckCircle2} label="Completed" value={data?.commitments.completed || 0} color="var(--green, #22c55e)" />
+                  <MetricCard icon={CheckCircle2} label="Completed" value={data?.commitments.completed || 0} color="var(--green)" />
                   <MetricCard icon={Target} label="Total" value={data?.commitments.total || 0} color="var(--teal)" />
                   <MetricCard icon={AlertTriangle} label="Overdue" value={data?.commitments.overdue || 0} color="var(--maroon)" />
                 </div>
@@ -536,8 +536,8 @@ export default function PIAnalytics() {
                 <div className="flex items-center gap-1.5 mt-1">
                   {data?.responseMetrics.trend === 'improving' ? (
                     <>
-                      <TrendingDown size={14} style={{ color: 'var(--green, #22c55e)' }} />
-                      <span className="text-xs" style={{ color: 'var(--green, #22c55e)' }}>
+                      <TrendingDown size={14} style={{ color: 'var(--green)' }} />
+                      <span className="text-xs" style={{ color: 'var(--green)' }}>
                         Improving
                       </span>
                     </>
@@ -745,7 +745,7 @@ export default function PIAnalytics() {
                             <span
                               className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded"
                               style={{
-                                color: 'var(--green, #22c55e)',
+                                color: 'var(--green)',
                                 backgroundColor: 'rgba(34, 197, 94, 0.08)',
                               }}
                             >
@@ -828,7 +828,7 @@ export default function PIAnalytics() {
               </h4>
               <div className="grid grid-cols-2 gap-3">
                 <MetricCard icon={Target} label="Submitted" value={data?.grantsFunnel.submitted || 0} color="var(--gold)" />
-                <MetricCard icon={CheckCircle2} label="Funded" value={data?.grantsFunnel.funded || 0} color="var(--green, #22c55e)" />
+                <MetricCard icon={CheckCircle2} label="Funded" value={data?.grantsFunnel.funded || 0} color="var(--green)" />
               </div>
               {data && data.grantsFunnel.submitted > 0 && (
                 <div className="mt-2">
@@ -840,7 +840,7 @@ export default function PIAnalytics() {
                       className="h-full rounded-full"
                       style={{
                         width: `${Math.round((data.grantsFunnel.funded / data.grantsFunnel.submitted) * 100)}%`,
-                        backgroundColor: 'var(--green, #22c55e)',
+                        backgroundColor: 'var(--green)',
                         transition: 'width 0.6s ease',
                       }}
                     />
@@ -892,7 +892,7 @@ export default function PIAnalytics() {
                   info: Lightbulb,
                 }
                 const colorMap = {
-                  good: 'var(--green, #22c55e)',
+                  good: 'var(--green)',
                   warning: 'var(--maroon)',
                   info: 'var(--teal)',
                 }

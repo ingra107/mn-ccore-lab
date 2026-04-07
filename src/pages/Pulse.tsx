@@ -53,7 +53,7 @@ export default function Pulse() {
           <div className="grid grid-cols-3 gap-8">
             <PulseStat label="Active Tasks" value={pendingTasks.length} color="var(--teal)" />
             <PulseStat label="Overdue" value={overdueTasks.length} color={overdueTasks.length > 0 ? 'var(--maroon)' : 'var(--slate)'} />
-            <PulseStat label="Completed" value={tasks.length - pendingTasks.length} color="var(--green, #22c55e)" />
+            <PulseStat label="Completed" value={tasks.length - pendingTasks.length} color="var(--green)" />
           </div>
           <div className="flex flex-col gap-2">
             {pendingTasks.slice(0, 4).map((t) => {

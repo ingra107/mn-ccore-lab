@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 
 interface SubtaskRow {
   id: string
@@ -43,7 +43,7 @@ export async function handleCreateSubtask(taskId: string, request: Request, user
 
   const created = await env.DB.prepare('SELECT * FROM task_subtasks WHERE id = ?').bind(id).first<SubtaskRow>();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'subtask_created', `Added subtask "${body.title.trim()}"`, actor, taskId, 'task');
 
   return json({ data: created }, 201);
@@ -59,7 +59,7 @@ export async function handleToggleSubtask(subtaskId: string, user: AuthUser, env
     return error('Subtask not found', 404);
   }
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   const nowCompleted = existing.completed ? 0 : 1;
   const completedAt = nowCompleted ? new Date().toISOString() : null;
   const completedBy = nowCompleted ? actor : null;

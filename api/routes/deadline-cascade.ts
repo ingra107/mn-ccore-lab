@@ -1,5 +1,5 @@
-import type { Env } from '../helpers';
-import { json, error, generateId } from '../helpers';
+import type { AuthUser, Env } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -232,11 +232,46 @@ export async function handleGetImpact(url: URL, env: Env): Promise<Response> {
     nodeIdsSet.add(dep.downstream_id);
   }
 
-  // Fetch all nodes
+  // Batch fetch all nodes (two queries instead of N per-node queries)
   const nodeMap = new Map<string, DeadlineNode>();
-  for (const nid of nodeIdsSet) {
-    const node = await fetchNodeById(nid, 'deadline', env);
-    if (node) nodeMap.set(nid, node);
+  const nodeIds = [...nodeIdsSet];
+  if (nodeIds.length > 0) {
+    const placeholders = nodeIds.map(() => '?').join(',');
+
+    const [milestoneRows, taskRows] = await Promise.all([
+      env.DB.prepare(
+        `SELECT m.id, m.title, m.target_date as due_date, m.status, m.project_id, p.title as project_title FROM milestones m LEFT JOIN projects p ON m.project_id = p.slug WHERE m.id IN (${placeholders})`
+      ).bind(...nodeIds).all(),
+      env.DB.prepare(
+        `SELECT t.id, COALESCE(t.title, t.description) as title, t.due_date, t.status, t.project_id, p.title as project_title FROM tasks t LEFT JOIN projects p ON t.project_id = p.slug WHERE t.id IN (${placeholders})`
+      ).bind(...nodeIds).all(),
+    ]);
+
+    for (const row of (milestoneRows.results || [])) {
+      nodeMap.set(row.id as string, {
+        id: row.id as string,
+        type: 'milestone',
+        title: row.title as string,
+        due_date: row.due_date as string | null,
+        status: row.status as string,
+        project_id: row.project_id as string | null,
+        project_title: row.project_title as string | null,
+      });
+    }
+    // Tasks fill gaps not already covered by milestones
+    for (const row of (taskRows.results || [])) {
+      if (!nodeMap.has(row.id as string)) {
+        nodeMap.set(row.id as string, {
+          id: row.id as string,
+          type: 'task',
+          title: row.title as string,
+          due_date: row.due_date as string | null,
+          status: row.status as string,
+          project_id: row.project_id as string | null,
+          project_title: row.project_title as string | null,
+        });
+      }
+    }
   }
 
   const impact = computeImpact(id, newDate, deps, nodeMap);
@@ -292,7 +327,7 @@ export async function handleGetAllCascades(env: Env): Promise<Response> {
 
 // ── POST /api/deadline-dependencies ────────────────────────
 
-export async function handleCreateDeadlineDependency(request: Request, env: Env): Promise<Response> {
+export async function handleCreateDeadlineDependency(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
     upstream_id: string;
     upstream_type: string;
@@ -321,6 +356,8 @@ export async function handleCreateDeadlineDependency(request: Request, env: Env)
   await env.DB.prepare(
     'INSERT INTO deadline_dependencies (id, upstream_id, upstream_type, downstream_id, downstream_type, lag_days, notes) VALUES (?, ?, ?, ?, ?, ?, ?)'
   ).bind(id, body.upstream_id, body.upstream_type, body.downstream_id, body.downstream_type, body.lag_days || 0, body.notes || null).run();
+
+  await logActivity(env, 'deadline_dependency', `Dependency created: ${body.upstream_type} → ${body.downstream_type}`, actorSlug(user.email), id, 'deadline_dependency');
 
   const created = await env.DB.prepare('SELECT * FROM deadline_dependencies WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);

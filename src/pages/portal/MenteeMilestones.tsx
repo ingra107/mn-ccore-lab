@@ -11,7 +11,7 @@ import { useMenteeMilestones, useMenteeOverview } from '../../hooks/useApiData'
 import type { MenteeMilestoneRow } from '../../hooks/useApiData'
 import { useCreateMenteeMilestone, useUpdateMenteeMilestone } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate } from '../../lib/dateUtils'
+import { formatShortDate, isOverdue } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 // ── Constants ──────────────────────────────────────────────
@@ -30,7 +30,7 @@ const MILESTONE_TYPES = [
 const STATUS_OPTIONS = [
   { value: 'upcoming', label: 'Upcoming', color: 'var(--slate)' },
   { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
-  { value: 'completed', label: 'Completed', color: 'var(--green, #16a34a)' },
+  { value: 'completed', label: 'Completed', color: 'var(--green)' },
   { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
 ]
 
@@ -40,13 +40,7 @@ function getTypeLabel(type: string): string {
   return MILESTONE_TYPES.find((t) => t.value === type)?.label || type
 }
 
-function isOverdue(dueDate: string | null, status: string): boolean {
-  if (!dueDate || status === 'completed') return false
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const due = new Date(dueDate + 'T23:59:59')
-  return due < today
-}
+// isOverdue imported from dateUtils
 
 // ── Main Page ──────────────────────────────────────────────
 
@@ -89,7 +83,7 @@ export default function MenteeMilestones() {
   }, [enrichedMilestones])
 
   // Flat list for keyboard nav
-  const flatList = useMemo(() => enrichedMilestones, [enrichedMilestones])
+  const flatList = enrichedMilestones
 
   const handleStatusChange = useCallback((id: string, newStatus: string, prevStatus: string) => {
     updateMilestone.mutate({ id, fields: { status: newStatus } as Partial<{ status: string }> })
@@ -336,7 +330,7 @@ export default function MenteeMilestones() {
                   {
                     label: 'Completed',
                     value: overview.reduce((s, o) => s + o.completed_count, 0),
-                    color: 'var(--green, #16a34a)',
+                    color: 'var(--green)',
                   },
                 ].map((s) => (
                   <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>

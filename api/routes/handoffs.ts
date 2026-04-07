@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 
 interface HandoffRow {
   id: string
@@ -41,7 +41,7 @@ export async function handleCreateHandoff(taskId: string, request: Request, user
     return error('situation is required', 400);
   }
 
-  const fromSlug = user.email.split('@')[0].toLowerCase();
+  const fromSlug = actorSlug(user.email);
   const toSlug = body.to_slug.trim();
   const id = generateId();
 
@@ -105,7 +105,7 @@ export async function handleAcknowledgeHandoff(handoffId: string, user: AuthUser
     return error('Already acknowledged', 400);
   }
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
 
   await env.DB.prepare(
     "UPDATE task_handoffs SET acknowledged = 1, acknowledged_at = datetime('now') WHERE id = ?"

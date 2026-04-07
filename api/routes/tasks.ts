@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions } from '../helpers';
+import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
 
 // GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
@@ -67,7 +67,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
   // Notify assigner when task is completed
   if (completed && item.assigned_by) {
     try {
-      const assignerSlug = item.assigned_by.split('@')[0].toLowerCase();
+      const assignerSlug = actorSlug(item.assigned_by);
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
       ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} completed a task`, (item.title || item.description).slice(0, 200), '/tasks').run();
@@ -154,7 +154,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
   // Notify assignee if it's someone else
   try {
     const assignee = body.assignee;
-    const authorSlug = user.email.split('@')[0].toLowerCase();
+    const authorSlug = actorSlug(user.email);
     if (assignee && assignee !== authorSlug) {
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
@@ -191,7 +191,7 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
   if (!body.content?.trim()) return error('content required', 400);
 
   const id = generateId();
-  const authorSlug = user.email.split('@')[0].toLowerCase();
+  const authorSlug = actorSlug(user.email);
 
   await env.DB.prepare(
     'INSERT INTO task_comments (id, task_id, author_slug, content) VALUES (?, ?, ?, ?)'
@@ -341,7 +341,7 @@ export async function handleAcknowledgeTask(id: string, user: AuthUser, env: Env
   }
 
   const now = new Date().toISOString();
-  const acknowledgedBy = user.email.split('@')[0].toLowerCase();
+  const acknowledgedBy = actorSlug(user.email);
 
   await env.DB.prepare(
     "UPDATE tasks SET acknowledged_at = ?, acknowledged_by = ?, updated_at = datetime('now') WHERE id = ?"
@@ -352,7 +352,7 @@ export async function handleAcknowledgeTask(id: string, user: AuthUser, env: Env
   // Notify the assigner that the task was acknowledged
   if (task.assigned_by) {
     try {
-      const assignerSlug = task.assigned_by.split('@')[0].toLowerCase();
+      const assignerSlug = actorSlug(task.assigned_by);
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
       ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} acknowledged a task`, (task.title || task.description).slice(0, 200), '/tasks').run();

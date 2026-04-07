@@ -11,6 +11,7 @@ import Breadcrumb from '../components/Breadcrumb'
 import Avatar from '../components/Avatar'
 import { getPersonInfo } from '../data/team'
 import { formatLongDate, formatShortDate } from '../lib/dateUtils'
+import { PRIORITY_COLORS } from '../lib/taskConstants'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { staggerContainer, staggerItem } from '../lib/animations'
 
@@ -34,13 +35,6 @@ function useMeetingPrep(meetingId: string) {
     },
     enabled: !!meetingId,
   })
-}
-
-const priorityColors: Record<string, string> = {
-  urgent: 'var(--maroon)',
-  high: 'var(--orange)',
-  medium: 'var(--gold)',
-  low: 'var(--slate)',
 }
 
 export default function MeetingPrep() {
@@ -166,7 +160,7 @@ export default function MeetingPrep() {
                     const person = getPersonInfo(task.assignee)
                     return (
                       <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
-                        <Flag size={10} style={{ color: priorityColors[task.priority] || 'var(--slate)', flexShrink: 0 }} />
+                        <Flag size={10} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)', flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                           <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />

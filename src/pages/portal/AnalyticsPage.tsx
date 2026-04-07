@@ -11,6 +11,7 @@ import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
+import { PRIORITY_COLORS } from '../../lib/taskConstants'
 
 const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
 
@@ -207,7 +208,7 @@ export default function AnalyticsPage() {
 
       {/* Weekly Summary Cards */}
       <motion.div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3" variants={staggerContainer} initial="hidden" animate="visible">
-        <motion.div variants={staggerItem}><MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} color="var(--green, #22c55e)" /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} color="var(--green)" /></motion.div>
         <motion.div variants={staggerItem}><MetricCard icon={Plus} label="Created" value={weekStats.created} color="var(--teal)" /></motion.div>
         <motion.div variants={staggerItem}><MetricCard icon={AlertTriangle} label="Overdue" value={weekStats.overdue} color="var(--maroon)" /></motion.div>
         <motion.div variants={staggerItem}><MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} color="var(--gold)" /></motion.div>
@@ -237,7 +238,7 @@ export default function AnalyticsPage() {
         </div>
       ) : (
         <div className="mt-4 rounded-xl border p-4 text-center" style={{ borderColor: 'var(--border-subtle)' }}>
-          <CheckCircle2 size={24} style={{ color: 'var(--green, #22c55e)', margin: '0 auto 6px' }} />
+          <CheckCircle2 size={24} style={{ color: 'var(--green)', margin: '0 auto 6px' }} />
           <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>All caught up!</p>
           <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>No overdue tasks. Keep up the momentum.</p>
         </div>
@@ -248,7 +249,7 @@ export default function AnalyticsPage() {
         <MetricCard icon={FolderKanban} label="Active Projects" value={projects.filter((p) => p.status === 'Active').length} color="var(--teal)" subtitle={`${projects.length} total`} />
         <MetricCard icon={Lightbulb} label="Research Ideas" value={activeIdeas} color="var(--gold)" subtitle={`${ideas.length} total`} />
         <MetricCard icon={FileText} label="Pending Tasks" value={pendingTasks} color="var(--ink)" subtitle={`${tasks.length} total`} />
-        <MetricCard icon={Users} label="Project Health" value={health?.healthy || 0} color="var(--green, #22c55e)" subtitle={`${health?.needs_attention || 0} attention · ${(health?.at_risk || 0) + (health?.critical || 0)} at risk`} />
+        <MetricCard icon={Users} label="Project Health" value={health?.healthy || 0} color="var(--green)" subtitle={`${health?.needs_attention || 0} attention · ${(health?.at_risk || 0) + (health?.critical || 0)} at risk`} />
       </div>
 
       {/* Team Performance */}
@@ -277,7 +278,7 @@ export default function AnalyticsPage() {
                     </span>
                     {/* Progress bar */}
                     <div className="flex-1 h-4 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
-                      <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, backgroundColor: rate > 70 ? 'var(--green, #22c55e)' : rate > 40 ? 'var(--gold)' : 'var(--maroon)' }} />
+                      <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, backgroundColor: rate > 70 ? 'var(--green)' : rate > 40 ? 'var(--gold)' : 'var(--maroon)' }} />
                     </div>
                     <span className="text-[11px] w-16 text-right" style={{ color: 'var(--slate)' }}>
                       {done}/{total}
@@ -334,7 +335,7 @@ export default function AnalyticsPage() {
                 'Analysis': 'var(--gold)',
                 'Writing': 'var(--orange)',
                 'Review': 'var(--maroon)',
-                'Published': 'var(--green, #22c55e)',
+                'Published': 'var(--green)',
               }
               return (
                 <div key={stage} className="flex items-center gap-3">
@@ -356,12 +357,11 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-3">
             {(['urgent', 'high', 'medium', 'low'] as const).map((p) => {
               const count = tasksByPriority.get(p) || 0
-              const colors: Record<string, string> = { urgent: 'var(--maroon)', high: 'var(--orange)', medium: 'var(--gold)', low: 'var(--slate)' }
               return (
                 <div key={p} className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: colors[p] }} />
+                  <div className="w-3 h-3 rounded" style={{ backgroundColor: PRIORITY_COLORS[p] }} />
                   <span className="text-xs capitalize" style={{ color: 'var(--ink)' }}>{p}</span>
-                  <span className="text-xs font-semibold" style={{ color: colors[p] }}>{count}</span>
+                  <span className="text-xs font-semibold" style={{ color: PRIORITY_COLORS[p] }}>{count}</span>
                 </div>
               )
             })}

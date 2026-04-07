@@ -15,7 +15,7 @@ interface TaskStandUpViewProps {
 const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
   todo: { icon: Circle, color: 'var(--slate)' },
   in_progress: { icon: Clock, color: 'var(--teal)' },
-  done: { icon: CheckCircle2, color: 'var(--green, #22c55e)' },
+  done: { icon: CheckCircle2, color: 'var(--green)' },
   blocked: { icon: AlertTriangle, color: 'var(--maroon)' },
 }
 

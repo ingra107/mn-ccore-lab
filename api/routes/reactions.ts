@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId } from '../helpers';
+import { json, error, generateId, actorSlug } from '../helpers';
 
 interface ReactionRow {
   id: string
@@ -39,7 +39,7 @@ export async function handleToggleReaction(request: Request, user: AuthUser, env
   }
 
   const emoji = body.emoji || '\u{1F44D}';
-  const userSlug = user.email.split('@')[0].toLowerCase();
+  const userSlug = actorSlug(user.email);
 
   // Check if reaction already exists
   const existing = await env.DB.prepare(

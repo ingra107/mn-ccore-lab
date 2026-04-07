@@ -22,7 +22,7 @@ function statusColor(s: 'on-track' | 'at-risk' | 'overdue' | 'completed'): strin
     case 'on-track': return 'var(--teal)'
     case 'at-risk': return 'var(--gold)'
     case 'overdue': return 'var(--maroon)'
-    case 'completed': return 'var(--green, #16a34a)'
+    case 'completed': return 'var(--green)'
   }
 }
 
@@ -578,8 +578,8 @@ export default function DeadlineCascade({
                 </span>
                 {completedCount > 0 && (
                   <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <CheckCircle2 size={10} style={{ color: 'var(--green, #16a34a)' }} />
-                    <span style={{ color: 'var(--green, #16a34a)', fontWeight: 500 }}>{completedCount}</span>
+                    <CheckCircle2 size={10} style={{ color: 'var(--green)' }} />
+                    <span style={{ color: 'var(--green)', fontWeight: 500 }}>{completedCount}</span>
                     <span style={{ color: 'var(--slate)', opacity: 0.5 }}>done</span>
                   </span>
                 )}

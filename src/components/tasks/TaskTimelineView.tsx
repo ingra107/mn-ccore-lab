@@ -20,7 +20,7 @@ const CHART_PADDING_BOTTOM = 32
 const statusColors: Record<string, string> = {
   todo: 'var(--slate)',
   in_progress: 'var(--teal)',
-  done: 'var(--green, #22c55e)',
+  done: 'var(--green)',
   blocked: 'var(--maroon)',
 }
 

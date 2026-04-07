@@ -25,6 +25,7 @@ import {
 import type { SubmissionEventType, SubmissionEventRow } from '../lib/api'
 import { useSubmissionEvents } from '../hooks/useApiData'
 import { useCreateSubmissionEvent, useDeleteSubmissionEvent } from '../hooks/useMutations'
+import { formatRelativeTime, getDaysUntil } from '../lib/dateUtils'
 
 // ── Event config ──
 
@@ -88,20 +89,8 @@ const EVENT_TYPES: SubmissionEventType[] = [
   'withdrawn',
 ]
 
-function daysAgo(dateStr: string): string {
-  const now = new Date()
-  const then = new Date(dateStr + 'T00:00:00')
-  const diff = Math.floor((now.getTime() - then.getTime()) / (1000 * 60 * 60 * 24))
-  if (diff < 0) return `in ${Math.abs(diff)}d`
-  if (diff === 0) return 'today'
-  if (diff === 1) return '1d ago'
-  return `${diff}d ago`
-}
-
-function daysUntil(dateStr: string): string {
-  const now = new Date()
-  const then = new Date(dateStr + 'T00:00:00')
-  const diff = Math.floor((then.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+function formatDaysUntil(dateStr: string): string {
+  const diff = getDaysUntil(dateStr)
   if (diff < 0) return `${Math.abs(diff)}d overdue`
   if (diff === 0) return 'today'
   if (diff === 1) return 'in 1d'
@@ -307,7 +296,7 @@ function TimelineEvent({
   const Icon = config.icon
   const isTerminal = ['accepted', 'rejected', 'withdrawn'].includes(event.event_type)
   const isFuture = event.event_type === 'revision_due'
-  const relativeDate = isFuture ? daysUntil(event.event_date) : daysAgo(event.event_date)
+  const relativeDate = isFuture ? formatDaysUntil(event.event_date) : formatRelativeTime(event.event_date)
   const isOverdue = isFuture && relativeDate.includes('overdue')
 
   return (

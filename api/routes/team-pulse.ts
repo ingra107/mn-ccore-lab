@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json } from '../helpers';
+import { json, actorSlug } from '../helpers';
 
 // GET /api/team/pulse?hours=48
 export async function handleTeamPulse(url: URL, env: Env): Promise<Response> {
@@ -28,21 +28,21 @@ export async function handleTeamPulse(url: URL, env: Env): Promise<Response> {
   const personActivity = new Map<string, { slug: string; updates: number; completions: number }>();
 
   for (const row of updates.results || []) {
-    const slug = row.slug.split('@')[0].toLowerCase();
+    const slug = actorSlug(row.slug);
     const entry = personActivity.get(slug) || { slug, updates: 0, completions: 0 };
     entry.updates += row.count;
     personActivity.set(slug, entry);
   }
 
   for (const row of completions.results || []) {
-    const slug = row.slug.split('@')[0].toLowerCase();
+    const slug = actorSlug(row.slug);
     const entry = personActivity.get(slug) || { slug, updates: 0, completions: 0 };
     entry.completions += row.count;
     personActivity.set(slug, entry);
   }
 
   for (const row of activeMembers.results || []) {
-    const slug = row.slug.split('@')[0].toLowerCase();
+    const slug = actorSlug(row.slug);
     if (!personActivity.has(slug)) {
       personActivity.set(slug, { slug, updates: 0, completions: 0 });
     }

@@ -216,7 +216,7 @@ export default function SessionHistory() {
   }, [sessions])
 
   // Flat list for keyboard nav
-  const flatSessions = useMemo(() => sessions, [sessions])
+  const flatSessions = sessions
   const [focusedIndex, setFocusedIndex] = useState(-1)
 
   useListKeyboardNav({

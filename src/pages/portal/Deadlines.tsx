@@ -260,7 +260,7 @@ export default function Deadlines() {
                   { label: 'This Week', value: thisWeek.length },
                   { label: 'Next Week', value: nextWeek.length },
                   { label: 'Later', value: later.length },
-                  { label: 'Done', value: completed.length, color: 'var(--green, #16a34a)' },
+                  { label: 'Done', value: completed.length, color: 'var(--green)' },
                 ].map(s => (
                   <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
                     {s.label}{' '}

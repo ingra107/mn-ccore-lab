@@ -15,7 +15,7 @@ import type { GrantTimelineItem } from '../../hooks/useGrantTimeline'
 import { useSimilarGrants, useUpcomingGrantMilestones } from '../../hooks/useApiData'
 import { useCreateGrantMilestone, useUpdateGrantMilestone, useCompleteGrantMilestone } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
-import { formatMediumDate } from '../../lib/dateUtils'
+import { formatMediumDate, isOverdue } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 // ── Grant Milestone Constants ──────────────────────────────
@@ -33,7 +33,7 @@ const MILESTONE_TYPES = [
 const MILESTONE_STATUS_OPTIONS = [
   { value: 'upcoming', label: 'Upcoming', color: 'var(--slate)' },
   { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
-  { value: 'completed', label: 'Completed', color: 'var(--green, #16a34a)' },
+  { value: 'completed', label: 'Completed', color: 'var(--green)' },
   { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
 ]
 
@@ -41,13 +41,7 @@ function getMilestoneTypeLabel(type: string): string {
   return MILESTONE_TYPES.find((t) => t.value === type)?.label || type
 }
 
-function isMilestoneOverdue(dueDate: string | null, status: string): boolean {
-  if (!dueDate || status === 'completed') return false
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const due = new Date(dueDate + 'T23:59:59')
-  return due < today
-}
+// isMilestoneOverdue replaced by isOverdue from dateUtils
 
 function formatFunding(amount: number): string {
   if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`
@@ -82,7 +76,7 @@ export default function Grants() {
   const enrichedPostAward = useMemo(() => {
     return upcomingMilestonesData.map((m) => ({
       ...m,
-      _isOverdue: isMilestoneOverdue(m.due_date, m.status) || m.status === 'overdue',
+      _isOverdue: isOverdue(m.due_date, m.status) || m.status === 'overdue',
     }))
   }, [upcomingMilestonesData])
 

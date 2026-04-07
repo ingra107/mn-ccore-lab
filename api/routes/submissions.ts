@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 
 // ── Types ──
 
@@ -70,7 +70,7 @@ export async function handleCreateSubmission(request: Request, user: AuthUser, e
     body.notes || null,
   ).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'submission', `Submission event '${body.event_type}' created for project ${body.project_id}`, actor, id, 'submission_event');
 
   const created = await env.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(id).first();
@@ -108,7 +108,7 @@ export async function handleUpdateSubmission(id: string, request: Request, user:
     `UPDATE submission_events SET ${sets.join(', ')} WHERE id = ? AND deleted_at IS NULL`
   ).bind(...params).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'submission', `Submission event ${id} updated`, actor, id, 'submission_event');
 
   const updated = await env.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(id).first();
@@ -128,7 +128,7 @@ export async function handleDeleteSubmission(id: string, user: AuthUser, env: En
     "UPDATE submission_events SET deleted_at = datetime('now') WHERE id = ?"
   ).bind(id).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'submission', `Submission event ${id} soft-deleted`, actor, id, 'submission_event');
 
   return json({ data: { id, deleted: true } });

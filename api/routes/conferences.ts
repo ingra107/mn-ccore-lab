@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
 
 // ── Types ──
 
@@ -148,7 +148,7 @@ export async function handleCreateConference(request: Request, user: AuthUser, e
     body.status || 'planning',
   ).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'conference', `Conference submission "${body.title}" created for ${body.conference}`, actor, id, 'conference_submission');
 
   const created = await env.DB.prepare('SELECT * FROM conference_submissions WHERE id = ?').bind(id).first();
@@ -163,17 +163,9 @@ export async function handleUpdateConference(id: string, request: Request, user:
     'authors', 'abstract_due', 'abstract_submitted_at', 'accepted_at',
     'presentation_type', 'materials_status', 'travel_booked', 'notes', 'status',
   ];
-  const updates: string[] = [];
-  const params: unknown[] = [];
+  const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);
 
-  for (const field of allowedFields) {
-    if (field in body) {
-      updates.push(`${field} = ?`);
-      params.push(body[field]);
-    }
-  }
-
-  if (updates.length === 0) return error('No valid fields to update', 400);
+  if (!hasUpdates) return error('No valid fields to update', 400);
 
   // Validate enums if provided
   if (body.submission_type && !VALID_SUBMISSION_TYPES.includes(body.submission_type as typeof VALID_SUBMISSION_TYPES[number])) {
@@ -189,10 +181,9 @@ export async function handleUpdateConference(id: string, request: Request, user:
     return error(`presentation_type must be one of: ${VALID_PRESENTATION_TYPES.join(', ')}`, 400);
   }
 
-  params.push(id);
-  await env.DB.prepare(`UPDATE conference_submissions SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+  await env.DB.prepare(`UPDATE conference_submissions SET ${sql} WHERE id = ?`).bind(...params, id).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'conference', `Conference submission ${id} updated`, actor, id, 'conference_submission');
 
   const updated = await env.DB.prepare('SELECT * FROM conference_submissions WHERE id = ?').bind(id).first();
@@ -207,7 +198,7 @@ export async function handleDeleteConference(id: string, user: AuthUser, env: En
 
   await env.DB.prepare('DELETE FROM conference_submissions WHERE id = ?').bind(id).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'conference', `Conference submission ${id} deleted`, actor, id, 'conference_submission');
 
   return json({ data: { id, deleted: true } });

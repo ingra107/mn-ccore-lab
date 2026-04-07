@@ -744,10 +744,10 @@ function LabHealthCard({ health }: { health: { total: number; healthy: number; n
   return (
     <BentoCard title="Lab Health" subtitle={`${health.total} projects`} icon={TrendingUp} badge="HEALTH">
       <div className="flex items-center gap-4 py-2">
-        <HealthDot color="#16a34a" label="Healthy" count={health.healthy} />
-        <HealthDot color="#c9a84c" label="Attention" count={health.needs_attention} />
-        <HealthDot color="#c2410c" label="At Risk" count={health.at_risk} />
-        <HealthDot color="#7a0019" label="Critical" count={health.critical} />
+        <HealthDot color="var(--green)" label="Healthy" count={health.healthy} />
+        <HealthDot color="var(--gold)" label="Attention" count={health.needs_attention} />
+        <HealthDot color="var(--orange)" label="At Risk" count={health.at_risk} />
+        <HealthDot color="var(--maroon)" label="Critical" count={health.critical} />
       </div>
       <Link to="/projects" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         View projects <ArrowRight size={11} />

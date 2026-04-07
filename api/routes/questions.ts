@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 
 // ── AI Co-Scientist: detect @claude mentions in answers ──
 async function handleClaudeMentionInAnswer(
@@ -118,7 +118,7 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
   if (!body.question?.trim()) return error('question is required', 400);
 
   const id = generateId();
-  const askedBy = user.email.split('@')[0].toLowerCase();
+  const askedBy = actorSlug(user.email);
 
   await env.DB.prepare(
     'INSERT INTO lab_questions (id, question, context, asked_by, project_slug) VALUES (?, ?, ?, ?, ?)'
@@ -170,7 +170,7 @@ export async function handleCreateAnswer(questionId: string, request: Request, u
   if (!question) return error('Question not found', 404);
 
   const id = generateId();
-  const authorSlug = user.email.split('@')[0].toLowerCase();
+  const authorSlug = actorSlug(user.email);
 
   await env.DB.prepare(
     'INSERT INTO lab_answers (id, question_id, content, author_slug) VALUES (?, ?, ?, ?)'
@@ -215,12 +215,12 @@ export async function handleAcceptAnswer(answerId: string, user: AuthUser, env: 
     'UPDATE lab_questions SET status = ? WHERE id = ?'
   ).bind('resolved', answer.question_id).run();
 
-  const actorSlug = user.email.split('@')[0].toLowerCase();
+  const actorSlugValue = actorSlug(user.email);
   await logActivity(
     env,
     'answer_accepted',
     `Accepted answer on a question`,
-    actorSlug,
+    actorSlugValue,
     answer.question_id,
     'question',
   );

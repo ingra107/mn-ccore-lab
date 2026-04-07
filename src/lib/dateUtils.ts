@@ -51,3 +51,18 @@ export function formatRelativeTime(dateStr: string): string {
   if (diffDay < 7) return `${diffDay}d ago`
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
+
+export function isOverdue(dueDate: string | null, status?: string): boolean {
+  if (!dueDate || status === 'done' || status === 'completed') return false
+  return new Date(dueDate + 'T23:59:59') < new Date()
+}
+
+export function getDaysUntil(dateStr: string): number {
+  const target = new Date(dateStr + 'T23:59:59')
+  return Math.ceil((target.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+}
+
+export function getDaysAgo(dateStr: string): number {
+  const target = new Date(dateStr + 'T00:00:00')
+  return Math.floor((new Date().getTime() - target.getTime()) / (1000 * 60 * 60 * 24))
+}

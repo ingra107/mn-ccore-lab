@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
 
 // milestone_type: 'progress_report' | 'continuing_review' | 'nce_deadline' | 'budget_period' | 'irb_renewal' | 'subcontract' | 'other'
 // status: 'upcoming' | 'in_progress' | 'completed' | 'overdue'
@@ -68,7 +68,7 @@ export async function handleCreateGrantMilestone(request: Request, user: AuthUse
     'INSERT INTO grant_milestones (id, grant_id, milestone_type, title, due_date, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?)'
   ).bind(id, body.grant_id, body.milestone_type, body.title, body.due_date || null, body.notes || null, status).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'grant_milestone', `New grant milestone: "${body.title}"`, actor, id, 'grant_milestone');
 
   const created = await env.DB.prepare('SELECT * FROM grant_milestones WHERE id = ?').bind(id).first();
@@ -79,20 +79,11 @@ export async function handleCreateGrantMilestone(request: Request, user: AuthUse
 export async function handleUpdateGrantMilestone(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
   const allowedFields = ['title', 'due_date', 'notes', 'status', 'milestone_type', 'grant_id'];
-  const updates: string[] = [];
-  const params: unknown[] = [];
+  const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);
 
-  for (const field of allowedFields) {
-    if (field in body) {
-      updates.push(`${field} = ?`);
-      params.push(body[field]);
-    }
-  }
+  if (!hasUpdates) return error('No valid fields to update', 400);
 
-  if (updates.length === 0) return error('No valid fields to update', 400);
-
-  params.push(id);
-  await env.DB.prepare(`UPDATE grant_milestones SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+  await env.DB.prepare(`UPDATE grant_milestones SET ${sql} WHERE id = ?`).bind(...params, id).run();
 
   const updated = await env.DB.prepare('SELECT * FROM grant_milestones WHERE id = ?').bind(id).first();
   if (!updated) return error('Milestone not found', 404);
@@ -108,7 +99,7 @@ export async function handleCompleteGrantMilestone(id: string, user: AuthUser, e
   const updated = await env.DB.prepare('SELECT * FROM grant_milestones WHERE id = ?').bind(id).first();
   if (!updated) return error('Milestone not found', 404);
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'grant_milestone', `Completed grant milestone: "${(updated as Record<string, unknown>).title}"`, actor, id, 'grant_milestone');
 
   return json({ data: updated });

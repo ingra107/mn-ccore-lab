@@ -16,7 +16,7 @@ import type { CommitmentRow } from '../hooks/useCommitments'
 import { getMemberBySlug } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
 import { projects } from '../data/projects'
-import { formatShortDate } from '../lib/dateUtils'
+import { formatShortDate, isOverdue } from '../lib/dateUtils'
 import WatchButton from '../components/WatchButton'
 
 const TOPIC_DISPLAY: Record<string, string> = {
@@ -39,13 +39,7 @@ const TOPIC_COLORS: Record<string, string> = {
   disparities: '#0284c7',
 }
 
-function isOverdue(dueDate: string | null): boolean {
-  if (!dueDate) return false
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const due = new Date(dueDate + 'T12:00:00')
-  return due < today
-}
+// isOverdue imported from dateUtils
 
 function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
   const isDone = item.status === 'done'
@@ -764,7 +758,7 @@ export default function MemberPage() {
 // ── Contribution Score Card ──────────────────────────────
 
 const TREND_ARROWS: Record<string, { symbol: string; color: string }> = {
-  increasing: { symbol: '\u2191', color: 'var(--green, #16a34a)' },
+  increasing: { symbol: '\u2191', color: 'var(--green)' },
   stable: { symbol: '\u2192', color: 'var(--slate)' },
   declining: { symbol: '\u2193', color: 'var(--maroon)' },
 }
@@ -866,7 +860,7 @@ const MILESTONE_TYPE_LABELS: Record<string, string> = {
 const MILESTONE_STATUS_COLORS: Record<string, string> = {
   upcoming: 'var(--slate)',
   in_progress: 'var(--teal)',
-  completed: 'var(--green, #16a34a)',
+  completed: 'var(--green)',
   overdue: 'var(--maroon)',
 }
 
@@ -933,7 +927,7 @@ function MilestoneMiniCard({
   isOverdue: boolean
 }) {
   const isDone = milestone.status === 'completed'
-  const borderColor = isDone ? 'var(--green, #16a34a)' : isOverdue ? 'var(--maroon)' : 'var(--teal)'
+  const borderColor = isDone ? 'var(--green)' : isOverdue ? 'var(--maroon)' : 'var(--teal)'
 
   return (
     <motion.div

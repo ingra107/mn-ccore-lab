@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 
 // ── Types ──
 
@@ -92,7 +92,7 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
     body.notes || null,
   ).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'revision', `Revision R${round} created for project ${body.project_id}`, actor, id, 'revision');
 
   const created = await env.DB.prepare('SELECT * FROM manuscript_revisions WHERE id = ?').bind(id).first();
@@ -132,7 +132,7 @@ export async function handleUpdateRevision(id: string, request: Request, user: A
     `UPDATE manuscript_revisions SET ${sets.join(', ')} WHERE id = ?`
   ).bind(...params).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'revision', `Revision ${id} updated`, actor, id, 'revision');
 
   const updated = await env.DB.prepare('SELECT * FROM manuscript_revisions WHERE id = ?').bind(id).first();
@@ -186,7 +186,7 @@ export async function handleCreateRevisionComment(revisionId: string, request: R
     body.response_text || null,
   ).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'revision_comment', `Comment added to revision ${revisionId}`, actor, id, 'reviewer_comment');
 
   const created = await env.DB.prepare('SELECT * FROM reviewer_comments WHERE id = ?').bind(id).first();
@@ -230,7 +230,7 @@ export async function handleUpdateRevisionComment(id: string, request: Request, 
     `UPDATE reviewer_comments SET ${sets.join(', ')} WHERE id = ?`
   ).bind(...params).run();
 
-  const actor = user.email.split('@')[0].toLowerCase();
+  const actor = actorSlug(user.email);
   await logActivity(env, 'revision_comment', `Comment ${id} updated`, actor, id, 'reviewer_comment');
 
   const updated = await env.DB.prepare('SELECT * FROM reviewer_comments WHERE id = ?').bind(id).first();

@@ -68,3 +68,21 @@ export function parseMentions(text: string): string[] {
   const regex = /@([a-z][a-z0-9_-]*)/g;
   return [...new Set(Array.from(text.matchAll(regex), m => m[1]))];
 }
+
+/** Extract user slug from email (e.g., "nick@umn.edu" → "nick") */
+export function actorSlug(email: string): string {
+  return email.split('@')[0].toLowerCase()
+}
+
+/** Build a dynamic UPDATE clause from allowed fields */
+export function buildUpdate(body: Record<string, unknown>, allowedFields: string[]) {
+  const updates: string[] = []
+  const params: unknown[] = []
+  for (const field of allowedFields) {
+    if (field in body) {
+      updates.push(`${field} = ?`)
+      params.push(body[field])
+    }
+  }
+  return { updates, params, sql: updates.join(', '), hasUpdates: updates.length > 0 }
+}
