@@ -1134,6 +1134,11 @@ export default {
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_pb_sessions_project ON pb_sessions(project_name)').run(); results.push('created idx_pb_sessions_project'); } catch (e) { results.push(`index error: ${e}`); }
             return json({ data: { version: 30, results } });
           }
+          if (body.version === 31) {
+            const results: string[] = [];
+            try { await env.DB.prepare("ALTER TABLE daily_plans ADD COLUMN evening_task_ids TEXT").run(); results.push('added evening_task_ids'); } catch { results.push('evening_task_ids already exists'); }
+            return json({ data: { version: 31, results } });
+          }
           return error(`Unknown migration version: ${body.version}`, 400);
         }
 
