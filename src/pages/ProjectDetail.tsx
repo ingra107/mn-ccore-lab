@@ -521,7 +521,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 >
                   Cancel
                 </button>
-                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.55 }}>
                   Ctrl+Enter to save
                 </span>
               </div>
@@ -647,7 +647,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   style={{
                     fontSize: '10px',
                     color: isCurrent ? 'var(--gold)' : isFuture ? 'var(--slate)' : 'var(--ink)',
-                    opacity: isCurrent ? 1 : isFuture ? 0.4 : 0.7,
+                    opacity: isCurrent ? 1 : isFuture ? 0.55 : 0.7,
                     fontWeight: isCurrent ? 700 : 400,
                     marginTop: '8px',
                     textAlign: 'center',
@@ -1023,7 +1023,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                         style={{
                           fontSize: '10px',
                           color: 'var(--slate)',
-                          opacity: 0.5,
+                          opacity: 0.7,
                           display: 'block',
                           marginBottom: '4px',
                         }}
@@ -1049,7 +1049,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     style={{
                       fontSize: '12px',
                       color: 'var(--slate)',
-                      opacity: 0.4,
+                      opacity: 0.55,
                       textAlign: 'center',
                       padding: '16px 0',
                       margin: 0,
@@ -1107,7 +1107,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               )}
               {completedTasks.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.35, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     Done ({completedTasks.length})
                   </span>
                   {completedTasks.slice(0, 5).map((task) => (
@@ -1123,7 +1123,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     />
                   ))}
                   {completedTasks.length > 5 && (
-                    <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4, paddingLeft: '4px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, paddingLeft: '4px' }}>
                       +{completedTasks.length - 5} more completed
                     </span>
                   )}

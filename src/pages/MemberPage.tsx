@@ -822,7 +822,7 @@ function ContributionScoreCard({ slug }: { slug: string }) {
       {/* Sparkline */}
       <div style={{ flex: 1 }}>
         <MiniSparkline data={data.sparkline} />
-        <div style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.4, marginTop: 2 }}>
+        <div style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.55, marginTop: 2 }}>
           Last 14 days (decay-weighted)
         </div>
       </div>

@@ -45,7 +45,7 @@ export default function MyTasks() {
   const [view, setView] = useState<ViewMode>('list')
   const [showCreate, setShowCreate] = useState(false)
   const [groupBy, setGroupBy] = useState<GroupBy>('due_date')
-  const [sortBy, setSortBy] = useState<SortBy>('priority')
+  const [sortBy, setSortBy] = useState<SortBy>('due_date')
 
   // For now, show all tasks (no auth = no current user detection)
   // When Cloudflare Access is enabled, this will filter to the authenticated user's slug
@@ -55,6 +55,7 @@ export default function MyTasks() {
   const updateTask = useUpdateTask()
   const { showSuccess, showUndo } = useUndoToast()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
+  const [showCompleted, setShowCompleted] = useState(false)
   const handleFieldChange = (id: string, field: string, value: unknown) => {
     updateTask.mutate({ id, fields: { [field]: value } })
   }
@@ -104,6 +105,8 @@ export default function MyTasks() {
   }
 
   const pendingCount = tasks.filter((t) => !t.completed).length
+  const completedCount = tasks.filter((t) => t.completed).length
+  const displayTasks = showCompleted ? tasks : tasks.filter((t) => !t.completed)
   const person = currentUser ? getPersonInfo(currentUser) : null
 
   return (
@@ -185,6 +188,23 @@ export default function MyTasks() {
               {sortByOptions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
             </select>
           </div>
+
+          {completedCount > 0 && (
+            <button
+              onClick={() => setShowCompleted(!showCompleted)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+              style={{
+                backgroundColor: showCompleted ? 'rgba(34,197,94,0.1)' : 'transparent',
+                color: showCompleted ? 'var(--green)' : 'var(--slate)',
+                border: `1px solid ${showCompleted ? 'rgba(34,197,94,0.3)' : 'var(--border-light)'}`,
+                cursor: 'pointer',
+                opacity: showCompleted ? 1 : 0.5,
+              }}
+            >
+              <CheckCircle2 size={10} />
+              {showCompleted ? `Hide ${completedCount} done` : `Show ${completedCount} done`}
+            </button>
+          )}
         </div>
       </PageHeader>
 
@@ -216,13 +236,13 @@ export default function MyTasks() {
           />
         ) : view !== 'list' ? (
           <>
-            {view === 'board' && <TaskBoardView tasks={tasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
-            {view === 'timeline' && <TaskTimelineView tasks={tasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} />}
+            {view === 'board' && <TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
+            {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} />}
           </>
         ) : groupBy === 'none' ? (
-          <TaskGridView tasks={sortTasks(tasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} />
+          <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} />
         ) : (
-          <GroupedTaskList tasks={tasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} />
+          <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} />
         )}
       </div>
 

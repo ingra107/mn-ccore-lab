@@ -12,11 +12,7 @@ import InlineSelect from '../components/InlineSelect'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
-import Avatar from '../components/Avatar'
-import HoverCard from '../components/HoverCard'
-import type { HoverCardData } from '../components/HoverCard'
-import { useHoverCard } from '../hooks/useHoverCard'
-import { getPersonInfo, getMemberBySlug, directors } from '../data/team'
+import { directors } from '../data/team'
 import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import type { Stage } from '../components/StageSelector'
@@ -92,16 +88,34 @@ export default function Projects() {
   const [showCreate, setShowCreate] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const rowRefs = useRef<(HTMLDivElement | null)[]>([])
+  type ProjectSortKey = 'title' | 'status' | 'stage' | 'pi' | 'category'
+  const [sortKey, setSortKey] = useState<ProjectSortKey>('stage')
+  const [sortAsc, setSortAsc] = useState(true)
+  const toggleSort = (key: ProjectSortKey) => {
+    if (sortKey === key) setSortAsc(!sortAsc)
+    else { setSortKey(key); setSortAsc(true) }
+  }
 
   const filtered = useMemo(() => {
     const base = activeCategory === 'all' ? projects : projects.filter((p) => p.category === activeCategory)
     return [...base].sort((a, b) => {
-      const stageA = STAGE_ORDER[a.stage ?? ''] ?? 99
-      const stageB = STAGE_ORDER[b.stage ?? ''] ?? 99
-      if (stageA !== stageB) return stageA - stageB
-      return a.title.localeCompare(b.title)
+      let cmp = 0
+      switch (sortKey) {
+        case 'title': cmp = a.title.localeCompare(b.title); break
+        case 'status': cmp = (a.status || '').localeCompare(b.status || ''); break
+        case 'stage': {
+          const stageA = STAGE_ORDER[a.stage ?? ''] ?? 99
+          const stageB = STAGE_ORDER[b.stage ?? ''] ?? 99
+          cmp = stageA - stageB
+          break
+        }
+        case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
+        case 'category': cmp = (a.category || '').localeCompare(b.category || ''); break
+      }
+      if (cmp === 0) cmp = a.title.localeCompare(b.title)
+      return sortAsc ? cmp : -cmp
     })
-  }, [activeCategory, projects])
+  }, [activeCategory, projects, sortKey, sortAsc])
 
   // Project slugs in display order for keyboard nav
   const projectSlugs = useMemo(() => filtered.map((p) => p.slug), [filtered])
@@ -302,20 +316,32 @@ export default function Projects() {
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
-              {['Title', 'Status', 'Stage', 'PI', 'Group'].map((col) => (
-                <span
-                  key={col}
+              {([['Title', 'title'], ['Status', 'status'], ['Stage', 'stage'], ['PI', 'pi'], ['Group', 'category']] as const).map(([label, key]) => (
+                <button
+                  key={key}
+                  onClick={() => toggleSort(key)}
                   style={{
                     fontSize: '11px',
                     fontWeight: 500,
-                    color: 'var(--slate)',
-                    opacity: 0.5,
+                    color: sortKey === key ? 'var(--teal)' : 'var(--slate)',
+                    opacity: sortKey === key ? 0.9 : 0.55,
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
                   }}
                 >
-                  {col}
-                </span>
+                  {label}
+                  {sortKey === key && (
+                    <span style={{ fontSize: '9px' }}>{sortAsc ? '▲' : '▼'}</span>
+                  )}
+                </button>
               ))}
             </div>
 
@@ -447,19 +473,28 @@ export default function Projects() {
                               onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
                             />
 
-                            {/* PI (with HoverCard) */}
-                            <PIHoverAvatar slug={project.pi} />
+                            {/* PI (inline editable) */}
+                            <div onClick={(e) => e.preventDefault()}>
+                              <InlineSelect
+                                value={project.pi || ''}
+                                options={directors.map(d => ({ value: d.slug, label: d.name.split(' ')[1] || d.name }))}
+                                onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { pi: val } })}
+                              />
+                            </div>
 
-                            {/* Category */}
-                            <span
-                              style={{
-                                fontSize: '11px',
-                                color: 'var(--slate)',
-                                opacity: 0.4,
-                              }}
-                            >
-                              {catLabel}
-                            </span>
+                            {/* Category (inline editable) */}
+                            <div onClick={(e) => e.preventDefault()}>
+                              <InlineSelect
+                                value={project.category || ''}
+                                options={[
+                                  { value: 'clif', label: 'CLIF', color: 'var(--maroon)' },
+                                  { value: 'lab', label: 'Lab', color: 'var(--teal)' },
+                                  { value: 'nate', label: 'Mesfin', color: 'var(--gold)' },
+                                  { value: 'mentee', label: 'Mentee', color: 'var(--slate)' },
+                                ]}
+                                onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
+                              />
+                            </div>
                           </div>
 
                           {/* Mobile: stacked card layout */}
@@ -529,7 +564,7 @@ export default function Projects() {
                                 style={{
                                   fontSize: '11px',
                                   color: 'var(--slate)',
-                                  opacity: 0.4,
+                                  opacity: 0.55,
                                   marginLeft: 'auto',
                                 }}
                               >
@@ -554,7 +589,7 @@ export default function Projects() {
                   style={{
                     fontSize: '14px',
                     color: 'var(--slate)',
-                    opacity: 0.4,
+                    opacity: 0.55,
                   }}
                 >
                   No projects in this category
@@ -672,7 +707,7 @@ export default function Projects() {
                           style={{
                             fontSize: '12px',
                             color: 'var(--slate)',
-                            opacity: 0.4,
+                            opacity: 0.55,
                             fontWeight: 500,
                           }}
                         >
@@ -711,7 +746,7 @@ export default function Projects() {
                               style={{
                                 fontSize: '12px',
                                 color: 'var(--slate)',
-                                opacity: 0.3,
+                                opacity: 0.5,
                               }}
                             >
                               No projects
@@ -809,41 +844,3 @@ export default function Projects() {
   )
 }
 
-// ── PI Avatar with HoverCard ────────────────────────────────
-
-function PIHoverAvatar({ slug }: { slug: string }) {
-  const p = getPersonInfo(slug)
-  const hoverCard = useHoverCard()
-  const dir = directors.find(d => d.slug === slug)
-  const member = getMemberBySlug(slug)
-  const data: HoverCardData = {
-    type: 'member',
-    name: p.name,
-    role: dir?.role || member?.role,
-    photoUrl: p.photoUrl,
-    initials: p.initials,
-  }
-
-  return (
-    <div
-      ref={hoverCard.triggerRef as React.RefObject<HTMLDivElement>}
-      className="flex items-center gap-1.5"
-      onMouseEnter={hoverCard.handlers.onMouseEnter}
-      onMouseLeave={hoverCard.handlers.onMouseLeave}
-    >
-      <div style={{ width: 22, height: 22, flexShrink: 0 }}>
-        <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[8px]" />
-      </div>
-      <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
-        {p.name.split(' ').pop()}
-      </span>
-      <HoverCard
-        data={data}
-        isVisible={hoverCard.isVisible}
-        position={hoverCard.position}
-        cardRef={hoverCard.cardRef}
-        cardHandlers={hoverCard.cardHandlers}
-      />
-    </div>
-  )
-}

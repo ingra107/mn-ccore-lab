@@ -971,7 +971,7 @@ export default function MyItems() {
               <motion.span
                 animate={{ rotate: showCompleted ? 0 : -90 }}
                 transition={{ duration: 0.2 }}
-                style={{ color: 'var(--slate)', opacity: 0.4, flexShrink: 0 }}
+                style={{ color: 'var(--slate)', opacity: 0.55, flexShrink: 0 }}
               >
                 <ChevronDown size={16} />
               </motion.span>

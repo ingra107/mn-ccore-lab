@@ -92,15 +92,15 @@ const pathways = [
   {
     icon: Handshake,
     title: 'Collaborate',
-    description: 'Join our multi-center research network',
-    to: '/team',
+    description: 'Multi-center research network',
+    to: '/network',
     accent: 'var(--gold)',
   },
   {
     icon: GraduationCap,
-    title: 'Join Our Team',
-    description: 'Training and mentorship opportunities',
-    to: '/contact',
+    title: 'Meet Our Team',
+    description: 'Faculty, trainees, and collaborators',
+    to: '/team',
     accent: 'var(--teal)',
   },
   {

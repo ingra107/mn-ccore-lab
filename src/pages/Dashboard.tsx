@@ -313,7 +313,7 @@ export default function Dashboard() {
           {/* Adaptive sorting indicator */}
           {adaptive && activeTab === 'overview' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}>
-              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4 }}>
+              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55 }}>
                 Organized by your usage
               </span>
               <button

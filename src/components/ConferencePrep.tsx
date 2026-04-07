@@ -223,7 +223,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         {formatShortDate(conf.abstract_due)}
                       </span>
                     ) : (
-                      <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>--</span>
+                      <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.55 }}>--</span>
                     )}
                   </td>
 
@@ -245,7 +245,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         onChange={(v) => handleMaterialsChange(conf, v as MaterialsStatus)}
                       />
                     ) : (
-                      <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>--</span>
+                      <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.55 }}>--</span>
                     )}
                   </td>
 

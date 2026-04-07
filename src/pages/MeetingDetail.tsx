@@ -316,7 +316,7 @@ export default function MeetingDetail() {
               )}
 
               {actionItems.length === 0 && (
-                <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '16px 0', margin: 0 }}>
                   No action items yet — type above to add one
                 </p>
               )}
@@ -425,7 +425,7 @@ export default function MeetingDetail() {
             ))}
 
             {decisions.length === 0 && !showDecisionForm && (
-              <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+              <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '16px 0', margin: 0 }}>
                 No decisions logged yet. Record one during the meeting so nobody forgets.
               </p>
             )}

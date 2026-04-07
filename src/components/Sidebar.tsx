@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
+import { useDarkMode } from '../hooks/useDarkMode'
 import { useUnreadCount } from '../hooks/useNotifications'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
@@ -110,6 +111,7 @@ const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gm
 export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
   const location = useLocation()
   const { user } = useAuth()
+  const { isDark } = useDarkMode()
   const userSlug = user?.email?.split('@')[0]?.toLowerCase()
   const person = userSlug ? getPersonInfo(userSlug) : null
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
@@ -165,11 +167,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             src="/logos/mnccore-logo-mark.svg"
             alt="MN-CCORE"
             className="flex-shrink-0"
-            style={{ width: 32, height: 32 }}
+            style={{ width: 32, height: 32, filter: isDark ? 'invert(1) brightness(1.5)' : 'none' }}
           />
           {!collapsed && (
             <img
-              src="/logos/mnccore-logo-primary.svg"
+              src={isDark ? '/logos/mnccore-logo-dark.svg' : '/logos/mnccore-logo-primary.svg'}
               alt="MN-CCORE"
               style={{ height: 24 }}
             />
@@ -180,20 +182,20 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
       {/* Nav groups */}
       <nav className="flex-1 overflow-y-auto py-3 px-2">
         {navWithBadges.map((group, groupIndex) => (
-          <div key={group.title} style={{ marginBottom: '8px' }}>
+          <div key={group.title} style={{ marginBottom: '4px' }}>
             {/* Section divider (not before first group) */}
             {groupIndex > 0 && (
               <div
                 style={{
                   height: '1px',
                   background: 'var(--border-subtle)',
-                  margin: collapsed ? '8px 4px 12px' : '8px 8px 12px',
+                  margin: collapsed ? '6px 4px 8px' : '6px 8px 8px',
                 }}
               />
             )}
             {!collapsed && (
               <div
-                className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider"
+                className="px-2 py-1 text-[9px] font-semibold uppercase tracking-wider"
                 style={{ color: 'var(--slate)', opacity: 0.5, letterSpacing: '0.08em' }}
               >
                 {group.title}
@@ -207,7 +209,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   key={item.to}
                   to={item.to}
                   onClick={onNavigate}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-colors mb-0.5"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] transition-colors mb-0.5"
                   style={{
                     backgroundColor: active ? 'color-mix(in srgb, var(--teal) 12%, transparent)' : 'transparent',
                     color: active ? 'var(--teal)' : 'var(--slate)',

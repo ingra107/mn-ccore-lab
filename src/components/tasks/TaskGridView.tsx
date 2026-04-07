@@ -38,7 +38,7 @@ type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title'
 
 export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
-  const [sortKey, setSortKey] = useState<SortKey>('priority')
+  const [sortKey, setSortKey] = useState<SortKey>('due_date')
   const [sortAsc, setSortAsc] = useState(true)
   const [internalExpanded, setInternalExpanded] = useState<Set<string>>(new Set())
   const { state: contextMenuState, openMenu: openContextMenu, closeMenu: closeContextMenu } = useContextMenu()
@@ -133,7 +133,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
       {/* Virtualized scrollable area */}
       <div
         ref={parentRef}
-        style={{ flex: 1, overflow: 'auto' }}
+        style={{ flex: 1, overflow: 'auto', minHeight: Math.min(sorted.length * ROW_HEIGHT + 4, 600) }}
       >
         {sorted.length > 0 ? (
           <div

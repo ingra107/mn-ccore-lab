@@ -137,7 +137,7 @@ export default function ActivityPage() {
                             <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}>
                               {item.type}
                             </span>
-                            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+                            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.55 }}>
                               {formatRelativeTime(item.timestamp)}
                             </span>
                           </div>

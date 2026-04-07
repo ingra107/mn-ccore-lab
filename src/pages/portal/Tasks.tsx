@@ -39,6 +39,7 @@ export default function Tasks() {
   const { user } = useAuth()
   const role = getUserRole(user?.email)
   const defaultView = useMemo(() => ROLE_DEFAULTS[role].taskView as ViewMode, [role])
+  const userSlug = user?.email?.split('@')[0]?.toLowerCase() || null
 
   const [searchParams, setSearchParams] = useSearchParams()
   const [view, setView] = useState<ViewMode>(defaultView)
@@ -46,6 +47,7 @@ export default function Tasks() {
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [peekTask, setPeekTask] = useState<TaskRow | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)
+  const [myTasksOnly, setMyTasksOnly] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [focusedTaskIndex, setFocusedTaskIndex] = useState(-1)
   const [showFilters, setShowFilters] = useState(false)
@@ -154,9 +156,12 @@ export default function Tasks() {
     setSelectedIds(new Set())
   }, [filters.assignee, filters.status, filters.priority, filters.project, showCompleted])
 
-  const pendingCount = tasks.filter((t) => !t.completed).length
-  const completedCount = tasks.filter((t) => t.completed).length
-  const displayTasks = showCompleted ? tasks : tasks.filter((t) => !t.completed)
+  const filteredByUser = myTasksOnly && userSlug
+    ? tasks.filter((t) => t.assignee === userSlug)
+    : tasks
+  const pendingCount = filteredByUser.filter((t) => !t.completed).length
+  const completedCount = filteredByUser.filter((t) => t.completed).length
+  const displayTasks = showCompleted ? filteredByUser : filteredByUser.filter((t) => !t.completed)
 
   // Get the currently focused task for peek/actions
   const focusedTask = focusedTaskIndex >= 0 && focusedTaskIndex < displayTasks.length
@@ -285,6 +290,23 @@ export default function Tasks() {
               </ToggleButton>
             )
           })}
+
+          {userSlug && (
+            <button
+              onClick={() => setMyTasksOnly(!myTasksOnly)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+              style={{
+                backgroundColor: myTasksOnly ? 'rgba(45,138,138,0.1)' : 'transparent',
+                color: myTasksOnly ? 'var(--teal)' : 'var(--slate)',
+                border: `1px solid ${myTasksOnly ? 'rgba(45,138,138,0.3)' : 'var(--border-light)'}`,
+                cursor: 'pointer',
+                opacity: myTasksOnly ? 1 : 0.55,
+              }}
+            >
+              <Users size={10} />
+              My Tasks
+            </button>
+          )}
 
           <div className="flex-1" />
 

@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Award } from 'lucide-react'
+import { Award, List, BookOpen } from 'lucide-react'
 import { usePublications } from '../hooks/useApiData'
 import type { Publication } from '../data/types'
 import PublicationFilters from '../components/PublicationFilters'
 import PublicationSearch from '../components/PublicationSearch'
 import PublicationCard from '../components/PublicationCard'
+import PublicationLibrary from '../components/PublicationLibrary'
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
@@ -42,6 +43,7 @@ export default function Publications() {
   // Live D1 data in production, static fallback in dev
   const { data: publications = [] } = usePublications()
 
+  const [viewMode, setViewMode] = useState<'list' | 'library'>('list')
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Parse filter state from URL
@@ -254,13 +256,45 @@ export default function Publications() {
         className="py-8 sm:py-12 lg:py-16 content-container"
         ref={pubsRef}
       >
-        {/* Search */}
-        <div className="mb-4">
-          <PublicationSearch
-            value={searchTerm}
-            onChange={setSearchTerm}
-            resultCount={filtered.length}
-          />
+        {/* Search + View Toggle */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1">
+            <PublicationSearch
+              value={searchTerm}
+              onChange={setSearchTerm}
+              resultCount={filtered.length}
+            />
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={() => setViewMode('list')}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+              style={{
+                backgroundColor: viewMode === 'list' ? 'rgba(45,138,138,0.1)' : 'transparent',
+                color: viewMode === 'list' ? 'var(--teal)' : 'var(--slate)',
+                border: `1px solid ${viewMode === 'list' ? 'var(--teal)' : 'var(--border-light)'}`,
+                cursor: 'pointer',
+                opacity: viewMode === 'list' ? 1 : 0.55,
+              }}
+            >
+              <List size={12} />
+              List
+            </button>
+            <button
+              onClick={() => setViewMode('library')}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+              style={{
+                backgroundColor: viewMode === 'library' ? 'rgba(45,138,138,0.1)' : 'transparent',
+                color: viewMode === 'library' ? 'var(--teal)' : 'var(--slate)',
+                border: `1px solid ${viewMode === 'library' ? 'var(--teal)' : 'var(--border-light)'}`,
+                cursor: 'pointer',
+                opacity: viewMode === 'library' ? 1 : 0.55,
+              }}
+            >
+              <BookOpen size={12} />
+              Library
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -279,8 +313,10 @@ export default function Publications() {
           />
         </div>
 
-        {/* Publication list */}
-        {filtered.length === 0 ? (
+        {/* Publication list / library */}
+        {viewMode === 'library' ? (
+          <PublicationLibrary publications={filtered} />
+        ) : filtered.length === 0 ? (
           <div
             className="text-center py-12"
             style={{ color: 'var(--slate)' }}

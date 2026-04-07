@@ -8,11 +8,10 @@ import { useAuth } from '../hooks/useAuth'
 import { useTasks, useMeetingsApi } from '../hooks/useApiData'
 import PageTransition from './PageTransition'
 
-const navLinks: { to: string; label: string; isJoin?: boolean }[] = [
+const navLinks: { to: string; label: string }[] = [
   { to: '/', label: 'Home' },
   { to: '/team', label: 'Team' },
   { to: '/publications', label: 'Publications' },
-  { to: '/contact', label: 'Join', isJoin: true },
   { to: '/contact', label: 'Contact' },
 ]
 
@@ -314,11 +313,11 @@ export default function Layout() {
                 className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap"
                 style={{
                   color:
-                    location.pathname === link.to && !link.isJoin
+                    location.pathname === link.to
                       ? 'var(--gold)'
                       : 'var(--slate)',
                   borderBottom:
-                    location.pathname === link.to && !link.isJoin
+                    location.pathname === link.to
                       ? '2px solid var(--gold)'
                       : '2px solid transparent',
                 }}
@@ -489,11 +488,11 @@ export default function Layout() {
                 className="block px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
                 style={{
                   color:
-                    location.pathname === link.to && !link.isJoin
+                    location.pathname === link.to
                       ? 'var(--gold)'
                       : 'var(--ink)',
                   background:
-                    location.pathname === link.to && !link.isJoin
+                    location.pathname === link.to
                       ? 'rgba(201, 168, 76, 0.1)'
                       : 'transparent',
                   minHeight: '44px',

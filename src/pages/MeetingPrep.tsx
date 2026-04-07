@@ -139,7 +139,7 @@ export default function MeetingPrep() {
                 </div>
               )}
               {previousActionItems.length === 0 && (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '16px 0', margin: 0 }}>
                   No previous meeting found
                 </p>
               )}
@@ -179,7 +179,7 @@ export default function MeetingPrep() {
                   </p>
                   {agendaItems.map((item, i) => (
                     <div key={item.id} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < agendaItems.length - 1 ? '1px solid rgba(201,168,76,0.04)' : 'none' }}>
-                      <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.4, marginTop: 2, flexShrink: 0 }}>{i + 1}.</span>
+                      <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.55, marginTop: 2, flexShrink: 0 }}>{i + 1}.</span>
                       <span style={{ fontSize: 12, color: 'var(--ink)' }}>{item.content}</span>
                     </div>
                   ))}
@@ -208,7 +208,7 @@ export default function MeetingPrep() {
               )}
 
               {agendaItems.length === 0 && overdueTasks.length === 0 && pendingPrev.length === 0 && (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '16px 0', margin: 0 }}>
                   No agenda items yet. The team can add items from the meeting page.
                 </p>
               )}
@@ -234,7 +234,7 @@ export default function MeetingPrep() {
                   )
                 })
               ) : (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '12px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '12px 0', margin: 0 }}>
                   No deadlines in the next two weeks.
                 </p>
               )}
@@ -255,7 +255,7 @@ export default function MeetingPrep() {
                   )
                 })
               ) : (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '12px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '12px 0', margin: 0 }}>
                   No recent activity.
                 </p>
               )}

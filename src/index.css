@@ -21,7 +21,7 @@
   --font-sans: 'DM Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --muted: rgba(148, 163, 184, 0.4);
+  --muted: rgba(148, 163, 184, 0.55);
 
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(15, 25, 35, 0.06);
@@ -64,7 +64,7 @@
   --green: oklch(0.78 0.18 145);         /* #4ade80 */
   --green-light: oklch(0.78 0.18 145);   /* #4ade80 */
 
-  --muted: rgba(148, 163, 184, 0.4);
+  --muted: rgba(148, 163, 184, 0.55);
 
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(255, 255, 255, 0.06);

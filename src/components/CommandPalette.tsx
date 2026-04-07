@@ -477,7 +477,7 @@ export default function CommandPalette() {
             .sort(([a], [b]) => (categoryOrder[a] || 9) - (categoryOrder[b] || 9))
             .map(([category, items]) => (
               <div key={category}>
-                <div className="px-4 py-1.5 text-[9px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+                <div className="px-4 py-1.5 text-[9px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 0.55 }}>
                   {categoryLabels[category] || category}
                 </div>
                 {items.map((item) => {
@@ -507,7 +507,7 @@ export default function CommandPalette() {
                         )}
                       </div>
                       {item.shortcut && (
-                        <kbd className="text-[9px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.4 }}>
+                        <kbd className="text-[9px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.55 }}>
                           {item.shortcut}
                         </kbd>
                       )}
@@ -525,7 +525,7 @@ export default function CommandPalette() {
         </div>
 
         {/* Footer hint */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 0.4 }}>
+        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 0.55 }}>
           <span>↑↓ navigate</span>
           <span>↵ select</span>
           <span>esc close</span>

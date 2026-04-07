@@ -781,7 +781,7 @@ export default function Meetings() {
                           </div>
                           <span
                             className="text-xs"
-                            style={{ color: 'var(--slate)', opacity: 0.4 }}
+                            style={{ color: 'var(--slate)', opacity: 0.55 }}
                           >
                             from {formatShortDate(item.meetingDate)}
                           </span>
@@ -946,7 +946,7 @@ export default function Meetings() {
                               background: 'none',
                               border: 'none',
                               color: 'var(--slate)',
-                              opacity: 0.4,
+                              opacity: 0.55,
                               padding: '4px',
                             }}
                           >
@@ -1007,7 +1007,7 @@ export default function Meetings() {
               <Search
                 size={14}
                 className="absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: 'var(--slate)', opacity: 0.4 }}
+                style={{ color: 'var(--slate)', opacity: 0.55 }}
               />
               <input
                 type="text"
@@ -1062,7 +1062,7 @@ export default function Meetings() {
           <div className="mt-4 text-center">
             <span
               className="text-xs"
-              style={{ color: 'var(--slate)', opacity: 0.4 }}
+              style={{ color: 'var(--slate)', opacity: 0.55 }}
             >
               {meetings.length} meetings &middot; {allActionItems.length} action items &middot;{' '}
               {meetings.reduce((acc, m) => acc + (m.decisions?.length ?? 0), 0)} decisions
