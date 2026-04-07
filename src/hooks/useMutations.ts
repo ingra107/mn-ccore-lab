@@ -897,7 +897,7 @@ export function usePBDefer() {
 export function useSaveDailyPlan() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { plan_date: string; star_task_id?: string | null; focus_task_ids?: string[]; quick_win_ids?: string[]; intention?: string; gratitude?: string }) =>
+    mutationFn: (input: { plan_date: string; star_task_id?: string | null; focus_task_ids?: string[]; quick_win_ids?: string[]; evening_task_ids?: string[]; intention?: string; gratitude?: string }) =>
       fetch('/api/pb/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -912,7 +912,7 @@ export function useSaveDailyPlan() {
 export function useReorderPlan() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { plan_date: string; slot_type: 'focus' | 'quick_win'; task_ids: string[] }) =>
+    mutationFn: (input: { plan_date: string; slot_type: 'focus' | 'quick_win' | 'evening'; task_ids: string[] }) =>
       fetch('/api/pb/plan/reorder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

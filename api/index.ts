@@ -37,6 +37,7 @@ import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpda
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions'
 import { handleGetTodayMd, handleUpsertTodayMd } from './routes/pb-today'
 import { handlePBHealth } from './routes/pb-health'
+import { handleGetRelay, handleCreateRelay, handleCompleteRelay } from './routes/pb-relay'
 import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleGetActiveRevisions } from './routes/revisions';
 import { handleMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone, handleCompleteMenteeMilestone } from './routes/mentee-milestones';
 import { handleGetCascade, handleGetImpact, handleGetAllCascades, handleCreateDeadlineDependency, handleDeleteDeadlineDependency } from './routes/deadline-cascade';
@@ -105,6 +106,11 @@ export default {
         // PB Sector — system health overview
         if (url.pathname === '/api/pb/health') {
           return await handlePBHealth(env);
+        }
+
+        // PB Sector — relay messages
+        if (url.pathname === '/api/pb/relay') {
+          return await handleGetRelay(env);
         }
 
         // PI Analytics — leadership dashboard data
@@ -757,6 +763,17 @@ export default {
         // POST /api/pb/today — upsert TODAY.md content
         if (request.method === 'POST' && path === '/api/pb/today') {
           return await handleUpsertTodayMd(request, env);
+        }
+
+        // POST /api/pb/relay — create a relay message
+        if (request.method === 'POST' && path === '/api/pb/relay') {
+          return await handleCreateRelay(request, user, env);
+        }
+
+        // POST /api/pb/relay/:index/complete — mark relay message completed
+        if (request.method === 'POST' && path.match(/^\/api\/pb\/relay\/\d+\/complete$/)) {
+          const index = parseInt(path.split('/')[4], 10);
+          return await handleCompleteRelay(request, env, index);
         }
 
         // POST /api/impact/check — scan for impact events and create notifications

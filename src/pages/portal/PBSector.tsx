@@ -23,6 +23,7 @@ import {
 import PlannerHeader from '../../components/pb-sector/PlannerHeader'
 import StarTaskSlot from '../../components/pb-sector/StarTaskSlot'
 import FocusTaskSlot from '../../components/pb-sector/FocusTaskSlot'
+import EveningTaskSlot from '../../components/pb-sector/EveningTaskSlot'
 import QuickWinsList from '../../components/pb-sector/QuickWinsList'
 import ReflectionPanel from '../../components/pb-sector/ReflectionPanel'
 import TaskSearchDropdown from '../../components/pb-sector/TaskSearchDropdown'
@@ -30,6 +31,7 @@ import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import DispatchBadge from '../../components/pb-sector/DispatchBadge'
 import LandscapeSidebar from '../../components/pb-sector/LandscapeSidebar'
 import SystemHealthCard from '../../components/pb-sector/SystemHealthCard'
+import RelayCard from '../../components/pb-sector/RelayCard'
 import TodayView from '../../components/pb-sector/TodayView'
 import { getDailyQuote } from '../../data/daily-quotes'
 
@@ -62,7 +64,7 @@ export default function PBSector() {
   const [viewMode, setViewMode] = useState<'planner' | 'today'>('planner')
   const [captureText, setCaptureText] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
-  const [searchSlot, setSearchSlot] = useState<'star' | 'focus' | 'quick_win'>('focus')
+  const [searchSlot, setSearchSlot] = useState<'star' | 'focus' | 'quick_win' | 'evening'>('focus')
   const [activeTask, setActiveTask] = useState<any>(null)
   const [detailTask, setDetailTask] = useState<TaskRow | null>(null)
   const captureInputRef = useRef<HTMLInputElement>(null)
@@ -98,10 +100,12 @@ export default function PBSector() {
   const starTaskId = plan?.star_task_id || null
   const focusTaskIds = useMemo(() => parseJsonArray(plan?.focus_task_ids ?? null), [plan])
   const quickWinIds = useMemo(() => parseJsonArray(plan?.quick_win_ids ?? null), [plan])
+  const eveningTaskIds = useMemo(() => parseJsonArray(plan?.evening_task_ids ?? null), [plan])
 
   const starTask = useMemo(() => starTaskId ? resolveTaskById(allTasks, starTaskId) : null, [allTasks, starTaskId])
   const focusTasks = useMemo(() => focusTaskIds.map(id => resolveTaskById(allTasks, id)).filter(Boolean), [allTasks, focusTaskIds])
   const quickWinTasks = useMemo(() => quickWinIds.map(id => resolveTaskById(allTasks, id)).filter(Boolean), [allTasks, quickWinIds])
+  const eveningTasks = useMemo(() => eveningTaskIds.map(id => resolveTaskById(allTasks, id)).filter(Boolean), [allTasks, eveningTaskIds])
 
   // All task IDs currently in the plan
   const plannedIds = useMemo(() => {
@@ -109,8 +113,9 @@ export default function PBSector() {
     if (starTaskId) s.add(starTaskId)
     focusTaskIds.forEach(id => s.add(id))
     quickWinIds.forEach(id => s.add(id))
+    eveningTaskIds.forEach(id => s.add(id))
     return s
-  }, [starTaskId, focusTaskIds, quickWinIds])
+  }, [starTaskId, focusTaskIds, quickWinIds, eveningTaskIds])
 
   // Pomodoro data per task
   const pomodoroData = useMemo(() => {
@@ -197,9 +202,10 @@ export default function PBSector() {
     // Determine which slot this task is in
     const slotType = taskId === starTaskId ? 'star'
       : focusTaskIds.includes(taskId) ? 'focus'
+      : eveningTaskIds.includes(taskId) ? 'evening'
       : 'quick_win'
     startPomodoro.mutate({ task_id: taskId, plan_date: selectedDate, slot_type: slotType })
-  }, [startPomodoro, selectedDate, starTaskId, focusTaskIds])
+  }, [startPomodoro, selectedDate, starTaskId, focusTaskIds, eveningTaskIds])
 
   const handleAddToSlot = useCallback((task: any) => {
     if (searchSlot === 'star') {
@@ -207,12 +213,14 @@ export default function PBSector() {
     } else if (searchSlot === 'focus') {
       const newFocus = [...focusTaskIds, task.id].slice(0, 3)
       handleSavePlan({ focus_task_ids: newFocus })
+    } else if (searchSlot === 'evening') {
+      handleSavePlan({ evening_task_ids: [...eveningTaskIds, task.id] })
     } else {
       handleSavePlan({ quick_win_ids: [...quickWinIds, task.id] })
     }
-  }, [searchSlot, focusTaskIds, quickWinIds, handleSavePlan])
+  }, [searchSlot, focusTaskIds, quickWinIds, eveningTaskIds, handleSavePlan])
 
-  const openSearch = useCallback((slot: 'star' | 'focus' | 'quick_win') => {
+  const openSearch = useCallback((slot: 'star' | 'focus' | 'quick_win' | 'evening') => {
     setSearchSlot(slot)
     setSearchOpen(true)
   }, [])
@@ -254,6 +262,14 @@ export default function PBSector() {
         const reordered = arrayMove(quickWinIds, oldIndex, newIndex)
         reorderPlan.mutate({ plan_date: selectedDate, slot_type: 'quick_win', task_ids: reordered })
       }
+    } else if (fromSlot === toSlot && fromSlot === 'evening') {
+      const oldIndex = eveningTaskIds.indexOf(taskId)
+      const overTaskId = over.id as string
+      const newIndex = eveningTaskIds.indexOf(overTaskId)
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        const reordered = arrayMove(eveningTaskIds, oldIndex, newIndex)
+        reorderPlan.mutate({ plan_date: selectedDate, slot_type: 'evening', task_ids: reordered })
+      }
     }
     // Cross-slot: drop on star slot
     else if (toSlot === 'star' || over.id === 'star-slot') {
@@ -261,12 +277,13 @@ export default function PBSector() {
       // Remove from source
       const newFocus = focusTaskIds.filter(id => id !== taskId)
       const newQuick = quickWinIds.filter(id => id !== taskId)
+      const newEvening = eveningTaskIds.filter(id => id !== taskId)
       // If old star exists, demote to focus #1
       if (oldStar && oldStar !== taskId) {
         newFocus.unshift(oldStar)
         if (newFocus.length > 3) newQuick.unshift(newFocus.pop()!)
       }
-      handleSavePlan({ star_task_id: taskId, focus_task_ids: newFocus, quick_win_ids: newQuick })
+      handleSavePlan({ star_task_id: taskId, focus_task_ids: newFocus, quick_win_ids: newQuick, evening_task_ids: newEvening })
     }
     // Cross-slot: drop on focus
     else if (toSlot === 'focus' || over.id === 'focus-slot') {
@@ -274,20 +291,32 @@ export default function PBSector() {
       let newStar = starTaskId
       const newFocus = focusTaskIds.filter(id => id !== taskId)
       const newQuick = quickWinIds.filter(id => id !== taskId)
+      const newEvening = eveningTaskIds.filter(id => id !== taskId)
       if (fromSlot === 'star') newStar = null
       newFocus.push(taskId)
-      handleSavePlan({ star_task_id: newStar, focus_task_ids: newFocus.slice(0, 3), quick_win_ids: newQuick })
+      handleSavePlan({ star_task_id: newStar, focus_task_ids: newFocus.slice(0, 3), quick_win_ids: newQuick, evening_task_ids: newEvening })
     }
     // Cross-slot: drop on quick wins
     else if (toSlot === 'quick_win' || over.id === 'quick-win-slot') {
       let newStar = starTaskId
       const newFocus = focusTaskIds.filter(id => id !== taskId)
       const newQuick = quickWinIds.filter(id => id !== taskId)
+      const newEvening = eveningTaskIds.filter(id => id !== taskId)
       if (fromSlot === 'star') newStar = null
       newQuick.push(taskId)
-      handleSavePlan({ star_task_id: newStar, focus_task_ids: newFocus, quick_win_ids: newQuick })
+      handleSavePlan({ star_task_id: newStar, focus_task_ids: newFocus, quick_win_ids: newQuick, evening_task_ids: newEvening })
     }
-  }, [focusTaskIds, quickWinIds, starTaskId, focusTasks.length, selectedDate, reorderPlan, handleSavePlan])
+    // Cross-slot: drop on evening
+    else if (toSlot === 'evening' || over.id === 'evening-slot') {
+      let newStar = starTaskId
+      const newFocus = focusTaskIds.filter(id => id !== taskId)
+      const newQuick = quickWinIds.filter(id => id !== taskId)
+      const newEvening = eveningTaskIds.filter(id => id !== taskId)
+      if (fromSlot === 'star') newStar = null
+      newEvening.push(taskId)
+      handleSavePlan({ star_task_id: newStar, focus_task_ids: newFocus, quick_win_ids: newQuick, evening_task_ids: newEvening })
+    }
+  }, [focusTaskIds, quickWinIds, eveningTaskIds, starTaskId, focusTasks.length, selectedDate, reorderPlan, handleSavePlan])
 
   // ── Loading / Error states ──────────────────────────────
 
@@ -400,6 +429,13 @@ export default function PBSector() {
               onClickTitle={handleClickTitle}
               onAddClick={() => openSearch('quick_win')}
             />
+
+            <EveningTaskSlot
+              tasks={eveningTasks}
+              onComplete={handleComplete}
+              onClickTitle={handleClickTitle}
+              onAddClick={() => openSearch('evening')}
+            />
           </div>
 
           {/* Drag overlay */}
@@ -432,6 +468,7 @@ export default function PBSector() {
             selectedDate={selectedDate}
             today={today}
           />
+          <RelayCard />
           <SystemHealthCard data={healthData} isLoading={healthLoading} />
         </div>
       </div>
@@ -482,7 +519,7 @@ export default function PBSector() {
         isOpen={searchOpen}
         onClose={() => setSearchOpen(false)}
         onSelect={handleAddToSlot}
-        slotLabel={searchSlot === 'star' ? 'Star Task' : searchSlot === 'focus' ? 'Focus Tasks' : 'Quick Wins'}
+        slotLabel={searchSlot === 'star' ? 'Star Task' : searchSlot === 'focus' ? 'Focus Tasks' : searchSlot === 'evening' ? 'This Evening' : 'Quick Wins'}
       />
 
       {/* Task Detail Slide-over */}

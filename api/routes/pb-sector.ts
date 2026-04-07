@@ -210,6 +210,7 @@ export async function handleCreateOrUpdatePlan(request: Request, user: AuthUser,
     star_task_id?: string | null
     focus_task_ids?: string[]
     quick_win_ids?: string[]
+    evening_task_ids?: string[]
     intention?: string
     gratitude?: string
   }
@@ -224,6 +225,7 @@ export async function handleCreateOrUpdatePlan(request: Request, user: AuthUser,
     if (body.star_task_id !== undefined) { sets.push('star_task_id = ?'); vals.push(body.star_task_id) }
     if (body.focus_task_ids !== undefined) { sets.push('focus_task_ids = ?'); vals.push(JSON.stringify(body.focus_task_ids)) }
     if (body.quick_win_ids !== undefined) { sets.push('quick_win_ids = ?'); vals.push(JSON.stringify(body.quick_win_ids)) }
+    if (body.evening_task_ids !== undefined) { sets.push('evening_task_ids = ?'); vals.push(JSON.stringify(body.evening_task_ids)) }
     if (body.intention !== undefined) { sets.push('intention = ?'); vals.push(body.intention) }
     if (body.gratitude !== undefined) { sets.push('gratitude = ?'); vals.push(body.gratitude) }
     vals.push(body.plan_date)
@@ -234,12 +236,13 @@ export async function handleCreateOrUpdatePlan(request: Request, user: AuthUser,
     // Create
     const id = generateId()
     await env.DB.prepare(
-      'INSERT INTO daily_plans (id, plan_date, star_task_id, focus_task_ids, quick_win_ids, intention, gratitude) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO daily_plans (id, plan_date, star_task_id, focus_task_ids, quick_win_ids, evening_task_ids, intention, gratitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     ).bind(
       id, body.plan_date,
       body.star_task_id || null,
       body.focus_task_ids ? JSON.stringify(body.focus_task_ids) : null,
       body.quick_win_ids ? JSON.stringify(body.quick_win_ids) : null,
+      body.evening_task_ids ? JSON.stringify(body.evening_task_ids) : null,
       body.intention || null,
       body.gratitude || null
     ).run()
@@ -257,10 +260,10 @@ export async function handleReorderPlan(request: Request, env: Env): Promise<Res
     task_ids: string[]
   }
   if (!body.plan_date) return error('plan_date required', 400)
-  if (!body.slot_type || !['focus', 'quick_win'].includes(body.slot_type)) return error('slot_type must be focus or quick_win', 400)
+  if (!body.slot_type || !['focus', 'quick_win', 'evening'].includes(body.slot_type)) return error('slot_type must be focus, quick_win, or evening', 400)
   if (!Array.isArray(body.task_ids)) return error('task_ids must be an array', 400)
 
-  const column = body.slot_type === 'focus' ? 'focus_task_ids' : 'quick_win_ids'
+  const column = body.slot_type === 'focus' ? 'focus_task_ids' : body.slot_type === 'evening' ? 'evening_task_ids' : 'quick_win_ids'
   await env.DB.prepare(
     `UPDATE daily_plans SET ${column} = ?, updated_at = datetime('now') WHERE plan_date = ?`
   ).bind(JSON.stringify(body.task_ids), body.plan_date).run()
@@ -276,8 +279,8 @@ export async function handlePromoteTask(request: Request, env: Env): Promise<Res
   const body = await request.json() as {
     plan_date: string
     task_id: string
-    from_slot: 'star' | 'focus' | 'quick_win'
-    to_slot: 'star' | 'focus' | 'quick_win'
+    from_slot: 'star' | 'focus' | 'quick_win' | 'evening'
+    to_slot: 'star' | 'focus' | 'quick_win' | 'evening'
   }
   if (!body.plan_date) return error('plan_date required', 400)
   if (!body.task_id) return error('task_id required', 400)
@@ -291,12 +294,15 @@ export async function handlePromoteTask(request: Request, env: Env): Promise<Res
   const starTaskId: string | null = plan.star_task_id || null
   let focusIds: string[] = plan.focus_task_ids ? JSON.parse(plan.focus_task_ids) : []
   let quickWinIds: string[] = plan.quick_win_ids ? JSON.parse(plan.quick_win_ids) : []
+  let eveningIds: string[] = plan.evening_task_ids ? JSON.parse(plan.evening_task_ids) : []
 
   // Remove from source slot
   if (body.from_slot === 'star') {
     if (starTaskId !== body.task_id) return error('Task is not in the star slot', 400)
   } else if (body.from_slot === 'focus') {
     focusIds = focusIds.filter(id => id !== body.task_id)
+  } else if (body.from_slot === 'evening') {
+    eveningIds = eveningIds.filter(id => id !== body.task_id)
   } else {
     quickWinIds = quickWinIds.filter(id => id !== body.task_id)
   }
@@ -311,6 +317,8 @@ export async function handlePromoteTask(request: Request, env: Env): Promise<Res
     newStarTaskId = body.task_id
   } else if (body.to_slot === 'focus') {
     if (!focusIds.includes(body.task_id)) focusIds.push(body.task_id)
+  } else if (body.to_slot === 'evening') {
+    if (!eveningIds.includes(body.task_id)) eveningIds.push(body.task_id)
   } else {
     if (!quickWinIds.includes(body.task_id)) quickWinIds.push(body.task_id)
   }
@@ -321,11 +329,12 @@ export async function handlePromoteTask(request: Request, env: Env): Promise<Res
   }
 
   await env.DB.prepare(
-    `UPDATE daily_plans SET star_task_id = ?, focus_task_ids = ?, quick_win_ids = ?, updated_at = datetime('now') WHERE plan_date = ?`
+    `UPDATE daily_plans SET star_task_id = ?, focus_task_ids = ?, quick_win_ids = ?, evening_task_ids = ?, updated_at = datetime('now') WHERE plan_date = ?`
   ).bind(
     newStarTaskId,
     JSON.stringify(focusIds),
     JSON.stringify(quickWinIds),
+    JSON.stringify(eveningIds),
     body.plan_date
   ).run()
 

@@ -290,8 +290,73 @@ export default function CommandPalette() {
     return items
   }, [tasks, projects, team, meetings, navigate])
 
+  // Project mode: when query starts with `/`
+  const isProjectMode = query.startsWith('/')
+
+  // Build project-mode items with enhanced info
+  const projectModeItems = useMemo<CommandItem[]>(() => {
+    if (!isProjectMode) return []
+
+    // Compute task counts per project
+    const taskCounts: Record<string, number> = {}
+    const nextActions: Record<string, string> = {}
+    for (const task of tasks.filter(t => !t.completed)) {
+      const pid = (task as any).project_id || (task as any).project_slug
+      if (pid) {
+        taskCounts[pid] = (taskCounts[pid] || 0) + 1
+        // First open task becomes next action (sorted by priority already from API)
+        if (!nextActions[pid]) {
+          nextActions[pid] = task.title || task.description || ''
+        }
+      }
+    }
+
+    return projects.map((project) => {
+      const count = taskCounts[project.slug] || 0
+      const next = nextActions[project.slug] || ''
+      const stagePart = project.stage ? `${project.stage}` : ''
+      const countPart = `${count} task${count !== 1 ? 's' : ''}`
+      const nextPart = next ? ` · ${next.length > 40 ? next.slice(0, 40) + '...' : next}` : ''
+
+      return {
+        id: `proj-${project.slug}`,
+        label: project.title,
+        sublabel: `${stagePart}${stagePart ? ' · ' : ''}${countPart}${nextPart}`,
+        icon: FolderKanban,
+        action: () => { navigate(`/projects/${project.slug}`); setOpen(false) },
+        category: 'project' as const,
+        _taskCount: count,
+        _stage: project.stage || '',
+      } as CommandItem & { _taskCount: number; _stage: string }
+    }).sort((a, b) => {
+      // Sort by task count descending (most active first), then alphabetically
+      const ac = (a as any)._taskCount || 0
+      const bc = (b as any)._taskCount || 0
+      if (bc !== ac) return bc - ac
+      return a.label.localeCompare(b.label)
+    })
+  }, [isProjectMode, projects, tasks, navigate])
+
   // Filter by query (fuzzy)
   const filtered = useMemo(() => {
+    // Project mode: filter within projects only
+    if (isProjectMode) {
+      const subQuery = query.slice(1).trim().toLowerCase()
+      if (!subQuery) return projectModeItems.slice(0, 15)
+      return projectModeItems
+        .filter((i) => {
+          const text = `${i.label} ${i.sublabel || ''}`.toLowerCase()
+          let idx = 0
+          for (const char of subQuery) {
+            idx = text.indexOf(char, idx)
+            if (idx === -1) return false
+            idx++
+          }
+          return true
+        })
+        .slice(0, 15)
+    }
+
     if (!query.trim()) {
       // Show context + actions + filters + navigation when no query
       return allItems.filter((i) => i.category === 'context' || i.category === 'action' || i.category === 'filter' || i.category === 'navigation')
@@ -310,7 +375,7 @@ export default function CommandPalette() {
         return true
       })
       .slice(0, 12)
-  }, [allItems, query])
+  }, [allItems, query, isProjectMode, projectModeItems])
 
   // Reset selection when filter changes
   useEffect(() => { setSelectedIndex(0) }, [filtered])
@@ -354,7 +419,7 @@ export default function CommandPalette() {
     filter: 'Quick Filters',
     navigation: 'Go To',
     task: 'Tasks',
-    project: 'Projects',
+    project: isProjectMode ? 'Switch Project' : 'Projects',
     person: 'People',
     meeting: 'Meetings',
   }
@@ -388,13 +453,16 @@ export default function CommandPalette() {
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <Search size={16} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+          {isProjectMode
+            ? <FolderKanban size={16} style={{ color: 'var(--teal)', opacity: 0.7 }} />
+            : <Search size={16} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+          }
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search tasks, projects, people, or type a command..."
+            placeholder={isProjectMode ? "Switch to project..." : "Search tasks, projects, people, or type a command..."}
             className="flex-1 text-sm outline-none"
             style={{ color: 'var(--ink)', background: 'none', border: 'none' }}
           />
@@ -461,6 +529,7 @@ export default function CommandPalette() {
           <span>↑↓ navigate</span>
           <span>↵ select</span>
           <span>esc close</span>
+          {!isProjectMode && <span>/ projects</span>}
           <span className="ml-auto flex items-center gap-1">
             <Command size={9} />K to toggle
           </span>
