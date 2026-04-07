@@ -443,7 +443,7 @@ export default function CommandPalette() {
         role="dialog"
         aria-label="Command palette"
         aria-modal="true"
-        className="w-full max-w-lg rounded-xl shadow-2xl border overflow-hidden"
+        className="w-full max-w-lg rounded-xl shadow-2xl border overflow-hidden card-elevated"
         initial={{ opacity: 0, scale: 0.95, y: -8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: -4 }}

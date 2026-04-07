@@ -154,7 +154,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
         role="dialog"
         aria-label="Create new task"
         aria-modal="true"
-        className="rounded-xl shadow-xl border w-full max-w-lg mx-4"
+        className="rounded-xl shadow-xl border w-full max-w-lg mx-4 card-elevated"
         style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}
       >

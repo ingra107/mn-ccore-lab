@@ -75,7 +75,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
       {/* Panel */}
       <div
         ref={panelRef}
-        className="fixed right-0 top-0 h-full z-50 overflow-y-auto shadow-2xl task-detail-panel"
+        className="fixed right-0 top-0 h-full z-50 overflow-y-auto shadow-2xl task-detail-panel card-elevated"
         style={{
           width: 'min(480px, 90vw)',
           backgroundColor: 'var(--cream)',

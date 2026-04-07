@@ -6,14 +6,14 @@
   /* Colors — OKLCH for perceptual uniformity + dark mode via lightness math */
   --ink: oklch(0.15 0.02 250);           /* #0f1923 */
   --slate: oklch(0.35 0.03 230);         /* #2c3e50 */
-  --gold: oklch(0.72 0.10 85);           /* #c9a84c */
+  --gold: oklch(0.73 0.12 85);           /* #c9a84c */
   --gold-light: oklch(0.95 0.01 85);     /* #f0efe8 */
   --cream: oklch(1.00 0 0);              /* #ffffff */
-  --maroon: oklch(0.35 0.15 10);         /* #7a0019 */
+  --maroon: oklch(0.35 0.15 20);         /* #7a0019 */
   --ice: oklch(0.97 0.005 250);          /* #f4f5f7 */
-  --teal: oklch(0.55 0.10 192);          /* #2d8a8a */
-  --orange: oklch(0.52 0.15 40);         /* #c2410c */
-  --green: oklch(0.60 0.16 145);         /* #16a34a */
+  --teal: oklch(0.55 0.1 190);           /* #2d8a8a */
+  --orange: oklch(0.6 0.18 45);          /* #c2410c */
+  --green: oklch(0.6 0.18 145);          /* #16a34a */
   --green-light: oklch(0.70 0.17 145);   /* #22c55e */
 
   --font-display: 'Fraunces', Georgia, serif;
@@ -26,8 +26,17 @@
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(15, 25, 35, 0.06);
 
-  --shadow-card: 0 1px 4px rgba(15, 25, 35, 0.12);
+  /* Border-radius scale */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* Shadow elevation system */
+  --shadow-flat: none;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.08);
   --shadow-card-hover: 0 6px 16px rgba(15, 25, 35, 0.18);
+  --shadow-elevated: 0 4px 12px rgba(0,0,0,0.15);
 
   /* Transition constants — Material Design 3 / Apple HIG consensus */
   --transition-fast: 150ms;
@@ -42,26 +51,27 @@
 /* ── Dark mode variables ── */
 /* Dark-first: deeper, more neutral dark — OKLCH lightness math */
 .dark {
-  --ink: oklch(0.90 0.01 230);           /* #e2e8f0 */
+  --ink: oklch(0.92 0.01 250);           /* #e2e8f0 */
   --ink-bright: oklch(1.00 0 0);         /* #ffffff */
-  --slate: oklch(0.70 0.02 240);         /* #94a3b8 */
-  --gold: oklch(0.72 0.10 85);           /* #c9a84c */
+  --slate: oklch(0.7 0.02 250);          /* #94a3b8 */
+  --gold: oklch(0.73 0.12 85);           /* #c9a84c */
   --gold-light: oklch(0.18 0.02 240);    /* #1a2332 */
-  --cream: oklch(0.10 0.01 250);         /* #0b1017 */
-  --maroon: oklch(0.65 0.15 10);         /* #e85d7a */
+  --cream: oklch(0.12 0.01 250);         /* #0b1017 */
+  --maroon: oklch(0.65 0.15 20);         /* #e85d7a */
   --ice: oklch(0.14 0.015 240);          /* #131a24 */
-  --teal: oklch(0.70 0.10 192);          /* #3db8b8 */
-  --orange: oklch(0.65 0.14 45);         /* #e8713a */
-  --green: oklch(0.78 0.16 145);         /* #4ade80 */
-  --green-light: oklch(0.78 0.16 145);   /* #4ade80 */
+  --teal: oklch(0.70 0.1 190);           /* #3db8b8 */
+  --orange: oklch(0.65 0.18 45);         /* #e8713a */
+  --green: oklch(0.78 0.18 145);         /* #4ade80 */
+  --green-light: oklch(0.78 0.18 145);   /* #4ade80 */
 
   --muted: rgba(148, 163, 184, 0.4);
 
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(255, 255, 255, 0.06);
 
-  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
   --shadow-card-hover: 0 6px 16px rgba(0, 0, 0, 0.6);
+  --shadow-elevated: 0 4px 12px rgba(0,0,0,0.4);
 
   --bg-rgb: 11, 16, 23;
 
@@ -80,7 +90,7 @@
 .density-compact {
   --density-card-padding: 12px;
   --density-gap: 12px;
-  --density-card-gap: 6px;
+  --density-card-gap: 4px;
   --density-text-sm: 13px;
   --density-text-xs: 11px;
 }
@@ -90,15 +100,15 @@
   /* Applied via density vars below */
 }
 .density-compact .task-grid-row {
-  padding-top: 6px !important;
-  padding-bottom: 6px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
 }
 .density-compact .table-container .col-header {
   font-size: 9px;
 }
 .density-compact .manuscript-list-row {
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
 }
 
 /* ── Base Styles ── */
@@ -237,7 +247,7 @@ a:hover {
 /* ── Table container ── */
 .table-container {
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--cream);
 }
@@ -251,7 +261,7 @@ a:hover {
 .card {
   background: var(--cream);
   box-shadow: var(--shadow-card);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   transition: box-shadow 0.25s ease, background-color 0.12s ease;
 }
 
@@ -267,6 +277,14 @@ a:hover {
 
 .dark .card:hover {
   background: #161f2b;
+}
+
+/* ── Elevated card with dark neumorphism ── */
+.card-elevated {
+  box-shadow: var(--shadow-elevated);
+}
+.dark .card-elevated {
+  box-shadow: var(--shadow-elevated), inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
 /* Luminance-stepping for bento cards in dark mode */
@@ -338,7 +356,7 @@ a:hover {
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
   font-weight: 500;
   font-family: var(--font-sans);
@@ -449,7 +467,7 @@ a:hover {
 }
 .skeleton {
   background: var(--ink);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   animation: skeleton-pulse 1.8s ease-in-out infinite;
 }
 
@@ -634,7 +652,7 @@ a:hover {
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   background: none;
   cursor: pointer;
@@ -671,7 +689,7 @@ a:hover {
   /* Filter pills — larger tap targets for touch */
   .filter-pill {
     min-height: 36px;
-    padding: 6px 12px;
+    padding: 8px 12px;
   }
 
   /* Table container — tighter border radius on mobile */
@@ -687,7 +705,7 @@ a:hover {
   /* New project / action buttons — larger touch targets */
   .new-project-btn {
     min-height: 36px;
-    padding: 6px 12px;
+    padding: 8px 12px;
   }
 
   /* Cards — reduce bottom gap on mobile */

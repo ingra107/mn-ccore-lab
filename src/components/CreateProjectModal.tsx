@@ -111,7 +111,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
         role="dialog"
         aria-modal="true"
         aria-label="Create new project"
-        className="rounded-xl shadow-xl border w-full max-w-lg mx-4"
+        className="rounded-xl shadow-xl border w-full max-w-lg mx-4 card-elevated"
         style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}
       >
