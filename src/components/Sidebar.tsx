@@ -222,7 +222,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   {!collapsed && item.badge !== undefined && item.badge > 0 && (
                     <span
                       className="ml-auto text-xs px-1.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: 'var(--maroon)', color: 'white' }}
+                      style={{
+                        backgroundColor: 'var(--maroon)',
+                        color: 'white',
+                        animation: item.to === '/my-tasks' ? 'badge-pulse 2s ease-in-out infinite' : undefined,
+                      }}
                     >
                       {item.badge}
                     </span>

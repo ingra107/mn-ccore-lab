@@ -356,6 +356,11 @@ function TaskGridRow({
         ...colStyle,
         padding: '10px 16px',
         borderBottom: '1px solid var(--border-subtle)',
+        borderLeft: `3px solid ${
+          task.priority === 'urgent' ? 'var(--maroon)' :
+          task.priority === 'high' ? 'var(--orange)' :
+          'transparent'
+        }`,
         cursor: onSelect ? 'pointer' : 'default',
         opacity: isDone ? 0.5 : 1,
         transition: 'background 150ms ease, opacity 150ms ease',
@@ -424,6 +429,25 @@ function TaskGridRow({
           >
             {formatBrandName(task.title || task.description)}
           </span>
+          {task.source && task.source !== 'manual' && (
+            <span
+              style={{
+                fontSize: '9px',
+                padding: '1px 5px',
+                borderRadius: '8px',
+                backgroundColor: task.source === 'meeting' ? 'rgba(45,138,138,0.1)' :
+                  task.source === 'recurrence' ? 'rgba(201,168,76,0.1)' :
+                  'rgba(148,163,184,0.1)',
+                color: task.source === 'meeting' ? 'var(--teal)' :
+                  task.source === 'recurrence' ? 'var(--gold)' :
+                  'var(--slate)',
+                flexShrink: 0,
+                lineHeight: '14px',
+              }}
+            >
+              {task.source === 'meeting' ? 'meeting' : task.source === 'recurrence' ? 'recurring' : task.source}
+            </span>
+          )}
         </div>
       </div>
 
