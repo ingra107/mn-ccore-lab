@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Sparkles, RefreshCw } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { useInsightConnections } from '../../hooks/useApiData'
 import { useQueryClient } from '@tanstack/react-query'
 
-export default function InsightsCard() {
+function InsightsCard() {
   const { data: connections = [], isLoading } = useInsightConnections()
   const queryClient = useQueryClient()
   const [refreshing, setRefreshing] = useState(false)
@@ -34,7 +34,7 @@ export default function InsightsCard() {
           style={{
             color: 'var(--teal)',
             background: 'rgba(45,138,138,0.06)',
-            border: '1px solid rgba(45,138,138,0.12)',
+            border: '1px solid color-mix(in srgb, var(--teal) 12%, transparent)',
             cursor: refreshing ? 'default' : 'pointer',
             opacity: refreshing ? 0.5 : 1,
           }}
@@ -168,7 +168,7 @@ export default function InsightsCard() {
                   className="flex-shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded"
                   style={{
                     background: edge.strength > 0.7
-                      ? 'rgba(45,138,138,0.12)'
+                      ? 'color-mix(in srgb, var(--teal) 12%, transparent)'
                       : edge.strength > 0.4
                       ? 'rgba(201,168,76,0.1)'
                       : 'rgba(100,116,139,0.08)',
@@ -189,3 +189,5 @@ export default function InsightsCard() {
     </BentoCard>
   )
 }
+
+export default memo(InsightsCard)

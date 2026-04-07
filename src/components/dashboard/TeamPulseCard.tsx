@@ -1,10 +1,10 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { Users } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { useTeamPulse } from '../../hooks/useApiData'
 import { directors, getAllMembers } from '../../data/team'
 
-export default function TeamPulseCard() {
+function TeamPulseCard() {
   const { data } = useTeamPulse(48)
 
   const allMembers = useMemo(() => {
@@ -105,6 +105,8 @@ export default function TeamPulseCard() {
     </BentoCard>
   )
 }
+
+export default memo(TeamPulseCard)
 
 function MemberDot({ name, initials, photoUrl, isActive }: {
   name: string; initials: string; photoUrl?: string; isActive: boolean

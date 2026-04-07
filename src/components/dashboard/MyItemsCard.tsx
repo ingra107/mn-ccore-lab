@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { User, Circle, CheckCircle2, ArrowRight, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -9,7 +9,7 @@ import { getPersonInfo } from '../../data/team'
 import { isOverdue } from '../../lib/dateUtils'
 import BentoCard from './BentoCard'
 
-export default function MyItemsCard() {
+function MyItemsCard() {
   const { user } = useAuth()
   const userSlug = user?.email?.split('@')[0] || ''
   const { data: allItems = [] } = useActionItems(
@@ -147,3 +147,5 @@ export default function MyItemsCard() {
     </BentoCard>
   )
 }
+
+export default memo(MyItemsCard)

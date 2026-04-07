@@ -85,11 +85,6 @@ function recordCardClick(cardId: string) {
   localStorage.setItem(CLICKS_KEY, JSON.stringify(counts))
 }
 
-function isAdaptiveSorting(): boolean {
-  const counts = getClickCounts()
-  return Object.values(counts).some(c => c > 2)
-}
-
 function getSavedTab(): DashboardTab {
   try {
     const stored = localStorage.getItem(TAB_KEY) as DashboardTab
@@ -140,7 +135,7 @@ export default function Dashboard() {
   const [pinnedCards, setPinnedCards] = useState<Set<string>>(getPinnedCards)
   const [activeTab, setActiveTab] = useState<DashboardTab>(getSavedTab)
   const [clickCounts, setClickCounts] = useState<Record<string, number>>(getClickCounts)
-  const adaptive = isAdaptiveSorting()
+  const adaptive = useMemo(() => Object.values(clickCounts).some(c => c > 2), [clickCounts])
 
   const handleTabChange = useCallback((tab: DashboardTab) => {
     setActiveTab(tab)

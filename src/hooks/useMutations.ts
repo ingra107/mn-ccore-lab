@@ -8,7 +8,7 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, acknowledgeTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone, createDeadlineDependency, deleteDeadlineDependency, createSubmissionEvent, updateSubmissionEvent, deleteSubmissionEvent, createRegulatoryItem, updateRegulatoryItem, renewRegulatoryItem, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference, createPBSession, bulkCreatePBSessions } from '../lib/api'
+import { fetchApi, createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, acknowledgeTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone, createDeadlineDependency, deleteDeadlineDependency, createSubmissionEvent, updateSubmissionEvent, deleteSubmissionEvent, createRegulatoryItem, updateRegulatoryItem, renewRegulatoryItem, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference, createPBSession, bulkCreatePBSessions } from '../lib/api'
 import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, RegulatoryItemRow, GrantMilestoneRow, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
@@ -133,11 +133,10 @@ export function useUpdateProfile(slug: string) {
 
   return useMutation({
     mutationFn: (fields: Record<string, string | null>) =>
-      fetch(`/api/team/${slug}`, {
+      fetchApi(`/api/team/${slug}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fields),
-      }).then((r) => r.json()),
+      }),
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['team'] })
@@ -155,10 +154,9 @@ export function useToggleActionItem() {
 
   return useMutation({
     mutationFn: (itemId: string) =>
-      fetch(`/api/action-items/${itemId}/toggle`, {
+      fetchApi(`/api/action-items/${itemId}/toggle`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      }).then((r) => r.json()),
+      }),
 
     onMutate: async (itemId) => {
       // Optimistically toggle in all action-items caches
@@ -218,11 +216,10 @@ export function useCreateActionItem() {
 
   return useMutation({
     mutationFn: (input: { meeting_id?: string; project_id?: string; description: string; assignee: string; due_date?: string }) =>
-      fetch('/api/action-items', {
+      fetchApi('/api/action-items', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
-      }).then((r) => r.json()),
+      }),
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['action-items'] })
@@ -239,11 +236,10 @@ export function useAddAgendaItem(meetingId: string) {
 
   return useMutation({
     mutationFn: (input: { content: string; project_id?: string; type?: string; document_url?: string }) =>
-      fetch(`/api/meetings/${meetingId}/agenda`, {
+      fetchApi(`/api/meetings/${meetingId}/agenda`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
-      }).then((r) => r.json()),
+      }),
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
@@ -258,11 +254,10 @@ export function useUpdateMeetingNotes(meetingId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (notes: string) =>
-      fetch(`/api/meetings/${meetingId}/notes`, {
+      fetchApi(`/api/meetings/${meetingId}/notes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes }),
-      }).then((r) => r.json()),
+      }),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
@@ -276,15 +271,11 @@ export function useUpdateDigestStatus() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const res = await fetch(`/api/digest/${id}/status`, {
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      fetchApi(`/api/digest/${id}/status`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
-      })
-      if (!res.ok) throw new Error('Failed')
-      return res.json()
-    },
+      }),
 
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey: ['digest'] })
@@ -309,11 +300,10 @@ export function usePostProjectUpdate(projectSlug: string) {
 
   return useMutation({
     mutationFn: (input: { content: string; update_type?: string }) =>
-      fetch(`/api/projects/${projectSlug}/updates`, {
+      fetchApi(`/api/projects/${projectSlug}/updates`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
-      }).then((r) => r.json()),
+      }),
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['project-updates', projectSlug] })
@@ -449,11 +439,10 @@ export function useCreateSubtask(taskId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (title: string) =>
-      fetch(`/api/tasks/${taskId}/subtasks`, {
+      fetchApi(`/api/tasks/${taskId}/subtasks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title }),
-      }).then((r) => r.json()),
+      }),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['subtasks', taskId] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
@@ -465,7 +454,7 @@ export function useToggleSubtask(taskId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (subtaskId: string) =>
-      fetch(`/api/subtasks/${subtaskId}/toggle`, { method: 'POST' }).then((r) => r.json()),
+      fetchApi(`/api/subtasks/${subtaskId}/toggle`, { method: 'POST' }),
     onMutate: async (subtaskId) => {
       await queryClient.cancelQueries({ queryKey: ['subtasks', taskId] })
       const prev = queryClient.getQueryData<SubtaskRow[]>(['subtasks', taskId])
@@ -489,7 +478,7 @@ export function useDeleteSubtask(taskId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (subtaskId: string) =>
-      fetch(`/api/subtasks/${subtaskId}/delete`, { method: 'POST' }).then((r) => r.json()),
+      fetchApi(`/api/subtasks/${subtaskId}/delete`, { method: 'POST' }),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['subtasks', taskId] })
     },

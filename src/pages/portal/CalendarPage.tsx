@@ -16,9 +16,9 @@ import { staggerContainer, staggerItem } from '../../lib/animations'
 type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 
 const eventColors: Record<string, { color: string; bg: string }> = {
-  meeting: { color: 'var(--teal)', bg: 'rgba(45,138,138,0.12)' },
+  meeting: { color: 'var(--teal)', bg: 'color-mix(in srgb, var(--teal) 12%, transparent)' },
   task: { color: 'var(--gold)', bg: 'rgba(201,168,76,0.12)' },
-  milestone: { color: 'var(--maroon)', bg: 'rgba(122,0,25,0.12)' },
+  milestone: { color: 'var(--maroon)', bg: 'color-mix(in srgb, var(--maroon) 12%, transparent)' },
 }
 
 const eventIcons: Record<string, typeof Calendar> = {

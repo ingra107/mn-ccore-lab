@@ -18,6 +18,7 @@ import { useDigest, useDigestDates, useProjects } from '../hooks/useApiData'
 import type { DigestPaper } from '../hooks/useApiData'
 import { useUpdateDigestStatus, useLinkPaper } from '../hooks/useMutations'
 import { getPersonInfo } from '../data/team'
+import { formatMediumDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 
 type StatusFilter = 'all' | 'new' | 'saved'
@@ -29,8 +30,7 @@ function formatDate(dateStr: string): string {
 
 function formatPubDate(dateStr: string | null): string {
   if (!dateStr) return ''
-  const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  return formatMediumDate(dateStr)
 }
 
 function truncateAuthors(authors: string | null): string {

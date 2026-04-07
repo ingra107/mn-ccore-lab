@@ -4,6 +4,7 @@ import { Menu, X, Sun, Moon, ChevronUp, ChevronDown } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
+import { useAuth } from '../hooks/useAuth'
 import { useTasks, useMeetingsApi } from '../hooks/useApiData'
 import PageTransition from './PageTransition'
 
@@ -46,6 +47,7 @@ const footerQuickLinks = [
 
 export default function Layout() {
   const { isDark, toggle } = useDarkMode()
+  const { isAuthenticated } = useAuth()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
@@ -56,11 +58,11 @@ export default function Layout() {
   const location = useLocation()
 
   // Task badge count (pending only, already deduped by useTasks hook)
-  const { data: tasks = [] } = useTasks()
+  const { data: tasks = [] } = useTasks(undefined, { enabled: isAuthenticated })
   const pendingCount = useMemo(() => tasks.filter((t) => !t.completed).length, [tasks])
 
   // Next upcoming meeting
-  const { data: meetings = [] } = useMeetingsApi()
+  const { data: meetings = [] } = useMeetingsApi({ enabled: isAuthenticated })
   const nextMeetingLabel = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
     const upcoming = meetings

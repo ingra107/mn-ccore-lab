@@ -8,6 +8,7 @@ import { CardSkeleton } from '../../components/LoadingSkeleton'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
+import { formatShortDate } from '../../lib/dateUtils'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
@@ -231,7 +232,7 @@ export default function AnalyticsPage() {
               <div key={t.id} className="flex items-center gap-2 text-xs" style={{ color: 'var(--ink)' }}>
                 <Circle size={10} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
                 <span className="truncate">{t.title}</span>
-                {t.due_date && <span style={{ color: 'var(--maroon)', fontSize: '10px', flexShrink: 0 }}>Due {new Date(t.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                {t.due_date && <span style={{ color: 'var(--maroon)', fontSize: '10px', flexShrink: 0 }}>Due {formatShortDate(t.due_date)}</span>}
               </div>
             ))}
           </div>

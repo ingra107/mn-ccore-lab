@@ -28,7 +28,7 @@ export default function WelcomeBanner() {
           {/* Progress ring */}
           <div style={{ width: 44, height: 44, position: 'relative', flexShrink: 0 }}>
             <svg width="44" height="44" viewBox="0 0 44 44" style={{ transform: 'rotate(-90deg)' }}>
-              <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(45,138,138,0.12)" strokeWidth="3" />
+              <circle cx="22" cy="22" r="18" fill="none" stroke="color-mix(in srgb, var(--teal) 12%, transparent)" strokeWidth="3" />
               <motion.circle
                 cx="22" cy="22" r="18" fill="none"
                 stroke="var(--teal)" strokeWidth="3" strokeLinecap="round"

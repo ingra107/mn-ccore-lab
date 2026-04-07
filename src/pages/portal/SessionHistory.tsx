@@ -172,7 +172,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
       <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
         {label}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.2, fontFamily: 'var(--font-display)' }}>
+      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2, fontFamily: 'var(--font-display)' }}>
         {value}
       </div>
       {sub && (
@@ -321,7 +321,7 @@ export default function SessionHistory() {
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.25 }}
           style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}
         >
           <StatCard
@@ -371,7 +371,7 @@ export default function SessionHistory() {
               gap: 8,
               padding: '8px 12px',
               fontSize: 10,
-              fontWeight: 600,
+              fontWeight: 500,
               color: 'var(--slate)',
               opacity: 0.5,
               textTransform: 'uppercase',
@@ -403,7 +403,7 @@ export default function SessionHistory() {
                   style={{
                     padding: '10px 12px 6px',
                     fontSize: 12,
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: 'var(--gold)',
                     opacity: 0.85,
                     borderBottom: '1px solid var(--border-subtle)',

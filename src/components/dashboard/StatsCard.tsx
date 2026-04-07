@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Users, FlaskConical, FileText, Award } from 'lucide-react'
 import { useCountUp } from '../../hooks/useCountUp'
 import BentoCard from './BentoCard'
@@ -56,7 +57,7 @@ function MiniStat({ icon: Icon, value, label, suffix = '', delay }: StatItem & {
   )
 }
 
-export default function StatsCard() {
+function StatsCard() {
   const { data: publications = [] } = usePublications()
   const { data: projects = [] } = useProjects()
   const { data: team = [] } = useTeam()
@@ -83,3 +84,5 @@ export default function StatsCard() {
     </BentoCard>
   )
 }
+
+export default memo(StatsCard)

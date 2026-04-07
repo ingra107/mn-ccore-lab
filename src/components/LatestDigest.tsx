@@ -10,7 +10,7 @@ function relevanceColor(score: number): string {
 }
 
 function relevanceBg(score: number): string {
-  if (score >= 80) return 'rgba(45,138,138,0.12)'
+  if (score >= 80) return 'color-mix(in srgb, var(--teal) 12%, transparent)'
   if (score >= 60) return 'rgba(201,168,76,0.12)'
   return 'rgba(44,62,80,0.08)'
 }

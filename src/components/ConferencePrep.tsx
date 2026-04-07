@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Presentation, Plus, Trash2, Plane, Check } from 'lucide-react'
 import CollapsibleSection from './CollapsibleSection'
+import EmptyState from './EmptyState'
 import InlineSelect from './InlineSelect'
 import { useUndoToast } from './UndoToast'
 import { useConferences } from '../hooks/useApiData'
@@ -36,7 +37,7 @@ const TYPE_OPTIONS: { value: ConferenceSubmissionType; label: string }[] = [
 const _STATUS_PILL_BG: Record<ConferenceStatus, string> = {
   planning: 'rgba(129,140,153,0.12)',
   submitted: 'rgba(201,168,76,0.12)',
-  accepted: 'rgba(45,138,138,0.12)',
+  accepted: 'color-mix(in srgb, var(--teal) 12%, transparent)',
   preparing: 'rgba(91,155,213,0.12)',
   presented: 'rgba(52,168,83,0.12)',
   rejected: 'rgba(134,48,62,0.12)',
@@ -418,7 +419,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               disabled={!form.conference.trim() || !form.title.trim()}
               style={{
                 fontSize: '11px',
-                fontWeight: 600,
+                fontWeight: 500,
                 padding: '5px 14px',
                 borderRadius: '6px',
                 border: 'none',
@@ -472,16 +473,10 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
 
       {/* Empty state */}
       {activeConfs.length === 0 && !showForm && (
-        <p
-          style={{
-            fontSize: '11px',
-            color: 'var(--slate)',
-            opacity: 0.4,
-            margin: '4px 0 0',
-          }}
-        >
-          No conference submissions yet
-        </p>
+        <EmptyState
+          icon={<Presentation size={24} />}
+          title="No conference submissions yet"
+        />
       )}
     </CollapsibleSection>
   )

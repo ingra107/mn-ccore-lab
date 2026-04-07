@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { memo, useMemo, useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { GitBranch } from 'lucide-react'
 import BentoCard from './BentoCard'
@@ -12,7 +12,7 @@ interface Stage {
   colorEnd: string
 }
 
-export default function PipelineCard() {
+function PipelineCard() {
   const { data: publications = [] } = usePublications()
   const [animated, setAnimated] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -160,3 +160,5 @@ export default function PipelineCard() {
     </BentoCard>
   )
 }
+
+export default memo(PipelineCard)

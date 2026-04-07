@@ -37,8 +37,8 @@ import { getDailyQuote } from '../../data/daily-quotes'
 
 // ── Helpers ────────────────────────────────────────────────
 
-function resolveTaskById(allTasks: any[], id: string): any | null {
-  return allTasks.find((t: any) => t.id === id) || null
+function resolveTaskById(allTasks: TaskRow[], id: string): TaskRow | null {
+  return allTasks.find((t) => t.id === id) || null
 }
 
 function parseJsonArray(val: string | null): string[] {
@@ -103,9 +103,9 @@ export default function PBSector() {
   const eveningTaskIds = useMemo(() => parseJsonArray(plan?.evening_task_ids ?? null), [plan])
 
   const starTask = useMemo(() => starTaskId ? resolveTaskById(allTasks, starTaskId) : null, [allTasks, starTaskId])
-  const focusTasks = useMemo(() => focusTaskIds.map(id => resolveTaskById(allTasks, id)).filter(Boolean), [allTasks, focusTaskIds])
-  const quickWinTasks = useMemo(() => quickWinIds.map(id => resolveTaskById(allTasks, id)).filter(Boolean), [allTasks, quickWinIds])
-  const eveningTasks = useMemo(() => eveningTaskIds.map(id => resolveTaskById(allTasks, id)).filter(Boolean), [allTasks, eveningTaskIds])
+  const focusTasks = useMemo(() => focusTaskIds.map(id => resolveTaskById(allTasks, id)).filter((t): t is TaskRow => t !== null), [allTasks, focusTaskIds])
+  const quickWinTasks = useMemo(() => quickWinIds.map(id => resolveTaskById(allTasks, id)).filter((t): t is TaskRow => t !== null), [allTasks, quickWinIds])
+  const eveningTasks = useMemo(() => eveningTaskIds.map(id => resolveTaskById(allTasks, id)).filter((t): t is TaskRow => t !== null), [allTasks, eveningTaskIds])
 
   // All task IDs currently in the plan
   const plannedIds = useMemo(() => {
@@ -493,7 +493,7 @@ export default function PBSector() {
                 outline: 'none',
                 boxShadow: '0 0 0 0px rgba(45,138,138,0)',
               }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(45,138,138,0.12)' }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.boxShadow = '0 0 0 3px color-mix(in srgb, var(--teal) 12%, transparent)' }}
               onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.boxShadow = '0 0 0 0px rgba(45,138,138,0)' }}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center gap-2" style={{

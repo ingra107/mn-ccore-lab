@@ -100,7 +100,7 @@ export default function PublicationDetail() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.25 }}
         >
           {/* Badges row */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -217,7 +217,7 @@ export default function PublicationDetail() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
+          transition={{ duration: 0.25, delay: 0.1 }}
         >
           <div
             style={{
@@ -322,7 +322,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.2 }}
+      transition={{ duration: 0.25, delay: 0.2 }}
       style={{ marginTop: '2rem' }}
     >
       <div className="flex items-center gap-2 mb-3">

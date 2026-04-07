@@ -44,7 +44,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.18 }}
+      transition={{ duration: 0.25, delay: 0.18 }}
       style={{ marginBottom: '2.5rem' }}
     >
       <div className="flex items-center gap-2 mb-3">

@@ -192,7 +192,7 @@ export default function Grants() {
                   fontSize: '10px',
                   fontWeight: 600,
                   color: 'var(--maroon)',
-                  background: 'rgba(122,0,25,0.12)',
+                  background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
                 }}
               >
                 <AlertTriangle size={10} />

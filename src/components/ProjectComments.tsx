@@ -39,7 +39,7 @@ export default function ProjectComments({ projectSlug }: Props) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.22 }}
+      transition={{ duration: 0.25, delay: 0.22 }}
       style={{ marginBottom: '2.5rem' }}
     >
       <div className="flex items-center gap-2 mb-3">

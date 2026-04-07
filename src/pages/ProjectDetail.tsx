@@ -31,7 +31,7 @@ import { useUpdateProject, useAddAgendaItem, useToggleActionItem, usePostProject
 import { useUndoToast } from '../components/UndoToast'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
-import { formatMediumDate, formatTimestamp } from '../lib/dateUtils'
+import { formatShortDate, formatMediumDate, formatTimestamp } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 import InlineSelect from '../components/InlineSelect'
 import WatchButton from '../components/WatchButton'
@@ -375,7 +375,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       letterSpacing: '0.06em',
                     }}
                   >
-                    Add to: {nextUpcomingMeeting.title.split(':')[0]} ({new Date(nextUpcomingMeeting.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                    Add to: {nextUpcomingMeeting.title.split(':')[0]} ({formatShortDate(nextUpcomingMeeting.date)})
                   </span>
                   <button
                     type="button"
@@ -594,7 +594,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         id="overview"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
+        transition={{ duration: 0.25, delay: 0.1 }}
         style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
       >
         <h2
@@ -635,7 +635,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 transform: 'translateY(-50%)',
                 zIndex: 1,
               }}
-              transition={{ duration: 0.4, ease: 'easeInOut' }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
             />
           )}
           {STAGES.map((stage, i) => {
@@ -770,7 +770,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           className="lg:col-span-3"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.15 }}
+          transition={{ duration: 0.25, delay: 0.15 }}
         >
           <h2
             style={{
@@ -967,7 +967,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           className="lg:col-span-2"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
+          transition={{ duration: 0.25, delay: 0.2 }}
         >
           <h2
             style={{
@@ -1357,7 +1357,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         id="action-items"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.25 }}
+        transition={{ duration: 0.25, delay: 0.25 }}
         style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
       >
         <h2
@@ -1512,7 +1512,7 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
       id="decisions"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.1 }}
+      transition={{ duration: 0.25, delay: 0.1 }}
       style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
     >
       <div className="flex items-center justify-between mb-3">
@@ -1613,7 +1613,7 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
                   marginTop: '4px',
                 }}
               >
-                {new Date(decision.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {formatMediumDate(decision.created_at)}
                 {decision.decided_by && ` -- ${decision.decided_by}`}
               </span>
             </div>
@@ -1705,7 +1705,7 @@ function ProjectDependenciesSection({ project, isPi }: { project: Project; isPi:
       id="dependencies"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.15 }}
+      transition={{ duration: 0.25, delay: 0.15 }}
       style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
     >
       <div className="flex items-center justify-between mb-3">
@@ -2107,7 +2107,7 @@ function RelatedProjectsSection({ projectSlug }: { projectSlug: string }) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.2 }}
+      transition={{ duration: 0.25, delay: 0.2 }}
       style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}
     >
       <div className="flex items-center gap-2 mb-3">

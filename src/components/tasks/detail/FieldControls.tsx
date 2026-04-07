@@ -8,6 +8,7 @@ import HoverCard from '../../HoverCard'
 import type { HoverCardData } from '../../HoverCard'
 import { useHoverCard } from '../../../hooks/useHoverCard'
 import { getPersonInfo } from '../../../data/team'
+import { formatMediumDate } from '../../../lib/dateUtils'
 import { useTeam } from '../../../hooks/useApiData'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
 
@@ -231,9 +232,7 @@ export function DateInput({ value, onChange }: { value: string; onChange: (v: st
   const inputRef = useRef<HTMLInputElement>(null)
   const isOverdue = value && new Date(value + 'T23:59:59') < new Date()
 
-  const formatted = value
-    ? new Date(value + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    : null
+  const formatted = value ? formatMediumDate(value) : null
 
   return (
     <div className="flex items-center gap-2">

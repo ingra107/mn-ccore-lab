@@ -231,7 +231,7 @@ function CascadeRow({
               fontSize: '10px',
               fontWeight: 500,
               color: impactItem.shift_days > 0 ? 'var(--gold)' : 'var(--teal)',
-              background: impactItem.shift_days > 0 ? 'rgba(201,168,76,0.12)' : 'rgba(45,138,138,0.12)',
+              background: impactItem.shift_days > 0 ? 'rgba(201,168,76,0.12)' : 'color-mix(in srgb, var(--teal) 12%, transparent)',
               padding: '2px 6px',
               borderRadius: 4,
               flexShrink: 0,

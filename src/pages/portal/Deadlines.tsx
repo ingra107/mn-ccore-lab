@@ -660,7 +660,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 const CONF_STATUS_PILL: Record<string, { bg: string; color: string }> = {
   planning: { bg: 'rgba(129,140,153,0.12)', color: 'var(--slate)' },
   submitted: { bg: 'rgba(201,168,76,0.12)', color: 'var(--gold)' },
-  accepted: { bg: 'rgba(45,138,138,0.12)', color: 'var(--teal)' },
+  accepted: { bg: 'color-mix(in srgb, var(--teal) 12%, transparent)', color: 'var(--teal)' },
   preparing: { bg: 'rgba(91,155,213,0.12)', color: '#5b9bd5' },
   presented: { bg: 'rgba(52,168,83,0.12)', color: '#34a853' },
   rejected: { bg: 'rgba(134,48,62,0.12)', color: 'var(--maroon)' },

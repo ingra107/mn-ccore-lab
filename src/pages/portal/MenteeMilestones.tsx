@@ -34,6 +34,8 @@ const STATUS_OPTIONS = [
   { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
 ]
 
+// TODO: Remove this hardcoded list once AddMilestoneModal receives mentee slugs as a prop
+// derived from the useMenteeOverview() API response (mentee_slug field).
 const MENTEE_SLUGS = ['shyu', 'fitzgerald', 'collins']
 
 function getTypeLabel(type: string): string {
@@ -93,6 +95,12 @@ export default function MenteeMilestones() {
     )
   }, [updateMilestone, showUndo])
 
+  // Derive mentee slugs from overview API response; fall back to hardcoded list if not yet loaded
+  const menteeSlugsDerived = useMemo(
+    () => overview.length > 0 ? [...new Set(overview.map((o) => o.mentee_slug))] : MENTEE_SLUGS,
+    [overview],
+  )
+
   const overdueTotal = overview.reduce((sum, o) => sum + o.overdue_count, 0)
   const upcomingTotal = overview.reduce((sum, o) => sum + o.upcoming_count, 0)
 
@@ -129,7 +137,7 @@ export default function MenteeMilestones() {
             value={filterMentee}
             onChange={setFilterMentee}
             placeholder="All Mentees"
-            options={MENTEE_SLUGS.map((s) => ({ value: s, label: getPersonInfo(s).name }))}
+            options={menteeSlugsDerived.map((s) => ({ value: s, label: getPersonInfo(s).name }))}
           />
 
           {/* Filter: Type */}
@@ -168,7 +176,7 @@ export default function MenteeMilestones() {
       {/* PI Overview Cards */}
       {!filterMentee && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          {MENTEE_SLUGS.map((slug) => {
+          {menteeSlugsDerived.map((slug) => {
             const person = getPersonInfo(slug)
             const stats = overview.find((o) => o.mentee_slug === slug)
             return (
@@ -212,7 +220,7 @@ export default function MenteeMilestones() {
                           fontSize: '10px',
                           fontWeight: 600,
                           color: 'var(--maroon)',
-                          background: 'rgba(122,0,25,0.12)',
+                          background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
                         }}
                       >
                         <AlertTriangle size={10} />
@@ -432,7 +440,7 @@ function MenteeGroup({
               fontSize: '9px',
               fontWeight: 600,
               color: 'var(--maroon)',
-              background: 'rgba(122,0,25,0.12)',
+              background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
             }}
           >
             {overdueCount} overdue

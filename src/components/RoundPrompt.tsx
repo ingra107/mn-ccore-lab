@@ -70,7 +70,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.08 }}
+      transition={{ duration: 0.25, delay: 0.08 }}
       style={{
         borderLeft: '3px solid var(--gold)',
         background: 'rgba(201, 168, 76, 0.06)',

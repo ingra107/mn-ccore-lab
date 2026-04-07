@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HeartPulse, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
@@ -57,7 +57,7 @@ function FactorTooltip({ factors, score }: { factors: HealthFactors; score: numb
   )
 }
 
-export default function ProjectHealthCard() {
+function ProjectHealthCard() {
   const { data } = useProjectHealth()
   const [showHealthy, setShowHealthy] = useState(false)
 
@@ -196,6 +196,8 @@ export default function ProjectHealthCard() {
     </BentoCard>
   )
 }
+
+export default memo(ProjectHealthCard)
 
 function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   const [showTooltip, setShowTooltip] = useState(false)

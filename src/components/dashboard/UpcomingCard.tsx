@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, AlertCircle, ArrowRight, ListChecks, CalendarOff, UserCheck } from 'lucide-react'
 import { useMeetingsApi, useActionItems, useMeetingCadence } from '../../hooks/useApiData'
@@ -69,7 +69,7 @@ function typeColor(type: Deadline['type']): string {
   }
 }
 
-export default function UpcomingCard() {
+function UpcomingCard() {
   const deadlines = generateDeadlines()
   const { data: meetings = [] } = useMeetingsApi()
   const { data: allActionItems = [] } = useActionItems()
@@ -303,3 +303,5 @@ export default function UpcomingCard() {
     </BentoCard>
   )
 }
+
+export default memo(UpcomingCard)

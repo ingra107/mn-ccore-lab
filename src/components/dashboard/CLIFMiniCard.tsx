@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { memo, useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Globe, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
@@ -24,7 +24,7 @@ const CLIF_SITES = [
 // Simplified US outline path
 const US_PATH = 'M25,30 L50,25 L85,22 L110,25 L140,20 L165,20 L190,25 L210,30 L235,28 L255,30 L265,40 L270,55 L265,65 L260,75 L250,80 L245,90 L240,95 L230,105 L220,110 L210,115 L200,118 L185,120 L175,115 L165,110 L155,108 L145,110 L135,115 L125,118 L115,120 L105,118 L95,115 L85,118 L75,120 L65,118 L55,112 L45,108 L35,100 L30,90 L25,78 L22,65 L20,50 L22,40 Z'
 
-export default function CLIFMiniCard() {
+function CLIFMiniCard() {
   const [animated, setAnimated] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -150,3 +150,5 @@ export default function CLIFMiniCard() {
     </BentoCard>
   )
 }
+
+export default memo(CLIFMiniCard)

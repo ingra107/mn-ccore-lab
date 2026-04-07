@@ -369,7 +369,7 @@ function ViewDropdown({ view, setView, views }: { view: ViewMode; setView: (v: V
       {open && (
         <div
           className="absolute top-full left-0 mt-1 rounded-lg border shadow-lg z-50 py-1 min-w-[200px]"
-          style={{ backgroundColor: 'var(--card-bg, #fff)', borderColor: 'var(--border-light)' }}
+          style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
         >
           {views.map((v) => {
             const Icon = v.icon

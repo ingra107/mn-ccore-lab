@@ -78,6 +78,9 @@ import type {
   UpcomingConferenceRow,
   PBSessionRow,
   PBSessionStats,
+  DailyPlanRow,
+  PomodoroSessionRow,
+  DailyReflectionRow,
 } from '../lib/api'
 
 // Re-export row types for components that need them
@@ -380,7 +383,7 @@ function staticToMeetingRows(): MeetingRow[] {
   }))
 }
 
-export function useMeetingsApi() {
+export function useMeetingsApi(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['meetings'],
     queryFn: async () => {
@@ -392,6 +395,7 @@ export function useMeetingsApi() {
     initialData: () => staticToMeetingRows(),
     staleTime: STALE_TIME,
     retry: false,
+    enabled: options?.enabled ?? true,
   })
 }
 
@@ -512,7 +516,7 @@ export function useTasks(filters?: {
   meeting?: string
   source?: string
   completed?: string
-}) {
+}, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['tasks', filters],
     queryFn: async () => {
@@ -520,6 +524,7 @@ export function useTasks(filters?: {
       return dedupTasks(res.data as TaskRow[])
     },
     staleTime: 60 * 1000,
+    enabled: options?.enabled ?? true,
   })
 }
 
@@ -1200,32 +1205,32 @@ export interface PBCommandCenterData {
   targetDate: string
   nudges: string[]
   sections: {
-    focusNow: any[]
-    today: any[]
-    thisWeek: any[]
-    backlog: any[]
-    recentlyCompleted: any[]
+    focusNow: TaskRow[]
+    today: TaskRow[]
+    thisWeek: TaskRow[]
+    backlog: TaskRow[]
+    recentlyCompleted: TaskRow[]
   }
   stats: {
     totalOpen: number
     overdue: number
     completedRecently: number
   }
-  projects: any[]
-  milestones: any[]
-  commitments: any[]
-  meetings: any[]
-  recentActivity: any[]
-  blockedTasks: any[]
-  decisionsForReview: any[]
-  dailyPlan: any
-  pomodoroSessions: any[]
-  dailyReflection: any
-  carryForward: { starTask?: any; focusTasks: any[] }
+  projects: ProjectRow[]
+  milestones: MenteeMilestoneRow[]
+  commitments: Record<string, unknown>[]
+  meetings: MeetingRow[]
+  recentActivity: Record<string, unknown>[]
+  blockedTasks: TaskRow[]
+  decisionsForReview: Record<string, unknown>[]
+  dailyPlan: DailyPlanRow | null
+  pomodoroSessions: PomodoroSessionRow[]
+  dailyReflection: DailyReflectionRow | null
+  carryForward: { starTask?: TaskRow; focusTasks: TaskRow[] }
   suggestions: {
-    starCandidates: any[]
-    focusCandidates: any[]
-    quickWinCandidates: any[]
+    starCandidates: TaskRow[]
+    focusCandidates: TaskRow[]
+    quickWinCandidates: TaskRow[]
   }
 }
 

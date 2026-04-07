@@ -64,7 +64,7 @@ export default function OnboardingChecklist() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'rgba(45,138,138,0.12)',
+              background: 'color-mix(in srgb, var(--teal) 12%, transparent)',
             }}
           >
             <PartyPopper size={20} style={{ color: 'var(--teal)' }} />

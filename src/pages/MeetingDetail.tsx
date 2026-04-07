@@ -156,7 +156,7 @@ export default function MeetingDetail() {
         <Breadcrumb backTo="/meetings" backLabel="Meetings" current={meeting?.title} />
 
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs"
               style={{ fontSize: '11px', background: statusStyle.bg, color: statusStyle.text }}>
@@ -225,7 +225,7 @@ export default function MeetingDetail() {
         {/* Two-column: Agenda + Action Items (action items first on mobile) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
           {/* Left: Agenda (order-2 on mobile so actions show first) */}
-          <motion.div className="order-2 lg:order-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+          <motion.div className="order-2 lg:order-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.1 }}>
             <div className="flex items-center gap-2 mb-3">
               <ListChecks size={16} style={{ color: 'var(--gold)' }} />
               <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
@@ -275,7 +275,7 @@ export default function MeetingDetail() {
           </motion.div>
 
           {/* Right: Action Items (order-1 on mobile so actions show first) */}
-          <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }}>
+          <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.15 }}>
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
               <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
@@ -325,7 +325,7 @@ export default function MeetingDetail() {
         </div>
 
         {/* Decisions */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }} className="mt-8">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.2 }} className="mt-8">
           <div className="flex items-center gap-2 mb-3">
             <Scale size={16} style={{ color: 'var(--gold)' }} />
             <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
@@ -433,7 +433,7 @@ export default function MeetingDetail() {
         </motion.div>
 
         {/* Notes */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.25 }} className="mt-8">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} className="mt-8">
           <div className="flex items-center gap-2 mb-3">
             <FileText size={16} style={{ color: 'var(--gold)' }} />
             <h3 style={{ fontWeight: 400, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
@@ -701,11 +701,11 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
           disabled={!isAuthenticated && import.meta.env.PROD}
           style={{
             flex: 1, fontSize: '13px', color: 'var(--ink)',
-            background: 'var(--cream)', border: '1px solid rgba(45,138,138,0.12)', borderRadius: 8,
+            background: 'var(--cream)', border: '1px solid color-mix(in srgb, var(--teal) 12%, transparent)', borderRadius: 8,
             padding: '8px 12px', outline: 'none', transition: 'border-color 0.15s',
           }}
           onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-          onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(45,138,138,0.12)')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--teal) 12%, transparent)')}
           onKeyDown={(e) => { if (e.key === 'Escape') { setText(''); e.currentTarget.blur() } }}
         />
         {hasContent && (

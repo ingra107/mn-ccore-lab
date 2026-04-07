@@ -26,6 +26,7 @@ import type { SubmissionEventType, SubmissionEventRow } from '../lib/api'
 import { useSubmissionEvents } from '../hooks/useApiData'
 import { useCreateSubmissionEvent, useDeleteSubmissionEvent } from '../hooks/useMutations'
 import { formatRelativeTime, getDaysUntil } from '../lib/dateUtils'
+import EmptyState from './EmptyState'
 
 // ── Event config ──
 
@@ -503,15 +504,11 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
         </div>
       ) : (
         !showAdd && (
-          <div style={{ padding: '32px 0', textAlign: 'center' }}>
-            <Send size={20} style={{ color: 'var(--slate)', opacity: 0.2, marginBottom: '8px' }} />
-            <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.4, margin: 0 }}>
-              No submission events yet
-            </p>
-            <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.3, margin: '4px 0 0' }}>
-              Track your paper's journey through peer review
-            </p>
-          </div>
+          <EmptyState
+            icon={<Send size={20} />}
+            title="No submission events yet"
+            subtitle="Track your paper's journey through peer review"
+          />
         )
       )}
     </div>

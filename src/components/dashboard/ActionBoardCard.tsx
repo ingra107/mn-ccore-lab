@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, Circle, Clock, ClipboardList, ArrowRight, AlertTriangle } from 'lucide-react'
 import BentoCard from './BentoCard'
@@ -15,7 +16,7 @@ const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
   blocked: { icon: AlertTriangle, color: 'var(--maroon)' },
 }
 
-export default function ActionBoardCard() {
+function ActionBoardCard() {
   const { data: items = [] } = useTasks() // Already deduped by useTasks hook
   const updateStatus = useUpdateTaskStatus()
   const { showUndo } = useUndoToast()
@@ -129,3 +130,5 @@ export default function ActionBoardCard() {
     </BentoCard>
   )
 }
+
+export default memo(ActionBoardCard)

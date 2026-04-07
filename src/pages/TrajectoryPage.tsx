@@ -457,7 +457,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
           key={pub.id}
           initial={{ opacity: 0, x: -12 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: i * 0.05, duration: 0.3 }}
+          transition={{ delay: i * 0.05, duration: 0.25 }}
           style={{
             position: 'relative',
             paddingBottom: i < publications.length - 1 ? '1.5rem' : 0,
@@ -1399,7 +1399,7 @@ export default function TrajectoryPage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.25 }}
         style={{
           display: 'flex',
           alignItems: 'flex-start',

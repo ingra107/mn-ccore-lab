@@ -81,7 +81,7 @@ export default function MeetingPrep() {
         <Breadcrumb backTo={`/meetings/${meeting.id}`} backLabel={meeting.title} current="Prep View" />
 
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
           <div className="flex items-center gap-2 mb-2">
             <ListChecks size={16} style={{ color: 'var(--teal)' }} />
             <span style={{ fontSize: 11, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>

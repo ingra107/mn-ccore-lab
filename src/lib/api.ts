@@ -125,6 +125,7 @@ export interface DailyPlanRow {
   star_task_id: string | null
   focus_task_ids: string | null
   quick_win_ids: string | null
+  evening_task_ids: string | null
   intention: string | null
   gratitude: string | null
   status: 'planning' | 'executing' | 'reviewing' | 'closed'
@@ -193,7 +194,7 @@ class ApiError extends Error {
   }
 }
 
-async function fetchApi<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
+export async function fetchApi<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
   const res = await fetch(path, {
     ...init,
     headers: {

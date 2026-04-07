@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -133,14 +134,14 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
     : navGroups
 
   // Inject badge counts into nav items
-  const navWithBadges = allGroups.map(group => ({
+  const navWithBadges = useMemo(() => allGroups.map(group => ({
     ...group,
     items: group.items.map(item => {
       if (item.to === '/personal' && unreadCount > 0) return { ...item, badge: unreadCount }
       if (item.to === '/my-tasks' && myOverdue > 0) return { ...item, badge: myOverdue }
       return item
     }),
-  }))
+  })), [allGroups, unreadCount, myOverdue])
 
   const isActive = (path: string) => {
     if (path === '/dashboard') return location.pathname === '/dashboard'
@@ -208,7 +209,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   onClick={onNavigate}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-colors mb-0.5"
                   style={{
-                    backgroundColor: active ? 'rgba(45,138,138,0.12)' : 'transparent',
+                    backgroundColor: active ? 'color-mix(in srgb, var(--teal) 12%, transparent)' : 'transparent',
                     color: active ? 'var(--teal)' : 'var(--slate)',
                     fontWeight: active ? 500 : 400,
                   }}

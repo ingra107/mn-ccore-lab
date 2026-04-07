@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Banknote } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { useGrants } from '../../hooks/useApiData'
@@ -25,7 +26,7 @@ function mechanismColor(mechanism: string): string {
   }
 }
 
-export default function GrantTimelineCard() {
+function GrantTimelineCard() {
   const { data: grants = [] } = useGrants()
   const activeCount = grants.filter((g) => g.status === 'Active').length
   const pendingCount = grants.filter((g) => g.proposed).length
@@ -153,3 +154,5 @@ export default function GrantTimelineCard() {
     </BentoCard>
   )
 }
+
+export default memo(GrantTimelineCard)

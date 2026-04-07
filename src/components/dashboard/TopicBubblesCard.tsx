@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { memo, useMemo, useState, useEffect, useRef } from 'react'
 import { Tags } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
@@ -97,7 +97,7 @@ function packBubbles(data: BubbleData[], width: number, height: number): BubbleD
   return placed
 }
 
-export default function TopicBubblesCard() {
+function TopicBubblesCard() {
   const { data: publications = [] } = usePublications()
   const [hovered, setHovered] = useState<string | null>(null)
   const [animated, setAnimated] = useState(false)
@@ -214,3 +214,5 @@ export default function TopicBubblesCard() {
     </BentoCard>
   )
 }
+
+export default memo(TopicBubblesCard)

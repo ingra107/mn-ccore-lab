@@ -14,7 +14,7 @@ import { useUndoToast } from '../../components/UndoToast'
 import { useProjects } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import InlineSelect from '../../components/InlineSelect'
-import { formatRelativeTime } from '../../lib/dateUtils'
+import { formatRelativeTime, formatShortDate } from '../../lib/dateUtils'
 import { useDebounce } from '../../hooks/useDebounce'
 import type { DecisionRow } from '../../hooks/useApiData'
 
@@ -376,7 +376,7 @@ function DecisionCard({ decision, projects, onUpdateOutcome, onStatusChange }: {
             style={{ background: 'rgba(45,138,138,0.04)', borderLeft: '3px solid var(--teal)' }}
           >
             <p style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>
-              <span style={{ fontWeight: 600 }}>Outcome:</span> {decision.outcome}
+              <span style={{ fontWeight: 500 }}>Outcome:</span> {decision.outcome}
             </p>
           </div>
         )}
@@ -513,7 +513,7 @@ function SimilarDecisionsPanel({ decisionId, projects }: { decisionId: string; p
               style={{ background: 'rgba(201,168,76,0.03)', border: '1px dashed rgba(201,168,76,0.12)' }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
+                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>
                   {d.title}
                 </span>
                 {d.outcome_sentiment && d.outcome_sentiment !== 'pending' && (
@@ -613,7 +613,7 @@ function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; p
                 opacity: 0.5,
               }}
             >
-              {new Date(decision.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              {formatShortDate(decision.created_at)}
             </div>
 
             {/* Content */}
@@ -622,7 +622,7 @@ function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; p
               style={{ background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.1)' }}
             >
               <div className="flex items-center gap-2 flex-wrap">
-                <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--ink)' }}>
+                <span style={{ fontWeight: 500, fontSize: '14px', color: 'var(--ink)' }}>
                   {decision.title}
                 </span>
                 <SentimentBadge sentiment={sentiment} />
@@ -793,7 +793,7 @@ function ReviewCard({
             className="cursor-pointer px-4 py-1.5 rounded-md text-xs font-medium"
             style={{
               background: outcome.trim() ? 'var(--gold)' : 'rgba(201,168,76,0.2)',
-              color: outcome.trim() ? '#0f1923' : 'var(--slate)',
+              color: outcome.trim() ? 'var(--ink)' : 'var(--slate)',
               border: 'none',
               opacity: outcome.trim() ? 1 : 0.5,
             }}
@@ -969,7 +969,7 @@ function CreateDecisionModal({
                 {similarDecisions.map(d => (
                   <div key={d.id} className="py-2" style={{ borderBottom: '1px solid rgba(201,168,76,0.06)' }}>
                     <div className="flex items-center gap-2">
-                      <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
+                      <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)', margin: 0 }}>
                         {d.title}
                       </p>
                       {d.outcome_sentiment && d.outcome_sentiment !== 'pending' && (

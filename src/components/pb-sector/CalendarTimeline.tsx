@@ -102,7 +102,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
               className="absolute block"
               style={{
                 left: 44, right: 4, top: top + 2, height: height - 4,
-                background: 'rgba(45,138,138,0.12)',
+                background: 'color-mix(in srgb, var(--teal) 12%, transparent)',
                 borderLeft: '3px solid var(--teal)',
                 borderRadius: 4,
                 textDecoration: 'none',

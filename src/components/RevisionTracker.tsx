@@ -33,6 +33,7 @@ import {
 import { getPersonInfo } from '../data/team'
 import { formatMediumDate } from '../lib/dateUtils'
 import { TableSkeleton } from './LoadingSkeleton'
+import EmptyState from './EmptyState'
 
 // ── Constants ──
 
@@ -142,7 +143,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
             background: 'transparent',
             color: 'var(--teal)',
             fontSize: '12px',
-            fontWeight: 600,
+            fontWeight: 500,
             border: '1px solid var(--border-subtle)',
             cursor: 'pointer',
             transition: 'background 150ms ease-out',
@@ -232,7 +233,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                     background: 'var(--teal)',
                     color: '#fff',
                     fontSize: '13px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     border: 'none',
                     cursor: 'pointer',
                     transition: 'opacity 150ms',
@@ -249,18 +250,11 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
 
       {/* Revision rounds list */}
       {revisions.length === 0 ? (
-        <div
-          className="text-center py-12 rounded-xl"
-          style={{ background: 'var(--ice)' }}
-        >
-          <MessageSquare
-            size={32}
-            style={{ color: 'var(--teal)', opacity: 0.2, margin: '0 auto 12px' }}
-          />
-          <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.5, margin: 0 }}>
-            No revision rounds yet. Click "Add Round" to start tracking.
-          </p>
-        </div>
+        <EmptyState
+          icon={<MessageSquare size={32} />}
+          title="No revision rounds yet"
+          subtitle='Click "Add Round" to start tracking.'
+        />
       ) : (
         <div className="flex flex-col gap-2">
           <AnimatePresence mode="popLayout">
@@ -826,7 +820,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                 className="flex items-center gap-1.5 px-3 py-1 rounded-md"
                 style={{
                   fontSize: '12px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: '#fff',
                   background: newCommentText.trim() ? 'var(--teal)' : 'var(--slate)',
                   border: 'none',

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Activity, BookOpen, FlaskConical, Users, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
@@ -22,7 +22,7 @@ function relativeTime(monthsAgo: number): string {
   return years === 1 ? '1 year ago' : `${years} years ago`
 }
 
-export default function ActivityFeedCard() {
+function ActivityFeedCard() {
   const { data: publications = [] } = usePublications()
   const { data: projects = [] } = useProjects()
 
@@ -199,3 +199,5 @@ export default function ActivityFeedCard() {
     </BentoCard>
   )
 }
+
+export default memo(ActivityFeedCard)
