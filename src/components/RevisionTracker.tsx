@@ -34,6 +34,7 @@ import { getPersonInfo } from '../data/team'
 import { formatMediumDate } from '../lib/dateUtils'
 import { TableSkeleton } from './LoadingSkeleton'
 import EmptyState from './EmptyState'
+import { getStatusBg } from '../lib/statusColors'
 
 // ── Constants ──
 
@@ -50,20 +51,6 @@ const COMMENT_STATUS_OPTIONS = [
   { value: 'done', label: 'Done', color: 'var(--green)' },
   { value: 'wont_fix', label: "Won't Fix", color: 'var(--maroon)' },
 ]
-
-const REVISION_STATUS_BG: Record<string, string> = {
-  in_progress: 'rgba(45, 138, 138, 0.12)',
-  submitted: 'rgba(22, 163, 74, 0.12)',
-  accepted: 'rgba(201, 168, 76, 0.12)',
-  rejected: 'rgba(122, 0, 25, 0.12)',
-}
-
-const COMMENT_STATUS_BG: Record<string, string> = {
-  pending: 'rgba(148, 163, 184, 0.12)',
-  in_progress: 'rgba(45, 138, 138, 0.12)',
-  done: 'rgba(22, 163, 74, 0.12)',
-  wont_fix: 'rgba(122, 0, 25, 0.12)',
-}
 
 const COMMENT_STATUS_ICON: Record<string, typeof Circle> = {
   pending: Circle,
@@ -335,7 +322,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
           style={{
             width: 36,
             height: 36,
-            background: REVISION_STATUS_BG[revision.status] || REVISION_STATUS_BG.in_progress,
+            background: getStatusBg(revision.status),
             flexShrink: 0,
           }}
         >
@@ -550,7 +537,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                         className="rounded-lg"
                         style={{
                           padding: '10px 12px',
-                          background: COMMENT_STATUS_BG[comment.status] || COMMENT_STATUS_BG.pending,
+                          background: getStatusBg(comment.status),
                           transition: 'background 250ms ease-out',
                         }}
                       >
@@ -948,7 +935,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
                     fontSize: '11px',
                     fontWeight: 600,
                     color: 'var(--teal)',
-                    background: REVISION_STATUS_BG.in_progress,
+                    background: getStatusBg('in_progress'),
                     padding: '2px 8px',
                     width: 'fit-content',
                   }}

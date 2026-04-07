@@ -27,6 +27,7 @@ import { useSubmissionEvents } from '../hooks/useApiData'
 import { useCreateSubmissionEvent, useDeleteSubmissionEvent } from '../hooks/useMutations'
 import { formatRelativeTime, getDaysUntil } from '../lib/dateUtils'
 import EmptyState from './EmptyState'
+import { getStatusColor, getStatusBg } from '../lib/statusColors'
 
 // ── Event config ──
 
@@ -38,44 +39,44 @@ const EVENT_CONFIG: Record<SubmissionEventType, {
 }> = {
   submitted: {
     label: 'Submitted',
-    color: 'var(--teal)',
-    bg: 'rgba(45, 138, 138, 0.12)',
+    color: getStatusColor('submitted'),
+    bg: getStatusBg('submitted'),
     icon: Send,
   },
   reviews_received: {
     label: 'Reviews Received',
-    color: 'var(--gold)',
-    bg: 'rgba(201, 168, 76, 0.12)',
+    color: getStatusColor('review_received'),
+    bg: getStatusBg('review_received'),
     icon: MessageSquare,
   },
   revision_due: {
     label: 'Revision Due',
-    color: 'var(--maroon)',
-    bg: 'rgba(122, 0, 25, 0.12)',
+    color: getStatusColor('revision_due'),
+    bg: getStatusBg('revision_due'),
     icon: Clock,
   },
   resubmitted: {
     label: 'Resubmitted',
-    color: 'var(--teal)',
-    bg: 'rgba(45, 138, 138, 0.12)',
+    color: getStatusColor('resubmitted'),
+    bg: getStatusBg('resubmitted'),
     icon: RotateCcw,
   },
   accepted: {
     label: 'Accepted',
-    color: 'var(--green)',
-    bg: 'rgba(34, 197, 94, 0.12)',
+    color: getStatusColor('accepted'),
+    bg: getStatusBg('accepted'),
     icon: CheckCircle2,
   },
   rejected: {
     label: 'Rejected',
-    color: 'var(--maroon)',
-    bg: 'rgba(122, 0, 25, 0.12)',
+    color: getStatusColor('rejected'),
+    bg: getStatusBg('rejected'),
     icon: XCircle,
   },
   withdrawn: {
     label: 'Withdrawn',
-    color: 'var(--slate)',
-    bg: 'rgba(100, 116, 139, 0.12)',
+    color: getStatusColor('withdrawn'),
+    bg: getStatusBg('withdrawn'),
     icon: LogOut,
   },
 }

@@ -3,10 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronDown, Calendar, ArrowRight, AlertTriangle, CheckCircle2, GitBranch } from 'lucide-react'
 import type { CascadeGraph, ImpactResult, DeadlineNode } from '../lib/api'
 import { formatShortDate } from '../lib/dateUtils'
+import { getStatusColor } from '../lib/statusColors'
 
 // ── Status helpers ──────────────────────────────────────────
 
-function getNodeStatus(node: DeadlineNode): 'on-track' | 'at-risk' | 'overdue' | 'completed' {
+type NodeStatus = 'on-track' | 'at-risk' | 'overdue' | 'completed'
+
+function getNodeStatus(node: DeadlineNode): NodeStatus {
   if (node.status === 'done' || node.status === 'completed') return 'completed'
   if (!node.due_date) return 'on-track'
   const now = new Date()
@@ -17,22 +20,19 @@ function getNodeStatus(node: DeadlineNode): 'on-track' | 'at-risk' | 'overdue' |
   return 'on-track'
 }
 
-function statusColor(s: 'on-track' | 'at-risk' | 'overdue' | 'completed'): string {
-  switch (s) {
-    case 'on-track': return 'var(--teal)'
-    case 'at-risk': return 'var(--gold)'
-    case 'overdue': return 'var(--maroon)'
-    case 'completed': return 'var(--green)'
-  }
+function statusColor(s: NodeStatus): string {
+  return getStatusColor(s)
 }
 
-function statusLabel(s: 'on-track' | 'at-risk' | 'overdue' | 'completed'): string {
-  switch (s) {
-    case 'on-track': return 'On Track'
-    case 'at-risk': return 'At Risk'
-    case 'overdue': return 'Overdue'
-    case 'completed': return 'Done'
-  }
+const STATUS_LABEL: Record<NodeStatus, string> = {
+  'on-track': 'On Track',
+  'at-risk': 'At Risk',
+  overdue: 'Overdue',
+  completed: 'Done',
+}
+
+function statusLabel(s: NodeStatus): string {
+  return STATUS_LABEL[s]
 }
 
 // ── Build tree from flat graph ─────────────────────────────

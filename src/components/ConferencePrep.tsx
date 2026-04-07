@@ -33,27 +33,7 @@ const TYPE_OPTIONS: { value: ConferenceSubmissionType; label: string }[] = [
   { value: 'invited', label: 'Invited' },
 ]
 
-// Reserved for future pill rendering
-const _STATUS_PILL_BG: Record<ConferenceStatus, string> = {
-  planning: 'rgba(129,140,153,0.12)',
-  submitted: 'rgba(201,168,76,0.12)',
-  accepted: 'color-mix(in srgb, var(--teal) 12%, transparent)',
-  preparing: 'rgba(91,155,213,0.12)',
-  presented: 'rgba(52,168,83,0.12)',
-  rejected: 'rgba(134,48,62,0.12)',
-}
-void _STATUS_PILL_BG
-
-// Reserved for future pill rendering
-const _STATUS_PILL_COLOR: Record<ConferenceStatus, string> = {
-  planning: 'var(--slate)',
-  submitted: 'var(--gold)',
-  accepted: 'var(--teal)',
-  preparing: '#5b9bd5',
-  presented: '#34a853',
-  rejected: 'var(--maroon)',
-}
-void _STATUS_PILL_COLOR
+// Status pill colors: use getStatusBg / getStatusColor from '../lib/statusColors' when needed.
 
 interface ConferencePrepProps {
   projectId: string
