@@ -11,6 +11,7 @@ import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import { useUndoToast } from '../../components/UndoToast'
 import { useTasks } from '../../hooks/useApiData'
+import { useAuth } from '../../hooks/useAuth'
 import type { TaskRow } from '../../lib/api'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
@@ -60,22 +61,8 @@ export default function MyTasks() {
     updateTask.mutate({ id, fields: { [field]: value } })
   }
 
-  // Get current user slug from JWT cookie (or fallback to showing prompt)
-  const currentUser = useMemo(() => {
-    // Try to get from Cloudflare Access JWT
-    try {
-      const cookies = document.cookie.split(';').map((c) => c.trim())
-      const cfCookie = cookies.find((c) => c.startsWith('CF_Authorization='))
-      if (cfCookie) {
-        const jwt = cfCookie.split('=')[1]
-        const payload = JSON.parse(atob(jwt.split('.')[1]))
-        if (payload.email) {
-          return payload.email.split('@')[0].toLowerCase()
-        }
-      }
-    } catch { /* no auth */ }
-    return null
-  }, [])
+  const { user } = useAuth()
+  const currentUser = user?.email?.split('@')[0]?.toLowerCase() || null
 
   // Filter to current user's tasks
   const tasks = useMemo(() => {

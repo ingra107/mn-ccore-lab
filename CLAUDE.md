@@ -28,7 +28,7 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 1. **Dark-first design.** Dark bg is deep neutral (#0b1017), NOT blue-tinted. Text is #e2e8f0 (not pure white — less glare). Light mode secondary.
 2. **Columnar tables, not card stacks.** Data pages use fixed-column tables with headers (Title|Assignee|Due|Status|Priority). Cards are for dashboards only. Fixed row height for vertical scanning.
 3. **Inline editability with visible affordance.** Every editable field shows "▾" dropdown indicator. Click cell → dropdown/picker by type. Auto-save on blur. No explicit save button. (Research: Pattern 4)
-4. **Typography: light weight, three opacity tiers.** Body font-weight: 400. Active text: 100% opacity. Normal: 70% (--ink = #e2e8f0). Muted: 40% (--slate = #94a3b8). NEVER 500+ weight for body text. Weight hierarchy: body=400, label/subtitle=500, card metrics=700, heading h1=600.
+4. **Typography: light weight, three opacity tiers.** Body font-weight: 400. Active text: 100% opacity. Normal: 70% (--ink = #e2e8f0). Muted: 55% (--muted = `rgba(148,163,184,0.55)`). NEVER use opacity below 0.5 on readable text in dark mode. NEVER 500+ weight for body text. Weight hierarchy: body=400, label/subtitle=500, card metrics=700, heading h1=600.
 5. **One accent color per view.** Teal for interactive. Everything else neutral. Max 2 non-neutral colors per view.
 6. **More info, more readable.** Density ≠ clutter. LabSync puts 20 sidebar items that are MORE readable than our 17. The secret: font-weight 400, grouped sections with rhythm, consistent icon opacity.
 7. **Zero monospace in content.** JetBrains Mono for `<kbd>` only. ALL other text is DM Sans.
@@ -66,9 +66,9 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 ### Sidebar
 - Font-weight 400 for nav items, 500 for active only
 - Active: teal bg fill, no left border. Inactive: --slate color, icon opacity 0.7.
-- Section labels: 10px uppercase, opacity 0.5. Divider lines between groups.
-- Row height: py-2.5 (generous). Gap: gap-3. Items within groups are tight; groups are separated.
-- Reference: LabSync sidebar — more items, more readable. The secret is lighter weight + grouped rhythm.
+- Section labels: 9px uppercase, opacity 0.5. Divider lines between groups.
+- Row height: py-2 (compact). Font: 12px. Group gap: 4px. Section divider margin: 6px/8px.
+- Logo: mark uses CSS filter for dark mode (`invert(1) brightness(1.5)`), text logo swaps to dark variant.
 
 ### Borders & Spacing
 - `--border-light` (gold tint) = semantic. `--border-subtle` (neutral) = structural. Don't mix.
@@ -216,6 +216,22 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 - **Deadline Cascade View** (schema-v25): dependency graph, impact simulation, /deadline-cascade page
 - **Paper Submission Lifecycle** (schema-v26): submission events timeline, active submissions widget
 - **IRB/Regulatory Tracking** (schema-v27): regulatory items, expiration alerts on Personal page
+
+**Phase 26: COMPLETE** (2 commits, 2026-04-07). UX audit from LabSync comparison — 14 issues:
+- Dark mode sidebar logo fix (filter + dark SVG variant)
+- Remove "Join" nav tab, rethink hero pathway cards (Collaborate→/network, Meet Our Team→/team)
+- Default task sort changed from priority → due_date (TaskGridView + MyTasks)
+- MyTasks: showCompleted toggle, useAuth() hook (replaces manual JWT parsing)
+- --muted opacity raised 0.4→0.55, dark mode contrast audit across 22 files
+- Sidebar compactness: py-2, 12px font, tighter group gaps
+- Task click fix in MyTasks grouped view (virtualizer minHeight)
+- Projects: PI + Group columns inline-editable (InlineSelect), sortable column headers
+- Projects: stage group headers only show when sorted by stage
+- All Tasks: "My Tasks" filter toggle
+- **TaskDetailPanel**: restructured to 4-tab layout (Overview/Details/Files/Comments)
+- **Link Paper to Project**: search modal on ProjectLiterature with publication picker
+- **Publication Library View**: horizontal scrolling journal cover cards (scroll-snap)
+- Remaining: watchers/reminders/instructions fields need D1 schema-v34 migration
 
 **Phase 22: COMPLETE** (5 commits, 5 deploys, 2026-04-05). Design research + polish:
 - Transition standardization: 10 inline durations → 150ms/250ms constants

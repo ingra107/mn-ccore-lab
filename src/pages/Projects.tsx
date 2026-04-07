@@ -36,13 +36,6 @@ const CATEGORY_DOT: Record<string, string> = {
   mentee: 'var(--slate)',
 }
 
-const CATEGORY_LABEL: Record<string, string> = {
-  clif: 'CLIF',
-  lab: 'Lab',
-  nate: 'Mesfin',
-  mentee: 'Mentee',
-}
-
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
 const HEALTH_STATUS_COLOR: Record<string, string> = {
@@ -355,7 +348,6 @@ export default function Projects() {
                 {(() => {
                   let lastStage = ''
                   return filtered.map((project, index) => {
-                    const catLabel = CATEGORY_LABEL[project.category] ?? project.category
                     const projectHealth = healthBySlug.get(project.slug)
                     const showStageHeader = project.stage !== lastStage
                     lastStage = project.stage ?? ''
@@ -364,7 +356,7 @@ export default function Projects() {
                     return (
                       <motion.div key={project.slug} variants={staggerItem} ref={setRowRef(index)}>
                         {/* Stage group divider — minimal, just text */}
-                        {showStageHeader && (
+                        {showStageHeader && sortKey === 'stage' && (
                           <div
                             className="flex items-center"
                             style={{
@@ -560,16 +552,18 @@ export default function Projects() {
                                 options={STAGES.map((s) => ({ value: s, label: s }))}
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
                               />
-                              <span
-                                style={{
-                                  fontSize: '11px',
-                                  color: 'var(--slate)',
-                                  opacity: 0.55,
-                                  marginLeft: 'auto',
-                                }}
-                              >
-                                {catLabel}
-                              </span>
+                              <div onClick={(e) => e.preventDefault()} style={{ marginLeft: 'auto' }}>
+                                <InlineSelect
+                                  value={project.category || ''}
+                                  options={[
+                                    { value: 'clif', label: 'CLIF', color: 'var(--maroon)' },
+                                    { value: 'lab', label: 'Lab', color: 'var(--teal)' },
+                                    { value: 'nate', label: 'Mesfin', color: 'var(--gold)' },
+                                    { value: 'mentee', label: 'Mentee', color: 'var(--slate)' },
+                                  ]}
+                                  onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
+                                />
+                              </div>
                             </div>
                           </div>
                         </Link>
