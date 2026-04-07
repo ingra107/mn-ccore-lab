@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Layout from './components/Layout'
 import PortalLayout from './components/PortalLayout'
+import ViewTransitionWrapper from './components/ViewTransitionWrapper'
 import Home from './pages/Home'
 import { AuthProvider } from './context/AuthContext'
 
@@ -151,6 +152,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
+          <ViewTransitionWrapper>
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 {/* Standalone pages (no layout wrapper) */}
@@ -214,6 +216,7 @@ export default function App() {
                 </Route>
               </Routes>
             </Suspense>
+          </ViewTransitionWrapper>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

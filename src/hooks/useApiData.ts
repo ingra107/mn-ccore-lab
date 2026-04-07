@@ -1049,6 +1049,33 @@ export function useContributions(slug: string, period: number) {
   })
 }
 
+// ── Contribution Score with Decay ────────────────────────
+
+export interface ContributionScoreData {
+  slug: string
+  days: number
+  total_score: number
+  trend: 'increasing' | 'stable' | 'declining'
+  breakdown: Record<string, { count: number; raw_score: number; decay_score: number }>
+  sparkline: number[]
+  decay_constant: number
+  half_life_days: number
+}
+
+export function useContributionScore(slug: string | undefined, days = 90) {
+  return useQuery({
+    queryKey: ['contribution-score', slug, days],
+    queryFn: async () => {
+      const res = await fetch(`/api/analytics/contributions?slug=${slug}&days=${days}`)
+      if (!res.ok) return null
+      const data = await res.json()
+      return data.data as ContributionScoreData
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!slug,
+  })
+}
+
 // ── Grant Intelligence (NIH RePORTER) ──────────────────────
 
 export interface SimilarGrant {

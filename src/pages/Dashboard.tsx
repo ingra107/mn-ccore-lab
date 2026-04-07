@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin } from 'lucide-react'
+import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
@@ -19,6 +19,32 @@ import ProjectHealthCard from '../components/dashboard/ProjectHealthCard'
 import MyItemsCard from '../components/dashboard/MyItemsCard'
 import TeamPulseCard from '../components/dashboard/TeamPulseCard'
 import InsightsCard from '../components/dashboard/InsightsCard'
+
+// Tab categories for card filtering
+type DashboardTab = 'overview' | 'projects' | 'people' | 'deadlines'
+
+const TAB_CONFIG: { id: DashboardTab; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'people', label: 'People' },
+  { id: 'deadlines', label: 'Deadlines' },
+]
+
+// Card-to-tab mapping: which tabs each card appears in (overview = all visible)
+const CARD_TABS: Record<string, DashboardTab[]> = {
+  'action-board': ['overview', 'deadlines'],
+  'upcoming': ['overview', 'deadlines'],
+  'project-health': ['overview', 'projects'],
+  'pipeline': ['overview', 'projects'],
+  'activity': ['overview', 'people'],
+  'stats': ['overview'],
+  'team-pulse': ['overview', 'people'],
+  'grants': ['overview', 'projects', 'deadlines'],
+  'my-items': ['overview', 'deadlines'],
+  'clif': ['overview', 'projects'],
+  'topics': ['overview', 'projects'],
+  'insights': ['overview', 'projects'],
+}
 
 // Card registry — order matters for default layout
 const CARD_REGISTRY = [
@@ -39,7 +65,38 @@ const CARD_REGISTRY = [
 const STORAGE_KEY = 'mnccore-dashboard-cards'
 const PINNED_KEY = 'mnccore-dashboard-pinned'
 const DEFAULTS_VERSION_KEY = 'mnccore-dashboard-version'
+const CLICKS_KEY = 'mnccore-dashboard-clicks'
+const TAB_KEY = 'mnccore-dashboard-tab'
 const CURRENT_DEFAULTS_VERSION = 2 // bump to reset localStorage to new defaults
+
+// ── Adaptive sorting helpers ──────────────────────────────
+
+function getClickCounts(): Record<string, number> {
+  try {
+    const stored = localStorage.getItem(CLICKS_KEY)
+    if (stored) return JSON.parse(stored)
+  } catch { /* use defaults */ }
+  return {}
+}
+
+function recordCardClick(cardId: string) {
+  const counts = getClickCounts()
+  counts[cardId] = (counts[cardId] || 0) + 1
+  localStorage.setItem(CLICKS_KEY, JSON.stringify(counts))
+}
+
+function isAdaptiveSorting(): boolean {
+  const counts = getClickCounts()
+  return Object.values(counts).some(c => c > 2)
+}
+
+function getSavedTab(): DashboardTab {
+  try {
+    const stored = localStorage.getItem(TAB_KEY) as DashboardTab
+    if (stored && TAB_CONFIG.some(t => t.id === stored)) return stored
+  } catch { /* use default */ }
+  return 'overview'
+}
 
 function getPinnedCards(): Set<string> {
   try {
@@ -81,6 +138,24 @@ export default function Dashboard() {
   const [showCustomize, setShowCustomize] = useState(false)
   const [visibleCards, setVisibleCards] = useState<Set<string>>(() => getVisibleCards(roleCards))
   const [pinnedCards, setPinnedCards] = useState<Set<string>>(getPinnedCards)
+  const [activeTab, setActiveTab] = useState<DashboardTab>(getSavedTab)
+  const [clickCounts, setClickCounts] = useState<Record<string, number>>(getClickCounts)
+  const adaptive = isAdaptiveSorting()
+
+  const handleTabChange = useCallback((tab: DashboardTab) => {
+    setActiveTab(tab)
+    localStorage.setItem(TAB_KEY, tab)
+  }, [])
+
+  const handleCardInteraction = useCallback((cardId: string) => {
+    recordCardClick(cardId)
+    setClickCounts(getClickCounts())
+  }, [])
+
+  const resetAdaptive = useCallback(() => {
+    localStorage.removeItem(CLICKS_KEY)
+    setClickCounts({})
+  }, [])
 
   const toggleCard = useCallback((id: string) => {
     setVisibleCards(prev => {
@@ -113,10 +188,24 @@ export default function Dashboard() {
     })
   }, [])
 
-  const allVisibleCards = CARD_REGISTRY.filter(c => visibleCards.has(c.id))
+  // Filter by active tab, then sort adaptively
+  const sortByUsage = useCallback((cards: typeof CARD_REGISTRY[number][]) => {
+    if (!adaptive) return cards
+    return [...cards].sort((a, b) => (clickCounts[b.id] || 0) - (clickCounts[a.id] || 0))
+  }, [adaptive, clickCounts])
+
+  const tabFilteredRegistry = useMemo(
+    () => CARD_REGISTRY.filter(c => {
+      if (activeTab === 'overview') return true
+      return (CARD_TABS[c.id] || ['overview']).includes(activeTab)
+    }),
+    [activeTab]
+  )
+
+  const allVisibleCards = tabFilteredRegistry.filter(c => visibleCards.has(c.id))
   const pinnedVisibleCards = allVisibleCards.filter(c => pinnedCards.has(c.id))
-  const unpinnedPrimaryCards = CARD_REGISTRY.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id))
-  const unpinnedSecondaryCards = CARD_REGISTRY.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id))
+  const unpinnedPrimaryCards = sortByUsage(tabFilteredRegistry.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
+  const unpinnedSecondaryCards = sortByUsage(tabFilteredRegistry.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
 
   return (
     <div style={{ minHeight: '100vh' }}>
@@ -199,6 +288,57 @@ export default function Dashboard() {
               marginTop: '1.25rem',
             }}
           />
+        </div>
+
+        {/* Notion-style tab bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '4px', padding: '3px', borderRadius: '10px', background: 'rgba(15,25,35,0.03)' }}>
+            {TAB_CONFIG.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                style={{
+                  padding: '5px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  fontSize: '12px',
+                  fontWeight: activeTab === tab.id ? 600 : 400,
+                  color: activeTab === tab.id ? 'var(--ink)' : 'var(--slate)',
+                  backgroundColor: activeTab === tab.id ? 'var(--gold)' : 'transparent',
+                  opacity: activeTab === tab.id ? 1 : 0.6,
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease',
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Adaptive sorting indicator */}
+          {adaptive && activeTab === 'overview' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}>
+              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4 }}>
+                Organized by your usage
+              </span>
+              <button
+                onClick={resetAdaptive}
+                title="Reset to default order"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--slate)',
+                  opacity: 0.3,
+                  padding: '2px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <RotateCcw size={10} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Welcome banner (first-visit onboarding) */}
@@ -299,10 +439,10 @@ export default function Dashboard() {
               {pinnedVisibleCards.map(card => {
                 const Card = card.component
                 return (
-                  <div key={card.id} className="relative group">
+                  <div key={card.id} className="relative group" onClick={() => handleCardInteraction(card.id)}>
                     <Card />
                     <button
-                      onClick={() => togglePin(card.id)}
+                      onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                       style={{
                         background: 'rgba(201,168,76,0.15)',
@@ -329,10 +469,10 @@ export default function Dashboard() {
             {unpinnedPrimaryCards.map(card => {
               const Card = card.component
               return (
-                <div key={card.id} className="relative group">
+                <div key={card.id} className="relative group" onClick={() => handleCardInteraction(card.id)}>
                   <Card />
                   <button
-                    onClick={() => togglePin(card.id)}
+                    onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
                     className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
                     style={{
                       border: 'none',
@@ -378,10 +518,10 @@ export default function Dashboard() {
                   {unpinnedSecondaryCards.map(card => {
                     const Card = card.component
                     return (
-                      <div key={card.id} className="relative group">
+                      <div key={card.id} className="relative group" onClick={() => handleCardInteraction(card.id)}>
                         <Card />
                         <button
-                          onClick={() => togglePin(card.id)}
+                          onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
                           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
                           style={{
                             border: 'none',
@@ -505,6 +645,9 @@ export default function Dashboard() {
         /* Customize panel — light/dark */
         .customize-panel { background-color: rgba(45,138,138,0.02); }
         .dark .customize-panel { background-color: rgba(45,138,138,0.06); }
+
+        /* Dark mode tab background */
+        .dark .dashboard-tabs { background: rgba(255,255,255,0.04) !important; }
 
         /* Status pulse for header */
         @keyframes status-pulse {

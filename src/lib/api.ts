@@ -112,6 +112,8 @@ export interface TaskRow {
   completed_at: string | null
   completed_by: string | null
   blocked_by: string | null
+  acknowledged_at: string | null
+  acknowledged_by: string | null
   created_at: string
   meeting_title?: string
   meeting_date?: string
@@ -326,6 +328,12 @@ export function updateTask(id: string, fields: Record<string, unknown>) {
   return fetchApi<TaskRow>(`/api/tasks/${id}`, {
     method: 'POST',
     body: JSON.stringify(fields),
+  })
+}
+
+export function acknowledgeTask(id: string) {
+  return fetchApi<TaskRow>(`/api/tasks/${id}/acknowledge`, {
+    method: 'POST',
   })
 }
 

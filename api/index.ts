@@ -2,7 +2,7 @@ import type { Env } from './types';
 import { corsHeaders, json, error, getAuthUser } from './helpers';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleTasks, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleBatchUpdateTasks, handleSyncBulkTasks } from './routes/tasks';
+import { handleTasks, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask } from './routes/tasks';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
 import { handleMeetings, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline } from './routes/publications';
@@ -22,6 +22,7 @@ import { handleInsightConnections, handleInsightSuggestions } from './routes/ins
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 import { handleTrajectory } from './routes/trajectory';
 import { handleContributions } from './routes/contributions';
+import { handleContributionsDecay } from './routes/contributions-decay';
 import { handleSimilarGrants } from './routes/grant-intelligence';
 import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleUpdateDecision, handleGetDecisionsNeedingReview, handleGetDecisionTags } from './routes/decisions';
 import { handleSimilarDecisions, handleSimilarDecisionsById } from './routes/decision-replay';
@@ -131,6 +132,11 @@ export default {
         }
         if (url.pathname === '/api/analytics/team-engagement') {
           return await handleTeamEngagement(env);
+        }
+
+        // Contribution score with exponential decay
+        if (url.pathname === '/api/analytics/contributions') {
+          return await handleContributionsDecay(url, env);
         }
 
         // Team members by expertise tag
@@ -461,6 +467,12 @@ export default {
         // POST /api/tasks/batch — batch update tasks
         if (request.method === 'POST' && path === '/api/tasks/batch') {
           return await handleBatchUpdateTasks(request, user, env);
+        }
+
+        // POST /api/tasks/:id/acknowledge — closed-loop task acknowledgment
+        const taskAckMatch = path.match(/^\/api\/tasks\/([^/]+)\/acknowledge$/);
+        if (request.method === 'POST' && taskAckMatch) {
+          return await handleAcknowledgeTask(taskAckMatch[1], user, env);
         }
 
         // POST /api/tasks/:id/status — change task status
@@ -1160,6 +1172,12 @@ export default {
             const results: string[] = [];
             try { await env.DB.prepare("ALTER TABLE paper_project_links ADD COLUMN link_type TEXT DEFAULT 'output'").run(); results.push('added link_type'); } catch { results.push('link_type already exists'); }
             return json({ data: { version: 32, results } });
+          }
+          if (body.version === 33) {
+            const results: string[] = [];
+            try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN acknowledged_at TEXT').run(); results.push('added acknowledged_at'); } catch { results.push('acknowledged_at already exists'); }
+            try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN acknowledged_by TEXT').run(); results.push('added acknowledged_by'); } catch { results.push('acknowledged_by already exists'); }
+            return json({ data: { version: 33, results } });
           }
           return error(`Unknown migration version: ${body.version}`, 400);
         }

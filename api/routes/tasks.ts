@@ -330,3 +330,35 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
 
   return json({ data: { ok: true, inserted } });
 }
+
+// POST /api/tasks/:id/acknowledge — closed-loop task acknowledgment (aviation CRM pattern)
+export async function handleAcknowledgeTask(id: string, user: AuthUser, env: Env): Promise<Response> {
+  const task = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null; acknowledged_at: string | null }>();
+  if (!task) return error('Task not found', 404);
+
+  if (task.acknowledged_at) {
+    return json({ data: { already_acknowledged: true, acknowledged_at: task.acknowledged_at } });
+  }
+
+  const now = new Date().toISOString();
+  const acknowledgedBy = user.email.split('@')[0].toLowerCase();
+
+  await env.DB.prepare(
+    "UPDATE tasks SET acknowledged_at = ?, acknowledged_by = ?, updated_at = datetime('now') WHERE id = ?"
+  ).bind(now, acknowledgedBy, id).run();
+
+  await logActivity(env, 'task', `Acknowledged: "${task.title || task.description}"`, user.email, id, 'task');
+
+  // Notify the assigner that the task was acknowledged
+  if (task.assigned_by) {
+    try {
+      const assignerSlug = task.assigned_by.split('@')[0].toLowerCase();
+      await env.DB.prepare(
+        'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} acknowledged a task`, (task.title || task.description).slice(0, 200), '/tasks').run();
+    } catch (e) { console.error('Failed to create acknowledge notification:', e); }
+  }
+
+  const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
+  return json({ data: updated });
+}

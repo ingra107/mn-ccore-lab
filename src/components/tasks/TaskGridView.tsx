@@ -433,6 +433,20 @@ function TaskGridRow({
           value={task.assignee}
           onChange={(slug) => onFieldChange(task.id, 'assignee', slug)}
         />
+        {/* Unacknowledged indicator — gold dot when assigned but not acknowledged */}
+        {task.assignee && !task.acknowledged_at && !isDone && (
+          <span
+            title="Not yet acknowledged"
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              backgroundColor: 'var(--gold)',
+              flexShrink: 0,
+              opacity: 0.8,
+            }}
+          />
+        )}
       </div>
 
       {/* Due date — inline date picker */}

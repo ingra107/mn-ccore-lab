@@ -8,7 +8,7 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone, createDeadlineDependency, deleteDeadlineDependency, createSubmissionEvent, updateSubmissionEvent, deleteSubmissionEvent, createRegulatoryItem, updateRegulatoryItem, renewRegulatoryItem, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference, createPBSession, bulkCreatePBSessions } from '../lib/api'
+import { createProject, updateProject, addProjectComment, createTask, updateTaskStatus, updateTask, acknowledgeTask, createIdea, updateIdea, voteIdea, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, completeMenteeMilestone, createDeadlineDependency, deleteDeadlineDependency, createSubmissionEvent, updateSubmissionEvent, deleteSubmissionEvent, createRegulatoryItem, updateRegulatoryItem, renewRegulatoryItem, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference, createPBSession, bulkCreatePBSessions } from '../lib/api'
 import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, RegulatoryItemRow, GrantMilestoneRow, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../lib/api'
 import type { TaskRow, IdeaRow } from '../lib/api'
 import type { Project } from '../data/types'
@@ -1552,6 +1552,51 @@ export function useBulkCreatePBSessions() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['pb-sessions'] })
       queryClient.invalidateQueries({ queryKey: ['pb-session-stats'] })
+    },
+  })
+}
+
+// ── Task Acknowledgment (closed-loop communication) ─────────
+
+export function useAcknowledgeTask() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => acknowledgeTask(id),
+
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+
+      const queries = queryClient.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
+      const snapshots: { key: readonly unknown[]; data: TaskRow[] | undefined }[] = []
+
+      for (const [key, data] of queries) {
+        snapshots.push({ key, data })
+        if (data) {
+          queryClient.setQueryData(
+            key,
+            data.map((t) =>
+              t.id === id
+                ? { ...t, acknowledged_at: new Date().toISOString(), acknowledged_by: 'me' }
+                : t
+            )
+          )
+        }
+      }
+
+      return { snapshots }
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.snapshots) {
+        for (const { key, data } of context.snapshots) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
     },
   })
 }

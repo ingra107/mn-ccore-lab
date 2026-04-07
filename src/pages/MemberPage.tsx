@@ -7,7 +7,7 @@ import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
 import ActivityHeatmap from '../components/ActivityHeatmap'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { usePublications, useExpertise, useMenteeMilestones } from '../hooks/useApiData'
+import { usePublications, useExpertise, useMenteeMilestones, useContributionScore } from '../hooks/useApiData'
 import type { MenteeMilestoneRow } from '../hooks/useApiData'
 import { useCommitments } from '../hooks/useCommitments'
 import { useAddExpertise, useRemoveExpertise } from '../hooks/useMutations'
@@ -610,7 +610,7 @@ export default function MemberPage() {
         </>
       )}
 
-      {/* Activity heatmap */}
+      {/* Activity heatmap + contribution score */}
       {slug && (
         <>
           <section className="mb-8" id="activity">
@@ -626,6 +626,8 @@ export default function MemberPage() {
                 Activity
               </h2>
             </div>
+            <ContributionScoreCard slug={slug} />
+            <div style={{ marginTop: '1rem' }} />
             <ActivityHeatmap slug={slug} days={90} />
           </section>
           <SectionDivider />
@@ -756,6 +758,95 @@ export default function MemberPage() {
         </div>
       )}
     </LabPageLayout>
+  )
+}
+
+// ── Contribution Score Card ──────────────────────────────
+
+const TREND_ARROWS: Record<string, { symbol: string; color: string }> = {
+  increasing: { symbol: '\u2191', color: 'var(--green, #16a34a)' },
+  stable: { symbol: '\u2192', color: 'var(--slate)' },
+  declining: { symbol: '\u2193', color: 'var(--maroon)' },
+}
+
+function MiniSparkline({ data }: { data: number[] }) {
+  if (!data || data.length === 0) return null
+  const max = Math.max(...data, 0.1)
+  const w = 120
+  const h = 28
+  const points = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - (v / max) * h}`).join(' ')
+
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ overflow: 'visible' }}>
+      <polyline
+        points={points}
+        fill="none"
+        stroke="var(--teal)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={0.7}
+      />
+    </svg>
+  )
+}
+
+function ContributionScoreCard({ slug }: { slug: string }) {
+  const { data, isLoading } = useContributionScore(slug)
+
+  if (isLoading || !data) return null
+
+  const trend = TREND_ARROWS[data.trend] || TREND_ARROWS.stable
+
+  return (
+    <div
+      className="card"
+      style={{
+        padding: '1rem 1.25rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1.25rem',
+        borderLeft: '3px solid var(--teal)',
+      }}
+    >
+      {/* Score */}
+      <div style={{ textAlign: 'center', minWidth: 60 }}>
+        <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.1 }}>
+          {Math.round(data.total_score)}
+        </div>
+        <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, marginTop: 2 }}>
+          contribution score
+        </div>
+      </div>
+
+      {/* Trend arrow */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+        <span style={{ fontSize: '18px', color: trend.color, lineHeight: 1 }}>{trend.symbol}</span>
+        <span style={{ fontSize: '9px', color: trend.color, textTransform: 'capitalize' }}>{data.trend}</span>
+      </div>
+
+      {/* Sparkline */}
+      <div style={{ flex: 1 }}>
+        <MiniSparkline data={data.sparkline} />
+        <div style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.4, marginTop: 2 }}>
+          Last 14 days (decay-weighted)
+        </div>
+      </div>
+
+      {/* Breakdown summary */}
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        {Object.entries(data.breakdown)
+          .filter(([, v]) => v.count > 0)
+          .sort(([, a], [, b]) => b.decay_score - a.decay_score)
+          .slice(0, 4)
+          .map(([type, v]) => (
+            <div key={type} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>{v.count}</div>
+              <div style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.5 }}>{type}s</div>
+            </div>
+          ))}
+      </div>
+    </div>
   )
 }
 

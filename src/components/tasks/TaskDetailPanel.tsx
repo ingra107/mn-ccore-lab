@@ -4,7 +4,7 @@ import {
   CalendarDays, FolderKanban, ArrowRightLeft,
 } from 'lucide-react'
 import CollapsibleSection from '../CollapsibleSection'
-import { useUpdateTask, useUpdateTaskStatus } from '../../hooks/useMutations'
+import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { TaskRow } from '../../lib/api'
@@ -25,6 +25,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
   const panelRef = useRef<HTMLDivElement>(null)
   const updateTask = useUpdateTask()
   const updateStatus = useUpdateTaskStatus()
+  const ackTask = useAcknowledgeTask()
   const { showUndo } = useUndoToast()
 
   // Close on Escape
@@ -109,6 +110,32 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
           <FieldBlock label="Assignee" icon={User}>
             <AssigneeSelect value={task.assignee} onChange={(v) => handleFieldUpdate('assignee', v)} />
           </FieldBlock>
+
+          {/* Acknowledge button — shown when task is assigned but not yet acknowledged */}
+          {task.assignee && !task.acknowledged_at && task.status !== 'done' && (
+            <button
+              onClick={() => ackTask.mutate(task.id)}
+              disabled={ackTask.isPending}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200"
+              style={{
+                background: 'rgba(201,168,76,0.08)',
+                color: 'var(--gold)',
+                border: '1px solid rgba(201,168,76,0.2)',
+                cursor: 'pointer',
+                width: 'fit-content',
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--gold)', flexShrink: 0 }} />
+              {ackTask.isPending ? 'Acknowledging...' : 'Acknowledge Assignment'}
+            </button>
+          )}
+          {task.acknowledged_at && (
+            <div className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+              <Clock size={10} />
+              Acknowledged {formatRelativeTime(task.acknowledged_at)}
+              {task.acknowledged_by ? ` by ${task.acknowledged_by}` : ''}
+            </div>
+          )}
 
           {/* Description (always visible) */}
           <div>
