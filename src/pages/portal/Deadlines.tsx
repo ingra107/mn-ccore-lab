@@ -61,10 +61,9 @@ export default function Deadlines() {
     showUndo(`Status → ${labels[newStatus] || newStatus}`, () => updateTaskStatus.mutate({ id, status: prevStatus }))
   }, [updateTaskStatus, showUndo])
 
-  const now = new Date()
-
   // Aggregate all deadlines
   const deadlines = useMemo(() => {
+    const now = new Date()
     const items: DeadlineItem[] = []
 
     // Tasks with due dates
@@ -114,7 +113,7 @@ export default function Deadlines() {
 
     // Sort by date
     return filtered.sort((a, b) => a.due_date.localeCompare(b.due_date))
-  }, [tasks, grants, filterType, now])
+  }, [tasks, grants, filterType])
 
   // Group by time period
   const overdue = deadlines.filter((d) => d.isOverdue && d.status !== 'done' && d.status !== 'completed')

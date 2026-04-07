@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Layout from './components/Layout'
 import PortalLayout from './components/PortalLayout'
 import ViewTransitionWrapper from './components/ViewTransitionWrapper'
-import Home from './pages/Home'
+const Home = lazy(() => import('./pages/Home'))
 import { AuthProvider } from './context/AuthContext'
 
 // Error boundary to prevent one page crash from taking down the app
