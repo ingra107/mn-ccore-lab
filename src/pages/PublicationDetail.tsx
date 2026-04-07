@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { ArrowLeft, ExternalLink, FolderOpen } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { usePublications } from '../hooks/useApiData'
+import { usePublications, useLinkedProjects } from '../hooks/useApiData'
 import { usePageMeta } from '../hooks/usePageMeta'
 import Avatar from '../components/Avatar'
 import { getPersonInfo } from '../data/team'
@@ -297,7 +297,126 @@ export default function PublicationDetail() {
             </div>
           </div>
         </motion.div>
+
+        {/* Linked Projects */}
+        <LinkedProjectsSection publicationId={decodedId} />
       </div>
     </div>
+  )
+}
+
+// ── Linked Projects Section ─────────────────────────────────
+
+const CATEGORY_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  clif: { bg: 'var(--maroon)', text: '#ffffff', label: 'CLIF' },
+  lab: { bg: 'var(--teal)', text: '#ffffff', label: 'Lab' },
+  nate: { bg: 'var(--gold)', text: '#0f1923', label: 'Mesfin' },
+}
+
+function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
+  const { data: linkedProjects = [] } = useLinkedProjects(publicationId)
+
+  if (linkedProjects.length === 0) return null
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.2 }}
+      style={{ marginTop: '2rem' }}
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <FolderOpen size={16} style={{ color: 'var(--teal)' }} />
+        <h2
+          style={{
+            fontWeight: 500,
+            fontSize: '16px',
+            color: 'var(--ink)',
+            margin: 0,
+          }}
+        >
+          Linked Projects
+        </h2>
+        <span
+          style={{
+            fontSize: '11px',
+            color: 'var(--slate)',
+            opacity: 0.6,
+          }}
+        >
+          {linkedProjects.length}
+        </span>
+      </div>
+      <div
+        style={{
+          background: 'var(--ice)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+        }}
+      >
+        <div className="flex flex-col gap-2">
+          {linkedProjects.map((project) => {
+            const cat = CATEGORY_COLORS[project.category ?? ''] ?? {
+              bg: 'var(--slate)',
+              text: '#ffffff',
+              label: project.category ?? 'Other',
+            }
+            return (
+              <Link
+                key={project.link_id}
+                to={`/projects/${project.slug}`}
+                className="flex items-center gap-3 py-2 transition-colors"
+                style={{
+                  textDecoration: 'none',
+                  borderBottom: '1px solid rgba(201, 168, 76, 0.06)',
+                }}
+              >
+                <span
+                  className="inline-block px-1.5 py-0.5 rounded text-[9px] font-medium flex-shrink-0"
+                  style={{ background: cat.bg, color: cat.text, letterSpacing: '0.04em' }}
+                >
+                  {cat.label}
+                </span>
+                <span
+                  style={{
+                    fontSize: '13px',
+                    color: 'var(--ink)',
+                    flex: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {project.title}
+                </span>
+                {project.link_type && project.link_type !== 'output' && (
+                  <span
+                    className="inline-block px-1.5 py-0.5 rounded text-[9px]"
+                    style={{
+                      background: 'rgba(45,138,138,0.08)',
+                      color: 'var(--teal)',
+                    }}
+                  >
+                    {project.link_type}
+                  </span>
+                )}
+                {project.stage && (
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      color: 'var(--slate)',
+                      opacity: 0.5,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {project.stage}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
+        </div>
+      </div>
+    </motion.div>
   )
 }

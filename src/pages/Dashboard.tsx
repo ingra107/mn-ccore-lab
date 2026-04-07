@@ -18,6 +18,7 @@ import ActionBoardCard from '../components/dashboard/ActionBoardCard'
 import ProjectHealthCard from '../components/dashboard/ProjectHealthCard'
 import MyItemsCard from '../components/dashboard/MyItemsCard'
 import TeamPulseCard from '../components/dashboard/TeamPulseCard'
+import InsightsCard from '../components/dashboard/InsightsCard'
 
 // Card registry — order matters for default layout
 const CARD_REGISTRY = [
@@ -32,6 +33,7 @@ const CARD_REGISTRY = [
   { id: 'my-items', label: 'My Items', component: MyItemsCard, defaultVisible: false },
   { id: 'clif', label: 'CLIF Network', component: CLIFMiniCard, defaultVisible: false },
   { id: 'topics', label: 'Research Topics', component: TopicBubblesCard, defaultVisible: false },
+  { id: 'insights', label: 'Cross-Project Insights', component: InsightsCard, defaultVisible: false },
 ] as const
 
 const STORAGE_KEY = 'mnccore-dashboard-cards'

@@ -1,0 +1,247 @@
+import type { Env } from '../helpers';
+import { json } from '../helpers';
+
+// ── Cross-Project Insight Engine ──────────────────────────────
+// Analyzes D1 project data to surface connections Nick might miss.
+
+interface InsightEdge {
+  from: string
+  to: string
+  fromTitle: string
+  toTitle: string
+  reason: string
+  strength: number
+}
+
+// Domain-specific keyword groups for research topic matching
+const KEYWORD_GROUPS: { keywords: string[]; label: string }[] = [
+  { keywords: ['clif', 'common longitudinal'], label: 'CLIF' },
+  { keywords: ['ventilat', 'mechanical ventilation', 'intubat'], label: 'ventilation' },
+  { keywords: ['sepsis', 'septic'], label: 'sepsis' },
+  { keywords: ['mortality', 'death', 'survival'], label: 'mortality' },
+  { keywords: ['icu', 'intensive care', 'critical care', 'critically ill'], label: 'ICU' },
+  { keywords: ['survey', 'questionnaire'], label: 'survey methods' },
+  { keywords: ['causal', 'causal inference', 'propensity'], label: 'causal inference' },
+  { keywords: ['machine learning', 'ml ', 'deep learning', 'prediction model'], label: 'ML/AI' },
+  { keywords: ['disparit', 'equity', 'racial', 'socioeconomic'], label: 'disparities' },
+  { keywords: ['covid', 'sars-cov', 'pandemic'], label: 'COVID-19' },
+  { keywords: ['ards', 'acute respiratory distress'], label: 'ARDS' },
+  { keywords: ['tracheostom', 'trach'], label: 'tracheostomy' },
+  { keywords: ['quality', 'quality improvement'], label: 'quality' },
+  { keywords: ['biomarker', 'inflammatory marker'], label: 'biomarkers' },
+  { keywords: ['phenotyp', 'subphenotyp', 'endotyp'], label: 'phenotyping' },
+]
+
+function findMatchingKeywords(text: string): string[] {
+  const lower = text.toLowerCase()
+  const matches: string[] = []
+  for (const group of KEYWORD_GROUPS) {
+    for (const kw of group.keywords) {
+      if (lower.includes(kw)) {
+        matches.push(group.label)
+        break
+      }
+    }
+  }
+  return matches
+}
+
+// GET /api/insights/connections — full cross-project analysis
+export async function handleInsightConnections(env: Env): Promise<Response> {
+  // Fetch all active projects with their details
+  const projects = await env.DB.prepare(
+    `SELECT slug, title, description, category, pi, stage, team_members
+     FROM projects
+     WHERE status != 'Archived'
+     ORDER BY title ASC`
+  ).all<{
+    slug: string
+    title: string
+    description: string | null
+    category: string | null
+    pi: string | null
+    stage: string | null
+    team_members: string | null
+  }>()
+
+  const rows = projects.results || []
+  const edges: InsightEdge[] = []
+  const seen = new Set<string>()
+
+  function addEdge(from: string, to: string, fromTitle: string, toTitle: string, reason: string, strength: number) {
+    const key = [from, to].sort().join('::') + '::' + reason
+    if (seen.has(key)) return
+    seen.add(key)
+    edges.push({ from, to, fromTitle, toTitle, reason, strength })
+  }
+
+  // 1. Shared team members
+  const teamMap = new Map<string, { slug: string; title: string; members: string[] }>()
+  for (const p of rows) {
+    const members: string[] = []
+    if (p.team_members) {
+      try {
+        const parsed = JSON.parse(p.team_members)
+        if (Array.isArray(parsed)) members.push(...parsed)
+      } catch {
+        // comma-separated fallback
+        members.push(...p.team_members.split(',').map((s: string) => s.trim()).filter(Boolean))
+      }
+    }
+    if (p.pi) members.push(p.pi)
+    teamMap.set(p.slug, { slug: p.slug, title: p.title, members: [...new Set(members)] })
+  }
+
+  const teamEntries = [...teamMap.values()]
+  for (let i = 0; i < teamEntries.length; i++) {
+    for (let j = i + 1; j < teamEntries.length; j++) {
+      const a = teamEntries[i]
+      const b = teamEntries[j]
+      const shared = a.members.filter((m) => b.members.includes(m))
+      if (shared.length > 0) {
+        // PI overlap is weaker signal than shared team members (PI is on most projects)
+        const piOnly = shared.length === 1 && (shared[0] === a.members[0] || shared[0] === b.members[0])
+        const strength = piOnly ? 0.3 : Math.min(0.9, shared.length * 0.3)
+        addEdge(
+          a.slug, b.slug, a.title, b.title,
+          `Shared team: ${shared.join(', ')}`,
+          strength
+        )
+      }
+    }
+  }
+
+  // 2. Same category + similar stage
+  const categoryGroups = new Map<string, typeof rows>()
+  for (const p of rows) {
+    if (!p.category) continue
+    if (!categoryGroups.has(p.category)) categoryGroups.set(p.category, [])
+    categoryGroups.get(p.category)!.push(p)
+  }
+
+  for (const [_cat, group] of categoryGroups) {
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        const a = group[i]
+        const b = group[j]
+        if (a.stage && b.stage && a.stage === b.stage) {
+          addEdge(
+            a.slug, b.slug, a.title, b.title,
+            `Same category & stage (${a.stage})`,
+            0.4
+          )
+        }
+      }
+    }
+  }
+
+  // 3. Keyword matching in titles + descriptions
+  const projectKeywords = new Map<string, { slug: string; title: string; keywords: string[] }>()
+  for (const p of rows) {
+    const text = [p.title, p.description || ''].join(' ')
+    const kws = findMatchingKeywords(text)
+    if (kws.length > 0) {
+      projectKeywords.set(p.slug, { slug: p.slug, title: p.title, keywords: kws })
+    }
+  }
+
+  const kwEntries = [...projectKeywords.values()]
+  for (let i = 0; i < kwEntries.length; i++) {
+    for (let j = i + 1; j < kwEntries.length; j++) {
+      const a = kwEntries[i]
+      const b = kwEntries[j]
+      const shared = a.keywords.filter((k) => b.keywords.includes(k))
+      if (shared.length > 0) {
+        addEdge(
+          a.slug, b.slug, a.title, b.title,
+          `Shared topics: ${shared.join(', ')}`,
+          Math.min(0.8, shared.length * 0.25)
+        )
+      }
+    }
+  }
+
+  // 4. Shared linked papers
+  const paperLinks = await env.DB.prepare(
+    `SELECT paper_id, project_slug FROM paper_project_links`
+  ).all<{ paper_id: string; project_slug: string }>()
+
+  const paperToProjects = new Map<string, string[]>()
+  for (const link of (paperLinks.results || [])) {
+    if (!paperToProjects.has(link.paper_id)) paperToProjects.set(link.paper_id, [])
+    paperToProjects.get(link.paper_id)!.push(link.project_slug)
+  }
+
+  for (const [_paperId, projectSlugs] of paperToProjects) {
+    if (projectSlugs.length < 2) continue
+    for (let i = 0; i < projectSlugs.length; i++) {
+      for (let j = i + 1; j < projectSlugs.length; j++) {
+        const a = rows.find((r) => r.slug === projectSlugs[i])
+        const b = rows.find((r) => r.slug === projectSlugs[j])
+        if (a && b) {
+          addEdge(
+            a.slug, b.slug, a.title, b.title,
+            'Shared literature',
+            0.6
+          )
+        }
+      }
+    }
+  }
+
+  // Sort by strength descending, deduplicate strongest per pair
+  const pairBest = new Map<string, InsightEdge[]>()
+  for (const edge of edges) {
+    const pairKey = [edge.from, edge.to].sort().join('::')
+    if (!pairBest.has(pairKey)) pairBest.set(pairKey, [])
+    pairBest.get(pairKey)!.push(edge)
+  }
+
+  // Combine edges per pair — aggregate reasons, take max strength
+  const combined: InsightEdge[] = []
+  for (const [_, pairEdges] of pairBest) {
+    const best = pairEdges.reduce((a, b) => (a.strength > b.strength ? a : b))
+    const allReasons = pairEdges.map((e) => e.reason)
+    const combinedStrength = Math.min(1, pairEdges.reduce((sum, e) => sum + e.strength, 0))
+    combined.push({
+      ...best,
+      reason: allReasons.join(' | '),
+      strength: combinedStrength,
+    })
+  }
+
+  combined.sort((a, b) => b.strength - a.strength)
+
+  return json({
+    data: combined,
+    count: combined.length,
+  })
+}
+
+// GET /api/insights/suggestions?project_id= — related projects for a given project
+export async function handleInsightSuggestions(url: URL, env: Env): Promise<Response> {
+  const projectId = url.searchParams.get('project_id')
+  if (!projectId) {
+    return json({ data: [], count: 0 })
+  }
+
+  // Get full connections and filter for this project
+  const connectionsResp = await handleInsightConnections(env)
+  const connectionsData = await connectionsResp.json() as { data: InsightEdge[] }
+  const all = connectionsData.data || []
+
+  const related = all
+    .filter((e) => e.from === projectId || e.to === projectId)
+    .map((e) => ({
+      slug: e.from === projectId ? e.to : e.from,
+      title: e.from === projectId ? e.toTitle : e.fromTitle,
+      reason: e.reason,
+      strength: e.strength,
+    }))
+    .sort((a, b) => b.strength - a.strength)
+
+  return json({
+    data: related,
+    count: related.length,
+  })
+}

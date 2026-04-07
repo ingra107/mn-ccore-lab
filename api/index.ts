@@ -17,7 +17,8 @@ import { handleCalendarEvents } from './routes/calendar';
 import { handleActivity, handleActivityHeatmap } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
-import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper } from './routes/paper-links';
+import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByProject, handlePapersByPublication } from './routes/paper-links';
+import { handleInsightConnections, handleInsightSuggestions } from './routes/insights';
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 import { handleTrajectory } from './routes/trajectory';
 import { handleContributions } from './routes/contributions';
@@ -143,6 +144,22 @@ export default {
         }
         if (url.pathname === '/api/digest') {
           return await handleDigest(url, env);
+        }
+
+        // Cross-Project Insight Engine
+        if (url.pathname === '/api/insights/connections') {
+          return await handleInsightConnections(env);
+        }
+        if (url.pathname === '/api/insights/suggestions') {
+          return await handleInsightSuggestions(url, env);
+        }
+
+        // Paper-to-Project linking queries
+        if (url.pathname === '/api/papers/by-project') {
+          return await handlePapersByProject(url, env);
+        }
+        if (url.pathname === '/api/papers/by-publication') {
+          return await handlePapersByPublication(url, env);
         }
 
         // Parameterized GET routes
@@ -1138,6 +1155,11 @@ export default {
             const results: string[] = [];
             try { await env.DB.prepare("ALTER TABLE daily_plans ADD COLUMN evening_task_ids TEXT").run(); results.push('added evening_task_ids'); } catch { results.push('evening_task_ids already exists'); }
             return json({ data: { version: 31, results } });
+          }
+          if (body.version === 32) {
+            const results: string[] = [];
+            try { await env.DB.prepare("ALTER TABLE paper_project_links ADD COLUMN link_type TEXT DEFAULT 'output'").run(); results.push('added link_type'); } catch { results.push('link_type already exists'); }
+            return json({ data: { version: 32, results } });
           }
           return error(`Unknown migration version: ${body.version}`, 400);
         }

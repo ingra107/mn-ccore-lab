@@ -1460,3 +1460,77 @@ export function usePBSessionStats() {
     retry: false,
   })
 }
+
+// ── Cross-Project Insights ──────────────────────────────────
+
+export interface InsightEdge {
+  from: string
+  to: string
+  fromTitle: string
+  toTitle: string
+  reason: string
+  strength: number
+}
+
+export function useInsightConnections() {
+  return useQuery({
+    queryKey: ['insight-connections'],
+    queryFn: async () => {
+      const res = await fetch('/api/insights/connections')
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as InsightEdge[]
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export interface InsightSuggestion {
+  slug: string
+  title: string
+  reason: string
+  strength: number
+}
+
+export function useInsightSuggestions(projectId: string) {
+  return useQuery({
+    queryKey: ['insight-suggestions', projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/insights/suggestions?project_id=${encodeURIComponent(projectId)}`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as InsightSuggestion[]
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!projectId,
+  })
+}
+
+// ── Paper-to-Project linking (enriched) ─────────────────────
+
+export interface LinkedProject {
+  link_id: string
+  link_type: string | null
+  note: string | null
+  linked_at: string
+  slug: string
+  title: string
+  status: string
+  category: string | null
+  stage: string | null
+  pi: string | null
+}
+
+export function useLinkedProjects(publicationId: string) {
+  return useQuery({
+    queryKey: ['linked-projects', publicationId],
+    queryFn: async () => {
+      const res = await fetch(`/api/papers/by-publication?publication_id=${encodeURIComponent(publicationId)}`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return (data.data || []) as LinkedProject[]
+    },
+    staleTime: 60 * 1000,
+    enabled: !!publicationId,
+  })
+}
