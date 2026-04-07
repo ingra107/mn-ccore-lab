@@ -97,7 +97,7 @@ export default function CommandPalette() {
       { path: '/ideas', label: 'Ideas', icon: Lightbulb },
       { path: '/ask', label: 'Ask the Lab', icon: HelpCircle },
       { path: '/decisions', label: 'Decisions', icon: Scale },
-      { path: '/digest', label: 'Literature', icon: BookOpen },
+      { path: '/digest', label: 'Research Digest', icon: BookOpen },
       { path: '/grants', label: 'Grants', icon: DollarSign },
       { path: '/meetings', label: 'Meetings', icon: Users, shortcut: 'G M' },
     ]

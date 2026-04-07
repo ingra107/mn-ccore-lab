@@ -21,14 +21,14 @@ const PATH_LABELS: Record<string, string> = {
   '/projects': 'Projects',
   '/manuscripts': 'Manuscripts',
   '/ideas': 'Ideas',
-  '/digest': 'Literature',
+  '/digest': 'Research Digest',
   '/grants': 'Grants',
   '/meetings': 'Meetings',
   '/activity': 'Activity',
   '/analytics': 'Analytics',
   '/search': 'Search',
   '/settings': 'Settings',
-  '/meeting-notes': 'Meeting Notes',
+  '/meeting-notes': 'Meeting Transcripts',
 }
 
 function labelForPath(path: string): string | null {

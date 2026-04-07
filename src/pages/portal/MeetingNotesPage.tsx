@@ -30,7 +30,7 @@ export default function MeetingNotesPage() {
     <div>
       <PageHeader
         icon={<FileText size={20} />}
-        title="AI Meeting Notes"
+        title="Meeting Transcripts"
         subtitle="Transcription, summaries, and action items"
         count={processedCount}
         actions={
@@ -57,7 +57,7 @@ export default function MeetingNotesPage() {
       <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
         <h3 className="text-sm font-normal mb-3 flex items-center gap-2" style={{ color: 'var(--ink)' }}>
           <Brain size={16} style={{ color: 'var(--teal)' }} />
-          How AI Meeting Notes Works
+          How Meeting Transcripts Work
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           {[

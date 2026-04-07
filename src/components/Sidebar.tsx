@@ -24,7 +24,6 @@ import {
   Scale,
   Shield,
   Terminal,
-  Inbox,
   ScrollText,
   GraduationCap,
   GitBranch,
@@ -66,8 +65,8 @@ const navGroups: NavGroup[] = [
     title: 'Planning',
     items: [
       { to: '/my-tasks', label: 'My Tasks', icon: CheckSquare },
-      { to: '/my-items', label: 'My Items', icon: Inbox },
       { to: '/tasks', label: 'All Tasks', icon: ListTodo },
+      { to: '/meetings', label: 'Meetings', icon: UsersIcon },
       { to: '/calendar', label: 'Calendar', icon: Calendar },
       { to: '/deadlines', label: 'Deadlines', icon: Clock },
       { to: '/deadline-cascade', label: 'Cascade', icon: GitBranch },
@@ -81,7 +80,7 @@ const navGroups: NavGroup[] = [
       { to: '/ideas', label: 'Ideas', icon: Lightbulb },
       { to: '/ask', label: 'Ask the Lab', icon: HelpCircle },
       { to: '/decisions', label: 'Decisions', icon: Scale },
-      { to: '/digest', label: 'Literature', icon: BookOpen },
+      { to: '/digest', label: 'Research Digest', icon: BookOpen },
       { to: '/search', label: 'Search', icon: Search },
       { to: '/grants', label: 'Grants', icon: DollarSign },
     ],
@@ -89,8 +88,7 @@ const navGroups: NavGroup[] = [
   {
     title: 'Meetings',
     items: [
-      { to: '/meetings', label: 'Meetings', icon: UsersIcon },
-      { to: '/meeting-notes', label: 'AI Notes', icon: FileText },
+      { to: '/meeting-notes', label: 'Meeting Transcripts', icon: FileText },
       { to: '/narratives', label: 'Narratives', icon: ScrollText },
     ],
   },

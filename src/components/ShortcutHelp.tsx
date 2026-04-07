@@ -18,7 +18,7 @@ const shortcuts = [
       { keys: 'G M', action: 'Go to Meetings' },
       { keys: 'G C', action: 'Go to Calendar' },
       { keys: 'G I', action: 'Go to Ideas' },
-      { keys: 'G L', action: 'Go to Literature' },
+      { keys: 'G L', action: 'Go to Research Digest' },
       { keys: 'G G', action: 'Go to Grants' },
       { keys: 'G K', action: 'Go to Deadlines' },
     ],

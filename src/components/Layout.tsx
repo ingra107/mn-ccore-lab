@@ -17,12 +17,12 @@ const navLinks: { to: string; label: string; isJoin?: boolean }[] = [
 
 const researchDropdownLinks = [
   { to: '/dashboard', label: 'Dashboard' },
-  { to: '/my-items', label: 'My Items' },
+  { to: '/personal', label: 'My Hub' },
   { to: '/projects', label: 'Projects' },
   { to: '/grants', label: 'Grants' },
   { to: '/network', label: 'Network' },
   { to: '/meetings', label: 'Meetings' },
-  { to: '/digest', label: 'Digest' },
+  { to: '/digest', label: 'Research Digest' },
 ]
 
 // Footer link groups
@@ -31,7 +31,7 @@ const footerResearchLinks = [
   { to: '/projects', label: 'Projects' },
   { to: '/grants', label: 'Grants' },
   { to: '/meetings', label: 'Meetings' },
-  { to: '/digest', label: 'Digest' },
+  { to: '/digest', label: 'Research Digest' },
 ]
 
 const footerQuickLinks = [

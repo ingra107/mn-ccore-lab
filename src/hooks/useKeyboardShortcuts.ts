@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
  *
  * Navigation (G + key):
  *   G D = Dashboard, G H = My Hub, G T = Tasks, G P = Projects
- *   G M = Meetings, G C = Calendar, G I = Ideas, G L = Literature
+ *   G M = Meetings, G C = Calendar, G I = Ideas, G L = Research Digest
  *
  * Actions:
  *   C = Create task (on tasks page)

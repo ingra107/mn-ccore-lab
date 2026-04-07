@@ -62,7 +62,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     day: 3,
     title: 'Check the Research Digest',
     description: 'Weekly papers relevant to our lab, scored by relevance.',
-    action: 'Visit Digest',
+    action: 'Visit Research Digest',
     link: '/digest',
     category: 'explore',
   },
