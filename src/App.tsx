@@ -123,6 +123,7 @@ const NarrativesPage = lazy(() => import('./pages/portal/NarrativesPage'))
 const AskTheLab = lazy(() => import('./pages/portal/AskTheLab'))
 const PIAnalytics = lazy(() => import('./pages/portal/PIAnalytics'))
 const PBSector = lazy(() => import('./pages/portal/PBSector'))
+const SessionHistory = lazy(() => import('./pages/portal/SessionHistory'))
 const MenteeMilestones = lazy(() => import('./pages/portal/MenteeMilestones'))
 const DeadlineCascadePage = lazy(() => import('./pages/portal/DeadlineCascadePage'))
 const Pulse = lazy(() => import('./pages/Pulse'))
@@ -208,6 +209,7 @@ export default function App() {
                   <Route path="/pi/analytics" element={<ErrorBoundary><PIAnalytics /></ErrorBoundary>} />
                   <Route path="/mentee-milestones" element={<ErrorBoundary><MenteeMilestones /></ErrorBoundary>} />
                   <Route path="/pb" element={<ErrorBoundary><PBSector /></ErrorBoundary>} />
+                  <Route path="/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
                   <Route path="/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
                 </Route>
               </Routes>

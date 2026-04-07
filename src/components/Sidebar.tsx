@@ -28,6 +28,7 @@ import {
   ScrollText,
   GraduationCap,
   GitBranch,
+  History,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
@@ -130,7 +131,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
 
   // Conditionally include PI Tools section
   const allGroups: NavGroup[] = isPi
-    ? [...navGroups, { title: 'PI Tools', items: [{ to: '/pb', label: 'Daily Plan', icon: Terminal }, { to: '/pi/analytics', label: 'PI Dashboard', icon: Shield }] }]
+    ? [...navGroups, { title: 'PI Tools', items: [{ to: '/pb', label: 'Daily Plan', icon: Terminal }, { to: '/sessions', label: 'Session History', icon: History }, { to: '/pi/analytics', label: 'PI Dashboard', icon: Shield }] }]
     : navGroups
 
   // Inject badge counts into nav items
