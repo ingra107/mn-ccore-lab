@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Layout from './components/Layout'
 import PortalLayout from './components/PortalLayout'
 import ViewTransitionWrapper from './components/ViewTransitionWrapper'
+import PageErrorBoundary from './components/PageErrorBoundary'
 const Home = lazy(() => import('./pages/Home'))
 import { AuthProvider } from './context/AuthContext'
 
@@ -176,7 +177,7 @@ export default function App() {
                 {/* Portal pages: sidebar layout */}
                 <Route element={<PortalLayout />}>
                   {/* Workspace */}
-                  <Route path="/dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+                  <Route path="/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Dashboard"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/personal" element={<ErrorBoundary><Personal /></ErrorBoundary>} />
                   <Route path="/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
 
@@ -189,15 +190,15 @@ export default function App() {
 
                   {/* Research */}
                   <Route path="/projects" element={<ErrorBoundary><Projects /></ErrorBoundary>} />
-                  <Route path="/projects/:slug" element={<ErrorBoundary><ProjectDetail /></ErrorBoundary>} />
+                  <Route path="/projects/:slug" element={<ErrorBoundary><PageErrorBoundary pageName="ProjectDetail"><ProjectDetail /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/manuscripts" element={<ErrorBoundary><Manuscripts /></ErrorBoundary>} />
                   <Route path="/ideas" element={<ErrorBoundary><Ideas /></ErrorBoundary>} />
                   <Route path="/ask" element={<ErrorBoundary><AskTheLab /></ErrorBoundary>} />
-                  <Route path="/decisions" element={<ErrorBoundary><DecisionsPage /></ErrorBoundary>} />
+                  <Route path="/decisions" element={<ErrorBoundary><PageErrorBoundary pageName="DecisionsPage"><DecisionsPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/narratives" element={<ErrorBoundary><NarrativesPage /></ErrorBoundary>} />
                   <Route path="/digest" element={<ErrorBoundary><Digest /></ErrorBoundary>} />
                   <Route path="/search" element={<ErrorBoundary><SearchPage /></ErrorBoundary>} />
-                  <Route path="/grants" element={<ErrorBoundary><GrantsPage /></ErrorBoundary>} />
+                  <Route path="/grants" element={<ErrorBoundary><PageErrorBoundary pageName="Grants"><GrantsPage /></PageErrorBoundary></ErrorBoundary>} />
 
                   {/* Meetings */}
                   <Route path="/meetings" element={<ErrorBoundary><Meetings /></ErrorBoundary>} />
@@ -208,7 +209,7 @@ export default function App() {
                   {/* Lab */}
                   <Route path="/activity" element={<ErrorBoundary><ActivityPage /></ErrorBoundary>} />
                   <Route path="/analytics" element={<ErrorBoundary><AnalyticsPage /></ErrorBoundary>} />
-                  <Route path="/pi/analytics" element={<ErrorBoundary><PIAnalytics /></ErrorBoundary>} />
+                  <Route path="/pi/analytics" element={<ErrorBoundary><PageErrorBoundary pageName="PIAnalytics"><PIAnalytics /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/mentee-milestones" element={<ErrorBoundary><MenteeMilestones /></ErrorBoundary>} />
                   <Route path="/pb" element={<ErrorBoundary><PBSector /></ErrorBoundary>} />
                   <Route path="/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />

@@ -1,0 +1,146 @@
+import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { Scale } from 'lucide-react'
+import { useDecisions } from '../../hooks/useApiData'
+import type { DecisionRow } from '../../hooks/useApiData'
+import { formatMediumDate } from '../../lib/dateUtils'
+
+interface ProjectDecisionsProps {
+  projectSlug: string
+}
+
+export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps) {
+  const { data: decisions = [] } = useDecisions(projectSlug)
+
+  if (decisions.length === 0) return null
+
+  return (
+    <motion.div
+      id="decisions"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, delay: 0.1 }}
+      style={{ marginBottom: '2.5rem', scrollMarginTop: '60px' }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <h2
+          style={{
+            fontWeight: 500,
+            fontSize: '16px',
+            color: 'var(--ink)',
+            margin: 0,
+          }}
+        >
+          <Scale size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px', color: 'var(--gold)' }} />
+          Decisions
+        </h2>
+        <Link
+          to="/decisions"
+          style={{
+            fontSize: '11px',
+            color: 'var(--teal)',
+            textDecoration: 'none',
+          }}
+        >
+          View all
+        </Link>
+      </div>
+
+      <div
+        style={{
+          background: 'var(--ice)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+        }}
+        className="detail-card"
+      >
+        <div className="flex flex-col gap-3">
+          {decisions.slice(0, 5).map((decision: DecisionRow) => (
+            <div
+              key={decision.id}
+              style={{
+                padding: '10px 0',
+                borderBottom: '1px solid rgba(201, 168, 76, 0.08)',
+              }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Scale size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                <span
+                  style={{
+                    fontSize: '13px',
+                    color: 'var(--ink)',
+                    fontWeight: 600,
+                  }}
+                >
+                  {decision.title}
+                </span>
+                {decision.outcome_status !== 'pending' && (
+                  <span
+                    className="text-[9px] px-1.5 py-0.5 rounded-full"
+                    style={{
+                      color: decision.outcome_status === 'recorded' ? 'var(--teal)' : 'var(--gold)',
+                      backgroundColor: decision.outcome_status === 'recorded' ? 'rgba(45,138,138,0.08)' : 'rgba(201,168,76,0.08)',
+                    }}
+                  >
+                    {decision.outcome_status}
+                  </span>
+                )}
+              </div>
+              {decision.rationale && (
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--slate)',
+                    lineHeight: 1.5,
+                    margin: '0 0 0 20px',
+                  }}
+                >
+                  {decision.rationale.length > 120 ? decision.rationale.slice(0, 120) + '...' : decision.rationale}
+                </p>
+              )}
+              {decision.outcome && (
+                <p
+                  style={{
+                    fontSize: '11px',
+                    color: 'var(--teal)',
+                    margin: '4px 0 0 20px',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  Outcome: {decision.outcome.length > 80 ? decision.outcome.slice(0, 80) + '...' : decision.outcome}
+                </p>
+              )}
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: 'var(--slate)',
+                  opacity: 0.5,
+                  marginLeft: '20px',
+                  display: 'inline-block',
+                  marginTop: '4px',
+                }}
+              >
+                {formatMediumDate(decision.created_at)}
+                {decision.decided_by && ` -- ${decision.decided_by}`}
+              </span>
+            </div>
+          ))}
+          {decisions.length > 5 && (
+            <Link
+              to="/decisions"
+              style={{
+                fontSize: '11px',
+                color: 'var(--teal)',
+                textDecoration: 'none',
+                textAlign: 'center',
+                padding: '8px 0',
+              }}
+            >
+              +{decisions.length - 5} more decisions
+            </Link>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
