@@ -212,6 +212,13 @@ export default function MyTasks() {
 
   const person = currentUser ? getPersonInfo(currentUser) : null
 
+  // Dynamic page title with count
+  useEffect(() => {
+    const count = tasks.filter(t => !t.completed).length
+    document.title = count > 0 ? `(${count}) My Tasks | MN-CCORE` : 'My Tasks | MN-CCORE'
+    return () => { document.title = 'MN-CCORE Lab Hub' }
+  }, [tasks])
+
   return (
     <div>
       <PageHeader

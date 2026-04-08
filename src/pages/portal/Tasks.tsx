@@ -284,6 +284,12 @@ export default function Tasks() {
     }, [focusedTask, handleFieldChange, showUndo]),
   })
 
+  // Dynamic page title
+  useEffect(() => {
+    document.title = pendingCount > 0 ? `(${pendingCount}) All Tasks | MN-CCORE` : 'All Tasks | MN-CCORE'
+    return () => { document.title = 'MN-CCORE Lab Hub' }
+  }, [pendingCount])
+
   return (
     <div>
       <PageHeader

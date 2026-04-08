@@ -412,6 +412,91 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Task Age Distribution + Workload */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Task age histogram */}
+        <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+          <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>Task Age Distribution</h3>
+          {(() => {
+            const now = new Date()
+            const active = tasks.filter(t => !t.completed && t.created_at)
+            const buckets = [
+              { label: '<1w', max: 7, count: 0 },
+              { label: '1-2w', max: 14, count: 0 },
+              { label: '2-4w', max: 28, count: 0 },
+              { label: '1-2m', max: 60, count: 0 },
+              { label: '2m+', max: Infinity, count: 0 },
+            ]
+            for (const t of active) {
+              const age = Math.floor((now.getTime() - new Date(t.created_at).getTime()) / 86400000)
+              const bucket = buckets.find(b => age < b.max) || buckets[buckets.length - 1]
+              bucket.count++
+            }
+            const max = Math.max(...buckets.map(b => b.count), 1)
+            return (
+              <div className="flex items-end gap-3" style={{ height: 72 }}>
+                {buckets.map((b, i) => (
+                  <div key={b.label} className="flex-1 flex flex-col items-center gap-1">
+                    {b.count > 0 && (
+                      <span className="text-[9px] font-medium" style={{ color: 'var(--teal)' }}>{b.count}</span>
+                    )}
+                    <div
+                      className="w-full rounded-sm"
+                      style={{
+                        height: `${Math.max((b.count / max) * 52, b.count > 0 ? 4 : 2)}px`,
+                        backgroundColor: i < 2 ? 'var(--teal)' : i < 3 ? 'var(--gold)' : 'var(--maroon)',
+                        opacity: b.count > 0 ? (i < 2 ? 0.6 : 0.8) : 0.15,
+                      }}
+                    />
+                    <span className="text-[8px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>{b.label}</span>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+          <p className="text-[10px] mt-3" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+            {tasks.filter(t => !t.completed && t.created_at && (new Date().getTime() - new Date(t.created_at).getTime()) > 28 * 86400000).length} tasks older than 4 weeks
+          </p>
+        </div>
+
+        {/* Workload distribution */}
+        <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+          <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>Workload Distribution</h3>
+          {(() => {
+            const active = tasks.filter(t => !t.completed)
+            const byPerson = new Map<string, number>()
+            for (const t of active) {
+              byPerson.set(t.assignee, (byPerson.get(t.assignee) || 0) + 1)
+            }
+            const sorted = [...byPerson.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)
+            const max = sorted[0]?.[1] || 1
+            return (
+              <div className="flex flex-col gap-2">
+                {sorted.map(([slug, count]) => {
+                  const person = getPersonInfo(slug)
+                  return (
+                    <div key={slug} className="flex items-center gap-2">
+                      <div style={{ width: 22, height: 22 }}>
+                        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
+                      </div>
+                      <span className="text-[11px] w-20 truncate" style={{ color: 'var(--ink)' }}>{person.name.split(' ')[0]}</span>
+                      <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
+                        <div className="h-full rounded-full" style={{
+                          width: `${(count / max) * 100}%`,
+                          backgroundColor: count > 8 ? 'var(--maroon)' : count > 5 ? 'var(--gold)' : 'var(--teal)',
+                          transition: 'width 300ms ease',
+                        }} />
+                      </div>
+                      <span className="text-[10px] w-6 text-right font-medium" style={{ color: count > 8 ? 'var(--maroon)' : 'var(--slate)' }}>{count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
+        </div>
+      </div>
+
       {/* Lab-wide Activity Heatmap */}
       <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
         <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>

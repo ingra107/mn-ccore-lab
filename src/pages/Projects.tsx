@@ -27,6 +27,7 @@ const CATEGORY_FILTERS = [
   { key: 'lab', label: 'Lab' },
   { key: 'nate', label: 'Mesfin Lab' },
   { key: 'mentee', label: 'Mentees' },
+  { key: 'stale', label: 'Needs Attention' },
 ] as const
 
 const CATEGORY_DOT: Record<string, string> = {
@@ -101,7 +102,15 @@ export default function Projects() {
   }
 
   const filtered = useMemo(() => {
-    const base = activeCategory === 'all' ? projects : projects.filter((p) => p.category === activeCategory)
+    let base: typeof projects
+    if (activeCategory === 'all') base = projects
+    else if (activeCategory === 'stale') {
+      base = projects.filter(p => {
+        const h = healthBySlug.get(p.slug)
+        return p.status === 'Active' && (!h || h.score < 50)
+      })
+    }
+    else base = projects.filter((p) => p.category === activeCategory)
     return [...base].sort((a, b) => {
       // Pinned always first
       const aPinned = pinnedSlugs.has(a.slug) ? 0 : 1
