@@ -419,7 +419,11 @@ export default function MyTasks() {
             icon={<CheckCircle2 size={40} />}
             title={currentUser ? 'All caught up!' : 'No tasks yet'}
             subtitle={currentUser
-              ? 'You have no active tasks assigned to you.'
+              ? streak >= 2
+                ? `Zero active tasks. ${streak}-day completion streak — keep it going!`
+                : completedCount > 0
+                  ? `Zero active tasks. ${completedCount} completed recently.`
+                  : 'You have no active tasks assigned to you.'
               : 'Sign in to see your personal tasks, or create one below.'}
             action={{ label: 'Create a task', onClick: () => setShowCreate(true) }}
           />

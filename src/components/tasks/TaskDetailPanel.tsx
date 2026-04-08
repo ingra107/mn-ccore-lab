@@ -3,7 +3,7 @@ import {
   X, Circle, Clock, User, Flag, Scale,
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye,
-  Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw,
+  Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CollapsibleSection from '../CollapsibleSection'
@@ -42,6 +42,7 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
   const ackTask = useAcknowledgeTask()
   const { showUndo } = useUndoToast()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [copied, setCopied] = useState(false)
 
   // Close on Escape
   useEffect(() => {
@@ -104,9 +105,24 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
           <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 0.55 }}>
             Task Detail
           </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/tasks?open=${task.id}`
+                navigator.clipboard.writeText(url).then(() => {
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 2000)
+                })
+              }}
+              title="Copy task link"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--green)' : 'var(--slate)', padding: '4px', opacity: copied ? 1 : 0.4, transition: 'all 150ms' }}
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+            </button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Always visible: Title + Status */}
@@ -117,6 +133,26 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
           />
 
           <StatusSelect value={task.status} onChange={handleStatusChange} />
+
+          {/* Task age + source info */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {task.created_at && (
+              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                Created {formatRelativeTime(task.created_at)}
+              </span>
+            )}
+            {task.source && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(45,138,138,0.08)', color: 'var(--teal)' }}>
+                {task.source}
+              </span>
+            )}
+            {(task as any).recurrence && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(201,168,76,0.08)', color: 'var(--gold)' }}>
+                <RefreshCw size={8} style={{ display: 'inline', marginRight: 2 }} />
+                {(task as any).recurrence}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Tab Bar */}
