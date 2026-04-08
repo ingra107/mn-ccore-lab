@@ -41,6 +41,7 @@ export function useKeyboardShortcuts() {
           d: '/dashboard',
           h: '/personal',
           t: '/tasks',
+          y: '/my-tasks',
           p: '/projects',
           m: '/meetings',
           c: '/calendar',
@@ -48,6 +49,8 @@ export function useKeyboardShortcuts() {
           l: '/digest',
           g: '/grants',
           k: '/deadlines',
+          a: '/activity',
+          s: '/search',
         }
 
         const path = navMap[e.key.toLowerCase()]

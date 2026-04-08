@@ -21,6 +21,9 @@ const shortcuts = [
       { keys: 'G L', action: 'Go to Research Digest' },
       { keys: 'G G', action: 'Go to Grants' },
       { keys: 'G K', action: 'Go to Deadlines' },
+      { keys: 'G Y', action: 'Go to My Tasks' },
+      { keys: 'G A', action: 'Go to Activity' },
+      { keys: 'G S', action: 'Go to Search' },
     ],
   },
   {
