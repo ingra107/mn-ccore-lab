@@ -346,7 +346,7 @@ function TaskGridRow({
       setCompletingAnim(true)
       setRowFadeAnim(true)
       const timer = setTimeout(() => setCompletingAnim(false), 350)
-      const fadeTimer = setTimeout(() => setRowFadeAnim(false), 200)
+      const fadeTimer = setTimeout(() => setRowFadeAnim(false), 650)
       return () => { clearTimeout(timer); clearTimeout(fadeTimer) }
     }
     prevStatusRef.current = task.status

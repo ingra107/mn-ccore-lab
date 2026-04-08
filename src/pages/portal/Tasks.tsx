@@ -250,6 +250,14 @@ export default function Tasks() {
     collapseFocused: useCallback(() => {
       if (focusedTask && expandedTasks.has(focusedTask.id)) toggleExpandTask(focusedTask.id)
     }, [focusedTask, expandedTasks, toggleExpandTask]),
+    editFocusedTitle: useCallback(() => {
+      const row = document.querySelector('.task-row-focused .task-title-clickable')
+      if (row) row.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    }, []),
+    editFocusedDueDate: useCallback(() => {
+      const row = document.querySelector('.task-row-focused .task-row-meta button')
+      if (row) (row as HTMLButtonElement).click()
+    }, []),
   })
 
   return (

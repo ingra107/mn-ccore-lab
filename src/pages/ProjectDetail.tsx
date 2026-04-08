@@ -301,13 +301,34 @@ function ProjectDetailInner({ project }: InnerProps) {
             </button>
           )}
 
+        </div>
+
+        {/* Quick stats strip */}
+        <div className="flex items-center gap-4 mt-2 flex-wrap">
           {pendingTasks.length > 0 && (
-            <span
-              className="inline-flex items-center gap-1 text-[11px]"
-              style={{ color: 'var(--teal)', fontWeight: 500 }}
-            >
-              <CheckCircle2 size={12} />
-              {pendingTasks.length} task{pendingTasks.length !== 1 ? 's' : ''}
+            <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--teal)', fontWeight: 500 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--teal)' }} />
+              {pendingTasks.length} active
+            </span>
+          )}
+          {(() => {
+            const overdue = pendingTasks.filter(t => t.due_date && t.due_date < new Date().toISOString().split('T')[0])
+            return overdue.length > 0 ? (
+              <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--maroon)', fontWeight: 500 }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--maroon)' }} />
+                {overdue.length} overdue
+              </span>
+            ) : null
+          })()}
+          {completedTasks.length > 0 && (
+            <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--green)', fontWeight: 500 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
+              {completedTasks.length} done
+            </span>
+          )}
+          {project.lastActivity && (
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.55 }}>
+              Last activity {formatShortDate(project.lastActivity)}
             </span>
           )}
         </div>

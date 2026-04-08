@@ -445,6 +445,24 @@ export default function Projects() {
                                   }}
                                 />
                               )}
+                              {/* Stage progress dots */}
+                              <span className="inline-flex items-center gap-0.5 ml-1" title={`Stage: ${project.stage || 'Idea'}`}>
+                                {STAGES.map((s, si) => {
+                                  const currentIdx = STAGES.indexOf(project.stage as typeof STAGES[number]) ?? 0
+                                  return (
+                                    <span
+                                      key={s}
+                                      style={{
+                                        width: 4,
+                                        height: 4,
+                                        borderRadius: '50%',
+                                        background: si <= currentIdx ? 'var(--teal)' : 'var(--border-subtle)',
+                                        opacity: si <= currentIdx ? 0.8 : 0.4,
+                                      }}
+                                    />
+                                  )
+                                })}
+                              </span>
                             </div>
 
                             {/* Status (inline editable) */}

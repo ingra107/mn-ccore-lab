@@ -29,6 +29,10 @@ interface UseTaskKeyboardShortcutsOptions {
   expandFocused?: () => void
   /** Collapse subtasks for focused task */
   collapseFocused?: () => void
+  /** Trigger inline title edit for focused task */
+  editFocusedTitle?: () => void
+  /** Trigger due date picker for focused task */
+  editFocusedDueDate?: () => void
 }
 
 /**
@@ -59,6 +63,8 @@ export function useTaskKeyboardShortcuts({
   toggleFilters,
   expandFocused,
   collapseFocused,
+  editFocusedTitle,
+  editFocusedDueDate,
 }: UseTaskKeyboardShortcutsOptions) {
   // Use refs to avoid stale closures in the event handler
   const focusedIndexRef = useRef(focusedIndex)
@@ -176,6 +182,24 @@ export function useTaskKeyboardShortcuts({
         break
       }
 
+      case 'e':
+      case 'E': {
+        if (idx >= 0 && editFocusedTitle) {
+          e.preventDefault()
+          editFocusedTitle()
+        }
+        break
+      }
+
+      case 'd':
+      case 'D': {
+        if (idx >= 0 && editFocusedDueDate) {
+          e.preventDefault()
+          editFocusedDueDate()
+        }
+        break
+      }
+
       case 'ArrowRight': {
         if (idx >= 0 && expandFocused) {
           e.preventDefault()
@@ -192,7 +216,7 @@ export function useTaskKeyboardShortcuts({
         break
       }
     }
-  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker, toggleFilters, expandFocused, collapseFocused])
+  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker, toggleFilters, expandFocused, collapseFocused, editFocusedTitle, editFocusedDueDate])
 
   useEffect(() => {
     document.addEventListener('keydown', handler)
