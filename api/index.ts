@@ -70,14 +70,13 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
-    // Helper: bump version + notify DO after successful mutations (fire-and-forget)
-    const withVersionBump = (response: Response): Response => {
+    // Helper: bump version + notify DO after successful mutations
+    const withVersionBump = async (response: Response): Promise<Response> => {
       if (method !== 'GET' && response.status >= 200 && response.status < 300) {
-        const work = Promise.all([
+        await Promise.all([
           bumpVersion(env.DB).catch(() => {}),
           notifyClients(env, 'data').catch(() => {}),
         ]);
-        if (ctx) ctx.waitUntil(work);
       }
       return response;
     };
