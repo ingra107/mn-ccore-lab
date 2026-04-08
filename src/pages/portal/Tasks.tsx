@@ -259,6 +259,14 @@ export default function Tasks() {
       const row = document.querySelector('.task-row-focused .task-row-meta button')
       if (row) (row as HTMLButtonElement).click()
     }, []),
+    snoozeFocused: useCallback(() => {
+      if (!focusedTask || !focusedTask.due_date) return
+      const d = new Date(focusedTask.due_date + 'T12:00:00')
+      d.setDate(d.getDate() + 1)
+      const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      handleFieldChange(focusedTask.id, 'due_date', newDate)
+      showUndo(`Snoozed to ${newDate}`, () => handleFieldChange(focusedTask.id, 'due_date', focusedTask.due_date))
+    }, [focusedTask, handleFieldChange, showUndo]),
   })
 
   return (

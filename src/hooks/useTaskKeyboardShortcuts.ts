@@ -35,6 +35,8 @@ interface UseTaskKeyboardShortcutsOptions {
   editFocusedDueDate?: () => void
   /** Open create task modal */
   createTask?: () => void
+  /** Snooze focused task (push due date +1 day) */
+  snoozeFocused?: () => void
 }
 
 /**
@@ -68,6 +70,7 @@ export function useTaskKeyboardShortcuts({
   editFocusedTitle,
   editFocusedDueDate,
   createTask,
+  snoozeFocused,
 }: UseTaskKeyboardShortcutsOptions) {
   // Use refs to avoid stale closures in the event handler
   const focusedIndexRef = useRef(focusedIndex)
@@ -212,6 +215,15 @@ export function useTaskKeyboardShortcuts({
         break
       }
 
+      case 'z':
+      case 'Z': {
+        if (idx >= 0 && snoozeFocused) {
+          e.preventDefault()
+          snoozeFocused()
+        }
+        break
+      }
+
       case 'ArrowRight': {
         if (idx >= 0 && expandFocused) {
           e.preventDefault()
@@ -228,7 +240,7 @@ export function useTaskKeyboardShortcuts({
         break
       }
     }
-  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker, toggleFilters, expandFocused, collapseFocused, editFocusedTitle, editFocusedDueDate, createTask])
+  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker, toggleFilters, expandFocused, collapseFocused, editFocusedTitle, editFocusedDueDate, createTask, snoozeFocused])
 
   useEffect(() => {
     document.addEventListener('keydown', handler)

@@ -52,6 +52,7 @@ const shortcuts = [
       { keys: 'X', action: 'Toggle selection' },
       { keys: 'E', action: 'Edit task title inline' },
       { keys: 'D', action: 'Set due date' },
+      { keys: 'Z', action: 'Snooze task (+1 day)' },
       { keys: 'B', action: 'Add blocker' },
       { keys: '→', action: 'Expand subtasks' },
       { keys: '←', action: 'Collapse subtasks' },
