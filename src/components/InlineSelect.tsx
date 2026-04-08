@@ -26,7 +26,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
   const py = size === 'sm' ? '2px' : '4px'
 
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
+    <div ref={ref} style={{ position: 'relative', display: 'inline-flex', zIndex: open ? 999 : 'auto' }}>
       <button
         onClick={(e) => {
           e.preventDefault()
