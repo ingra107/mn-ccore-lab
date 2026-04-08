@@ -22,6 +22,7 @@ import ProjectHealthCard from '../components/dashboard/ProjectHealthCard'
 import MyItemsCard from '../components/dashboard/MyItemsCard'
 import TeamPulseCard from '../components/dashboard/TeamPulseCard'
 import InsightsCard from '../components/dashboard/InsightsCard'
+import WeeklyProgressCard from '../components/dashboard/WeeklyProgressCard'
 
 // Tab categories for card filtering
 type DashboardTab = 'overview' | 'projects' | 'people' | 'deadlines'
@@ -47,6 +48,7 @@ const CARD_TABS: Record<string, DashboardTab[]> = {
   'clif': ['overview', 'projects'],
   'topics': ['overview', 'projects'],
   'insights': ['overview', 'projects'],
+  'weekly-progress': ['overview', 'deadlines'],
 }
 
 // Card registry — order matters for default layout
@@ -64,6 +66,7 @@ const CARD_REGISTRY = [
   { id: 'clif', label: 'CLIF Network', component: CLIFMiniCard, defaultVisible: false },
   { id: 'topics', label: 'Research Topics', component: TopicBubblesCard, defaultVisible: false },
   { id: 'insights', label: 'Cross-Project Insights', component: InsightsCard, defaultVisible: false },
+  { id: 'weekly-progress', label: 'Weekly Progress', component: WeeklyProgressCard, defaultVisible: true },
 ] as const
 
 const STORAGE_KEY = 'mnccore-dashboard-cards'
@@ -71,7 +74,7 @@ const PINNED_KEY = 'mnccore-dashboard-pinned'
 const DEFAULTS_VERSION_KEY = 'mnccore-dashboard-version'
 const CLICKS_KEY = 'mnccore-dashboard-clicks'
 const TAB_KEY = 'mnccore-dashboard-tab'
-const CURRENT_DEFAULTS_VERSION = 3 // bump to reset localStorage to new defaults
+const CURRENT_DEFAULTS_VERSION = 4 // bump to reset localStorage to new defaults
 
 // ── Adaptive sorting helpers ──────────────────────────────
 

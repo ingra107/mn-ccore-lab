@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Circle, CheckCircle2, Clock, Ban, ChevronRight,
-  Check, Copy, Link, Archive, Eye, ArrowRight,
+  Check, Copy, Link, Archive, Eye, ArrowRight, AlarmClock,
 } from 'lucide-react'
 import type { TaskRow } from '../../lib/api'
 import type { ContextMenuState } from '../../hooks/useContextMenu'
@@ -357,6 +357,33 @@ export default function TaskContextMenu({
         <MenuItem onClick={() => handleAction(() => { onOpenDetail?.(task) })}>
           <span>Set due date...</span>
         </MenuItem>
+      )}
+
+      {/* Snooze (push due date) */}
+      {onFieldChange && task.due_date && (
+        <SubmenuItem label="Snooze">
+          {[
+            { label: '+1 day', days: 1 },
+            { label: '+3 days', days: 3 },
+            { label: '+1 week', days: 7 },
+            { label: '+2 weeks', days: 14 },
+          ].map(opt => (
+            <MenuItem
+              key={opt.days}
+              onClick={() => handleAction(() => {
+                const current = new Date(task.due_date! + 'T12:00:00')
+                current.setDate(current.getDate() + opt.days)
+                const newDate = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`
+                onFieldChange!(task.id, 'due_date', newDate)
+              })}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlarmClock size={12} style={{ opacity: 0.5 }} />
+                {opt.label}
+              </span>
+            </MenuItem>
+          ))}
+        </SubmenuItem>
       )}
 
       <div style={dividerStyles} />

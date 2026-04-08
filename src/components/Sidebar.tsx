@@ -34,6 +34,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { useUnreadCount } from '../hooks/useNotifications'
+import { useMeetingsApi } from '../hooks/useApiData'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
 
@@ -48,6 +49,7 @@ interface NavItem {
   label: string
   icon: React.ComponentType<{ size?: number }>
   badge?: number
+  hint?: string // small secondary text (e.g. "Today")
 }
 
 interface NavGroup {
@@ -130,6 +132,23 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   })
   const myOverdue = overdueData?.count ?? 0
 
+  // Next meeting countdown
+  const { data: meetings = [] } = useMeetingsApi()
+  const nextMeetingLabel = useMemo(() => {
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const upcoming = meetings
+      .filter(m => m.date && new Date(m.date + 'T12:00:00') >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    if (upcoming.length === 0) return null
+    const next = upcoming[0]
+    const nextDate = new Date(next.date + 'T12:00:00')
+    const diffDays = Math.round((nextDate.getTime() - today.getTime()) / 86400000)
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return 'Tomorrow'
+    return `in ${diffDays}d`
+  }, [meetings])
+
   // Conditionally include PI Tools section
   const allGroups: NavGroup[] = isPi
     ? [...navGroups, { title: 'PI Tools', items: [{ to: '/pb', label: 'Daily Plan', icon: Terminal }, { to: '/sessions', label: 'Session History', icon: History }, { to: '/pi/analytics', label: 'PI Dashboard', icon: Shield }] }]
@@ -141,6 +160,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
     items: group.items.map(item => {
       if (item.to === '/personal' && unreadCount > 0) return { ...item, badge: unreadCount }
       if (item.to === '/my-tasks' && myOverdue > 0) return { ...item, badge: myOverdue }
+      if (item.to === '/meetings' && nextMeetingLabel) return { ...item, hint: nextMeetingLabel }
       return item
     }),
   })), [allGroups, unreadCount, myOverdue])
@@ -219,6 +239,17 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                 >
                   <span style={{ opacity: active ? 1 : 0.7, display: 'flex' }}><Icon size={18} /></span>
                   {!collapsed && <span className="truncate">{item.label}</span>}
+                  {!collapsed && item.hint && (
+                    <span
+                      className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full"
+                      style={{
+                        backgroundColor: item.hint === 'Today' ? 'rgba(45,138,138,0.1)' : 'rgba(201,168,76,0.08)',
+                        color: item.hint === 'Today' ? 'var(--teal)' : 'var(--gold)',
+                      }}
+                    >
+                      {item.hint}
+                    </span>
+                  )}
                   {!collapsed && item.badge !== undefined && item.badge > 0 && (
                     <span
                       className="ml-auto text-xs px-1.5 py-0.5 rounded-full"

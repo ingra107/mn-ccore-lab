@@ -198,6 +198,39 @@ export default function Deadlines() {
         </div>
       </PageHeader>
 
+      {/* Urgent deadline banner */}
+      {(() => {
+        const nextUrgent = [...overdue, ...thisWeek].filter(d => d.status !== 'done' && d.status !== 'completed')[0]
+        if (!nextUrgent) return null
+        const isOver = nextUrgent.isOverdue
+        const daysText = isOver
+          ? `${Math.abs(nextUrgent.daysUntil)}d overdue`
+          : nextUrgent.daysUntil === 0 ? 'Due today' : nextUrgent.daysUntil === 1 ? 'Due tomorrow' : `${nextUrgent.daysUntil}d away`
+        return (
+          <div
+            className="mt-3 flex items-center gap-3 px-4 py-3 rounded-lg border"
+            style={{
+              background: isOver ? 'rgba(122,0,25,0.04)' : 'rgba(45,138,138,0.04)',
+              borderColor: isOver ? 'rgba(122,0,25,0.2)' : 'rgba(45,138,138,0.2)',
+            }}
+          >
+            <AlertTriangle size={16} style={{ color: isOver ? 'var(--maroon)' : 'var(--gold)', flexShrink: 0 }} />
+            <div className="min-w-0 flex-1">
+              <span className="text-sm truncate" style={{ color: 'var(--ink)' }}>{nextUrgent.title}</span>
+            </div>
+            <span
+              className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
+              style={{
+                backgroundColor: isOver ? 'rgba(122,0,25,0.1)' : 'rgba(45,138,138,0.1)',
+                color: isOver ? 'var(--maroon)' : 'var(--teal)',
+              }}
+            >
+              {daysText}
+            </span>
+          </div>
+        )
+      })()}
+
       {/* Content */}
       <div className="mt-5">
         {isLoading ? (

@@ -1,11 +1,12 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, List, LayoutGrid, GanttChartSquare, ChevronDown, CheckCircle2, CheckSquare } from 'lucide-react'
+import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import TaskGridView from '../../components/tasks/TaskGridView'
 import TaskBoardView from '../../components/tasks/TaskBoardView'
+import TaskStandUpView from '../../components/tasks/TaskStandUpView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
@@ -17,10 +18,12 @@ import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks }
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import { getPersonInfo } from '../../data/team'
 
-type ViewMode = 'list' | 'board' | 'timeline'
+type ViewMode = 'list' | 'board' | 'standup' | 'timeline'
+type QuickFilter = 'all' | 'today' | 'this_week' | 'overdue' | 'no_date'
 
 const alternateViews: { key: ViewMode; label: string; icon: typeof List; description: string }[] = [
   { key: 'board', label: 'Board', icon: LayoutGrid, description: 'Kanban columns by status' },
+  { key: 'standup', label: 'By Person', icon: Users, description: 'Tasks grouped by assignee' },
   { key: 'timeline', label: 'Timeline', icon: GanttChartSquare, description: 'Tasks on a time axis' },
 ]
 
@@ -58,6 +61,7 @@ export default function MyTasks() {
   const { showSuccess, showUndo } = useUndoToast()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const bulkUpdate = useBulkUpdateTasks()
 
@@ -102,7 +106,96 @@ export default function MyTasks() {
 
   const pendingCount = tasks.filter((t) => !t.completed).length
   const completedCount = tasks.filter((t) => t.completed).length
-  const displayTasks = showCompleted ? tasks : tasks.filter((t) => !t.completed)
+
+  // Quick date filter
+  const quickFiltered = useMemo(() => {
+    const base = showCompleted ? tasks : tasks.filter((t) => !t.completed)
+    if (quickFilter === 'all') return base
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
+    const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7)
+    switch (quickFilter) {
+      case 'today': return base.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < tomorrow)
+      case 'this_week': return base.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < weekEnd)
+      case 'overdue': return base.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < now)
+      case 'no_date': return base.filter(t => !t.due_date)
+      default: return base
+    }
+  }, [tasks, showCompleted, quickFilter])
+  const displayTasks = quickFiltered
+
+  // Quick filter counts for pills
+  const filterCounts = useMemo(() => {
+    const active = tasks.filter(t => !t.completed)
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
+    const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7)
+    return {
+      today: active.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < tomorrow).length,
+      this_week: active.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < weekEnd).length,
+      overdue: active.filter(t => t.due_date && new Date(t.due_date + 'T23:59:59') < now).length,
+      no_date: active.filter(t => !t.due_date).length,
+    }
+  }, [tasks])
+
+  // "Focus Next" — smart scoring: urgency × priority × freshness
+  const focusNext = useMemo(() => {
+    const active = tasks.filter(t => !t.completed && t.status !== 'blocked')
+    if (active.length === 0) return null
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const scored = active.map(t => {
+      let score = 0
+      // Priority weight
+      const pWeight: Record<string, number> = { urgent: 40, high: 25, medium: 10, low: 2 }
+      score += pWeight[t.priority] ?? 10
+      // Due date urgency
+      if (t.due_date) {
+        const due = new Date(t.due_date + 'T12:00:00')
+        const daysUntil = (due.getTime() - today.getTime()) / 86400000
+        if (daysUntil < 0) score += 50 + Math.min(Math.abs(daysUntil) * 3, 30) // overdue bonus
+        else if (daysUntil <= 1) score += 35
+        else if (daysUntil <= 3) score += 20
+        else if (daysUntil <= 7) score += 10
+      }
+      // In-progress bonus (already started)
+      if (t.status === 'in_progress') score += 15
+      return { task: t, score }
+    })
+    scored.sort((a, b) => b.score - a.score)
+    return scored[0]?.task ?? null
+  }, [tasks])
+
+  // Task completion streak
+  const streak = useMemo(() => {
+    const completed = tasks.filter(t => t.completed && t.completed_at).map(t => {
+      const d = new Date(t.completed_at!)
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    })
+    if (completed.length === 0) return 0
+    const uniqueDays = [...new Set(completed)].sort().reverse()
+    const now = new Date()
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    let count = 0
+    let checkDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    // Allow starting from today or yesterday
+    if (uniqueDays[0] !== todayStr) {
+      checkDate.setDate(checkDate.getDate() - 1)
+      const yStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`
+      if (!uniqueDays.includes(yStr)) return 0
+    }
+    for (let i = 0; i < 365; i++) {
+      const dStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`
+      if (uniqueDays.includes(dStr)) {
+        count++
+        checkDate.setDate(checkDate.getDate() - 1)
+      } else break
+    }
+    return count
+  }, [tasks])
+
   const person = currentUser ? getPersonInfo(currentUser) : null
 
   return (
@@ -110,7 +203,17 @@ export default function MyTasks() {
       <PageHeader
         icon={<CheckSquare size={20} />}
         title={person ? `${person.name.split(' ')[0]}'s Tasks` : 'My Tasks'}
-        subtitle={`${pendingCount} active task${pendingCount !== 1 ? 's' : ''}`}
+        subtitle={
+          <span className="flex items-center gap-2">
+            {pendingCount} active task{pendingCount !== 1 ? 's' : ''}
+            {streak >= 2 && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: 'rgba(201,168,76,0.12)', color: 'var(--gold)' }}>
+                <Flame size={10} />
+                {streak}d streak
+              </span>
+            )}
+          </span>
+        }
         count={pendingCount}
         actions={
           <button
@@ -217,6 +320,57 @@ export default function MyTasks() {
         </div>
       )}
 
+      {/* Quick filter pills */}
+      <div className="flex items-center gap-2 mt-4 flex-wrap">
+        {([
+          { key: 'all' as QuickFilter, label: 'All', count: pendingCount },
+          { key: 'today' as QuickFilter, label: 'Today', count: filterCounts.today },
+          { key: 'this_week' as QuickFilter, label: 'This Week', count: filterCounts.this_week },
+          { key: 'overdue' as QuickFilter, label: 'Overdue', count: filterCounts.overdue },
+          { key: 'no_date' as QuickFilter, label: 'No Date', count: filterCounts.no_date },
+        ]).map(f => (
+          <button
+            key={f.key}
+            onClick={() => setQuickFilter(f.key)}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+            style={{
+              backgroundColor: quickFilter === f.key ? (f.key === 'overdue' ? 'rgba(122,0,25,0.1)' : 'rgba(45,138,138,0.1)') : 'transparent',
+              color: quickFilter === f.key ? (f.key === 'overdue' ? 'var(--maroon)' : 'var(--teal)') : 'var(--slate)',
+              border: `1px solid ${quickFilter === f.key ? (f.key === 'overdue' ? 'rgba(122,0,25,0.3)' : 'rgba(45,138,138,0.3)') : 'var(--border-light)'}`,
+              cursor: 'pointer',
+              opacity: quickFilter === f.key ? 1 : 0.6,
+            }}
+          >
+            {f.label}
+            {f.count > 0 && <span style={{ opacity: 0.7 }}>{f.count}</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* Focus Next recommendation */}
+      {focusNext && quickFilter === 'all' && !showCompleted && (
+        <button
+          onClick={() => setSelectedTask(focusNext)}
+          className="mt-3 w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-colors"
+          style={{
+            background: 'linear-gradient(135deg, rgba(45,138,138,0.04), rgba(201,168,76,0.04))',
+            borderColor: 'rgba(45,138,138,0.2)',
+            cursor: 'pointer',
+          }}
+        >
+          <Zap size={16} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--teal)', opacity: 0.7 }}>Focus next</div>
+            <div className="text-sm truncate" style={{ color: 'var(--ink)' }}>{focusNext.title || focusNext.description}</div>
+          </div>
+          {focusNext.due_date && (
+            <span className="text-[11px] flex-shrink-0" style={{ color: new Date(focusNext.due_date + 'T23:59:59') < new Date() ? 'var(--maroon)' : 'var(--slate)', opacity: 0.7 }}>
+              {focusNext.due_date}
+            </span>
+          )}
+        </button>
+      )}
+
       {/* Content */}
       <div className="mt-5">
         {isLoading ? (
@@ -233,6 +387,7 @@ export default function MyTasks() {
         ) : view !== 'list' ? (
           <>
             {view === 'board' && <TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
+            {view === 'standup' && <TaskStandUpView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} />}
             {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} />}
           </>
         ) : groupBy === 'none' ? (

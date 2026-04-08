@@ -1,7 +1,7 @@
 interface PageHeaderProps {
   icon?: React.ReactNode
   title: string
-  subtitle?: string
+  subtitle?: React.ReactNode
   actions?: React.ReactNode
   children?: React.ReactNode
   count?: number
