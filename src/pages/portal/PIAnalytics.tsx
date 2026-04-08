@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -18,6 +18,8 @@ import {
   Minus,
   BarChart3,
   LineChart,
+  Printer,
+  Copy,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
@@ -301,6 +303,7 @@ export default function PIAnalytics() {
   const { user } = useAuth()
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
   const { data, isLoading } = usePIDashboard()
+  const [copied, setCopied] = useState(false)
 
   // Compute insights
   const insights = useMemo(() => {
@@ -420,7 +423,44 @@ export default function PIAnalytics() {
         icon={<Shield size={20} />}
         title="PI Dashboard"
         subtitle="Evidence-based leadership metrics"
-      />
+      >
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (!data) return
+              const lines = [
+                'PI Dashboard Report',
+                `Generated: ${new Date().toLocaleDateString()}`,
+                '',
+                `Commitment Rate: ${commitRate}% (${data.commitments.completed}/${data.commitments.total})`,
+                `Overdue: ${data.commitments.overdue}`,
+                `Avg Response: ${data.responseMetrics.avg_days}d (${data.responseMetrics.trend})`,
+                `Active Funding: ${data.grantPipeline.active_funding ? formatCurrency(data.grantPipeline.active_funding) : '$0'} (${data.grantPipeline.active} grants)`,
+                `Trainee Pubs: ${data.menteeVelocity.reduce((s, m) => s + m.pub_count, 0)}`,
+                '',
+                'Insights:',
+                ...insights.map(i => `  ${i.type === 'good' ? '+' : i.type === 'warning' ? '!' : '-'} ${i.text}`),
+              ]
+              navigator.clipboard.writeText(lines.join('\n'))
+              setCopied(true)
+              setTimeout(() => setCopied(false), 2000)
+            }}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+            style={{ color: copied ? 'var(--green)' : 'var(--slate)', border: '1px solid var(--border-light)', background: 'none', cursor: 'pointer', opacity: 0.7 }}
+          >
+            <Copy size={11} />
+            {copied ? 'Copied' : 'Copy Report'}
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+            style={{ color: 'var(--slate)', border: '1px solid var(--border-light)', background: 'none', cursor: 'pointer', opacity: 0.7 }}
+          >
+            <Printer size={11} />
+            Print
+          </button>
+        </div>
+      </PageHeader>
 
       {/* Top-line Metric Cards */}
       <motion.div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3" variants={staggerContainer} initial="hidden" animate="visible">

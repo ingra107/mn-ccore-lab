@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { History, Clock, GitCommit, Zap, Monitor, Filter } from 'lucide-react'
+import { History, Clock, GitCommit, Zap, Monitor, Filter, Search } from 'lucide-react'
 import { usePBSessions, usePBSessionStats } from '../../hooks/useApiData'
 import type { PBSessionRow } from '../../hooks/useApiData'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
@@ -189,6 +189,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
 export default function SessionHistory() {
   const [projectFilter, setProjectFilter] = useState('')
   const [sinceFilter, setSinceFilter] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const { data: sessions = [], isLoading: sessionsLoading } = usePBSessions({
     limit: 100,
@@ -203,20 +204,30 @@ export default function SessionHistory() {
     return stats.per_project.map(p => p.project_name).filter(Boolean).sort()
   }, [stats])
 
+  // Filter by search term
+  const filteredSessions = useMemo(() => {
+    if (!searchTerm) return sessions
+    const q = searchTerm.toLowerCase()
+    return sessions.filter(s =>
+      (s.summary && s.summary.toLowerCase().includes(q)) ||
+      (s.project_name && s.project_name.toLowerCase().includes(q))
+    )
+  }, [sessions, searchTerm])
+
   // Group sessions by date
   const grouped = useMemo(() => {
     const map = new Map<string, PBSessionRow[]>()
-    for (const s of sessions) {
+    for (const s of filteredSessions) {
       const date = s.started_at.split('T')[0]
       const list = map.get(date) || []
       list.push(s)
       map.set(date, list)
     }
     return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]))
-  }, [sessions])
+  }, [filteredSessions])
 
   // Flat list for keyboard nav
-  const flatSessions = sessions
+  const flatSessions = filteredSessions
   const [focusedIndex, setFocusedIndex] = useState(-1)
 
   useListKeyboardNav({
@@ -226,7 +237,7 @@ export default function SessionHistory() {
   })
 
   // Reset focus on filter change
-  useEffect(() => { setFocusedIndex(-1) }, [projectFilter, sinceFilter])
+  useEffect(() => { setFocusedIndex(-1) }, [projectFilter, sinceFilter, searchTerm])
 
   // Date filter presets
   const setDatePreset = useCallback((preset: string) => {
@@ -255,11 +266,32 @@ export default function SessionHistory() {
       <PageHeader
         icon={<History size={20} />}
         title="Session History"
-        subtitle={stats ? `${stats.total_sessions} sessions` : undefined}
+        subtitle={stats ? `${filteredSessions.length}${searchTerm ? ` of ${stats.total_sessions}` : ''} sessions` : undefined}
       >
         {/* Filter bar */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <Filter size={14} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+
+          {/* Search */}
+          <div style={{ position: 'relative', minWidth: 160 }}>
+            <Search size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)', opacity: 0.4 }} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search summaries..."
+              style={{
+                fontSize: 12,
+                padding: '5px 10px 5px 26px',
+                borderRadius: 6,
+                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--surface)',
+                color: 'var(--ink)',
+                width: '100%',
+                outline: 'none',
+              }}
+            />
+          </div>
 
           {/* Project filter */}
           <select

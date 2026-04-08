@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Printer } from 'lucide-react'
+import { ArrowLeft, Printer, Copy, FileText } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useCVData } from '../hooks/useCVData'
 import type { CVData } from '../hooks/useCVData'
@@ -248,6 +248,61 @@ export default function CVPage() {
     ? `${member.name}, ${member.credentials}`
     : member.name
 
+  // Word count across all CV text
+  const wordCount = useMemo(() => {
+    let text = `${member.name} ${member.title || ''} ${member.department || ''}`
+    for (const pub of data.publications) {
+      text += ` ${pub.authors} ${pub.title} ${pub.journal || ''}`
+    }
+    for (const grant of data.grants) {
+      text += ` ${grant.title} ${grant.mechanism} ${grant.agency}`
+    }
+    return text.split(/\s+/).filter(Boolean).length
+  }, [data, member])
+
+  const [copied, setCopied] = useState(false)
+
+  const copyAsText = () => {
+    const lines: string[] = [
+      displayName,
+      member.title || '',
+      member.department || '',
+      'University of Minnesota',
+      '',
+      '--- PUBLICATIONS ---',
+      '',
+    ]
+    let idx = 1
+    for (const group of pubsByYear) {
+      lines.push(String(group.year))
+      for (const pub of group.pubs) {
+        lines.push(`${idx}. ${pub.authors}. "${pub.title}." ${pub.journal || ''} ${pub.year}.${pub.doi ? ` doi:${pub.doi}` : ''}`)
+        idx++
+      }
+      lines.push('')
+    }
+    if (activeGrants.length > 0 || pendingGrants.length > 0) {
+      lines.push('--- RESEARCH SUPPORT ---', '')
+      if (activeGrants.length > 0) {
+        lines.push('Active:')
+        for (const g of activeGrants) {
+          lines.push(`  ${g.mechanism} (${g.agency}) - ${g.title}`)
+        }
+        lines.push('')
+      }
+      if (pendingGrants.length > 0) {
+        lines.push('Pending:')
+        for (const g of pendingGrants) {
+          lines.push(`  ${g.mechanism} (${g.agency}) - ${g.title}`)
+        }
+        lines.push('')
+      }
+    }
+    navigator.clipboard.writeText(lines.join('\n'))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
     <>
       <div className="content-container cv-page" style={{ paddingBottom: '4rem' }}>
@@ -313,30 +368,53 @@ export default function CVPage() {
             University of Minnesota
           </p>
 
-          {/* Print button */}
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="no-print mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-md cursor-pointer transition-all duration-200"
-            style={{
-              fontSize: '12px',
-              fontWeight: 500,
-              background: 'var(--ice)',
-              color: 'var(--ink)',
-              border: '1px solid rgba(201, 168, 76, 0.3)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--gold)'
-              e.currentTarget.style.background = 'rgba(201, 168, 76, 0.1)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.3)'
-              e.currentTarget.style.background = 'var(--ice)'
-            }}
-          >
-            <Printer size={14} />
-            Print / Save as PDF
-          </button>
+          {/* Action buttons */}
+          <div className="no-print mt-4 flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md cursor-pointer transition-all duration-200"
+              style={{
+                fontSize: '12px',
+                fontWeight: 500,
+                background: 'var(--ice)',
+                color: 'var(--ink)',
+                border: '1px solid rgba(201, 168, 76, 0.3)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--gold)'
+                e.currentTarget.style.background = 'rgba(201, 168, 76, 0.1)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.3)'
+                e.currentTarget.style.background = 'var(--ice)'
+              }}
+            >
+              <Printer size={14} />
+              Print / Save as PDF
+            </button>
+            <button
+              type="button"
+              onClick={copyAsText}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md cursor-pointer transition-all duration-200"
+              style={{
+                fontSize: '12px',
+                fontWeight: 500,
+                background: 'none',
+                color: copied ? 'var(--green)' : 'var(--slate)',
+                border: '1px solid var(--border-light)',
+              }}
+            >
+              {copied ? <FileText size={14} /> : <Copy size={14} />}
+              {copied ? 'Copied!' : 'Copy as Text'}
+            </button>
+            <span
+              className="text-[10px] px-2 py-1 rounded"
+              style={{ color: 'var(--slate)', opacity: 0.55, background: 'rgba(148,163,184,0.06)' }}
+            >
+              ~{wordCount.toLocaleString()} words
+            </span>
+          </div>
         </header>
 
         {/* ── Publications ── */}

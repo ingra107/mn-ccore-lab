@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info } from 'lucide-react'
+import { Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info, Palette, RotateCcw, Sun, Moon } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
@@ -214,6 +214,106 @@ export default function SettingsPage() {
             <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6, lineHeight: 1.5 }}>
               Expertise notes help AI meeting notes recognize who should be assigned which tasks. These are used when AI processes meeting transcripts.
             </p>
+          </div>
+        </SettingsSection>
+
+        {/* Appearance */}
+        <SettingsSection title="Appearance" subtitle="Theme and layout preferences" icon={Palette}>
+          <div className="flex gap-4">
+            {/* Light theme preview */}
+            <button
+              onClick={() => {
+                document.documentElement.setAttribute('data-theme', 'light')
+                localStorage.setItem('theme', 'light')
+              }}
+              className="flex-1 rounded-lg border-2 p-3 transition-all cursor-pointer"
+              style={{
+                borderColor: document.documentElement.getAttribute('data-theme') !== 'dark' ? 'var(--teal)' : 'var(--border-light)',
+                background: '#ffffff',
+              }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Sun size={12} style={{ color: '#c9a84c' }} />
+                <span className="text-[11px] font-medium" style={{ color: '#0f1923' }}>Light</span>
+              </div>
+              <div className="rounded" style={{ background: '#f5f5f5', padding: 6 }}>
+                <div className="h-1.5 rounded-full mb-1.5" style={{ width: '80%', background: '#0f1923', opacity: 0.2 }} />
+                <div className="h-1.5 rounded-full mb-1.5" style={{ width: '60%', background: '#0f1923', opacity: 0.15 }} />
+                <div className="h-1.5 rounded-full" style={{ width: '70%', background: '#2d8a8a', opacity: 0.3 }} />
+              </div>
+            </button>
+            {/* Dark theme preview */}
+            <button
+              onClick={() => {
+                document.documentElement.setAttribute('data-theme', 'dark')
+                localStorage.setItem('theme', 'dark')
+              }}
+              className="flex-1 rounded-lg border-2 p-3 transition-all cursor-pointer"
+              style={{
+                borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? 'var(--teal)' : 'var(--border-light)',
+                background: '#0b1017',
+              }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Moon size={12} style={{ color: '#c9a84c' }} />
+                <span className="text-[11px] font-medium" style={{ color: '#e2e8f0' }}>Dark</span>
+              </div>
+              <div className="rounded" style={{ background: '#111820', padding: 6 }}>
+                <div className="h-1.5 rounded-full mb-1.5" style={{ width: '80%', background: '#e2e8f0', opacity: 0.2 }} />
+                <div className="h-1.5 rounded-full mb-1.5" style={{ width: '60%', background: '#e2e8f0', opacity: 0.15 }} />
+                <div className="h-1.5 rounded-full" style={{ width: '70%', background: '#2d8a8a', opacity: 0.3 }} />
+              </div>
+            </button>
+          </div>
+          <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+            You can also toggle with <kbd className="text-[9px] px-1 py-0.5 rounded" style={{ background: 'var(--border-light)' }}>Ctrl+.</kbd>
+          </p>
+        </SettingsSection>
+
+        {/* Reset */}
+        <SettingsSection title="Reset" subtitle="Clear cached preferences and layout" icon={RotateCcw}>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm" style={{ color: 'var(--ink)' }}>Reset Dashboard Layout</p>
+                <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.55 }}>
+                  Clears pinned cards, card order, and view preferences
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  const keys = Object.keys(localStorage).filter(k =>
+                    k.startsWith('dashboard-') || k.startsWith('mnccore-dashboard') || k === 'dashboardCards' || k === 'dashboardRole'
+                  )
+                  keys.forEach(k => localStorage.removeItem(k))
+                  setSaved(true)
+                  setTimeout(() => setSaved(false), 2000)
+                }}
+                className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                style={{ color: 'var(--maroon)', border: '1px solid rgba(122,0,25,0.2)', background: 'none', cursor: 'pointer' }}
+              >
+                Reset
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm" style={{ color: 'var(--ink)' }}>Clear Recent Searches</p>
+                <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.55 }}>
+                  Removes saved search history
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('mnccore-recent-searches')
+                  setSaved(true)
+                  setTimeout(() => setSaved(false), 2000)
+                }}
+                className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                style={{ color: 'var(--maroon)', border: '1px solid rgba(122,0,25,0.2)', background: 'none', cursor: 'pointer' }}
+              >
+                Clear
+              </button>
+            </div>
           </div>
         </SettingsSection>
 
