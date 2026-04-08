@@ -429,14 +429,30 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 - DECISION: InlineSelect dropdowns use createPortal to document.body to escape table overflow
 - LEARNING: Pages Functions don't pass ctx — must await async work directly. Wrangler secret put creates standalone Workers not Pages secrets — use dashboard. R2 CORS uses nested allowed:{origins,methods,headers}. Free-tier DOs require new_sqlite_classes.
 
-## Known Bugs (from 2026-04-08 review)
+## Known Bugs (from 2026-04-08 full launch audit)
 
-| Bug | Severity | Fix |
-|-----|----------|-----|
-| WebSocket 400 on handshake | Medium | Fix DO or set VITE_WS_HOST='' for clean polling fallback |
-| h1 fontWeight 800 on 7 portal pages | Low | Change to 600 on Grants, Digest, MeetingDetail, CVPage, MyItems, Meetings, ProjectDetail |
-| QA test data in Activity feed | Low | Delete "QA bump test" and "QA test idea" from D1 ideas + activity_log |
-| Project Health card shows 0s | Low | Health algorithm may need activity data threshold |
+### CRITICAL
+| Bug | Fix |
+|-----|-----|
+| MeetingDetail page CRASHES (React #310, hook order in sortable) | Fix conditional hook call in MeetingDetail.tsx sortable section |
+| `pub_date` column missing from publications table | Run ALTER TABLE or update queries to use `year`. Affects: PI Dashboard, Trajectory, Narratives, Contributions |
+| Decision creation 500 — `linked_projects` column missing | Run schema-v21 migration on D1 |
+| WebSocket 400 on handshake — console spam on every page | Fix DO or set VITE_WS_HOST='' in build env |
+
+### MEDIUM
+| Bug | Fix |
+|-----|-----|
+| Global h1 font-weight 800 (index.css:190) | Change to 600. Remove inline 800 from 7 portal pages. Keep 800 on public pages. |
+| Keyboard shortcuts fire in search input (F triggers focus mode) | Add activeElement guard to keyboard listeners |
+| "Press F" tooltip clips on mobile | Hide below md: breakpoint |
+| QA test data in D1 | Delete test ideas/tasks/activity entries |
+
+### LOW
+| Bug | Fix |
+|-----|-----|
+| No GET /api/tasks/:id or /api/projects/:slug | Add single-resource endpoints |
+| Project Health card shows 0s | Check dashboard card data binding |
+| Schema migration gap (v21+ not applied) | Run pending migrations via admin endpoint |
 
 ## Session Notes
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
