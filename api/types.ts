@@ -1,6 +1,12 @@
 export interface Env {
   DB: D1Database;
+  FILES?: R2Bucket;
+  R2_ACCESS_KEY_ID?: string;
+  R2_SECRET_ACCESS_KEY?: string;
+  CF_ACCOUNT_ID?: string;
   SENDGRID_API_KEY?: string;
+  RESEND_API_KEY?: string;
+  NOTIFICATION_HUB?: DurableObjectNamespace;
 }
 
 export interface ApiResponse<T = unknown> {

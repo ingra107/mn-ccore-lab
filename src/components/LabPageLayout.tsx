@@ -98,7 +98,7 @@ export default function LabPageLayout({
                 className="text-2xl sm:text-3xl mb-1"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   color: 'var(--ink)',
                 }}
               >

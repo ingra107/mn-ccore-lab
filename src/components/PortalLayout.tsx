@@ -13,12 +13,14 @@ import ScrollToTop from './ScrollToTop'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useDensity } from '../hooks/useDensity'
 import { useFavicon } from '../hooks/useFavicon'
+import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { UndoToastProvider } from './UndoToast'
 
 export default function PortalLayout() {
   const { mode, setTheme } = useDarkMode()
   const { density, toggle: toggleDensity } = useDensity()
   useFavicon()
+  useRealtimeSync()
   const [showThemeMenu, setShowThemeMenu] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const { showHelp, setShowHelp, gPending } = useKeyboardShortcuts()

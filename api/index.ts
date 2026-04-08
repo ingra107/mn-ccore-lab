@@ -1,5 +1,8 @@
 import type { Env } from './types';
 import { corsHeaders, json, error, getAuthUser } from './helpers';
+import { handleVersion, bumpVersion } from './lib/version';
+import { notifyClients } from './lib/notify';
+import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
 import { handleTasks, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask } from './routes/tasks';
@@ -58,18 +61,36 @@ function handleAuthMe(request: Request): Response {
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+    const method = request.method;
 
     // Handle CORS preflight
-    if (request.method === 'OPTIONS') {
+    if (method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
+
+    // Helper: bump version + notify DO after successful mutations (fire-and-forget)
+    const withVersionBump = (response: Response): Response => {
+      if (method !== 'GET' && response.status >= 200 && response.status < 300) {
+        const work = Promise.all([
+          bumpVersion(env.DB).catch(() => {}),
+          notifyClients(env, 'data').catch(() => {}),
+        ]);
+        if (ctx) ctx.waitUntil(work);
+      }
+      return response;
+    };
 
     try {
       // Auth endpoint — returns current user from Cloudflare Access JWT
       if (url.pathname === '/api/auth/me') {
         return handleAuthMe(request);
+      }
+
+      // Version endpoint — lightweight, no auth needed
+      if (url.pathname === '/api/version' && method === 'GET') {
+        return handleVersion(env);
       }
 
       // Read endpoints (GET only)
@@ -332,6 +353,17 @@ export default {
             return await handleCalendarEvents(url, env);
         }
 
+        // GET /api/files?entity_type=X&entity_id=Y — list file attachments
+        if (url.pathname === '/api/files') {
+          return await handleListFiles(url, env);
+        }
+
+        // GET /api/files/:key+ — presigned download URL
+        const fileGetMatch = url.pathname.match(/^\/api\/files\/(.+)$/);
+        if (fileGetMatch) {
+          return await handleGetFile(fileGetMatch[1], env);
+        }
+
         // GET /api/team/:slug/cv-data
         const cvDataGet = url.pathname.match(/^\/api\/team\/([^/]+)\/cv-data$/);
         if (cvDataGet) {
@@ -451,15 +483,31 @@ export default {
 
         const path = url.pathname;
 
+        // POST /api/upload/url — presigned upload URL
+        if (request.method === 'POST' && path === '/api/upload/url') {
+          return withVersionBump(await handleUploadUrl(request, user, env));
+        }
+
+        // POST /api/upload/done — record file after upload
+        if (request.method === 'POST' && path === '/api/upload/done') {
+          return withVersionBump(await handleUploadDone(request, user, env));
+        }
+
+        // POST /api/files/:id/delete — delete file attachment
+        const fileDeleteMatch = path.match(/^\/api\/files\/([^/]+)\/delete$/);
+        if (request.method === 'POST' && fileDeleteMatch) {
+          return withVersionBump(await handleDeleteFile(fileDeleteMatch[1], env));
+        }
+
         // POST /api/projects — create new project (must come before :id match)
         if (request.method === 'POST' && path === '/api/projects') {
-          return await handleCreateProject(request, user, env);
+          return withVersionBump(await handleCreateProject(request, user, env));
         }
 
         // POST /api/projects/:id — update project fields
         const projectMatch = path.match(/^\/api\/projects\/([^/]+)$/);
         if (request.method === 'POST' && projectMatch) {
-          return await handleUpdateProject(projectMatch[1], request, user, env);
+          return withVersionBump(await handleUpdateProject(projectMatch[1], request, user, env));
         }
 
         // POST /api/projects/:id/comments — add comment
@@ -476,46 +524,46 @@ export default {
 
         // POST /api/tasks/sync-bulk — bulk upsert from brain.db
         if (request.method === 'POST' && path === '/api/tasks/sync-bulk') {
-          return await handleSyncBulkTasks(request, user, env);
+          return withVersionBump(await handleSyncBulkTasks(request, user, env));
         }
 
         // POST /api/tasks/batch — batch update tasks
         if (request.method === 'POST' && path === '/api/tasks/batch') {
-          return await handleBatchUpdateTasks(request, user, env);
+          return withVersionBump(await handleBatchUpdateTasks(request, user, env));
         }
 
         // POST /api/tasks/:id/acknowledge — closed-loop task acknowledgment
         const taskAckMatch = path.match(/^\/api\/tasks\/([^/]+)\/acknowledge$/);
         if (request.method === 'POST' && taskAckMatch) {
-          return await handleAcknowledgeTask(taskAckMatch[1], user, env);
+          return withVersionBump(await handleAcknowledgeTask(taskAckMatch[1], user, env));
         }
 
         // POST /api/tasks/:id/status — change task status
         const taskStatusMatch = path.match(/^\/api\/tasks\/([^/]+)\/status$/);
         if (request.method === 'POST' && taskStatusMatch) {
-          return await handleUpdateTaskStatus(taskStatusMatch[1], request, user, env);
+          return withVersionBump(await handleUpdateTaskStatus(taskStatusMatch[1], request, user, env));
         }
 
         // POST /api/tasks/:id — update task fields
         const taskUpdateMatch = path.match(/^\/api\/tasks\/([^/]+)$/);
         if (request.method === 'POST' && taskUpdateMatch) {
-          return await handleUpdateTask(taskUpdateMatch[1], request, user, env);
+          return withVersionBump(await handleUpdateTask(taskUpdateMatch[1], request, user, env));
         }
 
         // POST /api/tasks — create new task
         if (request.method === 'POST' && path === '/api/tasks') {
-          return await handleCreateTask(request, user, env);
+          return withVersionBump(await handleCreateTask(request, user, env));
         }
 
         // POST /api/action-items/:id/toggle — backward compat alias
         const toggleMatch = path.match(/^\/api\/action-items\/([^/]+)\/toggle$/);
         if (request.method === 'POST' && toggleMatch) {
-          return await handleToggleTask(toggleMatch[1], user, env);
+          return withVersionBump(await handleToggleTask(toggleMatch[1], user, env));
         }
 
         // POST /api/action-items — backward compat alias
         if (request.method === 'POST' && path === '/api/action-items') {
-          return await handleCreateTask(request, user, env);
+          return withVersionBump(await handleCreateTask(request, user, env));
         }
 
         // GET /api/meetings/:id/prep — facilitator prep view
@@ -527,41 +575,41 @@ export default {
         // POST /api/meetings/:id/notes — update meeting notes
         const meetingNotesMatch = path.match(/^\/api\/meetings\/([^/]+)\/notes$/);
         if (request.method === 'POST' && meetingNotesMatch) {
-          return await handleUpdateMeetingNotes(meetingNotesMatch[1], request, user, env);
+          return withVersionBump(await handleUpdateMeetingNotes(meetingNotesMatch[1], request, user, env));
         }
 
         // POST /api/meetings/:id/agenda/reorder — reorder agenda items
         const agendaReorderMatch = path.match(/^\/api\/meetings\/([^/]+)\/agenda\/reorder$/);
         if (request.method === 'POST' && agendaReorderMatch) {
-          return await handleReorderAgenda(agendaReorderMatch[1], request, env);
+          return withVersionBump(await handleReorderAgenda(agendaReorderMatch[1], request, env));
         }
 
         // POST /api/meetings/:id/agenda — add agenda item
         const agendaMatch = path.match(/^\/api\/meetings\/([^/]+)\/agenda$/);
         if (request.method === 'POST' && agendaMatch) {
-          return await handleAddAgendaItem(agendaMatch[1], request, user, env);
+          return withVersionBump(await handleAddAgendaItem(agendaMatch[1], request, user, env));
         }
 
         // POST /api/milestones/:id/note — add/update "Future Me" note
         const milestoneNoteMatch = path.match(/^\/api\/milestones\/([^/]+)\/note$/);
         if (request.method === 'POST' && milestoneNoteMatch) {
-          return await handleUpdateMilestoneNote(milestoneNoteMatch[1], request, user, env);
+          return withVersionBump(await handleUpdateMilestoneNote(milestoneNoteMatch[1], request, user, env));
         }
 
         // POST /api/projects/:slug/updates — post project update
         const updateMatch = path.match(/^\/api\/projects\/([^/]+)\/updates$/);
         if (request.method === 'POST' && updateMatch) {
-          return await handlePostProjectUpdate(updateMatch[1], request, user, env);
+          return withVersionBump(await handlePostProjectUpdate(updateMatch[1], request, user, env));
         }
 
         // POST /api/meetings — create meeting
         if (request.method === 'POST' && path === '/api/meetings') {
-          return await handleCreateMeeting(request, user, env);
+          return withVersionBump(await handleCreateMeeting(request, user, env));
         }
 
         // POST /api/commitments — create/upsert commitment
         if (request.method === 'POST' && path === '/api/commitments') {
-          return await handleCreateCommitment(request, env);
+          return withVersionBump(await handleCreateCommitment(request, env));
         }
 
         // POST /api/notifications/:id/read — mark notification as read
@@ -578,31 +626,31 @@ export default {
 
         // POST /api/reactions — toggle reaction (add or remove)
         if (request.method === 'POST' && path === '/api/reactions') {
-          return await handleToggleReaction(request, user, env);
+          return withVersionBump(await handleToggleReaction(request, user, env));
         }
 
         // POST /api/tasks/:id/comments — add task comment
         const taskCommentMatch = path.match(/^\/api\/tasks\/([^/]+)\/comments$/);
         if (request.method === 'POST' && taskCommentMatch) {
-          return await handleAddTaskComment(taskCommentMatch[1], request, user, env);
+          return withVersionBump(await handleAddTaskComment(taskCommentMatch[1], request, user, env));
         }
 
         // POST /api/tasks/:id/updates — post task note/update
         const taskNoteMatch = path.match(/^\/api\/tasks\/([^/]+)\/updates$/);
         if (request.method === 'POST' && taskNoteMatch) {
-          return await handlePostTaskUpdate(taskNoteMatch[1], request, user, env);
+          return withVersionBump(await handlePostTaskUpdate(taskNoteMatch[1], request, user, env));
         }
 
         // POST /api/tasks/:id/subtasks — create subtask
         const subtaskCreateMatch = path.match(/^\/api\/tasks\/([^/]+)\/subtasks$/);
         if (request.method === 'POST' && subtaskCreateMatch) {
-          return await handleCreateSubtask(subtaskCreateMatch[1], request, user, env);
+          return withVersionBump(await handleCreateSubtask(subtaskCreateMatch[1], request, user, env));
         }
 
         // POST /api/subtasks/:id/toggle — toggle subtask completion
         const subtaskToggleMatch = path.match(/^\/api\/subtasks\/([^/]+)\/toggle$/);
         if (request.method === 'POST' && subtaskToggleMatch) {
-          return await handleToggleSubtask(subtaskToggleMatch[1], user, env);
+          return withVersionBump(await handleToggleSubtask(subtaskToggleMatch[1], user, env));
         }
 
         // POST /api/subtasks/:id/delete — delete subtask
@@ -669,19 +717,19 @@ export default {
 
         // POST /api/ideas — create idea
         if (request.method === 'POST' && path === '/api/ideas') {
-          return await handleCreateIdea(request, user, env);
+          return withVersionBump(await handleCreateIdea(request, user, env));
         }
 
         // POST /api/ideas/:id — update idea
         const ideaUpdateMatch = path.match(/^\/api\/ideas\/([^/]+)$/);
         if (request.method === 'POST' && ideaUpdateMatch) {
-          return await handleUpdateIdea(ideaUpdateMatch[1], request, user, env);
+          return withVersionBump(await handleUpdateIdea(ideaUpdateMatch[1], request, user, env));
         }
 
         // POST /api/ideas/:id/vote — upvote idea
         const ideaVoteMatch = path.match(/^\/api\/ideas\/([^/]+)\/vote$/);
         if (request.method === 'POST' && ideaVoteMatch) {
-          return await handleVoteIdea(ideaVoteMatch[1], env);
+          return withVersionBump(await handleVoteIdea(ideaVoteMatch[1], env));
         }
 
         // POST /api/digest — create/upsert digest paper

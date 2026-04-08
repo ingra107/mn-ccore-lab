@@ -13,5 +13,9 @@ database_id = "b8453e9b-7c5f-4029-b07d-dd89c05d00cf"
 # To activate: wrangler secret put SENDGRID_API_KEY
 crons = ["0 13 * * 1-5"]
 
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "mnccore-files"
+
 [site]
 bucket = "./dist"

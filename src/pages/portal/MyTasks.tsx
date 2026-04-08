@@ -44,7 +44,7 @@ const sortByOptions: { key: SortBy; label: string }[] = [
   { key: 'title', label: 'Title' },
 ]
 
-const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
+import { PRIORITY_ORDER } from '../../lib/taskConstants'
 
 export default function MyTasks() {
   const [view, setView] = useState<ViewMode>('list')

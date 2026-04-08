@@ -1,0 +1,163 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - img [ref=e7]
+          - generic [ref=e12]: LabSync
+        - link "Lab settings" [ref=e14] [cursor=pointer]:
+          - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/settings
+          - generic [ref=e15]: settings
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - generic [ref=e19]:
+            - generic [ref=e20]: Research Areas
+            - button "Create new research area" [ref=e21] [cursor=pointer]:
+              - generic [ref=e22]: add
+          - list [ref=e24]:
+            - listitem [ref=e25]:
+              - button "add New Area" [ref=e26] [cursor=pointer]:
+                - generic [ref=e27]: add
+                - generic [ref=e28]: New Area
+        - generic [ref=e29]:
+          - generic [ref=e30]: Workspace
+          - list [ref=e32]:
+            - listitem [ref=e33]:
+              - link "dashboard Dashboard" [ref=e34] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8
+                - generic [ref=e35]: dashboard
+                - generic [ref=e36]: Dashboard
+            - listitem [ref=e37]:
+              - link "person Personal Command Center" [ref=e38] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/personal
+                - generic [ref=e39]: person
+                - generic [ref=e40]: Personal Command Center
+        - generic [ref=e41]:
+          - generic [ref=e42]: Planning
+          - list [ref=e44]:
+            - listitem [ref=e45]:
+              - link "task_alt My Tasks" [ref=e46] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/my-tasks
+                - generic [ref=e47]: task_alt
+                - generic [ref=e48]: My Tasks
+            - listitem [ref=e49]:
+              - link "folder_managed Projects" [ref=e50] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/projects
+                - generic [ref=e51]: folder_managed
+                - generic [ref=e52]: Projects
+            - listitem [ref=e53]:
+              - link "check_box All Tasks" [ref=e54] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/tasks
+                - generic [ref=e55]: check_box
+                - generic [ref=e56]: All Tasks
+            - listitem [ref=e57]:
+              - link "calendar_month Calendar" [ref=e58] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/calendar
+                - generic [ref=e59]: calendar_month
+                - generic [ref=e60]: Calendar
+            - listitem [ref=e61]:
+              - link "groups Meetings" [ref=e62] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/meetings
+                - generic [ref=e63]: groups
+                - generic [ref=e64]: Meetings
+            - listitem [ref=e65]:
+              - link "schedule Deadlines" [ref=e66] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/deadlines
+                - generic [ref=e67]: schedule
+                - generic [ref=e68]: Deadlines
+        - generic [ref=e69]:
+          - generic [ref=e70]: Knowledge
+          - list [ref=e72]:
+            - listitem [ref=e73]:
+              - link "lightbulb Ideas Board" [ref=e74] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/ideas
+                - generic [ref=e75]: lightbulb
+                - generic [ref=e76]: Ideas Board
+            - listitem [ref=e77]:
+              - link "menu_book Literature" [ref=e78] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/literature
+                - generic [ref=e79]: menu_book
+                - generic [ref=e80]: Literature
+            - listitem [ref=e81]:
+              - link "science Protocols" [ref=e82] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/protocols
+                - generic [ref=e83]: science
+                - generic [ref=e84]: Protocols
+            - listitem [ref=e85]:
+              - link "edit_note Manuscripts" [ref=e86] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/manuscripts
+                - generic [ref=e87]: edit_note
+                - generic [ref=e88]: Manuscripts
+            - listitem [ref=e89]:
+              - link "description AI Meeting Notes" [ref=e90] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/meeting-notes
+                - generic [ref=e91]: description
+                - generic [ref=e92]: AI Meeting Notes
+            - listitem [ref=e93]:
+              - link "travel_explore AI Search" [ref=e94] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/search
+                - generic [ref=e95]: travel_explore
+                - generic [ref=e96]: AI Search
+            - listitem [ref=e97]:
+              - link "monitoring Activity" [ref=e98] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/activity
+                - generic [ref=e99]: monitoring
+                - generic [ref=e100]: Activity
+            - listitem [ref=e101]:
+              - button "search Quick Find" [ref=e102] [cursor=pointer]:
+                - generic [ref=e103]: search
+                - generic [ref=e104]: Quick Find
+        - generic [ref=e105]:
+          - generic [ref=e106]: Lab
+          - list [ref=e108]:
+            - listitem [ref=e109]:
+              - link "group Lab Members" [ref=e110] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/members
+                - generic [ref=e111]: group
+                - generic [ref=e112]: Lab Members
+            - listitem [ref=e113]:
+              - link "settings Settings" [ref=e114] [cursor=pointer]:
+                - /url: /labs/mh727912sx7a75xzeap8c81dns83p6y8/settings
+                - generic [ref=e115]: settings
+                - generic [ref=e116]: Settings
+      - generic [ref=e117]:
+        - list [ref=e118]:
+          - listitem [ref=e119]:
+            - button "bug_report Report a Bug" [ref=e120] [cursor=pointer]:
+              - generic [ref=e121]: bug_report
+              - generic [ref=e122]: Report a Bug
+        - generic [ref=e123] [cursor=pointer]:
+          - generic [ref=e124]:
+            - generic [ref=e125]: My Account
+            - generic [ref=e126]: Manage profile
+          - button "Change theme" [ref=e128]:
+            - generic [ref=e129]: dark_mode
+      - button "Toggle sidebar" [ref=e130] [cursor=pointer]
+    - main [ref=e131]:
+      - link "Skip to main content" [ref=e132] [cursor=pointer]:
+        - /url: "#main-content"
+      - main [ref=e133]:
+        - button "Collapse sidebar" [ref=e135] [cursor=pointer]:
+          - generic [ref=e136]: keyboard_double_arrow_left
+          - generic [ref=e137]: Collapse
+        - generic [ref=e143]:
+          - generic [ref=e144]:
+            - generic [ref=e146]: task_alt
+            - generic [ref=e147]:
+              - heading "My Tasks" [level=1] [ref=e148]
+              - paragraph [ref=e149]: Tasks assigned to you across all projects
+          - generic [ref=e151]:
+            - generic [ref=e152]:
+              - generic [ref=e153]: "Group by:"
+              - combobox [ref=e154] [cursor=pointer]:
+                - generic [ref=e155]: Due Date
+                - generic [ref=e156]: expand_more
+            - generic [ref=e157]:
+              - generic [ref=e158]: "Sort by:"
+              - combobox [ref=e159] [cursor=pointer]:
+                - generic [ref=e160]: Priority
+                - generic [ref=e161]: expand_more
+              - button "arrow_upward" [ref=e162] [cursor=pointer]:
+                - generic [ref=e163]: arrow_upward
+  - region "Notifications alt+T"
+  - alert [ref=e165]

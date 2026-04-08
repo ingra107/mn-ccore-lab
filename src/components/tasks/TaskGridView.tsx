@@ -890,7 +890,7 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
     ...(overdueCount > 0 ? [{ label: 'Overdue', value: overdueCount, color: 'var(--maroon)' }] : []),
     { label: 'To Do', value: todoCount },
     { label: 'In Progress', value: inProgressCount, color: 'var(--teal)' },
-    { label: 'Done', value: `${doneCount} (${pct}%)`, color: 'var(--green)' },
+    ...(doneCount > 0 ? [{ label: 'Done', value: `${doneCount} (${pct}%)`, color: 'var(--green)' }] : []),
   ]
 
   return (
@@ -904,7 +904,7 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
       }}
     >
       {stats.map(s => (
-        <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+        <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
           {s.label}{' '}
           <span style={{ fontWeight: 600, color: s.color || 'var(--slate)', opacity: 1 }}>
             {s.value}

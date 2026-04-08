@@ -21,7 +21,7 @@
   --font-sans: 'DM Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --muted: rgba(148, 163, 184, 0.55);
+  --muted: rgba(148, 163, 184, 0.76);
 
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(15, 25, 35, 0.06);
@@ -56,7 +56,7 @@
   --slate: oklch(0.7 0.02 250);          /* #94a3b8 */
   --gold: oklch(0.73 0.12 85);           /* #c9a84c */
   --gold-light: oklch(0.18 0.02 240);    /* #1a2332 */
-  --cream: oklch(0.12 0.01 250);         /* #0b1017 */
+  --cream: oklch(0.12 0.015 250);        /* #0b1017 with subtle blue tint */
   --maroon: oklch(0.65 0.15 20);         /* #e85d7a */
   --ice: oklch(0.14 0.015 240);          /* #131a24 */
   --teal: oklch(0.70 0.1 190);           /* #3db8b8 */
@@ -64,7 +64,7 @@
   --green: oklch(0.78 0.18 145);         /* #4ade80 */
   --green-light: oklch(0.78 0.18 145);   /* #4ade80 */
 
-  --muted: rgba(148, 163, 184, 0.55);
+  --muted: rgba(148, 163, 184, 0.76);
 
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(255, 255, 255, 0.06);
@@ -93,6 +93,46 @@
   --density-card-gap: 4px;
   --density-text-sm: 13px;
   --density-text-xs: 11px;
+}
+
+/* ── Tiptap rich text editor styles ── */
+.rich-text-editor .tiptap {
+  outline: none;
+}
+.rich-text-editor .tiptap p {
+  margin: 0 0 0.5em;
+}
+.rich-text-editor .tiptap h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0.8em 0 0.4em;
+}
+.rich-text-editor .tiptap h3 {
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0.6em 0 0.3em;
+}
+.rich-text-editor .tiptap ul,
+.rich-text-editor .tiptap ol {
+  padding-left: 1.2em;
+  margin: 0 0 0.5em;
+}
+.rich-text-editor .tiptap li {
+  margin-bottom: 0.15em;
+}
+.rich-text-editor .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  pointer-events: none;
+  height: 0;
+  float: left;
+}
+.rich-text-editor .tiptap .mention {
+  color: var(--teal);
+  font-weight: 500;
+  background: rgba(45, 138, 138, 0.08);
+  padding: 1px 4px;
+  border-radius: 4px;
 }
 
 /* Density: compact table rows */
@@ -317,42 +357,46 @@ a:hover {
 }
 
 .badge-active {
-  background: rgba(34, 197, 94, 0.12);
+  background: transparent;
   color: #16a34a;
+  border: 1px solid currentColor;
+  opacity: 0.8;
 }
 
 .dark .badge-active {
-  background: rgba(34, 197, 94, 0.15);
   color: #4ade80;
 }
 
 .badge-review {
-  background: rgba(245, 158, 11, 0.12);
+  background: transparent;
   color: #d97706;
+  border: 1px solid currentColor;
+  opacity: 0.8;
 }
 
 .dark .badge-review {
-  background: rgba(245, 158, 11, 0.15);
   color: #fbbf24;
 }
 
 .badge-published {
-  background: rgba(122, 0, 25, 0.1);
+  background: transparent;
   color: #7a0019;
+  border: 1px solid currentColor;
+  opacity: 0.8;
 }
 
 .dark .badge-published {
-  background: rgba(232, 93, 122, 0.15);
   color: #e85d7a;
 }
 
 .badge-preparation {
-  background: rgba(100, 116, 139, 0.1);
+  background: transparent;
   color: #64748b;
+  border: 1px solid currentColor;
+  opacity: 0.8;
 }
 
 .dark .badge-preparation {
-  background: rgba(100, 116, 139, 0.15);
   color: #94a3b8;
 }
 

@@ -81,6 +81,16 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
     },
+    mutations: {
+      onSettled: () => {
+        // Notify other tabs on the same device after any mutation
+        try {
+          const bc = new BroadcastChannel('mnccore-sync')
+          bc.postMessage('changed')
+          bc.close()
+        } catch { /* BroadcastChannel not supported */ }
+      },
+    },
   },
 })
 

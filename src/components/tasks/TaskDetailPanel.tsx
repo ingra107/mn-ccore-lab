@@ -8,6 +8,8 @@ import {
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CollapsibleSection from '../CollapsibleSection'
+import FileUpload from '../FileUpload'
+import RichTextEditor from '../RichTextEditor'
 import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
@@ -247,14 +249,17 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
               </div>
             )}
 
-            {/* Description (brief) */}
+            {/* Description (rich text) */}
             <div>
               <label className="block text-[11px] mb-1.5" style={{ color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
                 Description
               </label>
-              <EditableTextarea
-                value={task.description || ''}
-                onSave={(v) => handleFieldUpdate('description', v)}
+              <RichTextEditor
+                content={task.description_json || null}
+                plainTextFallback={task.description}
+                onUpdate={(json) => {
+                  handleFieldUpdate('description_json', json)
+                }}
                 placeholder="Add a description..."
               />
             </div>
@@ -363,7 +368,10 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
               defaultOpen={false}
               storageKey={`task-files-${task.id}`}
             >
-              <TaskFilesSection taskId={task.id} />
+              <FileUpload entityType="task" entityId={task.id} />
+              <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
+                <TaskFilesSection taskId={task.id} />
+              </div>
             </CollapsibleSection>
 
             {/* Meta info */}

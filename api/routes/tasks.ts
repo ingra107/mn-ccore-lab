@@ -125,7 +125,7 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 // POST /api/tasks/:id — update task fields
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
-  const allowedFields = ['title', 'description', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by'];
+  const allowedFields = ['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by'];
   const updates: string[] = [];
   const params: unknown[] = [];
 
@@ -195,6 +195,18 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
         title.slice(0, 200),
         '/tasks'
       ).run();
+
+      // Email notification (fire-and-forget, only if Resend configured)
+      if (env.RESEND_API_KEY) {
+        const { sendEmail, taskAssignmentEmail } = await import('../lib/email');
+        const member = await env.DB.prepare('SELECT name FROM team_members WHERE slug = ?').bind(assignee).first<{ name: string }>();
+        if (member) {
+          const email = taskAssignmentEmail(user.name || user.email, title, id);
+          // Look up assignee email from team — use UMN convention
+          email.to = `${assignee}@umn.edu`;
+          sendEmail(env.RESEND_API_KEY, email).catch(() => {});
+        }
+      }
     }
   } catch (e) {
     console.error('Failed to create assignment notification:', e);
@@ -338,12 +350,31 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
     const batch = body.tasks.slice(i, i + BATCH_SIZE);
     const stmts = batch.map(t =>
       env.DB.prepare(
-        'INSERT OR REPLACE INTO tasks (id, meeting_id, project_id, title, description, assignee, assigned_by, due_date, priority, status, source, completed, completed_at, completed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        `INSERT INTO tasks (id, meeting_id, project_id, title, description, assignee, assigned_by, due_date, priority, status, source, completed, completed_at, completed_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           meeting_id = excluded.meeting_id,
+           project_id = excluded.project_id,
+           title = excluded.title,
+           description = COALESCE(excluded.description, tasks.description),
+           assignee = COALESCE(excluded.assignee, tasks.assignee),
+           assigned_by = COALESCE(excluded.assigned_by, tasks.assigned_by),
+           due_date = excluded.due_date,
+           priority = COALESCE(excluded.priority, tasks.priority),
+           status = CASE
+             WHEN excluded.status IN ('blocked', 'done') THEN excluded.status
+             ELSE COALESCE(excluded.status, tasks.status)
+           END,
+           source = COALESCE(excluded.source, tasks.source),
+           completed = excluded.completed,
+           completed_at = excluded.completed_at,
+           completed_by = excluded.completed_by,
+           updated_at = datetime('now')`
       ).bind(
         t.id, t.meeting_id ?? null, t.project_id ?? null,
-        t.title, t.description ?? null, t.assignee,
+        t.title, t.description ?? null, t.assignee ?? null,
         t.assigned_by ?? null, t.due_date ?? null,
-        t.priority ?? 'medium', t.status ?? 'todo',
+        t.priority ?? null, t.status ?? null,
         t.source ?? 'sync', t.completed ?? 0,
         t.completed_at ?? null, t.completed_by ?? null,
         t.created_at ?? null

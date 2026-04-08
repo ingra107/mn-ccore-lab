@@ -119,6 +119,7 @@ export interface TaskRow {
   instructions: string | null
   recurrence: string | null
   recurrence_parent_id: string | null
+  description_json: string | null
   created_at: string
   meeting_title?: string
   meeting_date?: string

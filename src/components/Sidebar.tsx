@@ -10,7 +10,6 @@ import {
   FolderKanban,
   FileText,
   Lightbulb,
-  HelpCircle,
   BookOpen,
   Search,
   DollarSign,
@@ -22,12 +21,8 @@ import {
   ChevronRight,
   ExternalLink,
   Bug,
-  Scale,
   Shield,
   Terminal,
-  ScrollText,
-  GraduationCap,
-  GitBranch,
   History,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -73,7 +68,6 @@ const navGroups: NavGroup[] = [
       { to: '/meetings', label: 'Meetings', icon: UsersIcon },
       { to: '/calendar', label: 'Calendar', icon: Calendar },
       { to: '/deadlines', label: 'Deadlines', icon: Clock },
-      { to: '/deadline-cascade', label: 'Cascade', icon: GitBranch },
     ],
   },
   {
@@ -82,8 +76,6 @@ const navGroups: NavGroup[] = [
       { to: '/projects', label: 'Projects', icon: FolderKanban },
       { to: '/manuscripts', label: 'Manuscripts', icon: FileText },
       { to: '/ideas', label: 'Ideas', icon: Lightbulb },
-      { to: '/ask', label: 'Ask the Lab', icon: HelpCircle },
-      { to: '/decisions', label: 'Decisions', icon: Scale },
       { to: '/digest', label: 'Research Digest', icon: BookOpen },
       { to: '/search', label: 'Search', icon: Search },
       { to: '/grants', label: 'Grants', icon: DollarSign },
@@ -93,14 +85,12 @@ const navGroups: NavGroup[] = [
     title: 'Meetings',
     items: [
       { to: '/meeting-notes', label: 'Meeting Transcripts', icon: FileText },
-      { to: '/narratives', label: 'Narratives', icon: ScrollText },
     ],
   },
   {
     title: 'Lab',
     items: [
       { to: '/team', label: 'Team', icon: UsersIcon },
-      { to: '/mentee-milestones', label: 'Mentee Milestones', icon: GraduationCap },
       { to: '/activity', label: 'Activity', icon: Activity },
       { to: '/analytics', label: 'Analytics', icon: BarChart3 },
       { to: '/settings', label: 'Settings', icon: Settings },
@@ -215,8 +205,8 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             )}
             {!collapsed && (
               <div
-                className="px-2 py-1 text-[9px] font-semibold uppercase tracking-wider"
-                style={{ color: 'var(--slate)', opacity: 0.5, letterSpacing: '0.08em' }}
+                className="px-2 py-1 text-[9px] font-normal uppercase tracking-wider"
+                style={{ color: 'var(--slate)', opacity: 0.65, letterSpacing: '0.08em' }}
               >
                 {group.title}
               </div>

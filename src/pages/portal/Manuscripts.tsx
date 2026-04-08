@@ -167,7 +167,7 @@ export default function Manuscripts() {
               }}
             >
               <Plus size={14} />
-              New Project
+              New Manuscript
             </button>
           }
         >

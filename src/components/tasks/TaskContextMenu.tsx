@@ -53,7 +53,7 @@ const menuStyles: React.CSSProperties = {
   position: 'fixed',
   zIndex: 9999,
   minWidth: '200px',
-  background: '#111820',
+  background: 'var(--ice)',
   border: '1px solid var(--border-subtle)',
   borderRadius: '8px',
   boxShadow: '0 8px 32px rgba(0,0,0,0.3)',

@@ -1,0 +1,47 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e5]: genetics
+      - generic [ref=e7]: science
+      - generic [ref=e8]:
+        - link "science LabSync" [ref=e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e11]: science
+          - generic [ref=e12]: LabSync
+        - generic [ref=e13]:
+          - heading "Accelerate your scientific impact." [level=1] [ref=e14]:
+            - text: Accelerate your
+            - text: scientific impact.
+          - paragraph [ref=e15]: The modern operating system for research labs. Seamlessly manage protocols, grants, and team collaboration in one unified workspace.
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e20]: check_circle
+            - generic [ref=e21]: Smart Protocol Management
+          - generic [ref=e22]:
+            - generic [ref=e24]: check_circle
+            - generic [ref=e25]: Real-time Inventory Tracking
+          - generic [ref=e26]:
+            - generic [ref=e28]: check_circle
+            - generic [ref=e29]: Grant & Funding Analytics
+          - generic [ref=e30]:
+            - generic [ref=e32]: check_circle
+            - generic [ref=e33]: Secure Data Collaboration
+        - generic [ref=e34]:
+          - paragraph [ref=e35]: "\"LabSync has completely transformed how we organize our research. It's like having a lab manager in your pocket, but smarter.\""
+          - generic [ref=e38]:
+            - paragraph [ref=e39]: Dr. Sarah Chen
+            - paragraph [ref=e40]: Principal Investigator, Chen Lab
+    - generic [ref=e41]:
+      - generic [ref=e43]:
+        - heading "Welcome back" [level=2] [ref=e44]
+        - paragraph [ref=e45]: Enter your credentials to access your lab.
+      - paragraph [ref=e47]:
+        - text: © 2026 LabSync Inc.
+        - link "Privacy" [ref=e48] [cursor=pointer]:
+          - /url: /privacy
+        - text: •
+        - link "Terms" [ref=e49] [cursor=pointer]:
+          - /url: /terms
+  - region "Notifications alt+T"
+  - alert [ref=e50]
