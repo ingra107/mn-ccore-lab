@@ -100,7 +100,13 @@ export default function CalendarPage() {
       <PageHeader
         icon={<Calendar size={20} />}
         title="Lab Calendar"
-        subtitle={`${events.length} events`}
+        subtitle={(() => {
+          const todayStr = new Date().toISOString().split('T')[0]
+          const todayCount = events.filter(e => e.date === todayStr).length
+          return todayCount > 0
+            ? `${events.length} events · ${todayCount} today`
+            : `${events.length} events`
+        })()}
         count={events.length}
         actions={
           <button
@@ -235,7 +241,7 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
           const isToday = dateStr === today
           const dayEvents = eventsByDate.get(dateStr) || []
           return (
-            <div key={dateStr} className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.04)' : 'var(--cream)' }}>
+            <div key={dateStr} className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.06)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
               <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'white' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
                 {dayNum}
               </span>

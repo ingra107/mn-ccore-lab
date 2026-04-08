@@ -253,6 +253,48 @@ export default function AnalyticsPage() {
         <MetricCard icon={Users} label="Project Health" value={health?.healthy || 0} color="var(--green)" subtitle={`${health?.needs_attention || 0} attention · ${(health?.at_risk || 0) + (health?.critical || 0)} at risk`} />
       </div>
 
+      {/* Task Velocity — completions per week, last 8 weeks */}
+      <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+        <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>Task Velocity</h3>
+        <div className="flex items-end gap-2" style={{ height: 80 }}>
+          {(() => {
+            const now = new Date()
+            const weeks: { label: string; count: number }[] = []
+            for (let i = 7; i >= 0; i--) {
+              const wStart = new Date(now)
+              wStart.setDate(wStart.getDate() - wStart.getDay() - i * 7)
+              wStart.setHours(0, 0, 0, 0)
+              const wEnd = new Date(wStart)
+              wEnd.setDate(wEnd.getDate() + 7)
+              const wStartStr = wStart.toISOString()
+              const wEndStr = wEnd.toISOString()
+              const count = tasks.filter(t => t.completed_at && t.completed_at >= wStartStr && t.completed_at < wEndStr).length
+              const label = wStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              weeks.push({ label, count })
+            }
+            const max = Math.max(...weeks.map(w => w.count), 1)
+            return weeks.map((w, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                <span className="text-[9px] font-medium" style={{ color: w.count > 0 ? 'var(--teal)' : 'var(--slate)', opacity: w.count > 0 ? 1 : 0.3 }}>
+                  {w.count > 0 ? w.count : ''}
+                </span>
+                <div
+                  className="w-full rounded-sm transition-all"
+                  style={{
+                    height: `${Math.max((w.count / max) * 56, w.count > 0 ? 4 : 2)}px`,
+                    backgroundColor: i === weeks.length - 1 ? 'var(--teal)' : w.count > 0 ? 'rgba(45,138,138,0.4)' : 'var(--border-subtle)',
+                    minHeight: 2,
+                  }}
+                />
+                <span className="text-[8px]" style={{ color: i === weeks.length - 1 ? 'var(--teal)' : 'var(--slate)', opacity: i === weeks.length - 1 ? 1 : 0.4 }}>
+                  {w.label}
+                </span>
+              </div>
+            ))
+          })()}
+        </div>
+      </div>
+
       {/* Team Performance */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Completion by person — PI-only for psychological safety (SDT research) */}

@@ -48,6 +48,8 @@ export default function Manuscripts() {
   const [view, setView] = useState<'list' | 'pipeline'>('list')
   const [filterPI, setFilterPI] = useState<string>('')
   const [showCreate, setShowCreate] = useState(false)
+  const [sortKey, setSortKey] = useState<'stage' | 'title' | 'status' | 'pi' | 'category'>('stage')
+  const [sortAsc, setSortAsc] = useState(true)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   useScrollReveal<HTMLDivElement>()
 
@@ -72,12 +74,18 @@ export default function Manuscripts() {
     let filtered = projects.filter((p) => p.status !== 'Published' || p.stage === 'Published')
     if (filterPI) filtered = filtered.filter((p) => p.pi === filterPI)
     return [...filtered].sort((a, b) => {
-      const stageA = STAGE_ORDER[a.stage ?? ''] ?? 99
-      const stageB = STAGE_ORDER[b.stage ?? ''] ?? 99
-      if (stageA !== stageB) return stageA - stageB
-      return a.title.localeCompare(b.title)
+      let cmp = 0
+      switch (sortKey) {
+        case 'stage': cmp = (STAGE_ORDER[a.stage ?? ''] ?? 99) - (STAGE_ORDER[b.stage ?? ''] ?? 99); break
+        case 'title': cmp = a.title.localeCompare(b.title); break
+        case 'status': cmp = (a.status || '').localeCompare(b.status || ''); break
+        case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
+        case 'category': cmp = (a.category || '').localeCompare(b.category || ''); break
+      }
+      if (cmp === 0) cmp = a.title.localeCompare(b.title)
+      return sortAsc ? cmp : -cmp
     })
-  }, [projects, filterPI])
+  }, [projects, filterPI, sortKey, sortAsc])
 
   useListKeyboardNav({
     itemCount: view === 'list' ? manuscripts.length : 0,
@@ -181,7 +189,7 @@ export default function Manuscripts() {
         {/* ─── LIST VIEW ─── */}
         {!isLoading && view === 'list' && (
           <div className="table-container">
-            {/* Table header */}
+            {/* Table header — sortable */}
             <div
               className="hidden sm:grid"
               style={{
@@ -190,20 +198,38 @@ export default function Manuscripts() {
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
-              {['Title', 'Status', 'Stage', 'PI', 'Group'].map((col) => (
-                <span
-                  key={col}
+              {([
+                { label: 'Title', key: 'title' as const },
+                { label: 'Status', key: 'status' as const },
+                { label: 'Stage', key: 'stage' as const },
+                { label: 'PI', key: 'pi' as const },
+                { label: 'Group', key: 'category' as const },
+              ]).map((col) => (
+                <button
+                  key={col.key}
+                  onClick={() => {
+                    if (sortKey === col.key) setSortAsc(!sortAsc)
+                    else { setSortKey(col.key); setSortAsc(true) }
+                  }}
                   style={{
                     fontSize: '11px',
                     fontWeight: 500,
-                    color: 'var(--slate)',
-                    opacity: 0.5,
+                    color: sortKey === col.key ? 'var(--teal)' : 'var(--slate)',
+                    opacity: sortKey === col.key ? 0.8 : 0.5,
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.06em',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    padding: 0,
                   }}
                 >
-                  {col}
-                </span>
+                  {col.label}
+                  {sortKey === col.key && (
+                    <span style={{ marginLeft: 2, fontSize: '9px' }}>{sortAsc ? '▲' : '▼'}</span>
+                  )}
+                </button>
               ))}
             </div>
 
@@ -223,7 +249,7 @@ export default function Manuscripts() {
 
                   return (
                     <div key={project.slug}>
-                      {showStageHeader && (
+                      {showStageHeader && sortKey === 'stage' && (
                         <div className="flex items-center" style={{ padding: '20px 24px 8px', gap: '8px' }}>
                           <span
                             style={{
@@ -274,6 +300,23 @@ export default function Manuscripts() {
                                 {tc}
                               </span>
                             )}
+                            {/* Stage progress dots */}
+                            <div className="flex items-center gap-0.5 ml-1 flex-shrink-0">
+                              {STAGES.map((s, i) => {
+                                const currentIdx = STAGES.indexOf((project.stage as typeof STAGES[number]) || 'Idea')
+                                return (
+                                  <div
+                                    key={s}
+                                    style={{
+                                      width: 5, height: 5, borderRadius: '50%',
+                                      background: i <= currentIdx ? 'var(--teal)' : 'var(--border-subtle)',
+                                      transition: 'background 200ms',
+                                    }}
+                                    title={s}
+                                  />
+                                )
+                              })}
+                            </div>
                           </div>
 
                           {/* Status (inline editable) */}
