@@ -89,7 +89,7 @@ export default function CalendarPage() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  })
+  }, [view, currentDate])
 
   // iCal export
   const exportICal = () => {

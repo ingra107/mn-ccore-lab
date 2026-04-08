@@ -3,7 +3,7 @@
 Detailed tables, API endpoints, key files, and feature inventory.
 Moved from CLAUDE.md to reduce session context load. Read on demand.
 
-## D1 Tables (39+)
+## D1 Tables (43+)
 
 | Table | Rows | Purpose |
 |-------|------|---------|
@@ -27,7 +27,7 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | lab_settings | 6 | Key-value settings store |
 | workflow_templates | 3+ | Custom project stage templates |
 
-## API Endpoints (110+)
+## API Endpoints (180+)
 
 ### Core Data
 - GET /api/team, /api/projects, /api/publications, /api/grants

@@ -9,10 +9,10 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (495+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (496+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
-| Data | TanStack Query v5 + Cloudflare D1 (39 tables, 110+ endpoints) -- ALL LIVE |
+| Data | TanStack Query v5 + Cloudflare D1 (43 tables, 180+ endpoints) -- ALL LIVE |
 | D1 database | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM) |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
@@ -100,7 +100,7 @@ Airtable ←CRDT→ brain.db ←LWW→ D1 (mnccore-lab) ←API→ React + TanSta
 
 - **Data:** TanStack Query v5 → D1 API (prod), static TS fallback (dev)
 - **API:** Cloudflare Worker, 110+ endpoints, auth-gated writes
-- **Auth:** Open now. Cloudflare Access for April 7 launch (@umn.edu)
+- **Auth:** Open now. Cloudflare Access for April 21 launch (@umn.edu)
 - **Email:** Worker cron + SendGrid (dormant -- needs API key)
 - **Sync:** `sync_d1_push.py` / `sync_d1_pull.py` in PB, scheduled + /process-triggered
 
@@ -340,7 +340,7 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 
 ## Meeting Cadence
 
-Biweekly Tuesdays 3pm CT. Anchor: Apr 7, Apr 21. Automation runs Monday mornings.
+Biweekly Tuesdays 3pm CT. Anchor: Apr 21, May 5. Automation runs Monday mornings.
 
 ## Component Coverage (Verified 2026-04-08)
 

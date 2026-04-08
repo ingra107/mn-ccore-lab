@@ -112,6 +112,25 @@ export default function AnalyticsPage() {
   const pendingTasks = tasks.filter((t) => !t.completed).length
   const activeIdeas = ideas.filter((i) => i.status !== 'archived').length
 
+  const copyReport = () => {
+    const lines = [
+      `# MN-CCORE Lab Report — ${new Date().toLocaleDateString()}`,
+      '',
+      `## Week of ${formatWeekRange(selectedWeekStart)}`,
+      `- Completed: ${weekStats.completed}`,
+      `- Created: ${weekStats.created}`,
+      `- Overdue: ${weekStats.overdue}`,
+      `- Activity: ${weekStats.activityCount}`,
+      '',
+      '## Summary',
+      `- ${projects.filter(p => p.status === 'Active').length} active projects`,
+      `- ${pendingTasks} pending tasks`,
+      `- ${ideas.filter(i => i.status !== 'archived').length} research ideas`,
+      health ? `- Health: ${health.healthy} healthy, ${health.needs_attention || 0} need attention, ${(health.at_risk || 0) + (health.critical || 0)} at risk` : '',
+    ].filter(Boolean)
+    navigator.clipboard.writeText(lines.join('\n'))
+  }
+
   const exportCSV = () => {
     const rows = [
       ['Task', 'Assignee', 'Status', 'Priority', 'Due Date', 'Project', 'Created', 'Completed'],
@@ -164,24 +183,7 @@ export default function AnalyticsPage() {
         actions={isPi ? (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                const lines = [
-                  `# MN-CCORE Lab Report — ${new Date().toLocaleDateString()}`,
-                  '',
-                  `## Week of ${formatWeekRange(selectedWeekStart)}`,
-                  `- Completed: ${weekStats.completed}`,
-                  `- Created: ${weekStats.created}`,
-                  `- Overdue: ${weekStats.overdue}`,
-                  `- Activity: ${weekStats.activityCount}`,
-                  '',
-                  '## Summary',
-                  `- ${projects.filter(p => p.status === 'Active').length} active projects`,
-                  `- ${pendingTasks} pending tasks`,
-                  `- ${ideas.filter(i => i.status !== 'archived').length} research ideas`,
-                  health ? `- Health: ${health.healthy} healthy, ${health.needs_attention || 0} need attention, ${(health.at_risk || 0) + (health.critical || 0)} at risk` : '',
-                ].filter(Boolean)
-                navigator.clipboard.writeText(lines.join('\n'))
-              }}
+              onClick={copyReport}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
               style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
             >

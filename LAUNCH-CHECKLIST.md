@@ -1,4 +1,4 @@
-# MN-CCORE Lab Hub — Launch Checklist (April 7, 2026)
+# MN-CCORE Lab Hub — Launch Checklist (April 21, 2026)
 
 ## Prerequisites (Nick must do)
 
@@ -62,12 +62,10 @@ npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab
 
 | Item | Status |
 |------|--------|
-| Code complete | Done (230+ commits) |
-| Phase 10 (UX polish) | Done (22 commits) |
-| Phase 11 (infrastructure) | Done (26 commits) |
-| Dark mode + mobile polish | In progress |
+| Code complete | Done (496+ commits, Phases 1-26aq) |
+| D1 schema | v27 applied (43 tables) |
+| Dark mode + mobile | Done |
 | Wrangler auth | Needs refresh |
-| D1 schema-v10 | Blocked on auth |
 | SendGrid | Needs key |
 | Cloudflare Access | Needs config |
 | Headshots | Needs team |
