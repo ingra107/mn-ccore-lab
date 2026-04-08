@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Brain, Mic, Upload, FileText, CheckCircle2, Clock, ArrowRight,
-  Sparkles, Users,
+  Sparkles, Users, Search,
 } from 'lucide-react'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import PageHeader from '../../components/PageHeader'
@@ -16,9 +16,21 @@ import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 export default function MeetingNotesPage() {
   const [showCreate, setShowCreate] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const { data: meetings = [], isLoading } = useMeetingsApi()
   const [focusedIndex, setFocusedIndex] = useState(-1)
-  useListKeyboardNav({ itemCount: meetings.length, focusedIndex, setFocusedIndex })
+
+  const filteredMeetings = useMemo(() => {
+    if (!searchQuery.trim()) return meetings
+    const q = searchQuery.toLowerCase()
+    return meetings.filter(m =>
+      m.title.toLowerCase().includes(q) ||
+      (m.notes || '').toLowerCase().includes(q) ||
+      m.date.includes(q)
+    )
+  }, [meetings, searchQuery])
+
+  useListKeyboardNav({ itemCount: filteredMeetings.length, focusedIndex, setFocusedIndex })
 
   // Stats from meetings that have notes
   const processedCount = meetings.filter((m) => m.notes).length
@@ -80,13 +92,26 @@ export default function MeetingNotesPage() {
         </div>
       </div>
 
-      {/* Recent meetings with notes */}
+      {/* Search + Recent meetings */}
       <div className="mt-6">
-        <h3 className="text-sm font-normal mb-3" style={{ color: 'var(--ink)' }}>
-          Recent Meetings
-        </h3>
+        <div className="flex items-center gap-3 mb-3">
+          <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>
+            Recent Meetings
+          </h3>
+          <div className="relative flex-1 max-w-xs">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search meetings..."
+              className="w-full rounded-lg border pl-8 pr-3 py-1.5 text-xs outline-none"
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', background: 'var(--cream)' }}
+            />
+          </div>
+        </div>
         <motion.div className="flex flex-col gap-2" variants={staggerContainer} initial="hidden" animate="visible">
-          {meetings.slice(0, 10).map((m) => (
+          {filteredMeetings.slice(0, 20).map((m) => (
             <motion.div key={m.id} variants={staggerItem}>
               <Link
                 to={`/meetings/${m.id}`}
@@ -115,7 +140,7 @@ export default function MeetingNotesPage() {
               </Link>
             </motion.div>
           ))}
-          {meetings.length === 0 && (
+          {filteredMeetings.length === 0 && (
             <EmptyState
               icon={<FileText size={40} />}
               title="No meetings recorded yet"

@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation } from 'lucide-react'
+import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation, Download } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -171,6 +171,30 @@ export default function Deadlines() {
             <GitBranch size={12} />
             Cascade View
           </Link>
+          <button
+            onClick={() => {
+              const items = [...overdue, ...thisWeek, ...nextWeek, ...later].filter(d => d.status !== 'done')
+              let ical = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MN-CCORE//Deadlines//EN\nCALSCALE:GREGORIAN\n'
+              for (const d of items) {
+                const dateStr = d.due_date.replace(/-/g, '')
+                ical += `BEGIN:VEVENT\nDTSTART;VALUE=DATE:${dateStr}\nSUMMARY:${d.title.replace(/[,;\\]/g, ' ')}\nDESCRIPTION:${d.type} - ${d.status}\nUID:${d.id}@mn-ccore-deadlines\nEND:VEVENT\n`
+              }
+              ical += 'END:VCALENDAR'
+              const blob = new Blob([ical], { type: 'text/calendar' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = 'mnccore-deadlines.ics'
+              a.click()
+              URL.revokeObjectURL(url)
+            }}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs transition-colors border"
+            style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer', opacity: 0.6 }}
+            title="Export deadlines as .ics calendar file"
+          >
+            <Download size={12} />
+            Export
+          </button>
           <PageTooltip id="deadlines-timeline-hint" text="Switch to Timeline for a visual map" />
 
           <select

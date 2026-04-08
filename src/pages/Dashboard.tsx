@@ -23,6 +23,7 @@ import MyItemsCard from '../components/dashboard/MyItemsCard'
 import TeamPulseCard from '../components/dashboard/TeamPulseCard'
 import InsightsCard from '../components/dashboard/InsightsCard'
 import WeeklyProgressCard from '../components/dashboard/WeeklyProgressCard'
+import QuickWinsCard from '../components/dashboard/QuickWinsCard'
 
 // Tab categories for card filtering
 type DashboardTab = 'overview' | 'projects' | 'people' | 'deadlines'
@@ -49,6 +50,7 @@ const CARD_TABS: Record<string, DashboardTab[]> = {
   'topics': ['overview', 'projects'],
   'insights': ['overview', 'projects'],
   'weekly-progress': ['overview', 'deadlines'],
+  'quick-wins': ['overview', 'deadlines'],
 }
 
 // Card registry — order matters for default layout
@@ -67,6 +69,7 @@ const CARD_REGISTRY = [
   { id: 'topics', label: 'Research Topics', component: TopicBubblesCard, defaultVisible: false },
   { id: 'insights', label: 'Cross-Project Insights', component: InsightsCard, defaultVisible: false },
   { id: 'weekly-progress', label: 'Weekly Progress', component: WeeklyProgressCard, defaultVisible: true },
+  { id: 'quick-wins', label: 'Quick Wins', component: QuickWinsCard, defaultVisible: true },
 ] as const
 
 const STORAGE_KEY = 'mnccore-dashboard-cards'
