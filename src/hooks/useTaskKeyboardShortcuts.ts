@@ -33,6 +33,8 @@ interface UseTaskKeyboardShortcutsOptions {
   editFocusedTitle?: () => void
   /** Trigger due date picker for focused task */
   editFocusedDueDate?: () => void
+  /** Open create task modal */
+  createTask?: () => void
 }
 
 /**
@@ -65,6 +67,7 @@ export function useTaskKeyboardShortcuts({
   collapseFocused,
   editFocusedTitle,
   editFocusedDueDate,
+  createTask,
 }: UseTaskKeyboardShortcutsOptions) {
   // Use refs to avoid stale closures in the event handler
   const focusedIndexRef = useRef(focusedIndex)
@@ -182,6 +185,15 @@ export function useTaskKeyboardShortcuts({
         break
       }
 
+      case 'c':
+      case 'C': {
+        if (createTask) {
+          e.preventDefault()
+          createTask()
+        }
+        break
+      }
+
       case 'e':
       case 'E': {
         if (idx >= 0 && editFocusedTitle) {
@@ -216,7 +228,7 @@ export function useTaskKeyboardShortcuts({
         break
       }
     }
-  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker, toggleFilters, expandFocused, collapseFocused, editFocusedTitle, editFocusedDueDate])
+  }, [closeOverlay, setFocusedIndex, togglePeek, openDetail, cycleStatus, toggleSelect, addBlocker, toggleFilters, expandFocused, collapseFocused, editFocusedTitle, editFocusedDueDate, createTask])
 
   useEffect(() => {
     document.addEventListener('keydown', handler)

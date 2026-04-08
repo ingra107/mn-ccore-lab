@@ -13,7 +13,8 @@ import { useUndoToast } from '../../components/UndoToast'
 import { useTasks } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import type { TaskRow } from '../../lib/api'
-import { useCreateTask, useUpdateTaskStatus, useUpdateTask } from '../../hooks/useMutations'
+import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
+import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import { getPersonInfo } from '../../data/team'
 
 type ViewMode = 'list' | 'board' | 'timeline'
@@ -57,6 +58,14 @@ export default function MyTasks() {
   const { showSuccess, showUndo } = useUndoToast()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const bulkUpdate = useBulkUpdateTasks()
+
+  const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete', value?: string) => {
+    bulkUpdate.mutate({ ids: [...selectedIds], action, value }, {
+      onSuccess: () => setSelectedIds(new Set()),
+    })
+  }
   const handleFieldChange = (id: string, field: string, value: unknown) => {
     updateTask.mutate({ id, fields: { [field]: value } })
   }
@@ -227,7 +236,7 @@ export default function MyTasks() {
             {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} />}
           </>
         ) : groupBy === 'none' ? (
-          <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} />
+          <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} />
         ) : (
           <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} />
         )}
@@ -247,6 +256,14 @@ export default function MyTasks() {
           onClose={() => setSelectedTask(null)}
         />
       )}
+
+      <BulkActionToolbar
+        selectedIds={selectedIds}
+        selectedTasks={displayTasks.filter(t => selectedIds.has(t.id))}
+        onClear={() => setSelectedIds(new Set())}
+        onBulkAction={handleBulkAction}
+        isUpdating={bulkUpdate.isPending}
+      />
     </div>
   )
 }

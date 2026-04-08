@@ -250,6 +250,7 @@ export default function Tasks() {
     collapseFocused: useCallback(() => {
       if (focusedTask && expandedTasks.has(focusedTask.id)) toggleExpandTask(focusedTask.id)
     }, [focusedTask, expandedTasks, toggleExpandTask]),
+    createTask: useCallback(() => setShowCreate(true), []),
     editFocusedTitle: useCallback(() => {
       const row = document.querySelector('.task-row-focused .task-title-clickable')
       if (row) row.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))

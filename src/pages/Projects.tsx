@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FolderKanban, GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
+import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useProjects, useDependencies, useProjectHealth } from '../hooks/useApiData'
@@ -84,6 +84,17 @@ export default function Projects() {
   type ProjectSortKey = 'title' | 'status' | 'stage' | 'pi' | 'category'
   const [sortKey, setSortKey] = useState<ProjectSortKey>('stage')
   const [sortAsc, setSortAsc] = useState(true)
+  const [pinnedSlugs, setPinnedSlugs] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('pinned-projects') || '[]')) } catch { return new Set() }
+  })
+  const togglePin = (slug: string) => {
+    setPinnedSlugs(prev => {
+      const next = new Set(prev)
+      if (next.has(slug)) next.delete(slug); else next.add(slug)
+      localStorage.setItem('pinned-projects', JSON.stringify([...next]))
+      return next
+    })
+  }
   const toggleSort = (key: ProjectSortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc)
     else { setSortKey(key); setSortAsc(true) }
@@ -92,6 +103,10 @@ export default function Projects() {
   const filtered = useMemo(() => {
     const base = activeCategory === 'all' ? projects : projects.filter((p) => p.category === activeCategory)
     return [...base].sort((a, b) => {
+      // Pinned always first
+      const aPinned = pinnedSlugs.has(a.slug) ? 0 : 1
+      const bPinned = pinnedSlugs.has(b.slug) ? 0 : 1
+      if (aPinned !== bPinned) return aPinned - bPinned
       let cmp = 0
       switch (sortKey) {
         case 'title': cmp = a.title.localeCompare(b.title); break
@@ -108,7 +123,7 @@ export default function Projects() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [activeCategory, projects, sortKey, sortAsc])
+  }, [activeCategory, projects, sortKey, sortAsc, pinnedSlugs])
 
   // Project slugs in display order for keyboard nav
   const projectSlugs = useMemo(() => filtered.map((p) => p.slug), [filtered])
@@ -408,8 +423,27 @@ export default function Projects() {
                               transition: 'background 0.12s ease-out',
                             }}
                           >
-                            {/* Title with category dot and health indicator */}
+                            {/* Title with pin star, category dot, and health indicator */}
                             <div className="flex items-center gap-2.5" style={{ paddingRight: '16px' }}>
+                              <button
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePin(project.slug) }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  flexShrink: 0,
+                                  color: pinnedSlugs.has(project.slug) ? 'var(--gold)' : 'var(--slate)',
+                                  opacity: pinnedSlugs.has(project.slug) ? 1 : 0.15,
+                                  transition: 'opacity 150ms ease, color 150ms ease',
+                                  lineHeight: 0,
+                                }}
+                                onMouseOver={(e) => { if (!pinnedSlugs.has(project.slug)) e.currentTarget.style.opacity = '0.5' }}
+                                onMouseOut={(e) => { if (!pinnedSlugs.has(project.slug)) e.currentTarget.style.opacity = '0.15' }}
+                                title={pinnedSlugs.has(project.slug) ? 'Unpin project' : 'Pin to top'}
+                              >
+                                <Star size={12} fill={pinnedSlugs.has(project.slug) ? 'var(--gold)' : 'none'} />
+                              </button>
                               <span
                                 style={{
                                   width: 6,
@@ -474,6 +508,21 @@ export default function Projects() {
                                   )
                                 })}
                               </span>
+                              {/* Last activity / staleness indicator */}
+                              {project.lastActivity && (() => {
+                                const days = Math.floor((Date.now() - new Date(project.lastActivity!).getTime()) / 86400000)
+                                if (days < 7) return null
+                                return (
+                                  <span style={{
+                                    fontSize: '9px',
+                                    color: days > 30 ? 'var(--maroon)' : days > 14 ? 'var(--orange)' : 'var(--slate)',
+                                    opacity: 0.6,
+                                    flexShrink: 0,
+                                  }} title={`Last activity ${days} days ago`}>
+                                    {days}d ago
+                                  </span>
+                                )
+                              })()}
                             </div>
 
                             {/* Status (inline editable) */}
