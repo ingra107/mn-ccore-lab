@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Award, List, BookOpen } from 'lucide-react'
+import { Award, List, BookOpen, Copy } from 'lucide-react'
 import { usePublications } from '../hooks/useApiData'
 import type { Publication } from '../data/types'
 import PublicationFilters from '../components/PublicationFilters'
@@ -191,6 +191,52 @@ export default function Publications() {
           papers from MN-CCORE lab members. Click any paper to view its abstract
           and links.
         </p>
+
+        {/* Year distribution mini-chart */}
+        {years.length > 1 && (
+          <div className="flex items-end gap-1 mt-3" style={{ height: 32 }}>
+            {years.slice(0, 8).reverse().map(year => {
+              const count = filtered.filter(p => p.year === year).length
+              const max = Math.max(...years.map(y => filtered.filter(p => p.year === y).length), 1)
+              return (
+                <button
+                  key={year}
+                  onClick={() => handleYearToggle(year)}
+                  className="flex flex-col items-center gap-0.5"
+                  style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                  title={`${year}: ${count} publications`}
+                >
+                  <div
+                    className="rounded-sm transition-all"
+                    style={{
+                      width: 20,
+                      height: `${Math.max((count / max) * 24, 2)}px`,
+                      backgroundColor: activeYears.includes(year) ? 'var(--gold)' : 'rgba(201,168,76,0.3)',
+                    }}
+                  />
+                  <span className="text-[7px]" style={{ color: activeYears.includes(year) ? 'var(--gold)' : 'var(--slate)', opacity: activeYears.includes(year) ? 1 : 0.4 }}>
+                    {String(year).slice(2)}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Export bibliography */}
+        {filtered.length > 0 && (
+          <button
+            onClick={() => {
+              const bib = filtered.map(p => `${p.authors}. ${p.title}. ${p.journal} (${p.year}).${p.doi ? ` doi:${p.doi}` : ''}`).join('\n\n')
+              navigator.clipboard.writeText(bib)
+            }}
+            className="inline-flex items-center gap-1 mt-3 text-[11px] px-2.5 py-1 rounded transition-colors"
+            style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer', opacity: 0.5 }}
+          >
+            <Copy size={10} />
+            Copy bibliography ({filtered.length})
+          </button>
+        )}
       </section>
 
       {/* Key Publications */}
