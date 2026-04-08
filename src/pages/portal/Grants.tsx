@@ -561,8 +561,12 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
                   }}
                 />
               </div>
-              <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+              <span className="text-[10px] flex-shrink-0" style={{ color: progress > 80 ? 'var(--maroon)' : 'var(--slate)', opacity: progress > 80 ? 0.8 : 0.5 }}>
                 {Math.round(progress)}%
+                {grant.end_date && (() => {
+                  const days = Math.ceil((new Date(grant.end_date).getTime() - Date.now()) / 86400000)
+                  return days > 0 && days < 365 ? ` · ${days}d left` : null
+                })()}
               </span>
             </div>
           )}

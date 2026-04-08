@@ -12,6 +12,8 @@ interface UseProjectKeyboardNavOptions {
   slugs: string[]
   /** Whether keyboard nav is enabled (e.g., only in list view) */
   enabled: boolean
+  /** Toggle pin for focused project */
+  togglePin?: (slug: string) => void
 }
 
 /**
@@ -27,6 +29,7 @@ export function useProjectKeyboardNav({
   setFocusedIndex,
   slugs,
   enabled,
+  togglePin,
 }: UseProjectKeyboardNavOptions) {
   const navigate = useNavigate()
 
@@ -94,6 +97,15 @@ export function useProjectKeyboardNav({
         break
       }
 
+      case 'p':
+      case 'P': {
+        if (idx >= 0 && idx < slugsRef.current.length && togglePin) {
+          e.preventDefault()
+          togglePin(slugsRef.current[idx])
+        }
+        break
+      }
+
       case 'Escape': {
         if (idx >= 0) {
           e.preventDefault()
@@ -102,7 +114,7 @@ export function useProjectKeyboardNav({
         break
       }
     }
-  }, [navigate, setFocusedIndex])
+  }, [navigate, setFocusedIndex, togglePin])
 
   useEffect(() => {
     document.addEventListener('keydown', handler)

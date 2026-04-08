@@ -159,6 +159,7 @@ export default function Projects() {
     setFocusedIndex,
     slugs: projectSlugs,
     enabled: viewMode === 'list' && !showCreate,
+    togglePin,
   })
 
   // Scroll focused row into view
