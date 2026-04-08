@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { BookOpen, GitBranch, FileText } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { BookOpen, GitBranch, FileText, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -21,28 +21,60 @@ export default function NarrativesPage() {
   usePageMeta('Research Narratives | MN-CCORE Lab', 'Auto-detected research arcs across the lab.')
   const { data: narratives = [], isLoading } = useNarratives()
   const [focusedIndex, setFocusedIndex] = useState(-1)
-  useListKeyboardNav({ itemCount: narratives.length, focusedIndex, setFocusedIndex })
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const filteredNarratives = useMemo(() => {
+    if (!searchTerm) return narratives
+    const q = searchTerm.toLowerCase()
+    return narratives.filter(arc =>
+      arc.title.toLowerCase().includes(q) ||
+      arc.projects.some((p: { title: string }) => p.title.toLowerCase().includes(q)) ||
+      arc.sharedTopics.some((t: { topic: string }) => t.topic.toLowerCase().includes(q))
+    )
+  }, [narratives, searchTerm])
+
+  useListKeyboardNav({ itemCount: filteredNarratives.length, focusedIndex, setFocusedIndex })
 
   return (
     <div>
       <PageHeader
         icon={<BookOpen size={20} />}
         title="Research Narratives"
-        subtitle="Auto-detected research arcs"
-        count={narratives.length}
-      />
+        subtitle={`${filteredNarratives.length}${searchTerm ? ` of ${narratives.length}` : ''} research arcs`}
+        count={filteredNarratives.length}
+      >
+        <div style={{ position: 'relative', width: 200 }}>
+          <Search size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)', opacity: 0.4 }} />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search arcs..."
+            style={{
+              fontSize: 12,
+              padding: '5px 10px 5px 26px',
+              borderRadius: 6,
+              border: '1px solid var(--border-subtle)',
+              backgroundColor: 'var(--surface)',
+              color: 'var(--ink)',
+              width: '100%',
+              outline: 'none',
+            }}
+          />
+        </div>
+      </PageHeader>
 
       {isLoading ? (
         <TableSkeleton rows={5} cols={3} />
-      ) : narratives.length === 0 ? (
+      ) : filteredNarratives.length === 0 ? (
         <EmptyState
           icon={<BookOpen size={40} />}
-          title="No research narratives detected yet"
-          subtitle="Narratives emerge as projects and publications grow."
+          title={searchTerm ? 'No matching narratives' : 'No research narratives detected yet'}
+          subtitle={searchTerm ? 'Try a different search term.' : 'Narratives emerge as projects and publications grow.'}
         />
       ) : (
         <div className="table-container flex flex-col gap-5 mt-5" style={{ padding: '20px' }}>
-          {narratives.map((arc) => (
+          {filteredNarratives.map((arc) => (
             <div key={arc.id} className="p-5 rounded-xl" style={{ background: 'var(--cream)', border: '1px solid var(--border-subtle)' }}>
               {/* Header */}
               <div className="flex items-center gap-2 mb-3">

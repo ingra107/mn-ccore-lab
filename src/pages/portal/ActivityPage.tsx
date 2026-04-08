@@ -26,12 +26,35 @@ const typeOptions = [
 
 export default function ActivityPage() {
   const [filterType, setFilterType] = useState('')
+  const [filterPerson, setFilterPerson] = useState('')
   const { data: allActivity = [], isLoading } = useActivity(200)
 
+  // Unique actors for person filter
+  const actors = useMemo(() => {
+    const slugs = [...new Set(allActivity.map(a => a.actor).filter(Boolean))] as string[]
+    return slugs.map(slug => ({ slug, name: getPersonInfo(slug).name })).sort((a, b) => a.name.localeCompare(b.name))
+  }, [allActivity])
+
+  // Most active person
+  const mostActive = useMemo(() => {
+    if (allActivity.length === 0) return null
+    const counts = new Map<string, number>()
+    for (const a of allActivity) {
+      if (a.actor) counts.set(a.actor, (counts.get(a.actor) || 0) + 1)
+    }
+    let best = '', max = 0
+    for (const [slug, count] of counts) {
+      if (count > max) { best = slug; max = count }
+    }
+    return best ? getPersonInfo(best).name.split(' ')[0] : null
+  }, [allActivity])
+
   const filtered = useMemo(() => {
-    if (!filterType) return allActivity
-    return allActivity.filter((a) => a.type === filterType)
-  }, [allActivity, filterType])
+    let result = allActivity
+    if (filterType) result = result.filter((a) => a.type === filterType)
+    if (filterPerson) result = result.filter((a) => a.actor === filterPerson)
+    return result
+  }, [allActivity, filterType, filterPerson])
 
   // Group by date
   const grouped = useMemo(() => {
@@ -54,16 +77,38 @@ export default function ActivityPage() {
   })
 
   // Reset focus when filter changes
-  useEffect(() => { setFocusedIndex(-1) }, [filterType])
+  useEffect(() => { setFocusedIndex(-1) }, [filterType, filterPerson])
 
   return (
     <div>
       <PageHeader
         icon={<ActivityIcon size={20} />}
         title="Activity"
-        subtitle={`${allActivity.length} recent actions across the lab`}
+        subtitle={`${filtered.length}${filterType || filterPerson ? ` of ${allActivity.length}` : ''} recent actions${mostActive ? ` · Most active: ${mostActive}` : ''}`}
         count={allActivity.length}
         actions={
+          <div className="flex items-center gap-2">
+          <select
+            value={filterPerson}
+            onChange={(e) => setFilterPerson(e.target.value)}
+            className="rounded-full border px-3 py-1.5 text-xs"
+            style={{
+              fontSize: '12px',
+              color: filterPerson ? 'var(--gold)' : 'var(--slate)',
+              backgroundColor: filterPerson ? 'rgba(201,168,76,0.06)' : 'transparent',
+              borderColor: filterPerson ? 'var(--gold)' : 'var(--border-light)',
+              cursor: 'pointer',
+              appearance: 'none' as const,
+              WebkitAppearance: 'none' as const,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 8px center',
+              paddingRight: '24px',
+            }}
+          >
+            <option value="">All People</option>
+            {actors.map(a => <option key={a.slug} value={a.slug}>{a.name}</option>)}
+          </select>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
@@ -84,6 +129,7 @@ export default function ActivityPage() {
           >
             {typeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
+          </div>
         }
       />
 
