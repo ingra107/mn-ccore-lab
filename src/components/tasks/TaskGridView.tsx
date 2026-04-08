@@ -321,14 +321,6 @@ function TaskGridRow({
   const isDone = task.status === 'done'
   const blockerIds = useMemo(() => parseBlockedByIds(task.blocked_by), [task.blocked_by])
   const hasBlockers = blockerIds.length > 0
-  const blockerNames = useMemo(() => {
-    if (!hasBlockers) return ''
-    return blockerIds
-      .map(id => allTasks.find(t => t.id === id))
-      .filter(Boolean)
-      .map(t => t!.title || t!.description)
-      .join(', ')
-  }, [hasBlockers, blockerIds, allTasks])
   // isOverdue computed by InlineDatePicker now
   const rowRef = useRef<HTMLDivElement>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
@@ -407,8 +399,37 @@ function TaskGridRow({
             <ChevronRight size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform var(--transition-fast) ease' }} />
           </button>
           {hasBlockers && (
-            <span title={`Blocked by: ${blockerNames}`} style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
+            <span className="relative group" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
               <Link2 size={12} style={{ color: 'var(--maroon)', opacity: 0.7 }} />
+              <span
+                className="absolute left-full ml-2 hidden group-hover:block z-30 rounded-lg shadow-lg border py-2 px-3"
+                style={{
+                  backgroundColor: 'var(--cream)',
+                  borderColor: 'var(--border-light)',
+                  minWidth: '180px',
+                  maxWidth: '260px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                }}
+              >
+                <span className="text-[9px] uppercase tracking-wider block mb-1.5" style={{ color: 'var(--maroon)', fontWeight: 600 }}>Blocked by</span>
+                {blockerIds.map(id => {
+                  const bt = allTasks.find(t => t.id === id)
+                  if (!bt) return null
+                  return (
+                    <span key={id} className="flex items-center gap-1.5 text-[11px] mb-1" style={{ color: 'var(--ink)' }}>
+                      <span style={{
+                        width: 6, height: 6, borderRadius: '50%',
+                        background: bt.completed ? 'var(--green)' : bt.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)',
+                        flexShrink: 0,
+                      }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {bt.title || bt.description}
+                      </span>
+                    </span>
+                  )
+                })}
+              </span>
             </span>
           )}
           {editingTitle ? (

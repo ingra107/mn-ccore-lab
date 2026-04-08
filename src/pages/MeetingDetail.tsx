@@ -37,7 +37,7 @@ import WatchButton from '../components/WatchButton'
 import HoverCard from '../components/HoverCard'
 import type { HoverCardData } from '../components/HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
-import { getPersonInfo, getMemberBySlug, directors } from '../data/team'
+import { getPersonInfo, getMemberBySlug, directors, getAllMembers } from '../data/team'
 import { formatLongDate, formatShortDate } from '../lib/dateUtils'
 import { getMeetingFacilitator } from '../lib/facilitator'
 
@@ -209,15 +209,8 @@ export default function MeetingDetail() {
             ) : null
           })()}
 
-          {/* Attendees — horizontal scroll on mobile */}
-          {attendees.length > 0 && (
-            <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-1 -mx-1 px-1 attendee-scroll">
-              <Users size={14} style={{ color: 'var(--slate)', opacity: 0.5, flexShrink: 0 }} />
-              {attendees.map((slug) => (
-                <AttendeeChip key={slug} slug={slug} />
-              ))}
-            </div>
-          )}
+          {/* Attendees — clickable toggle */}
+          <AttendanceSection meetingId={meeting.id} attendees={attendees} />
 
           <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.3, marginTop: '1.5rem' }} />
         </motion.div>
@@ -860,5 +853,81 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
         )}
       </AnimatePresence>
     </form>
+  )
+}
+
+// ── Attendance Section ───────────────────────────────────
+function AttendanceSection({ meetingId, attendees }: { meetingId: string; attendees: string[] }) {
+  const [expanded, setExpanded] = useState(false)
+  const [localAttendees, setLocalAttendees] = useState<string[]>(attendees)
+
+  const allPeople = [...directors, ...getAllMembers()].filter(p => p.slug)
+  const uniquePeople = allPeople.filter((p, i) => allPeople.findIndex(x => x.slug === p.slug) === i)
+
+  const toggleAttendee = async (slug: string) => {
+    const newList = localAttendees.includes(slug)
+      ? localAttendees.filter(s => s !== slug)
+      : [...localAttendees, slug]
+    setLocalAttendees(newList)
+    try {
+      await fetch(`/api/meetings/${meetingId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attendees: JSON.stringify(newList) }),
+      })
+    } catch { /* silent */ }
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Users size={14} style={{ color: 'var(--slate)', opacity: 0.55, flexShrink: 0 }} />
+        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500 }}>
+          Attendees
+        </span>
+        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55 }}>
+          {localAttendees.length}
+        </span>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', color: 'var(--teal)', marginLeft: 'auto' }}
+        >
+          {expanded ? 'Done' : '+ Edit'}
+        </button>
+      </div>
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        {localAttendees.map(slug => <AttendeeChip key={slug} slug={slug} />)}
+        {localAttendees.length === 0 && !expanded && (
+          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.55 }}>No attendees logged</span>
+        )}
+      </div>
+      {expanded && (
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
+          {uniquePeople.map(person => {
+            const slug = person.slug!
+            const p = getPersonInfo(slug)
+            const present = localAttendees.includes(slug)
+            return (
+              <button
+                key={slug}
+                onClick={() => toggleAttendee(slug)}
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] transition-colors"
+                style={{
+                  background: present ? 'rgba(45,138,138,0.1)' : 'none',
+                  border: `1px solid ${present ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                  color: present ? 'var(--teal)' : 'var(--slate)',
+                  cursor: 'pointer',
+                  opacity: present ? 1 : 0.6,
+                }}
+              >
+                <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[7px]" />
+                {p.name.split(' ')[0]}
+                {present && <UserCheck size={10} style={{ marginLeft: 'auto' }} />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }

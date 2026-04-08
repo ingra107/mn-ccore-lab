@@ -177,6 +177,22 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
   const person = getPersonInfo(value)
   const members = team.filter((m) => m.slug).sort((a, b) => a.name.localeCompare(b.name))
 
+  // Workload counts — lightweight query
+  const { data: taskCounts } = useQuery<Record<string, number>>({
+    queryKey: ['assignee-workload'],
+    queryFn: async () => {
+      const res = await fetch('/api/tasks?status=todo,in_progress')
+      const json = await res.json() as { data: { assignee: string }[] }
+      const counts: Record<string, number> = {}
+      for (const t of json.data || []) {
+        if (t.assignee) counts[t.assignee] = (counts[t.assignee] || 0) + 1
+      }
+      return counts
+    },
+    staleTime: 60_000,
+    enabled: open,
+  })
+
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
@@ -216,6 +232,17 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
                   <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[7px]" />
                 </div>
                 <span className="flex-1">{m.name}</span>
+                {taskCounts && taskCounts[slug] ? (
+                  <span style={{
+                    fontSize: '9px',
+                    padding: '1px 5px',
+                    borderRadius: '8px',
+                    backgroundColor: taskCounts[slug] > 8 ? 'rgba(122,0,25,0.1)' : taskCounts[slug] > 4 ? 'rgba(194,65,12,0.1)' : 'rgba(45,138,138,0.08)',
+                    color: taskCounts[slug] > 8 ? 'var(--maroon)' : taskCounts[slug] > 4 ? 'var(--orange)' : 'var(--teal)',
+                  }}>
+                    {taskCounts[slug]} tasks
+                  </span>
+                ) : null}
                 {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}
               </button>
             )

@@ -434,16 +434,27 @@ export default function Projects() {
                               {projectHealth && (
                                 <span
                                   title={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
-                                  style={{
-                                    width: 6,
-                                    height: 6,
-                                    borderRadius: '50%',
-                                    background: HEALTH_STATUS_COLOR[projectHealth.status] ?? 'var(--slate)',
-                                    flexShrink: 0,
+                                  className="inline-flex items-center gap-1"
+                                  style={{ flexShrink: 0, marginLeft: '-2px' }}
+                                >
+                                  <span style={{
+                                    width: 24,
+                                    height: 4,
+                                    borderRadius: 2,
+                                    background: 'var(--border-subtle)',
+                                    overflow: 'hidden',
                                     display: 'inline-block',
-                                    marginLeft: '-4px',
-                                  }}
-                                />
+                                  }}>
+                                    <span style={{
+                                      display: 'block',
+                                      width: `${Math.min(projectHealth.score, 100)}%`,
+                                      height: '100%',
+                                      borderRadius: 2,
+                                      background: HEALTH_STATUS_COLOR[projectHealth.status] ?? 'var(--slate)',
+                                      transition: 'width 300ms ease',
+                                    }} />
+                                  </span>
+                                </span>
                               )}
                               {/* Stage progress dots */}
                               <span className="inline-flex items-center gap-0.5 ml-1" title={`Stage: ${project.stage || 'Idea'}`}>
