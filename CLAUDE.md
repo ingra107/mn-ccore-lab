@@ -12,7 +12,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Repo | github.com/ingra107/mn-ccore-lab (496+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
-| Data | TanStack Query v5 + Cloudflare D1 (43 tables, 180+ endpoints) -- ALL LIVE |
+| Data | TanStack Query v5 + Cloudflare D1 (44 tables, 182+ endpoints) -- ALL LIVE |
 | D1 database | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM) |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
@@ -300,6 +300,15 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 - Ctrl+. theme cycle on PortalLayout
 
 *Pending:* Schema v35 migration (recurrence + recurrence_parent_id) — planned but not yet needed. No code depends on it.
+
+**Phase 27: COMPLETE** (4 commits, 2026-04-08). Task notes/updates + activity tab:
+- **Schema v36**: `task_updates` table (mirrors `project_updates` pattern) with task_id, author_slug, content, update_type, created_at
+- **TaskUpdateFeed**: append-only notes with type badges (progress/blocker/result/question/session), textarea input, reactions
+- **TaskActivityFeed**: merged temporal timeline of notes + comments + system events with visual delineation (teal=notes, gold=comments, dot=system)
+- **TaskDetailPanel restructured** to 5 tabs: Overview | Notes | Comments | Activity | Details
+- Files tab merged into Details as CollapsibleSection
+- Status click bug fixed: guard against clicking already-active status pill
+- API: GET/POST /api/tasks/:id/updates with @mention notifications and activity logging
 
 **Phase 22: COMPLETE** (5 commits, 5 deploys, 2026-04-05). Design research + polish:
 - Transition standardization: 10 inline durations → 150ms/250ms constants
