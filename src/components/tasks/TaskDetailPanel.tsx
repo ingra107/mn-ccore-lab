@@ -80,6 +80,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
   }
 
   const handleStatusChange = (status: string) => {
+    if (status === task.status) return
     const prev = task.status
     updateStatus.mutate({ id: task.id, status })
     const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked' }
