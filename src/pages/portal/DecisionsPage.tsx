@@ -272,6 +272,7 @@ function ReviewCard({
 export default function DecisionsPage() {
   const [filterTag, setFilterTag] = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list')
   const [showCreate, setShowCreate] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
@@ -293,10 +294,16 @@ export default function DecisionsPage() {
     )
   }
 
-  // Filter decisions by status
-  const filteredDecisions = filterStatus
-    ? allDecisions.filter((d) => d.outcome_status === filterStatus)
-    : allDecisions
+  // Filter decisions by status + search
+  const filteredDecisions = allDecisions.filter((d) => {
+    if (filterStatus && d.outcome_status !== filterStatus) return false
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      const text = `${d.title} ${d.rationale || ''} ${d.outcome || ''} ${d.tags || ''}`.toLowerCase()
+      if (!text.includes(q)) return false
+    }
+    return true
+  })
 
   const pendingCount = allDecisions.filter((d) => d.outcome_status === 'pending').length
   const recordedCount = allDecisions.filter((d) => d.outcome_status !== 'pending').length
@@ -381,6 +388,18 @@ export default function DecisionsPage() {
               {f.label}
             </button>
           ))}
+        </div>
+
+        {/* Search */}
+        <div className="mt-2">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search decisions..."
+            className="w-full max-w-xs rounded-lg border px-3 py-1.5 text-xs outline-none"
+            style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', background: 'var(--cream)' }}
+          />
         </div>
 
         {/* Tag filters */}

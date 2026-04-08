@@ -357,7 +357,15 @@ export default function Meetings() {
               maxWidth: '520px',
             }}
           >
-            {meetings.length} meetings tracked — decisions, action items, and notes
+            {meetings.length} meetings tracked
+            {allActionItems.length > 0 && (
+              <> · <span style={{ color: completedActions.length === allActionItems.length ? 'var(--green)' : 'var(--teal)' }}>
+                {Math.round((completedActions.length / allActionItems.length) * 100)}% action items complete
+              </span></>
+            )}
+            {pendingActions.length > 0 && (
+              <> · <span style={{ color: 'var(--gold)' }}>{pendingActions.length} pending</span></>
+            )}
           </p>
 
           {/* Gold rule */}
