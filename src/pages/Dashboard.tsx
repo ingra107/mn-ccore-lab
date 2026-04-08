@@ -375,6 +375,40 @@ export default function Dashboard() {
         {/* Welcome banner (first-visit onboarding) */}
         <WelcomeBanner />
 
+        {/* Overdue alert banner */}
+        {(() => {
+          const overdue = allTasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date())
+          if (overdue.length === 0) return null
+          return (
+            <div
+              className="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg border"
+              style={{
+                background: 'rgba(122,0,25,0.04)',
+                borderColor: 'rgba(122,0,25,0.15)',
+              }}
+            >
+              <Clock size={16} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+              <div className="flex-1 min-w-0">
+                <span className="text-sm" style={{ color: 'var(--ink)' }}>
+                  <strong style={{ color: 'var(--maroon)' }}>{overdue.length}</strong> overdue task{overdue.length !== 1 ? 's' : ''} need attention
+                </span>
+                {overdue.length <= 3 && (
+                  <span className="text-[11px] ml-2" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+                    {overdue.map(t => t.title || t.description).join(' · ')}
+                  </span>
+                )}
+              </div>
+              <a
+                href="/my-tasks"
+                className="text-[11px] px-2.5 py-1 rounded-full font-medium flex-shrink-0"
+                style={{ color: 'var(--maroon)', background: 'rgba(122,0,25,0.08)', textDecoration: 'none' }}
+              >
+                View
+              </a>
+            </div>
+          )
+        })()}
+
         {/* Customize panel */}
         {showCustomize && (
           <div

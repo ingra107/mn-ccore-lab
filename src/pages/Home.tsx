@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 // Link removed — hero cards use <a> for reliable full-page navigation
 import {
   Stethoscope,
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import { useCountUp } from '../hooks/useCountUp'
+import { usePublications, useProjects } from '../hooks/useApiData'
 import NetworkBackground from '../components/NetworkBackground'
 import ImpactMetrics from '../components/ImpactMetrics'
 import FeaturedResearch from '../components/FeaturedResearch'
@@ -82,7 +83,7 @@ const affiliates = [
   },
 ]
 
-const heroStats = [
+const DEFAULT_HERO_STATS = [
   { value: 13, suffix: '+', label: 'ICU Centers', detail: 'in the CLIF Consortium' },
   { value: 80, suffix: '+', label: 'Researchers', detail: 'across institutions' },
   { value: 63, suffix: '+', label: 'Publications', detail: 'in top journals' },
@@ -125,6 +126,17 @@ export default function Home() {
     'MN-CCORE Lab at the University of Minnesota. Advancing critical care through data-driven discovery, provider variation research, and the CLIF Consortium.'
   )
   const [heroVisible, setHeroVisible] = useState(false)
+  const { data: publications = [] } = usePublications()
+  const { data: projects = [] } = useProjects()
+  const heroStats = useMemo(() => {
+    const pubCount = publications.length || DEFAULT_HERO_STATS[2].value
+    const projCount = projects.filter(p => p.status === 'Active').length
+    return [
+      DEFAULT_HERO_STATS[0], // ICU Centers (static)
+      DEFAULT_HERO_STATS[1], // Researchers (static)
+      { value: pubCount, suffix: '+', label: 'Publications', detail: projCount > 0 ? `${projCount} active projects` : 'in top journals' },
+    ]
+  }, [publications, projects])
   const pillarsRef = useScrollRevealGroup('.fade-in-up', 150)
   const affiliatesRef = useScrollRevealGroup('.fade-in-up', 100)
 
