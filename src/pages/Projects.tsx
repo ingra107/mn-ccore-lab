@@ -152,6 +152,13 @@ export default function Projects() {
   // Reset focus when filter/view changes
   useEffect(() => { setFocusedIndex(-1) }, [activeCategory, viewMode])
 
+  // Dynamic page title
+  useEffect(() => {
+    const active = projects.filter(p => p.status === 'Active').length
+    document.title = `Projects (${active} active) | MN-CCORE`
+    return () => { document.title = 'MN-CCORE Lab Hub' }
+  }, [projects])
+
   // Keyboard navigation (list view only)
   useProjectKeyboardNav({
     projectCount: filtered.length,

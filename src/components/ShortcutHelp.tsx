@@ -30,7 +30,7 @@ const shortcuts = [
     category: 'Actions',
     items: [
       { keys: 'C', action: 'Create new task' },
-      { keys: 'N', action: 'Submit new idea' },
+      { keys: 'N', action: 'New idea / decision (on those pages)' },
     ],
   },
   {
@@ -69,8 +69,17 @@ const shortcuts = [
     items: [
       { keys: 'J', action: 'Focus next project' },
       { keys: 'K', action: 'Focus previous project' },
+      { keys: 'P', action: 'Pin / unpin project' },
       { keys: 'Enter', action: 'Open project detail' },
       { keys: 'Esc', action: 'Clear selection' },
+    ],
+  },
+  {
+    category: 'Calendar',
+    items: [
+      { keys: '←', action: 'Previous period' },
+      { keys: '→', action: 'Next period' },
+      { keys: 'T', action: 'Jump to today' },
     ],
   },
 ]
