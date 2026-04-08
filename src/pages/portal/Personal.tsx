@@ -250,6 +250,28 @@ export default function Personal() {
         <OnboardingChecklist />
       </div>
 
+      {/* Quick Actions */}
+      <div className="flex items-center gap-2 mt-4 flex-wrap">
+        {([
+          { label: 'New Task', to: '/tasks?create=true', icon: CheckSquare, color: 'var(--teal)' },
+          { label: 'Submit Idea', to: '/ideas?create=true', icon: Lightbulb, color: 'var(--gold)' },
+          { label: 'Ask a Question', to: '/ask?create=true', icon: User, color: 'var(--slate)' },
+        ]).map(a => {
+          const Icon = a.icon
+          return (
+            <Link
+              key={a.label}
+              to={a.to}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border"
+              style={{ color: a.color, borderColor: `color-mix(in srgb, ${a.color} 20%, transparent)`, textDecoration: 'none', background: `color-mix(in srgb, ${a.color} 4%, transparent)` }}
+            >
+              <Icon size={12} />
+              {a.label}
+            </Link>
+          )
+        })}
+      </div>
+
       {/* Quick Stats Bar */}
       <motion.div
         className="flex items-center gap-4 mt-5 flex-wrap"

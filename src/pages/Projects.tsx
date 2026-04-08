@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
-import { useProjects, useDependencies, useProjectHealth } from '../hooks/useApiData'
+import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
 import { useCreateProject } from '../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../lib/api'
@@ -57,8 +57,20 @@ export default function Projects() {
   )
 
   const { data: projects = [] } = useProjects()
+  const { data: allTasks = [] } = useTasks()
   const { data: dependencies = [] } = useDependencies()
   const { data: healthData } = useProjectHealth()
+
+  // Task counts per project
+  const taskCountByProject = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const t of allTasks) {
+      if (t.project_id && !t.completed) {
+        map.set(t.project_id, (map.get(t.project_id) || 0) + 1)
+      }
+    }
+    return map
+  }, [allTasks])
 
   // Build a map of slug -> health data for quick lookup
   const healthBySlug = useMemo(() => {
@@ -474,6 +486,15 @@ export default function Projects() {
                               >
                                 {project.title}
                               </span>
+                              {/* Task count badge */}
+                              {(() => {
+                                const tc = taskCountByProject.get(project.slug) || 0
+                                return tc > 0 ? (
+                                  <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.7, flexShrink: 0 }} title={`${tc} open task${tc !== 1 ? 's' : ''}`}>
+                                    {tc}
+                                  </span>
+                                ) : null
+                              })()}
                               {projectHealth && (
                                 <span
                                   title={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}

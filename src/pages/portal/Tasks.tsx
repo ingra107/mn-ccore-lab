@@ -274,6 +274,11 @@ export default function Tasks() {
       const row = document.querySelector('.task-row-focused .task-row-meta button')
       if (row) (row as HTMLButtonElement).click()
     }, []),
+    assignFocused: useCallback(() => {
+      // Click the assignee picker on the focused row
+      const row = document.querySelector('.task-row-focused .inline-assignee-btn')
+      if (row) (row as HTMLButtonElement).click()
+    }, []),
     snoozeFocused: useCallback(() => {
       if (!focusedTask || !focusedTask.due_date) return
       const d = new Date(focusedTask.due_date + 'T12:00:00')

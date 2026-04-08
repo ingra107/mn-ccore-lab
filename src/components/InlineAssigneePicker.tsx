@@ -65,7 +65,7 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
       <button
         ref={hoverCard.triggerRef as React.RefObject<HTMLButtonElement>}
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
-        className="inline-flex items-center gap-1.5 rounded-md transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-md transition-colors inline-assignee-btn"
         style={{
           padding: '2px 6px',
           border: '1px solid transparent',

@@ -54,6 +54,7 @@ const shortcuts = [
       { keys: 'Enter', action: 'Open task detail' },
       { keys: 'S', action: 'Cycle status' },
       { keys: 'X', action: 'Toggle selection' },
+      { keys: 'A', action: 'Assign task' },
       { keys: 'E', action: 'Edit task title inline' },
       { keys: 'D', action: 'Set due date' },
       { keys: 'Z', action: 'Snooze task (+1 day)' },
