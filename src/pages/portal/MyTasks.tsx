@@ -65,7 +65,21 @@ export default function MyTasks() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const bulkUpdate = useBulkUpdateTasks()
 
-  const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete', value?: string) => {
+  const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze', value?: string) => {
+    if (action === 'snooze') {
+      const days = parseInt(value || '1', 10)
+      for (const id of selectedIds) {
+        const task = tasks.find(t => t.id === id)
+        if (!task?.due_date) continue
+        const d = new Date(task.due_date + 'T12:00:00')
+        d.setDate(d.getDate() + days)
+        const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        handleFieldChange(id, 'due_date', newDate)
+      }
+      showUndo(`Snoozed ${selectedIds.size} task(s) +${days}d`, () => {})
+      setSelectedIds(new Set())
+      return
+    }
     bulkUpdate.mutate({ ids: [...selectedIds], action, value }, {
       onSuccess: () => setSelectedIds(new Set()),
     })

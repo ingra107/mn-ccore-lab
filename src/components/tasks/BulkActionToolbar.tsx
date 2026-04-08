@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, Circle, UserCheck, Flag, Trash2, X, AlertTriangle } from 'lucide-react'
+import { CheckCircle2, Circle, UserCheck, Flag, Trash2, X, AlertTriangle, AlarmClock } from 'lucide-react'
 import { getAllMembers, directors } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
 
@@ -8,7 +8,7 @@ interface BulkActionToolbarProps {
   selectedIds: Set<string>
   selectedTasks: TaskRow[]
   onClear: () => void
-  onBulkAction: (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete', value?: string) => void
+  onBulkAction: (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze', value?: string) => void
   isUpdating: boolean
 }
 
@@ -276,6 +276,24 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
               </div>
             )}
           </div>
+
+          {/* Snooze (+1 day) */}
+          {selectedTasks.some(t => t.due_date) && (
+            <button
+              onClick={() => {
+                closeDropdowns()
+                onBulkAction('snooze', '1')
+              }}
+              disabled={isUpdating}
+              style={{
+                ...buttonStyle(),
+                color: 'var(--gold)',
+              }}
+            >
+              <AlarmClock size={14} />
+              +1 day
+            </button>
+          )}
 
           {/* Delete */}
           <button
