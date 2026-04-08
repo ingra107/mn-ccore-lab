@@ -4,7 +4,7 @@ import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin,
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
-import { useMeetingsApi } from '../hooks/useApiData'
+import { useMeetingsApi, useTasks } from '../hooks/useApiData'
 import { formatMediumDate } from '../lib/dateUtils'
 import { getUserRole, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
@@ -135,6 +135,15 @@ export default function Dashboard() {
   const role = getUserRole(user?.email)
   const roleCards = useMemo(() => ROLE_DEFAULTS[role].dashboardCards, [role])
   const { data: meetings = [] } = useMeetingsApi()
+  const { data: allTasks = [] } = useTasks()
+
+  // Today's progress summary
+  const todayProgress = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0]
+    const completedToday = allTasks.filter(t => t.completed_at && t.completed_at.startsWith(todayStr)).length
+    const dueToday = allTasks.filter(t => !t.completed && t.due_date === todayStr).length
+    return { completedToday, dueToday }
+  }, [allTasks])
 
   // Find next upcoming meeting (today or tomorrow)
   const upcomingMeeting = useMemo(() => {
@@ -218,6 +227,15 @@ export default function Dashboard() {
   const unpinnedPrimaryCards = sortByUsage(tabFilteredRegistry.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
   const unpinnedSecondaryCards = sortByUsage(tabFilteredRegistry.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
 
+  // Time-of-day greeting
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours()
+    const firstName = user?.email?.split('@')[0]?.split('.')[0]
+    const name = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : null
+    const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+    return name ? `${timeGreeting}, ${name}` : timeGreeting
+  }, [user])
+
   return (
     <div style={{ minHeight: '100vh' }}>
       <div className="content-container" style={{ paddingBottom: '4rem' }}>
@@ -276,7 +294,7 @@ export default function Dashboard() {
               lineHeight: 1.15,
             }}
           >
-            Dashboard
+            {greeting}
           </h1>
           <p
             style={{
@@ -287,7 +305,9 @@ export default function Dashboard() {
               maxWidth: '520px',
             }}
           >
-            Lab health at a glance — {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {todayProgress.completedToday > 0 && <> · <span style={{ color: 'var(--green)' }}>{todayProgress.completedToday} done today</span></>}
+            {todayProgress.dueToday > 0 && <> · <span style={{ color: 'var(--teal)' }}>{todayProgress.dueToday} due today</span></>}
           </p>
 
           {/* Gold rule */}

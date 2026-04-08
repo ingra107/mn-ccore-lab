@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Plus, LayoutGrid, List, ThumbsUp, X, Lightbulb } from 'lucide-react'
+import { Plus, LayoutGrid, List, ThumbsUp, X, Lightbulb, ArrowUpDown } from 'lucide-react'
 import { CardSkeleton, TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -18,6 +18,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import type { IdeaRow } from '../../lib/api'
 
 type ViewMode = 'grid' | 'list'
+type SortMode = 'newest' | 'votes' | 'title'
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   new: { label: 'New', color: 'var(--teal)', bg: 'rgba(45,138,138,0.08)' },
@@ -44,6 +45,7 @@ export default function Ideas() {
   const [view, setView] = useState<ViewMode>('grid')
   const [showCreate, setShowCreate] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('')
+  const [sortMode, setSortMode] = useState<SortMode>('newest')
 
   // Auto-open create modal from URL params (keyboard shortcut N)
   useEffect(() => {
@@ -73,6 +75,17 @@ export default function Ideas() {
     updateIdea.mutate({ id, fields: { status } })
     showUndo(`Idea → ${status.replace('_', ' ')}`, () => updateIdea.mutate({ id, fields: { status: prevStatus } }))
   }
+
+  const sortedIdeas = useMemo(() => {
+    const sorted = [...ideas]
+    switch (sortMode) {
+      case 'votes': sorted.sort((a, b) => (b.votes || 0) - (a.votes || 0)); break
+      case 'title': sorted.sort((a, b) => a.title.localeCompare(b.title)); break
+      case 'newest':
+      default: sorted.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')); break
+    }
+    return sorted
+  }, [ideas, sortMode])
 
   const activeCount = ideas.filter((i) => i.status !== 'archived' && i.status !== 'parked').length
 
@@ -131,6 +144,20 @@ export default function Ideas() {
             })}
           </div>
 
+          <button
+            onClick={() => setSortMode(s => s === 'newest' ? 'votes' : s === 'votes' ? 'title' : 'newest')}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-colors border"
+            style={{
+              color: sortMode !== 'newest' ? 'var(--teal)' : 'var(--slate)',
+              borderColor: sortMode !== 'newest' ? 'var(--teal)' : 'var(--border-light)',
+              backgroundColor: sortMode !== 'newest' ? 'rgba(45,138,138,0.06)' : 'transparent',
+              cursor: 'pointer',
+            }}
+          >
+            <ArrowUpDown size={10} />
+            {sortMode === 'newest' ? 'Newest' : sortMode === 'votes' ? 'Most Voted' : 'A-Z'}
+          </button>
+
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -165,12 +192,12 @@ export default function Ideas() {
             animate="visible"
             variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}
           >
-            {ideas.map((idea) => (
+            {sortedIdeas.map((idea) => (
               <motion.div key={idea.id} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
                 <IdeaCard idea={idea} onVote={() => vote.mutate(idea.id)} onStatusChange={(status) => handleIdeaStatusChange(idea.id, status, idea.status)} />
               </motion.div>
             ))}
-            {ideas.length === 0 && (
+            {sortedIdeas.length === 0 && (
               <div className="col-span-3">
                 <EmptyState
                   icon={<Lightbulb size={40} />}
@@ -182,8 +209,8 @@ export default function Ideas() {
             )}
           </motion.div>
         ) : (
-          <IdeaListView ideas={ideas} onVote={(id) => vote.mutate(id)} onStatusChange={(id, status) => {
-            const prev = ideas.find(i => i.id === id)?.status || 'new'
+          <IdeaListView ideas={sortedIdeas} onVote={(id) => vote.mutate(id)} onStatusChange={(id, status) => {
+            const prev = sortedIdeas.find(i => i.id === id)?.status || 'new'
             handleIdeaStatusChange(id, status, prev)
           }} focusedIndex={focusedIndex} />
         )}
