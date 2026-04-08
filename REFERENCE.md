@@ -3,7 +3,7 @@
 Detailed tables, API endpoints, key files, and feature inventory.
 Moved from CLAUDE.md to reduce session context load. Read on demand.
 
-## D1 Tables (43+)
+## D1 Tables (44+)
 
 | Table | Rows | Purpose |
 |-------|------|---------|
@@ -21,9 +21,10 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | notifications | dynamic | In-app notification feed |
 | commitments | dynamic | Team commitments tracker |
 | collaboration_network | dynamic | Inter-member collaboration links |
-| tasks | 19+ | Unified task system (replaces action_items) |
+| tasks | 546+ | Unified task system (replaces action_items) |
 | ideas | dynamic | Research ideas board with voting |
 | task_comments | dynamic | Per-task discussion threads |
+| task_updates | dynamic | Per-task notes/progress entries (schema v36) |
 | lab_settings | 6 | Key-value settings store |
 | workflow_templates | 3+ | Custom project stage templates |
 
@@ -45,7 +46,9 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 ### Task System
 - GET /api/tasks (7 filters), POST /api/tasks, POST /api/tasks/:id, POST /api/tasks/:id/status
 - GET /api/tasks/:id/comments, POST /api/tasks/:id/comments
+- GET /api/tasks/:id/updates, POST /api/tasks/:id/updates (notes/progress entries)
 - GET /api/tasks/:id/activity
+- POST /api/tasks/sync-bulk (brain.db bulk load)
 - blocked_by field for task dependencies
 
 ### Ideas Board
@@ -123,6 +126,14 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | `src/hooks/useProjectKeyboardNav.ts` | Project list keyboard nav (J/K/P/Enter) |
 | `src/components/PublicationLibrary.tsx` | Horizontal scrolling journal cover cards |
 | `src/components/ShortcutHelp.tsx` | Keyboard shortcut reference (?, 6 categories) |
+| `src/components/tasks/detail/TaskUpdateFeed.tsx` | Append-only task notes with type badges |
+| `src/components/tasks/detail/TaskActivityFeed.tsx` | Merged temporal timeline (notes+comments+system) |
+| `src/components/FileUpload.tsx` | R2 file upload with drag-drop |
+| `src/components/RichTextEditor.tsx` | Tiptap rich text editor for task descriptions |
+| `src/hooks/useRealtimeSync.ts` | WebSocket (DO) + polling + BroadcastChannel sync |
+| `src/hooks/useMutations.ts` | Optimistic mutations for tasks/projects/manuscripts |
+| `api/routes/uploads.ts` | R2 file upload API |
+| `api/lib/email.ts` | Resend email integration (ready, needs API key) |
 
 ## Portal Features (80+ shipped)
 
@@ -130,7 +141,7 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 
 **Navigation:** Cmd+K (fuzzy search + task/project counts), Keyboard Shortcuts (G+key + task J/K/S/X/B/Z/A/Space/Enter + project P pin + calendar arrows/T), Focus Mode (F key), Route Progress Bar, Dynamic Favicons (notification badge), ScrollToTop, Ctrl+. theme cycle.
 
-**Task UX (Phase 17+26b):** Space bar peek overlay, inline assignee/date/priority editing (with relative date labels + quick presets), hover row actions, completion animation, status color transitions, loading skeletons, progressive disclosure, board swimlanes + column collapse, snooze (+1d/3d/1w/2w), bulk snooze, 4-tab TaskDetailPanel (Overview/Details/Files/Comments), prev/next navigation, copy link, task age badge.
+**Task UX (Phase 17+26b+27):** Space bar peek overlay, inline assignee/date/priority editing (with relative date labels + quick presets), hover row actions, completion animation, status color transitions, loading skeletons, progressive disclosure, board swimlanes + column collapse, snooze (+1d/3d/1w/2w), bulk snooze, 5-tab TaskDetailPanel (Overview/Notes/Comments/Activity/Details), prev/next navigation, copy link, task age badge, task notes/updates feed, Tiptap rich text descriptions.
 
 **MyTasks (Phase 26b):** QuickFilter pills (Today/This Week/Overdue/No Date), Focus Next smart scoring (urgency×priority×freshness), completion streak counter, status distribution bar, StandUp view.
 
@@ -148,7 +159,7 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 
 **Other:** Quick Capture, GlobalQuickAdd (NLP), Grants SVG Gantt (with days remaining), CV Export (with word count), Density Toggle, Meeting Icebreakers, Reactions, @Mentions, Network stats bar, Team activity dots, Publication year chart.
 
-## Phase History (1-26aq COMPLETE, 495+ commits)
+## Phase History (1-28 COMPLETE, 530+ commits)
 
 Phases 1-8: Public website, D1 backend, team portal, sync, API, digest, migration, notifications.
 Phase 9: LabSync parity — task system, 10+ portal pages, Cmd+K, keyboard shortcuts.
@@ -172,6 +183,8 @@ Phase 24: Database alignment — brain.db ↔ D1 full sync (537 tasks, field-lev
 Phase 25: Academic workflow — virtual scrolling, paper revision tracker, mentee milestones, deadline cascade, IRB tracking.
 Phase 26: LabSync UX audit — 14 issues fixed, 4-tab TaskDetailPanel, publication library.
 Phase 26b-aq: Feature sprint — 44 commits across all pages. Dashboard cards, MyTasks smart features, snooze, keyboard shortcuts, dynamic titles, search filters, copy/export buttons, theme controls, network stats, calendar nav.
+Phase 27: Task notes/updates + activity tab — schema v36, 5-tab TaskDetailPanel, task_updates table.
+Phase 28: Next-gen upgrade — optimistic mutations, R2 file uploads, Tiptap rich text, WebSocket real-time (DO), smart polling, Resend email (ready), design polish, InlineSelect portal fix.
 
 ## Implementation Notes
 

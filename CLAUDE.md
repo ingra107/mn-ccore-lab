@@ -9,11 +9,12 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (496+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (530+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Data | TanStack Query v5 + Cloudflare D1 (44 tables, 182+ endpoints) -- ALL LIVE |
 | D1 database | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM) |
+| D1 tables | 44 |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
 | Reference | `REFERENCE.md` in this repo -- D1 tables, API endpoints, key files, feature list |
@@ -310,6 +311,17 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 - Status click bug fixed: guard against clicking already-active status pill
 - API: GET/POST /api/tasks/:id/updates with @mention notifications and activity logging
 
+**Phase 28: COMPLETE** (6 commits, 2026-04-08). Next-gen infrastructure + polish:
+- **Optimistic mutations** (`useMutations.ts`): instant UI for task/project/manuscript updates, rollback on error
+- **R2 file uploads** (`FileUpload.tsx`, `api/routes/uploads.ts`): drag-drop file attachments with R2 storage
+- **Tiptap rich text** (`RichTextEditor.tsx`): rich text editor for task descriptions (bold/italic/headings/lists/links)
+- **WebSocket real-time** (`useRealtimeSync.ts`): PartySocket → Durable Object at `hub-realtime.nicholas-ingraham.workers.dev`, with polling fallback + BroadcastChannel tab sync
+- **Smart polling**: 60s with WS, 10s without, version-based invalidation
+- **Resend email** (`api/lib/email.ts`): email integration ready, needs API key
+- **Design polish**: dark bg contrast improvements, text softening
+- **InlineSelect portal fix**: dropdown renders via `createPortal` to escape table overflow, z-index resolved
+- **Version bump fix**: Pages Functions must await async work directly (no ctx)
+
 **Phase 22: COMPLETE** (5 commits, 5 deploys, 2026-04-05). Design research + polish:
 - Transition standardization: 10 inline durations → 150ms/250ms constants
 - CreateProjectModal: focus trapping + aria-modal (a11y gap closed)
@@ -409,6 +421,22 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 - **CRDT engine:** `scripts/db/crdt.py` -- field-level LWW for Airtable sync (extend to D1)
 - **Meeting automation:** `scripts/scheduled/meeting_automation.py`
 - **Archived plans:** `Projects/mn-ccore-lab-hub/_archived/` + `Archive/Scratch/hub-plans-consolidated/`
+
+## Pending Sync
+- NEXT_ACTION: Fix WebSocket DO (400 on handshake) or disable WS_HOST for clean fallback. Fix h1 fontWeight 800→600 on 7 portal pages. Clean QA test data from D1 activity log. Set up Resend email API key.
+- STATUS: Active
+- NOTE: Full site review complete (2026-04-08). 25+ pages tested, all rendering correctly. InlineSelect portal fix VERIFIED working. Phase 28 (next-gen) complete. 33 commits today, 530+ total. Known bugs: WebSocket 400, h1 weight 800 on Grants/Digest/MeetingDetail/CVPage/MyItems/Meetings/ProjectDetail.
+- DECISION: InlineSelect dropdowns use createPortal to document.body to escape table overflow
+- LEARNING: Pages Functions don't pass ctx — must await async work directly. Wrangler secret put creates standalone Workers not Pages secrets — use dashboard. R2 CORS uses nested allowed:{origins,methods,headers}. Free-tier DOs require new_sqlite_classes.
+
+## Known Bugs (from 2026-04-08 review)
+
+| Bug | Severity | Fix |
+|-----|----------|-----|
+| WebSocket 400 on handshake | Medium | Fix DO or set VITE_WS_HOST='' for clean polling fallback |
+| h1 fontWeight 800 on 7 portal pages | Low | Change to 600 on Grants, Digest, MeetingDetail, CVPage, MyItems, Meetings, ProjectDetail |
+| QA test data in Activity feed | Low | Delete "QA bump test" and "QA test idea" from D1 ideas + activity_log |
+| Project Health card shows 0s | Low | Health algorithm may need activity data threshold |
 
 ## Session Notes
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
