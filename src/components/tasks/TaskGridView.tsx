@@ -883,12 +883,14 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
   const inProgressCount = tasks.filter(t => t.status === 'in_progress').length
   const doneCount = tasks.filter(t => t.completed).length
 
+  const pct = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0
+
   const stats = [
     { label: 'Count', value: tasks.length },
     ...(overdueCount > 0 ? [{ label: 'Overdue', value: overdueCount, color: 'var(--maroon)' }] : []),
     { label: 'To Do', value: todoCount },
     { label: 'In Progress', value: inProgressCount, color: 'var(--teal)' },
-    { label: 'Done', value: doneCount, color: 'var(--green)' },
+    { label: 'Done', value: `${doneCount} (${pct}%)`, color: 'var(--green)' },
   ]
 
   return (

@@ -18,6 +18,8 @@ import {
   GripVertical,
   UserCheck,
   Scale,
+  Copy,
+  Check,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -77,6 +79,7 @@ export default function MeetingDetail() {
   const { data: meeting, isLoading } = useMeetingDetail(id || '')
   const { isAuthenticated } = useAuth()
   const { showSuccess } = useToast()
+  const [copiedSummary, setCopiedSummary] = useState(false)
   // Hooks must be called unconditionally (before any conditional returns)
   const toggleAction = useToggleActionItem()
   const { showUndo } = useUndoToast()
@@ -178,6 +181,48 @@ export default function MeetingDetail() {
             >
               <ListChecks size={11} /> Prep View
             </Link>
+            <button
+              onClick={() => {
+                if (!meeting) return
+                const lines = [
+                  `# ${meeting.title}`,
+                  `Date: ${meeting.date}`,
+                  '',
+                ]
+                const decisions = parseJsonArray(meeting.decisions)
+                if (decisions.length > 0) {
+                  lines.push('## Decisions')
+                  decisions.forEach(d => lines.push(`- ${d}`))
+                  lines.push('')
+                }
+                const actions = (meeting.action_items || []).filter((a: any) => !a.completed)
+                if (actions.length > 0) {
+                  lines.push('## Open Action Items')
+                  actions.forEach((a: any) => lines.push(`- [ ] ${a.description} (@${a.assignee})`))
+                  lines.push('')
+                }
+                if (meeting.notes) {
+                  lines.push('## Notes')
+                  lines.push(meeting.notes)
+                }
+                navigator.clipboard.writeText(lines.join('\n')).then(() => {
+                  setCopiedSummary(true)
+                  setTimeout(() => setCopiedSummary(false), 2000)
+                })
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
+              style={{
+                fontSize: '11px',
+                color: copiedSummary ? 'var(--green)' : 'var(--slate)',
+                border: `1px solid ${copiedSummary ? 'var(--green)' : 'var(--border-light)'}`,
+                background: copiedSummary ? 'rgba(34,197,94,0.06)' : 'none',
+                cursor: 'pointer',
+                opacity: copiedSummary ? 1 : 0.6,
+              }}
+            >
+              {copiedSummary ? <Check size={11} /> : <Copy size={11} />}
+              {copiedSummary ? 'Copied!' : 'Copy Summary'}
+            </button>
           </div>
 
           <h1 style={{ fontWeight: 800, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
