@@ -11,6 +11,7 @@ import {
   FolderPlus,
   Check,
   User,
+  Copy,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
@@ -597,6 +598,26 @@ export default function Digest() {
         >
           Daily PubMed papers relevant to MNCCORE research
         </p>
+
+        {/* Reading progress bar */}
+        {statusCounts.all > 0 && (
+          <div className="mt-3 flex items-center gap-3">
+            <div className="flex-1 max-w-xs h-2 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
+              <div
+                style={{
+                  width: `${((statusCounts.saved + (statusCounts.all - statusCounts.new - statusCounts.saved)) / statusCounts.all) * 100}%`,
+                  height: '100%',
+                  borderRadius: '9999px',
+                  background: 'var(--gold)',
+                  transition: 'width 300ms ease',
+                }}
+              />
+            </div>
+            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+              {statusCounts.saved} saved · {statusCounts.new} unread · {statusCounts.all} total
+            </span>
+          </div>
+        )}
       </section>
 
       {isEmpty ? (
@@ -748,6 +769,27 @@ export default function Digest() {
             >
               {filteredPapers.length} paper{filteredPapers.length !== 1 ? 's' : ''}
             </span>
+
+            {/* Copy reading list */}
+            {statusCounts.saved > 0 && (
+              <button
+                onClick={() => {
+                  const saved = allPapersForDate.filter(p => p.status === 'saved')
+                  const bib = saved.map(p => {
+                    const authors = truncateAuthors(p.authors)
+                    const year = p.pub_date ? new Date(p.pub_date).getFullYear() : ''
+                    return `${authors}. ${p.title}. ${p.journal || ''}${year ? ` (${year})` : ''}${p.doi ? `. doi:${p.doi}` : ''}`
+                  }).join('\n\n')
+                  navigator.clipboard.writeText(bib)
+                }}
+                className="flex items-center gap-1 text-[11px] px-2 py-1 rounded transition-colors"
+                style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer', opacity: 0.6 }}
+                title="Copy saved papers as bibliography"
+              >
+                <Copy size={10} />
+                Copy reading list
+              </button>
+            )}
           </div>
 
           {/* Topic filter pills */}

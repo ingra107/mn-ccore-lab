@@ -7,13 +7,24 @@ import Avatar from '../components/Avatar'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { directors, seniorMentors, facultyCollaborators, researchTeam } from '../data/team'
 import { grants } from '../data/grants'
-import { usePublications, useExpertise } from '../hooks/useApiData'
+import { usePublications, useExpertise, useActivity } from '../hooks/useApiData'
 import type { ExpertiseTag } from '../hooks/useApiData'
 import { mentees } from '../data/mentees'
 
 export default function Team() {
   const { data: publications = [] } = usePublications()
   const { data: allExpertise = [] } = useExpertise() as { data: ExpertiseTag[] }
+  const { data: recentActivity = [] } = useActivity(50)
+
+  // Members active in last 7 days
+  const activeSlugs = useMemo(() => {
+    const cutoff = new Date(Date.now() - 7 * 86400000).toISOString()
+    const slugs = new Set<string>()
+    for (const a of recentActivity) {
+      if (a.timestamp >= cutoff && a.actor) slugs.add(a.actor)
+    }
+    return slugs
+  }, [recentActivity])
   const [searchParams, setSearchParams] = useSearchParams()
   const expertiseFilter = searchParams.get('expertise') || ''
 
@@ -187,6 +198,20 @@ export default function Team() {
                       }}
                     >
                       {director.name}, {director.credentials}
+                      {activeSlugs.has(director.slug) && (
+                        <span
+                          title="Active this week"
+                          style={{
+                            display: 'inline-block',
+                            width: 6,
+                            height: 6,
+                            borderRadius: '50%',
+                            background: 'var(--green)',
+                            marginLeft: 6,
+                            verticalAlign: 'middle',
+                          }}
+                        />
+                      )}
                     </h3>
                     <p
                       className="mb-0.5"
