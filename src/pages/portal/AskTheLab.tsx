@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Send, Sparkles } from 'lucide-react'
+import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Send, Sparkles, Search } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
@@ -25,6 +25,7 @@ export default function AskTheLab() {
   const [showCreate, setShowCreate] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Auto-open create modal from URL params
   useEffect(() => {
@@ -37,6 +38,16 @@ export default function AskTheLab() {
   const { data: questions = [], isLoading } = useQuestions(
     filterStatus ? { status: filterStatus } : undefined
   )
+
+  const filteredQuestions = useMemo(() => {
+    if (!searchQuery.trim()) return questions
+    const q = searchQuery.toLowerCase()
+    return questions.filter(qn =>
+      qn.question.toLowerCase().includes(q) ||
+      (qn.context || '').toLowerCase().includes(q) ||
+      qn.asked_by.toLowerCase().includes(q)
+    )
+  }, [questions, searchQuery])
 
   const openCount = questions.filter((q) => q.status === 'open').length
 
@@ -72,6 +83,17 @@ export default function AskTheLab() {
               </ToggleButton>
             )
           })}
+          <div className="relative flex-1 max-w-xs">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search questions..."
+              className="w-full rounded-lg border pl-8 pr-3 py-1.5 text-xs outline-none"
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', background: 'var(--cream)' }}
+            />
+          </div>
         </div>
       </PageHeader>
 
@@ -79,15 +101,15 @@ export default function AskTheLab() {
       <div className="mt-5 flex flex-col gap-3">
         {isLoading ? (
           <CardSkeleton count={3} />
-        ) : questions.length === 0 ? (
+        ) : filteredQuestions.length === 0 ? (
           <EmptyStateComponent
             icon={<HelpCircle size={40} />}
-            title="No questions yet"
-            subtitle="Be the first to ask. No question is too small."
-            action={{ label: 'Ask a question', onClick: () => setShowCreate(true) }}
+            title={searchQuery ? 'No matching questions' : 'No questions yet'}
+            subtitle={searchQuery ? 'Try different search terms.' : 'Be the first to ask. No question is too small.'}
+            action={!searchQuery ? { label: 'Ask a question', onClick: () => setShowCreate(true) } : undefined}
           />
         ) : (
-          questions.map((q) => (
+          filteredQuestions.map((q) => (
             <QuestionCard
               key={q.id}
               question={q}

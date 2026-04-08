@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, CheckCircle2, Circle, Clock, AlertTriangle,
-  Calendar, ListChecks, Activity, Flag,
+  Calendar, ListChecks, Activity, Flag, Printer,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { TableSkeleton } from '../components/LoadingSkeleton'
@@ -91,10 +91,43 @@ export default function MeetingPrep() {
           <h1 style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--ink)', margin: 0 }}>
             {meeting.title}
           </h1>
-          <p style={{ fontSize: 14, color: 'var(--slate)', marginTop: 4 }}>
-            {formatLongDate(meeting.date)}
-            {facilitator && ` — Facilitated by ${facilitator.name}`}
-          </p>
+          <div className="flex items-center gap-3 mt-1">
+            <p style={{ fontSize: 14, color: 'var(--slate)', margin: 0 }}>
+              {formatLongDate(meeting.date)}
+              {facilitator && ` — Facilitated by ${facilitator.name}`}
+            </p>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors"
+              style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer', opacity: 0.6 }}
+              title="Print prep sheet"
+            >
+              <Printer size={12} />
+              Print
+            </button>
+          </div>
+          {/* Meeting countdown */}
+          {(() => {
+            const meetingDate = new Date(meeting.date + 'T15:00:00') // 3pm CT
+            const now = new Date()
+            const diffMs = meetingDate.getTime() - now.getTime()
+            if (diffMs < 0) return null
+            const days = Math.floor(diffMs / 86400000)
+            const hours = Math.floor((diffMs % 86400000) / 3600000)
+            const label = days > 0 ? `${days}d ${hours}h until meeting` : hours > 0 ? `${hours}h until meeting` : 'Meeting starting soon'
+            return (
+              <span
+                className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
+                style={{
+                  backgroundColor: days === 0 ? 'rgba(45,138,138,0.1)' : 'rgba(201,168,76,0.08)',
+                  color: days === 0 ? 'var(--teal)' : 'var(--gold)',
+                }}
+              >
+                <Clock size={10} />
+                {label}
+              </span>
+            )
+          })()}
           <div style={{ height: 1, background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.3, marginTop: '1rem', marginBottom: '1.5rem' }} />
         </motion.div>
 
