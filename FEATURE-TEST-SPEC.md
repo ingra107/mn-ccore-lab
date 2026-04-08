@@ -372,29 +372,53 @@ These are confirmed bugs. A fresh audit session should verify whether they're fi
 
 ## HOW TO RUN THIS AUDIT
 
-### Option A: Playwright MCP (comprehensive, high token cost)
+### Option A: API-only audit (RECOMMENDED — fast, low token cost)
+```
+1. Use browser_evaluate with batch fetch() to hit ALL GET endpoints in one call
+2. Test all POST endpoints with test data, verify readback
+3. Check for 500s, missing columns, error messages
+4. Verify schema integrity via admin SQL endpoint
+5. Clean up test data after
+6. Token cost: ~5K tokens total. Finds the most critical bugs.
+```
+
+### Option B: Playwright CLI (4x cheaper than MCP)
+```
+Playwright CLI saves snapshots as compact YAML to disk instead of streaming into context.
+~27K tokens/session vs ~114K via MCP.
+
+1. Use `npx playwright` commands via Bash tool (not MCP)
+2. Save screenshots to review/ folder, read them with Read tool
+3. Focus on 10 most critical pages, not all 37
+4. Use browser_evaluate for JS checks instead of browser_snapshot (avoid DOM dumps)
+```
+
+### Option C: claude --chrome (interactive debugging)
+```
+Claude Code's built-in --chrome flag gives live browser control.
+No MCP needed. Best for debugging specific issues found in Option A/B.
+```
+
+### Option D: Playwright MCP (current approach — most thorough, highest cost)
 ```
 1. Navigate to each page in Section 1
 2. Take screenshot + check console errors
 3. Test each interactive feature in Section 2
-4. Hit each API endpoint in Section 3
-5. Check design system rules in Section 4
-6. Resize to 375x812 for mobile tests in Section 5
+4. ~114K tokens/session. Reserve for launch-readiness audits.
 ```
 
-### Option B: API-only audit (fast, low token cost)
-```
-1. Hit all GET endpoints via fetch() in browser console
-2. Test all POST endpoints with test data
-3. Verify schema integrity via SQL
-4. Check for 500s, missing columns, error messages
-5. Clean up test data after
-```
-
-### Option C: Automated test script (recommended for CI)
+### Option E: Automated CI (recommended long-term)
 ```
 1. Write Vitest + @testing-library/react tests for components
 2. Write API integration tests hitting live D1
-3. Run visual regression with Percy or Chromatic
+3. Run visual regression with Glance MCP or Chromatic
 4. Run on every deploy via GitHub Actions
+```
+
+### Audit Workflow
+```
+After fixes:  Option A (API-only, 5 min)
+Before launch: Option A + Option B (API + key pages, 15 min)
+Major overhaul: Option A + Option D (full Playwright, 30 min)
+Long-term:     Option E (CI, automated on every push)
 ```
