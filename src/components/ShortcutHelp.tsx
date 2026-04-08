@@ -41,6 +41,7 @@ const shortcuts = [
       { keys: '/', action: 'Search' },
       { keys: 'F', action: 'Focus mode (hide sidebar + header)' },
       { keys: '[', action: 'Toggle sidebar' },
+      { keys: '⌘ .', action: 'Cycle theme (light/dark/system)' },
       { keys: '?', action: 'This help' },
     ],
   },

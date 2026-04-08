@@ -44,6 +44,18 @@ export default function PortalLayout() {
     return () => document.removeEventListener('toggle-sidebar', handler)
   }, [toggleSidebar])
 
+  // Ctrl+. to cycle theme (light → dark → system)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === '.') {
+        e.preventDefault()
+        setTheme(mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light')
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [mode, setTheme])
+
   // Listen for F key to toggle focus mode
   useEffect(() => {
     const handler = () => setFocusMode((prev) => !prev)
