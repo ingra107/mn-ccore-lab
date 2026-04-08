@@ -390,6 +390,23 @@ export async function handleAcknowledgeTask(id: string, user: AuthUser, env: Env
   return json({ data: updated });
 }
 
+// GET /api/task-updates/recent — bulk fetch recent task updates (for sync pull)
+export async function handleGetRecentTaskUpdates(url: URL, env: Env): Promise<Response> {
+  const limit = parseInt(url.searchParams.get('limit') || '100')
+  const since = url.searchParams.get('since') // ISO timestamp for delta sync
+  let query = 'SELECT * FROM task_updates'
+  const binds: unknown[] = []
+  if (since) {
+    query += ' WHERE created_at > ?'
+    binds.push(since)
+  }
+  query += ' ORDER BY created_at DESC LIMIT ?'
+  binds.push(Math.min(limit, 500))
+  const stmt = env.DB.prepare(query)
+  const result = await (binds.length === 2 ? stmt.bind(binds[0], binds[1]) : stmt.bind(binds[0])).all()
+  return json({ data: result.results || [], count: result.results?.length || 0 })
+}
+
 // GET /api/tasks/:id/updates — get task notes/updates
 export async function handleGetTaskUpdates(taskId: string, env: Env): Promise<Response> {
   const result = await env.DB.prepare(

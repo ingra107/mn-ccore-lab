@@ -2,7 +2,7 @@ import type { Env } from './types';
 import { corsHeaders, json, error, getAuthUser } from './helpers';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleTasks, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask } from './routes/tasks';
+import { handleTasks, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask } from './routes/tasks';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
 import { handleMeetings, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline } from './routes/publications';
@@ -302,6 +302,8 @@ export default {
             return await handleTasks(url, env);  // backward compat alias
           case '/api/updates/recent':
             return await handleRecentUpdates(url, env);
+          case '/api/task-updates/recent':
+            return await handleGetRecentTaskUpdates(url, env);
           case '/api/projects/health':
             return await handleProjectHealth(env);
           case '/api/grants/timeline':

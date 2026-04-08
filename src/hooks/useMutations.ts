@@ -413,6 +413,33 @@ export function useUpdateTask() {
     mutationFn: ({ id, fields }: { id: string; fields: Record<string, unknown> }) =>
       updateTask(id, fields),
 
+    onMutate: async ({ id, fields }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+
+      const queries = queryClient.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
+      const snapshots: { key: readonly unknown[]; data: TaskRow[] | undefined }[] = []
+
+      for (const [key, data] of queries) {
+        snapshots.push({ key, data })
+        if (data) {
+          queryClient.setQueryData(
+            key,
+            data.map((t) => t.id === id ? { ...t, ...fields } : t)
+          )
+        }
+      }
+
+      return { snapshots }
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.snapshots) {
+        for (const { key, data } of context.snapshots) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
+
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
       queryClient.invalidateQueries({ queryKey: ['action-items'] })

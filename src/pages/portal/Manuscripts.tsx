@@ -63,7 +63,21 @@ export default function Manuscripts() {
   const inlineUpdate = useMutation({
     mutationFn: ({ slug, fields }: { slug: string; fields: Record<string, unknown> }) =>
       updateProject(slug, fields),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
+    onMutate: async ({ slug, fields }) => {
+      await queryClient.cancelQueries({ queryKey: ['projects'] })
+      const prev = queryClient.getQueryData<Project[]>(['projects'])
+      if (prev) {
+        queryClient.setQueryData<Project[]>(['projects'], prev.map(p => p.slug === slug ? { ...p, ...fields } : p))
+      }
+      return { prev }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(['projects'], context.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
   })
 
   const handleFieldChange = (slug: string, field: string, value: unknown, prev: unknown) => {
