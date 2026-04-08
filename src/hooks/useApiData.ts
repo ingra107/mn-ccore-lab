@@ -359,6 +359,15 @@ export interface ProjectUpdateRow {
   created_at: string
 }
 
+export interface TaskUpdateRow {
+  id: string
+  task_id: string
+  author_slug: string
+  content: string
+  update_type: string
+  created_at: string
+}
+
 export interface MeetingDetail extends MeetingRow {
   action_items: ActionItemRow[]
   agenda_items: AgendaItemRow[]
@@ -790,6 +799,24 @@ export function useProjectUpdates(slug: string) {
     },
     staleTime: 60 * 1000,
     enabled: !!slug,
+  })
+}
+
+export function useTaskUpdates(taskId: string) {
+  return useQuery({
+    queryKey: ['task-updates', taskId],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/tasks/${taskId}/updates`)
+        if (!res.ok) return []
+        const data = await res.json()
+        return data.data as TaskUpdateRow[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: 30 * 1000,
+    enabled: !!taskId,
   })
 }
 

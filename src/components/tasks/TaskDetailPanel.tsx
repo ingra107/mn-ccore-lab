@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   X, Circle, Clock, User, Flag, Scale,
   CalendarDays, FolderKanban, ArrowRightLeft,
-  FileText, MessageSquare, Upload, Eye,
+  FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
   ChevronUp, ChevronDown,
 } from 'lucide-react'
@@ -20,15 +20,18 @@ import { FieldBlock, EditableTitle, EditableTextarea, StatusSelect, PrioritySele
 import { TaskDependenciesSection } from './detail/TaskDependencies'
 import { SubtaskSection } from './detail/SubtaskSection'
 import { HandoffSection } from './detail/HandoffSection'
-import { TaskComments, TaskActivity, ProjectDecisionsSection } from './detail/TaskComments'
+import { TaskComments, ProjectDecisionsSection } from './detail/TaskComments'
+import { TaskUpdateFeed } from './detail/TaskUpdateFeed'
+import { TaskActivityFeed } from './detail/TaskActivityFeed'
 
-type Tab = 'overview' | 'details' | 'files' | 'comments'
+type Tab = 'overview' | 'notes' | 'comments' | 'activity' | 'details'
 
 const TABS: { key: Tab; label: string; icon: typeof Circle }[] = [
   { key: 'overview', label: 'Overview', icon: Eye },
-  { key: 'details', label: 'Details', icon: Flag },
-  { key: 'files', label: 'Files', icon: FileText },
+  { key: 'notes', label: 'Notes', icon: ScrollText },
   { key: 'comments', label: 'Comments', icon: MessageSquare },
+  { key: 'activity', label: 'Activity', icon: Clock },
+  { key: 'details', label: 'Details', icon: Flag },
 ]
 
 interface TaskDetailPanelProps {
@@ -353,32 +356,37 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
               </CollapsibleSection>
             )}
 
+            {/* Files */}
+            <CollapsibleSection
+              title="Files"
+              icon={<FileText size={11} style={{ color: 'var(--slate)', opacity: 0.55 }} />}
+              defaultOpen={false}
+              storageKey={`task-files-${task.id}`}
+            >
+              <TaskFilesSection taskId={task.id} />
+            </CollapsibleSection>
+
             {/* Meta info */}
             <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 0.5 }}>
               {task.source && <span>Source: {task.source}</span>}
               {task.created_at && <span>Created {formatRelativeTime(task.created_at)}</span>}
               {task.completed_at && <span>Completed {formatRelativeTime(task.completed_at)}</span>}
             </div>
-
-            {/* Activity */}
-            <CollapsibleSection
-              title="Activity"
-              icon={<Clock size={11} style={{ color: 'var(--slate)', opacity: 0.55 }} />}
-              defaultOpen={false}
-              storageKey="task-activity"
-            >
-              <TaskActivity taskId={task.id} />
-            </CollapsibleSection>
           </div>
 
-          {/* ── Files Tab ── */}
-          <div style={{ display: activeTab === 'files' ? 'flex' : 'none', flexDirection: 'column', gap: '16px' }}>
-            <TaskFilesSection taskId={task.id} />
+          {/* ── Notes Tab ── */}
+          <div style={{ display: activeTab === 'notes' ? 'flex' : 'none', flexDirection: 'column', gap: '16px' }}>
+            <TaskUpdateFeed taskId={task.id} />
           </div>
 
           {/* ── Comments Tab ── */}
           <div style={{ display: activeTab === 'comments' ? 'flex' : 'none', flexDirection: 'column', gap: '20px' }}>
             <TaskComments taskId={task.id} taskTitle={task.title} projectSlug={task.project_id} />
+          </div>
+
+          {/* ── Activity Tab ── */}
+          <div style={{ display: activeTab === 'activity' ? 'flex' : 'none', flexDirection: 'column', gap: '8px' }}>
+            <TaskActivityFeed taskId={task.id} />
           </div>
 
         </div>

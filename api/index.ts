@@ -2,7 +2,7 @@ import type { Env } from './types';
 import { corsHeaders, json, error, getAuthUser } from './helpers';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleTasks, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask } from './routes/tasks';
+import { handleTasks, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask } from './routes/tasks';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
 import { handleMeetings, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline } from './routes/publications';
@@ -416,6 +416,12 @@ export default {
           return json({ data: results });
         }
 
+        // GET /api/tasks/:id/updates
+        const taskUpdatesGet = url.pathname.match(/^\/api\/tasks\/([^/]+)\/updates$/);
+        if (taskUpdatesGet) {
+          return await handleGetTaskUpdates(taskUpdatesGet[1], env);
+        }
+
         // GET /api/tasks/:id/activity
         const taskActivityGet = url.pathname.match(/^\/api\/tasks\/([^/]+)\/activity$/);
         if (taskActivityGet) {
@@ -577,6 +583,12 @@ export default {
         const taskCommentMatch = path.match(/^\/api\/tasks\/([^/]+)\/comments$/);
         if (request.method === 'POST' && taskCommentMatch) {
           return await handleAddTaskComment(taskCommentMatch[1], request, user, env);
+        }
+
+        // POST /api/tasks/:id/updates — post task note/update
+        const taskUpdateMatch = path.match(/^\/api\/tasks\/([^/]+)\/updates$/);
+        if (request.method === 'POST' && taskUpdateMatch) {
+          return await handlePostTaskUpdate(taskUpdateMatch[1], request, user, env);
         }
 
         // POST /api/tasks/:id/subtasks — create subtask
@@ -1242,6 +1254,26 @@ export default {
             try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN recurrence TEXT').run(); results.push('added recurrence'); } catch { results.push('recurrence already exists'); }
             try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN recurrence_parent_id TEXT').run(); results.push('added recurrence_parent_id'); } catch { results.push('recurrence_parent_id already exists'); }
             return json({ data: { version: 35, results } });
+          }
+          if (body.version === 36) {
+            const results: string[] = [];
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS task_updates (
+                  id TEXT PRIMARY KEY,
+                  task_id TEXT NOT NULL,
+                  author_slug TEXT NOT NULL,
+                  content TEXT NOT NULL,
+                  update_type TEXT DEFAULT 'progress',
+                  created_at TEXT DEFAULT (datetime('now')),
+                  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+                )
+              `).run();
+              results.push('created task_updates');
+            } catch (e) { results.push(`task_updates: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_task_updates_task ON task_updates(task_id)').run(); results.push('created task index'); } catch (e) { results.push(`task index: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_task_updates_created ON task_updates(created_at)').run(); results.push('created created_at index'); } catch (e) { results.push(`created_at index: ${e}`); }
+            return json({ data: { version: 36, results } });
           }
           return error(`Unknown migration version: ${body.version}`, 400);
         }

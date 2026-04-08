@@ -312,6 +312,24 @@ export function usePostProjectUpdate(projectSlug: string) {
   })
 }
 
+export function usePostTaskUpdate(taskId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { content: string; update_type?: string }) =>
+      fetchApi(`/api/tasks/${taskId}/updates`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['task-updates', taskId] })
+      queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Task mutations ──────────────────────────────────────────
 
 export function useCreateTask() {

@@ -389,3 +389,43 @@ export async function handleAcknowledgeTask(id: string, user: AuthUser, env: Env
   const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
   return json({ data: updated });
 }
+
+// GET /api/tasks/:id/updates — get task notes/updates
+export async function handleGetTaskUpdates(taskId: string, env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    'SELECT * FROM task_updates WHERE task_id = ? ORDER BY created_at DESC'
+  ).bind(taskId).all();
+  return json({ data: result.results || [] });
+}
+
+// POST /api/tasks/:id/updates — post a task note/update
+export async function handlePostTaskUpdate(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { content: string; update_type?: string };
+  if (!body.content?.trim()) return error('content required', 400);
+
+  const id = generateId();
+  const authorSlug = actorSlug(user.email);
+
+  await env.DB.prepare(
+    'INSERT INTO task_updates (id, task_id, author_slug, content, update_type) VALUES (?, ?, ?, ?, ?)'
+  ).bind(id, taskId, authorSlug, body.content.trim(), body.update_type ?? 'progress').run();
+
+  // Look up task title for activity log
+  const task = await env.DB.prepare('SELECT title FROM tasks WHERE id = ?').bind(taskId).first<{ title: string }>();
+  await logActivity(env, 'task_update', `Posted note on "${task?.title || taskId}": "${body.content.trim().slice(0, 100)}"`, authorSlug, taskId, 'task');
+
+  // Notify @mentions
+  const mentions = parseMentions(body.content);
+  for (const slug of mentions) {
+    if (slug !== authorSlug) {
+      try {
+        await env.DB.prepare(
+          'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        ).bind(generateId(), slug, 'mention', 'task', taskId, `${user.name || user.email} mentioned you in a task note`, body.content.trim().slice(0, 200), '/tasks').run();
+      } catch (e) { console.error('Failed to create mention notification:', e); }
+    }
+  }
+
+  const created = await env.DB.prepare('SELECT * FROM task_updates WHERE id = ?').bind(id).first();
+  return json({ data: created }, 201);
+}
