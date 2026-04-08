@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download } from 'lucide-react'
+import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download, Copy } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
 import EmptyState from '../../components/EmptyState'
@@ -162,14 +162,41 @@ export default function AnalyticsPage() {
         title="Lab Analytics"
         subtitle={`${projects.length} projects, ${pendingTasks} active tasks`}
         actions={isPi ? (
-          <button
-            onClick={exportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
-            style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
-          >
-            <Download size={14} />
-            Export CSV
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const lines = [
+                  `# MN-CCORE Lab Report — ${new Date().toLocaleDateString()}`,
+                  '',
+                  `## Week of ${formatWeekRange(selectedWeekStart)}`,
+                  `- Completed: ${weekStats.completed}`,
+                  `- Created: ${weekStats.created}`,
+                  `- Overdue: ${weekStats.overdue}`,
+                  `- Activity: ${weekStats.activityCount}`,
+                  '',
+                  '## Summary',
+                  `- ${projects.filter(p => p.status === 'Active').length} active projects`,
+                  `- ${pendingTasks} pending tasks`,
+                  `- ${ideas.filter(i => i.status !== 'archived').length} research ideas`,
+                  health ? `- Health: ${health.healthy} healthy, ${health.needs_attention || 0} need attention, ${(health.at_risk || 0) + (health.critical || 0)} at risk` : '',
+                ].filter(Boolean)
+                navigator.clipboard.writeText(lines.join('\n'))
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+              style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
+            >
+              <Copy size={14} />
+              Copy Report
+            </button>
+            <button
+              onClick={exportCSV}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+              style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
+            >
+              <Download size={14} />
+              Export CSV
+            </button>
+          </div>
         ) : undefined}
       />
 

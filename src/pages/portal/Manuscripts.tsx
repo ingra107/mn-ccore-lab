@@ -47,6 +47,7 @@ export default function Manuscripts() {
 
   const [view, setView] = useState<'list' | 'pipeline'>('list')
   const [filterPI, setFilterPI] = useState<string>('')
+  const [filterCategory, setFilterCategory] = useState<string>('')
   const [showCreate, setShowCreate] = useState(false)
   const [sortKey, setSortKey] = useState<'stage' | 'title' | 'status' | 'pi' | 'category'>('stage')
   const [sortAsc, setSortAsc] = useState(true)
@@ -73,6 +74,7 @@ export default function Manuscripts() {
   const manuscripts = useMemo(() => {
     let filtered = projects.filter((p) => p.status !== 'Published' || p.stage === 'Published')
     if (filterPI) filtered = filtered.filter((p) => p.pi === filterPI)
+    if (filterCategory) filtered = filtered.filter((p) => p.category === filterCategory)
     return [...filtered].sort((a, b) => {
       let cmp = 0
       switch (sortKey) {
@@ -85,7 +87,7 @@ export default function Manuscripts() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [projects, filterPI, sortKey, sortAsc])
+  }, [projects, filterPI, filterCategory, sortKey, sortAsc])
 
   useListKeyboardNav({
     itemCount: view === 'list' ? manuscripts.length : 0,
@@ -95,7 +97,7 @@ export default function Manuscripts() {
   })
 
   // Reset focus when filters or view change
-  useEffect(() => { setFocusedIndex(-1) }, [filterPI, view])
+  useEffect(() => { setFocusedIndex(-1) }, [filterPI, filterCategory, view])
 
   const taskCounts = useMemo(() => {
     const map = new Map<string, number>()
@@ -174,6 +176,24 @@ export default function Manuscripts() {
               <option value="">All PIs</option>
               <option value="nick">Nick Ingraham</option>
               <option value="nate">Nate Mesfin</option>
+            </select>
+
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="rounded-md border px-3 py-1.5 text-xs"
+              style={{
+                fontSize: '12px',
+                color: filterCategory ? 'var(--gold)' : 'var(--slate)',
+                backgroundColor: 'transparent',
+                borderColor: 'var(--border-subtle)',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="">All Groups</option>
+              {Object.entries(CATEGORY_LABEL).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
             </select>
           </div>
         </PageHeader>
