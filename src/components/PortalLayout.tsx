@@ -9,6 +9,7 @@ import ShortcutHelp from './ShortcutHelp'
 import PageTransition from './PageTransition'
 import GlobalQuickAddModal, { useQuickAddShortcut } from './GlobalQuickAdd'
 import RouteProgressBar from './RouteProgressBar'
+import ScrollToTop from './ScrollToTop'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useDensity } from '../hooks/useDensity'
 import { useFavicon } from '../hooks/useFavicon'
@@ -230,6 +231,8 @@ export default function PortalLayout() {
       >
         <Plus size={20} strokeWidth={2.5} />
       </button>
+
+      <ScrollToTop />
 
       {/* G-key pending indicator */}
       {gPending && (

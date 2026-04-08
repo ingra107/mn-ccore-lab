@@ -266,9 +266,15 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
         </div>
 
         <button
-          onClick={onVote}
-          className="flex items-center gap-1 px-2 py-1 rounded-md transition-colors hover:bg-black/5"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}
+          onClick={(e) => {
+            onVote()
+            // Scale bounce animation
+            const btn = e.currentTarget
+            btn.style.transform = 'scale(1.3)'
+            setTimeout(() => { btn.style.transform = 'scale(1)' }, 150)
+          }}
+          className="flex items-center gap-1 px-2 py-1 rounded-md transition-all hover:bg-black/5"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)', transition: 'transform 150ms ease, color 150ms' }}
         >
           <ThumbsUp size={13} />
           <span className="text-xs font-medium">
