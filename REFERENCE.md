@@ -3,7 +3,7 @@
 Detailed tables, API endpoints, key files, and feature inventory.
 Moved from CLAUDE.md to reduce session context load. Read on demand.
 
-## D1 Tables (19)
+## D1 Tables (39+)
 
 | Table | Rows | Purpose |
 |-------|------|---------|
@@ -27,7 +27,7 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | lab_settings | 6 | Key-value settings store |
 | workflow_templates | 3+ | Custom project stage templates |
 
-## API Endpoints (75+)
+## API Endpoints (110+)
 
 ### Core Data
 - GET /api/team, /api/projects, /api/publications, /api/grants
@@ -84,7 +84,7 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | `src/lib/api.ts` | Typed D1 API client |
 | `src/hooks/useApiData.ts` | 20+ TanStack Query hooks |
 | `src/hooks/useMutations.ts` | 10+ mutation hooks with optimistic updates |
-| `src/hooks/useTaskKeyboardShortcuts.ts` | Task-specific shortcuts (J/K/Space/S/X/B/Enter/Esc) |
+| `src/hooks/useTaskKeyboardShortcuts.ts` | Task-specific shortcuts (J/K/Space/S/X/B/Z/A/Enter/Esc) |
 | `src/lib/dateUtils.ts` | Shared date formatters (6 exports) |
 | `src/data/team.ts` | Team members + `getPersonInfo()` |
 | `src/components/Avatar.tsx` | Photo/initials avatar |
@@ -115,22 +115,40 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | `api/routes/pi-dashboard.ts` | PI analytics API |
 | `api/routes/decision-replay.ts` | Similar decisions API |
 | `functions/api/[[route]].ts` | Pages Function catch-all |
+| `src/components/ScrollToTop.tsx` | Floating scroll-to-top button (all portal pages) |
+| `src/components/dashboard/WeeklyProgressCard.tsx` | 7-day completion bar chart with trend |
+| `src/components/dashboard/QuickWinsCard.tsx` | Top 4 actionable tasks by urgency score |
+| `src/hooks/useAuth.ts` | JWT auth hook (replaces manual parsing) |
+| `src/hooks/useFavicon.ts` | Canvas favicon with notification badge overlay |
+| `src/hooks/useProjectKeyboardNav.ts` | Project list keyboard nav (J/K/P/Enter) |
+| `src/components/PublicationLibrary.tsx` | Horizontal scrolling journal cover cards |
+| `src/components/ShortcutHelp.tsx` | Keyboard shortcut reference (?, 6 categories) |
 
-## Portal Features (45+ shipped)
+## Portal Features (80+ shipped)
 
-**Core:** Task System (5 views: Grid/Board/StandUp/Timeline + detail panel + comments + subtasks + bulk actions + peek), Personal Hub, Deadlines, Manuscripts, Ideas Board (voting), Calendar (4 views), Lab Analytics, Activity Feed, Settings, AI Meeting Notes, Smart Search (FTS), Lab Pulse (kiosk).
+**Core:** Task System (5 views: Grid/Board/StandUp/Timeline + detail panel + comments + subtasks + bulk actions + peek), Personal Hub, Deadlines, Manuscripts, Ideas Board (voting + sort), Calendar (4 views + keyboard nav), Lab Analytics (velocity + age + workload charts), Activity Feed (person + type filters), Settings (theme preview + reset), AI Meeting Notes, Smart Search (FTS + recent searches), Lab Pulse (kiosk).
 
-**Navigation:** Cmd+K, Keyboard Shortcuts (G+key + task-specific J/K/S/X/B/Space/Enter), Focus Mode (F key), Route Progress Bar, Dynamic Favicons, Recently Viewed.
+**Navigation:** Cmd+K (fuzzy search + task/project counts), Keyboard Shortcuts (G+key + task J/K/S/X/B/Z/A/Space/Enter + project P pin + calendar arrows/T), Focus Mode (F key), Route Progress Bar, Dynamic Favicons (notification badge), ScrollToTop, Ctrl+. theme cycle.
 
-**Task UX (Phase 17):** Space bar peek overlay, inline assignee/date/priority editing, hover row actions, completion animation, status color transitions, loading skeletons, progressive disclosure, board swimlanes + column collapse.
+**Task UX (Phase 17+26b):** Space bar peek overlay, inline assignee/date/priority editing (with relative date labels + quick presets), hover row actions, completion animation, status color transitions, loading skeletons, progressive disclosure, board swimlanes + column collapse, snooze (+1d/3d/1w/2w), bulk snooze, 4-tab TaskDetailPanel (Overview/Details/Files/Comments), prev/next navigation, copy link, task age badge.
+
+**MyTasks (Phase 26b):** QuickFilter pills (Today/This Week/Overdue/No Date), Focus Next smart scoring (urgency×priority×freshness), completion streak counter, status distribution bar, StandUp view.
+
+**Dashboard (Phase 26b):** Time-of-day greeting, WeeklyProgressCard (7-day chart), QuickWinsCard (top 4 tasks), overdue alert banner, today's progress summary.
 
 **Data (Phase 18):** Blocker flagging (blocked_by + B shortcut), project health (4-factor algorithm + colored bars), dashboard card badges, saved named views.
 
-**Differentiation (Phase 19):** Trainee development trajectories (pub curve + velocity + metrics + heatmap), decision replay (tags + similar search + outcomes + timeline), evidence-based PI dashboard (commitment scorecard + response time + engagement + mentee velocity), expertise tags on profiles.
+**Differentiation (Phase 19):** Trainee development trajectories (pub curve + velocity + metrics + heatmap), decision replay (tags + similar search + outcomes + timeline), evidence-based PI dashboard (commitment scorecard + response time + engagement + mentee velocity + copy report + print), expertise tags on profiles.
 
-**Other:** Quick Capture, GlobalQuickAdd (NLP), Grants SVG Gantt, CV Export, Density Toggle, CSV Export, Meeting Icebreakers, Reactions, @Mentions.
+**Copy/Export:** Copy bibliography (Publications), Copy Reading List (Digest), Copy Summary (MeetingDetail), Copy Report (PIAnalytics, Analytics), Copy as Text (CVPage), Export .ics (Deadlines), Export CSV (Analytics), Print (MeetingPrep, PIAnalytics, CVPage).
 
-## Phase History (1-19 COMPLETE, 400+ commits)
+**Dynamic Page Titles:** Tasks, MyTasks, Ideas, Decisions, Deadlines, Manuscripts, Projects — show counts/status in browser tab.
+
+**Search Filters Added (Phase 26b):** AskTheLab, SessionHistory, Narratives, MeetingNotes, Decisions (all with inline search input).
+
+**Other:** Quick Capture, GlobalQuickAdd (NLP), Grants SVG Gantt (with days remaining), CV Export (with word count), Density Toggle, Meeting Icebreakers, Reactions, @Mentions, Network stats bar, Team activity dots, Publication year chart.
+
+## Phase History (1-26aq COMPLETE, 495+ commits)
 
 Phases 1-8: Public website, D1 backend, team portal, sync, API, digest, migration, notifications.
 Phase 9: LabSync parity — task system, 10+ portal pages, Cmd+K, keyboard shortcuts.
@@ -144,6 +162,16 @@ Phase 16: Foundation + table overhaul — dark deepening, TaskGridView, columnar
 Phase 17: UX interaction layer — PageHeader, keyboard shortcuts, peek, inline editing, board enhancements, skeletons.
 Phase 18: Functional depth — blocker flagging, project health, dashboard badges.
 Phase 19: Differentiation — trainee trajectories, decision replay, PI dashboard, expertise tags.
+Phase 20: HoverCards, context menu, toast system, heatmap, stagger animations, role-based dashboard.
+Phase 20.5-20.6: Mobile responsive, portal font fixes.
+Phase 21: Visual perfection — spring physics, progressive disclosure, fontFamily purge, loading skeletons.
+Post-21: Inline subtasks, meeting NLP, accessibility, dashboard 6-card, meeting dedup.
+Phase 22: Design research — transition constants, calculations row, status badge pills, CSS polish.
+Phase 23: UX depth — clickable titles everywhere, undo everywhere, TaskDetailPanel on all views, a11y.
+Phase 24: Database alignment — brain.db ↔ D1 full sync (537 tasks, field-level LWW).
+Phase 25: Academic workflow — virtual scrolling, paper revision tracker, mentee milestones, deadline cascade, IRB tracking.
+Phase 26: LabSync UX audit — 14 issues fixed, 4-tab TaskDetailPanel, publication library.
+Phase 26b-aq: Feature sprint — 44 commits across all pages. Dashboard cards, MyTasks smart features, snooze, keyboard shortcuts, dynamic titles, search filters, copy/export buttons, theme controls, network stats, calendar nav.
 
 ## Implementation Notes
 

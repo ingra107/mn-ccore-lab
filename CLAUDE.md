@@ -9,7 +9,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (470+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (495+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Data | TanStack Query v5 + Cloudflare D1 (39 tables, 110+ endpoints) -- ALL LIVE |
@@ -231,7 +231,75 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 - **TaskDetailPanel**: restructured to 4-tab layout (Overview/Details/Files/Comments)
 - **Link Paper to Project**: search modal on ProjectLiterature with publication picker
 - **Publication Library View**: horizontal scrolling journal cover cards (scroll-snap)
-- Remaining: watchers/reminders/instructions fields need D1 schema-v34 migration
+
+**Phase 26b-aq: COMPLETE** (44 commits, 2026-04-07/08). Massive feature sprint across all pages:
+
+*Interaction & Keyboard:*
+- Keyboard shortcuts: Z (snooze +1d), A (assign), P (pin project), N (new idea/decision), T (calendar today), arrow keys (calendar nav)
+- Task context menu: snooze submenu (+1d/+3d/+1w/+2w), open in new tab
+- Bulk action toolbar: snooze button (+1 day)
+- InlineDatePicker: relative labels ("2d ago", "in 3d"), quick presets (Today/Tomorrow/Next Mon/+1 Week/Clear)
+- Command palette: task/project counts in footer, Due Today quick filter, Log Decision action
+- ShortcutHelp: updated with all new shortcuts (P pin, calendar section, N decisions)
+- N key opens create modal on Ideas + Decisions pages
+
+*Dashboard & Personal:*
+- Time-of-day greeting, today's progress summary
+- WeeklyProgressCard: 7-day bar chart with trend indicator
+- QuickWinsCard: top 4 actionable tasks scored by urgency
+- Overdue alert banner on Dashboard
+- CURRENT_DEFAULTS_VERSION bumped to 4 (6 default cards)
+- Personal: quick actions row, priority distribution bar, weekly completion count
+
+*Task System:*
+- MyTasks: QuickFilter pills (Today/This Week/Overdue/No Date), Focus Next smart scoring, completion streak counter, status distribution bar, StandUp view, prev/next in detail panel
+- TaskDetailPanel: copy link button, task age badge, source/recurrence chips, prev/next navigation (Alt+Up/Down)
+- TaskGridView: calculations row shows completion percentage
+- Dynamic page titles on Tasks, MyTasks, Ideas, Decisions, Deadlines, Manuscripts, Projects
+
+*Data Pages:*
+- Projects: task count badges, "Needs Attention" filter (health < 50), dynamic title
+- Manuscripts: category filter (CLIF/Lab/Mesfin/Mentee), sortable columns, stage progress dots, dynamic title
+- Ideas: sort toggle (Newest/Most Voted/A-Z), vote bounce animation, N-key create
+- Decisions: search filter, N-key create, dynamic title
+- Deadlines: urgent countdown banner, Export to .ics, dynamic title
+- Grants: days remaining on progress bars, maroon when >80% elapsed
+
+*Analytics & PI:*
+- AnalyticsPage: 8-week task velocity chart, task age histogram, workload per person, lab health summary, Copy Report button
+- PIAnalytics: Copy Report + Print buttons
+
+*Activity & Search:*
+- ActivityPage: person filter dropdown, "Most active: X" in subtitle
+- SearchPage: recent searches (localStorage, max 5, click to re-search, clear all)
+- SessionHistory: search filter on summaries
+
+*Meetings & Digest:*
+- Meetings: action item completion rate in subtitle
+- MeetingDetail: Copy Summary button (markdown to clipboard)
+- MeetingPrep: Print button, meeting countdown badge
+- MeetingNotes: search filter, 20 results
+- Digest: reading progress bar, Copy Reading List export
+
+*Publications & Network:*
+- Publications: year distribution mini-chart (clickable), Copy bibliography button
+- Network: stats bar (author count, connections, avg, hub node)
+
+*Team & Member:*
+- Team: member count + active-this-week count, green activity dots on directors
+- CVPage: Copy as Text button, word count badge
+
+*Settings & Infrastructure:*
+- Settings: theme preview cards (light/dark), Reset Dashboard + Clear Searches buttons
+- Narratives: search filter on arc titles/projects/topics
+- ScrollToTop: floating button on all portal pages
+- Favicon: notification badge overlay (red circle with count)
+- Sidebar: next meeting countdown hint
+- CalendarPage: keyboard arrow nav, T for today
+- Print CSS: enhanced @media print rules
+- Ctrl+. theme cycle on PortalLayout
+
+*Pending:* Schema v35 migration (recurrence + recurrence_parent_id) — planned but not yet needed. No code depends on it.
 
 **Phase 22: COMPLETE** (5 commits, 5 deploys, 2026-04-05). Design research + polish:
 - Transition standardization: 10 inline durations → 150ms/250ms constants
@@ -274,20 +342,25 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 
 Biweekly Tuesdays 3pm CT. Anchor: Apr 7, Apr 21. Automation runs Monday mornings.
 
-## Component Coverage (Verified 2026-04-06)
+## Component Coverage (Verified 2026-04-08)
 
 | Component | Coverage | NOT Used On |
 |-----------|----------|-------------|
 | LoadingSkeleton | ALL 19 portal pages | -- |
 | EmptyState | 15 pages (Tasks, MyTasks, Deadlines, Decisions, Ideas, Activity, Calendar, Search, Grants, MeetingNotes, Narratives, AskTheLab, Manuscripts, Digest, Settings) | Analytics, PBSector, Personal, PIAnalytics |
 | PageHeader | 17 of 19 portal pages (all with aria-live on count/subtitle) | PBSector (custom PlannerHeader) |
-| J/K keyboard nav | 11 pages (Tasks, Projects, Meetings, Ideas, Decisions, Deadlines, Manuscripts, Grants, Search, MeetingNotes, Narratives) | Calendar (grid-based), Analytics, Settings |
+| J/K keyboard nav | 11 pages (Tasks, Projects, Meetings, Ideas, Decisions, Deadlines, Manuscripts, Grants, Search, MeetingNotes, Narratives) | Calendar (arrow keys), Analytics, Settings |
 | HoverCard | 8 surfaces (TaskDetail, TaskPeek, MeetingDetail, AssigneePicker, ProjectHealth, MenteeDashboard, Projects list, Activity) | Team (cards already detailed) |
 | UndoToast | ALL task surfaces (TaskGridView, StandUp, Timeline, Board, Detail, Tasks, MyTasks, Personal, Deadlines, Dashboard ActionBoard, MeetingDetail, ProjectDetail, MyItems, Meetings) + Ideas, Manuscripts, Decisions | Settings (uses saved indicator) |
 | Stagger animations | 12 pages (Projects, Personal, Ideas, Decisions, Deadlines, Meetings, MeetingPrep, MeetingNotes, Search, Calendar, Analytics, PIAnalytics, Settings) | -- |
 | InlineSelect | Tasks (grid), Projects (list+detail), Manuscripts, Ideas, Decisions, Deadlines | Grants (no editable status) |
 | Focus trapping | ALL 6 modals (CreateTask, CreateProject, CreateIdea, CreateQuestion, CreateDecision, TranscriptModal) | -- |
 | Escape key close | ALL 6 modals + CommandPalette + GlobalQuickAdd + ShortcutHelp | -- |
+| Dynamic page title | 7 pages (Tasks, MyTasks, Ideas, Decisions, Deadlines, Manuscripts, Projects) | Other portal pages use static usePageMeta |
+| Search/filter input | 8 pages (Tasks, AskTheLab, SessionHistory, Narratives, MeetingNotes, Decisions, Search, Digest) | -- |
+| N-key create | Ideas, Decisions | Tasks uses C key |
+| Copy to clipboard | PIAnalytics, CVPage, Publications, Digest, MeetingDetail, AnalyticsPage | -- |
+| ScrollToTop | All portal pages (via PortalLayout) | Public pages |
 
 ## Accessibility Requirements
 
