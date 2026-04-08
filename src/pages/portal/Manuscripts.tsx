@@ -121,6 +121,15 @@ export default function Manuscripts() {
   }, [manuscripts])
 
   const activeCount = manuscripts.filter((p) => p.stage !== 'Published').length
+  const writingCount = manuscripts.filter((p) => p.stage === 'Writing').length
+
+  // Dynamic page title
+  useEffect(() => {
+    document.title = writingCount > 0
+      ? `Manuscripts (${writingCount} writing) | MN-CCORE`
+      : `Manuscripts (${activeCount}) | MN-CCORE`
+    return () => { document.title = 'MN-CCORE Lab Hub' }
+  }, [writingCount, activeCount])
 
   return (
     <div style={{ minHeight: '100vh' }}>

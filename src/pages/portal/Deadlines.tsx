@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation, Download } from 'lucide-react'
@@ -127,6 +127,14 @@ export default function Deadlines() {
     focusedIndex,
     setFocusedIndex,
   })
+
+  // Dynamic page title
+  useEffect(() => {
+    document.title = overdue.length > 0
+      ? `Deadlines (${overdue.length} overdue) | MN-CCORE`
+      : 'Deadlines | MN-CCORE'
+    return () => { document.title = 'MN-CCORE Lab Hub' }
+  }, [overdue.length])
 
   return (
     <div>

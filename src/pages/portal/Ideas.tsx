@@ -71,6 +71,27 @@ export default function Ideas() {
   // Reset focus when filters change
   useEffect(() => { setFocusedIndex(-1) }, [filterStatus, view])
 
+  // N key opens create modal
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey && !showCreate) {
+        const tag = (e.target as HTMLElement).tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+        e.preventDefault()
+        setShowCreate(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [showCreate])
+
+  // Dynamic page title
+  useEffect(() => {
+    const count = ideas.filter(i => i.status === 'new').length
+    document.title = count > 0 ? `Ideas (${count} new) | MN-CCORE` : 'Ideas | MN-CCORE'
+    return () => { document.title = 'MN-CCORE Lab Hub' }
+  }, [ideas])
+
   const handleIdeaStatusChange = (id: string, status: string, prevStatus: string) => {
     updateIdea.mutate({ id, fields: { status } })
     showUndo(`Idea → ${status.replace('_', ' ')}`, () => updateIdea.mutate({ id, fields: { status: prevStatus } }))

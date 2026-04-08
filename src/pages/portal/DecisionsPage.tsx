@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Scale, Plus, AlertTriangle, FolderKanban, Tag, List, GitCommitVertical } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -314,6 +314,26 @@ export default function DecisionsPage() {
     setFocusedIndex,
     disabled: showCreate,
   })
+
+  // N key opens create modal
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey && !showCreate) {
+        const tag = (e.target as HTMLElement).tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+        e.preventDefault()
+        setShowCreate(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [showCreate])
+
+  // Dynamic page title
+  useEffect(() => {
+    document.title = pendingCount > 0 ? `Decisions (${pendingCount} pending) | MN-CCORE` : 'Decisions | MN-CCORE'
+    return () => { document.title = 'MN-CCORE Lab Hub' }
+  }, [pendingCount])
 
   return (
     <div>
