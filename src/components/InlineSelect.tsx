@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown } from 'lucide-react'
 
 interface InlineSelectProps {
@@ -10,24 +11,45 @@ interface InlineSelectProps {
 
 export default function InlineSelect({ value, options, onChange, size = 'sm' }: InlineSelectProps) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+
+  const updatePosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 4, left: rect.left })
+    }
+  }, [])
 
   useEffect(() => {
     if (!open) return
+    updatePosition()
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const target = e.target as Node
+      if (
+        buttonRef.current && !buttonRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
+        setOpen(false)
+      }
     }
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
+    window.addEventListener('scroll', () => setOpen(false), true)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      window.removeEventListener('scroll', () => setOpen(false), true)
+    }
+  }, [open, updatePosition])
 
   const current = options.find((o) => o.value === value)
   const fontSize = size === 'sm' ? '11px' : '12px'
   const py = size === 'sm' ? '2px' : '4px'
 
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex', zIndex: open ? 999 : 'auto' }}>
+    <>
       <button
+        ref={buttonRef}
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
@@ -62,18 +84,18 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
         <ChevronDown size={10} style={{ opacity: 0.4 }} />
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
+          ref={dropdownRef}
           style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            marginTop: '4px',
+            position: 'fixed',
+            top: pos.top,
+            left: pos.left,
             background: 'var(--cream)',
             border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-card-hover)',
-            zIndex: 50,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            zIndex: 9999,
             minWidth: '120px',
             overflow: 'hidden',
           }}
@@ -110,8 +132,9 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
               {opt.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   )
 }
