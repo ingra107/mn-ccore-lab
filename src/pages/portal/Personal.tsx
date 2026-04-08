@@ -319,6 +319,21 @@ export default function Personal() {
         )}
       </motion.div>
 
+      {/* Priority distribution mini-bar */}
+      {pendingTasks.length > 0 && (
+        <div className="flex items-center gap-2 mt-3">
+          <span className="text-[9px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.4 }}>Priority</span>
+          <div className="flex-1 flex rounded-full overflow-hidden" style={{ height: 4, maxWidth: 200 }}>
+            {(['urgent', 'high', 'medium', 'low'] as const).map(p => {
+              const count = pendingTasks.filter(t => t.priority === p).length
+              if (count === 0) return null
+              const colors: Record<string, string> = { urgent: 'var(--maroon)', high: 'var(--orange)', medium: 'var(--gold)', low: 'var(--slate)' }
+              return <div key={p} style={{ width: `${(count / pendingTasks.length) * 100}%`, background: colors[p], opacity: p === 'low' ? 0.3 : 0.7 }} />
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Recently Viewed */}
       {recent.length > 1 && (
         <div className="flex items-center gap-2 mt-4 flex-wrap">

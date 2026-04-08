@@ -97,7 +97,7 @@ export default function CommandPalette() {
       { path: '/ideas', label: 'Ideas', icon: Lightbulb },
       { path: '/ask', label: 'Ask the Lab', icon: HelpCircle },
       { path: '/decisions', label: 'Decisions', icon: Scale },
-      { path: '/digest', label: 'Research Digest', icon: BookOpen },
+      { path: '/digest', label: 'Research Digest', icon: BookOpen, shortcut: 'G L' },
       { path: '/grants', label: 'Grants', icon: DollarSign },
       { path: '/meetings', label: 'Meetings', icon: Users, shortcut: 'G M' },
     ]
@@ -148,6 +148,14 @@ export default function CommandPalette() {
       category: 'action',
       shortcut: 'M',
     })
+    items.push({
+      id: 'action-create-decision',
+      label: 'Log Decision',
+      sublabel: 'Record a research decision',
+      icon: Scale,
+      action: () => { navigate('/decisions?create=true'); setOpen(false) },
+      category: 'action',
+    })
 
     // Quick Filters
     items.push({
@@ -172,6 +180,14 @@ export default function CommandPalette() {
       sublabel: `${tasks.filter(t => !t.completed && (t.priority === 'high' || t.priority === 'urgent')).length} high/urgent tasks`,
       icon: Flag,
       action: () => { navigate('/tasks?priority=high'); setOpen(false) },
+      category: 'filter',
+    })
+    items.push({
+      id: 'filter-due-today',
+      label: 'Due Today',
+      sublabel: `${tasks.filter(t => !t.completed && t.due_date === new Date().toISOString().split('T')[0]).length} tasks due today`,
+      icon: Clock,
+      action: () => { navigate('/my-tasks'); setOpen(false) },
       category: 'filter',
     })
     items.push({
