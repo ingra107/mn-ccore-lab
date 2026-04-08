@@ -4,6 +4,7 @@ import {
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
+  ChevronUp, ChevronDown,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CollapsibleSection from '../CollapsibleSection'
@@ -33,9 +34,11 @@ const TABS: { key: Tab; label: string; icon: typeof Circle }[] = [
 interface TaskDetailPanelProps {
   task: TaskRow | null
   onClose: () => void
+  onPrev?: () => void
+  onNext?: () => void
 }
 
-export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
+export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskDetailPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const updateTask = useUpdateTask()
   const updateStatus = useUpdateTaskStatus()
@@ -44,14 +47,16 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [copied, setCopied] = useState(false)
 
-  // Close on Escape
+  // Close on Escape, navigate on Alt+Up/Down
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
+      if (e.altKey && e.key === 'ArrowUp' && onPrev) { e.preventDefault(); onPrev() }
+      if (e.altKey && e.key === 'ArrowDown' && onNext) { e.preventDefault(); onNext() }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [onClose])
+  }, [onClose, onPrev, onNext])
 
   // Close on click outside
   useEffect(() => {
@@ -106,6 +111,27 @@ export default function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps)
             Task Detail
           </span>
           <div className="flex items-center gap-1">
+            {/* Prev/Next navigation */}
+            {(onPrev || onNext) && (
+              <div className="flex items-center mr-1">
+                <button
+                  onClick={onPrev}
+                  disabled={!onPrev}
+                  title="Previous task (Alt+↑)"
+                  style={{ background: 'none', border: 'none', cursor: onPrev ? 'pointer' : 'default', color: 'var(--slate)', padding: '2px', opacity: onPrev ? 0.5 : 0.15 }}
+                >
+                  <ChevronUp size={14} />
+                </button>
+                <button
+                  onClick={onNext}
+                  disabled={!onNext}
+                  title="Next task (Alt+↓)"
+                  style={{ background: 'none', border: 'none', cursor: onNext ? 'pointer' : 'default', color: 'var(--slate)', padding: '2px', opacity: onNext ? 0.5 : 0.15 }}
+                >
+                  <ChevronDown size={14} />
+                </button>
+              </div>
+            )}
             <button
               onClick={() => {
                 const url = `${window.location.origin}/tasks?open=${task.id}`

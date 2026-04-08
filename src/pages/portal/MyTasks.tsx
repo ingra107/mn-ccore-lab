@@ -452,6 +452,14 @@ export default function MyTasks() {
         <TaskDetailPanel
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
+          onPrev={(() => {
+            const idx = displayTasks.findIndex(t => t.id === selectedTask.id)
+            return idx > 0 ? () => setSelectedTask(displayTasks[idx - 1]) : undefined
+          })()}
+          onNext={(() => {
+            const idx = displayTasks.findIndex(t => t.id === selectedTask.id)
+            return idx >= 0 && idx < displayTasks.length - 1 ? () => setSelectedTask(displayTasks[idx + 1]) : undefined
+          })()}
         />
       )}
 
