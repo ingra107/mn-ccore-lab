@@ -163,6 +163,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Inline editing
   const [editingDescription, setEditingDescription] = useState(false)
+  const [descExpanded, setDescExpanded] = useState(false)
   const [descDraft, setDescDraft] = useState(project.description ?? '')
   const descRef = useRef<HTMLTextAreaElement>(null)
 
@@ -842,32 +843,56 @@ function ProjectDetailInner({ project }: InnerProps) {
                   }}
                 />
               ) : (
-                <p
-                  onClick={() => {
-                    setDescDraft(project.description ?? '')
-                    setEditingDescription(true)
-                  }}
-                  style={{
-                    fontSize: '14px',
-                    color: project.description ? 'var(--ink)' : 'var(--slate)',
-                    lineHeight: 1.6,
-                    margin: 0,
-                    cursor: 'pointer',
-                    padding: '4px 0',
-                    opacity: project.description ? 1 : 0.5,
-                    borderBottom: '1px dashed transparent',
-                    transition: 'border-color 0.2s',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.4)')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.borderColor = 'transparent')
-                  }
-                  title="Click to edit"
-                >
-                  {project.description || 'Click to add a description...'}
-                </p>
+                <div>
+                  <p
+                    onClick={() => {
+                      setDescDraft(project.description ?? '')
+                      setEditingDescription(true)
+                    }}
+                    style={{
+                      fontSize: '14px',
+                      color: project.description ? 'var(--ink)' : 'var(--slate)',
+                      lineHeight: 1.6,
+                      margin: 0,
+                      cursor: 'pointer',
+                      padding: '4px 0',
+                      opacity: project.description ? 1 : 0.5,
+                      borderBottom: '1px dashed transparent',
+                      transition: 'border-color 0.2s',
+                      ...(!descExpanded && project.description && project.description.length > 200 ? {
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical' as const,
+                      } : {}),
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.4)')
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.borderColor = 'transparent')
+                    }
+                    title="Click to edit"
+                  >
+                    {project.description || 'Click to add a description...'}
+                  </p>
+                  {project.description && project.description.length > 200 && (
+                    <button
+                      onClick={() => setDescExpanded(!descExpanded)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        color: 'var(--teal)',
+                        padding: '4px 0',
+                        opacity: 0.8,
+                      }}
+                    >
+                      {descExpanded ? 'Show less' : 'Show more'}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 

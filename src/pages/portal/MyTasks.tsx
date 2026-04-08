@@ -329,9 +329,24 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
             <h3 className="text-xs font-normal uppercase tracking-wider" style={{ color: groupColors[label] || 'var(--ink)' }}>
               {label}
             </h3>
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.55 }}>
               {items.length}
             </span>
+            {/* Mini progress bar */}
+            {(() => {
+              const done = items.filter(t => t.completed).length
+              const total = items.length
+              if (total === 0 || done === 0) return null
+              const pct = Math.round((done / total) * 100)
+              return (
+                <div className="flex items-center gap-1.5">
+                  <div style={{ width: 40, height: 3, borderRadius: 2, background: 'var(--border-subtle)', overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', borderRadius: 2, background: 'var(--green)', transition: 'width 300ms ease' }} />
+                  </div>
+                  <span className="text-[9px]" style={{ color: 'var(--green)', opacity: 0.7 }}>{pct}%</span>
+                </div>
+              )
+            })()}
           </div>
           <TaskGridView tasks={items} onStatusChange={onStatusChange} onFieldChange={onFieldChange} onOpenDetail={onOpenDetail} />
         </div>

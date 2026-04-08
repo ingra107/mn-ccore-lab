@@ -479,6 +479,26 @@ function TaskGridRow({
               {task.source === 'meeting' ? 'meeting' : task.source === 'recurrence' ? 'recurring' : task.source}
             </span>
           )}
+          {!isDone && task.created_at && (() => {
+            const age = Math.floor((Date.now() - new Date(task.created_at).getTime()) / 86400000)
+            if (age < 14) return null
+            return (
+              <span
+                title={`Open for ${age} days`}
+                style={{
+                  fontSize: '9px',
+                  padding: '1px 5px',
+                  borderRadius: '8px',
+                  backgroundColor: age > 30 ? 'rgba(122,0,25,0.1)' : 'rgba(194,65,12,0.1)',
+                  color: age > 30 ? 'var(--maroon)' : 'var(--orange)',
+                  flexShrink: 0,
+                  lineHeight: '14px',
+                }}
+              >
+                {age}d
+              </span>
+            )
+          })()}
         </div>
       </div>
 

@@ -222,6 +222,36 @@ export default function MeetingDetail() {
           <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.3, marginTop: '1.5rem' }} />
         </motion.div>
 
+        {/* Projects discussed — derived from action items' project_id */}
+        {(() => {
+          const projectSlugs = [...new Set(actionItems.filter(a => a.project_id).map(a => a.project_id!))]
+          if (projectSlugs.length === 0) return null
+          return (
+            <div className="flex items-center gap-2 mt-4 flex-wrap">
+              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500 }}>
+                Projects discussed
+              </span>
+              {projectSlugs.map((slug: string) => (
+                <a
+                  key={slug}
+                  href={`/projects/${slug}`}
+                  style={{
+                    fontSize: '11px',
+                    padding: '2px 8px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(45,138,138,0.08)',
+                    color: 'var(--teal)',
+                    textDecoration: 'none',
+                    fontWeight: 500,
+                  }}
+                >
+                  {slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                </a>
+              ))}
+            </div>
+          )
+        })()}
+
         {/* Two-column: Agenda + Action Items (action items first on mobile) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
           {/* Left: Agenda (order-2 on mobile so actions show first) */}
