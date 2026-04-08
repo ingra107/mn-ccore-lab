@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import PartySocket from 'partysocket'
 
-// WebSocket host for Durable Object — set after deploying hub-realtime Worker
-const WS_HOST = import.meta.env.VITE_WS_HOST || ''
+// WebSocket host for Durable Object
+const WS_HOST = import.meta.env.VITE_WS_HOST || 'hub-realtime.nicholas-ingraham.workers.dev'
 
 export function useRealtimeSync() {
   const queryClient = useQueryClient()
