@@ -522,6 +522,27 @@ function TaskGridRow({
               </span>
             )
           })()}
+          {task.project_id && (
+            <span
+              style={{
+                fontSize: '9px',
+                padding: '1px 5px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(45,138,138,0.06)',
+                color: 'var(--teal)',
+                flexShrink: 0,
+                lineHeight: '14px',
+                opacity: 0.7,
+                maxWidth: '100px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+              title={task.project_id}
+            >
+              {task.project_id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).slice(0, 20)}
+            </span>
+          )}
         </div>
       </div>
 
@@ -586,6 +607,18 @@ function TaskGridRow({
           )
         }}
       />
+      {task.status === 'in_progress' && task.created_at && (() => {
+        const days = Math.floor((Date.now() - new Date(task.created_at).getTime()) / 86400000)
+        if (days < 7) return null
+        return (
+          <span
+            title={`In progress for ${days} days — consider updating`}
+            style={{ fontSize: '8px', color: 'var(--orange)', opacity: 0.7, marginTop: '1px' }}
+          >
+            ⚠ {days}d
+          </span>
+        )
+      })()}
       </div>
 
       {/* Priority — inline dropdown */}

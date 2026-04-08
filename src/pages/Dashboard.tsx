@@ -15,6 +15,7 @@ import GrantTimelineCard from '../components/dashboard/GrantTimelineCard'
 import CLIFMiniCard from '../components/dashboard/CLIFMiniCard'
 import TopicBubblesCard from '../components/dashboard/TopicBubblesCard'
 import ActionBoardCard from '../components/dashboard/ActionBoardCard'
+import YourWeekCard from '../components/dashboard/YourWeekCard'
 import ProjectHealthCard from '../components/dashboard/ProjectHealthCard'
 import MyItemsCard from '../components/dashboard/MyItemsCard'
 import TeamPulseCard from '../components/dashboard/TeamPulseCard'
@@ -48,6 +49,7 @@ const CARD_TABS: Record<string, DashboardTab[]> = {
 
 // Card registry — order matters for default layout
 const CARD_REGISTRY = [
+  { id: 'your-week', label: 'Your Week', component: YourWeekCard, defaultVisible: true },
   { id: 'action-board', label: 'Action Board', component: ActionBoardCard, defaultVisible: true },
   { id: 'upcoming', label: 'Upcoming Meeting', component: UpcomingCard, defaultVisible: true },
   { id: 'project-health', label: 'Project Health', component: ProjectHealthCard, defaultVisible: true },
@@ -67,7 +69,7 @@ const PINNED_KEY = 'mnccore-dashboard-pinned'
 const DEFAULTS_VERSION_KEY = 'mnccore-dashboard-version'
 const CLICKS_KEY = 'mnccore-dashboard-clicks'
 const TAB_KEY = 'mnccore-dashboard-tab'
-const CURRENT_DEFAULTS_VERSION = 2 // bump to reset localStorage to new defaults
+const CURRENT_DEFAULTS_VERSION = 3 // bump to reset localStorage to new defaults
 
 // ── Adaptive sorting helpers ──────────────────────────────
 
