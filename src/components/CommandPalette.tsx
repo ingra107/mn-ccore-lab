@@ -546,6 +546,9 @@ export default function CommandPalette() {
           <span>↵ select</span>
           <span>esc close</span>
           {!isProjectMode && <span>/ projects</span>}
+          <span style={{ opacity: 0.4 }}>
+            {tasks.filter(t => !t.completed).length} tasks · {projects.length} projects
+          </span>
           <span className="ml-auto flex items-center gap-1">
             <Command size={9} />K to toggle
           </span>

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Circle, CheckCircle2, Clock, Ban, ChevronRight,
-  Check, Copy, Link, Archive, Eye, ArrowRight, AlarmClock,
+  Check, Copy, Link, Archive, Eye, ArrowRight, AlarmClock, ExternalLink,
 } from 'lucide-react'
 import type { TaskRow } from '../../lib/api'
 import type { ContextMenuState } from '../../hooks/useContextMenu'
@@ -411,6 +411,16 @@ export default function TaskContextMenu({
       )}
 
       <div style={dividerStyles} />
+
+      {/* Open in new tab */}
+      <MenuItem onClick={() => handleAction(() => {
+        window.open(`/tasks?open=${task.id}`, '_blank')
+      })}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <ExternalLink size={13} style={{ opacity: 0.5 }} />
+          Open in new tab
+        </span>
+      </MenuItem>
 
       {/* Copy task title */}
       <MenuItem onClick={() => handleAction(() => { copyToClipboard(task.title || task.description) })}>
