@@ -39,6 +39,19 @@ export default function Network() {
   const [graphNodes, setGraphNodes] = useState<NetworkNode[]>([])
   const [graphEdges, setGraphEdges] = useState<NetworkEdge[]>([])
 
+  // Network stats
+  const networkStats = useMemo(() => {
+    if (graphNodes.length === 0) return null
+    const avgConnections = graphNodes.length > 0
+      ? (graphEdges.length * 2 / graphNodes.length).toFixed(1)
+      : '0'
+    const maxNode = graphNodes.reduce((best, n) => {
+      const count = graphEdges.filter(e => e.source === n.id || e.target === n.id).length
+      return count > (best.count || 0) ? { name: n.name, count } : best
+    }, { name: '', count: 0 })
+    return { nodes: graphNodes.length, edges: graphEdges.length, avgConnections, hub: maxNode.name }
+  }, [graphNodes, graphEdges])
+
   // Filter publications based on current filter state
   const filteredPublications = useMemo(() => {
     return publishedPubs.filter((pub) => {
@@ -113,15 +126,26 @@ export default function Network() {
               Collaboration Network
             </h1>
           </div>
-          <p
-            className="hidden sm:block text-xs"
-            style={{
-              color: 'rgba(255, 255, 255, 0.35)',
-              letterSpacing: '0.05em',
-            }}
-          >
-            {filteredPublications.length} papers &middot; click nodes & edges to explore
-          </p>
+          <div className="hidden sm:flex items-center gap-4">
+            {networkStats && (
+              <div className="flex items-center gap-3 text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                <span><strong style={{ color: 'rgba(45,138,138,0.8)' }}>{networkStats.nodes}</strong> authors</span>
+                <span>&middot;</span>
+                <span><strong style={{ color: 'rgba(201,168,76,0.8)' }}>{networkStats.edges}</strong> connections</span>
+                <span>&middot;</span>
+                <span>{networkStats.avgConnections} avg</span>
+                {networkStats.hub && (
+                  <>
+                    <span>&middot;</span>
+                    <span>Hub: <strong style={{ color: 'rgba(255,255,255,0.5)' }}>{networkStats.hub}</strong></span>
+                  </>
+                )}
+              </div>
+            )}
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em' }}>
+              {filteredPublications.length} papers
+            </p>
+          </div>
         </div>
 
         {/* Filters */}

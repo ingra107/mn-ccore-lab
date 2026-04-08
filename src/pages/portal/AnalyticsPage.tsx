@@ -215,6 +215,18 @@ export default function AnalyticsPage() {
         <motion.div variants={staggerItem}><MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} color="var(--gold)" /></motion.div>
       </motion.div>
 
+      {/* Lab health summary */}
+      {health && (
+        <div className="mt-3 flex items-center gap-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+          <span>Lab health:</span>
+          <span style={{ color: 'var(--green)' }}>{health.healthy} healthy</span>
+          {(health.needs_attention || 0) > 0 && <span style={{ color: 'var(--gold)' }}>{health.needs_attention} need attention</span>}
+          {((health.at_risk || 0) + (health.critical || 0)) > 0 && <span style={{ color: 'var(--maroon)' }}>{(health.at_risk || 0) + (health.critical || 0)} at risk</span>}
+          <span>&middot;</span>
+          <span>Net this week: {weekStats.completed - weekStats.created > 0 ? '+' : ''}{weekStats.completed - weekStats.created} tasks ({weekStats.completed} done, {weekStats.created} created)</span>
+        </div>
+      )}
+
       {/* Attention Required — positive empty state when clear */}
       {weekStats.overdue > 0 ? (
         <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'var(--maroon)', borderLeftWidth: 3 }}>

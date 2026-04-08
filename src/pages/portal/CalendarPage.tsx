@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Calendar, ChevronLeft, ChevronRight, Users, CheckSquare, Diamond, Download } from 'lucide-react'
@@ -77,6 +77,19 @@ export default function CalendarPage() {
   const goToToday = () => setCurrentDate(new Date())
 
   const headerLabel = view === 'month' ? monthLabel : view === 'week' ? weekLabel : view === 'day' ? dayLabel : monthLabel
+
+  // Keyboard navigation: arrow keys for prev/next, T for today
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (e.key === 'ArrowLeft') { e.preventDefault(); goToPrev() }
+      if (e.key === 'ArrowRight') { e.preventDefault(); goToNext() }
+      if (e.key === 't' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); goToToday() }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  })
 
   // iCal export
   const exportICal = () => {
