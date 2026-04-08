@@ -454,6 +454,15 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 | Project Health card shows 0s | Check dashboard card data binding |
 | Schema migration gap (v21+ not applied) | Run pending migrations via admin endpoint |
 
+### SYNC PIPELINE
+| Bug | Severity | Fix |
+|-----|----------|-----|
+| task_updates table has NO sync handler | CRITICAL | Add pull handler to sync_d1_pull.py for /api/tasks/:id/updates |
+| Push state not updated on sync-bulk failure | HIGH | Fix sync_d1_push.py:365-378 — update state even if pushed=0 |
+| No try/except around resp.json() in push | HIGH | Wrap sync_d1_push.py:368 in try/except |
+| Hub-created tasks can get NULL project_id | MEDIUM | Log warning when slug_map misses, queue for re-link |
+| Pull silently returns [] on network error | MEDIUM | Add explicit failure logging/alerting in d1_get() |
+
 ## Session Notes
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
 
