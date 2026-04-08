@@ -1,9 +1,11 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw } from 'lucide-react'
+import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
+import { useMeetingsApi } from '../hooks/useApiData'
+import { formatMediumDate } from '../lib/dateUtils'
 import { getUserRole, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
 import PageTooltip from '../components/PageTooltip'
@@ -129,6 +131,15 @@ export default function Dashboard() {
   const { user } = useAuth()
   const role = getUserRole(user?.email)
   const roleCards = useMemo(() => ROLE_DEFAULTS[role].dashboardCards, [role])
+  const { data: meetings = [] } = useMeetingsApi()
+
+  // Find next upcoming meeting (today or tomorrow)
+  const upcomingMeeting = useMemo(() => {
+    const now = new Date()
+    const today = now.toISOString().split('T')[0]
+    const tomorrow = new Date(now.getTime() + 86400000).toISOString().split('T')[0]
+    return meetings.find(m => m.date === today || m.date === tomorrow)
+  }, [meetings])
 
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [showMore, setShowMore] = useState(false)
@@ -386,6 +397,36 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Meeting Prep Banner */}
+        {upcomingMeeting && (
+          <Link
+            to={`/meetings/${upcomingMeeting.id}/prep`}
+            className="flex items-center gap-3 mb-4 px-4 py-3 rounded-xl transition-all"
+            style={{
+              background: 'linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(45,138,138,0.06) 100%)',
+              border: '1px solid rgba(201,168,76,0.2)',
+              textDecoration: 'none',
+              color: 'var(--ink)',
+            }}
+          >
+            <Clock size={18} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+            <div className="flex-1">
+              <div style={{ fontSize: '13px', fontWeight: 500 }}>
+                {upcomingMeeting.date === new Date().toISOString().split('T')[0] ? 'Meeting today' : 'Meeting tomorrow'}: {upcomingMeeting.title}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
+                {formatMediumDate(upcomingMeeting.date)}
+              </div>
+            </div>
+            <span
+              className="px-3 py-1 rounded-lg text-[11px] font-medium"
+              style={{ backgroundColor: 'var(--gold)', color: '#0f1923' }}
+            >
+              Prepare
+            </span>
+          </Link>
         )}
 
         {/* Quick Actions */}

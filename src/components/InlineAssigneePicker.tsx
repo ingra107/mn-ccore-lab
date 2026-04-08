@@ -9,6 +9,7 @@ import { getPersonInfo, getMemberBySlug, directors, seniorMentors, facultyCollab
 interface InlineAssigneePickerProps {
   value: string
   onChange: (slug: string) => void
+  compact?: boolean
 }
 
 // Build member list from team data
@@ -28,7 +29,7 @@ function getAssignableMembers() {
   })
 }
 
-export default function InlineAssigneePicker({ value, onChange }: InlineAssigneePickerProps) {
+export default function InlineAssigneePicker({ value, onChange, compact }: InlineAssigneePickerProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const person = getPersonInfo(value)
@@ -94,16 +95,18 @@ export default function InlineAssigneePicker({ value, onChange }: InlineAssignee
             className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]"
           />
         </div>
-        <span style={{
-          fontSize: '12px',
-          color: 'var(--slate)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap' as const,
-          maxWidth: '72px',
-        }}>
-          {person.name.split(' ')[0]}
-        </span>
+        {!compact && (
+          <span style={{
+            fontSize: '12px',
+            color: 'var(--slate)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap' as const,
+            maxWidth: '72px',
+          }}>
+            {person.name.split(' ')[0]}
+          </span>
+        )}
         <ChevronDown size={10} style={{ opacity: 0.3 }} />
       </button>
 

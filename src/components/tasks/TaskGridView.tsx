@@ -551,6 +551,7 @@ function TaskGridRow({
         <InlineAssigneePicker
           value={task.assignee}
           onChange={(slug) => onFieldChange(task.id, 'assignee', slug)}
+          compact
         />
         {/* Unacknowledged indicator — gold dot when assigned but not acknowledged */}
         {task.assignee && !task.acknowledged_at && !isDone && (
