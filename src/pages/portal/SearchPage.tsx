@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Search, CheckSquare, FolderKanban, Users, Lightbulb,
-  MessageSquare, Activity, ArrowRight, X,
+  MessageSquare, Activity, ArrowRight, X, Clock, Trash2,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -30,15 +30,44 @@ const typeConfig: Record<string, { icon: typeof Search; color: string; label: st
   activity: { icon: Activity, color: 'var(--slate)', label: 'Activity' },
 }
 
+const RECENT_KEY = 'mnccore-recent-searches'
+const MAX_RECENT = 5
+
+function getRecentSearches(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+function saveRecentSearch(q: string) {
+  const recent = getRecentSearches().filter(s => s !== q)
+  recent.unshift(q)
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, MAX_RECENT)))
+}
+
+function clearRecentSearches() {
+  localStorage.removeItem(RECENT_KEY)
+}
+
 export default function SearchPage() {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const [recentSearches, setRecentSearches] = useState(getRecentSearches)
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 300)
     return () => clearTimeout(timer)
   }, [query])
+
+  // Save search when results come back
+  useEffect(() => {
+    if (debouncedQuery.length >= 2) {
+      saveRecentSearch(debouncedQuery)
+      setRecentSearches(getRecentSearches())
+    }
+  }, [debouncedQuery])
 
   useEffect(() => { inputRef.current?.focus() }, [])
 
@@ -115,6 +144,37 @@ export default function SearchPage() {
           <p className="text-[10px] mt-4" style={{ color: 'var(--slate)', opacity: 0.3 }}>
             Powered by D1 full-text search
           </p>
+
+          {/* Recent searches */}
+          {recentSearches.length > 0 && (
+            <div className="mt-6 w-full max-w-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+                  Recent Searches
+                </span>
+                <button
+                  onClick={() => { clearRecentSearches(); setRecentSearches([]) }}
+                  className="text-[10px] flex items-center gap-1 transition-colors"
+                  style={{ color: 'var(--slate)', opacity: 0.3, background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  <Trash2 size={9} /> Clear
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {recentSearches.map(s => (
+                  <button
+                    key={s}
+                    onClick={() => { setQuery(s); inputRef.current?.focus() }}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs transition-colors hover:border-[var(--teal)]"
+                    style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
+                  >
+                    <Clock size={10} style={{ opacity: 0.4 }} />
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <>

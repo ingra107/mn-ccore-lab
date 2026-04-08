@@ -128,6 +128,13 @@ export default function Personal() {
   // Unread notifications
   const unreadNotifications = useMemo(() => notifications.filter((n) => !n.read), [notifications])
 
+  // Completions this week
+  const completedThisWeek = useMemo(() => {
+    const now = new Date()
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
+    return myTasks.filter(t => t.completed && t.completed_at && new Date(t.completed_at) >= weekStart).length
+  }, [myTasks])
+
   // Pending commitments
   const pendingCommitments = useMemo(() => commitments.filter((c) => c.status !== 'completed'), [commitments])
 
@@ -212,9 +219,9 @@ export default function Personal() {
           icon={<User size={20} />}
           title={person ? `${person.name.split(' ')[0]}'s Hub` : 'My Hub'}
           subtitle={overdueTasks.length > 0
-            ? `${overdueTasks.length} overdue`
+            ? `${overdueTasks.length} overdue · ${completedThisWeek} done this week`
             : pendingTasks.length > 0
-              ? `${pendingTasks.length} active task${pendingTasks.length !== 1 ? 's' : ''}`
+              ? `${pendingTasks.length} active · ${completedThisWeek} done this week`
               : 'All caught up'}
         />
         {showRoleSelector && (

@@ -361,6 +361,31 @@ export default function MyTasks() {
         ))}
       </div>
 
+      {/* Status distribution bar */}
+      {pendingCount > 0 && (
+        <div className="mt-3 flex items-center gap-2">
+          <div className="flex-1 flex rounded-full overflow-hidden" style={{ height: 4, background: 'var(--border-subtle)' }}>
+            {(() => {
+              const active = tasks.filter(t => !t.completed)
+              const todo = active.filter(t => t.status === 'todo').length
+              const inProgress = active.filter(t => t.status === 'in_progress').length
+              const blocked = active.filter(t => t.status === 'blocked').length
+              const total = active.length || 1
+              return (
+                <>
+                  {inProgress > 0 && <div style={{ width: `${(inProgress / total) * 100}%`, background: 'var(--teal)', transition: 'width 300ms ease' }} />}
+                  {todo > 0 && <div style={{ width: `${(todo / total) * 100}%`, background: 'var(--slate)', opacity: 0.4, transition: 'width 300ms ease' }} />}
+                  {blocked > 0 && <div style={{ width: `${(blocked / total) * 100}%`, background: 'var(--maroon)', transition: 'width 300ms ease' }} />}
+                </>
+              )
+            })()}
+          </div>
+          <span className="text-[9px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+            {tasks.filter(t => !t.completed && t.status === 'in_progress').length} active
+          </span>
+        </div>
+      )}
+
       {/* Focus Next recommendation */}
       {focusNext && quickFilter === 'all' && !showCompleted && (
         <button
