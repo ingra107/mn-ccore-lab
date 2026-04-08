@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, CalendarPlus, Link2, Plus } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, Link2, Plus, MessageSquare } from 'lucide-react'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
@@ -326,6 +326,8 @@ function TaskGridRow({
   const titleInputRef = useRef<HTMLInputElement>(null)
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
+  const [quickComment, setQuickComment] = useState(false)
+  const [commentDraft, setCommentDraft] = useState('')
   const [completingAnim, setCompletingAnim] = useState(false)
   const [rowFadeAnim, setRowFadeAnim] = useState(false)
   const prevStatusRef = useRef(task.status)
@@ -613,6 +615,13 @@ function TaskGridRow({
       <div className="task-grid-row-actions" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2px' }}>
         <button
           className="task-grid-row-action-btn"
+          onClick={() => setQuickComment(!quickComment)}
+          title="Quick comment"
+        >
+          <MessageSquare size={12} />
+        </button>
+        <button
+          className="task-grid-row-action-btn"
           onClick={() => {
             const prev = task.status
             onStatusChange(task.id, 'done')
@@ -622,14 +631,41 @@ function TaskGridRow({
         >
           <Archive size={12} />
         </button>
-        <button
-          className="task-grid-row-action-btn"
-          title="Add to Meeting (coming soon)"
-          style={{ opacity: 0.5 }}
-        >
-          <CalendarPlus size={12} />
-        </button>
       </div>
+
+      {/* Quick comment input — below the row */}
+      {quickComment && (
+        <div
+          style={{ gridColumn: '1 / -1', padding: '4px 16px 8px 48px' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex gap-2">
+            <input
+              autoFocus
+              value={commentDraft}
+              onChange={(e) => setCommentDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && commentDraft.trim()) {
+                  fetch(`/api/tasks/${task.id}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: commentDraft.trim() }),
+                  })
+                  setCommentDraft('')
+                  setQuickComment(false)
+                  showUndo('Comment added', () => {})
+                }
+                if (e.key === 'Escape') { setQuickComment(false); setCommentDraft('') }
+                e.stopPropagation()
+              }}
+              onBlur={() => { if (!commentDraft.trim()) { setQuickComment(false); setCommentDraft('') } }}
+              placeholder="Add a quick note..."
+              className="flex-1 text-[12px] px-2.5 py-1.5 rounded-lg border bg-transparent"
+              style={{ color: 'var(--ink)', borderColor: 'var(--teal)', outline: 'none' }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

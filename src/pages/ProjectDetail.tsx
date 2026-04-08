@@ -126,6 +126,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   })()
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [showCreateTask, setShowCreateTask] = useState(false)
+  const [taskFilter, setTaskFilter] = useState<'all' | 'active' | 'done' | 'blocked'>('active')
   const createTask = useCreateTask()
 
   // Revisions for this project
@@ -1142,10 +1143,29 @@ function ProjectDetailInner({ project }: InnerProps) {
       {/* ── TASKS TAB ── */}
       {activeTab === 'tasks' && (
         <div className="table-container" style={{ padding: '16px 20px', marginBottom: '2rem' }}>
-          <div className="flex items-center justify-between mb-4">
-            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Project Tasks
-            </span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              {(['all', 'active', 'done', 'blocked'] as const).map(f => {
+                const count = f === 'all' ? projectTasks.length : f === 'active' ? pendingTasks.length : f === 'done' ? completedTasks.length : projectTasks.filter(t => t.status === 'blocked').length
+                if (f !== 'all' && count === 0) return null
+                return (
+                  <button
+                    key={f}
+                    onClick={() => setTaskFilter(f)}
+                    className="text-[10px] px-2.5 py-1 rounded-full font-medium transition-colors"
+                    style={{
+                      background: taskFilter === f ? 'rgba(45,138,138,0.1)' : 'none',
+                      color: taskFilter === f ? 'var(--teal)' : 'var(--slate)',
+                      border: `1px solid ${taskFilter === f ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                      cursor: 'pointer',
+                      opacity: taskFilter === f ? 1 : 0.6,
+                    }}
+                  >
+                    {f.charAt(0).toUpperCase() + f.slice(1)} {count > 0 ? `(${count})` : ''}
+                  </button>
+                )
+              })}
+            </div>
             <button
               onClick={() => setShowCreateTask(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
@@ -1155,60 +1175,32 @@ function ProjectDetailInner({ project }: InnerProps) {
               New Task
             </button>
           </div>
-          {pendingTasks.length === 0 && completedTasks.length === 0 ? (
-            <div className="text-center py-12">
-              <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 12px' }} />
-              <p style={{ fontSize: '14px', color: 'var(--slate)', opacity: 0.55 }}>
-                No tasks for this project. Create one above.
-              </p>
-            </div>
-          ) : (
-            <>
-              {pendingTasks.length > 0 && (
-                <div className="flex flex-col gap-2 mb-4">
-                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Active ({pendingTasks.length})
-                  </span>
-                  {pendingTasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onStatusChange={(id, status) => {
-                        const prev = task.status
-                        updateTaskStatus.mutate({ id, status })
-                        showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
-                      }}
-                      onClick={() => setSelectedTask(task)}
-                    />
-                  ))}
-                </div>
-              )}
-              {completedTasks.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Done ({completedTasks.length})
-                  </span>
-                  {completedTasks.slice(0, 5).map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onStatusChange={(id, status) => {
-                        const prev = task.status
-                        updateTaskStatus.mutate({ id, status })
-                        showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
-                      }}
-                      onClick={() => setSelectedTask(task)}
-                    />
-                  ))}
-                  {completedTasks.length > 5 && (
-                    <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, paddingLeft: '4px' }}>
-                      +{completedTasks.length - 5} more completed
-                    </span>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+          {(() => {
+            const filtered = taskFilter === 'all' ? projectTasks : taskFilter === 'active' ? pendingTasks : taskFilter === 'done' ? completedTasks : projectTasks.filter(t => t.status === 'blocked')
+            return filtered.length === 0 ? (
+              <div className="text-center py-12">
+                <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 12px' }} />
+                <p style={{ fontSize: '14px', color: 'var(--slate)', opacity: 0.55 }}>
+                  {taskFilter === 'active' ? 'No active tasks.' : taskFilter === 'done' ? 'No completed tasks.' : 'No tasks for this project.'}
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {filtered.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onStatusChange={(id, status) => {
+                      const prev = task.status
+                      updateTaskStatus.mutate({ id, status })
+                      showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
+                    }}
+                    onClick={() => setSelectedTask(task)}
+                  />
+                ))}
+              </div>
+            )
+          })()}
         </div>
       )}
 
