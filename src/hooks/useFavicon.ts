@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useAuth } from './useAuth'
+import { useUnreadCount } from './useNotifications'
 
 const SECTION_EMOJIS: Record<string, string> = {
   '/dashboard': '📊',
@@ -24,7 +26,7 @@ const SECTION_EMOJIS: Record<string, string> = {
 
 let originalFavicon: string | null = null
 
-function setEmojiFavicon(emoji: string) {
+function setEmojiFavicon(emoji: string, badge?: number) {
   const canvas = document.createElement('canvas')
   canvas.width = 64
   canvas.height = 64
@@ -35,6 +37,19 @@ function setEmojiFavicon(emoji: string) {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText(emoji, 32, 36)
+
+  // Draw notification badge
+  if (badge && badge > 0) {
+    ctx.fillStyle = '#dc2626'
+    ctx.beginPath()
+    ctx.arc(52, 12, 12, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 14px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(badge > 9 ? '9+' : String(badge), 52, 13)
+  }
 
   let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
   if (!link) {
@@ -59,6 +74,9 @@ function restoreFavicon() {
  */
 export function useFavicon() {
   const { pathname } = useLocation()
+  const { user } = useAuth()
+  const userSlug = user?.email?.split('@')[0]?.toLowerCase() || ''
+  const { data: unreadCount = 0 } = useUnreadCount(userSlug)
 
   useEffect(() => {
     // Find matching section (longest prefix match)
@@ -72,13 +90,13 @@ export function useFavicon() {
     }
 
     if (emoji) {
-      setEmojiFavicon(emoji)
+      setEmojiFavicon(emoji, unreadCount)
     } else if (pathname.startsWith('/publications')) {
-      setEmojiFavicon('📄')
+      setEmojiFavicon('📄', unreadCount)
     } else {
       restoreFavicon()
     }
 
     return () => restoreFavicon()
-  }, [pathname])
+  }, [pathname, unreadCount])
 }

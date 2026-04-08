@@ -1166,14 +1166,28 @@ function ProjectDetailInner({ project }: InnerProps) {
                 )
               })}
             </div>
-            <button
-              onClick={() => setShowCreateTask(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-              style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
-            >
-              <Plus size={13} />
-              New Task
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  const lines = pendingTasks.map(t => `- [ ] ${t.title || t.description}${t.due_date ? ` (due ${t.due_date})` : ''}`)
+                  navigator.clipboard.writeText(lines.join('\n'))
+                }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors border"
+                style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.6 }}
+                title="Copy task list to clipboard"
+              >
+                <FileText size={11} />
+                Copy
+              </button>
+              <button
+                onClick={() => setShowCreateTask(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+                style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+              >
+                <Plus size={13} />
+                New Task
+              </button>
+            </div>
           </div>
           {(() => {
             const filtered = taskFilter === 'all' ? projectTasks : taskFilter === 'active' ? pendingTasks : taskFilter === 'done' ? completedTasks : projectTasks.filter(t => t.status === 'blocked')

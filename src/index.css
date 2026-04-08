@@ -540,8 +540,14 @@ a:hover {
     break-inside: avoid;
   }
 
+  /* Hide top bar, modals, tooltips */
+  header, .fixed, [role="dialog"], [role="status"] {
+    display: none !important;
+  }
+
   /* Page breaks */
   h1, h2, h3 { break-after: avoid; }
+  .table-container { break-inside: avoid; }
   .bento-grid { display: block !important; }
   .bento-grid > * {
     display: block !important;
