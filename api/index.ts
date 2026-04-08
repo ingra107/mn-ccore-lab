@@ -586,9 +586,9 @@ export default {
         }
 
         // POST /api/tasks/:id/updates — post task note/update
-        const taskUpdateMatch = path.match(/^\/api\/tasks\/([^/]+)\/updates$/);
-        if (request.method === 'POST' && taskUpdateMatch) {
-          return await handlePostTaskUpdate(taskUpdateMatch[1], request, user, env);
+        const taskNoteMatch = path.match(/^\/api\/tasks\/([^/]+)\/updates$/);
+        if (request.method === 'POST' && taskNoteMatch) {
+          return await handlePostTaskUpdate(taskNoteMatch[1], request, user, env);
         }
 
         // POST /api/tasks/:id/subtasks — create subtask
