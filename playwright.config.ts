@@ -9,6 +9,7 @@ export default defineConfig({
     headless: true,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
+    reducedMotion: 'reduce',
   },
   reporter: [
     ['list'],

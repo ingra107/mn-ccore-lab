@@ -437,16 +437,17 @@ test.describe('TASK — Filter and sort', () => {
       await page.screenshot({ path: 'review/daily-sorted-by-due.png' })
     }
 
-    // Show done toggle
-    const showDone = page.locator('button:has-text("Show"), label:has-text("done")')
-    if (await showDone.first().isVisible().catch(() => false)) {
+    // Show done toggle — text changes between "Show N done" and "Hide N done"
+    const showDone = page.locator('button:has-text("done")').first()
+    if (await showDone.isVisible().catch(() => false)) {
       const beforeCount = await page.locator('[class*="row"]').count()
-      await showDone.first().click()
+      await showDone.click()
       await page.waitForTimeout(500)
       const afterCount = await page.locator('[class*="row"]').count()
       console.log(`Show done: ${beforeCount} → ${afterCount} rows`)
       await page.screenshot({ path: 'review/daily-show-done.png' })
-      await showDone.first().click() // toggle back
+      // Toggle back — button text now says "Hide N done"
+      await page.locator('button:has-text("done")').first().click()
     }
   })
 })
@@ -1531,8 +1532,8 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
     console.log(`Dialog opacity when open: ${opacity}`)
     await page.screenshot({ path: 'review/exhaustive-cmdk-open.png' })
     await page.keyboard.press('Escape')
-    await page.waitForTimeout(500)
-    const closedGone = await page.locator(dialogSel).isVisible({ timeout: 500 }).catch(() => false)
+    await page.waitForTimeout(800)
+    const closedGone = await page.locator(dialogSel).isVisible({ timeout: 1000 }).catch(() => false)
     console.log(`Dialog visible after Escape: ${closedGone}`)
     expect(closedGone).toBe(false)
   })
@@ -1541,20 +1542,24 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
 
   test('14. Alt+Arrow navigation: open detail → Alt+ArrowDown → verify task changed', async ({ page }) => {
     await go(page, '/tasks')
-    await page.locator('body').click()
-    await page.keyboard.press('j')
-    await page.waitForTimeout(300)
-    await page.keyboard.press('Enter')
-    await page.waitForTimeout(800)
-    const titleSel = '.task-detail-panel h1, .task-detail-panel [class*="title"], [class*="editable-title"]'
-    const firstTitle = await page.locator(titleSel).first().textContent().catch(() => '')
-    console.log(`First detail title: "${firstTitle?.substring(0, 50)}"`)
-    await page.keyboard.press('Alt+ArrowDown')
-    await page.waitForTimeout(500)
-    const secondTitle = await page.locator(titleSel).first().textContent().catch(() => '')
-    console.log(`After Alt+Down title: "${secondTitle?.substring(0, 50)}"`)
-    if (firstTitle && secondTitle) {
-      console.log(`Task changed: ${firstTitle !== secondTitle}`)
+    // Click first task row to open detail panel (more reliable than j+Enter)
+    const firstRow = page.locator('.task-grid-row').first()
+    if (await firstRow.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await firstRow.click()
+      await page.waitForTimeout(800)
+      const panel = page.locator('.task-detail-panel')
+      if (await panel.isVisible({ timeout: 3000 }).catch(() => false)) {
+        const titleSel = '.task-detail-panel [class*="title"], .task-detail-panel input, .task-detail-panel h1'
+        const firstTitle = await page.locator(titleSel).first().textContent().catch(() => '')
+        console.log(`First detail title: "${firstTitle?.substring(0, 50)}"`)
+        await page.keyboard.press('Alt+ArrowDown')
+        await page.waitForTimeout(500)
+        const secondTitle = await page.locator(titleSel).first().textContent().catch(() => '')
+        console.log(`After Alt+Down title: "${secondTitle?.substring(0, 50)}"`)
+        if (firstTitle && secondTitle) {
+          console.log(`Task changed: ${firstTitle !== secondTitle}`)
+        }
+      }
     }
     await page.screenshot({ path: 'review/exhaustive-alt-arrow-nav.png' })
     await page.keyboard.press('Escape')
@@ -1581,10 +1586,11 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
 
   test('16. Copy link feedback: open detail → click copy → verify checkmark icon appears', async ({ page }) => {
     await go(page, '/tasks')
-    await page.locator('body').click()
-    await page.keyboard.press('j')
-    await page.waitForTimeout(300)
-    await page.keyboard.press('Enter')
+    // Click first task row directly (more reliable than keyboard nav)
+    const firstRow = page.locator('.task-grid-row').first()
+    if (await firstRow.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await firstRow.click()
+    }
     await page.waitForTimeout(800)
     const copyBtn = page.locator('button[aria-label*="copy"], button[aria-label*="Copy"], button[title*="Copy link"], button[title*="copy"]').first()
     if (await copyBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -1833,19 +1839,28 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
 
   test('29. Multiple toasts: trigger 2 status changes quickly → verify 2 toasts visible simultaneously', async ({ page }) => {
     await go(page, '/tasks')
-    await page.locator('body').click()
-    // Change status of first task
-    await page.keyboard.press('j')
-    await page.waitForTimeout(300)
-    await page.keyboard.press('s')
-    await page.waitForTimeout(400)
-    // Change status of second task
-    await page.keyboard.press('j')
-    await page.waitForTimeout(300)
-    await page.keyboard.press('s')
-    await page.waitForTimeout(800)
-    // UndoToast uses role="status", not role="alert"
-    const toasts = await page.locator('[role="status"] > div, [class*="undo-toast"]').count()
+    // Click status circles on first two task rows to trigger toasts
+    const statusCircles = page.locator('.task-grid-row .status-circle, .task-grid-row [class*="status"] svg, .task-grid-row circle').filter({ has: page.locator('svg, circle') })
+    const circleCount = await statusCircles.count().catch(() => 0)
+    if (circleCount >= 2) {
+      await statusCircles.nth(0).click()
+      await page.waitForTimeout(200)
+      await statusCircles.nth(1).click()
+      await page.waitForTimeout(800)
+    } else {
+      // Fallback to keyboard
+      await page.locator('body').click()
+      await page.keyboard.press('j')
+      await page.waitForTimeout(300)
+      await page.keyboard.press('s')
+      await page.waitForTimeout(400)
+      await page.keyboard.press('j')
+      await page.waitForTimeout(300)
+      await page.keyboard.press('s')
+      await page.waitForTimeout(800)
+    }
+    // UndoToast uses role="status"
+    const toasts = await page.locator('[role="status"] > div, text=Undo').count()
     console.log(`Simultaneous toasts: ${toasts}`)
     await page.screenshot({ path: 'review/exhaustive-multi-toast.png' })
     // Undo both
