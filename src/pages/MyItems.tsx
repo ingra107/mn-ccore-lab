@@ -609,8 +609,8 @@ export default function MyItems() {
 
   const [showCompleted, setShowCompleted] = useState(false)
 
-  // Derive user slug from email
-  const userSlug = user.email ? user.email.split('@')[0] : ''
+  // Derive user slug from email (guard against undefined user)
+  const userSlug = user?.email ? user.email.split('@')[0] : ''
 
   // Data hooks
   const { data: allActionItems = [] } = useActionItems(
@@ -725,7 +725,7 @@ export default function MyItems() {
     return <SignInPrompt />
   }
 
-  const displayName = user.name || userSlug
+  const displayName = user?.name || userSlug
 
   return (
     <div style={{ minHeight: '100vh' }}>
