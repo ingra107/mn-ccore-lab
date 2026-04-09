@@ -422,8 +422,47 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 - **Meeting automation:** `scripts/scheduled/meeting_automation.py`
 - **Archived plans:** `Projects/mn-ccore-lab-hub/_archived/` + `Archive/Scratch/hub-plans-consolidated/`
 
+## Office of Inspection (Testing Infrastructure)
+
+**546 tests** across 4 suites. Self-updating via feature registry + scanner.
+
+| Suite | Tests | File |
+|-------|-------|------|
+| Inspection | 198 | `tests/inspection.spec.ts` |
+| Workflows | 169 | `tests/inspection-workflows.spec.ts` |
+| Daily Super-User | 131 | `tests/daily-superuser.spec.ts` |
+| Sync Pipeline | 48 | `tests/sync-pipeline.test.py` |
+
+**Run:** `bash scripts/run-tests.sh all` (quick/ui/sync/all modes)
+**Scan for gaps:** `python scripts/inspection-scanner.py --commits 5`
+**Registry:** `tests/feature-registry.json` (353 features, 302 covered = 85.6%)
+**Guide:** `TESTING.md`
+**Skill:** `/test-hub` (scan, run, generate, update, report)
+
+## Phase 29: New Features (2026-04-09)
+
+Schema v37 deployed. 9 features built:
+
+1. **Pomodoro Stats Card** — focus hours, streak, top project (PomodoroStatsCard.tsx)
+2. **Key Links on Tasks** — 📂📧▶️ icons on grid + detail panel, mnccore:// protocol for local folders
+3. **Email Drafts Card** — pending count, Gmail links (EmailDraftsCard.tsx)
+4. **Proactive Brief Card** — overdue/due-today/stale/focus suggestion (ProactiveBriefCard.tsx)
+5. **Session History Sync** — brain.db sessions → D1 pb_sessions (push handler)
+6. **System Health Card** — green/amber/red indicator, sync age (SystemHealthMiniCard.tsx)
+7. **Quick Capture Bar** — dashboard top input, Ctrl+N, idea: prefix (QuickCaptureBar.tsx)
+8. **File Activity Heatmap** — GitHub-style calendar heatmap (FileActivityCard.tsx)
+9. **mnccore:// Protocol** — Windows registry handler for local folder/script links
+
+New API routes: `/api/email-drafts`, `/api/proactive-brief`, `/api/file-activity`
+New D1 tables: `email_drafts`, `file_activity_daily`
+New task columns: `key_link_1/2/3` + `_desc`
+New push handlers: pomodoro, sessions, email, file_activity, key_links, health
+
 ## Pending Sync
-<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
+- NEXT_ACTION: Fix all 55 documented bugs in one batch, run full 546-test suite, deploy once
+- STATUS: Active
+- NOTE: Phase 29 features built + deployed + schema v37 migrated. Office of Inspection (546 tests) fully operational. 55 bugs documented in Known Bugs section. Push script crash from new handlers needs immediate fix. Ready for bug fix batch.
+- LEARNING: Build tests BEFORE features, test every direction of data flow (brain.db→D1→Hub AND Hub→D1→brain.db), scan code for every interactive element not just what's obvious
 
 
 ## Known Bugs — Test-Verified (2026-04-09 full audit, 4 test suites)
