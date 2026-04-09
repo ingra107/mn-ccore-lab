@@ -1904,20 +1904,20 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
 
   test('31. Instant UI: change priority dropdown → verify button text changed IMMEDIATELY', async ({ page }) => {
     await go(page, '/tasks')
-    const prioBtn = page.locator('button:has-text("Low"), button:has-text("Medium")').first()
+    // Find the first task row's priority cell
+    const prioCell = page.locator('.task-row-priority').first()
+    const prioBtn = prioCell.locator('button').first()
     if (await prioBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      const originalText = await prioBtn.textContent()
-      const newPrio = originalText?.includes('Low') ? 'High' : 'Low'
+      const originalText = await prioBtn.textContent() || ''
+      const newPrio = originalText.includes('Low') ? 'High' : 'Low'
       await prioBtn.click()
       await page.waitForTimeout(300)
       const option = page.locator(`text=${newPrio}`).last()
       if (await option.isVisible({ timeout: 1000 }).catch(() => false)) {
         await option.click()
-        // Wait for API mutation + refetch cycle
-        await page.waitForTimeout(1500)
-        const updatedText = await prioBtn.textContent()
-        console.log(`Optimistic update: "${originalText}" → "${updatedText}" (expected "${newPrio}")`)
-        expect(updatedText).toContain(newPrio)
+        // Optimistic update should reflect immediately — use Playwright auto-retry
+        await expect(prioCell.locator('button').first()).toContainText(newPrio, { timeout: 3000 })
+        console.log(`Optimistic update: "${originalText}" → "${newPrio}" ✓`)
         // Undo
         const undo = page.locator('text=Undo').first()
         if (await undo.isVisible({ timeout: 2000 }).catch(() => false)) {

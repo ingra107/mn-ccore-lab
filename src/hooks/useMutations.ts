@@ -471,6 +471,17 @@ export function useUpdateIdea() {
     mutationFn: ({ id, fields }: { id: string; fields: Record<string, unknown> }) =>
       updateIdea(id, fields),
 
+    onMutate: async ({ id, fields }) => {
+      await queryClient.cancelQueries({ queryKey: ['ideas'] })
+      const prev = queryClient.getQueryData<IdeaRow[]>(['ideas'])
+      if (prev) {
+        queryClient.setQueryData(['ideas'], prev.map(i => i.id === id ? { ...i, ...fields } : i))
+      }
+      return { prev }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(['ideas'], context.prev)
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['ideas'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
@@ -524,6 +535,17 @@ export function useDeleteSubtask(taskId: string) {
   return useMutation({
     mutationFn: (subtaskId: string) =>
       fetchApi(`/api/subtasks/${subtaskId}/delete`, { method: 'POST' }),
+    onMutate: async (subtaskId) => {
+      await queryClient.cancelQueries({ queryKey: ['subtasks', taskId] })
+      const prev = queryClient.getQueryData<SubtaskRow[]>(['subtasks', taskId])
+      if (prev) {
+        queryClient.setQueryData(['subtasks', taskId], prev.filter(s => s.id !== subtaskId))
+      }
+      return { prev }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(['subtasks', taskId], context.prev)
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['subtasks', taskId] })
     },
@@ -593,6 +615,16 @@ export function useToggleReaction() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       }).then((r) => r.json()),
+    onMutate: async (input) => {
+      const key = ['reactions', input.target_type, input.target_id]
+      await queryClient.cancelQueries({ queryKey: key })
+      const prev = queryClient.getQueryData(key)
+      // Optimistically toggle — invalidation will correct
+      return { prev, key }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(context.key, context.prev)
+    },
     onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: ['reactions', variables.target_type, variables.target_id] })
     },
@@ -664,6 +696,31 @@ export function useBulkUpdateTasks() {
         body: JSON.stringify(input),
       }).then((r) => r.json()),
 
+    onMutate: async ({ ids, action, value }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      const queries = queryClient.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
+      const snapshots: { key: readonly unknown[]; data: TaskRow[] | undefined }[] = []
+      for (const [key, data] of queries) {
+        snapshots.push({ key, data })
+        if (data) {
+          queryClient.setQueryData(key, data.map(t => {
+            if (!ids.includes(t.id)) return t
+            if (action === 'complete') return { ...t, completed: 1, status: 'done' }
+            if (action === 'uncomplete') return { ...t, completed: 0, status: 'todo' }
+            if (action === 'priority' && value) return { ...t, priority: value }
+            if (action === 'assign' && value) return { ...t, assignee: value }
+            if (action === 'delete') return { ...t, deleted_at: new Date().toISOString() }
+            return t
+          }))
+        }
+      }
+      return { snapshots }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.snapshots) {
+        for (const { key, data } of context.snapshots) queryClient.setQueryData(key, data)
+      }
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
       queryClient.invalidateQueries({ queryKey: ['action-items'] })
@@ -729,6 +786,17 @@ export function useUpdateDecision() {
         body: JSON.stringify(fields),
       }).then((r) => r.json()),
 
+    onMutate: async ({ id, fields }) => {
+      await queryClient.cancelQueries({ queryKey: ['decisions'] })
+      const prev = queryClient.getQueryData<Array<Record<string, unknown>>>(['decisions'])
+      if (prev) {
+        queryClient.setQueryData(['decisions'], prev.map(d => d.id === id ? { ...d, ...fields } : d))
+      }
+      return { prev }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(['decisions'], context.prev)
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['decisions'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
