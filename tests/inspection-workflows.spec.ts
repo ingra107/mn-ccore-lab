@@ -1383,7 +1383,7 @@ test.describe('EDGE — Special characters and long text', () => {
   test('EDGE: Task with very long title (500 chars)', async ({ request }) => {
     const longTitle = 'A'.repeat(500) + ' — EDGE TEST DELETE'
     const res = await request.post(`${BASE}/api/tasks`, {
-      data: { title: longTitle, assignee: 'nick-ingraham', priority: 'low' }
+      data: { title: longTitle, description: 'sync test', assignee: 'nick-ingraham', priority: 'low' }
     })
     expect([200, 201, 400]).toContain(res.status()) // 400 if server validates length
   })
@@ -1505,7 +1505,7 @@ test.describe('SYNC — Status change round-trip', () => {
   test('SYNC: Change status via API → verify readback → change again → verify', async ({ request }) => {
     // Create test task
     const create = await request.post(`${BASE}/api/tasks`, {
-      data: { title: `SYNC-STATUS-${Date.now()}`, assignee: 'nick-ingraham', priority: 'low' }
+      data: { title: `SYNC-STATUS-${Date.now()}`, description: 'sync test', assignee: 'nick-ingraham', priority: 'low' }
     })
     const { data } = await create.json()
     const id = data.id
@@ -1533,7 +1533,7 @@ test.describe('SYNC — Status change round-trip', () => {
 test.describe('SYNC — Priority change round-trip', () => {
   test('SYNC: Change priority → readback matches', async ({ request }) => {
     const create = await request.post(`${BASE}/api/tasks`, {
-      data: { title: `SYNC-PRIORITY-${Date.now()}`, assignee: 'nick-ingraham', priority: 'low' }
+      data: { title: `SYNC-PRIORITY-${Date.now()}`, description: 'sync test', assignee: 'nick-ingraham', priority: 'low' }
     })
     const { data } = await create.json()
     const id = data.id
@@ -1549,7 +1549,7 @@ test.describe('SYNC — Priority change round-trip', () => {
 test.describe('SYNC — Assignee change round-trip', () => {
   test('SYNC: Change assignee → readback matches → filter by new assignee includes task', async ({ request }) => {
     const create = await request.post(`${BASE}/api/tasks`, {
-      data: { title: `SYNC-ASSIGNEE-${Date.now()}`, assignee: 'nick-ingraham', priority: 'low' }
+      data: { title: `SYNC-ASSIGNEE-${Date.now()}`, description: 'sync test', assignee: 'nick-ingraham', priority: 'low' }
     })
     const { data } = await create.json()
     const id = data.id
@@ -1609,7 +1609,7 @@ test.describe('SYNC — Bulk task operations', () => {
     const ids: string[] = []
     for (let i = 0; i < 3; i++) {
       const res = await request.post(`${BASE}/api/tasks`, {
-        data: { title: `SYNC-BULK-${i}-${Date.now()}`, assignee: 'nick-ingraham', priority: 'low' }
+        data: { title: `SYNC-BULK-${i}-${Date.now()}`, description: 'sync test', assignee: 'nick-ingraham', priority: 'low' }
       })
       const { data } = await res.json()
       ids.push(data.id)
@@ -1633,7 +1633,7 @@ test.describe('SYNC — Bulk task operations', () => {
 test.describe('SYNC — Comment and note persistence', () => {
   test('SYNC: Add comment → add note → readback in correct order', async ({ request }) => {
     const create = await request.post(`${BASE}/api/tasks`, {
-      data: { title: `SYNC-COMMENTS-${Date.now()}`, assignee: 'nick-ingraham', priority: 'low' }
+      data: { title: `SYNC-COMMENTS-${Date.now()}`, description: 'sync test', assignee: 'nick-ingraham', priority: 'low' }
     })
     const { data } = await create.json()
     const id = data.id
