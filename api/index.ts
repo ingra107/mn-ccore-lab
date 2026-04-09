@@ -50,6 +50,9 @@ import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, h
 import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRenewRegulatoryItem } from './routes/regulatory';
 import { handleGrantMilestones, handleUpcomingGrantMilestones, handleCreateGrantMilestone, handleUpdateGrantMilestone, handleCompleteGrantMilestone } from './routes/grant-milestones';
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
+import { handleGetEmailDrafts, handleGetPendingDrafts, handleSyncEmailDrafts } from './routes/email-drafts';
+import { handleProactiveBrief } from './routes/proactive-brief';
+import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -429,6 +432,24 @@ export default {
         }
         if (url.pathname === '/api/conferences') {
           return await handleGetConferences(url, env);
+        }
+
+        // Email drafts
+        if (url.pathname === '/api/email-drafts') {
+          return await handleGetEmailDrafts(request, env, url);
+        }
+        if (url.pathname === '/api/email-drafts/pending') {
+          return await handleGetPendingDrafts(request, env, url);
+        }
+
+        // Proactive brief
+        if (url.pathname === '/api/proactive-brief') {
+          return await handleProactiveBrief(request, env);
+        }
+
+        // File activity heatmap
+        if (url.pathname.match(/^\/api\/file-activity\/heatmap/)) {
+          return await handleGetFileActivity(request, env, url);
         }
 
         // GET /api/reactions?target_type=...&target_id=...
@@ -1037,6 +1058,20 @@ export default {
         const deadlineDepDeleteMatch = path.match(/^\/api\/deadline-dependencies\/([^/]+)\/delete$/);
         if (request.method === 'POST' && deadlineDepDeleteMatch) {
           return await handleDeleteDeadlineDependency(deadlineDepDeleteMatch[1], env);
+        }
+
+        // ── Email drafts sync ──
+
+        // POST /api/email-drafts/sync-bulk — bulk upsert email drafts
+        if (request.method === 'POST' && path === '/api/email-drafts/sync-bulk') {
+          return withVersionBump(await handleSyncEmailDrafts(request, env));
+        }
+
+        // ── File activity sync ──
+
+        // POST /api/file-activity/sync — bulk upsert file activity entries
+        if (request.method === 'POST' && path === '/api/file-activity/sync') {
+          return withVersionBump(await handleSyncFileActivity(request, env));
         }
 
         // POST /api/admin/migrate — apply schema migrations

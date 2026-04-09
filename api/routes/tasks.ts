@@ -125,7 +125,7 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 // POST /api/tasks/:id — update task fields
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
-  const allowedFields = ['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by'];
+  const allowedFields = ['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc'];
   const updates: string[] = [];
   const params: unknown[] = [];
 
@@ -328,6 +328,9 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
       completed?: number; completed_at?: string | null;
       completed_by?: string | null; created_at?: string | null;
       project_id?: string | null; meeting_id?: string | null;
+      key_link_1?: string | null; key_link_1_desc?: string | null;
+      key_link_2?: string | null; key_link_2_desc?: string | null;
+      key_link_3?: string | null; key_link_3_desc?: string | null;
     }>;
     clear_existing?: boolean;
   };
@@ -350,8 +353,8 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
     const batch = body.tasks.slice(i, i + BATCH_SIZE);
     const stmts = batch.map(t =>
       env.DB.prepare(
-        `INSERT INTO tasks (id, meeting_id, project_id, title, description, assignee, assigned_by, due_date, priority, status, source, completed, completed_at, completed_by, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO tasks (id, meeting_id, project_id, title, description, assignee, assigned_by, due_date, priority, status, source, completed, completed_at, completed_by, created_at, key_link_1, key_link_1_desc, key_link_2, key_link_2_desc, key_link_3, key_link_3_desc)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET
            meeting_id = excluded.meeting_id,
            project_id = excluded.project_id,
@@ -369,6 +372,12 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
            completed = excluded.completed,
            completed_at = excluded.completed_at,
            completed_by = excluded.completed_by,
+           key_link_1 = excluded.key_link_1,
+           key_link_1_desc = excluded.key_link_1_desc,
+           key_link_2 = excluded.key_link_2,
+           key_link_2_desc = excluded.key_link_2_desc,
+           key_link_3 = excluded.key_link_3,
+           key_link_3_desc = excluded.key_link_3_desc,
            updated_at = datetime('now')`
       ).bind(
         t.id, t.meeting_id ?? null, t.project_id ?? null,
@@ -377,7 +386,10 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
         t.priority ?? null, t.status ?? null,
         t.source ?? 'sync', t.completed ?? 0,
         t.completed_at ?? null, t.completed_by ?? null,
-        t.created_at ?? null
+        t.created_at ?? null,
+        t.key_link_1 ?? null, t.key_link_1_desc ?? null,
+        t.key_link_2 ?? null, t.key_link_2_desc ?? null,
+        t.key_link_3 ?? null, t.key_link_3_desc ?? null
       )
     );
     await env.DB.batch(stmts);

@@ -50,6 +50,13 @@ export async function handlePBHealth(env: Env): Promise<Response> {
       SELECT MAX(timestamp) as last_activity FROM activity_log
     `).first();
 
+    // Sync summary: last push/pull from lab_settings + sync coverage estimate
+    const [lastPush, lastPull, syncCount] = await Promise.all([
+      env.DB.prepare("SELECT value FROM lab_settings WHERE key = 'last_d1_push'").first<{ value: string }>().catch(() => null),
+      env.DB.prepare("SELECT value FROM lab_settings WHERE key = 'last_d1_pull'").first<{ value: string }>().catch(() => null),
+      env.DB.prepare("SELECT COUNT(*) as count FROM tasks WHERE source = 'sync'").first<{ count: number }>().catch(() => null),
+    ]);
+
     return json({
       data: {
         tasks: {
@@ -64,6 +71,11 @@ export async function handlePBHealth(env: Env): Promise<Response> {
         d1TableCount: tableCount?.count ?? 0,
         lastTaskSync: lastTaskUpdate?.last_sync ?? null,
         lastActivityTimestamp: lastActivity?.last_activity ?? null,
+        sync_summary: {
+          last_push: lastPush?.value ?? null,
+          last_pull: lastPull?.value ?? null,
+          pending_changes: syncCount?.count ?? 0,
+        },
       },
     });
   } catch (e: any) {
