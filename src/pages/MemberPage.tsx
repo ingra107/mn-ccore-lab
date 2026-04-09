@@ -268,30 +268,9 @@ export default function MemberPage() {
           : []),
       ]}
     >
-      {/* Export CV + View Trajectory links */}
+      {/* View Trajectory link */}
       {slug && (
         <div className="mb-6 flex flex-wrap gap-2">
-          <Link
-            to={`/team/${slug}/cv`}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
-            style={{
-              background: 'var(--ice)',
-              color: 'var(--slate)',
-              border: '1px solid transparent',
-              textDecoration: 'none',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--gold)'
-              e.currentTarget.style.color = 'var(--gold)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'transparent'
-              e.currentTarget.style.color = 'var(--slate)'
-            }}
-          >
-            <FileText size={12} />
-            Export CV
-          </Link>
           <Link
             to={`/team/${slug}/trajectory`}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"

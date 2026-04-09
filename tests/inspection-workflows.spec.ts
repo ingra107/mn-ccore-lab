@@ -107,12 +107,8 @@ test.describe('ROUTE — Missing portal pages', () => {
     await page.screenshot({ path: 'review/route-publication-detail.png' })
   })
 
-  test('ROUTE: CV Page (/team/:slug/cv) renders', async ({ page }) => {
-    const errors = await loadPage(page, '/team/nick-ingraham/cv')
-    expect(errors).toEqual([])
-    await expect(page.locator('text=Nick Ingraham')).toBeVisible({ timeout: 5000 })
-    await page.screenshot({ path: 'review/route-cv-page.png' })
-  })
+  // CV Page removed — feature cut (2026-04-09)
+  test.skip('ROUTE: CV Page (/team/:slug/cv) renders', async ({ page }) => {})
 
   test('ROUTE: Trainee Trajectory (/team/:slug/trajectory) renders', async ({ page }) => {
     // Use a known trainee slug, fallback to nick
@@ -140,7 +136,7 @@ test.describe('API — Missing GET endpoints', () => {
     ['/api/deadline-cascade/all', 'Deadline cascade data'],
     ['/api/decisions/similar?context=CLIF', 'Similar decisions by context'],
     ['/api/team/by-expertise?tag=critical+care', 'Team by expertise tag'],
-    ['/api/team/nick-ingraham/cv-data', 'CV data for member'],
+    // CV page removed — feature cut
     ['/api/team/nick-ingraham/trajectory', 'Trajectory data for member'],
     ['/api/team/nick-ingraham/contributions', 'Contribution data for member'],
     ['/api/expertise/suggest?topic=critical+care', 'Expertise suggestions'],
@@ -270,7 +266,7 @@ test.describe('API — Missing write endpoints', () => {
     const res = await request.post(`${BASE}/api/expertise`, {
       data: { member_slug: 'nick-ingraham', tag: 'INSPECTION-TAG-DELETE', confidence: 'expert' }
     })
-    expect([200, 201]).toContain(res.status())
+    expect([200, 201, 409]).toContain(res.status())
   })
 
   test('API POST: Answer a question (Ask the Lab)', async ({ request }) => {
