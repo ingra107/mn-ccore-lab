@@ -626,7 +626,7 @@ function GrantSummary({ grants }: { grants: GrantTimelineItem[] }) {
             className="text-2xl sm:text-3xl font-bold mb-1"
             style={{
               color: stat.color,
-              fontWeight: 800,
+              fontWeight: 600,
             }}
           >
             {stat.value}
@@ -695,7 +695,7 @@ export default function Grants() {
         <h1
           className="text-3xl sm:text-4xl lg:text-5xl mb-3 sm:mb-4"
           style={{
-            fontWeight: 800,
+            fontWeight: 600,
             color: 'var(--ink)',
           }}
         >

@@ -177,7 +177,7 @@ export default function Publications() {
           className="text-3xl sm:text-4xl lg:text-5xl mb-3 sm:mb-4"
           style={{
             fontFamily: 'var(--font-display)',
-            fontWeight: 800,
+            fontWeight: 600,
             color: 'var(--ink)',
           }}
         >

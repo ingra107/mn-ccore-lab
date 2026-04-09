@@ -117,7 +117,7 @@ export default function MeetingDetail() {
           style={{ fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
           <ArrowLeft size={16} /> Back to Meetings
         </Link>
-        <h1 style={{ fontWeight: 800, fontSize: '1.75rem', color: 'var(--ink)' }}>
+        <h1 style={{ fontWeight: 600, fontSize: '1.75rem', color: 'var(--ink)' }}>
           Meeting not found
         </h1>
       </div>
@@ -225,7 +225,7 @@ export default function MeetingDetail() {
             </button>
           </div>
 
-          <h1 style={{ fontWeight: 800, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
+          <h1 style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
             {meeting.title}
           </h1>
           <p style={{ fontSize: '15px', color: 'var(--slate)', marginTop: '6px' }}>

@@ -52,7 +52,7 @@ export default function PublicationDetail() {
         <h1
           style={{
             fontFamily: 'var(--font-display)',
-            fontWeight: 800,
+            fontWeight: 600,
             fontSize: '1.75rem',
             color: 'var(--ink)',
           }}
@@ -143,7 +143,7 @@ export default function PublicationDetail() {
           <h1
             style={{
               fontFamily: 'var(--font-display)',
-              fontWeight: 800,
+              fontWeight: 600,
               fontSize: 'clamp(1.25rem, 3vw, 2rem)',
               color: 'var(--ink)',
               margin: '0 0 12px 0',

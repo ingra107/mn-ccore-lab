@@ -364,9 +364,13 @@ function TaskGridRow({
         position: 'relative',
       }}
       className={`task-grid-row hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${isFocused ? 'task-row-focused' : ''} ${rowFadeAnim ? 'task-row-complete-fade' : ''}`}
+      tabIndex={0}
       onClick={() => {
         onFocusIndex?.(index)
         onSelect?.(task)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') { e.preventDefault(); onOpenDetail?.(task) }
       }}
       onContextMenu={(e) => onContextMenu?.(e, task.id)}
     >

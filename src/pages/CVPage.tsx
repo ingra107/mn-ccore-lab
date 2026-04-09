@@ -229,7 +229,7 @@ export default function CVPage() {
         </Link>
         <h1
           style={{
-            fontWeight: 800,
+            fontWeight: 600,
             fontSize: '1.75rem',
             color: 'var(--ink)',
           }}
@@ -328,7 +328,7 @@ export default function CVPage() {
             className="cv-name"
             style={{
               fontSize: '28px',
-              fontWeight: 800,
+              fontWeight: 600,
               color: 'var(--ink)',
               lineHeight: 1.2,
               marginBottom: '0.25rem',

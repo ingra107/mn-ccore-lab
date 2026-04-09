@@ -81,7 +81,7 @@ export default function ProjectDetail() {
         </Link>
         <h1
           style={{
-            fontWeight: 800,
+            fontWeight: 600,
             fontSize: '1.75rem',
             color: 'var(--ink)',
           }}

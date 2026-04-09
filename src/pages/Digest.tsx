@@ -585,7 +585,7 @@ export default function Digest() {
           <h1
             className="text-3xl sm:text-4xl lg:text-5xl"
             style={{
-              fontWeight: 800,
+              fontWeight: 600,
               color: 'var(--ink)',
             }}
           >

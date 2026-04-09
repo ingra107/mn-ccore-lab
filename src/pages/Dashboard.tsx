@@ -256,8 +256,8 @@ export default function Dashboard() {
   }, [user])
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <div className="content-container" style={{ paddingBottom: '4rem' }}>
+    <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
+      <div className="content-container" style={{ paddingBottom: '4rem', maxWidth: '100%' }}>
         {/* Page Header */}
         <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1.5rem', paddingTop: '0.25rem' }}>
           <div className="flex items-center justify-between">
@@ -693,6 +693,13 @@ export default function Dashboard() {
           grid-template-columns: repeat(4, 1fr);
           grid-auto-rows: minmax(200px, auto);
           gap: 1.25rem;
+          max-width: 100%;
+          overflow: hidden;
+        }
+
+        .bento-grid > * {
+          min-width: 0;
+          overflow: hidden;
         }
 
         .bento-span-2 {

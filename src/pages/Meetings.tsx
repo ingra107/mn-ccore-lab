@@ -338,7 +338,7 @@ export default function Meetings() {
             </div>
             <h1
               style={{
-                fontWeight: 800,
+                fontWeight: 600,
                 fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
                 color: 'var(--ink)',
                 margin: 0,

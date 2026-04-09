@@ -71,6 +71,13 @@ export default function Tasks() {
       setSearchParams({}, { replace: true })
     }
   }, [searchParams, setSearchParams])
+
+  // F key toggles filters on task pages
+  useEffect(() => {
+    const handler = () => setShowFilters(prev => !prev)
+    document.addEventListener('toggle-filters', handler)
+    return () => document.removeEventListener('toggle-filters', handler)
+  }, [])
   const [filters, setFilters] = useState({
     assignee: '',
     status: '',

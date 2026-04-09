@@ -80,7 +80,12 @@ export function useKeyboardShortcuts() {
 
         case 'f':
           e.preventDefault()
-          document.dispatchEvent(new CustomEvent('toggle-focus'))
+          // On task pages, F toggles filter panel; elsewhere, focus mode
+          if (window.location.pathname === '/tasks' || window.location.pathname === '/my-tasks') {
+            document.dispatchEvent(new CustomEvent('toggle-filters'))
+          } else {
+            document.dispatchEvent(new CustomEvent('toggle-focus'))
+          }
           break
 
         case '[':
