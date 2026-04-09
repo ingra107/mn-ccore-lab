@@ -723,17 +723,248 @@ test.describe('UX — Accessibility', () => {
 test.describe('UX — Undo system', () => {
   test('UX: Status change shows undo toast', async ({ page }) => {
     await loadPage(page, '/tasks')
-    // Click a status circle to cycle status
     const statusBtn = page.locator('button:has-text("To Do")').first()
     if (await statusBtn.isVisible()) {
-      // Click to change status
       await statusBtn.click()
-      // Select a different status from dropdown
       const inProgress = page.locator('text=In Progress').last()
       if (await inProgress.isVisible({ timeout: 1000 }).catch(() => false)) {
-        // Don't actually click — just verify the dropdown rendered
         await page.screenshot({ path: 'review/ux-undo-test.png' })
       }
     }
   })
+})
+
+// ═══════════════════════════════════════════════════════════════════
+// PART 9: VISUAL BEHAVIOR — Every dropdown, modal, hover state
+// ═══════════════════════════════════════════════════════════════════
+
+test.describe('VISUAL — Dropdown and modal states', () => {
+  test('VISUAL: Status dropdown open state', async ({ page }) => {
+    await loadPage(page, '/tasks')
+    const btn = page.locator('button:has-text("To Do")').first()
+    if (await btn.isVisible()) {
+      await btn.click()
+      await page.waitForTimeout(300)
+      await page.screenshot({ path: 'review/visual-status-dropdown-open.png' })
+      // Dropdown should show all 4 options
+      for (const opt of ['To Do', 'In Progress', 'Blocked', 'Done']) {
+        const visible = await page.locator(`text=${opt}`).last().isVisible({ timeout: 1000 }).catch(() => false)
+        expect(visible, `Status option "${opt}" should be visible`).toBe(true)
+      }
+      await page.keyboard.press('Escape')
+    }
+  })
+
+  test('VISUAL: Priority dropdown open state', async ({ page }) => {
+    await loadPage(page, '/tasks')
+    const btn = page.locator('button:has-text("Medium")').first()
+    if (await btn.isVisible()) {
+      await btn.click()
+      await page.waitForTimeout(300)
+      await page.screenshot({ path: 'review/visual-priority-dropdown-open.png' })
+      await page.keyboard.press('Escape')
+    }
+  })
+
+  test('VISUAL: Create Task modal all fields visible', async ({ page }) => {
+    await loadPage(page, '/tasks')
+    await page.keyboard.press('c')
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: 'review/visual-create-task-modal.png' })
+    // Verify all fields
+    await expect(page.locator('text=Title')).toBeVisible()
+    await expect(page.locator('text=Description')).toBeVisible()
+    await expect(page.locator('text=Owner')).toBeVisible()
+    await expect(page.locator('text=Priority')).toBeVisible()
+    await expect(page.locator('text=Due Date')).toBeVisible()
+    // Template chips
+    await expect(page.locator('text=Paper Review')).toBeVisible()
+    await page.keyboard.press('Escape')
+  })
+
+  test('VISUAL: Command palette with search results', async ({ page }) => {
+    await loadPage(page, '/tasks')
+    await page.keyboard.press('Control+k')
+    await page.waitForTimeout(500)
+    // Type a search query
+    await page.keyboard.type('CLIF', { delay: 50 })
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: 'review/visual-command-palette-search.png' })
+    await page.keyboard.press('Escape')
+  })
+
+  test('VISUAL: TaskDetailPanel all 5 tabs', async ({ page }) => {
+    await loadPage(page, '/tasks')
+    await page.keyboard.press('j')
+    await page.waitForTimeout(300)
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(500)
+
+    // Screenshot Overview tab
+    await page.screenshot({ path: 'review/visual-detail-overview.png' })
+
+    // Click each tab and screenshot
+    for (const tab of ['Notes', 'Comments', 'Activity', 'Details']) {
+      const tabBtn = page.locator(`button:has-text("${tab}"), text=${tab}`).first()
+      if (await tabBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await tabBtn.click()
+        await page.waitForTimeout(300)
+        await page.screenshot({ path: `review/visual-detail-${tab.toLowerCase()}.png` })
+      }
+    }
+    await page.keyboard.press('Escape')
+  })
+
+  test('VISUAL: Board view columns and cards', async ({ page }) => {
+    await loadPage(page, '/tasks')
+    await page.locator('button:has-text("Board")').click()
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: 'review/visual-board-full.png' })
+    // Group by Priority
+    const priorityBtn = page.locator('text=Priority').last()
+    if (await priorityBtn.isVisible().catch(() => false)) {
+      await priorityBtn.click()
+      await page.waitForTimeout(500)
+      await page.screenshot({ path: 'review/visual-board-by-priority.png' })
+    }
+  })
+
+  test('VISUAL: Timeline view with Gantt bars', async ({ page }) => {
+    await loadPage(page, '/tasks')
+    await page.locator('button:has-text("Timeline")').click()
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: 'review/visual-timeline-full.png' })
+  })
+
+  test('VISUAL: Calendar month view', async ({ page }) => {
+    await loadPage(page, '/calendar')
+    await page.screenshot({ path: 'review/visual-calendar-month.png' })
+  })
+
+  test('VISUAL: Calendar week view', async ({ page }) => {
+    await loadPage(page, '/calendar')
+    await page.getByRole('button', { name: /^week$/i }).click()
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: 'review/visual-calendar-week.png' })
+  })
+
+  test('VISUAL: Digest with paper cards expanded', async ({ page }) => {
+    await loadPage(page, '/digest')
+    await page.screenshot({ path: 'review/visual-digest.png' })
+    // Click show abstract on first paper
+    const showAbstract = page.locator('text=Show abstract').first()
+    if (await showAbstract.isVisible().catch(() => false)) {
+      await showAbstract.click()
+      await page.waitForTimeout(300)
+      await page.screenshot({ path: 'review/visual-digest-abstract-expanded.png' })
+    }
+  })
+
+  test('VISUAL: Projects pipeline view', async ({ page }) => {
+    await loadPage(page, '/projects')
+    const pipelineBtn = page.locator('button:has-text("Pipeline")')
+    if (await pipelineBtn.isVisible().catch(() => false)) {
+      await pipelineBtn.click()
+      await page.waitForTimeout(500)
+      await page.screenshot({ path: 'review/visual-projects-pipeline.png' })
+    }
+  })
+
+  test('VISUAL: Ideas grid vs list view', async ({ page }) => {
+    await loadPage(page, '/ideas')
+    await page.screenshot({ path: 'review/visual-ideas-grid.png' })
+    const listBtn = page.locator('button:has-text("List")')
+    if (await listBtn.isVisible().catch(() => false)) {
+      await listBtn.click()
+      await page.waitForTimeout(300)
+      await page.screenshot({ path: 'review/visual-ideas-list.png' })
+    }
+  })
+
+  test('VISUAL: Decisions timeline view', async ({ page }) => {
+    await loadPage(page, '/decisions')
+    const timelineBtn = page.locator('button:has-text("Timeline")')
+    if (await timelineBtn.isVisible().catch(() => false)) {
+      await timelineBtn.click()
+      await page.waitForTimeout(300)
+      await page.screenshot({ path: 'review/visual-decisions-timeline.png' })
+    }
+  })
+
+  test('VISUAL: Analytics charts render', async ({ page }) => {
+    await loadPage(page, '/analytics')
+    await page.screenshot({ path: 'review/visual-analytics-top.png' })
+    // Scroll down to see charts
+    await page.evaluate(() => window.scrollBy(0, 600))
+    await page.waitForTimeout(300)
+    await page.screenshot({ path: 'review/visual-analytics-charts.png' })
+    await page.evaluate(() => window.scrollBy(0, 600))
+    await page.waitForTimeout(300)
+    await page.screenshot({ path: 'review/visual-analytics-bottom.png' })
+  })
+
+  test('VISUAL: Grants timeline with TODAY marker', async ({ page }) => {
+    await loadPage(page, '/grants')
+    await page.screenshot({ path: 'review/visual-grants-timeline.png' })
+    // Scroll to details
+    await page.evaluate(() => window.scrollBy(0, 400))
+    await page.waitForTimeout(300)
+    await page.screenshot({ path: 'review/visual-grants-details.png' })
+  })
+
+  test('VISUAL: Shortcut help modal all categories', async ({ page }) => {
+    await loadPage(page, '/dashboard')
+    await page.keyboard.press('?')
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: 'review/visual-shortcut-help-top.png' })
+    // Scroll within the modal to see all categories
+    const modal = page.locator('[role="dialog"], [aria-modal="true"]').first()
+    if (await modal.isVisible().catch(() => false)) {
+      await modal.evaluate((el) => el.scrollBy(0, 400))
+      await page.waitForTimeout(200)
+      await page.screenshot({ path: 'review/visual-shortcut-help-bottom.png' })
+    }
+    await page.keyboard.press('Escape')
+  })
+
+  test('VISUAL: Settings theme preview cards', async ({ page }) => {
+    await loadPage(page, '/settings')
+    await page.evaluate(() => window.scrollBy(0, 600))
+    await page.waitForTimeout(300)
+    await page.screenshot({ path: 'review/visual-settings-themes.png' })
+  })
+
+  test('VISUAL: MyTasks Focus Next card', async ({ page }) => {
+    await loadPage(page, '/my-tasks')
+    await page.screenshot({ path: 'review/visual-mytasks-focusnext.png' })
+  })
+
+  test('VISUAL: Dashboard all cards', async ({ page }) => {
+    await loadPage(page, '/dashboard')
+    await page.screenshot({ path: 'review/visual-dashboard-top.png' })
+    await page.evaluate(() => window.scrollBy(0, 500))
+    await page.waitForTimeout(300)
+    await page.screenshot({ path: 'review/visual-dashboard-cards.png' })
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════
+// PART 10: EVERY PAGE AT EVERY BREAKPOINT (visual regression set)
+// ═══════════════════════════════════════════════════════════════════
+
+test.describe('VISUAL — Full page screenshots for visual regression', () => {
+  const allPortalPaths = [
+    'dashboard', 'my-tasks', 'tasks', 'projects', 'manuscripts',
+    'ideas', 'calendar', 'deadlines', 'decisions', 'meetings',
+    'analytics', 'search', 'grants', 'settings', 'activity',
+    'digest', 'meeting-notes', 'ask', 'personal',
+  ]
+
+  for (const pg of allPortalPaths) {
+    test(`VISUAL: Full screenshot — /${pg}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 900 })
+      await loadPage(page, `/${pg}`)
+      await page.screenshot({ path: `review/fullpage-${pg}.png`, fullPage: true })
+    })
+  }
 })

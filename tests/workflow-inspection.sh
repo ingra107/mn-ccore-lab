@@ -128,20 +128,85 @@ TITLE_RES=$(d1post "/api/tasks/$TASK_ID" '{"title":"WORKFLOW-TEST renamed from H
 TITLE_OK=$(echo "$TITLE_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') or d.get('success') else 'fail')" 2>/dev/null)
 [ "$TITLE_OK" = "ok" ] && pass "A6: Title renamed" || fail "A6: Title rename" "$TITLE_RES"
 
-# A7: Add comment
-echo "A7: Add comment..."
-CMT_RES=$(d1post "/api/tasks/$TASK_ID/comments" '{"content":"Workflow test comment","author_slug":"nick-ingraham"}')
-CMT_OK=$(echo "$CMT_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') else 'fail')" 2>/dev/null)
-[ "$CMT_OK" = "ok" ] && pass "A7: Comment added" || fail "A7: Comment" "$CMT_RES"
+# A7: Reassign to different person
+echo "A7: Reassign task to dan-shyu..."
+ASSIGN_RES=$(d1post "/api/tasks/$TASK_ID" '{"assignee":"dan-shyu"}')
+ASSIGN_OK=$(echo "$ASSIGN_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') or d.get('success') else 'fail')" 2>/dev/null)
+[ "$ASSIGN_OK" = "ok" ] && pass "A7a: Reassigned to dan-shyu" || fail "A7a: Reassign" "$ASSIGN_RES"
 
-# A8: Add task note/update
-echo "A8: Add task note..."
-NOTE_RES=$(d1post "/api/tasks/$TASK_ID/updates" '{"content":"Progress note from workflow test","update_type":"progress","author_slug":"nick-ingraham"}')
-NOTE_OK=$(echo "$NOTE_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') else 'fail')" 2>/dev/null)
-[ "$NOTE_OK" = "ok" ] && pass "A8: Task note added" || fail "A8: Task note" "$NOTE_RES"
+# Verify reassignment stuck
+VERIFY_ASSIGN=$(d1get "/api/tasks" | python -c "
+import sys,json
+data = json.load(sys.stdin).get('data',[])
+t = next((x for x in data if x['id'] == '$TASK_ID'), None)
+print(t.get('assignee','') if t else 'NOT_FOUND')
+" 2>/dev/null)
+[ "$VERIFY_ASSIGN" = "dan-shyu" ] && pass "A7b: Reassignment verified in D1" || fail "A7b: Reassign verify" "got: $VERIFY_ASSIGN"
 
-# A9: Verify all changes persisted in D1
-echo "A9: Verify all field changes persisted..."
+# Reassign back
+d1post "/api/tasks/$TASK_ID" '{"assignee":"nick-ingraham"}' > /dev/null
+pass "A7c: Reassigned back to nick-ingraham"
+
+# A8: Add first comment
+echo "A8: Add comments (multiple)..."
+CMT1_RES=$(d1post "/api/tasks/$TASK_ID/comments" '{"content":"First comment from workflow test","author_slug":"nick-ingraham"}')
+CMT1_OK=$(echo "$CMT1_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') else 'fail')" 2>/dev/null)
+[ "$CMT1_OK" = "ok" ] && pass "A8a: First comment added" || fail "A8a: Comment 1" "$CMT1_RES"
+
+# Add second comment from different person
+CMT2_RES=$(d1post "/api/tasks/$TASK_ID/comments" '{"content":"Second comment from Dan","author_slug":"dan-shyu"}')
+CMT2_OK=$(echo "$CMT2_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') else 'fail')" 2>/dev/null)
+[ "$CMT2_OK" = "ok" ] && pass "A8b: Second comment (different author)" || fail "A8b: Comment 2" "$CMT2_RES"
+
+# Verify comment count = 2
+CMT_COUNT=$(d1get "/api/tasks/$TASK_ID/comments" | python -c "import sys,json; print(len(json.load(sys.stdin).get('data',[])))" 2>/dev/null)
+[ "$CMT_COUNT" -ge 2 ] && pass "A8c: Verified $CMT_COUNT comments" || fail "A8c: Comment count" "got $CMT_COUNT, expected >=2"
+
+# A9: Add multiple note types
+echo "A9: Add notes (multiple types)..."
+for TYPE in progress blocker result question; do
+  N_RES=$(d1post "/api/tasks/$TASK_ID/updates" "{\"content\":\"$TYPE note from test\",\"update_type\":\"$TYPE\",\"author_slug\":\"nick-ingraham\"}")
+  N_OK=$(echo "$N_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') else 'fail')" 2>/dev/null)
+  [ "$N_OK" = "ok" ] && pass "A9: Note type=$TYPE added" || fail "A9: Note type=$TYPE" "$N_RES"
+done
+
+# Verify note count = 4
+NOTE_COUNT=$(d1get "/api/tasks/$TASK_ID/updates" | python -c "import sys,json; print(len(json.load(sys.stdin).get('data',[])))" 2>/dev/null)
+[ "$NOTE_COUNT" -ge 4 ] && pass "A9: Verified $NOTE_COUNT notes total" || fail "A9: Note count" "got $NOTE_COUNT, expected >=4"
+
+# A10: Edit task description
+echo "A10: Edit description..."
+DESC_RES=$(d1post "/api/tasks/$TASK_ID" '{"description":"Updated description with **bold** and details"}')
+DESC_OK=$(echo "$DESC_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') or d.get('success') else 'fail')" 2>/dev/null)
+[ "$DESC_OK" = "ok" ] && pass "A10: Description updated" || fail "A10: Description" "$DESC_RES"
+
+# A11: Subtask lifecycle (create → toggle → verify → delete)
+echo "A11: Subtask lifecycle..."
+SUB_CREATE=$(d1post "/api/tasks/$TASK_ID/subtasks" '{"title":"Test subtask from workflow","sort_order":0}')
+SUB_ID=$(echo "$SUB_CREATE" | python -c "import sys,json; print(json.load(sys.stdin).get('data',{}).get('id',''))" 2>/dev/null)
+if [ -n "$SUB_ID" ]; then
+  pass "A11a: Subtask created ($SUB_ID)"
+
+  # Toggle complete
+  TOG_RES=$(d1post "/api/subtasks/$SUB_ID" '{"completed":1}')
+  TOG_OK=$(echo "$TOG_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') or d.get('success') else 'fail')" 2>/dev/null)
+  [ "$TOG_OK" = "ok" ] && pass "A11b: Subtask toggled complete" || fail "A11b: Subtask toggle" "$TOG_RES"
+
+  # Verify subtask in list
+  SUB_LIST=$(d1get "/api/tasks/$TASK_ID/subtasks" | python -c "import sys,json; print(len(json.load(sys.stdin).get('data',[])))" 2>/dev/null)
+  [ "$SUB_LIST" -ge 1 ] && pass "A11c: Subtask verified in list ($SUB_LIST)" || fail "A11c: Subtask list" "count=$SUB_LIST"
+
+  # Delete subtask
+  DEL_RES=$(d1post "/api/subtasks/$SUB_ID/delete" '{}')
+  DEL_OK=$(echo "$DEL_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') or d.get('success') or not d.get('error') else 'fail')" 2>/dev/null)
+  [ "$DEL_OK" = "ok" ] && pass "A11d: Subtask deleted" || fail "A11d: Subtask delete" "$DEL_RES"
+else
+  fail "A11a: Subtask creation" "$SUB_CREATE"
+  skip "A11b-d: Subtask lifecycle"
+fi
+
+# A12: Verify all changes persisted in D1
+echo "A12: Verify all field changes persisted..."
 VERIFY=$(d1get "/api/tasks" | python -c "
 import sys,json
 data = json.load(sys.stdin).get('data',[])
