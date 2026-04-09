@@ -1580,6 +1580,53 @@ export interface LinkedProject {
   pi: string | null
 }
 
+// ── Email Drafts Pending ────────────────────────────────────
+
+export function useEmailDraftsPending() {
+  return useQuery({
+    queryKey: ['email-drafts-pending'],
+    queryFn: async () => {
+      const res = await fetch('/api/email-drafts/pending')
+      if (!res.ok) return []
+      const data = await res.json()
+      return data.data ?? []
+    },
+    staleTime: 2 * 60 * 1000,
+  })
+}
+
+// ── Proactive Brief ─────────────────────────────────────────
+
+export function useProactiveBrief() {
+  return useQuery({
+    queryKey: ['proactive-brief'],
+    queryFn: async () => {
+      const res = await fetch('/api/proactive-brief')
+      if (!res.ok) return null
+      const data = await res.json()
+      return data.data ?? null
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ── File Activity Heatmap ───────────────────────────────────
+
+export function useFileActivityHeatmap(days = 90) {
+  return useQuery({
+    queryKey: ['file-activity-heatmap', days],
+    queryFn: async () => {
+      const res = await fetch(`/api/file-activity/heatmap?days=${days}`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return data.data ?? []
+    },
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+// ── Paper-to-Project linking (enriched) cont'd ──────────────
+
 export function useLinkedProjects(publicationId: string) {
   return useQuery({
     queryKey: ['linked-projects', publicationId],
