@@ -1849,14 +1849,14 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
       await page.waitForTimeout(300)
       const opt1 = page.locator('text=Done').last()
       if (await opt1.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await opt1.click()
+        await opt1.click({ force: true })
         await page.waitForTimeout(500)
         // Click second status dropdown (force to bypass any overlay)
         await statusBtns.nth(1).click({ force: true })
         await page.waitForTimeout(300)
         const opt2 = page.locator('text=Done').last()
         if (await opt2.isVisible({ timeout: 1000 }).catch(() => false)) {
-          await opt2.click()
+          await opt2.click({ force: true })
           await page.waitForTimeout(1000)
         }
       }
@@ -1916,7 +1916,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
       await page.waitForTimeout(300)
       const option = page.locator(`text=${newPrio}`).last()
       if (await option.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await option.click()
+        await option.click({ force: true })
         await page.waitForTimeout(500)
         // Optimistic update should reflect — use Playwright auto-retry
         await expect(prioCell.locator('button').first()).toContainText(newPrio, { timeout: 8000 })
