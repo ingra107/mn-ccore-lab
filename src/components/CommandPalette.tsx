@@ -459,6 +459,7 @@ export default function CommandPalette() {
         role="dialog"
         aria-label="Command palette"
         aria-modal="true"
+        data-testid="command-palette"
         className="w-full max-w-lg rounded-xl shadow-2xl border overflow-hidden card-elevated"
         initial={{ opacity: 0, scale: 0.95, y: -8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -475,6 +476,7 @@ export default function CommandPalette() {
           }
           <input
             ref={inputRef}
+            data-testid="command-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}

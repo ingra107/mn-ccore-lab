@@ -218,6 +218,7 @@ export default function PortalLayout() {
 
       {/* Floating quick-add button */}
       <button
+        data-testid="fab-quick-add"
         onClick={() => setQuickAddOpen(true)}
         className="fixed bottom-5 right-5 z-40 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{

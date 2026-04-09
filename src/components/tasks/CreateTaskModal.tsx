@@ -192,6 +192,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
         role="dialog"
         aria-label="Create new task"
         aria-modal="true"
+        data-testid="create-task-modal"
         className="rounded-xl shadow-xl border w-full max-w-lg mx-4 card-elevated"
         style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
         onClick={(e) => e.stopPropagation()}
@@ -258,6 +259,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             </label>
             <input
               type="text"
+              data-testid="task-title-input"
               value={title}
               onChange={handleTitleChange}
               placeholder="e.g., Complete BMI subgroup analysis for AJRCCM revision"
@@ -423,6 +425,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             </button>
             <button
               type="submit"
+              data-testid="task-submit"
               disabled={!title.trim() || !assignee}
               className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
               style={{

@@ -287,6 +287,7 @@ export default function Dashboard() {
 
             {/* Customize button */}
             <button
+              data-testid="dashboard-customize"
               onClick={() => setShowCustomize(!showCustomize)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
               style={{
@@ -431,6 +432,7 @@ export default function Dashboard() {
         {/* Customize panel */}
         {showCustomize && (
           <div
+            data-testid="customize-panel"
             className="rounded-xl border p-4 mb-4 customize-panel"
             style={{ borderColor: 'var(--border-light)' }}
           >
@@ -556,7 +558,7 @@ export default function Dashboard() {
               {pinnedVisibleCards.map(card => {
                 const Card = card.component
                 return (
-                  <div key={card.id} className="relative group" onClick={() => handleCardInteraction(card.id)}>
+                  <div key={card.id} data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
                     <Card />
                     <button
                       onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
@@ -586,7 +588,7 @@ export default function Dashboard() {
             {unpinnedPrimaryCards.map(card => {
               const Card = card.component
               return (
-                <div key={card.id} className="relative group" onClick={() => handleCardInteraction(card.id)}>
+                <div key={card.id} data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
                   <Card />
                   <button
                     onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
@@ -635,7 +637,7 @@ export default function Dashboard() {
                   {unpinnedSecondaryCards.map(card => {
                     const Card = card.component
                     return (
-                      <div key={card.id} className="relative group" onClick={() => handleCardInteraction(card.id)}>
+                      <div key={card.id} data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
                         <Card />
                         <button
                           onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}

@@ -162,6 +162,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
 
   return (
     <aside
+      data-testid="sidebar"
       className={`fixed top-0 left-0 h-full z-40 flex flex-col transition-all duration-200 border-r ${
         collapsed ? 'w-16' : 'w-60'
       }`}

@@ -96,6 +96,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
     <>
       {/* Backdrop */}
       <div
+        data-testid="detail-backdrop"
         className="fixed inset-0 z-40 transition-opacity duration-200"
         style={{ backgroundColor: 'rgba(15, 25, 35, 0.3)' }}
       />
@@ -103,6 +104,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
       {/* Panel */}
       <div
         ref={panelRef}
+        data-testid="task-detail-panel"
         className="fixed right-0 top-0 h-full z-50 overflow-y-auto shadow-2xl task-detail-panel card-elevated"
         style={{
           width: 'min(480px, 90vw)',
@@ -139,6 +141,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
               </div>
             )}
             <button
+              data-testid="copy-task-link"
               onClick={() => {
                 const url = `${window.location.origin}/tasks?open=${task.id}`
                 navigator.clipboard.writeText(url).then(() => {
@@ -151,7 +154,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
             </button>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
+            <button data-testid="close-detail-panel" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
               <X size={18} />
             </button>
           </div>

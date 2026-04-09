@@ -89,6 +89,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
 
       {/* Toast container — fixed bottom-center */}
       <div
+        data-testid="toast-container"
         role="status"
         aria-live="polite"
         aria-atomic="true"
@@ -109,6 +110,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
           {toasts.map((toast) => (
             <motion.div
               key={toast.id}
+              data-testid={toast.type === 'undo' ? 'undo-toast' : 'success-toast'}
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -135,6 +137,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
               <span style={{ flex: 1 }}>{toast.message}</span>
               {toast.type === 'undo' && (
                 <button
+                  data-testid="undo-button"
                   onClick={() => handleUndo(toast)}
                   style={{
                     display: 'inline-flex',

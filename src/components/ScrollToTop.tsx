@@ -14,6 +14,7 @@ export default function ScrollToTop() {
 
   return (
     <button
+      data-testid="scroll-to-top"
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       className="fixed z-50 rounded-full shadow-lg border transition-all"
       style={{

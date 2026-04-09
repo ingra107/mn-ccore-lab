@@ -349,6 +349,7 @@ function TaskGridRow({
   return (
     <div
       ref={rowRef}
+      data-testid={`task-row-${task.id}`}
       style={{
         ...colStyle,
         padding: '10px 16px',
@@ -467,6 +468,7 @@ function TaskGridRow({
             <span
               role="button"
               tabIndex={0}
+              data-testid={`task-title-${task.id}`}
               onClick={(e) => { e.stopPropagation(); onOpenDetail?.(task) }}
               onDoubleClick={(e) => { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) }}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOpenDetail?.(task) } if (e.key === 'F2') { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) } }}
@@ -552,7 +554,7 @@ function TaskGridRow({
       </div>
 
       {/* Metadata row — wraps on mobile */}
-      <div className="task-row-meta flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+      <div className="task-row-meta flex items-center gap-1.5" data-testid={`task-assignee-${task.id}`} onClick={(e) => e.stopPropagation()}>
         <InlineAssigneePicker
           value={task.assignee}
           onChange={(slug) => onFieldChange(task.id, 'assignee', slug)}
@@ -575,7 +577,7 @@ function TaskGridRow({
       </div>
 
       {/* Due date — inline date picker */}
-      <div className="task-row-meta" onClick={(e) => e.stopPropagation()}>
+      <div className="task-row-meta" data-testid={`task-due-${task.id}`} onClick={(e) => e.stopPropagation()}>
         <InlineDatePicker
           value={task.due_date}
           onChange={(date) => onFieldChange(task.id, 'due_date', date)}
@@ -583,7 +585,7 @@ function TaskGridRow({
       </div>
 
       {/* Status — inline dropdown (show Blocked label for tasks with blockers) */}
-      <div className="task-row-status">
+      <div className="task-row-status" data-testid={`task-status-${task.id}`}>
       <InlineCellSelect
         value={task.status}
         options={STATUS_OPTIONS}
@@ -628,7 +630,7 @@ function TaskGridRow({
       </div>
 
       {/* Priority — inline dropdown */}
-      <div className="task-row-priority">
+      <div className="task-row-priority" data-testid={`task-priority-${task.id}`}>
       <InlineCellSelect
         value={task.priority}
         options={PRIORITY_OPTIONS}
