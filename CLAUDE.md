@@ -12,9 +12,10 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Repo | github.com/ingra107/mn-ccore-lab (530+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
-| Data | TanStack Query v5 + Cloudflare D1 (44 tables, 182+ endpoints) -- ALL LIVE |
+| Testing | Playwright 1.59 (E2E, 546 tests) + Vitest 4.1 (component, browser mode) |
+| Data | TanStack Query v5 + Cloudflare D1 (57 tables, 182+ endpoints) -- ALL LIVE |
 | D1 database | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM) |
-| D1 tables | 44 |
+| D1 tables | 57 |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
 | Reference | `REFERENCE.md` in this repo -- D1 tables, API endpoints, key files, feature list |
@@ -459,8 +460,11 @@ New task columns: `key_link_1/2/3` + `_desc`
 New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 
 ## Pending Sync
-<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
-
+- NEXT_ACTION: Deploy all changes, run full 546-test suite, fix final ~10 stragglers to 100%
+- STATUS: Active
+- NOTE: Massive bug fix + architecture session. 55 bugs fixed, mutations split into 9 files, Vitest set up, data-testid added, 5 optimistic updates, null protection. All committed, build clean, not yet deployed.
+- LEARNING: 546 E2E tests hitting live prod is an antipattern — plan migration to 3-tier (Vitest component + MSW integration + Playwright E2E). reducedMotion:'reduce' in Playwright config eliminates Framer Motion animation test failures.
+- DECISION: CV page removed — not needed. Framer Motion migration scoped to 5 critical files now, 75 incremental later.
 
 ## Known Bugs — Test-Verified (2026-04-09 full audit, 4 test suites)
 
@@ -563,6 +567,28 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 | L2 | Project Health card shows 0s | Check dashboard card data binding |
 | L3 | Schema migration gap (v21+ not applied) | Run pending migrations — ROOT CAUSE of C2, C3, C4, C5, C6, A10-A14 |
 
+## Architecture Notes
+
+### Mutations (src/hooks/mutations/)
+71 mutations split into 9 domain files. `useMutations.ts` re-exports everything — no import changes needed.
+- `useTaskMutations.ts` (5), `useSubtaskMutations.ts` (3), `useProjectMutations.ts` (6), `useMeetingMutations.ts` (4), `useDecisionMutations.ts` (3), `useIdeaMutations.ts` (3), `usePBMutations.ts` (13), `useOtherMutations.ts` (34)
+
+### Testing
+- **Playwright** (E2E): 546 tests, 4 suites. `reducedMotion: 'reduce'` in config.
+- **Vitest** (component): Browser mode with Playwright provider. `vitest.config.ts`.
+- **data-testid**: 28 attributes on key interactive elements. Use in tests over CSS selectors.
+
+### API Field Protection
+Update handlers protect required fields from null:
+- Tasks: `status`, `priority`, `assignee` — can never be null
+- Projects: `status`, `stage`, `category` — can never be null
+
+### Removed Features
+- **CV Page** (`/team/:slug/cv`): Cut 2026-04-09. PB cv-export skill handles Nick's CV.
+
 ## Session Notes
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
+
+### 2026-04-09 Bug Fix Batch + Architecture (~25 commits, 6 deploys)
+Fixed 55 bugs, added 5 optimistic updates, split mutations into 9 files, added 28 data-testid attrs, set up Vitest Browser Mode, added null field protection, removed CV page. Installed Playwright MCP + 3 skills. Tests: 377→~535/546. Pending: deploy + final run.
 
