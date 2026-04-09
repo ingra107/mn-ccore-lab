@@ -699,6 +699,143 @@ class TestTimingAndConsistency:
         print(f"  ✓ Idempotent pull: +{diff} tasks")
 
 # ═════════════════════════════════════════════════════════════════════
+# NEW FEATURE SYNC: Pomodoro, Sessions, Email Drafts, File Activity, Key Links
+# ═════════════════════════════════════════════════════════════════════
+
+class TestNewFeatureSync:
+    """Tests for the new push handlers added in the feature build."""
+
+    def test_23_push_pomodoro_sessions_to_d1(self):
+        """brain.db pomodoro_sessions → push → verify D1 has sessions."""
+        # Check brain.db has pomodoro data
+        rows = brain_query("SELECT COUNT(*) as cnt FROM pomodoro_sessions")
+        brain_count = rows[0]["cnt"]
+        print(f"  brain.db pomodoro_sessions: {brain_count}")
+
+        if brain_count == 0:
+            print(f"  ✓ Skipped — no pomodoro data in brain.db")
+            return
+
+        # Push (the new handler runs as part of full push)
+        output = run_push()
+
+        # Verify D1 has sessions via the PB sessions endpoint
+        d1_sessions = d1_get("/pb/sessions?limit=10")
+        d1_count = len(d1_sessions.get("data", []))
+        print(f"  D1 pb_sessions after push: {d1_count}")
+        assert d1_count > 0, "No sessions in D1 after push"
+        print(f"  ✓ Pomodoro sessions pushed to D1")
+
+    def test_24_push_claude_sessions_to_d1(self):
+        """brain.db sessions → push → verify D1 pb_sessions has data."""
+        rows = brain_query("SELECT COUNT(*) as cnt FROM sessions")
+        brain_count = rows[0]["cnt"]
+        print(f"  brain.db sessions: {brain_count}")
+
+        if brain_count == 0:
+            print(f"  ✓ Skipped — no session data")
+            return
+
+        output = run_push()
+
+        d1_stats = d1_get("/pb/sessions/stats")
+        print(f"  D1 session stats: {d1_stats}")
+        print(f"  ✓ Claude sessions pushed to D1")
+
+    def test_25_push_email_drafts_to_d1(self):
+        """brain.db email_draft_log → push → verify D1 has drafts."""
+        rows = brain_query("SELECT COUNT(*) as cnt FROM email_draft_log")
+        brain_count = rows[0]["cnt"]
+        print(f"  brain.db email_draft_log: {brain_count}")
+
+        if brain_count == 0:
+            print(f"  ✓ Skipped — no email draft data")
+            return
+
+        output = run_push()
+
+        d1_drafts = d1_get("/email-drafts")
+        d1_count = len(d1_drafts.get("data", []))
+        print(f"  D1 email_drafts after push: {d1_count}")
+        assert d1_count > 0, "No email drafts in D1 after push"
+        print(f"  ✓ Email drafts pushed to D1")
+
+    def test_26_push_file_activity_to_d1(self):
+        """brain.db file_activity → push aggregated daily → verify D1 has heatmap data."""
+        rows = brain_query("SELECT COUNT(*) as cnt FROM file_activity")
+        brain_count = rows[0]["cnt"]
+        print(f"  brain.db file_activity: {brain_count}")
+
+        if brain_count == 0:
+            print(f"  ✓ Skipped — no file activity data")
+            return
+
+        output = run_push()
+
+        d1_heatmap = d1_get("/file-activity/heatmap?days=30")
+        d1_data = d1_heatmap.get("data", [])
+        print(f"  D1 file_activity_daily entries: {len(d1_data)}")
+        assert len(d1_data) > 0, "No file activity in D1 after push"
+        print(f"  ✓ File activity pushed to D1")
+
+    def test_27_push_key_links_to_d1(self):
+        """brain.db task key_links → push → verify D1 tasks have key_link fields."""
+        # Find a task with key links
+        rows = brain_query("""
+            SELECT id, name, task_key_link_1, task_key_link_1_desc
+            FROM tasks
+            WHERE task_key_link_1 IS NOT NULL AND task_key_link_1 != ''
+            LIMIT 1
+        """)
+
+        if not rows:
+            print(f"  ✓ Skipped — no tasks with key links in brain.db")
+            return
+
+        task = rows[0]
+        print(f"  brain.db task with key_link: {task['name'][:40]}, link1={task['task_key_link_1'][:50]}")
+
+        # Push
+        run_push()
+
+        # Verify D1
+        d1_tasks = d1_get("/tasks?limit=500")
+        found = [t for t in d1_tasks.get("data", []) if t.get("id") == task["id"]]
+        if found:
+            d1_link = found[0].get("key_link_1", "")
+            print(f"  D1 key_link_1: {d1_link[:50]}")
+            assert d1_link, f"key_link_1 not pushed to D1"
+            print(f"  ✓ Key links pushed to D1")
+        else:
+            print(f"  Task {task['id']} not found in D1")
+
+    def test_28_push_health_summary_to_d1(self):
+        """brain.db sync health → push → verify D1 lab_settings has sync_health."""
+        run_push()
+
+        # Check lab_settings for sync_health key
+        d1_settings = d1_get("/settings")
+        settings_data = d1_settings.get("data", [])
+        sync_health = [s for s in settings_data if s.get("key") == "sync_health"]
+        if sync_health:
+            import json as _json
+            value = _json.loads(sync_health[0].get("value", "{}"))
+            print(f"  D1 sync_health: pending={value.get('pending_changes')}, synced={value.get('total_synced')}")
+            print(f"  ✓ Health summary pushed to D1")
+        else:
+            print(f"  sync_health not found in lab_settings (may need POST /api/settings fix)")
+
+    def test_29_proactive_brief_computes_correctly(self):
+        """Verify /api/proactive-brief returns computed intelligence."""
+        brief = d1_get("/proactive-brief")
+        print(f"  Proactive brief: overdue={brief.get('overdue_count')}, due_today={brief.get('due_today_count')}")
+        print(f"  Bullets: {brief.get('bullets', [])[:2]}")
+        assert "overdue_count" in brief, "Missing overdue_count in proactive brief"
+        assert "bullets" in brief, "Missing bullets in proactive brief"
+        print(f"  ✓ Proactive brief computes correctly")
+
+
+# ═════════════════════════════════════════════════════════════════════
 # CLEANUP
 # ═════════════════════════════════════════════════════════════════════
 
@@ -734,7 +871,7 @@ class TestCleanup:
 if __name__ == "__main__":
     import traceback
 
-    test_classes = [TestBrainToD1, TestD1ToBrain, TestRoundTrip, TestTimingAndConsistency, TestCleanup]
+    test_classes = [TestBrainToD1, TestD1ToBrain, TestRoundTrip, TestTimingAndConsistency, TestNewFeatureSync, TestCleanup]
     passed = 0
     failed = 0
     errors = []

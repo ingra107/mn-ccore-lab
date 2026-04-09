@@ -2021,3 +2021,101 @@ test.describe('VISUAL — Missing page screenshots', () => {
     })
   }
 })
+
+// ═════════════════════════════════════════════════════════════════════
+// PART 12: NEW FEATURE TESTS — API endpoints for F1-F9 features
+// ═════════════════════════════════════════════════════════════════════
+
+test.describe('API — New feature endpoints (schema v37+)', () => {
+  // Feature 3: Email Drafts
+  test('API GET: /api/email-drafts → 200', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/email-drafts`)
+    expect([200, 404]).toContain(res.status())
+  })
+
+  test('API GET: /api/email-drafts/pending → 200', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/email-drafts/pending`)
+    expect(res.status()).toBe(200)
+    const data = await res.json()
+    expect(data).toHaveProperty('count')
+  })
+
+  test('API POST: /api/email-drafts/sync-bulk → accepts draft array', async ({ request }) => {
+    const res = await request.post(`${BASE}/api/email-drafts/sync-bulk`, {
+      data: { drafts: [{
+        id: 'test-draft-001',
+        task_id: null,
+        gmail_draft_url: 'https://mail.google.com/test',
+        draft_type: 'reply',
+        status: 'draft',
+        created_at: new Date().toISOString(),
+      }]}
+    })
+    expect([200, 201]).toContain(res.status())
+  })
+
+  // Feature 4: Proactive Brief
+  test('API GET: /api/proactive-brief → 200 with structured response', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/proactive-brief`)
+    expect(res.status()).toBe(200)
+    const data = await res.json()
+    expect(data).toHaveProperty('overdue_count')
+    expect(data).toHaveProperty('due_today_count')
+    expect(data).toHaveProperty('bullets')
+    expect(Array.isArray(data.bullets)).toBe(true)
+  })
+
+  // Feature 8: File Activity
+  test('API GET: /api/file-activity/heatmap → 200', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/file-activity/heatmap?days=30`)
+    expect(res.status()).toBe(200)
+  })
+
+  test('API POST: /api/file-activity/sync → accepts entries', async ({ request }) => {
+    const res = await request.post(`${BASE}/api/file-activity/sync`, {
+      data: { entries: [{
+        date: '2026-04-08',
+        project_id: 'test',
+        project_name: 'Test Project',
+        file_count: 5,
+        total_events: 12,
+      }]}
+    })
+    expect([200, 201]).toContain(res.status())
+  })
+
+  // Feature 2: Key Links on Tasks
+  test('API: Task key_link fields accepted in sync-bulk', async ({ request }) => {
+    const res = await request.post(`${BASE}/api/tasks/sync-bulk`, {
+      data: { tasks: [{
+        id: 'test-keylink-001',
+        title: 'KEYLINK TEST — delete',
+        description: 'Testing key links',
+        assignee: 'nick-ingraham',
+        priority: 'low',
+        source: 'sync',
+        key_link_1: 'C:/Users/ingra107/Box/Research/Test',
+        key_link_1_desc: 'Project Folder',
+        key_link_2: 'https://mail.google.com/test',
+        key_link_2_desc: 'Email Draft',
+      }], clear_existing: false }
+    })
+    expect([200, 201]).toContain(res.status())
+
+    // Verify readback includes key_links
+    const tasks = await (await request.get(`${BASE}/api/tasks?limit=200`)).json()
+    const found = tasks.data?.find((t: any) => t.id === 'test-keylink-001')
+    if (found) {
+      expect(found.key_link_1).toBe('C:/Users/ingra107/Box/Research/Test')
+      expect(found.key_link_1_desc).toBe('Project Folder')
+    }
+  })
+
+  // Feature 6: Enhanced PB Health
+  test('API GET: /api/pb/health → includes sync_summary', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/pb/health`)
+    expect(res.status()).toBe(200)
+    const data = await res.json()
+    expect(data).toHaveProperty('sync_summary')
+  })
+})

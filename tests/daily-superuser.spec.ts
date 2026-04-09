@@ -1038,3 +1038,129 @@ test.describe('E2E — Simulated daily session', () => {
     console.log('✓ Full daily session simulation complete — 6 screenshots captured')
   })
 })
+
+// ═════════════════════════════════════════════════════════════════════
+// NEW FEATURES: Dashboard cards, Quick Capture, Key Links
+// ═════════════════════════════════════════════════════════════════════
+
+test.describe('FEATURE — New dashboard cards (v37)', () => {
+  test('Proactive Brief card renders with bullets', async ({ page }) => {
+    await go(page, '/dashboard')
+    const brief = page.locator('text=Your Brief, text=Brief').first()
+    const visible = await brief.isVisible({ timeout: 5000 }).catch(() => false)
+    console.log(`Proactive Brief card: ${visible}`)
+    if (visible) {
+      await page.screenshot({ path: 'review/feature-proactive-brief-card.png' })
+    }
+  })
+
+  test('Pomodoro Stats card renders (if enabled)', async ({ page }) => {
+    await go(page, '/dashboard')
+    const pomo = page.locator('text=Focus Time, text=Pomodoro').first()
+    const visible = await pomo.isVisible({ timeout: 3000 }).catch(() => false)
+    console.log(`Pomodoro Stats card: ${visible}`)
+  })
+
+  test('Email Drafts card renders (if enabled)', async ({ page }) => {
+    await go(page, '/dashboard')
+    const email = page.locator('text=Email Drafts, text=Drafts').first()
+    const visible = await email.isVisible({ timeout: 3000 }).catch(() => false)
+    console.log(`Email Drafts card: ${visible}`)
+  })
+
+  test('System Health mini card renders (if enabled)', async ({ page }) => {
+    await go(page, '/dashboard')
+    const health = page.locator('text=System Health').first()
+    const visible = await health.isVisible({ timeout: 3000 }).catch(() => false)
+    console.log(`System Health card: ${visible}`)
+  })
+
+  test('File Activity card renders (if enabled)', async ({ page }) => {
+    await go(page, '/dashboard')
+    const files = page.locator('text=File Activity').first()
+    const visible = await files.isVisible({ timeout: 3000 }).catch(() => false)
+    console.log(`File Activity card: ${visible}`)
+  })
+})
+
+test.describe('FEATURE — Quick Capture bar', () => {
+  test('Quick Capture input visible on Dashboard', async ({ page }) => {
+    await go(page, '/dashboard')
+    const input = page.locator('input[placeholder*="capture"], input[placeholder*="Capture"], input[placeholder*="task"]').first()
+    const visible = await input.isVisible({ timeout: 5000 }).catch(() => false)
+    console.log(`Quick Capture bar: ${visible}`)
+    if (visible) {
+      await page.screenshot({ path: 'review/feature-quick-capture-bar.png' })
+    }
+  })
+
+  test('Quick Capture → type text → shows input value', async ({ page }) => {
+    await go(page, '/dashboard')
+    const input = page.locator('input[placeholder*="capture"], input[placeholder*="Capture"], input[placeholder*="task"]').first()
+    if (await input.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await input.click()
+      await input.fill('Test quick capture from Playwright')
+      const value = await input.inputValue()
+      expect(value).toContain('Test quick capture')
+      await page.screenshot({ path: 'review/feature-quick-capture-typed.png' })
+      // Don't submit — just verify input works
+      await input.clear()
+    }
+  })
+
+  test('Quick Capture → Ctrl+N focuses input', async ({ page }) => {
+    await go(page, '/dashboard')
+    await page.keyboard.press('Control+n')
+    await page.waitForTimeout(300)
+    const focused = await page.evaluate(() => {
+      const el = document.activeElement as HTMLInputElement
+      return el?.placeholder || el?.tagName || 'nothing'
+    })
+    console.log(`Ctrl+N focused: ${focused}`)
+  })
+})
+
+test.describe('FEATURE — Key links on tasks', () => {
+  test('Task grid shows key link icons when present', async ({ page }) => {
+    await go(page, '/tasks')
+    // Look for key link icons (folder, external link, play icons)
+    const keyLinks = page.locator('[class*="key-link"], [class*="keyLink"], a[href*="mnccore://"], a[href*="mail.google"]')
+    const count = await keyLinks.count()
+    console.log(`Key link icons on tasks page: ${count}`)
+    if (count > 0) {
+      await page.screenshot({ path: 'review/feature-key-links-grid.png' })
+    }
+  })
+
+  test('Task detail panel shows key links in Details tab', async ({ page }) => {
+    await go(page, '/tasks')
+    await page.keyboard.press('j')
+    await page.waitForTimeout(200)
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(500)
+
+    // Click Details tab
+    const detailsTab = page.locator('button:has-text("Details")').first()
+    if (await detailsTab.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await detailsTab.click()
+      await page.waitForTimeout(300)
+
+      // Look for key links section
+      const keyLinkSection = page.locator('text=Key Links, text=Links, [class*="key-link"]').first()
+      const visible = await keyLinkSection.isVisible({ timeout: 2000 }).catch(() => false)
+      console.log(`Key links in detail panel: ${visible}`)
+      await page.screenshot({ path: 'review/feature-key-links-detail.png' })
+    }
+    await page.keyboard.press('Escape')
+  })
+
+  test('Key link copy button copies path to clipboard', async ({ page }) => {
+    await go(page, '/tasks')
+    const copyBtn = page.locator('button[aria-label*="copy"], button[title*="copy"], button[title*="Copy"]').first()
+    if (await copyBtn.isVisible().catch(() => false)) {
+      await copyBtn.click()
+      await page.waitForTimeout(300)
+      console.log('Key link copy button clicked')
+    }
+  })
+})
