@@ -426,9 +426,16 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 <!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
 
 
-## Known Bugs — Test-Verified (2026-04-08 audit + 2026-04-09 Playwright run)
+## Known Bugs — Test-Verified (2026-04-09 full audit, 4 test suites)
 
-**Test results:** 314 passed, 40 failed, 5 skipped across 359 tests (87.5% pass rate)
+**Test results:** 377 passed, 49 failed, 5 skipped across 431 tests (87.5% pass rate)
+
+| Suite | Passed | Failed | Skipped |
+|-------|--------|--------|---------|
+| inspection.spec.ts | 183 | 15 | 0 |
+| inspection-workflows.spec.ts | 131 | 25 | 5 |
+| daily-superuser.spec.ts | 43 | 6 | 0 |
+| sync-pipeline.test.py | 20 | 3 | 0 |
 
 ### CRITICAL (blocks launch or crashes)
 | # | Bug | Test | Fix |
@@ -475,8 +482,24 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 | M11 | "Press F" tooltip clips on mobile | manual audit | Hide below md: breakpoint |
 | M12 | WebSocket 400 on handshake — console spam | manual audit | Fix DO or set VITE_WS_HOST='' in build env |
 | M13 | QA test data in D1 | manual audit | Delete INSPECTION/EDGE/SYNC/JOURNEY test tasks/ideas/decisions |
+| M14 | F key doesn't trigger focus mode (sidebar doesn't collapse) | `daily: Focus mode (F key) hides sidebar` | F key handler not firing or sidebar width unchanged |
+| M15 | ScrollToTop button blocked by FAB quick-add button | `daily: ScrollToTop appears after scrolling` | FAB (bottom-right +) z-index overlaps ScrollToTop — reposition or z-index fix |
+| M16 | Dashboard task card links don't navigate on click | `daily: Dashboard → click task → navigates` | Links in Tasks bento card not wired or wrong element type |
+| M17 | Dashboard Customize modal — toggles not found or not rendering | `daily: Customize dashboard cards` | Customize button click doesn't open modal or toggle count is 0 |
+| M18 | Board view "To Do" column header not matching expected text | `daily: Board view Kanban columns` | Column header text mismatch (case or label) |
+| M19 | Filter panel (F key on Tasks) — fires focus mode instead of filter toggle | `daily: F key toggles filter panel` | F key has dual binding conflict — focus mode vs filter toggle |
 
-### SYNC FAILURES (task create/update/status/comment chain broken)
+### SYNC PIPELINE BUGS (brain.db ↔ D1 real round-trip tests)
+| # | Bug | Test | Severity | Fix |
+|---|-----|------|----------|-----|
+| SP1 | effort→priority mapping not pushed (Quick→low) — D1 gets None | `test_04: effort push` | HIGH | sync_d1_push.py not including effort→priority in payload |
+| SP2 | Hub-created tasks don't appear in brain.db after pull | `test_07: hub create pull` | CRITICAL | sync_d1_pull.py not picking up new hex-ID tasks from D1 |
+| SP3 | Push is NOT idempotent — double push adds ~10 duplicate tasks | `test_21: idempotent push` | HIGH | sync-bulk ON CONFLICT not deduplicating; IDs may differ between runs |
+| SP4 | Hub completion doesn't reach brain.db (completed stays 0 after pull) | `test_15: status round-trip` | CRITICAL | Pull not syncing D1 completed=1 → brain.db completed=1 |
+| SP5 | Hub due date change doesn't reach brain.db after pull | `test_17: due date round-trip` | HIGH | Pull not applying D1 due_date changes to brain.db |
+| SP6 | Hub note/update not synced to brain.db (task_updates has no pull handler) | `test_10: note pull` | CRITICAL | No pull handler for /api/tasks/:id/updates → brain.db (also P1) |
+
+### D1 API SYNC FAILURES (Playwright API round-trip tests)
 | # | Bug | Test | Fix |
 |---|-----|------|-----|
 | S1 | Task creation returns no `data.id` (response shape issue) | ALL sync tests + journey lifecycle | Fix POST /api/tasks response — must return `{ data: { id } }` |
@@ -486,10 +509,10 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 | S5 | Batch status update fails | `SYNC: Batch update verify all changed` | Fix POST /api/tasks/batch (also A3) |
 | S6 | Comment/note persistence broken | `SYNC: Comment and note readback` | Fix — cascades from S1 (task create) |
 
-### SYNC PIPELINE (PB ↔ D1)
+### SYNC PIPELINE CODE (PB scripts)
 | # | Bug | Severity | Fix |
 |---|-----|----------|-----|
-| P1 | task_updates table has NO sync handler | CRITICAL | Add pull handler to sync_d1_pull.py for /api/tasks/:id/updates |
+| P1 | task_updates table has NO sync handler | CRITICAL | Add pull handler to sync_d1_pull.py for /api/tasks/:id/updates (=SP6) |
 | P2 | Push state not updated on sync-bulk failure | HIGH | Fix sync_d1_push.py:365-378 |
 | P3 | No try/except around resp.json() in push | HIGH | Wrap sync_d1_push.py:368 in try/except |
 | P4 | Hub-created tasks can get NULL project_id | MEDIUM | Log warning when slug_map misses |
