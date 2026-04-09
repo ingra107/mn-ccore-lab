@@ -1404,7 +1404,7 @@ test.describe('EDGE — Special characters and long text', () => {
 test.describe('EDGE — Task with no due date', () => {
   test('EDGE: Task without due date renders correctly in grid', async ({ page, request }) => {
     const res = await request.post(`${BASE}/api/tasks`, {
-      data: { title: 'EDGE no-date task — delete', assignee: 'nick-ingraham', priority: 'medium' }
+      data: { title: 'EDGE no-date task — delete', description: 'edge case test', assignee: 'nick-ingraham', priority: 'medium' }
     })
     expect(res.status()).toBe(201)
 
@@ -1615,9 +1615,9 @@ test.describe('SYNC — Bulk task operations', () => {
       ids.push(data.id)
     }
 
-    // Batch update
+    // Batch update — use 'priority' action (batch handler supports: complete, uncomplete, assign, priority, delete)
     const batch = await request.post(`${BASE}/api/tasks/batch`, {
-      data: { ids, updates: { status: 'in_progress' } }
+      data: { ids, action: 'priority', value: 'high' }
     })
     expect([200, 201]).toContain(batch.status())
 
@@ -1625,7 +1625,7 @@ test.describe('SYNC — Bulk task operations', () => {
     const all = await (await request.get(`${BASE}/api/tasks?limit=200`)).json()
     for (const id of ids) {
       const task = all.data?.find((t: any) => t.id === id)
-      expect(task?.status, `Task ${id} should be in_progress`).toBe('in_progress')
+      expect(task?.priority, `Task ${id} should be high priority`).toBe('high')
     }
   })
 })
