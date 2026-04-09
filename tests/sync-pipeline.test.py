@@ -388,7 +388,7 @@ class TestD1ToBrain:
         run_pull()
 
         # Verify
-        rows = brain_query("SELECT * FROM tasks WHERE name LIKE ?", (f"%date-pull-test%",))
+        rows = brain_query("SELECT * FROM tasks WHERE name LIKE ?", (f"%{TEST_PREFIX}%date-pull-test%",))
         if rows:
             brain_date = rows[0].get("due_date", "")
             print(f"  brain.db due_date: {brain_date} (expected: {new_date})")
@@ -802,7 +802,7 @@ class TestNewFeatureSync:
         d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if t.get("id") == task["id"]]
         if found:
-            d1_link = found[0].get("key_link_1", "")
+            d1_link = found[0].get("key_link_1") or ""
             print(f"  D1 key_link_1: {d1_link[:50]}")
             assert d1_link, f"key_link_1 not pushed to D1"
             print(f"  ✓ Key links pushed to D1")
@@ -815,19 +815,32 @@ class TestNewFeatureSync:
 
         # Check lab_settings for sync_health key
         d1_settings = d1_get("/settings")
-        settings_data = d1_settings.get("data", [])
-        sync_health = [s for s in settings_data if s.get("key") == "sync_health"]
-        if sync_health:
+        settings_data = d1_settings.get("data", {})
+        # Settings endpoint returns a flat dict, check if it has sync_health key
+        if isinstance(settings_data, dict) and settings_data.get("key") == "sync_health":
             import json as _json
-            value = _json.loads(sync_health[0].get("value", "{}"))
+            value = _json.loads(settings_data.get("value", "{}"))
             print(f"  D1 sync_health: pending={value.get('pending_changes')}, synced={value.get('total_synced')}")
             print(f"  ✓ Health summary pushed to D1")
         else:
-            print(f"  sync_health not found in lab_settings (may need POST /api/settings fix)")
+            # Try querying directly for sync_health setting
+            try:
+                sh = d1_get("/settings?key=sync_health")
+                sh_data = sh.get("data", {})
+                if sh_data and sh_data.get("value"):
+                    import json as _json
+                    value = _json.loads(sh_data["value"])
+                    print(f"  D1 sync_health: pending={value.get('pending_changes')}, synced={value.get('total_synced')}")
+                    print(f"  ✓ Health summary pushed to D1")
+                else:
+                    print(f"  sync_health not found in lab_settings")
+            except Exception:
+                print(f"  sync_health not found in lab_settings")
 
     def test_29_proactive_brief_computes_correctly(self):
         """Verify /api/proactive-brief returns computed intelligence."""
-        brief = d1_get("/proactive-brief")
+        brief_raw = d1_get("/proactive-brief")
+        brief = brief_raw.get("data", brief_raw)  # unwrap data envelope
         print(f"  Proactive brief: overdue={brief.get('overdue_count')}, due_today={brief.get('due_today_count')}")
         print(f"  Bullets: {brief.get('bullets', [])[:2]}")
         assert "overdue_count" in brief, "Missing overdue_count in proactive brief"
@@ -1171,7 +1184,7 @@ class TestFullRoundTripWorkflows:
         d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if t.get("id") == task["id"]]
         if found:
-            d1_link = found[0].get("key_link_1", "")
+            d1_link = found[0].get("key_link_1") or ""
             print(f"  D1 key_link_1: {d1_link[:60]}")
             assert d1_link == original_link, f"Key link not matching: {d1_link} vs {original_link}"
 
@@ -1219,7 +1232,8 @@ class TestFullRoundTripWorkflows:
 
         # Verify D1 heatmap
         d1_heatmap = d1_get("/file-activity/heatmap?days=7")
-        d1_data = d1_heatmap.get("data", [])
+        d1_envelope = d1_heatmap.get("data", {})
+        d1_data = d1_envelope.get("daily", []) if isinstance(d1_envelope, dict) else d1_envelope
         d1_totals = {d["date"]: d.get("total_events", 0) for d in d1_data}
         print(f"  D1 heatmap last 7 days: {len(d1_totals)} days, {sum(d1_totals.values())} events")
 
@@ -1322,7 +1336,7 @@ class TestFullRoundTripWorkflows:
         # Check if a linked task was created
         after = d1_get("/tasks?limit=500")
         after_count = len(after.get("data", []))
-        new_tasks = [t for t in after.get("data", []) if "meeting-action-test" in t.get("title", "").lower() or "meeting-action-test" in t.get("description", "").lower()]
+        new_tasks = [t for t in after.get("data", []) if "meeting-action-test" in (t.get("title") or "").lower() or "meeting-action-test" in (t.get("description") or "").lower()]
         print(f"  Tasks before: {before_count}, after: {after_count}")
         print(f"  Linked task found: {len(new_tasks) > 0}")
         print(f"  ✓ Meeting action item → task link test complete")

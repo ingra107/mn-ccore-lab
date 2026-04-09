@@ -22,6 +22,7 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
   const completed = url.searchParams.get('completed');
   const source = url.searchParams.get('source');
   const updatedSince = url.searchParams.get('updated_since');
+  const createdSince = url.searchParams.get('created_since');
 
   let query = 'SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE t.deleted_at IS NULL';
   const params: (string | number)[] = [];
@@ -37,6 +38,7 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
     params.push(completed === 'true' ? 1 : 0);
   }
   if (updatedSince) { query += ' AND t.updated_at > ?'; params.push(updatedSince); }
+  if (createdSince) { query += ' AND t.created_at > ?'; params.push(createdSince); }
 
   query += ' ORDER BY t.completed ASC, t.due_date ASC, t.created_at DESC';
 
