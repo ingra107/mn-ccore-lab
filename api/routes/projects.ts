@@ -351,8 +351,15 @@ export async function handleUpdateProject(
   const updates: string[] = [];
   const values: (string | number | null)[] = [];
 
+  // Fields that must never be set to null
+  const requiredFields = new Set(['status', 'stage', 'category']);
+
   for (const [key, val] of Object.entries(body)) {
     if (allowed.includes(key)) {
+      // Don't allow null on required fields — skip silently
+      if (requiredFields.has(key) && (val === null || val === undefined || val === '')) {
+        continue;
+      }
       updates.push(`${key} = ?`);
       values.push(val as string | number | null);
     }

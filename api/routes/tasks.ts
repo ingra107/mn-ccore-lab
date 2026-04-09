@@ -131,8 +131,15 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
   const updates: string[] = [];
   const params: unknown[] = [];
 
+  // Fields that must never be set to null (always require a value)
+  const requiredFields = new Set(['status', 'priority', 'assignee']);
+
   for (const field of allowedFields) {
     if (field in body) {
+      // Don't allow null on required fields — skip silently
+      if (requiredFields.has(field) && (body[field] === null || body[field] === undefined || body[field] === '')) {
+        continue;
+      }
       updates.push(`${field} = ?`);
       params.push(body[field]);
     }
