@@ -137,7 +137,7 @@ test.describe('ROUTE — Missing portal pages', () => {
 test.describe('API — Missing GET endpoints', () => {
   const missingGets: [string, string][] = [
     ['/api/deadline-cascade/all', 'All deadline cascades'],
-    ['/api/deadline-cascade', 'Deadline cascade data'],
+    ['/api/deadline-cascade/all', 'Deadline cascade data'],
     ['/api/decisions/similar?context=CLIF', 'Similar decisions by context'],
     ['/api/team/by-expertise?tag=critical+care', 'Team by expertise tag'],
     ['/api/team/nick-ingraham/cv-data', 'CV data for member'],
@@ -222,7 +222,7 @@ test.describe('API — Missing write endpoints', () => {
     const id = decisions.data?.[0]?.id
     if (!id) { test.skip(); return }
     const res = await request.post(`${BASE}/api/decisions/${id}/outcome`, {
-      data: { outcome_status: 'successful', outcome_notes: 'INSPECTION — delete' }
+      data: { outcome: 'INSPECTION — delete', outcome_status: 'successful' }
     })
     expect([200, 201]).toContain(res.status())
   })
