@@ -203,7 +203,7 @@ export default function Projects() {
 
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
       <div className="content-container" style={{ paddingBottom: '6rem' }}>
         {/* Page Header */}
         <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1rem', paddingTop: '1rem' }}>
@@ -793,10 +793,11 @@ export default function Projects() {
               className="pipeline-board"
               style={{
                 display: 'grid',
-                gridTemplateColumns: `repeat(${STAGES.length}, minmax(200px, 1fr))`,
-                gap: '20px',
+                gridTemplateColumns: `repeat(${STAGES.length}, minmax(160px, 1fr))`,
+                gap: '16px',
                 overflowX: 'auto',
                 paddingBottom: '1rem',
+                maxWidth: '100%',
               }}
             >
               {STAGES.map((stage) => {
