@@ -1397,6 +1397,232 @@ class TestFullRoundTripWorkflows:
 
 
 # ═════════════════════════════════════════════════════════════════════
+# NEW FIELD ROUND-TRIPS (priority, assignee — added 2026-04-09)
+# ═════════════════════════════════════════════════════════════════════
+
+class TestPriorityAssigneeSync:
+    """Tests bidirectional sync for priority and assignee fields."""
+
+    def test_50_priority_push_braindb_to_d1(self):
+        """Set priority in brain.db → push → verify D1 has it."""
+        db = get_braindb()
+        title = f"{TEST_PREFIX} priority-push"
+        result = db.create_task(name=title, notes="Priority push test", priority="high")
+        task_id = result["id"]
+        db.close()
+
+        run_push()
+
+        d1_tasks = d1_get("/tasks?limit=500")
+        found = [t for t in d1_tasks.get("data", []) if title in t.get("title", "")]
+        assert len(found) > 0, "Task not found in D1"
+        assert found[0].get("priority") == "high", f"Priority not pushed: {found[0].get('priority')}"
+        print(f"  ✓ Priority 'high' pushed to D1")
+
+    def test_51_priority_pull_d1_to_braindb(self):
+        """Change priority in Hub → pull → verify brain.db has it."""
+        # Create task in D1
+        title = f"{TEST_PREFIX} priority-pull"
+        res = d1_post("/tasks", {"title": title, "description": "Priority pull test",
+                                  "assignee": "nick-ingraham", "priority": "low"})
+        assert res["status"] == 201
+        d1_id = res["body"]["data"]["id"]
+
+        time.sleep(2)
+        run_pull()
+
+        # Verify brain.db has the task with priority
+        rows = brain_query("SELECT id, priority FROM tasks WHERE id = ?", (d1_id,))
+        assert len(rows) > 0, "Hub task not found in brain.db"
+        assert rows[0]["priority"] == "low", f"Priority not pulled: {rows[0]['priority']}"
+        print(f"  ✓ Priority 'low' pulled from D1 to brain.db")
+
+        # Now change priority in Hub
+        d1_post(f"/tasks/{d1_id}", {"priority": "urgent"})
+        time.sleep(2)
+        run_pull()
+
+        rows2 = brain_query("SELECT priority FROM tasks WHERE id = ?", (d1_id,))
+        assert rows2[0]["priority"] == "urgent", f"Updated priority not pulled: {rows2[0]['priority']}"
+        print(f"  ✓ Priority change 'low' → 'urgent' synced from D1 to brain.db")
+
+    def test_52_assignee_push_braindb_to_d1(self):
+        """Set assignee in brain.db → push → verify D1 has it."""
+        db = get_braindb()
+        title = f"{TEST_PREFIX} assignee-push"
+        result = db.create_task(name=title, notes="Assignee push test", assignee="dan-mcsorley")
+        task_id = result["id"]
+        db.close()
+
+        run_push()
+
+        d1_tasks = d1_get("/tasks?limit=500")
+        found = [t for t in d1_tasks.get("data", []) if title in t.get("title", "")]
+        assert len(found) > 0, "Task not found in D1"
+        assert found[0].get("assignee") == "dan-mcsorley", f"Assignee not pushed: {found[0].get('assignee')}"
+        print(f"  ✓ Assignee 'dan-mcsorley' pushed to D1")
+
+    def test_53_assignee_pull_d1_to_braindb(self):
+        """Reassign in Hub → pull → verify brain.db updated."""
+        title = f"{TEST_PREFIX} assignee-pull"
+        res = d1_post("/tasks", {"title": title, "description": "Assignee pull test",
+                                  "assignee": "nick-ingraham", "priority": "medium"})
+        assert res["status"] == 201
+        d1_id = res["body"]["data"]["id"]
+
+        time.sleep(2)
+        run_pull()
+
+        # Verify initial assignee
+        rows = brain_query("SELECT assignee FROM tasks WHERE id = ?", (d1_id,))
+        assert len(rows) > 0, "Task not in brain.db"
+        assert rows[0]["assignee"] == "nick-ingraham", f"Initial assignee wrong: {rows[0]['assignee']}"
+
+        # Reassign in Hub
+        d1_post(f"/tasks/{d1_id}", {"assignee": "mesfin-nathan"})
+        time.sleep(2)
+        run_pull()
+
+        rows2 = brain_query("SELECT assignee FROM tasks WHERE id = ?", (d1_id,))
+        assert rows2[0]["assignee"] == "mesfin-nathan", f"Reassignment not pulled: {rows2[0]['assignee']}"
+        print(f"  ✓ Assignee reassignment synced from D1 to brain.db")
+
+    def test_54_priority_roundtrip_full(self):
+        """brain.db priority → D1 → Hub changes it → brain.db sees change."""
+        db = get_braindb()
+        title = f"{TEST_PREFIX} priority-roundtrip"
+        result = db.create_task(name=title, notes="Full roundtrip", priority="medium")
+        task_id = result["id"]
+        db.close()
+
+        # Push to D1
+        run_push()
+
+        # Find in D1
+        d1_tasks = d1_get("/tasks?limit=500")
+        found = [t for t in d1_tasks.get("data", []) if title in t.get("title", "")]
+        assert len(found) > 0 and found[0].get("priority") == "medium"
+
+        # Hub user changes priority to urgent
+        d1_post(f"/tasks/{found[0]['id']}", {"priority": "urgent"})
+        time.sleep(2)
+
+        # Pull back
+        run_pull()
+
+        rows = brain_query("SELECT priority FROM tasks WHERE id = ?", (task_id,))
+        assert rows[0]["priority"] == "urgent", f"Roundtrip failed: priority={rows[0]['priority']}"
+        print(f"  ✓ Priority full roundtrip: medium → D1 → urgent → brain.db")
+
+    def test_55_effort_maps_to_priority_on_push(self):
+        """brain.db effort=Quick → D1 priority=low (mapping)."""
+        db = get_braindb()
+        title = f"{TEST_PREFIX} effort-map"
+        result = db.create_task(name=title, notes="Effort mapping test")
+        task_id = result["id"]
+        db.update_task(task_id, effort="Quick")
+        db.close()
+
+        run_push()
+
+        d1_tasks = d1_get("/tasks?limit=500")
+        found = [t for t in d1_tasks.get("data", []) if title in t.get("title", "")]
+        assert len(found) > 0
+        assert found[0].get("priority") == "low", f"Effort→priority mapping failed: {found[0].get('priority')}"
+        print(f"  ✓ Effort 'Quick' mapped to D1 priority 'low'")
+
+    def test_56_priority_overrides_effort_on_push(self):
+        """brain.db priority=urgent + effort=Quick → D1 gets urgent (priority wins)."""
+        db = get_braindb()
+        title = f"{TEST_PREFIX} priority-override"
+        result = db.create_task(name=title, notes="Priority override test", priority="urgent")
+        task_id = result["id"]
+        db.update_task(task_id, effort="Quick")
+        db.close()
+
+        run_push()
+
+        d1_tasks = d1_get("/tasks?limit=500")
+        found = [t for t in d1_tasks.get("data", []) if title in t.get("title", "")]
+        assert len(found) > 0
+        assert found[0].get("priority") == "urgent", f"Priority should override effort: {found[0].get('priority')}"
+        print(f"  ✓ Priority 'urgent' overrides effort 'Quick' on push")
+
+
+# ═════════════════════════════════════════════════════════════════════
+# SESSION HOOK TESTS (test auto_pull_d1 function directly)
+# ═════════════════════════════════════════════════════════════════════
+
+class TestSessionHookSync:
+    """Tests that session-start D1 pull function works correctly."""
+
+    def test_60_auto_pull_d1_function_runs(self):
+        """Import and call auto_pull_d1 — verify it doesn't crash."""
+        sys.path.insert(0, str(PB_ROOT / ".claude" / "hooks"))
+        # We can't import session-start.py directly (hyphen in name), use importlib
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "session_start", str(PB_ROOT / ".claude" / "hooks" / "session-start.py"))
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        # Call with very short threshold so it actually runs
+        result = mod.auto_pull_d1(threshold_hours=0.0)
+        print(f"  auto_pull_d1 result: {result}")
+        # Should return a string or None (not crash)
+        assert result is None or isinstance(result, str)
+        print(f"  ✓ auto_pull_d1 runs without error")
+
+    def test_61_d1_pull_creates_hub_task_in_braindb(self):
+        """Create task in Hub → run D1 pull directly → verify in brain.db.
+        This simulates what session-start does."""
+        title = f"{TEST_PREFIX} session-hook-test"
+        res = d1_post("/tasks", {"title": title, "description": "Session hook test",
+                                  "assignee": "nick-ingraham", "priority": "high"})
+        assert res["status"] == 201
+        d1_id = res["body"]["data"]["id"]
+        print(f"  Created Hub task: {d1_id}")
+
+        time.sleep(2)
+
+        # Run pull directly (same as session-start calls)
+        run_pull()
+
+        rows = brain_query("SELECT id, name, priority, assignee FROM tasks WHERE id = ?", (d1_id,))
+        assert len(rows) > 0, "Session-hook-created task not in brain.db after pull"
+        assert rows[0]["priority"] == "high", f"Priority not synced: {rows[0]['priority']}"
+        assert rows[0]["assignee"] == "nick-ingraham", f"Assignee not synced: {rows[0]['assignee']}"
+        print(f"  ✓ Hub task with priority+assignee synced via D1 pull (session-start path)")
+
+    def test_62_process_push_then_pull_roundtrip(self):
+        """Simulate /process flow: create in brain.db → push → Hub changes → pull back.
+        This tests the /process step 6b+6c pattern."""
+        db = get_braindb()
+        title = f"{TEST_PREFIX} process-roundtrip"
+        result = db.create_task(name=title, notes="Process roundtrip", priority="medium", assignee="nick")
+        task_id = result["id"]
+        db.close()
+
+        # Step 6b: push
+        run_push()
+
+        # Simulate team editing in Hub
+        d1_tasks = d1_get("/tasks?limit=500")
+        found = [t for t in d1_tasks.get("data", []) if title in t.get("title", "")]
+        assert len(found) > 0
+        d1_post(f"/tasks/{found[0]['id']}", {"priority": "high", "assignee": "dan-mcsorley"})
+        time.sleep(2)
+
+        # Step 6c: pull (new step added today)
+        run_pull()
+
+        rows = brain_query("SELECT priority, assignee FROM tasks WHERE id = ?", (task_id,))
+        assert rows[0]["priority"] == "high", f"Process roundtrip priority failed: {rows[0]['priority']}"
+        assert rows[0]["assignee"] == "dan-mcsorley", f"Process roundtrip assignee failed: {rows[0]['assignee']}"
+        print(f"  ✓ /process push+pull roundtrip: priority medium→high, assignee nick→dan")
+
+
+# ═════════════════════════════════════════════════════════════════════
 # CLEANUP
 # ═════════════════════════════════════════════════════════════════════
 
