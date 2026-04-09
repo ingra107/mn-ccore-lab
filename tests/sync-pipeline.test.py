@@ -107,7 +107,7 @@ class TestBrainToD1:
         print(f"  Push output: {output[:200]}")
 
         # Verify in D1
-        d1_tasks = d1_get("/tasks?limit=200")
+        d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if t.get("title", "").startswith(TEST_PREFIX)]
         assert len(found) > 0, f"Task '{task_name}' not found in D1 after push"
         d1_task = found[0]
@@ -130,7 +130,7 @@ class TestBrainToD1:
         run_push()
 
         # Verify in D1
-        d1_tasks = d1_get("/tasks?limit=200")
+        d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if task_name in t.get("title", "")]
         assert len(found) > 0, "Completed task not found in D1"
         assert found[0]["status"] == "done", f"D1 status should be 'done', got '{found[0]['status']}'"
@@ -153,7 +153,7 @@ class TestBrainToD1:
         run_push()
 
         # Verify in D1 --notes map to description
-        d1_tasks = d1_get("/tasks?limit=200")
+        d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if task_name in t.get("title", "")]
         assert len(found) > 0, "Task with note not found in D1"
         desc = found[0].get("description", "")
@@ -177,7 +177,7 @@ class TestBrainToD1:
         run_push()
 
         # Verify in D1
-        d1_tasks = d1_get("/tasks?limit=200")
+        d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if task_name in t.get("title", "")]
         assert len(found) > 0, "Task not found in D1"
         priority = found[0].get("priority", "")
@@ -201,7 +201,7 @@ class TestBrainToD1:
         run_push()
 
         # Verify
-        d1_tasks = d1_get("/tasks?limit=200")
+        d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if task_name in t.get("title", "")]
         if found:
             status = found[0].get("status", "")
@@ -227,7 +227,7 @@ class TestBrainToD1:
         run_push()
 
         # Verify
-        d1_tasks = d1_get("/tasks?limit=200")
+        d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if task_name in t.get("title", "")]
         if found:
             d1_date = found[0].get("due_date", "")
@@ -318,6 +318,9 @@ class TestD1ToBrain:
         # Complete in Hub
         d1_post(f"/tasks/{d1_id}/status", {"status": "done"})
         print(f"  Marked done in D1")
+
+        # Wait for D1 timestamp to settle (status changes need propagation time)
+        time.sleep(2)
 
         # Pull
         run_pull()
@@ -474,7 +477,7 @@ class TestRoundTrip:
         run_push()
 
         # Find in D1
-        d1_tasks = d1_get("/tasks?limit=200")
+        d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if task_name in t.get("title", "")]
         assert len(found) > 0, "Task not found in D1 after push"
         d1_id = found[0]["id"]
@@ -505,7 +508,7 @@ class TestRoundTrip:
         run_push()
 
         # Find in D1
-        d1_tasks = d1_get("/tasks?limit=200")
+        d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if task_name in t.get("title", "")]
         assert len(found) > 0
         d1_id = found[0]["id"]
@@ -542,7 +545,7 @@ class TestRoundTrip:
         run_push()
 
         # Find in D1
-        d1_tasks = d1_get("/tasks?limit=200")
+        d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if task_name in t.get("title", "")]
         assert len(found) > 0
         d1_id = found[0]["id"]
@@ -578,7 +581,7 @@ class TestRoundTrip:
         run_push()
 
         # Find in D1
-        d1_tasks = d1_get("/tasks?limit=200")
+        d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if task_name in t.get("title", "")]
         assert len(found) > 0
         d1_id = found[0]["id"]
@@ -633,7 +636,7 @@ class TestTimingAndConsistency:
         run_push()
 
         # Find in D1
-        d1_tasks = d1_get("/tasks?limit=200")
+        d1_tasks = d1_get("/tasks?limit=500")
         found = [t for t in d1_tasks.get("data", []) if task_name in t.get("title", "")]
         assert len(found) > 0
         d1_id = found[0]["id"]
@@ -653,7 +656,7 @@ class TestTimingAndConsistency:
         run_pull()
 
         # Check what won
-        d1_task = d1_get(f"/tasks?limit=200")
+        d1_task = d1_get(f"/tasks?limit=500")
         found_d1 = [t for t in d1_task.get("data", []) if task_name in t.get("title", "")]
         brain_rows = brain_query("SELECT effort FROM tasks WHERE id = ?", (task_id,))
 

@@ -425,16 +425,21 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 
 ## Office of Inspection (Testing Infrastructure)
 
-**546 tests** across 4 suites. Self-updating via feature registry + scanner.
+**552 tests** across 4 suites. Self-updating via feature registry + scanner.
 
 | Suite | Tests | File |
 |-------|-------|------|
 | Inspection | 198 | `tests/inspection.spec.ts` |
-| Workflows | 169 | `tests/inspection-workflows.spec.ts` |
+| Workflows | 167 | `tests/inspection-workflows.spec.ts` |
 | Daily Super-User | 131 | `tests/daily-superuser.spec.ts` |
-| Sync Pipeline | 48 | `tests/sync-pipeline.test.py` |
+| Sync Pipeline | 58 | `tests/sync-pipeline.test.py` |
 
 **Run:** `bash scripts/run-tests.sh all` (quick/ui/sync/all modes)
+
+**MANDATORY: Clean up after tests.** Tests create prefixed data in both brain.db and D1. Sync pipeline cleanup is built into test_99. For Playwright test data, run after every test session:
+```bash
+npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%' OR title LIKE 'SYNC-%' OR title LIKE 'JOURNEY%' OR title LIKE 'DAILYTEST%' OR title LIKE 'SYNCTEST%'"
+```
 **Scan for gaps:** `python scripts/inspection-scanner.py --commits 5`
 **Registry:** `tests/feature-registry.json` (353 features, 302 covered = 85.6%)
 **Guide:** `TESTING.md`
@@ -483,33 +488,28 @@ python tests/sync-pipeline.test.py
 npx vitest run src/__tests__/keyboard-shortcuts.test.tsx
 ```
 
-**Step 3: Fix remaining failures** (expect ~10-12 of 546+4 total)
-Likely failures and pre-planned fixes:
-- **My Items / Ask the Lab / Project Detail page errors** → should clear with deploy (MyItems user?.email fix + questions handler fix deployed)
-- **Light mode renders** → cascade from page errors above, clears with deploy
-- **Multiple toasts** → status circle selector — try `[data-testid^="task-status-"]` 
-- **Dashboard < 10s** → increase test timeout to 15s or add warm-up request
-- **5 sync pipeline Hub→brain.db** → timing issue with `created_since` — add `time.sleep(2)` between create and pull in tests
-- **Handoff FK constraint** → test needs real task ID from `getFirstTaskId()`
+**Step 3: Target 100%.** All 552 tests should pass. If failures appear, check:
+- Sync pipeline `limit=500` (D1 has 1200+ tasks, lower limits miss new ones)
+- Hub→brain.db timing: `time.sleep(2)` between D1 writes and pulls
+- Page errors: usually means a deploy is needed first
 
-**Step 4: Clean up D1 test data**
+**Step 4: Clean up D1 test data** (MANDATORY after every test run)
 ```bash
-# Delete INSPECTION/EDGE/SYNC/JOURNEY/DAILYTEST prefixed items
+# Sync pipeline cleanup is automatic (test_99). Playwright cleanup:
 npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%' OR title LIKE 'SYNC-%' OR title LIKE 'JOURNEY%' OR title LIKE 'DAILYTEST%' OR title LIKE 'SYNCTEST%'"
 ```
 
-## Test Results (2026-04-09, post-fix)
+## Test Results (2026-04-09, verified)
 
-**494 Playwright passed, 0 failed, 2 skipped | 47/48 sync pipeline passed**
+**494 Playwright passed, 0 failed, 2 skipped | 58/58 sync pipeline passed**
 
 | Suite | Passed | Failed | Skipped |
 |-------|--------|--------|---------|
 | inspection.spec.ts | 198 | 0 | 0 |
-| inspection-workflows.spec.ts | 164 | 0 | 2 |
+| inspection-workflows.spec.ts | 165 | 0 | 2 |
 | daily-superuser.spec.ts | 131 | 0 | 0 |
-| sync-pipeline.test.py | 47 | 0* | 0 |
+| sync-pipeline.test.py | 58 | 0 | 0 |
 
-*1 test_02 failure was caused by D1 cleanup running mid-suite, not a real bug.
 2 skips: Publication Detail (no pub data in D1), Subtask Reorder (no subtask data).
 
 ### Remaining Known Issues (not test failures)
