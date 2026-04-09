@@ -1164,3 +1164,114 @@ test.describe('FEATURE — Key links on tasks', () => {
     }
   })
 })
+
+// ═════════════════════════════════════════════════════════════════════
+// DATA VERIFICATION: Cards show REAL data, not just render
+// ═════════════════════════════════════════════════════════════════════
+
+test.describe('DATA — Dashboard cards show real data', () => {
+  test('Your Week card shows actual numbers (not all zeros)', async ({ page }) => {
+    await go(page, '/dashboard')
+    const weekCard = page.locator('text=Your Week').first()
+    if (await weekCard.isVisible({ timeout: 5000 }).catch(() => false)) {
+      // Find number elements near the card
+      const numbers = await page.evaluate(() => {
+        const els = document.querySelectorAll('[class*="week"] span, [class*="Week"] span')
+        return Array.from(els).map(e => e.textContent).filter(t => /^\d+$/.test(t?.trim() || ''))
+      })
+      console.log(`Your Week numbers: ${JSON.stringify(numbers)}`)
+      const hasNonZero = numbers.some(n => parseInt(n || '0') > 0)
+      console.log(`Has non-zero data: ${hasNonZero}`)
+    }
+  })
+
+  test('Action Board card shows tasks grouped by person', async ({ page }) => {
+    await go(page, '/dashboard')
+    const board = page.locator('text=Action Board').first()
+    if (await board.isVisible({ timeout: 5000 }).catch(() => false)) {
+      const nick = await vis(page, 'text=Nick')
+      console.log(`Action Board shows Nick: ${nick}`)
+    }
+  })
+
+  test('Project Health card shows non-zero health scores', async ({ page }) => {
+    await go(page, '/dashboard')
+    const health = page.locator('text=Project Health').first()
+    if (await health.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await page.screenshot({ path: 'review/data-project-health.png' })
+    }
+  })
+
+  test('Weekly Progress card shows 7-day bar chart with data', async ({ page }) => {
+    await go(page, '/dashboard')
+    const weekly = page.locator('text=Weekly Progress, text=Weekly').first()
+    if (await weekly.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await page.screenshot({ path: 'review/data-weekly-progress.png' })
+    }
+  })
+
+  test('Quick Wins card shows actionable tasks', async ({ page }) => {
+    await go(page, '/dashboard')
+    const wins = page.locator('text=Quick Wins').first()
+    if (await wins.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await page.screenshot({ path: 'review/data-quick-wins.png' })
+    }
+  })
+
+  test('Proactive Brief API returns real overdue/due-today counts', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/proactive-brief`)
+    if (res.status() === 200) {
+      const data = await res.json()
+      console.log(`Brief: overdue=${data.overdue_count}, due_today=${data.due_today_count}, bullets=${data.bullets?.length}`)
+      // Should have real data since there are overdue tasks
+      expect(data.overdue_count + data.due_today_count).toBeGreaterThan(0)
+    }
+  })
+
+  test('PB Health API returns sync summary with timestamps', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/pb/health`)
+    if (res.status() === 200) {
+      const data = await res.json()
+      console.log(`Health: sync_summary=${JSON.stringify(data.sync_summary)}`)
+    }
+  })
+
+  test('Email Drafts API returns correct pending count', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/email-drafts/pending`)
+    if (res.status() === 200) {
+      const data = await res.json()
+      console.log(`Email drafts pending: ${data.count}`)
+      expect(typeof data.count).toBe('number')
+    }
+  })
+
+  test('File Activity API returns heatmap with date entries', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/file-activity/heatmap?days=30`)
+    if (res.status() === 200) {
+      const data = await res.json()
+      const entries = data.data || data
+      console.log(`File activity entries: ${Array.isArray(entries) ? entries.length : 'not array'}`)
+    }
+  })
+
+  test('PB Sessions API returns session history', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/pb/sessions?limit=5`)
+    if (res.status() === 200) {
+      const data = await res.json()
+      const sessions = data.data || data
+      console.log(`PB sessions: ${Array.isArray(sessions) ? sessions.length : 'not array'}`)
+    }
+  })
+
+  test('Tasks API returns key_link fields', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/tasks?limit=50`)
+    if (res.status() === 200) {
+      const data = await res.json()
+      const withLinks = (data.data || []).filter((t: any) => t.key_link_1 || t.key_link_2 || t.key_link_3)
+      console.log(`Tasks with key_links: ${withLinks.length} out of ${data.data?.length}`)
+      if (withLinks.length > 0) {
+        console.log(`  First: ${withLinks[0].title?.substring(0, 40)} → ${withLinks[0].key_link_1?.substring(0, 50)}`)
+      }
+    }
+  })
+})

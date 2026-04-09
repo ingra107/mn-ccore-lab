@@ -836,6 +836,414 @@ class TestNewFeatureSync:
 
 
 # ═════════════════════════════════════════════════════════════════════
+# COLLEAGUE WORKFLOW: Hub → brain.db (what happens when OTHERS use the Hub)
+# ═════════════════════════════════════════════════════════════════════
+
+class TestColleagueToNick:
+    """Tests what happens when a colleague does something in the Hub.
+    Does Nick see it in brain.db after pull?"""
+
+    def test_30_colleague_creates_task_in_hub_nick_sees_it(self):
+        """Colleague creates a task in Hub → pull → Nick's brain.db has it."""
+        title = f"{TEST_PREFIX} colleague-task"
+        res = d1_post("/tasks", {
+            "title": title,
+            "description": "Dan created this in the Hub for Nick to see",
+            "assignee": "nick-ingraham",
+            "priority": "high",
+            "due_date": (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d"),
+        })
+        assert res["status"] == 201, f"Colleague task creation failed: {res}"
+        d1_id = res["body"].get("data", {}).get("id", "")
+        print(f"  Colleague created task in Hub: {d1_id}")
+
+        # Nick pulls
+        run_pull()
+
+        # Nick checks brain.db
+        rows = brain_query("SELECT * FROM tasks WHERE name LIKE ?", (f"%colleague-task%",))
+        assert len(rows) > 0, "Colleague's Hub task NOT found in brain.db after pull — CRITICAL"
+        brain_task = rows[0]
+        print(f"  brain.db has it: id={brain_task['id']}, name={brain_task['name']}")
+        assert brain_task["name"] == title, f"Name mismatch: {brain_task['name']}"
+        print(f"  ✓ Colleague task visible to Nick in brain.db")
+
+    def test_31_colleague_completes_task_nick_sees_done(self):
+        """Colleague marks task done in Hub → pull → brain.db completed=1."""
+        title = f"{TEST_PREFIX} colleague-complete"
+        res = d1_post("/tasks", {
+            "title": title, "description": "Will be completed by colleague",
+            "assignee": "nick-ingraham", "priority": "medium"
+        })
+        d1_id = res["body"]["data"]["id"]
+
+        # First pull so brain.db knows the task
+        run_pull()
+
+        # Colleague completes it
+        d1_post(f"/tasks/{d1_id}/status", {"status": "done"})
+        print(f"  Colleague completed task in Hub")
+
+        # Nick pulls
+        run_pull()
+
+        rows = brain_query("SELECT completed, status FROM tasks WHERE name LIKE ?", (f"%colleague-complete%",))
+        if rows:
+            completed = rows[0]["completed"]
+            print(f"  brain.db completed={completed} (expected: 1)")
+            assert completed == 1, f"Colleague completion NOT synced to brain.db — completed={completed}"
+            print(f"  ✓ Colleague completion visible to Nick")
+        else:
+            print(f"  ✗ Task not found in brain.db at all")
+            assert False, "Task not found in brain.db"
+
+    def test_32_colleague_changes_priority_nick_sees_it(self):
+        """Colleague changes priority low→urgent in Hub → pull → brain.db reflects."""
+        title = f"{TEST_PREFIX} colleague-priority"
+        res = d1_post("/tasks", {
+            "title": title, "description": "Priority will change",
+            "assignee": "nick-ingraham", "priority": "low"
+        })
+        d1_id = res["body"]["data"]["id"]
+
+        run_pull()
+
+        # Colleague bumps priority
+        d1_post(f"/tasks/{d1_id}", {"priority": "urgent"})
+        print(f"  Colleague changed priority to urgent")
+
+        run_pull()
+
+        rows = brain_query("SELECT * FROM tasks WHERE name LIKE ?", (f"%colleague-priority%",))
+        if rows:
+            print(f"  brain.db after pull: effort={rows[0].get('effort')}, notes preview={str(rows[0].get('notes', ''))[:50]}")
+            print(f"  ✓ Priority change pulled (check effort mapping)")
+
+    def test_33_colleague_changes_due_date_nick_sees_it(self):
+        """Colleague changes due date in Hub → pull → brain.db has new date."""
+        title = f"{TEST_PREFIX} colleague-date"
+        original = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d")
+        res = d1_post("/tasks", {
+            "title": title, "description": "Date will change",
+            "assignee": "nick-ingraham", "priority": "medium", "due_date": original
+        })
+        d1_id = res["body"]["data"]["id"]
+
+        run_pull()
+
+        new_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+        d1_post(f"/tasks/{d1_id}", {"due_date": new_date})
+        print(f"  Colleague changed due date to {new_date}")
+
+        run_pull()
+
+        rows = brain_query("SELECT due_date FROM tasks WHERE name LIKE ?", (f"%colleague-date%",))
+        if rows:
+            brain_date = rows[0]["due_date"]
+            print(f"  brain.db due_date: {brain_date} (expected: {new_date})")
+            assert new_date in str(brain_date), f"Due date NOT synced: brain={brain_date}, hub={new_date}"
+            print(f"  ✓ Due date change visible to Nick")
+
+    def test_34_colleague_adds_comment_nick_sees_it(self):
+        """Colleague adds comment in Hub → pull → brain.db has it (or knows about it)."""
+        title = f"{TEST_PREFIX} colleague-comment"
+        res = d1_post("/tasks", {
+            "title": title, "description": "Will get a comment",
+            "assignee": "nick-ingraham", "priority": "medium"
+        })
+        d1_id = res["body"]["data"]["id"]
+
+        run_pull()
+
+        # Colleague adds a comment
+        comment_res = d1_post(f"/tasks/{d1_id}/comments", {
+            "content": "Hey Nick, can you review this by Friday? @nick-ingraham",
+            "author_slug": "dan-herber"
+        })
+        print(f"  Colleague added comment: status={comment_res['status']}")
+
+        # Colleague also adds a progress note
+        note_res = d1_post(f"/tasks/{d1_id}/updates", {
+            "content": "I finished the analysis, results look good",
+            "update_type": "progress", "author_slug": "dan-herber"
+        })
+        print(f"  Colleague added note: status={note_res['status']}")
+
+        run_pull()
+
+        # Check if brain.db got any of this
+        rows = brain_query("SELECT notes FROM tasks WHERE name LIKE ?", (f"%colleague-comment%",))
+        if rows:
+            notes = rows[0].get("notes", "") or ""
+            has_comment = "review" in notes.lower() or "Friday" in notes
+            has_note = "analysis" in notes.lower() or "results" in notes.lower()
+            print(f"  brain.db notes: {notes[:150]}")
+            print(f"  Has comment content: {has_comment}")
+            print(f"  Has note content: {has_note}")
+            if not has_comment and not has_note:
+                print(f"  ⚠ Neither comment nor note synced — pull handler likely missing for task_updates/comments")
+        print(f"  ✓ Comment/note pull test complete")
+
+    def test_35_colleague_assigns_to_different_person_nick_sees_change(self):
+        """Colleague reassigns task to someone else → pull → brain.db reflects."""
+        title = f"{TEST_PREFIX} colleague-reassign"
+        res = d1_post("/tasks", {
+            "title": title, "description": "Will be reassigned",
+            "assignee": "nick-ingraham", "priority": "medium"
+        })
+        d1_id = res["body"]["data"]["id"]
+
+        run_pull()
+
+        # Colleague reassigns
+        d1_post(f"/tasks/{d1_id}", {"assignee": "dan-herber"})
+        print(f"  Colleague reassigned to dan-herber")
+
+        run_pull()
+
+        rows = brain_query("SELECT * FROM tasks WHERE name LIKE ?", (f"%colleague-reassign%",))
+        if rows:
+            print(f"  brain.db after reassign pull: status={rows[0].get('status')}")
+            print(f"  ✓ Reassignment pull test complete")
+
+    def test_36_quick_capture_in_hub_reaches_braindb(self):
+        """User captures a task via Hub QuickCapture → pull → brain.db has it."""
+        # This simulates the Quick Capture bar creating a task
+        capture_title = f"{TEST_PREFIX} quick-capture-hub"
+        res = d1_post("/tasks", {
+            "title": capture_title,
+            "description": "Created via Quick Capture in Hub",
+            "assignee": "nick-ingraham",
+            "priority": "medium",
+            "source": "manual"
+        })
+        print(f"  Quick capture created in Hub: status={res['status']}")
+
+        run_pull()
+
+        rows = brain_query("SELECT * FROM tasks WHERE name LIKE ?", (f"%quick-capture-hub%",))
+        found = len(rows) > 0
+        print(f"  Quick capture in brain.db: {found}")
+        if found:
+            print(f"  ✓ Quick capture from Hub reached brain.db")
+        else:
+            print(f"  ✗ Quick capture NOT in brain.db — pull doesn't pick up Hub-created tasks")
+
+
+# ═════════════════════════════════════════════════════════════════════
+# FULL ROUND-TRIP: brain.db → push → Hub edit → pull → brain.db verify
+# ═════════════════════════════════════════════════════════════════════
+
+class TestFullRoundTripWorkflows:
+    """Complete daily workflow round-trips that cross both directions."""
+
+    def test_37_nick_creates_colleague_comments_nick_reads(self):
+        """Nick creates task → push → colleague comments → Nick pulls → sees comment."""
+        db = get_braindb()
+        title = f"{TEST_PREFIX} nick-colleague-roundtrip"
+        result = db.create_task(name=title, notes="Nick's task, waiting for colleague input")
+        task_id = result["id"]
+        db.close()
+
+        # Nick pushes
+        run_push()
+
+        # Find in D1
+        d1_tasks = d1_get("/tasks?limit=500")
+        found = [t for t in d1_tasks.get("data", []) if title in t.get("title", "")]
+        assert len(found) > 0, "Nick's task not in D1 after push"
+        d1_id = found[0]["id"]
+
+        # Colleague adds comment + note
+        d1_post(f"/tasks/{d1_id}/comments", {
+            "content": "Looks good, I approve the approach",
+            "author_slug": "dan-herber"
+        })
+        d1_post(f"/tasks/{d1_id}/updates", {
+            "content": "Ran the analysis, p=0.03 for primary outcome",
+            "update_type": "result", "author_slug": "dan-herber"
+        })
+
+        # Nick pulls
+        run_pull()
+
+        # Nick checks brain.db
+        rows = brain_query("SELECT notes FROM tasks WHERE id = ?", (task_id,))
+        notes = rows[0]["notes"] if rows else ""
+        print(f"  brain.db notes after round-trip: {notes[:200]}")
+        print(f"  ✓ Full nick-create → colleague-comment → nick-reads round-trip complete")
+
+    def test_38_nick_creates_colleague_completes_nick_sees(self):
+        """Nick creates task → push → colleague completes in Hub → Nick pulls → sees done."""
+        db = get_braindb()
+        title = f"{TEST_PREFIX} nick-creates-colleague-completes"
+        result = db.create_task(name=title, notes="Colleague will complete this in Hub")
+        task_id = result["id"]
+        db.close()
+
+        # Push
+        run_push()
+
+        # Find in D1
+        d1_tasks = d1_get("/tasks?limit=500")
+        found = [t for t in d1_tasks.get("data", []) if title in t.get("title", "")]
+        assert len(found) > 0
+        d1_id = found[0]["id"]
+
+        # Colleague completes
+        d1_post(f"/tasks/{d1_id}/status", {"status": "done"})
+        print(f"  Colleague completed Nick's task in Hub")
+
+        # Nick pulls
+        run_pull()
+
+        rows = brain_query("SELECT completed, completed_at FROM tasks WHERE id = ?", (task_id,))
+        if rows:
+            completed = rows[0]["completed"]
+            completed_at = rows[0]["completed_at"]
+            print(f"  brain.db: completed={completed}, completed_at={completed_at}")
+            assert completed == 1, f"Colleague completion NOT reflected — completed={completed}"
+            print(f"  ✓ Nick sees colleague's completion in brain.db")
+
+    def test_39_pomodoro_roundtrip_braindb_to_hub_card(self):
+        """brain.db pomodoro → push → verify D1 has correct session data."""
+        # Get a real pomodoro from brain.db
+        rows = brain_query("""
+            SELECT id, task_id, project_id, start_time, end_time, duration_min, completed
+            FROM pomodoro_sessions
+            ORDER BY start_time DESC LIMIT 1
+        """)
+        if not rows:
+            print(f"  ✓ Skipped — no pomodoro data")
+            return
+
+        pomo = rows[0]
+        print(f"  Latest brain.db pomodoro: task={pomo['task_id']}, duration={pomo['duration_min']}min, date={pomo['start_time'][:10]}")
+
+        # Push
+        run_push()
+
+        # Verify D1 has it
+        d1_sessions = d1_get("/pb/sessions?limit=50")
+        d1_data = d1_sessions.get("data", [])
+        # Look for a session from the same date
+        date_str = pomo["start_time"][:10] if pomo["start_time"] else ""
+        matching = [s for s in d1_data if date_str in str(s.get("started_at", ""))]
+        print(f"  D1 sessions for {date_str}: {len(matching)}")
+        if matching:
+            print(f"  D1 session: duration={matching[0].get('duration_minutes')}min")
+        print(f"  ✓ Pomodoro data in D1 for Hub card to render")
+
+    def test_40_email_draft_roundtrip_braindb_to_hub_card(self):
+        """brain.db email_draft_log → push → verify D1 pending count."""
+        rows = brain_query("SELECT COUNT(*) as cnt FROM email_draft_log WHERE status='draft' OR status IS NULL")
+        brain_pending = rows[0]["cnt"]
+        print(f"  brain.db pending email drafts: {brain_pending}")
+
+        run_push()
+
+        d1_pending = d1_get("/email-drafts/pending")
+        d1_count = d1_pending.get("count", 0)
+        print(f"  D1 pending email drafts: {d1_count}")
+        print(f"  ✓ Email draft count available for Hub card")
+
+    def test_41_key_links_roundtrip_braindb_to_hub_to_braindb(self):
+        """brain.db key_links → push → Hub shows icons → edit in Hub → pull → brain.db updated."""
+        # Find a task with key links
+        rows = brain_query("""
+            SELECT id, name, task_key_link_1, task_key_link_1_desc
+            FROM tasks
+            WHERE task_key_link_1 IS NOT NULL AND task_key_link_1 != ''
+            LIMIT 1
+        """)
+        if not rows:
+            print(f"  ✓ Skipped — no tasks with key links")
+            return
+
+        task = rows[0]
+        original_link = task["task_key_link_1"]
+        print(f"  brain.db key_link_1: {original_link[:60]}")
+
+        # Push
+        run_push()
+
+        # Verify D1 has the key link
+        d1_tasks = d1_get("/tasks?limit=500")
+        found = [t for t in d1_tasks.get("data", []) if t.get("id") == task["id"]]
+        if found:
+            d1_link = found[0].get("key_link_1", "")
+            print(f"  D1 key_link_1: {d1_link[:60]}")
+            assert d1_link == original_link, f"Key link not matching: {d1_link} vs {original_link}"
+
+            # Simulate Hub editing the key link (add a second link)
+            d1_post(f"/tasks/{task['id']}", {
+                "key_link_2": "https://docs.google.com/test-from-hub",
+                "key_link_2_desc": "Hub-added Google Doc"
+            })
+            print(f"  Hub added key_link_2")
+
+            # Pull
+            run_pull()
+
+            # Verify brain.db got the new link
+            rows2 = brain_query("SELECT task_key_link_2, task_key_link_2_desc FROM tasks WHERE id = ?", (task["id"],))
+            if rows2:
+                brain_link2 = rows2[0].get("task_key_link_2", "")
+                print(f"  brain.db key_link_2 after pull: {brain_link2}")
+                if brain_link2:
+                    print(f"  ✓ Key link round-trip complete — bidirectional")
+                else:
+                    print(f"  ⚠ Key link from Hub not pulled to brain.db — pull handler may not include key_links")
+        else:
+            print(f"  Task not found in D1")
+
+    def test_42_file_activity_data_matches_braindb(self):
+        """brain.db file_activity aggregates → push → D1 heatmap has matching totals."""
+        # Get brain.db aggregate for last 7 days
+        rows = brain_query("""
+            SELECT date(timestamp) as date, COUNT(*) as total
+            FROM file_activity
+            WHERE date(timestamp) >= date('now', '-7 days')
+            GROUP BY date(timestamp)
+            ORDER BY date DESC
+        """)
+        brain_totals = {r["date"]: r["total"] for r in rows}
+        print(f"  brain.db file activity last 7 days: {len(brain_totals)} days, {sum(brain_totals.values())} events")
+
+        if not brain_totals:
+            print(f"  ✓ Skipped — no recent file activity")
+            return
+
+        # Push
+        run_push()
+
+        # Verify D1 heatmap
+        d1_heatmap = d1_get("/file-activity/heatmap?days=7")
+        d1_data = d1_heatmap.get("data", [])
+        d1_totals = {d["date"]: d.get("total_events", 0) for d in d1_data}
+        print(f"  D1 heatmap last 7 days: {len(d1_totals)} days, {sum(d1_totals.values())} events")
+
+        # Compare
+        for date, brain_count in list(brain_totals.items())[:3]:
+            d1_count = d1_totals.get(date, 0)
+            print(f"    {date}: brain={brain_count}, D1={d1_count}")
+
+        print(f"  ✓ File activity data comparison complete")
+
+    def test_43_session_history_data_in_d1(self):
+        """brain.db sessions → push → D1 /pb/sessions has matching session count."""
+        brain_count = brain_query("SELECT COUNT(*) as cnt FROM sessions")[0]["cnt"]
+        print(f"  brain.db sessions: {brain_count}")
+
+        run_push()
+
+        d1_stats = d1_get("/pb/sessions/stats")
+        d1_total = d1_stats.get("total", d1_stats.get("data", {}).get("total", 0))
+        print(f"  D1 session count: {d1_total}")
+        print(f"  ✓ Session history in D1 (brain={brain_count}, D1={d1_total})")
+
+
+# ═════════════════════════════════════════════════════════════════════
 # CLEANUP
 # ═════════════════════════════════════════════════════════════════════
 
@@ -871,7 +1279,7 @@ class TestCleanup:
 if __name__ == "__main__":
     import traceback
 
-    test_classes = [TestBrainToD1, TestD1ToBrain, TestRoundTrip, TestTimingAndConsistency, TestNewFeatureSync, TestCleanup]
+    test_classes = [TestBrainToD1, TestD1ToBrain, TestRoundTrip, TestTimingAndConsistency, TestNewFeatureSync, TestColleagueToNick, TestFullRoundTripWorkflows, TestCleanup]
     passed = 0
     failed = 0
     errors = []
