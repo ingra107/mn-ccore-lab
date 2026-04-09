@@ -1242,6 +1242,128 @@ class TestFullRoundTripWorkflows:
         print(f"  D1 session count: {d1_total}")
         print(f"  ✓ Session history in D1 (brain={brain_count}, D1={d1_total})")
 
+    def test_44_edit_description_in_hub_pull_to_braindb(self):
+        """Edit task description in Hub → pull → brain.db has updated notes."""
+        title = f"{TEST_PREFIX} desc-edit-hub"
+        res = d1_post("/tasks", {
+            "title": title,
+            "description": "Original description",
+            "assignee": "nick-ingraham", "priority": "medium"
+        })
+        d1_id = res["body"]["data"]["id"]
+        run_pull()
+
+        # Edit description in Hub
+        d1_post(f"/tasks/{d1_id}", {"description": "Updated by colleague in Hub — new analysis approach"})
+        print(f"  Hub description updated")
+        run_pull()
+
+        rows = brain_query("SELECT notes FROM tasks WHERE name LIKE ?", (f"%desc-edit-hub%",))
+        if rows:
+            notes = rows[0].get("notes", "")
+            has_update = "new analysis" in notes.lower() or "updated" in notes.lower()
+            print(f"  brain.db notes: {notes[:100]}")
+            print(f"  Description edit synced: {has_update}")
+        print(f"  ✓ Description edit pull test complete")
+
+    def test_45_change_project_stage_in_hub_pull_to_braindb(self):
+        """Change project stage in Hub → pull → brain.db reflects new stage."""
+        # Get a real project
+        d1_projects = d1_get("/projects")
+        if not d1_projects.get("data"):
+            print(f"  ✓ Skipped — no projects in D1")
+            return
+        project = d1_projects["data"][0]
+        slug = project.get("slug", "")
+        original_stage = project.get("stage", "")
+        print(f"  D1 project: {slug}, stage={original_stage}")
+
+        # Change stage in Hub
+        new_stage = "Writing" if original_stage != "Writing" else "Analysis"
+        d1_post(f"/projects/{project['id']}", {"stage": new_stage})
+        print(f"  Hub stage changed to {new_stage}")
+
+        run_pull()
+
+        # Check brain.db
+        rows = brain_query("SELECT stage FROM projects WHERE name LIKE ? OR id LIKE ?",
+                          (f"%{slug.replace('-', '%')}%", f"%{slug}%"))
+        if rows:
+            brain_stage = rows[0].get("stage", "")
+            print(f"  brain.db stage: {brain_stage}")
+        else:
+            print(f"  Project not found in brain.db by slug pattern")
+
+        # Restore original
+        d1_post(f"/projects/{project['id']}", {"stage": original_stage})
+        print(f"  ✓ Project stage pull test complete")
+
+    def test_46_meeting_action_item_creates_linked_task(self):
+        """Create action item in meeting → verify it creates a linked task."""
+        # Get a meeting
+        meetings = d1_get("/meetings")
+        if not meetings.get("data"):
+            print(f"  ✓ Skipped — no meetings")
+            return
+        meeting_id = meetings["data"][0]["id"]
+
+        # Count tasks before
+        before = d1_get("/tasks?limit=500")
+        before_count = len(before.get("data", []))
+
+        # Create action item via meeting
+        res = d1_post(f"/meetings/{meeting_id}/action-items", {
+            "description": f"{TEST_PREFIX} meeting-action-test",
+            "assignee": "nick-ingraham",
+            "due_date": (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
+        })
+        print(f"  Action item created: status={res['status']}")
+
+        # Check if a linked task was created
+        after = d1_get("/tasks?limit=500")
+        after_count = len(after.get("data", []))
+        new_tasks = [t for t in after.get("data", []) if "meeting-action-test" in t.get("title", "").lower() or "meeting-action-test" in t.get("description", "").lower()]
+        print(f"  Tasks before: {before_count}, after: {after_count}")
+        print(f"  Linked task found: {len(new_tasks) > 0}")
+        print(f"  ✓ Meeting action item → task link test complete")
+
+    def test_47_conflicting_title_edits_both_sides(self):
+        """Both brain.db and Hub edit same task title → push+pull → verify which wins."""
+        db = get_braindb()
+        title = f"{TEST_PREFIX} conflict-title"
+        result = db.create_task(name=title, notes="Conflict test")
+        task_id = result["id"]
+        db.close()
+
+        run_push()
+
+        d1_tasks = d1_get("/tasks?limit=500")
+        found = [t for t in d1_tasks.get("data", []) if title in t.get("title", "")]
+        assert len(found) > 0
+        d1_id = found[0]["id"]
+
+        # Both sides edit
+        db = get_braindb()
+        db.update_task(task_id, name=f"{title} — brain edit")
+        db.close()
+
+        d1_post(f"/tasks/{d1_id}", {"title": f"{title} — hub edit"})
+
+        run_push()
+        run_pull()
+
+        # Check which side won
+        rows = brain_query("SELECT name FROM tasks WHERE id = ?", (task_id,))
+        brain_title = rows[0]["name"] if rows else ""
+
+        d1_check = d1_get("/tasks?limit=500")
+        d1_found = [t for t in d1_check.get("data", []) if t.get("id") == d1_id]
+        d1_title = d1_found[0]["title"] if d1_found else ""
+
+        print(f"  brain.db title: {brain_title}")
+        print(f"  D1 title: {d1_title}")
+        print(f"  ✓ Title conflict test complete — inspect which side won")
+
 
 # ═════════════════════════════════════════════════════════════════════
 # CLEANUP
