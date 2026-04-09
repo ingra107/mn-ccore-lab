@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createTask, updateTaskStatus, updateTask, acknowledgeTask, fetchApi } from '../../lib/api'
 import type { TaskRow } from '../../lib/api'
+import { TASK_STATUS, optimisticListUpdate, rollbackSnapshots } from './utils'
 
 // ── Task mutations ──────────────────────────────────────────
 
@@ -35,38 +36,18 @@ export function useUpdateTaskStatus() {
 
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
-
-      const queries = queryClient.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
-      const snapshots: { key: readonly unknown[]; data: TaskRow[] | undefined }[] = []
-
-      for (const [key, data] of queries) {
-        snapshots.push({ key, data })
-        if (data) {
-          queryClient.setQueryData(
-            key,
-            data.map((t) =>
-              t.id === id
-                ? {
-                    ...t,
-                    status,
-                    completed: status === 'done' ? 1 : 0,
-                    completed_at: status === 'done' ? new Date().toISOString() : null,
-                  }
-                : t
-            )
-          )
-        }
-      }
-
+      const { snapshots } = optimisticListUpdate<TaskRow>(
+        queryClient, ['tasks'],
+        (tasks) => tasks.map((t) => t.id === id
+          ? { ...t, status, completed: status === TASK_STATUS.DONE ? 1 : 0, completed_at: status === TASK_STATUS.DONE ? new Date().toISOString() : null }
+          : t
+        ),
+      )
       return { snapshots }
     },
 
     onError: (_err, _vars, context) => {
-      if (context?.snapshots) {
-        for (const { key, data } of context.snapshots) {
-          queryClient.setQueryData(key, data)
-        }
-      }
+      rollbackSnapshots(queryClient, context?.snapshots)
     },
 
     onSettled: () => {
@@ -87,29 +68,15 @@ export function useUpdateTask() {
 
     onMutate: async ({ id, fields }) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
-
-      const queries = queryClient.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
-      const snapshots: { key: readonly unknown[]; data: TaskRow[] | undefined }[] = []
-
-      for (const [key, data] of queries) {
-        snapshots.push({ key, data })
-        if (data) {
-          queryClient.setQueryData(
-            key,
-            data.map((t) => t.id === id ? { ...t, ...fields } : t)
-          )
-        }
-      }
-
+      const { snapshots } = optimisticListUpdate<TaskRow>(
+        queryClient, ['tasks'],
+        (tasks) => tasks.map((t) => t.id === id ? { ...t, ...fields } : t),
+      )
       return { snapshots }
     },
 
     onError: (_err, _vars, context) => {
-      if (context?.snapshots) {
-        for (const { key, data } of context.snapshots) {
-          queryClient.setQueryData(key, data)
-        }
-      }
+      rollbackSnapshots(queryClient, context?.snapshots)
     },
 
     onSettled: () => {
@@ -132,29 +99,25 @@ export function useBulkUpdateTasks() {
 
     onMutate: async ({ ids, action, value }) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
-      const queries = queryClient.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
-      const snapshots: { key: readonly unknown[]; data: TaskRow[] | undefined }[] = []
-      for (const [key, data] of queries) {
-        snapshots.push({ key, data })
-        if (data) {
-          queryClient.setQueryData(key, data.map(t => {
-            if (!ids.includes(t.id)) return t
-            if (action === 'complete') return { ...t, completed: 1, status: 'done' }
-            if (action === 'uncomplete') return { ...t, completed: 0, status: 'todo' }
-            if (action === 'priority' && value) return { ...t, priority: value }
-            if (action === 'assign' && value) return { ...t, assignee: value }
-            if (action === 'delete') return { ...t, deleted_at: new Date().toISOString() }
-            return t
-          }))
-        }
-      }
+      const { snapshots } = optimisticListUpdate<TaskRow>(
+        queryClient, ['tasks'],
+        (tasks) => tasks.map(t => {
+          if (!ids.includes(t.id)) return t
+          if (action === 'complete') return { ...t, completed: 1, status: TASK_STATUS.DONE }
+          if (action === 'uncomplete') return { ...t, completed: 0, status: TASK_STATUS.TODO }
+          if (action === 'priority' && value) return { ...t, priority: value }
+          if (action === 'assign' && value) return { ...t, assignee: value }
+          if (action === 'delete') return { ...t, deleted_at: new Date().toISOString() }
+          return t
+        }),
+      )
       return { snapshots }
     },
+
     onError: (_err, _vars, context) => {
-      if (context?.snapshots) {
-        for (const { key, data } of context.snapshots) queryClient.setQueryData(key, data)
-      }
+      rollbackSnapshots(queryClient, context?.snapshots)
     },
+
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
       queryClient.invalidateQueries({ queryKey: ['action-items'] })
@@ -171,37 +134,23 @@ export function useAcknowledgeTask() {
 
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
-
-      const queries = queryClient.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
-      const snapshots: { key: readonly unknown[]; data: TaskRow[] | undefined }[] = []
-
-      for (const [key, data] of queries) {
-        snapshots.push({ key, data })
-        if (data) {
-          queryClient.setQueryData(
-            key,
-            data.map((t) =>
-              t.id === id
-                ? { ...t, acknowledged_at: new Date().toISOString(), acknowledged_by: 'me' }
-                : t
-            )
-          )
-        }
-      }
-
+      const { snapshots } = optimisticListUpdate<TaskRow>(
+        queryClient, ['tasks'],
+        (tasks) => tasks.map((t) => t.id === id
+          ? { ...t, acknowledged_at: new Date().toISOString(), acknowledged_by: 'nick' }
+          : t
+        ),
+      )
       return { snapshots }
     },
 
     onError: (_err, _vars, context) => {
-      if (context?.snapshots) {
-        for (const { key, data } of context.snapshots) {
-          queryClient.setQueryData(key, data)
-        }
-      }
+      rollbackSnapshots(queryClient, context?.snapshots)
     },
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
 }

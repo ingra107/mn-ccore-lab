@@ -86,10 +86,12 @@ export function useToggleActionItem() {
         }
       }
 
-      // Also update meeting detail caches
+      // Also update meeting detail caches (and snapshot for rollback)
+      const meetingSnapshots: { key: readonly unknown[]; data: unknown }[] = []
       const meetingQueries = queryClient.getQueriesData<{ action_items?: ActionItemRow[] }>({ queryKey: ['meeting'] })
       for (const [key, data] of meetingQueries) {
         if (data?.action_items) {
+          meetingSnapshots.push({ key, data })
           queryClient.setQueryData(key, {
             ...data,
             action_items: data.action_items.map((item) =>
@@ -101,12 +103,17 @@ export function useToggleActionItem() {
         }
       }
 
-      return { snapshots }
+      return { snapshots, meetingSnapshots }
     },
 
     onError: (_err, _itemId, context) => {
       if (context?.snapshots) {
         for (const { key, data } of context.snapshots) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+      if (context?.meetingSnapshots) {
+        for (const { key, data } of context.meetingSnapshots) {
           queryClient.setQueryData(key, data)
         }
       }

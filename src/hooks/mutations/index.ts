@@ -1,3 +1,4 @@
+export { TASK_STATUS, optimisticListUpdate, rollbackSnapshots } from './utils'
 export * from './useTaskMutations'
 export * from './useSubtaskMutations'
 export * from './useProjectMutations'
