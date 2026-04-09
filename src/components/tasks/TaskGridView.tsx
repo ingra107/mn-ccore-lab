@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, Link2, Plus, MessageSquare } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check } from 'lucide-react'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
@@ -543,6 +543,7 @@ function TaskGridRow({
               {task.project_id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).slice(0, 20)}
             </span>
           )}
+          <TaskKeyLinks task={task} />
         </div>
       </div>
 
@@ -701,6 +702,98 @@ function TaskGridRow({
         </div>
       )}
     </div>
+  )
+}
+
+// ── Key Link Icons ──────────────────────────────────────────
+
+function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
+  const [copied, setCopied] = useState(false)
+
+  const isLocalPath = url.startsWith('file:///') || url.startsWith('C:') || url.startsWith('/') && !url.startsWith('//')
+  const isBat = url.endsWith('.bat') || url.endsWith('.cmd') || url.endsWith('.ps1')
+  const isHttp = url.startsWith('http')
+
+  let Icon = ExternalLink
+  let href = url
+  if (isBat) {
+    Icon = Play
+    const cleanPath = url.replace('file:///', '')
+    href = `mnccore://launch/${cleanPath}`
+  } else if (isLocalPath) {
+    Icon = FolderOpen
+    const cleanPath = url.replace('file:///', '')
+    href = `mnccore://open/${cleanPath}`
+  }
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+
+  return (
+    <span className="inline-flex items-center gap-0.5" style={{ flexShrink: 0 }}>
+      <a
+        href={href}
+        target={isHttp ? '_blank' : undefined}
+        rel={isHttp ? 'noopener noreferrer' : undefined}
+        onClick={(e) => e.stopPropagation()}
+        title={label || url}
+        style={{
+          color: 'var(--teal)',
+          opacity: 0.5,
+          transition: 'opacity var(--transition-fast) ease',
+          display: 'inline-flex',
+          alignItems: 'center',
+          padding: '1px',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
+        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5' }}
+      >
+        <Icon size={14} />
+      </a>
+      <button
+        onClick={handleCopy}
+        title="Copy link"
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: copied ? 'var(--green)' : 'var(--slate)',
+          opacity: copied ? 1 : 0.35,
+          transition: 'opacity var(--transition-fast) ease, color var(--transition-fast) ease',
+          display: 'inline-flex',
+          alignItems: 'center',
+          padding: '1px',
+        }}
+        onMouseEnter={(e) => { if (!copied) e.currentTarget.style.opacity = '0.8' }}
+        onMouseLeave={(e) => { if (!copied) e.currentTarget.style.opacity = '0.35' }}
+      >
+        {copied ? <Check size={11} /> : <Clipboard size={11} />}
+      </button>
+    </span>
+  )
+}
+
+function TaskKeyLinks({ task }: { task: TaskRow }) {
+  const links = [
+    { url: task.key_link_1, desc: task.key_link_1_desc },
+    { url: task.key_link_2, desc: task.key_link_2_desc },
+    { url: task.key_link_3, desc: task.key_link_3_desc },
+  ].filter(l => l.url)
+
+  if (links.length === 0) return null
+
+  return (
+    <span className="inline-flex items-center gap-1" style={{ flexShrink: 0 }}>
+      {links.map((l, i) => (
+        <KeyLinkIcon key={i} url={l.url!} label={l.desc} />
+      ))}
+    </span>
   )
 }
 

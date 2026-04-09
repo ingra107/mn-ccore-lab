@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Classes\mnccore]
+@="URL:MN-CCORE Protocol"
+"URL Protocol"=""
+
+[HKEY_CURRENT_USER\Software\Classes\mnccore\shell]
+
+[HKEY_CURRENT_USER\Software\Classes\mnccore\shell\open]
+
+[HKEY_CURRENT_USER\Software\Classes\mnccore\shell\open\command]
+@="\"C:\\Users\\ingra107\\mn-ccore-lab\\scripts\\mnccore-handler.bat\" \"%1\""

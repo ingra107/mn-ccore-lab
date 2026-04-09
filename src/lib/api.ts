@@ -120,6 +120,12 @@ export interface TaskRow {
   recurrence: string | null
   recurrence_parent_id: string | null
   description_json: string | null
+  key_link_1: string | null
+  key_link_1_desc: string | null
+  key_link_2: string | null
+  key_link_2_desc: string | null
+  key_link_3: string | null
+  key_link_3_desc: string | null
   created_at: string
   meeting_title?: string
   meeting_date?: string

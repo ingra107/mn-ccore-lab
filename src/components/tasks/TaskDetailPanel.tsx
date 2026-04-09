@@ -4,7 +4,7 @@ import {
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
-  ChevronUp, ChevronDown,
+  ChevronUp, ChevronDown, FolderOpen, Play, Clipboard,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CollapsibleSection from '../CollapsibleSection'
@@ -283,6 +283,9 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
               <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
             </FieldBlock>
 
+            {/* Key Links */}
+            <DetailKeyLinks task={task} />
+
             {/* Watchers */}
             <FieldBlock label="Watchers" icon={Users}>
               <WatchersPicker value={task.watchers || ''} onChange={(v) => handleFieldUpdate('watchers', v || null)} />
@@ -513,6 +516,105 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
           })}
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Detail Key Links ────────────────────────────────────
+
+function DetailKeyLinkRow({ url, label }: { url: string; label?: string | null }) {
+  const [copied, setCopied] = useState(false)
+
+  const isLocalPath = url.startsWith('file:///') || url.startsWith('C:') || (url.startsWith('/') && !url.startsWith('//'))
+  const isBat = url.endsWith('.bat') || url.endsWith('.cmd') || url.endsWith('.ps1')
+  const isHttp = url.startsWith('http')
+
+  let Icon = ExternalLink
+  let href = url
+  let typeLabel = 'Link'
+  if (isBat) {
+    Icon = Play
+    const cleanPath = url.replace('file:///', '')
+    href = `mnccore://launch/${cleanPath}`
+    typeLabel = 'Script'
+  } else if (isLocalPath) {
+    Icon = FolderOpen
+    const cleanPath = url.replace('file:///', '')
+    href = `mnccore://open/${cleanPath}`
+    typeLabel = 'Folder'
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
+      <a
+        href={href}
+        target={isHttp ? '_blank' : undefined}
+        rel={isHttp ? 'noopener noreferrer' : undefined}
+        style={{ color: 'var(--teal)', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+      >
+        <Icon size={14} />
+      </a>
+      <div className="flex-1 min-w-0">
+        <a
+          href={href}
+          target={isHttp ? '_blank' : undefined}
+          rel={isHttp ? 'noopener noreferrer' : undefined}
+          className="text-xs truncate block"
+          style={{ color: 'var(--ink)', textDecoration: 'none' }}
+          title={url}
+        >
+          {label || url}
+        </a>
+        <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+          {typeLabel}
+        </span>
+      </div>
+      <button
+        onClick={handleCopy}
+        title="Copy link"
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: copied ? 'var(--green)' : 'var(--slate)',
+          opacity: copied ? 1 : 0.4,
+          padding: '2px',
+          transition: 'all 150ms',
+        }}
+      >
+        {copied ? <Check size={12} /> : <Clipboard size={12} />}
+      </button>
+    </div>
+  )
+}
+
+function DetailKeyLinks({ task }: { task: TaskRow }) {
+  const links = [
+    { url: task.key_link_1, desc: task.key_link_1_desc },
+    { url: task.key_link_2, desc: task.key_link_2_desc },
+    { url: task.key_link_3, desc: task.key_link_3_desc },
+  ].filter(l => l.url)
+
+  if (links.length === 0) return null
+
+  return (
+    <div>
+      <label className="flex items-center gap-1.5 text-[11px] mb-1.5" style={{ color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
+        <Link2 size={11} />
+        Key Links
+      </label>
+      <div className="flex flex-col gap-1">
+        {links.map((l, i) => (
+          <DetailKeyLinkRow key={i} url={l.url!} label={l.desc} />
+        ))}
+      </div>
     </div>
   )
 }
