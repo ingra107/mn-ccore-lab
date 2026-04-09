@@ -255,6 +255,9 @@ class TestD1ToBrain:
         d1_id = res["body"].get("data", {}).get("id", "")
         print(f"  Created D1 task: {d1_id}")
 
+        # Wait for D1 created_at to be in the past relative to pull timestamp
+        time.sleep(2)
+
         # Pull to brain.db
         output = run_pull()
         print(f"  Pull output: {output[:200]}")
@@ -795,6 +798,9 @@ class TestNewFeatureSync:
         task = rows[0]
         print(f"  brain.db task with key_link: {task['name'][:40]}, link1={task['task_key_link_1'][:50]}")
 
+        # Touch updated_at so the task is included in delta push
+        brain_execute("UPDATE tasks SET updated_at = datetime('now') WHERE id = ?", (task['id'],))
+
         # Push
         run_push()
 
@@ -869,6 +875,9 @@ class TestColleagueToNick:
         assert res["status"] == 201, f"Colleague task creation failed: {res}"
         d1_id = res["body"].get("data", {}).get("id", "")
         print(f"  Colleague created task in Hub: {d1_id}")
+
+        # Wait for D1 timestamp to settle
+        time.sleep(2)
 
         # Nick pulls
         run_pull()
@@ -1107,6 +1116,9 @@ class TestFullRoundTripWorkflows:
         d1_post(f"/tasks/{d1_id}/status", {"status": "done"})
         print(f"  Colleague completed Nick's task in Hub")
 
+        # Wait for D1 timestamp to be strictly newer
+        time.sleep(2)
+
         # Nick pulls
         run_pull()
 
@@ -1176,6 +1188,9 @@ class TestFullRoundTripWorkflows:
         task = rows[0]
         original_link = task["task_key_link_1"]
         print(f"  brain.db key_link_1: {original_link[:60]}")
+
+        # Touch updated_at so the task is included in delta push
+        brain_execute("UPDATE tasks SET updated_at = datetime('now') WHERE id = ?", (task['id'],))
 
         # Push
         run_push()
