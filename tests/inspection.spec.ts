@@ -418,9 +418,11 @@ test.describe('VISUAL — Design system compliance', () => {
 test.describe('UX — Keyboard shortcuts', () => {
   test('UX: Ctrl+K opens command palette', async ({ page }) => {
     await loadPage(page, '/dashboard')
+    await page.locator('body').click()
     await page.keyboard.press('Control+k')
-    // Command palette may show different placeholder text
-    const visible = await page.locator('[placeholder*="Search tasks"], [placeholder*="search"], text=Search tasks').first().isVisible({ timeout: 3000 }).catch(() => false)
+    await page.waitForTimeout(300)
+    // Command palette has role="dialog" with aria-label
+    const visible = await page.locator('[role="dialog"][aria-label="Command palette"], [placeholder*="Search tasks"], [placeholder*="search"]').first().isVisible({ timeout: 3000 }).catch(() => false)
     expect(visible, 'Command palette should open').toBe(true)
     await page.screenshot({ path: 'review/ux-command-palette.png' })
     await page.keyboard.press('Escape')
@@ -454,11 +456,13 @@ test.describe('UX — Keyboard shortcuts', () => {
 
   test('UX: Enter opens TaskDetailPanel', async ({ page }) => {
     await loadPage(page, '/tasks')
+    await page.locator('body').click()
     await page.keyboard.press('j') // Select first
     await page.waitForTimeout(300)
     await page.keyboard.press('Enter') // Open detail
-    // Panel header text
-    const panel = page.locator('text=TASK DETAIL').or(page.locator('text=Overview').first())
+    await page.waitForTimeout(500)
+    // TaskDetailPanel renders with this class
+    const panel = page.locator('.task-detail-panel')
     await expect(panel).toBeVisible({ timeout: 5000 })
     await page.screenshot({ path: 'review/ux-task-detail-panel.png' })
     await page.keyboard.press('Escape')
@@ -771,12 +775,12 @@ test.describe('VISUAL — Dropdown and modal states', () => {
     await page.keyboard.press('c')
     await page.waitForTimeout(500)
     await page.screenshot({ path: 'review/visual-create-task-modal.png' })
-    // Verify all fields
-    await expect(page.locator('text=Title')).toBeVisible()
-    await expect(page.locator('text=Description')).toBeVisible()
-    await expect(page.locator('text=Owner')).toBeVisible()
-    await expect(page.locator('text=Priority')).toBeVisible()
-    await expect(page.locator('text=Due Date')).toBeVisible()
+    // Verify all fields (use first() to avoid strict mode with multiple matches)
+    await expect(page.locator('text=Title').first()).toBeVisible()
+    await expect(page.locator('text=Description').first()).toBeVisible()
+    await expect(page.locator('text=Owner').first()).toBeVisible()
+    await expect(page.locator('text=Priority').first()).toBeVisible()
+    await expect(page.locator('text=Due Date').first()).toBeVisible()
     // Template chips
     await expect(page.locator('text=Paper Review')).toBeVisible()
     await page.keyboard.press('Escape')
