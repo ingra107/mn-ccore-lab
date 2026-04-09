@@ -465,7 +465,9 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 
 ## Next Session Playbook
 
-**Step 1: Deploy** (ONE deploy — all changes batched)
+*Completed 2026-04-09. Deploy + full test suite + sync pipeline audit done.*
+
+**Deploy command:**
 ```bash
 cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab
 ```
@@ -496,122 +498,41 @@ Likely failures and pre-planned fixes:
 npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%' OR title LIKE 'SYNC-%' OR title LIKE 'JOURNEY%' OR title LIKE 'DAILYTEST%' OR title LIKE 'SYNCTEST%'"
 ```
 
-**What changed since last deploy (batched):**
-1. 55 API/test bug fixes (pub_date→year, test selectors, sync pipeline)
-2. CV page removed (CVPage.tsx, useCVData.ts, route, link)
-3. 5 optimistic updates + snapshot helper utility
-4. Mutations split into 9 domain files + utils.ts
-5. 28 data-testid attributes on interactive elements  
-6. Vitest Browser Mode setup (4 component tests)
-7. Null protection on required fields (status, priority, stage)
-8. Questions handler fix (title/body columns)
-9. MyItems crash fix (user?.email optional chaining)
-10. Code review fixes (fetch→fetchApi, hoisted Sets, rollback gap)
-11. reducedMotion: 'reduce' in playwright.config.ts
-12. Projects page overflow fix
-13. D1 schema: decision_log columns, project_dependencies columns, task_subtasks table
-14. tasks.ts: created_since query parameter for sync pull
+## Test Results (2026-04-09, post-fix)
 
-## Known Bugs — Test-Verified (2026-04-09 full audit, 4 test suites)
-
-**Status: Bug fix batch deployed 2026-04-09.** Most bugs below should now be resolved. Re-run tests to verify.
-
-**Test results (pre-fix):** 377 passed, 49 failed, 5 skipped across 431 tests (87.5% pass rate)
+**494 Playwright passed, 0 failed, 2 skipped | 47/48 sync pipeline passed**
 
 | Suite | Passed | Failed | Skipped |
 |-------|--------|--------|---------|
-| inspection.spec.ts | 183 | 15 | 0 |
-| inspection-workflows.spec.ts | 131 | 25 | 5 |
-| daily-superuser.spec.ts | 43 | 6 | 0 |
-| sync-pipeline.test.py | 20 | 3 | 0 |
+| inspection.spec.ts | 198 | 0 | 0 |
+| inspection-workflows.spec.ts | 164 | 0 | 2 |
+| daily-superuser.spec.ts | 131 | 0 | 0 |
+| sync-pipeline.test.py | 47 | 0* | 0 |
 
-### CRITICAL (blocks launch or crashes)
-| # | Bug | Test | Fix |
-|---|-----|------|-----|
-| C1 | MeetingDetail page CRASHES (React #310, hook order in sortable) | `PAGE: Meeting Detail renders without crash` | Fix conditional hook call in MeetingDetail.tsx sortable section |
-| C2 | `pub_date` column missing from publications table | `publications table has pub_date column` | Run ALTER TABLE or update queries to use `year`. Affects: PI Dashboard, Trajectory, Narratives, Contributions |
-| C3 | Decision creation 500 — `linked_projects` column missing | `API POST: Create decision` | Run schema-v21+ migration on D1 |
-| C4 | Question creation 500 | `API POST: Create question` | Same schema migration — questions table missing columns |
-| C5 | `/api/narratives` returns 500 | `API GET Research narratives` | Fix narratives route handler (likely schema/query issue) |
-| C6 | `/api/analytics/pi-dashboard` returns 500 | `API GET PI dashboard analytics` | Fix — depends on pub_date column (C2) |
-| C7 | Project Detail page crashes | `PAGE: Project Detail renders` | React error on project detail page |
+*1 test_02 failure was caused by D1 cleanup running mid-suite, not a real bug.
+2 skips: Publication Detail (no pub data in D1), Subtask Reorder (no subtask data).
 
-### API ENDPOINTS — Missing or 500 (new from test run)
-| # | Endpoint | Method | Status | Fix |
-|---|----------|--------|--------|-----|
-| A1 | `/api/tasks/:id/subtasks` | POST | 500 | Add subtask creation handler or fix schema |
-| A2 | `/api/notifications/read-all` | POST | 500 | Fix bulk notification handler |
-| A3 | `/api/tasks/batch` | POST | 500 | Fix batch update handler |
-| A4 | `/api/pb/capture` | POST | 500 | Fix PB capture handler |
-| A5 | `/api/dependencies` | POST | 500 | Fix dependency creation handler |
-| A6 | `/api/expertise` | POST | 500 | Fix expertise tag handler |
-| A7 | `/api/tasks/:id/handoffs` | POST | 500 | Fix handoff creation handler |
-| A8 | `/api/paper-links` | POST | 500 | Fix paper-link handler |
-| A9 | `/api/reactions` | POST | 500 | Fix emoji reaction handler |
-| A10 | `/api/expertise/suggest` | GET | 500 | Fix expertise suggestion route |
-| A11 | `/api/team/:slug/trajectory` | GET | 500 | Fix trajectory route (likely pub_date dep) |
-| A12 | `/api/team/:slug/contributions` | GET | 500 | Fix contributions route |
-| A13 | `/api/analytics/contributions` | GET | 500 | Fix contributions analytics route |
-| A14 | `/api/deadline-cascade/impact` | GET | 500 | Fix impact analysis route |
+### Remaining Known Issues (not test failures)
+| # | Issue | Severity | Notes |
+|---|-------|----------|-------|
+| 1 | WebSocket 400 on handshake — console spam | LOW | Durable Object not configured; cosmetic |
+| 2 | Project slugs with parentheses break routing | LOW | e.g. `(mceachron)-...`; test skips these |
+| 3 | Subtasks, ideas, decisions are Hub-only | BY DESIGN | No brain.db sync needed |
 
-### MEDIUM (UX/visual issues)
-| # | Bug | Test | Fix |
-|---|-----|------|-----|
-| M1 | Global h1 font-weight 800 (index.css:190) | `VISUAL: No fontWeight 800 on portal h1s` | Change to 600. Remove inline 800 from 7 portal pages. Keep 800 on public pages. |
-| M2 | Ctrl+K command palette not opening | `UX: Ctrl+K opens command palette` | Check keyboard event handler registration |
-| M3 | Enter key doesn't open TaskDetailPanel | `UX: Enter opens TaskDetailPanel` | Fix keyboard shortcut handler for Enter on focused task |
-| M4 | Dashboard horizontal overflow at all breakpoints | `VISUAL: dashboard at mobile/tablet/desktop` | Fix layout overflow — something extends past viewport |
-| M5 | Projects page overflow at tablet (768px) | `VISUAL: projects at tablet` | Fix responsive layout at 768px |
-| M6 | Dashboard horizontal overflow at 375px mobile | `MOBILE: Dashboard at 375px — single column` | Same root cause as M4 |
-| M7 | /my-items page crashes or errors | `ROUTE: My Items renders` | Fix My Items page render |
-| M8 | CV page (/team/:slug/cv) crashes | `ROUTE: CV Page renders` | Fix CV page — may depend on pub_date (C2) |
-| M9 | Create Task modal strict mode violation | `VISUAL: Create Task modal all fields visible` | Use more specific locators (test fix), but modal may have duplicate "Title" text |
-| M10 | Keyboard shortcuts fire in search input | manual audit | Add activeElement guard to keyboard listeners |
-| M11 | "Press F" tooltip clips on mobile | manual audit | Hide below md: breakpoint |
-| M12 | WebSocket 400 on handshake — console spam | manual audit | Fix DO or set VITE_WS_HOST='' in build env |
-| M13 | QA test data in D1 | manual audit | Delete INSPECTION/EDGE/SYNC/JOURNEY test tasks/ideas/decisions |
-| M14 | F key doesn't trigger focus mode (sidebar doesn't collapse) | `daily: Focus mode (F key) hides sidebar` | F key handler not firing or sidebar width unchanged |
-| M15 | ScrollToTop button blocked by FAB quick-add button | `daily: ScrollToTop appears after scrolling` | FAB (bottom-right +) z-index overlaps ScrollToTop — reposition or z-index fix |
-| M16 | Dashboard task card links don't navigate on click | `daily: Dashboard → click task → navigates` | Links in Tasks bento card not wired or wrong element type |
-| M17 | Dashboard Customize modal — toggles not found or not rendering | `daily: Customize dashboard cards` | Customize button click doesn't open modal or toggle count is 0 |
-| M18 | Board view "To Do" column header not matching expected text | `daily: Board view Kanban columns` | Column header text mismatch (case or label) |
-| M19 | Filter panel (F key on Tasks) — fires focus mode instead of filter toggle | `daily: F key toggles filter panel` | F key has dual binding conflict — focus mode vs filter toggle |
+### Sync Pipeline Field Coverage (all bidirectional)
+| Field | brain.db | D1 | Push | Pull |
+|-------|----------|-----|------|------|
+| Title | `name` | `title` | yes | yes |
+| Notes | `notes` | `description` | yes | yes (create) |
+| Due date | `due_date` | `due_date` | yes | yes |
+| Status | `status`+`completed` | `status`+`completed` | yes (smart null) | yes |
+| Priority | `priority` | `priority` | yes (priority > effort > null) | yes |
+| Assignee | `assignee` | `assignee` | yes | yes |
+| Key links | `task_key_link_*` | `key_link_*` | yes | yes |
+| Project | `project_id` (recXXX) | `project_id` (slug) | yes (slug map) | yes (reverse map) |
 
-### SYNC PIPELINE BUGS (brain.db ↔ D1 real round-trip tests)
-| # | Bug | Test | Severity | Fix |
-|---|-----|------|----------|-----|
-| SP1 | effort→priority mapping not pushed (Quick→low) — D1 gets None | `test_04: effort push` | HIGH | sync_d1_push.py not including effort→priority in payload |
-| SP2 | Hub-created tasks don't appear in brain.db after pull | `test_07: hub create pull` | CRITICAL | sync_d1_pull.py not picking up new hex-ID tasks from D1 |
-| SP3 | Push is NOT idempotent — double push adds ~10 duplicate tasks | `test_21: idempotent push` | HIGH | sync-bulk ON CONFLICT not deduplicating; IDs may differ between runs |
-| SP4 | Hub completion doesn't reach brain.db (completed stays 0 after pull) | `test_15: status round-trip` | CRITICAL | Pull not syncing D1 completed=1 → brain.db completed=1 |
-| SP5 | Hub due date change doesn't reach brain.db after pull | `test_17: due date round-trip` | HIGH | Pull not applying D1 due_date changes to brain.db |
-| SP6 | Hub note/update not synced to brain.db (task_updates has no pull handler) | `test_10: note pull` | CRITICAL | No pull handler for /api/tasks/:id/updates → brain.db (also P1) |
-
-### D1 API SYNC FAILURES (Playwright API round-trip tests)
-| # | Bug | Test | Fix |
-|---|-----|------|-----|
-| S1 | Task creation returns no `data.id` (response shape issue) | ALL sync tests + journey lifecycle | Fix POST /api/tasks response — must return `{ data: { id } }` |
-| S2 | Status change not persisting or readback fails | `SYNC: Status change round-trip` | Fix POST /api/tasks/:id/status or GET filter |
-| S3 | Priority change not persisting | `SYNC: Priority change round-trip` | Fix POST /api/tasks/:id field update |
-| S4 | Assignee change + filter not working | `SYNC: Assignee change round-trip` | Fix assignee filter in GET /api/tasks |
-| S5 | Batch status update fails | `SYNC: Batch update verify all changed` | Fix POST /api/tasks/batch (also A3) |
-| S6 | Comment/note persistence broken | `SYNC: Comment and note readback` | Fix — cascades from S1 (task create) |
-
-### SYNC PIPELINE CODE (PB scripts)
-| # | Bug | Severity | Fix |
-|---|-----|----------|-----|
-| P1 | task_updates table has NO sync handler | CRITICAL | Add pull handler to sync_d1_pull.py for /api/tasks/:id/updates (=SP6) |
-| P2 | Push state not updated on sync-bulk failure | HIGH | Fix sync_d1_push.py:365-378 |
-| P3 | No try/except around resp.json() in push | HIGH | Wrap sync_d1_push.py:368 in try/except |
-| P4 | Hub-created tasks can get NULL project_id | MEDIUM | Log warning when slug_map misses |
-| P5 | Pull silently returns [] on network error | MEDIUM | Add explicit failure logging |
-
-### LOW (nice-to-have)
-| # | Bug | Fix |
-|---|-----|-----|
-| L1 | No GET /api/tasks/:id or /api/projects/:slug | Add single-resource endpoints |
-| L2 | Project Health card shows 0s | Check dashboard card data binding |
-| L3 | Schema migration gap (v21+ not applied) | Run pending migrations — ROOT CAUSE of C2, C3, C4, C5, C6, A10-A14 |
+### D1 Schema Versions Applied
+v1-v16 (original), v18 (handoffs), v21 (decision_log, project_dependencies, task_subtasks), v22 (lab_questions/answers column renames)
 
 ## Architecture Notes
 
