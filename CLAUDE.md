@@ -624,6 +624,21 @@ npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted
 - **Vitest** (component): Browser mode with Playwright provider. `vitest.config.ts`.
 - **data-testid**: 28 attributes on key interactive elements. Use in tests over CSS selectors.
 
+### When to Use Playwright MCP vs CLI (token budget)
+
+**Use Playwright CLI** (default — cheap, fast):
+- Running test suites: `npx playwright test tests/...`
+- Batch test runs: `bash scripts/run-tests.sh all`
+- Any run where you just need pass/fail counts
+
+**Use Playwright MCP** (expensive — real browser control, burns tokens on snapshots):
+- Debugging a SPECIFIC failing test that you can't figure out from the error message
+- Investigating what the page actually looks like (DOM structure, visibility)
+- Testing a fix interactively before committing
+- When you need to inspect the accessibility tree or console errors live
+
+**Rule of thumb:** Run tests via CLI first. If a test fails and the error context isn't enough, THEN use the MCP to navigate to that page and inspect. Never use the MCP for batch test runs — a single `browser_snapshot` call returns the full accessibility tree which costs ~2K tokens.
+
 ### API Field Protection
 Update handlers protect required fields from null:
 - Tasks: `status`, `priority`, `assignee` — can never be null
