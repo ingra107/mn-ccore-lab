@@ -15,9 +15,9 @@ export default function ScrollToTop() {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      className="fixed z-30 rounded-full shadow-lg border transition-all"
+      className="fixed z-50 rounded-full shadow-lg border transition-all"
       style={{
-        bottom: 24,
+        bottom: 72,
         right: 24,
         width: 36,
         height: 36,

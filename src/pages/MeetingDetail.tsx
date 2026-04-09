@@ -96,6 +96,8 @@ export default function MeetingDetail() {
   const [decisionTitle, setDecisionTitle] = useState('')
   const [decisionRationale, setDecisionRationale] = useState('')
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
   usePageMeta(
     meeting ? `${meeting.title} | MN-CCORE` : 'Meeting | MN-CCORE',
     'MNCCORE meeting details, agenda, action items, and decisions.'
@@ -130,8 +132,6 @@ export default function MeetingDetail() {
   const statusStyle = STATUS_COLORS[meeting.status] || STATUS_COLORS.completed
   const actionItems = meeting.action_items || []
   const teamAgendaItems = meeting.agenda_items || []
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   async function handleAgendaDragEnd(event: DragEndEvent) {
     const { active, over } = event
