@@ -23,7 +23,8 @@ async function go(page: Page, path: string) {
     if (!err.message.includes('WebSocket') && !err.message.includes('hub-realtime'))
       errors.push(err.message)
   })
-  await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle', timeout: 15000 })
+  await page.goto(`${BASE}${path}`, { waitUntil: 'load', timeout: 15000 })
+  await page.waitForTimeout(1500) // Allow React hydration + initial API calls
   return errors
 }
 

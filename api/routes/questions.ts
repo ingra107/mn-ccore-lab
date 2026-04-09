@@ -16,7 +16,7 @@ async function handleClaudeMentionInAnswer(
 
   // Get question context
   const question = await env.DB.prepare(
-    'SELECT question, project_slug FROM lab_questions WHERE id = ?'
+    'SELECT title as question, project_slug FROM lab_questions WHERE id = ?'
   ).bind(questionId).first<{ question: string; project_slug: string | null }>();
 
   // Create AI request record
@@ -68,7 +68,8 @@ export async function handleGetQuestions(url: URL, env: Env): Promise<Response> 
   const projectSlug = url.searchParams.get('project_slug');
 
   let query = `
-    SELECT q.*,
+    SELECT q.id, q.title as question, q.body as context, q.author_slug as asked_by,
+      q.project_slug, q.status, q.created_at,
       (SELECT COUNT(*) FROM lab_answers a WHERE a.question_id = q.id) as answer_count
     FROM lab_questions q
     WHERE 1=1
@@ -88,7 +89,7 @@ export async function handleGetQuestions(url: URL, env: Env): Promise<Response> 
 
 export async function handleGetQuestionDetail(id: string, env: Env): Promise<Response> {
   const question = await env.DB.prepare(
-    'SELECT * FROM lab_questions WHERE id = ?'
+    'SELECT id, title as question, body as context, author_slug as asked_by, project_slug, status, created_at FROM lab_questions WHERE id = ?'
   ).bind(id).first<QuestionRow>();
 
   if (!question) return error('Question not found', 404);
@@ -125,7 +126,7 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
   const askedBy = actorSlug(user.email);
 
   await env.DB.prepare(
-    'INSERT INTO lab_questions (id, question, context, asked_by, project_slug) VALUES (?, ?, ?, ?, ?)'
+    'INSERT INTO lab_questions (id, title, body, author_slug, project_slug) VALUES (?, ?, ?, ?, ?)'
   ).bind(
     id,
     questionText.trim(),
@@ -169,7 +170,7 @@ export async function handleCreateAnswer(questionId: string, request: Request, u
 
   // Verify question exists
   const question = await env.DB.prepare(
-    'SELECT id, question FROM lab_questions WHERE id = ?'
+    'SELECT id, title as question FROM lab_questions WHERE id = ?'
   ).bind(questionId).first<{ id: string; question: string }>();
   if (!question) return error('Question not found', 404);
 

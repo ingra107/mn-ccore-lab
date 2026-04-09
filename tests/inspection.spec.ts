@@ -25,7 +25,8 @@ async function loadPage(page: Page, path: string) {
       errors.push(err.message)
     }
   })
-  await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle', timeout: 15000 })
+  await page.goto(`${BASE}${path}`, { waitUntil: 'load', timeout: 15000 })
+  await page.waitForTimeout(1500) // Allow React hydration + initial API calls
   return errors
 }
 
