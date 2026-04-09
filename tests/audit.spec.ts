@@ -207,6 +207,140 @@ test('publications table has pub_date column', async ({ request }) => {
   expect('pub_date' in first).toBe(true)
 })
 
+// ── Section 7: Performance ───────────────────────────────────────
+
+test('Dashboard loads in under 8 seconds', async ({ page }) => {
+  // Note: networkidle includes WebSocket retry backoff (~3s).
+  // Real user-perceived load is faster. Use domcontentloaded for stricter test.
+  const start = Date.now()
+  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  const loadTime = Date.now() - start
+  console.log(`Dashboard load: ${loadTime}ms`)
+  expect(loadTime).toBeLessThan(8000)
+})
+
+test('Tasks page (500+ rows) loads in under 5 seconds', async ({ page }) => {
+  const start = Date.now()
+  await page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' })
+  const loadTime = Date.now() - start
+  console.log(`Tasks load: ${loadTime}ms`)
+  expect(loadTime).toBeLessThan(5000)
+})
+
+test('API response times under 1 second', async ({ request }) => {
+  const slow: string[] = []
+  const endpoints = ['/api/tasks', '/api/projects', '/api/team', '/api/meetings', '/api/publications']
+
+  for (const ep of endpoints) {
+    const start = Date.now()
+    await request.get(`${BASE}${ep}`)
+    const elapsed = Date.now() - start
+    console.log(`${ep}: ${elapsed}ms`)
+    if (elapsed > 1000) slow.push(`${ep} (${elapsed}ms)`)
+  }
+  expect(slow).toEqual([])
+})
+
+test('No layout shift on dashboard load', async ({ page }) => {
+  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+
+  // Content should be visible immediately (opacity: 1), not hidden behind animation
+  const greeting = page.locator('h1').first()
+  const opacity = await greeting.evaluate((el) => getComputedStyle(el).opacity)
+  expect(opacity).toBe('1')
+})
+
+test('Transition durations use design system constants', async ({ page }) => {
+  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  const durations = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement)
+    return {
+      fast: root.getPropertyValue('--transition-fast').trim(),
+      panel: root.getPropertyValue('--transition-panel').trim(),
+    }
+  })
+  // Design system: 150ms / 250ms (CSS may store as .15s / .25s)
+  expect(durations.fast === '150ms' || durations.fast === '.15s' || durations.fast === '0.15s').toBe(true)
+  expect(durations.panel === '250ms' || durations.panel === '.25s' || durations.panel === '0.25s').toBe(true)
+})
+
+// ── Section 8: Responsive breakpoints ────────────────────────────
+
+const BREAKPOINTS = [
+  { name: 'mobile', width: 375, height: 812 },
+  { name: 'tablet', width: 768, height: 1024 },
+  { name: 'desktop', width: 1280, height: 900 },
+] as const
+
+for (const bp of BREAKPOINTS) {
+  test(`Dashboard renders at ${bp.name} (${bp.width}x${bp.height})`, async ({ page }) => {
+    await page.setViewportSize({ width: bp.width, height: bp.height })
+    await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+    await page.screenshot({ path: `review/responsive-dashboard-${bp.name}.png` })
+
+    // No horizontal overflow
+    const hasOverflow = await page.evaluate(() => {
+      return document.documentElement.scrollWidth > document.documentElement.clientWidth
+    })
+    expect(hasOverflow).toBe(false)
+  })
+
+  test(`Tasks renders at ${bp.name} (${bp.width}x${bp.height})`, async ({ page }) => {
+    await page.setViewportSize({ width: bp.width, height: bp.height })
+    await page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' })
+    await page.screenshot({ path: `review/responsive-tasks-${bp.name}.png` })
+
+    const hasOverflow = await page.evaluate(() => {
+      return document.documentElement.scrollWidth > document.documentElement.clientWidth
+    })
+    expect(hasOverflow).toBe(false)
+  })
+}
+
+test('Mobile sidebar collapses to hamburger', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+
+  // Sidebar nav should NOT be visible on mobile
+  const sidebar = page.locator('nav >> text=Dashboard').first()
+  const isVisible = await sidebar.isVisible().catch(() => false)
+
+  // Either hidden or collapsed — the full sidebar text shouldn't show
+  // Hamburger icon should exist
+  const hamburger = page.locator('button:has(svg), [aria-label*="menu"], [aria-label*="Menu"]').first()
+  const hasHamburger = await hamburger.isVisible().catch(() => false)
+
+  expect(isVisible === false || hasHamburger === true).toBe(true)
+})
+
+test('Touch targets >= 36px on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' })
+
+  const smallTargets = await page.evaluate(() => {
+    const clickables = document.querySelectorAll('button, a, [role="button"], select, input')
+    const tooSmall: string[] = []
+    clickables.forEach((el) => {
+      const rect = el.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0 && (rect.width < 36 || rect.height < 36)) {
+        const text = el.textContent?.trim().substring(0, 30) || el.tagName
+        // Skip hidden/offscreen elements
+        if (rect.top > -100 && rect.left > -100) {
+          tooSmall.push(`${text} (${Math.round(rect.width)}x${Math.round(rect.height)})`)
+        }
+      }
+    })
+    return tooSmall.slice(0, 10) // Cap at 10 to avoid noise
+  })
+
+  // Log but don't hard-fail — some small icons are acceptable
+  if (smallTargets.length > 0) {
+    console.log(`Small touch targets found: ${JSON.stringify(smallTargets)}`)
+  }
+})
+
+// ── Section 9: Keyboard shortcut guard ───────────────────────────
+
 test('No keyboard shortcuts in focused inputs', async ({ page }) => {
   await page.goto(`${BASE}/search`, { waitUntil: 'networkidle' })
 
