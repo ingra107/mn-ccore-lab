@@ -86,6 +86,7 @@ export function getMemberBySlug(slug: string): TeamMember | undefined {
 
 // Shared person lookup — used across MeetingDetail, ProjectDetail, MeetingCard, etc.
 export function getPersonInfo(slug: string): { name: string; initials: string; photoUrl: string | undefined } {
+  if (!slug) return { name: 'Unknown', initials: '??', photoUrl: undefined }
   // AI Co-Scientist
   if (slug === 'claude-ai') {
     return { name: 'Claude AI', initials: 'AI', photoUrl: undefined }

@@ -125,7 +125,7 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
   const askedBy = actorSlug(user.email);
 
   await env.DB.prepare(
-    'INSERT INTO lab_questions (id, title, body, author_slug, project_slug) VALUES (?, ?, ?, ?, ?)'
+    'INSERT INTO lab_questions (id, question, context, asked_by, project_slug) VALUES (?, ?, ?, ?, ?)'
   ).bind(
     id,
     questionText.trim(),

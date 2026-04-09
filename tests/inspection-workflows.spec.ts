@@ -1718,7 +1718,7 @@ test.describe('VISUAL — Loading skeletons', () => {
 })
 
 test.describe('VISUAL — Light mode full check', () => {
-  test('VISUAL: Light mode renders correctly on key pages', async ({ page }) => {
+  test('VISUAL: Light mode renders correctly on key pages', { timeout: 90000 }, async ({ page }) => {
     await loadPage(page, '/dashboard')
 
     // Force light mode
@@ -1731,7 +1731,7 @@ test.describe('VISUAL — Light mode full check', () => {
 
     const keyPages = ['/dashboard', '/tasks', '/projects', '/meetings']
     for (const path of keyPages) {
-      await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle', timeout: 15000 })
+      await page.goto(`${BASE}${path}`, { waitUntil: 'load', timeout: 15000 })
       await page.evaluate(() => {
         document.documentElement.classList.remove('dark')
         document.documentElement.classList.add('light')

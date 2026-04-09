@@ -460,8 +460,8 @@ New task columns: `key_link_1/2/3` + `_desc`
 New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 
 ## Pending Sync
-- NEXT_ACTION: Deploy + run full test suite + fix final stragglers to 100%
-- STATUS: Active
+<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
+
 
 ## Next Session Playbook
 
@@ -649,7 +649,4 @@ Update handlers protect required fields from null:
 
 ## Session Notes
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
-
-### 2026-04-09 Bug Fix Batch + Architecture (~25 commits, 6 deploys)
-Fixed 55 bugs, added 5 optimistic updates, split mutations into 9 files, added 28 data-testid attrs, set up Vitest Browser Mode, added null field protection, removed CV page. Installed Playwright MCP + 3 skills. Tests: 377→~535/546. Pending: deploy + final run.
 

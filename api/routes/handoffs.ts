@@ -70,8 +70,8 @@ export async function handleCreateHandoff(taskId: string, request: Request, user
   const taskLabel = task?.title || task?.description || 'a task';
 
   await env.DB.prepare(
-    `INSERT INTO notifications (id, type, title, body, recipient_slug, related_id, related_type, actor)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO notifications (id, type, title, body, recipient_slug, source_id, source_type)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     generateId(),
     'handoff',
@@ -80,7 +80,6 @@ export async function handleCreateHandoff(taskId: string, request: Request, user
     toSlug,
     taskId,
     'task',
-    fromSlug,
   ).run();
 
   // Log activity

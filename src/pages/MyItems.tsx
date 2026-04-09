@@ -662,7 +662,7 @@ export default function MyItems() {
   const dedupedItems = useMemo(() => {
     const seen = new Map<string, ActionItemRow>()
     for (const item of allActionItems) {
-      const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
+      const normalized = (item.description || '').replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
       const key = `${normalized}::${item.assignee}`
       const existing = seen.get(key)
       if (!existing || (item.created_at > existing.created_at)) {
