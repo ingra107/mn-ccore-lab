@@ -137,13 +137,13 @@ test.describe('ROUTE — Missing portal pages', () => {
 test.describe('API — Missing GET endpoints', () => {
   const missingGets: [string, string][] = [
     ['/api/deadline-cascade/all', 'All deadline cascades'],
-    ['/api/deadline-cascade/impact', 'Deadline impact analysis'],
+    ['/api/deadline-cascade', 'Deadline cascade data'],
     ['/api/decisions/similar?context=CLIF', 'Similar decisions by context'],
     ['/api/team/by-expertise?tag=critical+care', 'Team by expertise tag'],
     ['/api/team/nick-ingraham/cv-data', 'CV data for member'],
     ['/api/team/nick-ingraham/trajectory', 'Trajectory data for member'],
     ['/api/team/nick-ingraham/contributions', 'Contribution data for member'],
-    ['/api/expertise/suggest', 'Expertise suggestions'],
+    ['/api/expertise/suggest?topic=critical+care', 'Expertise suggestions'],
     ['/api/graph/collaboration', 'Collaboration network graph'],
     ['/api/revisions/active', 'Active paper revisions'],
     ['/api/submissions/active', 'Active conference submissions'],
@@ -152,7 +152,7 @@ test.describe('API — Missing GET endpoints', () => {
     ['/api/grant-milestones/upcoming', 'Upcoming grant milestones'],
     ['/api/mentee-milestones', 'Mentee milestones'],
     ['/api/mentee-milestones/overview', 'Mentee milestones overview'],
-    ['/api/analytics/contributions', 'Contribution analytics'],
+    ['/api/analytics/contributions?slug=nick', 'Contribution analytics'],
     ['/api/pb/command-center', 'PB command center'],
     ['/api/pb/plan/history', 'PB plan history'],
     ['/api/pb/sessions', 'PB session history'],
@@ -188,7 +188,7 @@ test.describe('API — Missing write endpoints', () => {
     if (!subs.data?.length) { test.skip(); return }
     const ids = subs.data.map((s: any) => s.id)
     const res = await request.post(`${BASE}/api/tasks/${taskId}/subtasks/reorder`, {
-      data: { order: ids }
+      data: { ids }
     })
     expect([200, 201]).toContain(res.status())
   })
@@ -245,14 +245,14 @@ test.describe('API — Missing write endpoints', () => {
     const ids = tasks.data?.slice(0, 2).map((t: any) => t.id)
     if (!ids?.length) { test.skip(); return }
     const res = await request.post(`${BASE}/api/tasks/batch`, {
-      data: { ids, updates: { priority: 'medium' } }
+      data: { ids, action: 'priority', value: 'medium' }
     })
     expect([200, 201]).toContain(res.status())
   })
 
   test('API POST: PB capture (quick capture)', async ({ request }) => {
     const res = await request.post(`${BASE}/api/pb/capture`, {
-      data: { content: 'INSPECTION capture — delete', type: 'task' }
+      data: { text: 'INSPECTION capture — delete', type: 'task' }
     })
     expect([200, 201]).toContain(res.status())
   })
@@ -261,14 +261,14 @@ test.describe('API — Missing write endpoints', () => {
     const tasks = await (await request.get(`${BASE}/api/tasks?limit=2`)).json()
     if (tasks.data?.length < 2) { test.skip(); return }
     const res = await request.post(`${BASE}/api/dependencies`, {
-      data: { from_id: tasks.data[0].id, to_id: tasks.data[1].id, type: 'blocks' }
+      data: { from_slug: tasks.data[0].id, to_slug: tasks.data[1].id, relationship_type: 'blocks' }
     })
     expect([200, 201, 409]).toContain(res.status()) // 409 if already exists
   })
 
   test('API POST: Add expertise tag', async ({ request }) => {
     const res = await request.post(`${BASE}/api/expertise`, {
-      data: { slug: 'nick-ingraham', tag: 'INSPECTION-TAG-DELETE', level: 'expert' }
+      data: { member_slug: 'nick-ingraham', tag: 'INSPECTION-TAG-DELETE', confidence: 'expert' }
     })
     expect([200, 201]).toContain(res.status())
   })
@@ -287,7 +287,7 @@ test.describe('API — Missing write endpoints', () => {
     const taskId = await getFirstTaskId(request)
     if (!taskId) { test.skip(); return }
     const res = await request.post(`${BASE}/api/tasks/${taskId}/handoffs`, {
-      data: { from_slug: 'nick-ingraham', to_slug: 'nick-ingraham', notes: 'INSPECTION handoff — delete' }
+      data: { to_slug: 'nick-ingraham', situation: 'INSPECTION handoff — delete', recommendation: 'test' }
     })
     expect([200, 201]).toContain(res.status())
   })
@@ -298,7 +298,7 @@ test.describe('API — Missing write endpoints', () => {
     const pubId = pubs.data?.[0]?.id
     if (!pubId || !slug) { test.skip(); return }
     const res = await request.post(`${BASE}/api/paper-links`, {
-      data: { publication_id: pubId, project_slug: slug, relevance: 'background' }
+      data: { paper_id: pubId, project_slug: slug }
     })
     expect([200, 201, 409]).toContain(res.status())
   })
@@ -317,7 +317,7 @@ test.describe('API — Missing write endpoints', () => {
     const taskId = await getFirstTaskId(request)
     if (!taskId) { test.skip(); return }
     const res = await request.post(`${BASE}/api/reactions`, {
-      data: { entity_type: 'task', entity_id: taskId, emoji: '🔥', user_slug: 'nick-ingraham' }
+      data: { target_type: 'task', target_id: taskId, emoji: '🔥' }
     })
     expect([200, 201]).toContain(res.status())
   })
@@ -2058,7 +2058,8 @@ test.describe('API — New feature endpoints (schema v37+)', () => {
   test('API GET: /api/proactive-brief → 200 with structured response', async ({ request }) => {
     const res = await request.get(`${BASE}/api/proactive-brief`)
     expect(res.status()).toBe(200)
-    const data = await res.json()
+    const body = await res.json()
+    const data = body.data  // API wraps response in { data: {...} }
     expect(data).toHaveProperty('overdue_count')
     expect(data).toHaveProperty('due_today_count')
     expect(data).toHaveProperty('bullets')
@@ -2115,7 +2116,8 @@ test.describe('API — New feature endpoints (schema v37+)', () => {
   test('API GET: /api/pb/health → includes sync_summary', async ({ request }) => {
     const res = await request.get(`${BASE}/api/pb/health`)
     expect(res.status()).toBe(200)
-    const data = await res.json()
+    const body = await res.json()
+    const data = body.data  // API wraps response in { data: {...} }
     expect(data).toHaveProperty('sync_summary')
   })
 })
