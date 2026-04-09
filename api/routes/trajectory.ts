@@ -27,14 +27,14 @@ export async function handleTrajectory(slug: string, env: Env): Promise<Response
 
     // Milestones on their projects
     env.DB.prepare(`
-      SELECT m.id, m.title, m.due_date, m.status, m.project_id, p.title as project_title
-      FROM milestones m
-      INNER JOIN projects p ON p.id = m.project_id
-      INNER JOIN tasks t ON t.project_id = p.id
+      SELECT m.id, m.title, m.due_date, m.status, m.grant_id as project_id, p.title as project_title
+      FROM grant_milestones m
+      LEFT JOIN projects p ON p.id = m.grant_id
+      LEFT JOIN tasks t ON t.project_id = p.id
       WHERE t.assignee LIKE ?
       GROUP BY m.id
       ORDER BY m.due_date
-    `).bind(`%${slug}%`).all(),
+    `).bind(`%${slug}%`).all().catch(() => ({ results: [] })),
 
     // Task metrics: total, completed, overdue, avg days to complete
     env.DB.prepare(`
