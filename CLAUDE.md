@@ -459,12 +459,15 @@ New task columns: `key_link_1/2/3` + `_desc`
 New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 
 ## Pending Sync
-<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
-
+- NEXT_ACTION: Run full 546-test suite to verify bug fix batch. Clean up test data (INSPECTION/EDGE/SYNC/JOURNEY/DAILYTEST prefixed items in D1).
+- STATUS: Active
+- NOTE: Bug fix batch deployed 2026-04-09. Fixed: pub_date→year in 5 API routes, task_subtasks table, notifications/read-all, h1 fontWeight 800→600, dashboard overflow, MeetingDetail hook crash, ScrollToTop/FAB overlap, keyboard shortcuts (F key/Enter), trajectory table name, sync pipeline (effort→priority, task_updates pull). 2 deploys used.
 
 ## Known Bugs — Test-Verified (2026-04-09 full audit, 4 test suites)
 
-**Test results:** 377 passed, 49 failed, 5 skipped across 431 tests (87.5% pass rate)
+**Status: Bug fix batch deployed 2026-04-09.** Most bugs below should now be resolved. Re-run tests to verify.
+
+**Test results (pre-fix):** 377 passed, 49 failed, 5 skipped across 431 tests (87.5% pass rate)
 
 | Suite | Passed | Failed | Skipped |
 |-------|--------|--------|---------|
@@ -563,4 +566,7 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 
 ## Session Notes
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
+
+### 2026-04-09 Bug Fix Batch (6 commits, 2 deploys)
+Fixed: C1 (MeetingDetail crash), C2/C5/C6 (pub_date→year), A1 (task_subtasks), A2 (notifications), A11 (trajectory table), M1 (fontWeight), M3 (Enter key), M4-6 (overflow), M14/M19 (F key), M15 (ScrollToTop), SP1 (effort→priority), SP6/P1 (task_updates pull). Most A1-A14 were validation errors, not 500s. Remaining: run test suite, clean up test data.
 
