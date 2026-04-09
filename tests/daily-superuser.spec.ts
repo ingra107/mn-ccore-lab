@@ -1442,7 +1442,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
       await bulkDone.click()
       await page.waitForTimeout(500)
       // Click undo
-      const undo = page.locator('button:has-text("Undo"), text=Undo').first()
+      const undo = page.locator('button:has-text("Undo")').or(page.locator('text=Undo')).first()
       if (await undo.isVisible({ timeout: 3000 }).catch(() => false)) {
         await undo.click()
         await page.waitForTimeout(500)
@@ -1806,7 +1806,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
         await inProgress.click()
         await page.waitForTimeout(500)
         // Click Undo
-        const undo = page.locator('button:has-text("Undo"), text=Undo').first()
+        const undo = page.locator('button:has-text("Undo")').or(page.locator('text=Undo')).first()
         if (await undo.isVisible({ timeout: 3000 }).catch(() => false)) {
           await undo.click()
           await page.waitForTimeout(500)
@@ -1863,7 +1863,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
     console.log(`Simultaneous toasts: ${toasts}`)
     await page.screenshot({ path: 'review/exhaustive-multi-toast.png' })
     // Undo both
-    const undos = page.locator('button:has-text("Undo"), text=Undo')
+    const undos = page.locator('button:has-text("Undo")').or(page.locator('text=Undo'))
     const undoCount = await undos.count()
     for (let i = 0; i < undoCount; i++) {
       await undos.first().click().catch(() => {})
