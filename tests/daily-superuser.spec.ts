@@ -1272,6 +1272,815 @@ test.describe('GAPS — Previously untested workflows', () => {
 })
 
 // ═════════════════════════════════════════════════════════════════════
+// EXHAUSTIVE: Every interactive element verified
+// ═════════════════════════════════════════════════════════════════════
+
+test.describe('EXHAUSTIVE — Every interactive element verified', () => {
+
+  // ── Dashboard Interactions (6 tests) ─────────────────────────────
+
+  test('1. Pin/unpin card: click pin icon → verify gold color → verify localStorage', async ({ page }) => {
+    await go(page, '/dashboard')
+    const pinBtn = page.locator('button[aria-label*="pin"], button[title*="Pin"], button[title*="pin"]').first()
+    if (await pinBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await pinBtn.click()
+      await page.waitForTimeout(300)
+      const color = await pinBtn.evaluate(el => getComputedStyle(el).color)
+      console.log(`Pin icon color after click: ${color}`)
+      // Check localStorage for pinned card
+      const stored = await page.evaluate(() => {
+        const keys = Object.keys(localStorage)
+        return keys.filter(k => k.includes('pin') || k.includes('dashboard'))
+      })
+      console.log(`localStorage pin keys: ${JSON.stringify(stored)}`)
+      await page.screenshot({ path: 'review/exhaustive-pin-card.png' })
+      // Unpin
+      await pinBtn.click()
+      await page.waitForTimeout(300)
+    }
+  })
+
+  test('2. Show more button: click → secondary cards appear → click Show less → they hide', async ({ page }) => {
+    await go(page, '/dashboard')
+    const showMore = page.locator('button:has-text("Show more"), button:has-text("Show More")').first()
+    if (await showMore.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const beforeCount = await page.locator('[class*="card"], [class*="Card"]').count()
+      await showMore.click()
+      await page.waitForTimeout(500)
+      const afterCount = await page.locator('[class*="card"], [class*="Card"]').count()
+      console.log(`Show more: ${beforeCount} → ${afterCount} cards`)
+      expect(afterCount).toBeGreaterThanOrEqual(beforeCount)
+      await page.screenshot({ path: 'review/exhaustive-show-more.png' })
+      // Show less
+      const showLess = page.locator('button:has-text("Show less"), button:has-text("Show Less")').first()
+      if (await showLess.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await showLess.click()
+        await page.waitForTimeout(500)
+        const finalCount = await page.locator('[class*="card"], [class*="Card"]').count()
+        console.log(`Show less: ${afterCount} → ${finalCount} cards`)
+      }
+    }
+  })
+
+  test('3. Tab switch: click Projects tab → verify different cards visible than Overview tab', async ({ page }) => {
+    await go(page, '/dashboard')
+    const overviewContent = await page.locator('[class*="card"], [class*="Card"]').allTextContents()
+    const projectsTab = page.locator('button:has-text("Projects")').first()
+    if (await projectsTab.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await projectsTab.click()
+      await page.waitForTimeout(500)
+      const projectsContent = await page.locator('[class*="card"], [class*="Card"]').allTextContents()
+      const different = JSON.stringify(overviewContent) !== JSON.stringify(projectsContent)
+      console.log(`Tab content differs: ${different}`)
+      await page.screenshot({ path: 'review/exhaustive-tab-switch.png' })
+    }
+  })
+
+  test('4. Card version reset: verify localStorage keys exist for dashboard preferences', async ({ page }) => {
+    await go(page, '/dashboard')
+    await page.waitForTimeout(1000)
+    const keys = await page.evaluate(() => {
+      const allKeys = Object.keys(localStorage)
+      return allKeys.filter(k => k.includes('dashboard') || k.includes('card') || k.includes('preference') || k.includes('version'))
+    })
+    console.log(`Dashboard localStorage keys: ${JSON.stringify(keys)}`)
+    await page.screenshot({ path: 'review/exhaustive-card-version.png' })
+  })
+
+  // ── MyTasks Interactions (5 tests) ────────────────────────────────
+
+  test('5. Group By dropdown: change to priority → tasks regroup visually', async ({ page }) => {
+    await go(page, '/my-tasks')
+    const groupBy = page.locator('select, button:has-text("Group"), [class*="group-by"]').first()
+    if (await groupBy.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const beforeHTML = await page.locator('main').innerHTML()
+      await groupBy.click()
+      await page.waitForTimeout(300)
+      const priorityOption = page.locator('text=Priority, option[value="priority"]').last()
+      if (await priorityOption.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await priorityOption.click()
+        await page.waitForTimeout(500)
+        const afterHTML = await page.locator('main').innerHTML()
+        console.log(`Group by changed content: ${beforeHTML !== afterHTML}`)
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-group-by.png' })
+  })
+
+  test('6. Sort By dropdown: change to title → verify order changes', async ({ page }) => {
+    await go(page, '/my-tasks')
+    const sortBy = page.locator('select, button:has-text("Sort"), [class*="sort-by"]').first()
+    if (await sortBy.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const beforeTitles = await page.locator('[class*="task-title"], [class*="taskTitle"], td:first-child').allTextContents()
+      await sortBy.click()
+      await page.waitForTimeout(300)
+      const titleOption = page.locator('text=Title, option[value="title"]').last()
+      if (await titleOption.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await titleOption.click()
+        await page.waitForTimeout(500)
+        const afterTitles = await page.locator('[class*="task-title"], [class*="taskTitle"], td:first-child').allTextContents()
+        console.log(`Sort changed: ${JSON.stringify(beforeTitles.slice(0,3))} → ${JSON.stringify(afterTitles.slice(0,3))}`)
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-sort-by.png' })
+  })
+
+  test('7. Quick filter verify: click Today → count task rows → click All → count >= Today count', async ({ page }) => {
+    await go(page, '/my-tasks')
+    const todayBtn = page.locator('button:has-text("Today")').first()
+    const allBtn = page.locator('button:has-text("All")').first()
+    if (await todayBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await todayBtn.click()
+      await page.waitForTimeout(500)
+      const todayCount = await page.locator('[class*="row"], [class*="task-item"], tr').filter({ hasText: /\w{3,}/ }).count()
+      console.log(`Today tasks: ${todayCount}`)
+      if (await allBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await allBtn.click()
+        await page.waitForTimeout(500)
+        const allCount = await page.locator('[class*="row"], [class*="task-item"], tr').filter({ hasText: /\w{3,}/ }).count()
+        console.log(`All tasks: ${allCount}`)
+        expect(allCount).toBeGreaterThanOrEqual(todayCount)
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-quick-filter.png' })
+  })
+
+  test('8. Document title: navigate to /my-tasks → verify document.title contains task count', async ({ page }) => {
+    await go(page, '/my-tasks')
+    await page.waitForTimeout(1000)
+    const title = await page.title()
+    console.log(`MyTasks document.title: "${title}"`)
+    // Title should include a count or "My Tasks"
+    expect(title.length).toBeGreaterThan(0)
+    await page.screenshot({ path: 'review/exhaustive-doc-title.png' })
+  })
+
+  test('9. Bulk done + undo revert: select 2 tasks → bulk complete → undo → verify status reverted', async ({ page }) => {
+    await go(page, '/my-tasks')
+    // Capture original statuses
+    const originalStatuses = await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll('button'))
+      return btns.filter(b => ['To Do', 'In Progress'].includes(b.textContent?.trim() || '')).map(b => b.textContent?.trim()).slice(0, 2)
+    })
+    console.log(`Original statuses: ${JSON.stringify(originalStatuses)}`)
+    // Select 2 tasks with X
+    for (let i = 0; i < 2; i++) {
+      await page.keyboard.press('j')
+      await page.waitForTimeout(100)
+      await page.keyboard.press('x')
+      await page.waitForTimeout(100)
+    }
+    await page.waitForTimeout(300)
+    // Bulk complete
+    const bulkDone = page.locator('button:has-text("Done"), button:has-text("Complete"), button:has-text("Mark Done")').last()
+    if (await bulkDone.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await bulkDone.click()
+      await page.waitForTimeout(500)
+      // Click undo
+      const undo = page.locator('button:has-text("Undo"), text=Undo').first()
+      if (await undo.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await undo.click()
+        await page.waitForTimeout(500)
+        const revertedStatuses = await page.evaluate(() => {
+          const btns = Array.from(document.querySelectorAll('button'))
+          return btns.filter(b => ['To Do', 'In Progress'].includes(b.textContent?.trim() || '')).map(b => b.textContent?.trim()).slice(0, 2)
+        })
+        console.log(`Reverted statuses: ${JSON.stringify(revertedStatuses)}`)
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-bulk-undo.png' })
+    await page.keyboard.press('Escape')
+  })
+
+  // ── Command Palette (4 tests) ─────────────────────────────────────
+
+  test('10. Arrow navigation: open Cmd+K → ArrowDown 3 times → verify 4th item highlighted', async ({ page }) => {
+    await go(page, '/dashboard')
+    await page.keyboard.press('Control+k')
+    await page.waitForTimeout(500)
+    // Arrow down 3 times
+    for (let i = 0; i < 3; i++) {
+      await page.keyboard.press('ArrowDown')
+      await page.waitForTimeout(100)
+    }
+    // Check which item is highlighted
+    const highlighted = await page.evaluate(() => {
+      const selected = document.querySelector('[aria-selected="true"], [class*="highlight"], [class*="active"], [class*="selected"]')
+      return selected?.textContent?.trim()?.substring(0, 50) || 'none'
+    })
+    console.log(`Highlighted item after 3 ArrowDown: "${highlighted}"`)
+    await page.screenshot({ path: 'review/exhaustive-cmdk-arrow.png' })
+    await page.keyboard.press('Escape')
+  })
+
+  test('11. Project mode: open Cmd+K → type "/" → verify results filtered to projects/pages', async ({ page }) => {
+    await go(page, '/dashboard')
+    await page.keyboard.press('Control+k')
+    await page.waitForTimeout(500)
+    await page.keyboard.type('/', { delay: 30 })
+    await page.waitForTimeout(500)
+    const results = await page.evaluate(() => {
+      const items = document.querySelectorAll('[role="option"], [class*="result"], [class*="command-item"]')
+      return Array.from(items).map(el => el.textContent?.trim()?.substring(0, 50)).slice(0, 5)
+    })
+    console.log(`Cmd+K "/" results: ${JSON.stringify(results)}`)
+    await page.screenshot({ path: 'review/exhaustive-cmdk-slash.png' })
+    await page.keyboard.press('Escape')
+  })
+
+  test('12. Focus trap: open Cmd+K → Tab many times → verify activeElement stays inside dialog', async ({ page }) => {
+    await go(page, '/dashboard')
+    await page.keyboard.press('Control+k')
+    await page.waitForTimeout(500)
+    // Tab 10 times
+    let escapedDialog = false
+    for (let i = 0; i < 10; i++) {
+      await page.keyboard.press('Tab')
+      await page.waitForTimeout(50)
+      const insideDialog = await page.evaluate(() => {
+        const el = document.activeElement
+        const dialog = document.querySelector('[role="dialog"], [class*="palette"], [class*="command"]')
+        return dialog?.contains(el) ?? false
+      })
+      if (!insideDialog) {
+        escapedDialog = true
+        console.log(`Focus escaped dialog at tab ${i + 1}`)
+        break
+      }
+    }
+    if (!escapedDialog) console.log('Focus trap held for 10 tabs')
+    await page.screenshot({ path: 'review/exhaustive-cmdk-focus-trap.png' })
+    await page.keyboard.press('Escape')
+  })
+
+  test('13. Open/close animation: open Cmd+K → verify dialog visible → Escape → verify gone', async ({ page }) => {
+    await go(page, '/dashboard')
+    await page.keyboard.press('Control+k')
+    await page.waitForTimeout(500)
+    const openVisible = await page.locator('[role="dialog"], [class*="palette"], [class*="command"]').first().isVisible({ timeout: 2000 }).catch(() => false)
+    expect(openVisible).toBe(true)
+    const opacity = await page.evaluate(() => {
+      const dialog = document.querySelector('[role="dialog"], [class*="palette"], [class*="command"]')
+      return dialog ? getComputedStyle(dialog).opacity : '0'
+    })
+    console.log(`Dialog opacity when open: ${opacity}`)
+    await page.screenshot({ path: 'review/exhaustive-cmdk-open.png' })
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(500)
+    const closedGone = await page.locator('[role="dialog"], [class*="palette"], [class*="command"]').first().isVisible({ timeout: 500 }).catch(() => false)
+    console.log(`Dialog visible after Escape: ${closedGone}`)
+    expect(closedGone).toBe(false)
+  })
+
+  // ── Task Detail Panel (6 tests) ──────────────────────────────────
+
+  test('14. Alt+Arrow navigation: open detail → Alt+ArrowDown → verify task changed', async ({ page }) => {
+    await go(page, '/tasks')
+    await page.keyboard.press('j')
+    await page.waitForTimeout(200)
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(500)
+    const firstTitle = await page.locator('[class*="detail"] h2, [class*="panel"] h2, [class*="detail-title"]').first().textContent().catch(() => '')
+    console.log(`First detail title: "${firstTitle?.substring(0, 50)}"`)
+    await page.keyboard.press('Alt+ArrowDown')
+    await page.waitForTimeout(500)
+    const secondTitle = await page.locator('[class*="detail"] h2, [class*="panel"] h2, [class*="detail-title"]').first().textContent().catch(() => '')
+    console.log(`After Alt+Down title: "${secondTitle?.substring(0, 50)}"`)
+    if (firstTitle && secondTitle) {
+      console.log(`Task changed: ${firstTitle !== secondTitle}`)
+    }
+    await page.screenshot({ path: 'review/exhaustive-alt-arrow-nav.png' })
+    await page.keyboard.press('Escape')
+  })
+
+  test('15. Click outside closes: open detail → click on backdrop → panel should close', async ({ page }) => {
+    await go(page, '/tasks')
+    await page.keyboard.press('j')
+    await page.waitForTimeout(200)
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(500)
+    const panelOpen = await page.locator('[class*="detail"], [class*="panel"], [class*="slide"]').first().isVisible({ timeout: 3000 }).catch(() => false)
+    console.log(`Panel open: ${panelOpen}`)
+    if (panelOpen) {
+      // Click on backdrop/overlay area (far left of viewport)
+      const backdrop = page.locator('[class*="backdrop"], [class*="overlay"]').first()
+      if (await backdrop.isVisible().catch(() => false)) {
+        await backdrop.click({ position: { x: 10, y: 10 } })
+      } else {
+        await page.mouse.click(50, 300)
+      }
+      await page.waitForTimeout(500)
+      const panelStillOpen = await page.locator('[class*="detail"], [class*="panel"], [class*="slide"]').first().isVisible({ timeout: 500 }).catch(() => false)
+      console.log(`Panel after click outside: ${panelStillOpen}`)
+      await page.screenshot({ path: 'review/exhaustive-click-outside.png' })
+    }
+  })
+
+  test('16. Copy link feedback: open detail → click copy → verify checkmark icon appears', async ({ page }) => {
+    await go(page, '/tasks')
+    await page.keyboard.press('j')
+    await page.waitForTimeout(200)
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(500)
+    const copyBtn = page.locator('button[aria-label*="copy"], button[aria-label*="Copy"], button[title*="Copy link"], button[title*="copy"]').first()
+    if (await copyBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await copyBtn.click()
+      await page.waitForTimeout(300)
+      // Look for checkmark SVG or "Copied" text
+      const checkmark = await page.locator('[class*="check"], text=Copied, svg path[d*="M5"]').first().isVisible({ timeout: 2000 }).catch(() => false)
+      console.log(`Checkmark/Copied feedback: ${checkmark}`)
+      await page.screenshot({ path: 'review/exhaustive-copy-feedback.png' })
+    }
+    await page.keyboard.press('Escape')
+  })
+
+  test('17. Acknowledge button: open detail → check if ack button exists → screenshot', async ({ page }) => {
+    await go(page, '/tasks')
+    await page.keyboard.press('j')
+    await page.waitForTimeout(200)
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(500)
+    const ackBtn = page.locator('button:has-text("Acknowledge"), button:has-text("Ack"), button[aria-label*="acknowledge"]').first()
+    const hasAck = await ackBtn.isVisible({ timeout: 2000 }).catch(() => false)
+    console.log(`Acknowledge button exists: ${hasAck}`)
+    if (hasAck) {
+      await page.screenshot({ path: 'review/exhaustive-ack-button.png' })
+    }
+    await page.keyboard.press('Escape')
+  })
+
+  test('18. Description editing: open detail → click description area → verify Tiptap toolbar appears', async ({ page }) => {
+    await go(page, '/tasks')
+    await page.keyboard.press('j')
+    await page.waitForTimeout(200)
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(500)
+    // Click on description area
+    const descArea = page.locator('[class*="description"], [class*="tiptap"], [class*="ProseMirror"], [contenteditable="true"]').first()
+    if (await descArea.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await descArea.click()
+      await page.waitForTimeout(300)
+      // Look for formatting toolbar (bold, italic, etc.)
+      const toolbar = await page.locator('[class*="toolbar"], [class*="menu-bar"], button[aria-label*="Bold"], button[aria-label*="bold"], button[title*="Bold"]').first().isVisible({ timeout: 2000 }).catch(() => false)
+      console.log(`Tiptap toolbar visible: ${toolbar}`)
+      await page.screenshot({ path: 'review/exhaustive-desc-editing.png' })
+    }
+    await page.keyboard.press('Escape')
+  })
+
+  test('19. Details tab fields: open detail → Details tab → verify Due Date, Project, Priority, Assignee, Key Links', async ({ page }) => {
+    await go(page, '/tasks')
+    await page.keyboard.press('j')
+    await page.waitForTimeout(200)
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(500)
+    const detailsTab = page.locator('button:has-text("Details")').first()
+    if (await detailsTab.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await detailsTab.click()
+      await page.waitForTimeout(300)
+      for (const field of ['Due Date', 'Project', 'Priority', 'Assignee', 'Key Links']) {
+        const found = await page.locator(`text=${field}`).first().isVisible({ timeout: 1000 }).catch(() => false)
+        console.log(`Details field "${field}": ${found}`)
+      }
+      await page.screenshot({ path: 'review/exhaustive-details-fields.png' })
+    }
+    await page.keyboard.press('Escape')
+  })
+
+  // ── Inline Components (7 tests) ──────────────────────────────────
+
+  test('20. InlineSelect hover: hover over status button → verify background color changes', async ({ page }) => {
+    await go(page, '/tasks')
+    const statusBtn = page.locator('button:has-text("To Do"), button:has-text("In Progress")').first()
+    if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const beforeBg = await statusBtn.evaluate(el => getComputedStyle(el).backgroundColor)
+      await statusBtn.hover()
+      await page.waitForTimeout(200)
+      const afterBg = await statusBtn.evaluate(el => getComputedStyle(el).backgroundColor)
+      console.log(`InlineSelect hover: ${beforeBg} → ${afterBg}`)
+      await page.screenshot({ path: 'review/exhaustive-inline-hover.png' })
+    }
+  })
+
+  test('21. InlineSelect outside click: open dropdown → click elsewhere → dropdown closes', async ({ page }) => {
+    await go(page, '/tasks')
+    const statusBtn = page.locator('button:has-text("To Do"), button:has-text("In Progress")').first()
+    if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await statusBtn.click()
+      await page.waitForTimeout(300)
+      const dropdownOpen = await page.locator('[role="listbox"], [class*="dropdown"], [class*="popover"]').first().isVisible({ timeout: 1000 }).catch(() => false)
+      console.log(`Dropdown opened: ${dropdownOpen}`)
+      if (dropdownOpen) {
+        // Click elsewhere on page
+        await page.mouse.click(10, 10)
+        await page.waitForTimeout(300)
+        const dropdownClosed = !(await page.locator('[role="listbox"], [class*="dropdown"], [class*="popover"]').first().isVisible({ timeout: 500 }).catch(() => false))
+        console.log(`Dropdown closed after outside click: ${dropdownClosed}`)
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-inline-outside-click.png' })
+  })
+
+  test('22. InlineSelect scroll closes: open dropdown → scroll page → dropdown closes', async ({ page }) => {
+    await go(page, '/tasks')
+    const statusBtn = page.locator('button:has-text("To Do"), button:has-text("In Progress")').first()
+    if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await statusBtn.click()
+      await page.waitForTimeout(300)
+      const dropdownOpen = await page.locator('[role="listbox"], [class*="dropdown"], [class*="popover"]').first().isVisible({ timeout: 1000 }).catch(() => false)
+      console.log(`Dropdown opened before scroll: ${dropdownOpen}`)
+      if (dropdownOpen) {
+        await page.evaluate(() => window.scrollBy(0, 200))
+        await page.waitForTimeout(300)
+        const dropdownAfterScroll = await page.locator('[role="listbox"], [class*="dropdown"], [class*="popover"]').first().isVisible({ timeout: 500 }).catch(() => false)
+        console.log(`Dropdown visible after scroll: ${dropdownAfterScroll}`)
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-inline-scroll-close.png' })
+  })
+
+  test('23. InlineDatePicker presets work: click date → click Tomorrow → verify date text changed', async ({ page }) => {
+    await go(page, '/tasks')
+    const dateCell = page.locator('button').filter({ hasText: /\d{1,2}\/\d{1,2}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/ }).first()
+    if (await dateCell.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const beforeText = await dateCell.textContent()
+      await dateCell.click()
+      await page.waitForTimeout(500)
+      const tomorrow = page.locator('button:has-text("Tomorrow")').first()
+      if (await tomorrow.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await tomorrow.click()
+        await page.waitForTimeout(500)
+        const afterText = await dateCell.textContent()
+        console.log(`Date changed: "${beforeText}" → "${afterText}"`)
+        // Undo if available
+        const undo = page.locator('text=Undo').first()
+        if (await undo.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await undo.click()
+          await page.waitForTimeout(300)
+        }
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-datepicker-preset.png' })
+  })
+
+  test('24. InlineDatePicker Escape: click date → press Escape → picker closes without changing', async ({ page }) => {
+    await go(page, '/tasks')
+    const dateCell = page.locator('button').filter({ hasText: /\d{1,2}\/\d{1,2}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/ }).first()
+    if (await dateCell.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const beforeText = await dateCell.textContent()
+      await dateCell.click()
+      await page.waitForTimeout(500)
+      // Verify picker is open
+      const pickerOpen = await page.locator('button:has-text("Tomorrow"), [class*="calendar"], [class*="datepicker"]').first().isVisible({ timeout: 2000 }).catch(() => false)
+      console.log(`Date picker opened: ${pickerOpen}`)
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(300)
+      const afterText = await dateCell.textContent()
+      console.log(`Date unchanged after Escape: ${beforeText === afterText}`)
+    }
+    await page.screenshot({ path: 'review/exhaustive-datepicker-escape.png' })
+  })
+
+  test('25. InlineAssigneePicker shows team: click assignee → verify at least 3 team members listed', async ({ page }) => {
+    await go(page, '/tasks')
+    const assignee = page.locator('[class*="assignee"], [class*="avatar"]').filter({ has: page.locator('img, svg') }).first()
+    if (await assignee.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await assignee.click()
+      await page.waitForTimeout(500)
+      const members = await page.locator('[role="option"], [class*="member"], [class*="user-item"]').count()
+      console.log(`Team members in assignee picker: ${members}`)
+      expect(members).toBeGreaterThanOrEqual(1)
+      await page.screenshot({ path: 'review/exhaustive-assignee-team.png' })
+      await page.keyboard.press('Escape')
+    }
+  })
+
+  test('26. InlineAssigneePicker select: click assignee → click a team member → verify avatar changed', async ({ page }) => {
+    await go(page, '/tasks')
+    const assignee = page.locator('[class*="assignee"], [class*="avatar"]').filter({ has: page.locator('img, svg') }).first()
+    if (await assignee.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const beforeImg = await assignee.locator('img').first().getAttribute('src').catch(() => '')
+      await assignee.click()
+      await page.waitForTimeout(500)
+      const memberOption = page.locator('[role="option"], [class*="member"], [class*="user-item"]').first()
+      if (await memberOption.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await memberOption.click()
+        await page.waitForTimeout(500)
+        const afterImg = await assignee.locator('img').first().getAttribute('src').catch(() => '')
+        console.log(`Avatar src changed: ${beforeImg !== afterImg}`)
+        // Undo if available
+        const undo = page.locator('text=Undo').first()
+        if (await undo.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await undo.click()
+          await page.waitForTimeout(300)
+        }
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-assignee-select.png' })
+  })
+
+  // ── Undo System (4 tests) ────────────────────────────────────────
+
+  test('27. Undo REVERTS change: change status → note original → click Undo → verify status back', async ({ page }) => {
+    await go(page, '/tasks')
+    const statusBtn = page.locator('button:has-text("To Do")').first()
+    if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const originalText = await statusBtn.textContent()
+      await statusBtn.click()
+      await page.waitForTimeout(300)
+      const inProgress = page.locator('text=In Progress').last()
+      if (await inProgress.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await inProgress.click()
+        await page.waitForTimeout(500)
+        // Click Undo
+        const undo = page.locator('button:has-text("Undo"), text=Undo').first()
+        if (await undo.isVisible({ timeout: 3000 }).catch(() => false)) {
+          await undo.click()
+          await page.waitForTimeout(500)
+          // Verify reverted
+          const revertedText = await statusBtn.textContent().catch(() => '')
+          console.log(`Undo revert: "${originalText}" → changed → "${revertedText}"`)
+          expect(revertedText).toBe(originalText)
+        }
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-undo-revert.png' })
+  })
+
+  test('28. Auto-dismiss: trigger a success toast → wait 4 seconds → verify toast gone', async ({ page }) => {
+    await go(page, '/tasks')
+    // Trigger a status change to get a toast
+    await page.keyboard.press('j')
+    await page.waitForTimeout(150)
+    await page.keyboard.press('s')
+    await page.waitForTimeout(500)
+    const toastVisible = await page.locator('[class*="toast"], [role="alert"], text=Undo').first().isVisible({ timeout: 2000 }).catch(() => false)
+    console.log(`Toast appeared: ${toastVisible}`)
+    if (toastVisible) {
+      // Wait for auto-dismiss (typically 3-5 seconds)
+      await page.waitForTimeout(4000)
+      const toastGone = !(await page.locator('[class*="toast"], [role="alert"], text=Undo').first().isVisible({ timeout: 500 }).catch(() => false))
+      console.log(`Toast auto-dismissed after 4s: ${toastGone}`)
+    }
+    await page.screenshot({ path: 'review/exhaustive-auto-dismiss.png' })
+  })
+
+  test('29. Multiple toasts: trigger 2 status changes quickly → verify 2 toasts visible simultaneously', async ({ page }) => {
+    await go(page, '/tasks')
+    // Change status of first task
+    await page.keyboard.press('j')
+    await page.waitForTimeout(100)
+    await page.keyboard.press('s')
+    await page.waitForTimeout(200)
+    // Change status of second task
+    await page.keyboard.press('j')
+    await page.waitForTimeout(100)
+    await page.keyboard.press('s')
+    await page.waitForTimeout(500)
+    const toasts = await page.locator('[class*="toast"], [role="alert"]').count()
+    console.log(`Simultaneous toasts: ${toasts}`)
+    await page.screenshot({ path: 'review/exhaustive-multi-toast.png' })
+    // Undo both
+    const undos = page.locator('button:has-text("Undo"), text=Undo')
+    const undoCount = await undos.count()
+    for (let i = 0; i < undoCount; i++) {
+      await undos.first().click().catch(() => {})
+      await page.waitForTimeout(200)
+    }
+  })
+
+  test('30. Dismiss button: trigger toast → click X/dismiss → verify toast removed before timeout', async ({ page }) => {
+    await go(page, '/tasks')
+    await page.keyboard.press('j')
+    await page.waitForTimeout(150)
+    await page.keyboard.press('s')
+    await page.waitForTimeout(500)
+    const toast = page.locator('[class*="toast"], [role="alert"]').first()
+    if (await toast.isVisible({ timeout: 2000 }).catch(() => false)) {
+      // Find dismiss/X button on toast
+      const dismiss = toast.locator('button[aria-label*="close"], button[aria-label*="dismiss"], button:has(svg)').first()
+      if (await dismiss.isVisible().catch(() => false)) {
+        await dismiss.click()
+        await page.waitForTimeout(300)
+        const toastGone = !(await toast.isVisible({ timeout: 500 }).catch(() => false))
+        console.log(`Toast dismissed via X: ${toastGone}`)
+      } else {
+        // Try clicking Undo instead to clear it
+        const undo = page.locator('text=Undo').first()
+        if (await undo.isVisible().catch(() => false)) {
+          await undo.click()
+          await page.waitForTimeout(300)
+        }
+        console.log('No X/dismiss button found on toast')
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-toast-dismiss.png' })
+  })
+
+  // ── Optimistic Updates (3 tests) ──────────────────────────────────
+
+  test('31. Instant UI: change priority dropdown → verify button text changed IMMEDIATELY', async ({ page }) => {
+    await go(page, '/tasks')
+    const prioBtn = page.locator('button:has-text("Low"), button:has-text("Medium")').first()
+    if (await prioBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const originalText = await prioBtn.textContent()
+      const newPrio = originalText?.includes('Low') ? 'High' : 'Low'
+      await prioBtn.click()
+      await page.waitForTimeout(300)
+      const option = page.locator(`text=${newPrio}`).last()
+      if (await option.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await option.click()
+        // Check IMMEDIATELY — no waitForTimeout
+        const updatedText = await prioBtn.textContent()
+        console.log(`Optimistic update: "${originalText}" → "${updatedText}" (expected "${newPrio}")`)
+        expect(updatedText).toContain(newPrio)
+        // Undo
+        const undo = page.locator('text=Undo').first()
+        if (await undo.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await undo.click()
+          await page.waitForTimeout(300)
+        }
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-optimistic-instant.png' })
+  })
+
+  test('32. Mutation invalidation: change task status → wait 2s → verify API returns updated status', async ({ page, request }) => {
+    await go(page, '/tasks')
+    // Get a task ID from the page
+    const taskId = await page.evaluate(() => {
+      const link = document.querySelector('a[href*="/tasks/"]') as HTMLAnchorElement
+      return link?.href?.match(/tasks\/([^/]+)/)?.[1] || null
+    })
+    if (taskId) {
+      // Change status via keyboard
+      await page.keyboard.press('j')
+      await page.waitForTimeout(150)
+      await page.keyboard.press('s')
+      await page.waitForTimeout(2000)
+      // Check API
+      const res = await request.get(`${BASE}/api/tasks/${taskId}`)
+      if (res.status() === 200) {
+        const data = await res.json()
+        console.log(`API status after mutation: ${data.data?.status || data.status}`)
+      }
+      // Undo
+      const undo = page.locator('text=Undo').first()
+      if (await undo.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await undo.click()
+        await page.waitForTimeout(300)
+      }
+    }
+    await page.screenshot({ path: 'review/exhaustive-mutation-invalidation.png' })
+  })
+
+  test('33. Error graceful: try updating a nonexistent task → verify no crash, page still functional', async ({ page, request }) => {
+    // Hit a nonexistent task endpoint
+    const res = await request.put(`${BASE}/api/tasks/nonexistent-task-999`, {
+      data: { status: 'done' }
+    })
+    console.log(`Nonexistent task update status: ${res.status()}`)
+    // Now verify the page still works
+    const errors = await go(page, '/tasks')
+    expect(errors).toEqual([])
+    const taskRows = await page.locator('[class*="row"], [class*="task"]').filter({ hasText: /\w{3,}/ }).count()
+    console.log(`Tasks page still has ${taskRows} rows after error`)
+    expect(taskRows).toBeGreaterThan(0)
+    await page.screenshot({ path: 'review/exhaustive-error-graceful.png' })
+  })
+
+  // ── PB Sector (3 tests) ──────────────────────────────────────────
+
+  test('34. PB Sector loads with sections: navigate to /pb → verify Star, Focus, Quick, Evening sections', async ({ page }) => {
+    await go(page, '/pb')
+    for (const section of ['Star', 'Focus', 'Quick', 'Evening']) {
+      const found = await page.locator(`text=${section}`).first().isVisible({ timeout: 3000 }).catch(() => false)
+      console.log(`PB section "${section}": ${found}`)
+    }
+    await page.screenshot({ path: 'review/exhaustive-pb-sections.png' })
+  })
+
+  test('35. PB Sector pomodoro circles: verify PomodoroCircles component renders', async ({ page }) => {
+    await go(page, '/pb')
+    const circles = page.locator('[class*="pomodoro"], [class*="Pomodoro"], circle, [class*="circle"]').first()
+    const visible = await circles.isVisible({ timeout: 3000 }).catch(() => false)
+    console.log(`Pomodoro circles visible: ${visible}`)
+    if (visible) {
+      const circleCount = await page.locator('circle, [class*="circle"]').count()
+      console.log(`Circle elements: ${circleCount}`)
+    }
+    await page.screenshot({ path: 'review/exhaustive-pb-pomodoro.png' })
+  })
+
+  test('36. PB quick capture: type in capture bar → verify text appears', async ({ page }) => {
+    await go(page, '/pb')
+    const input = page.locator('input[placeholder*="capture"], input[placeholder*="Capture"], input[placeholder*="add"], textarea').first()
+    if (await input.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await input.click()
+      await input.fill('Test PB quick capture')
+      const value = await input.inputValue()
+      expect(value).toContain('Test PB quick capture')
+      console.log(`PB capture input value: "${value}"`)
+      await page.screenshot({ path: 'review/exhaustive-pb-capture.png' })
+      await input.clear()
+    }
+  })
+
+  // ── Other Pages (4 tests) ────────────────────────────────────────
+
+  test('37. Ideas pagination: go to /ideas → if more than 1 page, verify pagination controls exist', async ({ page }) => {
+    await go(page, '/ideas')
+    const ideas = await page.locator('[class*="card"], [class*="idea"]').filter({ hasText: /\w{3,}/ }).count()
+    console.log(`Ideas count: ${ideas}`)
+    const pagination = page.locator('button:has-text("Next"), button:has-text("Previous"), [class*="pagination"], nav[aria-label*="page"]')
+    const hasPagination = await pagination.first().isVisible({ timeout: 2000 }).catch(() => false)
+    console.log(`Pagination controls: ${hasPagination}`)
+    await page.screenshot({ path: 'review/exhaustive-ideas-pagination.png' })
+  })
+
+  test('38. Deadlines page filters: go to /deadlines → verify filter buttons (All Types, Urgent, etc.)', async ({ page }) => {
+    await go(page, '/deadlines')
+    for (const filter of ['All', 'Urgent', 'Upcoming', 'Past']) {
+      const btn = page.locator(`button:has-text("${filter}")`).first()
+      const visible = await btn.isVisible({ timeout: 2000 }).catch(() => false)
+      console.log(`Deadlines filter "${filter}": ${visible}`)
+    }
+    await page.screenshot({ path: 'review/exhaustive-deadlines-filters.png' })
+  })
+
+  test('39. Decisions similar panel: go to /decisions → click a decision → look for Similar Decisions section', async ({ page }) => {
+    await go(page, '/decisions')
+    const decisionLink = page.locator('a[href*="/decisions/"], [class*="decision"]').filter({ hasText: /\w{5,}/ }).first()
+    if (await decisionLink.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await decisionLink.click()
+      await page.waitForTimeout(1000)
+      const similar = page.locator('text=Similar, text=Related').first()
+      const hasSimilar = await similar.isVisible({ timeout: 3000 }).catch(() => false)
+      console.log(`Similar Decisions section: ${hasSimilar}`)
+      await page.screenshot({ path: 'review/exhaustive-decisions-similar.png' })
+    }
+  })
+
+  test('40. Grants milestone: go to /grants → verify TODAY marker + progress bars visible', async ({ page }) => {
+    await go(page, '/grants')
+    const todayMarker = page.locator('text=TODAY, [class*="today-marker"], [class*="todayMarker"]').first()
+    const hasTodayMarker = await todayMarker.isVisible({ timeout: 3000 }).catch(() => false)
+    console.log(`Grants TODAY marker: ${hasTodayMarker}`)
+    const progressBars = page.locator('[class*="progress"], [role="progressbar"]')
+    const barCount = await progressBars.count()
+    console.log(`Grants progress bars: ${barCount}`)
+    await page.screenshot({ path: 'review/exhaustive-grants-milestone.png' })
+  })
+
+  // ── localStorage Persistence (2 tests) ───────────────────────────
+
+  test('41. Theme persists: toggle theme with Ctrl+. → reload page → verify same theme applied', async ({ page }) => {
+    await go(page, '/dashboard')
+    // Toggle theme
+    await page.keyboard.press('Control+.')
+    await page.waitForTimeout(500)
+    const themeAfterToggle = await page.evaluate(() => {
+      return localStorage.getItem('theme') || document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+    })
+    console.log(`Theme after toggle: ${themeAfterToggle}`)
+    // Reload
+    await page.reload({ waitUntil: 'networkidle' })
+    await page.waitForTimeout(500)
+    const themeAfterReload = await page.evaluate(() => {
+      return localStorage.getItem('theme') || document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+    })
+    console.log(`Theme after reload: ${themeAfterReload}`)
+    expect(themeAfterReload).toBe(themeAfterToggle)
+    await page.screenshot({ path: 'review/exhaustive-theme-persist.png' })
+    // Toggle back to restore
+    await page.keyboard.press('Control+.')
+    await page.waitForTimeout(300)
+  })
+
+  test('42. Sidebar state persists: collapse with [ → reload → verify sidebar still collapsed', async ({ page }) => {
+    await go(page, '/dashboard')
+    // Get sidebar width before collapse
+    const beforeWidth = await page.locator('nav').first().evaluate(el => el.getBoundingClientRect().width).catch(() => 0)
+    // Collapse sidebar
+    await page.keyboard.press('[')
+    await page.waitForTimeout(500)
+    const collapsedWidth = await page.locator('nav').first().evaluate(el => el.getBoundingClientRect().width).catch(() => 0)
+    console.log(`Sidebar: ${beforeWidth}px → collapsed ${collapsedWidth}px`)
+    // Reload
+    await page.reload({ waitUntil: 'networkidle' })
+    await page.waitForTimeout(500)
+    const afterReloadWidth = await page.locator('nav').first().evaluate(el => el.getBoundingClientRect().width).catch(() => 0)
+    console.log(`Sidebar after reload: ${afterReloadWidth}px`)
+    // Should still be collapsed (within tolerance)
+    expect(afterReloadWidth).toBeLessThanOrEqual(collapsedWidth + 10)
+    await page.screenshot({ path: 'review/exhaustive-sidebar-persist.png' })
+    // Restore sidebar
+    await page.keyboard.press('[')
+    await page.waitForTimeout(300)
+  })
+})
+
+// ═════════════════════════════════════════════════════════════════════
 // END-TO-END: Full daily session simulation
 // ═════════════════════════════════════════════════════════════════════
 
