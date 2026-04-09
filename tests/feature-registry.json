@@ -1,0 +1,3242 @@
+{
+  "version": 1,
+  "last_scanned": "2026-04-09T00:30:42.051727",
+  "features": [
+    {
+      "id": "api-get-tasks",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "GET /api/tasks — task list with filters",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Task list: /api/tasks",
+      "covered": true
+    },
+    {
+      "id": "api-get-tasks-status-filter",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "GET /api/tasks?status= — filter tasks by status",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Task filter by status",
+      "covered": true
+    },
+    {
+      "id": "api-get-tasks-overdue-count",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "GET /api/tasks/overdue-count — overdue task count",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Overdue task count",
+      "covered": true
+    },
+    {
+      "id": "api-get-projects",
+      "component": "api/routes/projects.ts",
+      "type": "api",
+      "description": "GET /api/projects — project list",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Project list",
+      "covered": true
+    },
+    {
+      "id": "api-get-projects-health",
+      "component": "api/routes/projects.ts",
+      "type": "api",
+      "description": "GET /api/projects/health — project health scores",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Project health scores",
+      "covered": true
+    },
+    {
+      "id": "api-get-team",
+      "component": "api/routes/team.ts",
+      "type": "api",
+      "description": "GET /api/team — team members",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Team members",
+      "covered": true
+    },
+    {
+      "id": "api-get-team-slugs",
+      "component": "api/routes/team.ts",
+      "type": "api",
+      "description": "GET /api/team/slugs — team slug list",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Team slug list",
+      "covered": true
+    },
+    {
+      "id": "api-get-team-pulse",
+      "component": "api/routes/team-pulse.ts",
+      "type": "api",
+      "description": "GET /api/team/pulse — team pulse",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Team pulse",
+      "covered": true
+    },
+    {
+      "id": "api-get-meetings",
+      "component": "api/routes/meetings.ts",
+      "type": "api",
+      "description": "GET /api/meetings — meeting list",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Meeting list",
+      "covered": true
+    },
+    {
+      "id": "api-get-meetings-cadence",
+      "component": "api/routes/meeting-cadence.ts",
+      "type": "api",
+      "description": "GET /api/meetings/cadence-check — meeting cadence",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Meeting cadence",
+      "covered": true
+    },
+    {
+      "id": "api-get-ideas",
+      "component": "api/routes/ideas.ts",
+      "type": "api",
+      "description": "GET /api/ideas — ideas list",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Ideas list",
+      "covered": true
+    },
+    {
+      "id": "api-get-decisions",
+      "component": "api/routes/decisions.ts",
+      "type": "api",
+      "description": "GET /api/decisions — decision log",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Decision log",
+      "covered": true
+    },
+    {
+      "id": "api-get-decisions-tags",
+      "component": "api/routes/decisions.ts",
+      "type": "api",
+      "description": "GET /api/decisions/tags — decision tags",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Decision tags",
+      "covered": true
+    },
+    {
+      "id": "api-get-decisions-review",
+      "component": "api/routes/decisions.ts",
+      "type": "api",
+      "description": "GET /api/decisions/review — decisions for review",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Decisions for review",
+      "covered": true
+    },
+    {
+      "id": "api-get-search",
+      "component": "api/routes/search.ts",
+      "type": "api",
+      "description": "GET /api/search?q= — full-text search",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Full-text search",
+      "covered": true
+    },
+    {
+      "id": "api-get-version",
+      "component": "api/lib/version.ts",
+      "type": "api",
+      "description": "GET /api/version — version check",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Version check",
+      "covered": true
+    },
+    {
+      "id": "api-get-settings",
+      "component": "api/routes/settings.ts",
+      "type": "api",
+      "description": "GET /api/settings — lab settings",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Lab settings",
+      "covered": true
+    },
+    {
+      "id": "api-get-workflow-templates",
+      "component": "api/routes/settings.ts",
+      "type": "api",
+      "description": "GET /api/workflow-templates — workflow templates",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Workflow templates",
+      "covered": true
+    },
+    {
+      "id": "api-get-calendar-events",
+      "component": "api/routes/calendar.ts",
+      "type": "api",
+      "description": "GET /api/calendar/events — calendar events",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Calendar events",
+      "covered": true
+    },
+    {
+      "id": "api-get-activity",
+      "component": "api/routes/activity.ts",
+      "type": "api",
+      "description": "GET /api/activity — activity feed",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Activity feed",
+      "covered": true
+    },
+    {
+      "id": "api-get-activity-heatmap",
+      "component": "api/routes/activity.ts",
+      "type": "api",
+      "description": "GET /api/activity/heatmap — activity heatmap",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Activity heatmap",
+      "covered": true
+    },
+    {
+      "id": "api-get-grants",
+      "component": "api/routes/publications.ts",
+      "type": "api",
+      "description": "GET /api/grants — grants list",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Grants list",
+      "covered": true
+    },
+    {
+      "id": "api-get-grants-timeline",
+      "component": "api/routes/publications.ts",
+      "type": "api",
+      "description": "GET /api/grants/timeline — grants timeline",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Grants timeline",
+      "covered": true
+    },
+    {
+      "id": "api-get-publications",
+      "component": "api/routes/publications.ts",
+      "type": "api",
+      "description": "GET /api/publications — publications list",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Publications",
+      "covered": true
+    },
+    {
+      "id": "api-get-notifications",
+      "component": "api/routes/notifications.ts",
+      "type": "api",
+      "description": "GET /api/notifications — notifications",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Notifications",
+      "covered": true
+    },
+    {
+      "id": "api-get-notifications-count",
+      "component": "api/routes/notifications.ts",
+      "type": "api",
+      "description": "GET /api/notifications/count — notification count",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Notification count",
+      "covered": true
+    },
+    {
+      "id": "api-get-commitments",
+      "component": "api/routes/notifications.ts",
+      "type": "api",
+      "description": "GET /api/commitments — commitments list",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Commitments",
+      "covered": true
+    },
+    {
+      "id": "api-get-milestones",
+      "component": "api/routes/projects.ts",
+      "type": "api",
+      "description": "GET /api/milestones — project milestones",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Milestones",
+      "covered": true
+    },
+    {
+      "id": "api-get-digest",
+      "component": "api/routes/digest.ts",
+      "type": "api",
+      "description": "GET /api/digest — research digest",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Research digest",
+      "covered": true
+    },
+    {
+      "id": "api-get-digest-dates",
+      "component": "api/routes/digest.ts",
+      "type": "api",
+      "description": "GET /api/digest/dates — digest dates",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Digest dates",
+      "covered": true
+    },
+    {
+      "id": "api-get-action-items",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "GET /api/action-items — action items alias",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Action items",
+      "covered": true
+    },
+    {
+      "id": "api-get-updates-recent",
+      "component": "api/routes/projects.ts",
+      "type": "api",
+      "description": "GET /api/updates/recent — recent project updates",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Recent updates",
+      "covered": true
+    },
+    {
+      "id": "api-get-narratives",
+      "component": "api/routes/narratives.ts",
+      "type": "api",
+      "description": "GET /api/narratives — research narratives",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Research narratives",
+      "covered": true
+    },
+    {
+      "id": "api-get-questions",
+      "component": "api/routes/questions.ts",
+      "type": "api",
+      "description": "GET /api/questions — Ask the Lab questions",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Ask the Lab questions",
+      "covered": true
+    },
+    {
+      "id": "api-get-expertise",
+      "component": "api/routes/expertise.ts",
+      "type": "api",
+      "description": "GET /api/expertise — expertise tags",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Expertise tags",
+      "covered": true
+    },
+    {
+      "id": "api-get-stats",
+      "component": "api/routes/publications.ts",
+      "type": "api",
+      "description": "GET /api/stats — lab stats",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Lab stats",
+      "covered": true
+    },
+    {
+      "id": "api-get-collab-graph",
+      "component": "api/routes/publications.ts",
+      "type": "api",
+      "description": "GET /api/graph/collaboration — collaboration graph",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Collaboration graph",
+      "covered": true
+    },
+    {
+      "id": "api-get-revisions-active",
+      "component": "api/routes/revisions.ts",
+      "type": "api",
+      "description": "GET /api/revisions/active — active revisions",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Active revisions",
+      "covered": true
+    },
+    {
+      "id": "api-get-submissions-active",
+      "component": "api/routes/submissions.ts",
+      "type": "api",
+      "description": "GET /api/submissions/active — active submissions",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Active submissions",
+      "covered": true
+    },
+    {
+      "id": "api-get-mentee-milestones",
+      "component": "api/routes/mentee-milestones.ts",
+      "type": "api",
+      "description": "GET /api/mentee-milestones — mentee milestones",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Mentee milestones",
+      "covered": true
+    },
+    {
+      "id": "api-get-mentee-milestones-overview",
+      "component": "api/routes/mentee-milestones.ts",
+      "type": "api",
+      "description": "GET /api/mentee-milestones/overview — mentee overview",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Mentee overview",
+      "covered": true
+    },
+    {
+      "id": "api-get-conferences-upcoming",
+      "component": "api/routes/conferences.ts",
+      "type": "api",
+      "description": "GET /api/conferences/upcoming — upcoming conferences",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Upcoming conferences",
+      "covered": true
+    },
+    {
+      "id": "api-get-regulatory-expiring",
+      "component": "api/routes/regulatory.ts",
+      "type": "api",
+      "description": "GET /api/regulatory/expiring — expiring regulatory items",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Expiring regulatory items",
+      "covered": true
+    },
+    {
+      "id": "api-get-grant-milestones-upcoming",
+      "component": "api/routes/grant-milestones.ts",
+      "type": "api",
+      "description": "GET /api/grant-milestones/upcoming — upcoming grant milestones",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Upcoming grant milestones",
+      "covered": true
+    },
+    {
+      "id": "api-get-deadline-cascade-all",
+      "component": "api/routes/deadline-cascade.ts",
+      "type": "api",
+      "description": "GET /api/deadline-cascade/all — all deadline cascades",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Deadline cascades",
+      "covered": true
+    },
+    {
+      "id": "api-get-analytics-pi-dashboard",
+      "component": "api/routes/pi-dashboard.ts",
+      "type": "api",
+      "description": "GET /api/analytics/pi-dashboard — PI dashboard analytics",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET PI dashboard analytics",
+      "covered": true
+    },
+    {
+      "id": "api-get-analytics-mentee-velocity",
+      "component": "api/routes/pi-dashboard.ts",
+      "type": "api",
+      "description": "GET /api/analytics/mentee-velocity — mentee velocity",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Mentee velocity",
+      "covered": true
+    },
+    {
+      "id": "api-get-analytics-response-time",
+      "component": "api/routes/pi-dashboard.ts",
+      "type": "api",
+      "description": "GET /api/analytics/response-time — response time analytics",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Response time analytics",
+      "covered": true
+    },
+    {
+      "id": "api-get-analytics-team-engagement",
+      "component": "api/routes/pi-dashboard.ts",
+      "type": "api",
+      "description": "GET /api/analytics/team-engagement — team engagement",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Team engagement",
+      "covered": true
+    },
+    {
+      "id": "api-get-auth-me",
+      "component": "api/index.ts",
+      "type": "api",
+      "description": "GET /api/auth/me — auth check",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API GET Auth check",
+      "covered": true
+    },
+    {
+      "id": "api-post-tasks-create",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "POST /api/tasks — create task",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create task",
+      "covered": true
+    },
+    {
+      "id": "api-post-tasks-status",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "POST /api/tasks/:id/status — change task status",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create task (status change step)",
+      "covered": true
+    },
+    {
+      "id": "api-post-tasks-update",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "POST /api/tasks/:id — update task fields",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create task (field update step)",
+      "covered": true
+    },
+    {
+      "id": "api-post-tasks-comments",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "POST /api/tasks/:id/comments — add task comment",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create task (comment step)",
+      "covered": true
+    },
+    {
+      "id": "api-post-tasks-updates",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "POST /api/tasks/:id/updates — add task note/update",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create task (note step)",
+      "covered": true
+    },
+    {
+      "id": "api-post-ideas-create",
+      "component": "api/routes/ideas.ts",
+      "type": "api",
+      "description": "POST /api/ideas — create idea",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create idea",
+      "covered": true
+    },
+    {
+      "id": "api-post-decisions-create",
+      "component": "api/routes/decisions.ts",
+      "type": "api",
+      "description": "POST /api/decisions — create decision",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create decision",
+      "covered": true
+    },
+    {
+      "id": "api-post-questions-create",
+      "component": "api/routes/questions.ts",
+      "type": "api",
+      "description": "POST /api/questions — create question",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create question",
+      "covered": true
+    },
+    {
+      "id": "api-post-project-updates",
+      "component": "api/routes/projects.ts",
+      "type": "api",
+      "description": "POST /api/projects/:slug/updates — post project update",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Post project update",
+      "covered": true
+    },
+    {
+      "id": "api-post-settings",
+      "component": "api/routes/settings.ts",
+      "type": "api",
+      "description": "POST /api/settings — update lab settings",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Update lab settings",
+      "covered": true
+    },
+    {
+      "id": "api-post-ideas-vote",
+      "component": "api/routes/ideas.ts",
+      "type": "api",
+      "description": "POST /api/ideas/:id/vote — vote on idea",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Vote on idea",
+      "covered": true
+    },
+    {
+      "id": "api-post-subtasks-create",
+      "component": "api/routes/subtasks.ts",
+      "type": "api",
+      "description": "POST /api/tasks/:id/subtasks — create subtask",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Create subtask on a task",
+      "covered": true
+    },
+    {
+      "id": "api-post-subtasks-reorder",
+      "component": "api/routes/subtasks.ts",
+      "type": "api",
+      "description": "POST /api/tasks/:id/subtasks/reorder — reorder subtasks",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Reorder subtasks",
+      "covered": true
+    },
+    {
+      "id": "api-post-meetings-create",
+      "component": "api/routes/meetings.ts",
+      "type": "api",
+      "description": "POST /api/meetings — create meeting",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Create meeting with dedup check",
+      "covered": true
+    },
+    {
+      "id": "api-post-meetings-agenda",
+      "component": "api/routes/meetings.ts",
+      "type": "api",
+      "description": "POST /api/meetings/:id/agenda — add agenda item",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Add agenda item to meeting",
+      "covered": true
+    },
+    {
+      "id": "api-post-decisions-outcome",
+      "component": "api/routes/decisions.ts",
+      "type": "api",
+      "description": "POST /api/decisions/:id/outcome — update decision outcome",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Update decision outcome",
+      "covered": true
+    },
+    {
+      "id": "api-post-notifications-read",
+      "component": "api/routes/notifications.ts",
+      "type": "api",
+      "description": "POST /api/notifications/:id/read — mark notification read",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Mark notification as read",
+      "covered": true
+    },
+    {
+      "id": "api-post-notifications-read-all",
+      "component": "api/routes/notifications.ts",
+      "type": "api",
+      "description": "POST /api/notifications/read-all — mark all notifications read",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Mark all notifications read",
+      "covered": true
+    },
+    {
+      "id": "api-post-tasks-batch",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "POST /api/tasks/batch — batch update tasks",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Batch task update",
+      "covered": true
+    },
+    {
+      "id": "api-post-pb-capture",
+      "component": "api/routes/pb-sector.ts",
+      "type": "api",
+      "description": "POST /api/pb/capture — PB quick capture",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: PB capture (quick capture)",
+      "covered": true
+    },
+    {
+      "id": "api-post-dependencies-create",
+      "component": "api/routes/dependencies.ts",
+      "type": "api",
+      "description": "POST /api/dependencies — create task dependency",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Create dependency between tasks",
+      "covered": true
+    },
+    {
+      "id": "api-post-expertise-add",
+      "component": "api/routes/expertise.ts",
+      "type": "api",
+      "description": "POST /api/expertise — add expertise tag",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Add expertise tag",
+      "covered": true
+    },
+    {
+      "id": "api-post-questions-answer",
+      "component": "api/routes/questions.ts",
+      "type": "api",
+      "description": "POST /api/questions/:id/answers — answer a question",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Answer a question (Ask the Lab)",
+      "covered": true
+    },
+    {
+      "id": "api-post-handoffs-create",
+      "component": "api/routes/handoffs.ts",
+      "type": "api",
+      "description": "POST /api/tasks/:id/handoffs — create task handoff",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Create task handoff",
+      "covered": true
+    },
+    {
+      "id": "api-post-paper-links",
+      "component": "api/routes/paper-links.ts",
+      "type": "api",
+      "description": "POST /api/paper-links — link paper to project",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Link paper to project",
+      "covered": true
+    },
+    {
+      "id": "api-post-tasks-acknowledge",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "POST /api/tasks/:id/acknowledge — acknowledge task",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Task acknowledge",
+      "covered": true
+    },
+    {
+      "id": "api-post-reactions-toggle",
+      "component": "api/routes/reactions.ts",
+      "type": "api",
+      "description": "POST /api/reactions — add emoji reaction",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Add emoji reaction",
+      "covered": true
+    },
+    {
+      "id": "api-get-deadline-cascade-impact",
+      "component": "api/routes/deadline-cascade.ts",
+      "type": "api",
+      "description": "GET /api/deadline-cascade/impact — deadline impact analysis",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: Deadline impact analysis",
+      "covered": true
+    },
+    {
+      "id": "api-get-decisions-similar",
+      "component": "api/routes/decision-replay.ts",
+      "type": "api",
+      "description": "GET /api/decisions/similar — similar decisions by context",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: Similar decisions by context",
+      "covered": true
+    },
+    {
+      "id": "api-get-team-by-expertise",
+      "component": "api/routes/pi-dashboard.ts",
+      "type": "api",
+      "description": "GET /api/team/by-expertise — team by expertise tag",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: Team by expertise tag",
+      "covered": true
+    },
+    {
+      "id": "api-get-team-cv-data",
+      "component": "api/routes/team.ts",
+      "type": "api",
+      "description": "GET /api/team/:slug/cv-data — CV data for member",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: CV data for member",
+      "covered": true
+    },
+    {
+      "id": "api-get-team-trajectory",
+      "component": "api/routes/trajectory.ts",
+      "type": "api",
+      "description": "GET /api/team/:slug/trajectory — trajectory data",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: Trajectory data for member",
+      "covered": true
+    },
+    {
+      "id": "api-get-team-contributions",
+      "component": "api/routes/contributions.ts",
+      "type": "api",
+      "description": "GET /api/team/:slug/contributions — contribution data",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: Contribution data for member",
+      "covered": true
+    },
+    {
+      "id": "api-get-expertise-suggest",
+      "component": "api/routes/expertise.ts",
+      "type": "api",
+      "description": "GET /api/expertise/suggest — expertise suggestions",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: Expertise suggestions",
+      "covered": true
+    },
+    {
+      "id": "api-get-pb-command-center",
+      "component": "api/routes/pb-sector.ts",
+      "type": "api",
+      "description": "GET /api/pb/command-center — PB command center",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: PB command center",
+      "covered": true
+    },
+    {
+      "id": "api-get-pb-plan-history",
+      "component": "api/routes/pb-sector.ts",
+      "type": "api",
+      "description": "GET /api/pb/plan/history — PB plan history",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: PB plan history",
+      "covered": true
+    },
+    {
+      "id": "api-get-pb-sessions",
+      "component": "api/routes/pb-sessions.ts",
+      "type": "api",
+      "description": "GET /api/pb/sessions — PB session history",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: PB session history",
+      "covered": true
+    },
+    {
+      "id": "api-get-pb-sessions-stats",
+      "component": "api/routes/pb-sessions.ts",
+      "type": "api",
+      "description": "GET /api/pb/sessions/stats — PB session stats",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: PB session stats",
+      "covered": true
+    },
+    {
+      "id": "api-get-pb-today",
+      "component": "api/routes/pb-today.ts",
+      "type": "api",
+      "description": "GET /api/pb/today — PB today data",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: PB today data",
+      "covered": true
+    },
+    {
+      "id": "api-get-pb-health",
+      "component": "api/routes/pb-health.ts",
+      "type": "api",
+      "description": "GET /api/pb/health — PB system health",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: PB system health",
+      "covered": true
+    },
+    {
+      "id": "api-post-tasks-sync-bulk",
+      "component": "api/routes/tasks.ts",
+      "type": "api",
+      "description": "POST /api/tasks/sync-bulk — bulk upsert from brain.db",
+      "test_file": "tests/sync-pipeline.test.py",
+      "test_name": "test_01_create_task_in_brain_push_to_d1",
+      "covered": true
+    },
+    {
+      "id": "page-render-dashboard",
+      "component": "src/pages/Dashboard.tsx",
+      "type": "render",
+      "description": "Dashboard page renders without errors",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Dashboard (/dashboard) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-personal",
+      "component": "src/pages/portal/Personal.tsx",
+      "type": "render",
+      "description": "My Hub page renders without errors",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: My Hub (/personal) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-my-tasks",
+      "component": "src/pages/portal/MyTasks.tsx",
+      "type": "render",
+      "description": "My Tasks page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: My Tasks (/my-tasks) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-tasks",
+      "component": "src/pages/portal/Tasks.tsx",
+      "type": "render",
+      "description": "All Tasks page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: All Tasks (/tasks) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-calendar",
+      "component": "src/pages/portal/CalendarPage.tsx",
+      "type": "render",
+      "description": "Calendar page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Calendar (/calendar) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-deadlines",
+      "component": "src/pages/portal/Deadlines.tsx",
+      "type": "render",
+      "description": "Deadlines page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Deadlines (/deadlines) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-projects",
+      "component": "src/pages/Projects.tsx",
+      "type": "render",
+      "description": "Projects page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Projects (/projects) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-manuscripts",
+      "component": "src/pages/portal/Manuscripts.tsx",
+      "type": "render",
+      "description": "Manuscripts page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Manuscripts (/manuscripts) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-ideas",
+      "component": "src/pages/portal/Ideas.tsx",
+      "type": "render",
+      "description": "Ideas page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Ideas (/ideas) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-ask",
+      "component": "src/pages/portal/AskTheLab.tsx",
+      "type": "render",
+      "description": "Ask the Lab page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Ask the Lab (/ask) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-decisions",
+      "component": "src/pages/portal/DecisionsPage.tsx",
+      "type": "render",
+      "description": "Decisions page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Decisions (/decisions) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-digest",
+      "component": "src/pages/Digest.tsx",
+      "type": "render",
+      "description": "Research Digest page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Research Digest (/digest) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-search",
+      "component": "src/pages/portal/SearchPage.tsx",
+      "type": "render",
+      "description": "Search page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Search (/search) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-grants",
+      "component": "src/pages/portal/Grants.tsx",
+      "type": "render",
+      "description": "Grants page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Grants (/grants) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-meetings",
+      "component": "src/pages/Meetings.tsx",
+      "type": "render",
+      "description": "Meetings page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Meetings (/meetings) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-meeting-notes",
+      "component": "src/pages/portal/MeetingNotesPage.tsx",
+      "type": "render",
+      "description": "Meeting Transcripts page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Meeting Transcripts (/meeting-notes) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-activity",
+      "component": "src/pages/portal/ActivityPage.tsx",
+      "type": "render",
+      "description": "Activity page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Activity (/activity) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-analytics",
+      "component": "src/pages/portal/AnalyticsPage.tsx",
+      "type": "render",
+      "description": "Analytics page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Analytics (/analytics) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-settings",
+      "component": "src/pages/portal/SettingsPage.tsx",
+      "type": "render",
+      "description": "Settings page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Settings (/settings) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-narratives",
+      "component": "src/pages/portal/NarrativesPage.tsx",
+      "type": "render",
+      "description": "Narratives page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Narratives (/narratives) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-sessions",
+      "component": "src/pages/portal/SessionHistory.tsx",
+      "type": "render",
+      "description": "Session History page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Session History (/sessions) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-mentee-milestones",
+      "component": "src/pages/portal/MenteeMilestones.tsx",
+      "type": "render",
+      "description": "Mentee Milestones page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Mentee Milestones (/mentee-milestones) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-pi-analytics",
+      "component": "src/pages/portal/PIAnalytics.tsx",
+      "type": "render",
+      "description": "PI Analytics page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: PI Analytics (/pi/analytics) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-home",
+      "component": "src/pages/Home.tsx",
+      "type": "render",
+      "description": "Homepage renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Homepage (/) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-team",
+      "component": "src/pages/Team.tsx",
+      "type": "render",
+      "description": "Team page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Team (/team) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-publications",
+      "component": "src/pages/Publications.tsx",
+      "type": "render",
+      "description": "Publications page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Publications (/publications) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-contact",
+      "component": "src/pages/Contact.tsx",
+      "type": "render",
+      "description": "Contact page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Contact (/contact) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-project-detail",
+      "component": "src/pages/ProjectDetail.tsx",
+      "type": "render",
+      "description": "Project Detail page renders with real data",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Project Detail renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-meeting-detail",
+      "component": "src/pages/MeetingDetail.tsx",
+      "type": "render",
+      "description": "Meeting Detail page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Meeting Detail renders without crash",
+      "covered": true
+    },
+    {
+      "id": "page-render-member",
+      "component": "src/pages/MemberPage.tsx",
+      "type": "render",
+      "description": "Member page renders",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Member page renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-deadline-cascade",
+      "component": "src/pages/portal/DeadlineCascadePage.tsx",
+      "type": "render",
+      "description": "Deadline Cascade page renders",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: Deadline Cascade (/deadline-cascade) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-my-items",
+      "component": "src/pages/MyItems.tsx",
+      "type": "render",
+      "description": "My Items page renders",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: My Items (/my-items) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-pb-sector",
+      "component": "src/pages/portal/PBSector.tsx",
+      "type": "render",
+      "description": "PB Sector / Planner page renders",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: PB Sector / Planner (/pb) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-pulse",
+      "component": "src/pages/Pulse.tsx",
+      "type": "render",
+      "description": "Pulse / Kiosk page renders",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: Pulse / Kiosk (/pulse) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-network",
+      "component": "src/pages/Network.tsx",
+      "type": "render",
+      "description": "Collaboration Network page renders",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: Collaboration Network (/network) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-publication-detail",
+      "component": "src/pages/PublicationDetail.tsx",
+      "type": "render",
+      "description": "Publication Detail page renders",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: Publication Detail (/publications/:id) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-cv",
+      "component": "src/pages/CVPage.tsx",
+      "type": "render",
+      "description": "CV page renders",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: CV Page (/team/:slug/cv) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-trajectory",
+      "component": "src/pages/TrajectoryPage.tsx",
+      "type": "render",
+      "description": "Trainee Trajectory page renders",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: Trainee Trajectory (/team/:slug/trajectory) renders",
+      "covered": true
+    },
+    {
+      "id": "page-render-meeting-prep",
+      "component": "src/pages/MeetingPrep.tsx",
+      "type": "render",
+      "description": "Meeting Prep page renders",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: Meeting Prep (/meetings/:id/prep) renders",
+      "covered": true
+    },
+    {
+      "id": "keyboard-ctrl-k-command-palette",
+      "component": "src/components/CommandPalette.tsx",
+      "type": "keyboard",
+      "description": "Ctrl+K opens command palette",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Ctrl+K opens command palette",
+      "covered": true
+    },
+    {
+      "id": "keyboard-question-shortcut-help",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "? opens shortcut help modal",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: ? opens shortcut help",
+      "covered": true
+    },
+    {
+      "id": "keyboard-c-create-task",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "C opens create task modal",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: C opens create task modal on Tasks page",
+      "covered": true
+    },
+    {
+      "id": "keyboard-jk-task-nav",
+      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "J/K navigates task rows",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: J/K navigates task rows",
+      "covered": true
+    },
+    {
+      "id": "keyboard-enter-task-detail",
+      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "Enter opens TaskDetailPanel",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Enter opens TaskDetailPanel",
+      "covered": true
+    },
+    {
+      "id": "keyboard-shortcut-guard",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "Shortcuts do not fire when input is focused",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Shortcuts do NOT fire when input is focused",
+      "covered": true
+    },
+    {
+      "id": "keyboard-g-nav-dashboard",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "G then D navigates to Dashboard",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: G then D navigates to Dashboard",
+      "covered": true
+    },
+    {
+      "id": "keyboard-g-nav-tasks",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "G then T navigates to Tasks",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: G then T navigates to Tasks",
+      "covered": true
+    },
+    {
+      "id": "keyboard-g-nav-projects",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "G then P navigates to Projects",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: G then P navigates to Projects",
+      "covered": true
+    },
+    {
+      "id": "keyboard-g-nav-meetings",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "G then M navigates to Meetings",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: G then M navigates to Meetings",
+      "covered": true
+    },
+    {
+      "id": "keyboard-g-nav-calendar",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "G then C navigates to Calendar",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: G then C navigates to Calendar",
+      "covered": true
+    },
+    {
+      "id": "keyboard-g-nav-ideas",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "G then I navigates to Ideas",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: G then I navigates to Ideas",
+      "covered": true
+    },
+    {
+      "id": "keyboard-g-nav-deadlines",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "G then K navigates to Deadlines",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: G then K navigates to Deadlines",
+      "covered": true
+    },
+    {
+      "id": "keyboard-g-nav-mytasks",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "G then Y navigates to My Tasks",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: G then Y navigates to My Tasks",
+      "covered": true
+    },
+    {
+      "id": "keyboard-space-peek",
+      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "Space opens peek overlay on focused task",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Space opens peek overlay on focused task",
+      "covered": true
+    },
+    {
+      "id": "keyboard-x-bulk-select",
+      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "X key toggles task selection for bulk actions",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: X key toggles task selection, toolbar appears",
+      "covered": true
+    },
+    {
+      "id": "keyboard-s-status-cycle",
+      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "S key cycles task status (todo -> in_progress -> done)",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: S key cycles task status",
+      "covered": true
+    },
+    {
+      "id": "keyboard-z-snooze",
+      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "Z key snoozes focused task",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Z key or context menu triggers snooze",
+      "covered": true
+    },
+    {
+      "id": "keyboard-b-blocker",
+      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "B key toggles blocker on focused task",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: B key toggles blocker on focused task",
+      "covered": true
+    },
+    {
+      "id": "keyboard-bracket-sidebar",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "[ key collapses/expands sidebar",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: [ key collapses sidebar, [ again expands",
+      "covered": true
+    },
+    {
+      "id": "keyboard-arrow-subtask-expand",
+      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "Arrow right expands subtasks, left collapses",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Right expands subtasks, left collapses",
+      "covered": true
+    },
+    {
+      "id": "keyboard-n-new-idea",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "N key opens new idea modal",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: CreateIdeaModal — N key + Escape",
+      "covered": true
+    },
+    {
+      "id": "keyboard-f-focus-mode",
+      "component": "src/hooks/useKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "F key toggles focus mode (hide sidebar)",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Focus mode (F key) hides sidebar, restores on F again",
+      "covered": true
+    },
+    {
+      "id": "keyboard-ctrl-dot-theme",
+      "component": "src/pages/portal/SettingsPage.tsx",
+      "type": "keyboard",
+      "description": "Ctrl+. cycles theme: dark/light/system",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Ctrl+. cycles theme: dark → light → system",
+      "covered": true
+    },
+    {
+      "id": "keyboard-p-pin-project",
+      "component": "src/hooks/useProjectKeyboardNav.ts",
+      "type": "keyboard",
+      "description": "P key pins/unpins project on Projects page",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: P key pins/unpins project on Projects page",
+      "covered": true
+    },
+    {
+      "id": "keyboard-f-filter-panel",
+      "component": "src/hooks/useTaskKeyboardShortcuts.ts",
+      "type": "keyboard",
+      "description": "F key toggles filter panel on tasks page",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "F key toggles filter panel",
+      "covered": true
+    },
+    {
+      "id": "keyboard-t-calendar-today",
+      "component": "src/pages/portal/CalendarPage.tsx",
+      "type": "keyboard",
+      "description": "T key jumps to today in calendar",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Calendar T key jumps to today",
+      "covered": true
+    },
+    {
+      "id": "click-task-status-dropdown",
+      "component": "src/components/InlineSelect.tsx",
+      "type": "inline-edit",
+      "description": "Click status dropdown to change task status",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Click status dropdown → select In Progress → undo toast",
+      "covered": true
+    },
+    {
+      "id": "click-task-priority-dropdown",
+      "component": "src/components/InlineSelect.tsx",
+      "type": "inline-edit",
+      "description": "Click priority dropdown to change task priority",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Click priority dropdown → change low to high",
+      "covered": true
+    },
+    {
+      "id": "click-task-date-picker",
+      "component": "src/components/InlineDatePicker.tsx",
+      "type": "inline-edit",
+      "description": "Click due date to open date picker with presets",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Click due date → use Tomorrow preset",
+      "covered": true
+    },
+    {
+      "id": "click-task-assignee-picker",
+      "component": "src/components/InlineAssigneePicker.tsx",
+      "type": "inline-edit",
+      "description": "Click assignee to open team member dropdown",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Click assignee → team dropdown → shows team members",
+      "covered": true
+    },
+    {
+      "id": "click-task-detail-tabs",
+      "component": "src/components/tasks/TaskDetailPanel.tsx",
+      "type": "click",
+      "description": "Task detail panel 5 tabs: Overview, Notes, Comments, Activity, Details",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Open detail → read all 5 tabs",
+      "covered": true
+    },
+    {
+      "id": "click-board-view",
+      "component": "src/components/tasks/TaskBoardView.tsx",
+      "type": "click",
+      "description": "Switch to Board view shows Kanban columns",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Board view renders Kanban columns",
+      "covered": true
+    },
+    {
+      "id": "click-timeline-view",
+      "component": "src/components/tasks/TaskTimelineView.tsx",
+      "type": "click",
+      "description": "Switch to Timeline view shows Gantt chart",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Timeline view renders Gantt chart",
+      "covered": true
+    },
+    {
+      "id": "click-byperson-view",
+      "component": "src/components/tasks/TaskGridView.tsx",
+      "type": "click",
+      "description": "Switch to By Person view shows team workload",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: By Person view shows team workload",
+      "covered": true
+    },
+    {
+      "id": "click-mytasks-filter-pills",
+      "component": "src/pages/portal/MyTasks.tsx",
+      "type": "click",
+      "description": "MyTasks QuickFilter pills (All, Today, Overdue, etc.)",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "All filter pills work: All, Today, This Week, Overdue, No Date",
+      "covered": true
+    },
+    {
+      "id": "click-create-task-modal",
+      "component": "src/components/tasks/CreateTaskModal.tsx",
+      "type": "form",
+      "description": "Create Task modal with all fields and template chips",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "C key → fill all fields → template chip",
+      "covered": true
+    },
+    {
+      "id": "click-create-task-escape",
+      "component": "src/components/tasks/CreateTaskModal.tsx",
+      "type": "click",
+      "description": "Escape closes CreateTaskModal",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: CreateTaskModal — Escape closes",
+      "covered": true
+    },
+    {
+      "id": "click-dashboard-customize",
+      "component": "src/pages/Dashboard.tsx",
+      "type": "click",
+      "description": "Customize button opens card selection dialog",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Customize dashboard cards — toggle cards on/off",
+      "covered": true
+    },
+    {
+      "id": "toggle-dashboard-card",
+      "component": "src/pages/Dashboard.tsx",
+      "type": "toggle",
+      "description": "Toggle individual dashboard cards on/off",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Customize dashboard cards — toggle cards on/off",
+      "covered": true
+    },
+    {
+      "id": "click-dashboard-pin-card",
+      "component": "src/pages/Dashboard.tsx",
+      "type": "click",
+      "description": "Pin/unpin dashboard card",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Dashboard role tabs switch content",
+      "covered": true
+    },
+    {
+      "id": "click-dashboard-tab",
+      "component": "src/pages/Dashboard.tsx",
+      "type": "click",
+      "description": "Dashboard role tabs (Projects, People, Deadlines)",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Dashboard role tabs switch content",
+      "covered": true
+    },
+    {
+      "id": "click-sidebar-nav",
+      "component": "src/components/PortalLayout.tsx",
+      "type": "navigation",
+      "description": "All sidebar navigation items clickable",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: All sidebar nav items are clickable",
+      "covered": true
+    },
+    {
+      "id": "click-notification-bell",
+      "component": "src/components/NotificationBell.tsx",
+      "type": "click",
+      "description": "Notification bell opens dropdown",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Notification bell click opens dropdown",
+      "covered": true
+    },
+    {
+      "id": "click-context-menu",
+      "component": "src/components/tasks/TaskContextMenu.tsx",
+      "type": "click",
+      "description": "Right-click on task row shows context menu",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Right-click task → see Open, Status, Snooze, Archive",
+      "covered": true
+    },
+    {
+      "id": "click-welcome-banner-dismiss",
+      "component": "src/components/WelcomeBanner.tsx",
+      "type": "click",
+      "description": "Welcome banner can be dismissed",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Welcome banner shows and can be dismissed",
+      "covered": true
+    },
+    {
+      "id": "click-search-results",
+      "component": "src/pages/portal/SearchPage.tsx",
+      "type": "click",
+      "description": "Search returns results and navigates on click",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Search returns results for CLIF",
+      "covered": true
+    },
+    {
+      "id": "click-ideas-vote",
+      "component": "src/pages/portal/Ideas.tsx",
+      "type": "click",
+      "description": "Vote button on ideas works and shows count",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Vote button works and shows count",
+      "covered": true
+    },
+    {
+      "id": "click-ideas-grid-list-toggle",
+      "component": "src/pages/portal/Ideas.tsx",
+      "type": "click",
+      "description": "Ideas grid/list view toggle",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Ideas page → grid/list toggle",
+      "covered": true
+    },
+    {
+      "id": "click-decisions-tag-filter",
+      "component": "src/pages/portal/DecisionsPage.tsx",
+      "type": "click",
+      "description": "Decision tags filter the list",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Decision tags filter the list",
+      "covered": true
+    },
+    {
+      "id": "click-decisions-timeline-view",
+      "component": "src/pages/portal/DecisionsPage.tsx",
+      "type": "click",
+      "description": "Decisions timeline view toggle",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Decisions → timeline view",
+      "covered": true
+    },
+    {
+      "id": "click-project-category-filter",
+      "component": "src/pages/Projects.tsx",
+      "type": "click",
+      "description": "Project category filters (All, CLIF, Lab, Mentees)",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Projects list → category filter",
+      "covered": true
+    },
+    {
+      "id": "click-project-pipeline-view",
+      "component": "src/pages/Projects.tsx",
+      "type": "click",
+      "description": "Projects pipeline view toggle",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Pipeline view",
+      "covered": true
+    },
+    {
+      "id": "click-project-detail-tabs",
+      "component": "src/pages/ProjectDetail.tsx",
+      "type": "click",
+      "description": "Project detail tabs (Overview, Tasks, Revisions, Activity, Literature)",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Project detail → 5 tabs",
+      "covered": true
+    },
+    {
+      "id": "click-project-watch",
+      "component": "src/components/WatchButton.tsx",
+      "type": "click",
+      "description": "Watch/Unwatch button on project detail",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Watch button",
+      "covered": true
+    },
+    {
+      "id": "click-calendar-view-modes",
+      "component": "src/pages/portal/CalendarPage.tsx",
+      "type": "click",
+      "description": "Calendar Month/Week/Day/Agenda view modes",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Calendar Week view renders",
+      "covered": true
+    },
+    {
+      "id": "click-digest-topic-filter",
+      "component": "src/pages/Digest.tsx",
+      "type": "click",
+      "description": "Digest topic filter pills",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Digest → topic pills",
+      "covered": true
+    },
+    {
+      "id": "click-digest-abstract-expand",
+      "component": "src/pages/Digest.tsx",
+      "type": "click",
+      "description": "Show/hide abstract on digest papers",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Abstract expand",
+      "covered": true
+    },
+    {
+      "id": "click-digest-tabs",
+      "component": "src/pages/Digest.tsx",
+      "type": "click",
+      "description": "Digest tabs (All, New, Saved)",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Tabs: All, New, Saved",
+      "covered": true
+    },
+    {
+      "id": "click-cmdk-contextual",
+      "component": "src/components/CommandPalette.tsx",
+      "type": "click",
+      "description": "Command palette shows contextual page actions",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Cmd+K shows contextual actions on Tasks page",
+      "covered": true
+    },
+    {
+      "id": "click-cmdk-create-task",
+      "component": "src/components/CommandPalette.tsx",
+      "type": "click",
+      "description": "Command palette Create Task action opens modal",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Cmd+K Create Task action opens modal",
+      "covered": true
+    },
+    {
+      "id": "form-mention-autocomplete",
+      "component": "src/components/MentionInput.tsx",
+      "type": "form",
+      "description": "@mention autocomplete shows team member suggestions",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: @mention shows team member suggestions",
+      "covered": true
+    },
+    {
+      "id": "click-meeting-nlp-quickadd",
+      "component": "src/pages/MeetingDetail.tsx",
+      "type": "form",
+      "description": "NLP quick-add parses @person, priority, date",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: NLP quick-add parses @person, priority, date",
+      "covered": true
+    },
+    {
+      "id": "click-saved-views",
+      "component": "src/components/tasks/SavedViewsBar.tsx",
+      "type": "click",
+      "description": "Saved views selector on Tasks page",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Saved views selector exists on Tasks page",
+      "covered": true
+    },
+    {
+      "id": "click-rich-text-editor",
+      "component": "src/components/RichTextEditor.tsx",
+      "type": "click",
+      "description": "Task description uses Tiptap rich text editor",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Task description uses Tiptap rich text editor",
+      "covered": true
+    },
+    {
+      "id": "click-onboarding-checklist",
+      "component": "src/components/OnboardingChecklist.tsx",
+      "type": "click",
+      "description": "Personal Hub shows onboarding progress",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Personal Hub shows onboarding progress",
+      "covered": true
+    },
+    {
+      "id": "click-settings-reset-dashboard",
+      "component": "src/pages/portal/SettingsPage.tsx",
+      "type": "click",
+      "description": "Settings reset dashboard layout",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Settings reset dashboard + clear searches",
+      "covered": true
+    },
+    {
+      "id": "click-settings-clear-searches",
+      "component": "src/pages/portal/SettingsPage.tsx",
+      "type": "click",
+      "description": "Settings clear recent searches",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Settings reset dashboard + clear searches",
+      "covered": true
+    },
+    {
+      "id": "copy-bibliography",
+      "component": "src/pages/Publications.tsx",
+      "type": "copy",
+      "description": "Copy Bibliography button on Publications page",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Copy Bibliography button exists on Publications",
+      "covered": true
+    },
+    {
+      "id": "copy-export-ics",
+      "component": "src/pages/portal/Deadlines.tsx",
+      "type": "copy",
+      "description": "Export .ics button on Deadlines page",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Export .ics button exists on Deadlines",
+      "covered": true
+    },
+    {
+      "id": "copy-analytics-report",
+      "component": "src/pages/portal/AnalyticsPage.tsx",
+      "type": "copy",
+      "description": "Copy Report button on Analytics page",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Copy Report button exists on Analytics",
+      "covered": true
+    },
+    {
+      "id": "copy-meeting-summary",
+      "component": "src/pages/MeetingDetail.tsx",
+      "type": "copy",
+      "description": "Copy Summary on Meeting Detail",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Copy Summary on Meeting Detail",
+      "covered": true
+    },
+    {
+      "id": "copy-cv-text",
+      "component": "src/pages/CVPage.tsx",
+      "type": "copy",
+      "description": "Copy as Text on CV page",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Copy as Text on CV page",
+      "covered": true
+    },
+    {
+      "id": "copy-pi-print",
+      "component": "src/pages/portal/PIAnalytics.tsx",
+      "type": "copy",
+      "description": "Print button on PI Analytics",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Print button on PI Analytics",
+      "covered": true
+    },
+    {
+      "id": "copy-task-link",
+      "component": "src/components/tasks/TaskDetailPanel.tsx",
+      "type": "copy",
+      "description": "Copy task link to clipboard",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Open detail → read all 5 tabs",
+      "covered": true
+    },
+    {
+      "id": "copy-publication-citation",
+      "component": "src/components/PublicationCard.tsx",
+      "type": "copy",
+      "description": "Copy citation on publication card",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Publications list: click publication",
+      "covered": true
+    },
+    {
+      "id": "copy-digest-bib",
+      "component": "src/pages/Digest.tsx",
+      "type": "copy",
+      "description": "Copy BibTeX from digest paper",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Digest → progress bar → topic pills",
+      "covered": true
+    },
+    {
+      "id": "copy-project-link",
+      "component": "src/pages/ProjectDetail.tsx",
+      "type": "copy",
+      "description": "Copy project link to clipboard",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Project detail → 5 tabs",
+      "covered": true
+    },
+    {
+      "id": "toast-undo-status",
+      "component": "src/components/UndoToast.tsx",
+      "type": "toast",
+      "description": "Undo toast appears after status change",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Status change shows undo toast",
+      "covered": true
+    },
+    {
+      "id": "a11y-aria-live",
+      "component": "src/components/UndoToast.tsx",
+      "type": "a11y",
+      "description": "UndoToast has aria-live region",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: UndoToast has aria-live",
+      "covered": true
+    },
+    {
+      "id": "a11y-page-title",
+      "component": "src/hooks/usePageMeta.ts",
+      "type": "a11y",
+      "description": "Page title updates dynamically with page name",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Page title updates dynamically",
+      "covered": true
+    },
+    {
+      "id": "a11y-skip-to-content",
+      "component": "src/components/PortalLayout.tsx",
+      "type": "a11y",
+      "description": "Skip-to-content link for keyboard users",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Skip-to-content link exists",
+      "covered": true
+    },
+    {
+      "id": "animation-page-transition",
+      "component": "src/components/PageTransition.tsx",
+      "type": "animation",
+      "description": "Page transition Framer Motion animation",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "VISUAL: Transition CSS variables are set",
+      "covered": true
+    },
+    {
+      "id": "animation-task-peek-overlay",
+      "component": "src/components/tasks/TaskPeekOverlay.tsx",
+      "type": "animation",
+      "description": "Peek overlay slide-in animation",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Space opens peek overlay on focused task",
+      "covered": true
+    },
+    {
+      "id": "animation-welcome-banner",
+      "component": "src/components/WelcomeBanner.tsx",
+      "type": "animation",
+      "description": "Welcome banner entrance/exit animation",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Welcome banner shows and can be dismissed",
+      "covered": true
+    },
+    {
+      "id": "animation-bento-card",
+      "component": "src/components/dashboard/BentoCard.tsx",
+      "type": "animation",
+      "description": "Dashboard bento card hover/entrance animation",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Dashboard loads with greeting, cards, and no crashes",
+      "covered": true
+    },
+    {
+      "id": "portal-inline-select",
+      "component": "src/components/InlineSelect.tsx",
+      "type": "inline-edit",
+      "description": "InlineSelect renders dropdown as portal (not clipped)",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: InlineSelect status dropdown renders as portal",
+      "covered": true
+    },
+    {
+      "id": "portal-task-context-menu",
+      "component": "src/components/tasks/TaskContextMenu.tsx",
+      "type": "click",
+      "description": "TaskContextMenu renders as portal",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Right-click task → see Open, Status, Snooze, Archive",
+      "covered": true
+    },
+    {
+      "id": "portal-task-peek-overlay",
+      "component": "src/components/tasks/TaskPeekOverlay.tsx",
+      "type": "toggle",
+      "description": "TaskPeekOverlay renders as portal",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Space opens peek overlay on focused task",
+      "covered": true
+    },
+    {
+      "id": "portal-global-quickadd",
+      "component": "src/components/GlobalQuickAdd.tsx",
+      "type": "form",
+      "description": "GlobalQuickAdd renders as portal",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "FAB quick-add button opens task creation",
+      "covered": true
+    },
+    {
+      "id": "portal-hover-card",
+      "component": "src/components/HoverCard.tsx",
+      "type": "hover",
+      "description": "HoverCard renders as portal on mouse enter",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Task row hover shows gold tint",
+      "covered": true
+    },
+    {
+      "id": "drag-board-view",
+      "component": "src/components/tasks/TaskBoardView.tsx",
+      "type": "drag",
+      "description": "Drag-and-drop task cards between Board columns",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Board view: drag task card between columns",
+      "covered": true
+    },
+    {
+      "id": "drag-meeting-agenda",
+      "component": "src/pages/MeetingDetail.tsx",
+      "type": "drag",
+      "description": "Drag-and-drop reorder meeting agenda items",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "JOURNEY: Create meeting → add agenda",
+      "covered": true
+    },
+    {
+      "id": "drag-pb-sector",
+      "component": "src/pages/portal/PBSector.tsx",
+      "type": "drag",
+      "description": "Drag-and-drop reorder PB Sector task slots",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: PB Sector / Planner (/pb) renders",
+      "covered": true
+    },
+    {
+      "id": "drag-file-upload",
+      "component": "src/components/FileUpload.tsx",
+      "type": "drag",
+      "description": "Drag-and-drop file upload zone",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "localStorage-dashboard-cards",
+      "component": "src/pages/Dashboard.tsx",
+      "type": "localStorage",
+      "description": "Dashboard card visibility persisted to localStorage",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Customize dashboard cards — toggle cards on/off",
+      "covered": true
+    },
+    {
+      "id": "localStorage-dashboard-pins",
+      "component": "src/pages/Dashboard.tsx",
+      "type": "localStorage",
+      "description": "Dashboard pinned cards persisted to localStorage",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Dashboard role tabs switch content",
+      "covered": true
+    },
+    {
+      "id": "localStorage-dashboard-tab",
+      "component": "src/pages/Dashboard.tsx",
+      "type": "localStorage",
+      "description": "Dashboard active tab persisted to localStorage",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Dashboard role tabs switch content",
+      "covered": true
+    },
+    {
+      "id": "localStorage-sidebar-collapsed",
+      "component": "src/components/PortalLayout.tsx",
+      "type": "localStorage",
+      "description": "Sidebar collapsed state persisted to localStorage",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: [ key collapses sidebar",
+      "covered": true
+    },
+    {
+      "id": "localStorage-dark-mode",
+      "component": "src/hooks/useDarkMode.ts",
+      "type": "localStorage",
+      "description": "Theme mode (dark/light/system) persisted to localStorage",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Ctrl+. cycles theme: dark → light → system",
+      "covered": true
+    },
+    {
+      "id": "localStorage-density",
+      "component": "src/hooks/useDensity.ts",
+      "type": "localStorage",
+      "description": "Density preference persisted to localStorage",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Density toggle: switch to compact",
+      "covered": true
+    },
+    {
+      "id": "localStorage-saved-views",
+      "component": "src/hooks/useSavedViews.ts",
+      "type": "localStorage",
+      "description": "Saved views persisted to localStorage",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Saved views selector exists on Tasks page",
+      "covered": true
+    },
+    {
+      "id": "localStorage-watchlist",
+      "component": "src/hooks/useWatchlist.ts",
+      "type": "localStorage",
+      "description": "Watchlist persisted to localStorage",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Watch button",
+      "covered": true
+    },
+    {
+      "id": "localStorage-onboarding",
+      "component": "src/hooks/useOnboarding.ts",
+      "type": "localStorage",
+      "description": "Onboarding checklist state persisted to localStorage",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Personal Hub shows onboarding progress",
+      "covered": true
+    },
+    {
+      "id": "localStorage-recently-viewed",
+      "component": "src/hooks/useRecentlyViewed.ts",
+      "type": "localStorage",
+      "description": "Recently viewed items persisted to localStorage",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "localStorage-recent-searches",
+      "component": "src/pages/portal/SearchPage.tsx",
+      "type": "localStorage",
+      "description": "Recent searches persisted to localStorage",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Settings reset dashboard + clear searches",
+      "covered": true
+    },
+    {
+      "id": "localStorage-user-role",
+      "component": "src/hooks/useUserRole.ts",
+      "type": "localStorage",
+      "description": "User role override persisted to localStorage",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "localStorage-pinned-projects",
+      "component": "src/pages/Projects.tsx",
+      "type": "localStorage",
+      "description": "Pinned projects persisted to localStorage",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: P key pins/unpins project",
+      "covered": true
+    },
+    {
+      "id": "localStorage-board-collapsed",
+      "component": "src/components/tasks/TaskBoardView.tsx",
+      "type": "localStorage",
+      "description": "Board view collapsed columns persisted to localStorage",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "localStorage-collapsible-section",
+      "component": "src/components/CollapsibleSection.tsx",
+      "type": "localStorage",
+      "description": "Collapsible section open/closed state persisted",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "localStorage-page-tooltip",
+      "component": "src/components/PageTooltip.tsx",
+      "type": "localStorage",
+      "description": "Page tooltip dismissed state persisted",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "localStorage-round-prompt",
+      "component": "src/components/RoundPrompt.tsx",
+      "type": "localStorage",
+      "description": "Round prompt state persisted to localStorage",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "localStorage-personal-cards",
+      "component": "src/pages/portal/Personal.tsx",
+      "type": "localStorage",
+      "description": "Personal hub visible cards persisted",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "localStorage-local-data",
+      "component": "src/hooks/useLocalData.tsx",
+      "type": "localStorage",
+      "description": "Local data cache (offline fallback) persisted",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "hover-task-row",
+      "component": "src/components/tasks/TaskListView.tsx",
+      "type": "hover",
+      "description": "Task row hover reveals action buttons and gold tint",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Task row hover shows gold tint + reveals action buttons",
+      "covered": true
+    },
+    {
+      "id": "hover-project-card",
+      "component": "src/components/ProjectCard.tsx",
+      "type": "hover",
+      "description": "Project card hover effect",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Projects list → category filter",
+      "covered": true
+    },
+    {
+      "id": "hover-avatar",
+      "component": "src/components/Avatar.tsx",
+      "type": "hover",
+      "description": "Avatar hover shows tooltip with name",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "hover-stage-selector",
+      "component": "src/components/StageSelector.tsx",
+      "type": "hover",
+      "description": "Stage selector hover shows stage name tooltip",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "hover-submission-timeline",
+      "component": "src/components/SubmissionTimeline.tsx",
+      "type": "hover",
+      "description": "Submission timeline hover shows event details",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "hover-revision-tracker",
+      "component": "src/components/RevisionTracker.tsx",
+      "type": "hover",
+      "description": "Revision tracker hover shows status details",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "hover-grants-timeline-bar",
+      "component": "src/pages/Grants.tsx",
+      "type": "hover",
+      "description": "Grants timeline bar hover shows grant details",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "JOURNEY: Grants page → see timeline",
+      "covered": true
+    },
+    {
+      "id": "mutation-create-project",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Create new project mutation",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Post project update",
+      "covered": true
+    },
+    {
+      "id": "mutation-update-project",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Update project fields mutation (optimistic)",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Post project update",
+      "covered": true
+    },
+    {
+      "id": "mutation-add-comment",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Add comment to project mutation",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create task (comment step)",
+      "covered": true
+    },
+    {
+      "id": "mutation-create-task",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Create task mutation (optimistic)",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "C key → fill all fields → template chip",
+      "covered": true
+    },
+    {
+      "id": "mutation-update-task-status",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Update task status mutation (optimistic with undo)",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Click status dropdown → select In Progress",
+      "covered": true
+    },
+    {
+      "id": "mutation-update-task",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Update task fields mutation",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create task (field update step)",
+      "covered": true
+    },
+    {
+      "id": "mutation-create-idea",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Create idea mutation",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create idea",
+      "covered": true
+    },
+    {
+      "id": "mutation-vote-idea",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Vote on idea mutation",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Vote on idea",
+      "covered": true
+    },
+    {
+      "id": "mutation-create-decision",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Create decision mutation",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create decision",
+      "covered": true
+    },
+    {
+      "id": "mutation-create-dependency",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Create task dependency mutation",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Create dependency between tasks",
+      "covered": true
+    },
+    {
+      "id": "mutation-toggle-reaction",
+      "component": "src/components/ReactionBar.tsx",
+      "type": "mutation",
+      "description": "Toggle emoji reaction mutation",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Add emoji reaction",
+      "covered": true
+    },
+    {
+      "id": "mutation-create-revision",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Create revision mutation",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "mutation-create-mentee-milestone",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Create mentee milestone mutation",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "mutation-create-submission",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Create submission event mutation",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "mutation-create-regulatory",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Create regulatory item mutation",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "mutation-create-grant-milestone",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Create grant milestone mutation",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "mutation-create-conference",
+      "component": "src/hooks/useMutations.ts",
+      "type": "mutation",
+      "description": "Create conference submission mutation",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "mutation-mark-notification-read",
+      "component": "src/hooks/useNotifications.ts",
+      "type": "mutation",
+      "description": "Mark notification as read mutation",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Mark notification as read",
+      "covered": true
+    },
+    {
+      "id": "mutation-file-upload",
+      "component": "src/components/FileUpload.tsx",
+      "type": "mutation",
+      "description": "File upload mutation (presigned URL + R2)",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API: Upload presigned URL generation",
+      "covered": true
+    },
+    {
+      "id": "toggle-subtask-checkbox",
+      "component": "src/components/tasks/detail/SubtaskSection.tsx",
+      "type": "toggle",
+      "description": "Toggle subtask completion checkbox",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Subtask: expand → check off subtask → progress updates",
+      "covered": true
+    },
+    {
+      "id": "toggle-collapsible-section",
+      "component": "src/components/CollapsibleSection.tsx",
+      "type": "toggle",
+      "description": "Collapsible section expand/collapse toggle",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "toggle-show-done",
+      "component": "src/pages/portal/Tasks.tsx",
+      "type": "toggle",
+      "description": "Show/hide completed tasks toggle",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "F key toggles filter panel → show/hide done",
+      "covered": true
+    },
+    {
+      "id": "click-scroll-to-top",
+      "component": "src/components/ScrollToTop.tsx",
+      "type": "click",
+      "description": "ScrollToTop button appears after scrolling",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "ScrollToTop appears after scrolling and works",
+      "covered": true
+    },
+    {
+      "id": "click-column-sort",
+      "component": "src/pages/portal/Tasks.tsx",
+      "type": "click",
+      "description": "Click column header to sort tasks",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Column header click sorts",
+      "covered": true
+    },
+    {
+      "id": "animation-skeleton-loading",
+      "component": "src/components/LoadingSkeleton.tsx",
+      "type": "animation",
+      "description": "Loading skeleton pulse animation before data",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Loading skeleton appears before data",
+      "covered": true
+    },
+    {
+      "id": "click-favicon-badge",
+      "component": "src/hooks/useFavicon.ts",
+      "type": "render",
+      "description": "Favicon badge updates with notification count",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: Favicon changes with notification count",
+      "covered": true
+    },
+    {
+      "id": "click-search-type-filter",
+      "component": "src/pages/portal/SearchPage.tsx",
+      "type": "click",
+      "description": "Search type filter pills (Tasks, Projects, Meetings, Ideas)",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "JOURNEY: Search → type query → filter by type",
+      "covered": true
+    },
+    {
+      "id": "click-manuscripts-pipeline",
+      "component": "src/pages/portal/Manuscripts.tsx",
+      "type": "click",
+      "description": "Manuscripts pipeline view toggle",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "JOURNEY: Manuscripts → pipeline view",
+      "covered": true
+    },
+    {
+      "id": "click-manuscripts-inline-status",
+      "component": "src/pages/portal/Manuscripts.tsx",
+      "type": "inline-edit",
+      "description": "Manuscripts inline status edit",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "JOURNEY: inline status edit",
+      "covered": true
+    },
+    {
+      "id": "click-analytics-week-selector",
+      "component": "src/pages/portal/AnalyticsPage.tsx",
+      "type": "click",
+      "description": "Analytics weekly date selector",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "JOURNEY: Analytics → read metrics",
+      "covered": true
+    },
+    {
+      "id": "navigation-publication-detail",
+      "component": "src/pages/Publications.tsx",
+      "type": "navigation",
+      "description": "Click publication navigates to detail page",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Publications list: click publication → lands on detail page",
+      "covered": true
+    },
+    {
+      "id": "navigation-dashboard-task-click",
+      "component": "src/pages/Dashboard.tsx",
+      "type": "navigation",
+      "description": "Click task in Dashboard card navigates to context",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Dashboard → click task in Tasks card → navigates",
+      "covered": true
+    },
+    {
+      "id": "sync-brain-to-d1-push",
+      "component": "scripts/sync-brain-tasks.ts",
+      "type": "sync",
+      "description": "brain.db → D1 push sync (tasks)",
+      "test_file": "tests/sync-pipeline.test.py",
+      "test_name": "test_01_create_task_in_brain_push_to_d1",
+      "covered": true
+    },
+    {
+      "id": "sync-d1-to-brain-pull",
+      "component": "scripts/sync-brain-tasks.ts",
+      "type": "sync",
+      "description": "D1 → brain.db pull sync (tasks)",
+      "test_file": "tests/sync-pipeline.test.py",
+      "test_name": "test_07_create_task_in_hub_pull_to_brain",
+      "covered": true
+    },
+    {
+      "id": "sync-status-change-push",
+      "component": "scripts/sync-brain-tasks.ts",
+      "type": "sync",
+      "description": "Task status change syncs from brain.db to D1",
+      "test_file": "tests/sync-pipeline.test.py",
+      "test_name": "test_02_change_status_in_brain_push_to_d1",
+      "covered": true
+    },
+    {
+      "id": "sync-status-change-pull",
+      "component": "scripts/sync-brain-tasks.ts",
+      "type": "sync",
+      "description": "Task status change syncs from D1 to brain.db",
+      "test_file": "tests/sync-pipeline.test.py",
+      "test_name": "test_09_change_status_in_hub_pull_to_brain",
+      "covered": true
+    },
+    {
+      "id": "sync-due-date-push",
+      "component": "scripts/sync-brain-tasks.ts",
+      "type": "sync",
+      "description": "Due date change syncs from brain.db to D1",
+      "test_file": "tests/sync-pipeline.test.py",
+      "test_name": "test_06_due_date_change_in_brain_push_to_d1",
+      "covered": true
+    },
+    {
+      "id": "sync-due-date-pull",
+      "component": "scripts/sync-brain-tasks.ts",
+      "type": "sync",
+      "description": "Due date change syncs from D1 to brain.db",
+      "test_file": "tests/sync-pipeline.test.py",
+      "test_name": "test_11_change_due_date_in_hub_pull_to_brain",
+      "covered": true
+    },
+    {
+      "id": "sync-broadcast-channel",
+      "component": "src/App.tsx",
+      "type": "sync",
+      "description": "BroadcastChannel cross-tab sync after mutations",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "form-create-decision-modal",
+      "component": "src/components/CreateDecisionModal.tsx",
+      "type": "form",
+      "description": "Create Decision modal form submission",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Decisions → log decision modal",
+      "covered": true
+    },
+    {
+      "id": "form-create-project-modal",
+      "component": "src/components/CreateProjectModal.tsx",
+      "type": "form",
+      "description": "Create Project modal form submission",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Projects renders (New Project button)",
+      "covered": true
+    },
+    {
+      "id": "form-ask-question",
+      "component": "src/pages/portal/AskTheLab.tsx",
+      "type": "form",
+      "description": "Submit question form on Ask the Lab page",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Create question",
+      "covered": true
+    },
+    {
+      "id": "form-settings-theme",
+      "component": "src/pages/portal/SettingsPage.tsx",
+      "type": "form",
+      "description": "Settings page theme selection",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Ctrl+. cycles theme",
+      "covered": true
+    },
+    {
+      "id": "form-quick-capture-bar",
+      "component": "src/components/QuickCaptureBar.tsx",
+      "type": "form",
+      "description": "Quick capture bar form submission",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: PB capture",
+      "covered": true
+    },
+    {
+      "id": "form-task-comment",
+      "component": "src/components/tasks/detail/TaskComments.tsx",
+      "type": "form",
+      "description": "Task comment form submission",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Open detail → add comment",
+      "covered": true
+    },
+    {
+      "id": "form-task-update-note",
+      "component": "src/components/tasks/detail/TaskUpdateFeed.tsx",
+      "type": "form",
+      "description": "Task progress note submission",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Open detail → add note",
+      "covered": true
+    },
+    {
+      "id": "form-project-comment",
+      "component": "src/components/ProjectComments.tsx",
+      "type": "form",
+      "description": "Project comment form submission",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API POST: Post project update",
+      "covered": true
+    },
+    {
+      "id": "form-project-update-feed",
+      "component": "src/components/ProjectUpdateFeed.tsx",
+      "type": "form",
+      "description": "Project update feed form submission",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "JOURNEY: Project exploration → post update",
+      "covered": true
+    },
+    {
+      "id": "form-meeting-create",
+      "component": "src/pages/Meetings.tsx",
+      "type": "form",
+      "description": "Record Meeting form submission",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Create meeting with dedup check",
+      "covered": true
+    },
+    {
+      "id": "form-handoff-section",
+      "component": "src/components/tasks/detail/HandoffSection.tsx",
+      "type": "form",
+      "description": "Task handoff form submission",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Create task handoff",
+      "covered": true
+    },
+    {
+      "id": "form-subtask-add",
+      "component": "src/components/tasks/detail/SubtaskSection.tsx",
+      "type": "form",
+      "description": "Add subtask inline form",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Expand subtasks → see subtask list → add input",
+      "covered": true
+    },
+    {
+      "id": "click-grants-mechanism-badges",
+      "component": "src/pages/portal/Grants.tsx",
+      "type": "click",
+      "description": "Grants mechanism badges (K23, R03, R01)",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "JOURNEY: Grants page → mechanism badges",
+      "covered": true
+    },
+    {
+      "id": "render-responsive-mobile",
+      "component": "src/components/PortalLayout.tsx",
+      "type": "render",
+      "description": "Responsive layout at mobile breakpoint (375px)",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Dashboard mobile — single column, no overflow",
+      "covered": true
+    },
+    {
+      "id": "render-responsive-tablet",
+      "component": "src/components/PortalLayout.tsx",
+      "type": "render",
+      "description": "Responsive layout at tablet breakpoint (768px)",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "VISUAL: dashboard at tablet (768x1024)",
+      "covered": true
+    },
+    {
+      "id": "render-responsive-desktop",
+      "component": "src/components/PortalLayout.tsx",
+      "type": "render",
+      "description": "Responsive layout at desktop breakpoint (1280px)",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "VISUAL: dashboard at desktop (1280x900)",
+      "covered": true
+    },
+    {
+      "id": "render-mobile-sidebar-collapse",
+      "component": "src/components/PortalLayout.tsx",
+      "type": "render",
+      "description": "Mobile sidebar collapses automatically",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "VISUAL: Mobile sidebar collapses",
+      "covered": true
+    },
+    {
+      "id": "click-mobile-hamburger",
+      "component": "src/components/PortalLayout.tsx",
+      "type": "click",
+      "description": "Mobile hamburger menu opens sidebar",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Mobile hamburger menu opens sidebar",
+      "covered": true
+    },
+    {
+      "id": "render-light-mode",
+      "component": "src/hooks/useDarkMode.ts",
+      "type": "render",
+      "description": "Light mode renders correctly on key pages",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Light mode renders correctly on all key pages",
+      "covered": true
+    },
+    {
+      "id": "render-dark-mode-bg",
+      "component": "src/hooks/useDarkMode.ts",
+      "type": "render",
+      "description": "Dark mode background is #0b1017",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "VISUAL: Dark mode bg is #0b1017",
+      "covered": true
+    },
+    {
+      "id": "render-font-dm-sans",
+      "component": "src/index.css",
+      "type": "render",
+      "description": "Portal uses DM Sans font, not Fraunces",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "VISUAL: Portal uses DM Sans, not Fraunces",
+      "covered": true
+    },
+    {
+      "id": "render-font-weight-600",
+      "component": "src/index.css",
+      "type": "render",
+      "description": "Portal h1 font-weight is 600 (not 800)",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "VISUAL: Portal h1 font-weight is 600",
+      "covered": true
+    },
+    {
+      "id": "render-status-badge-colors",
+      "component": "src/lib/statusColors.ts",
+      "type": "render",
+      "description": "Status badge colors per status (To Do, In Progress, Blocked, Done)",
+      "test_file": "tests/daily-superuser.spec.ts",
+      "test_name": "Status badge colors are correct per status",
+      "covered": true
+    },
+    {
+      "id": "render-touch-targets",
+      "component": "src/components/PortalLayout.tsx",
+      "type": "render",
+      "description": "Touch targets >= 36px on mobile",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "VISUAL: Touch targets >= 36px on mobile tasks",
+      "covered": true
+    },
+    {
+      "id": "render-error-boundary",
+      "component": "src/App.tsx",
+      "type": "render",
+      "description": "Error boundary catches React crashes gracefully",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Dashboard renders (error boundary check)",
+      "covered": true
+    },
+    {
+      "id": "api-get-analytics-contributions",
+      "component": "api/routes/contributions-decay.ts",
+      "type": "api",
+      "description": "GET /api/analytics/contributions — contribution analytics",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API GET: Contribution analytics",
+      "covered": true
+    },
+    {
+      "id": "api-get-insights-connections",
+      "component": "api/routes/insights.ts",
+      "type": "api",
+      "description": "GET /api/insights/connections — cross-project insight connections",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-get-insights-suggestions",
+      "component": "api/routes/insights.ts",
+      "type": "api",
+      "description": "GET /api/insights/suggestions — insight suggestions",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-get-grants-similar",
+      "component": "api/routes/grant-intelligence.ts",
+      "type": "api",
+      "description": "GET /api/grants/similar — NIH RePORTER similar grants",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-get-pi-analytics",
+      "component": "api/routes/pi-analytics.ts",
+      "type": "api",
+      "description": "GET /api/pi/analytics — PI analytics endpoint",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-get-proactive-brief",
+      "component": "api/routes/proactive-brief.ts",
+      "type": "api",
+      "description": "GET /api/proactive-brief — proactive briefing",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-get-file-activity",
+      "component": "api/routes/file-activity.ts",
+      "type": "api",
+      "description": "GET /api/file-activity/heatmap — file activity heatmap",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-get-email-drafts",
+      "component": "api/routes/email-drafts.ts",
+      "type": "api",
+      "description": "GET /api/email-drafts — email drafts list",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-get-email-drafts-pending",
+      "component": "api/routes/email-drafts.ts",
+      "type": "api",
+      "description": "GET /api/email-drafts/pending — pending email drafts",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-get-pb-relay",
+      "component": "api/routes/pb-relay.ts",
+      "type": "api",
+      "description": "GET /api/pb/relay — relay messages",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-get-pb-dispatch-pending",
+      "component": "api/routes/pb-sector.ts",
+      "type": "api",
+      "description": "GET /api/pb/dispatch/pending — pending dispatch queue",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-post-pb-plan",
+      "component": "api/routes/pb-sector.ts",
+      "type": "api",
+      "description": "POST /api/pb/plan — create/update daily plan",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-post-pb-pomodoro-start",
+      "component": "api/routes/pb-sector.ts",
+      "type": "api",
+      "description": "POST /api/pb/pomodoro/start — start pomodoro",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-post-pb-reflection",
+      "component": "api/routes/pb-sector.ts",
+      "type": "api",
+      "description": "POST /api/pb/reflection — save reflection",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-post-digest-status",
+      "component": "api/routes/digest.ts",
+      "type": "api",
+      "description": "POST /api/digest/:id/status — update digest paper status",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-post-revisions-create",
+      "component": "api/routes/revisions.ts",
+      "type": "api",
+      "description": "POST /api/revisions — create revision",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-post-meetings-notes",
+      "component": "api/routes/meetings.ts",
+      "type": "api",
+      "description": "POST /api/meetings/:id/notes — update meeting notes",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "api-post-projects-create",
+      "component": "api/routes/projects.ts",
+      "type": "api",
+      "description": "POST /api/projects — create project",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "click-meeting-notes-upload",
+      "component": "src/pages/portal/MeetingNotesPage.tsx",
+      "type": "click",
+      "description": "Upload Audio button on meeting notes page",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Meeting Transcripts renders",
+      "covered": true
+    },
+    {
+      "id": "form-meeting-notes-upload",
+      "component": "src/pages/portal/MeetingNotesPage.tsx",
+      "type": "form",
+      "description": "Meeting notes audio upload form",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "animation-route-progress-bar",
+      "component": "src/components/RouteProgressBar.tsx",
+      "type": "animation",
+      "description": "Route progress bar animation during navigation",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "animation-count-up",
+      "component": "src/hooks/useCountUp.ts",
+      "type": "animation",
+      "description": "Count-up animation for metric numbers",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "animation-scroll-reveal",
+      "component": "src/hooks/useScrollReveal.ts",
+      "type": "animation",
+      "description": "Scroll reveal animation for page sections",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "animation-network-background",
+      "component": "src/components/NetworkBackground.tsx",
+      "type": "animation",
+      "description": "Animated network background on public pages",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "click-clif-map-sites",
+      "component": "src/components/CLIFMap.tsx",
+      "type": "click",
+      "description": "CLIF map site markers clickable",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "click-collaboration-graph",
+      "component": "src/components/CollaborationGraph.tsx",
+      "type": "click",
+      "description": "Collaboration graph node interaction",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "click-project-dependency-map",
+      "component": "src/components/ProjectDependencyMap.tsx",
+      "type": "click",
+      "description": "Project dependency map node interaction",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "click-task-dependency-add",
+      "component": "src/components/tasks/detail/TaskDependencies.tsx",
+      "type": "click",
+      "description": "Add task dependency from detail panel",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "API POST: Create dependency between tasks",
+      "covered": true
+    },
+    {
+      "id": "click-bulk-action-toolbar",
+      "component": "src/components/tasks/BulkActionToolbar.tsx",
+      "type": "click",
+      "description": "Bulk action toolbar buttons (status, priority, assign, archive)",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "FEATURE: X key toggles task selection, toolbar appears",
+      "covered": true
+    },
+    {
+      "id": "click-stage-selector",
+      "component": "src/components/StageSelector.tsx",
+      "type": "inline-edit",
+      "description": "Stage selector dropdown for project stage",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "click-view-dropdown",
+      "component": "src/components/ViewDropdown.tsx",
+      "type": "click",
+      "description": "View dropdown selector",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "UX: Board view renders Kanban columns",
+      "covered": true
+    },
+    {
+      "id": "form-mentee-milestone-create",
+      "component": "src/pages/portal/MenteeMilestones.tsx",
+      "type": "form",
+      "description": "Create mentee milestone form",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "click-conference-prep",
+      "component": "src/components/ConferencePrep.tsx",
+      "type": "click",
+      "description": "Conference prep interactions",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "click-deadline-cascade-expand",
+      "component": "src/components/DeadlineCascade.tsx",
+      "type": "click",
+      "description": "Deadline cascade expand/collapse chain",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: Deadline Cascade renders",
+      "covered": true
+    },
+    {
+      "id": "click-insight-panel",
+      "component": "src/components/InsightPanel.tsx",
+      "type": "click",
+      "description": "Insight panel expand/dismiss suggestions",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    },
+    {
+      "id": "click-network-filters",
+      "component": "src/components/NetworkFilters.tsx",
+      "type": "click",
+      "description": "Collaboration network filter controls",
+      "test_file": "tests/inspection-workflows.spec.ts",
+      "test_name": "ROUTE: Collaboration Network renders",
+      "covered": true
+    },
+    {
+      "id": "click-publication-filters",
+      "component": "src/components/PublicationFilters.tsx",
+      "type": "click",
+      "description": "Publication filter controls (year, type, etc.)",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "PAGE: Publications renders",
+      "covered": true
+    },
+    {
+      "id": "form-publication-search",
+      "component": "src/components/PublicationSearch.tsx",
+      "type": "form",
+      "description": "Publication search input",
+      "test_file": null,
+      "test_name": null,
+      "covered": false
+    }
+  ],
+  "uncovered": [
+    "drag-file-upload",
+    "localStorage-recently-viewed",
+    "localStorage-user-role",
+    "localStorage-board-collapsed",
+    "localStorage-collapsible-section",
+    "localStorage-page-tooltip",
+    "localStorage-round-prompt",
+    "localStorage-personal-cards",
+    "localStorage-local-data",
+    "hover-avatar",
+    "hover-stage-selector",
+    "hover-submission-timeline",
+    "hover-revision-tracker",
+    "mutation-create-revision",
+    "mutation-create-mentee-milestone",
+    "mutation-create-submission",
+    "mutation-create-regulatory",
+    "mutation-create-grant-milestone",
+    "mutation-create-conference",
+    "toggle-collapsible-section",
+    "sync-broadcast-channel",
+    "api-get-insights-connections",
+    "api-get-insights-suggestions",
+    "api-get-grants-similar",
+    "api-get-pi-analytics",
+    "api-get-proactive-brief",
+    "api-get-file-activity",
+    "api-get-email-drafts",
+    "api-get-email-drafts-pending",
+    "api-get-pb-relay",
+    "api-get-pb-dispatch-pending",
+    "api-post-pb-plan",
+    "api-post-pb-pomodoro-start",
+    "api-post-pb-reflection",
+    "api-post-digest-status",
+    "api-post-revisions-create",
+    "api-post-meetings-notes",
+    "api-post-projects-create",
+    "form-meeting-notes-upload",
+    "animation-route-progress-bar",
+    "animation-count-up",
+    "animation-scroll-reveal",
+    "animation-network-background",
+    "click-clif-map-sites",
+    "click-collaboration-graph",
+    "click-project-dependency-map",
+    "click-stage-selector",
+    "form-mentee-milestone-create",
+    "click-conference-prep",
+    "click-insight-panel",
+    "form-publication-search"
+  ],
+  "summary": {
+    "total": 353,
+    "covered": 302,
+    "uncovered": 51,
+    "coverage_pct": 85.6
+  }
+}
