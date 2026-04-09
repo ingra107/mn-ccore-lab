@@ -18,7 +18,7 @@ export async function handleNarratives(env: Env): Promise<Response> {
     ).all(),
     env.DB.prepare('SELECT from_slug, to_slug, relationship_type FROM project_dependencies').all(),
     env.DB.prepare(
-      "SELECT id, title, topics, author_slugs, pub_date FROM publications WHERE pub_date > date('now', '-3 years') ORDER BY pub_date DESC"
+      "SELECT id, title, topics, author_slugs, year FROM publications WHERE year >= (CAST(strftime('%Y', 'now') AS INTEGER) - 3) ORDER BY year DESC"
     ).all(),
   ]);
 
@@ -97,7 +97,7 @@ export async function handleNarratives(env: Env): Promise<Response> {
       connectedCount: connected.size,
       sharedTopics: sharedTopics.map(([topic, count]) => ({ topic, count })),
       stageDistribution: stageOrder.map((s) => ({ stage: s, count: stageCounts.get(s) || 0 })),
-      relatedPubs: relatedPubs.map((p: any) => ({ id: p.id, title: p.title, pub_date: p.pub_date })),
+      relatedPubs: relatedPubs.map((p: any) => ({ id: p.id, title: p.title, year: p.year })),
     });
   }
 

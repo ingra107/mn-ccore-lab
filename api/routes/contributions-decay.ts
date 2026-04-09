@@ -64,7 +64,7 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
     ).bind(`%${slug}%`, cutoff.split('T')[0]).all(),
 
     env.DB.prepare(
-      "SELECT pub_date FROM publications WHERE author_slugs LIKE ? AND pub_date > ?"
+      "SELECT year FROM publications WHERE author_slugs LIKE ? AND year >= CAST(substr(?, 1, 4) AS INTEGER)"
     ).bind(`%${slug}%`, cutoff.split('T')[0]).all(),
   ]);
 
@@ -113,7 +113,7 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
     ['comment', (comments.results || []) as Record<string, unknown>[], 'created_at'],
     ['decision', (decisions.results || []) as Record<string, unknown>[], 'created_at'],
     ['meeting', (meetings.results || []) as Record<string, unknown>[], 'date'],
-    ['publication', (publications.results || []) as Record<string, unknown>[], 'pub_date'],
+    ['publication', (publications.results || []) as Record<string, unknown>[], 'year'],
   ];
 
   for (const [type, items, dateField] of types) {

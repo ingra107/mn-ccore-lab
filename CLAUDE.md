@@ -459,10 +459,7 @@ New task columns: `key_link_1/2/3` + `_desc`
 New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 
 ## Pending Sync
-- NEXT_ACTION: Fix all 55 documented bugs in one batch, run full 546-test suite, deploy once
-- STATUS: Active
-- NOTE: Phase 29 features built + deployed + schema v37 migrated. Office of Inspection (546 tests) fully operational. 55 bugs documented in Known Bugs section. Push script crash from new handlers needs immediate fix. Ready for bug fix batch.
-- LEARNING: Build tests BEFORE features, test every direction of data flow (brain.db→D1→Hub AND Hub→D1→brain.db), scan code for every interactive element not just what's obvious
+<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
 
 
 ## Known Bugs — Test-Verified (2026-04-09 full audit, 4 test suites)

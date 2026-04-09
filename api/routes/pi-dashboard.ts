@@ -81,22 +81,16 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
       ORDER BY total_actions DESC
     `).all(),
 
-    // Publications per quarter (last 2 years)
+    // Publications per year (last 3 years)
     env.DB.prepare(`
       SELECT
         year,
-        CASE
-          WHEN CAST(substr(pub_date, 6, 2) AS INTEGER) <= 3 THEN 'Q1'
-          WHEN CAST(substr(pub_date, 6, 2) AS INTEGER) <= 6 THEN 'Q2'
-          WHEN CAST(substr(pub_date, 6, 2) AS INTEGER) <= 9 THEN 'Q3'
-          ELSE 'Q4'
-        END as quarter,
         COUNT(*) as count
       FROM publications
-      WHERE year >= (CAST(strftime('%Y', 'now') AS INTEGER) - 2)
+      WHERE year >= (CAST(strftime('%Y', 'now') AS INTEGER) - 3)
         AND status = 'Published'
-      GROUP BY year, quarter
-      ORDER BY year, quarter
+      GROUP BY year
+      ORDER BY year
     `).all(),
 
     // Grants: submitted vs funded

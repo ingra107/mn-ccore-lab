@@ -7,7 +7,7 @@ export async function handleTrajectory(slug: string, env: Env): Promise<Response
   const [publications, taskStats, projectHistory, milestones, taskMetrics, projectStages] = await Promise.all([
     // Publications where this person is an author
     env.DB.prepare(
-      "SELECT id, title, journal, pub_date, doi FROM publications WHERE authors LIKE ? ORDER BY pub_date DESC"
+      "SELECT id, title, journal, year, doi FROM publications WHERE authors LIKE ? ORDER BY year DESC"
     ).bind(`%${slug}%`).all(),
 
     // Task completion stats by month (last 12 months)

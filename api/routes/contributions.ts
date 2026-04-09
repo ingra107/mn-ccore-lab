@@ -34,7 +34,7 @@ export async function handleContributions(slug: string, url: URL, env: Env): Pro
 
     // Publications in period
     env.DB.prepare(
-      "SELECT id, title, journal, pub_date FROM publications WHERE author_slugs LIKE ? AND pub_date > ? ORDER BY pub_date DESC"
+      "SELECT id, title, journal, year FROM publications WHERE author_slugs LIKE ? AND year >= CAST(substr(?, 1, 4) AS INTEGER) ORDER BY year DESC"
     ).bind(`%${slug}%`, cutoff.split('T')[0]).all(),
   ]);
 

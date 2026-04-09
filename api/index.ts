@@ -640,8 +640,12 @@ export default {
 
         // POST /api/notifications/read-all — mark all read
         if (request.method === 'POST' && path === '/api/notifications/read-all') {
-          const body = await request.json() as Record<string, string>;
-          return await handleMarkAllNotificationsRead(body.recipient || user.email.split('@')[0], env);
+          let recipient = user.email.split('@')[0];
+          try {
+            const body = await request.json() as Record<string, string>;
+            if (body.recipient) recipient = body.recipient;
+          } catch {}
+          return await handleMarkAllNotificationsRead(recipient, env);
         }
 
         // POST /api/reactions — toggle reaction (add or remove)
