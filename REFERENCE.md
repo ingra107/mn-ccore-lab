@@ -3,7 +3,7 @@
 Detailed tables, API endpoints, key files, and feature inventory.
 Moved from CLAUDE.md to reduce session context load. Read on demand.
 
-## D1 Tables (44+)
+## D1 Tables (56 — schema v37)
 
 | Table | Rows | Purpose |
 |-------|------|---------|
@@ -21,12 +21,19 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | notifications | dynamic | In-app notification feed |
 | commitments | dynamic | Team commitments tracker |
 | collaboration_network | dynamic | Inter-member collaboration links |
-| tasks | 546+ | Unified task system (replaces action_items) |
+| tasks | 546+ | Unified task system (+ key_link_1/2/3 + _desc columns, schema v37) |
 | ideas | dynamic | Research ideas board with voting |
 | task_comments | dynamic | Per-task discussion threads |
 | task_updates | dynamic | Per-task notes/progress entries (schema v36) |
 | lab_settings | 6 | Key-value settings store |
 | workflow_templates | 3+ | Custom project stage templates |
+| email_drafts | dynamic | Email draft status synced from brain.db (schema v37) |
+| file_activity_daily | dynamic | Aggregated daily file activity from brain.db (schema v37) |
+| daily_plans | dynamic | PB Sector daily plans (star/focus/quick/evening tasks) |
+| pomodoro_sessions | dynamic | Focus sessions synced from brain.db |
+| daily_reflections | dynamic | End-of-day reflections |
+| dispatch_queue | dynamic | Claude action items from Hub |
+| pb_sessions | dynamic | Claude Code session history synced from brain.db |
 
 ## API Endpoints (180+)
 
@@ -79,6 +86,17 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 
 ### Notifications
 - POST /api/notifications/:id/read, /api/notifications/read-all
+
+### Email Drafts (Phase 29)
+- GET /api/email-drafts (?status=draft filter), /api/email-drafts/pending
+- POST /api/email-drafts/sync-bulk (brain.db push)
+
+### Proactive Brief (Phase 29)
+- GET /api/proactive-brief (overdue, due-today, stale projects, milestones, suggested focus, bullets)
+
+### File Activity (Phase 29)
+- GET /api/file-activity/heatmap?days=90 (daily aggregates + per-project)
+- POST /api/file-activity/sync (brain.db push)
 
 ## Key Files
 
@@ -134,6 +152,22 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | `src/hooks/useMutations.ts` | Optimistic mutations for tasks/projects/manuscripts |
 | `api/routes/uploads.ts` | R2 file upload API |
 | `api/lib/email.ts` | Resend email integration (ready, needs API key) |
+| `src/components/dashboard/PomodoroStatsCard.tsx` | Focus hours/streak/top project dashboard card (Phase 29) |
+| `src/components/dashboard/EmailDraftsCard.tsx` | Pending email draft count + Gmail links (Phase 29) |
+| `src/components/dashboard/ProactiveBriefCard.tsx` | Overdue/due-today/focus suggestion intelligence card (Phase 29) |
+| `src/components/dashboard/SystemHealthMiniCard.tsx` | Green/amber/red sync health indicator (Phase 29) |
+| `src/components/dashboard/FileActivityCard.tsx` | GitHub-style calendar heatmap of file activity (Phase 29) |
+| `src/components/QuickCaptureBar.tsx` | Dashboard top input, Ctrl+N, idea: prefix parsing (Phase 29) |
+| `api/routes/email-drafts.ts` | Email draft sync + pending count API (Phase 29) |
+| `api/routes/proactive-brief.ts` | Computed intelligence: overdue, stale, focus suggestion (Phase 29) |
+| `api/routes/file-activity.ts` | File activity heatmap + sync API (Phase 29) |
+| `api/schema-v37.sql` | Key link columns + email_drafts + file_activity_daily tables |
+| `scripts/run-tests.sh` | Test runner (4 modes: quick/ui/sync/all) |
+| `scripts/inspection-scanner.py` | Feature scanner (15 patterns, registry cross-ref) |
+| `scripts/setup-mnccore-protocol.reg` | Windows registry for mnccore:// protocol handler |
+| `scripts/mnccore-handler.bat` | Opens local folders/scripts from Hub links |
+| `tests/feature-registry.json` | 353 interactive elements mapped with test coverage |
+| `TESTING.md` | Testing guide — suites, runner, conventions |
 
 ## Portal Features (80+ shipped)
 
