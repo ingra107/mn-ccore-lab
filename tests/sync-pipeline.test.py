@@ -1,5 +1,5 @@
 """
-MN-CCORE Lab Hub — Sync Pipeline Tests
+MN-CCORE Lab Hub --Sync Pipeline Tests
 =======================================
 
 Tests the REAL sync pipeline: brain.db ↔ D1 ↔ Hub in both directions.
@@ -152,7 +152,7 @@ class TestBrainToD1:
         # Push
         run_push()
 
-        # Verify in D1 — notes map to description
+        # Verify in D1 --notes map to description
         d1_tasks = d1_get("/tasks?limit=200")
         found = [t for t in d1_tasks.get("data", []) if task_name in t.get("title", "")]
         assert len(found) > 0, "Task with note not found in D1"
@@ -291,13 +291,13 @@ class TestD1ToBrain:
         # Pull again
         run_pull()
 
-        # Verify brain.db — priority maps to effort
+        # Verify brain.db --priority maps to effort
         rows = brain_query("SELECT * FROM tasks WHERE name LIKE ?", (f"%priority-pull-test%",))
         if rows:
             effort = rows[0].get("effort", "")
             print(f"  brain.db effort: {effort} (expected: Multi for high priority)")
             # high → Multi, low → Quick
-            # Note: pull may not map priority back to effort — check
+            # Note: pull may not map priority back to effort --check
             print(f"  ✓ Task found in brain.db after priority change pull")
 
     def test_09_change_status_in_hub_pull_to_brain(self):
@@ -418,7 +418,7 @@ class TestD1ToBrain:
         # Pull
         run_pull()
 
-        # Verify brain.db — completed field should be bidirectional
+        # Verify brain.db --completed field should be bidirectional
         rows = brain_query("SELECT * FROM tasks WHERE name LIKE ?", (f"%reopen-pull-test%",))
         if rows:
             completed = rows[0].get("completed", 0)
@@ -448,7 +448,7 @@ class TestD1ToBrain:
         # Pull again
         run_pull()
 
-        # Verify — brain.db may not have an assignee field per se,
+        # Verify --brain.db may not have an assignee field per se,
         # but check what the pull handler does
         rows = brain_query("SELECT * FROM tasks WHERE name LIKE ?", (f"%assignee-pull-test%",))
         if rows:
@@ -661,7 +661,7 @@ class TestTimingAndConsistency:
             print(f"  D1 priority: {found_d1[0].get('priority')}")
         if brain_rows:
             print(f"  brain.db effort: {brain_rows[0].get('effort')}")
-        print(f"  ✓ LWW test complete — inspect which side won")
+        print(f"  ✓ LWW test complete --inspect which side won")
 
     def test_21_idempotent_push(self):
         """Running push twice doesn't duplicate data."""
@@ -680,7 +680,7 @@ class TestTimingAndConsistency:
         print(f"  D1 tasks before: {before_count}, after double push: {after_count}")
         # Should not increase significantly (new test tasks are fine)
         diff = after_count - before_count
-        assert diff < 10, f"Double push added {diff} tasks — possible duplication"
+        assert diff < 10, f"Double push added {diff} tasks --possible duplication"
         print(f"  ✓ Idempotent push: +{diff} tasks (test artifacts only)")
 
     def test_22_idempotent_pull(self):
@@ -698,7 +698,7 @@ class TestTimingAndConsistency:
 
         print(f"  brain.db tasks before: {before_count}, after double pull: {after_count}")
         diff = after_count - before_count
-        assert diff < 10, f"Double pull added {diff} tasks — possible duplication"
+        assert diff < 10, f"Double pull added {diff} tasks --possible duplication"
         print(f"  ✓ Idempotent pull: +{diff} tasks")
 
 # ═════════════════════════════════════════════════════════════════════
@@ -716,7 +716,7 @@ class TestNewFeatureSync:
         print(f"  brain.db pomodoro_sessions: {brain_count}")
 
         if brain_count == 0:
-            print(f"  ✓ Skipped — no pomodoro data in brain.db")
+            print(f"  ✓ Skipped --no pomodoro data in brain.db")
             return
 
         # Push (the new handler runs as part of full push)
@@ -736,7 +736,7 @@ class TestNewFeatureSync:
         print(f"  brain.db sessions: {brain_count}")
 
         if brain_count == 0:
-            print(f"  ✓ Skipped — no session data")
+            print(f"  ✓ Skipped --no session data")
             return
 
         output = run_push()
@@ -752,7 +752,7 @@ class TestNewFeatureSync:
         print(f"  brain.db email_draft_log: {brain_count}")
 
         if brain_count == 0:
-            print(f"  ✓ Skipped — no email draft data")
+            print(f"  ✓ Skipped --no email draft data")
             return
 
         output = run_push()
@@ -770,7 +770,7 @@ class TestNewFeatureSync:
         print(f"  brain.db file_activity: {brain_count}")
 
         if brain_count == 0:
-            print(f"  ✓ Skipped — no file activity data")
+            print(f"  ✓ Skipped --no file activity data")
             return
 
         output = run_push()
@@ -792,7 +792,7 @@ class TestNewFeatureSync:
         """)
 
         if not rows:
-            print(f"  ✓ Skipped — no tasks with key links in brain.db")
+            print(f"  ✓ Skipped --no tasks with key links in brain.db")
             return
 
         task = rows[0]
@@ -882,12 +882,12 @@ class TestColleagueToNick:
         # Nick pulls
         run_pull()
 
-        # Nick checks brain.db — look up by D1 task ID (hex)
+        # Nick checks brain.db --look up by D1 task ID (hex)
         rows = brain_query("SELECT * FROM tasks WHERE id = ?", (d1_id,))
         if not rows:
             # Fallback: search by name
             rows = brain_query("SELECT * FROM tasks WHERE name = ?", (title,))
-        assert len(rows) > 0, "Colleague's Hub task NOT found in brain.db after pull — CRITICAL"
+        assert len(rows) > 0, "Colleague's Hub task NOT found in brain.db after pull --CRITICAL"
         brain_task = rows[0]
         print(f"  brain.db has it: id={brain_task['id']}, name={brain_task['name']}")
         print(f"  ✓ Colleague task visible to Nick in brain.db")
@@ -915,7 +915,7 @@ class TestColleagueToNick:
         if rows:
             completed = rows[0]["completed"]
             print(f"  brain.db completed={completed} (expected: 1)")
-            assert completed == 1, f"Colleague completion NOT synced to brain.db — completed={completed}"
+            assert completed == 1, f"Colleague completion NOT synced to brain.db --completed={completed}"
             print(f"  ✓ Colleague completion visible to Nick")
         else:
             print(f"  ✗ Task not found in brain.db at all")
@@ -1005,7 +1005,7 @@ class TestColleagueToNick:
             print(f"  Has comment content: {has_comment}")
             print(f"  Has note content: {has_note}")
             if not has_comment and not has_note:
-                print(f"  ⚠ Neither comment nor note synced — pull handler likely missing for task_updates/comments")
+                print(f"  ⚠ Neither comment nor note synced --pull handler likely missing for task_updates/comments")
         print(f"  ✓ Comment/note pull test complete")
 
     def test_35_colleague_assigns_to_different_person_nick_sees_change(self):
@@ -1051,7 +1051,7 @@ class TestColleagueToNick:
         if found:
             print(f"  ✓ Quick capture from Hub reached brain.db")
         else:
-            print(f"  ✗ Quick capture NOT in brain.db — pull doesn't pick up Hub-created tasks")
+            print(f"  ✗ Quick capture NOT in brain.db --pull doesn't pick up Hub-created tasks")
 
 
 # ═════════════════════════════════════════════════════════════════════
@@ -1129,7 +1129,7 @@ class TestFullRoundTripWorkflows:
             completed = rows[0]["completed"]
             completed_at = rows[0]["completed_at"]
             print(f"  brain.db: completed={completed}, completed_at={completed_at}")
-            assert completed == 1, f"Colleague completion NOT reflected — completed={completed}"
+            assert completed == 1, f"Colleague completion NOT reflected --completed={completed}"
             print(f"  ✓ Nick sees colleague's completion in brain.db")
 
     def test_39_pomodoro_roundtrip_braindb_to_hub_card(self):
@@ -1141,7 +1141,7 @@ class TestFullRoundTripWorkflows:
             ORDER BY start_time DESC LIMIT 1
         """)
         if not rows:
-            print(f"  ✓ Skipped — no pomodoro data")
+            print(f"  ✓ Skipped --no pomodoro data")
             return
 
         pomo = rows[0]
@@ -1184,7 +1184,7 @@ class TestFullRoundTripWorkflows:
             LIMIT 1
         """)
         if not rows:
-            print(f"  ✓ Skipped — no tasks with key links")
+            print(f"  ✓ Skipped --no tasks with key links")
             return
 
         task = rows[0]
@@ -1221,9 +1221,9 @@ class TestFullRoundTripWorkflows:
                 brain_link2 = rows2[0].get("task_key_link_2", "")
                 print(f"  brain.db key_link_2 after pull: {brain_link2}")
                 if brain_link2:
-                    print(f"  ✓ Key link round-trip complete — bidirectional")
+                    print(f"  ✓ Key link round-trip complete --bidirectional")
                 else:
-                    print(f"  ⚠ Key link from Hub not pulled to brain.db — pull handler may not include key_links")
+                    print(f"  ⚠ Key link from Hub not pulled to brain.db --pull handler may not include key_links")
         else:
             print(f"  Task not found in D1")
 
@@ -1241,7 +1241,7 @@ class TestFullRoundTripWorkflows:
         print(f"  brain.db file activity last 7 days: {len(brain_totals)} days, {sum(brain_totals.values())} events")
 
         if not brain_totals:
-            print(f"  ✓ Skipped — no recent file activity")
+            print(f"  ✓ Skipped --no recent file activity")
             return
 
         # Push
@@ -1285,7 +1285,7 @@ class TestFullRoundTripWorkflows:
         run_pull()
 
         # Edit description in Hub
-        d1_post(f"/tasks/{d1_id}", {"description": "Updated by colleague in Hub — new analysis approach"})
+        d1_post(f"/tasks/{d1_id}", {"description": "Updated by colleague in Hub --new analysis approach"})
         print(f"  Hub description updated")
         run_pull()
 
@@ -1302,7 +1302,7 @@ class TestFullRoundTripWorkflows:
         # Get a real project
         d1_projects = d1_get("/projects")
         if not d1_projects.get("data"):
-            print(f"  ✓ Skipped — no projects in D1")
+            print(f"  ✓ Skipped --no projects in D1")
             return
         project = d1_projects["data"][0]
         slug = project.get("slug", "")
@@ -1334,7 +1334,7 @@ class TestFullRoundTripWorkflows:
         # Get a meeting
         meetings = d1_get("/meetings")
         if not meetings.get("data"):
-            print(f"  ✓ Skipped — no meetings")
+            print(f"  ✓ Skipped --no meetings")
             return
         meeting_id = meetings["data"][0]["id"]
 
@@ -1375,10 +1375,10 @@ class TestFullRoundTripWorkflows:
 
         # Both sides edit
         db = get_braindb()
-        db.update_task(task_id, name=f"{title} — brain edit")
+        db.update_task(task_id, name=f"{title} --brain edit")
         db.close()
 
-        d1_post(f"/tasks/{d1_id}", {"title": f"{title} — hub edit"})
+        d1_post(f"/tasks/{d1_id}", {"title": f"{title} --hub edit"})
 
         run_push()
         run_pull()
@@ -1393,11 +1393,11 @@ class TestFullRoundTripWorkflows:
 
         print(f"  brain.db title: {brain_title}")
         print(f"  D1 title: {d1_title}")
-        print(f"  ✓ Title conflict test complete — inspect which side won")
+        print(f"  ✓ Title conflict test complete --inspect which side won")
 
 
 # ═════════════════════════════════════════════════════════════════════
-# NEW FIELD ROUND-TRIPS (priority, assignee — added 2026-04-09)
+# NEW FIELD ROUND-TRIPS (priority, assignee --added 2026-04-09)
 # ═════════════════════════════════════════════════════════════════════
 
 class TestPriorityAssigneeSync:
@@ -1557,7 +1557,7 @@ class TestSessionHookSync:
     """Tests that session-start D1 pull function works correctly."""
 
     def test_60_auto_pull_d1_function_runs(self):
-        """Import and call auto_pull_d1 — verify it doesn't crash."""
+        """Import and call auto_pull_d1 --verify it doesn't crash."""
         sys.path.insert(0, str(PB_ROOT / ".claude" / "hooks"))
         # We can't import session-start.py directly (hyphen in name), use importlib
         import importlib.util
@@ -1642,7 +1642,7 @@ class TestCleanup:
         )
         print(f"  Cleaned brain.db: {deleted_brain[0]['cnt']} test tasks marked deleted")
 
-        # Clean D1 — soft delete via API
+        # Clean D1 --soft delete via API
         d1_tasks = d1_get("/tasks?limit=500")
         test_tasks = [t for t in d1_tasks.get("data", []) if t.get("title", "").startswith(TEST_PREFIX)]
         for t in test_tasks:
@@ -1658,7 +1658,7 @@ class TestCleanup:
 if __name__ == "__main__":
     import traceback
 
-    test_classes = [TestBrainToD1, TestD1ToBrain, TestRoundTrip, TestTimingAndConsistency, TestNewFeatureSync, TestColleagueToNick, TestFullRoundTripWorkflows, TestCleanup]
+    test_classes = [TestBrainToD1, TestD1ToBrain, TestRoundTrip, TestTimingAndConsistency, TestNewFeatureSync, TestColleagueToNick, TestFullRoundTripWorkflows, TestPriorityAssigneeSync, TestSessionHookSync, TestCleanup]
     passed = 0
     failed = 0
     errors = []
