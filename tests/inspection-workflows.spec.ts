@@ -108,8 +108,7 @@ test.describe('ROUTE — Missing portal pages', () => {
     await page.screenshot({ path: 'review/route-publication-detail.png' })
   })
 
-  // CV Page removed — feature cut (2026-04-09)
-  test.skip('ROUTE: CV Page (/team/:slug/cv) renders', async ({ page }) => {})
+  // CV Page removed — feature cut (2026-04-09), test deleted
 
   test('ROUTE: Trainee Trajectory (/team/:slug/trajectory) renders', async ({ page }) => {
     // Use a known trainee slug, fallback to nick
