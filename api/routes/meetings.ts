@@ -100,7 +100,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env): Promise<Re
   // Recent project activity (last 14 days) — stage changes, completed tasks, comments
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   const recentActivity = (await env.DB.prepare(
-    'SELECT type, description, actor, entity_id, entity_type, created_at FROM activity WHERE created_at > ? ORDER BY created_at DESC LIMIT 30'
+    'SELECT type, description, actor, related_id as entity_id, related_type as entity_type, timestamp as created_at FROM activity_log WHERE timestamp > ? ORDER BY timestamp DESC LIMIT 30'
   ).bind(twoWeeksAgo).all()).results;
 
   // Upcoming deadlines (next 14 days)
