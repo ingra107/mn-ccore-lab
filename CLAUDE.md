@@ -465,7 +465,7 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 
 ## Next Session Playbook
 
-*Completed 2026-04-09. Deploy + full test suite + sync pipeline audit done.*
+**READ `SESSION-HANDOFF.md` FIRST** — full context from 2026-04-09 session (15 commits, sync overhaul, 13 new tests).
 
 **Deploy command:**
 ```bash
