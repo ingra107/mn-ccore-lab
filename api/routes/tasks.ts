@@ -125,19 +125,18 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 }
 
 // POST /api/tasks/:id — update task fields
+// Hoisted to module scope — avoids allocation per request
+const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc']);
+const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee']);
+
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
-  const allowedFields = ['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc'];
   const updates: string[] = [];
   const params: unknown[] = [];
 
-  // Fields that must never be set to null (always require a value)
-  const requiredFields = new Set(['status', 'priority', 'assignee']);
-
-  for (const field of allowedFields) {
+  for (const field of TASK_ALLOWED_FIELDS) {
     if (field in body) {
-      // Don't allow null on required fields — skip silently
-      if (requiredFields.has(field) && (body[field] === null || body[field] === undefined || body[field] === '')) {
+      if (TASK_REQUIRED_FIELDS.has(field) && (body[field] === null || body[field] === undefined || body[field] === '')) {
         continue;
       }
       updates.push(`${field} = ?`);

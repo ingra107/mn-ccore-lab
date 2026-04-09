@@ -338,6 +338,10 @@ export async function handleRecentUpdates(url: URL, env: Env): Promise<Response>
 }
 
 // POST /api/projects/:id — update project fields
+// Hoisted to module scope — avoids allocation per request
+const PROJECT_ALLOWED_FIELDS = new Set(['title', 'status', 'description', 'category', 'stage', 'pi', 'slug', 'pi_context', 'strategic_context']);
+const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
+
 export async function handleUpdateProject(
   id: string,
   request: Request,
@@ -345,19 +349,12 @@ export async function handleUpdateProject(
   env: Env,
 ): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
-
-  // Allowlisted fields that can be updated
-  const allowed = ['title', 'status', 'description', 'category', 'stage', 'pi', 'slug', 'pi_context', 'strategic_context'];
   const updates: string[] = [];
   const values: (string | number | null)[] = [];
 
-  // Fields that must never be set to null
-  const requiredFields = new Set(['status', 'stage', 'category']);
-
   for (const [key, val] of Object.entries(body)) {
-    if (allowed.includes(key)) {
-      // Don't allow null on required fields — skip silently
-      if (requiredFields.has(key) && (val === null || val === undefined || val === '')) {
+    if (PROJECT_ALLOWED_FIELDS.has(key)) {
+      if (PROJECT_REQUIRED_FIELDS.has(key) && (val === null || val === undefined || val === '')) {
         continue;
       }
       updates.push(`${key} = ?`);
