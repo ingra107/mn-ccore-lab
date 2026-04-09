@@ -423,45 +423,84 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 - **Archived plans:** `Projects/mn-ccore-lab-hub/_archived/` + `Archive/Scratch/hub-plans-consolidated/`
 
 ## Pending Sync
-- NEXT_ACTION: Fix WebSocket DO (400 on handshake) or disable WS_HOST for clean fallback. Fix h1 fontWeight 800→600 on 7 portal pages. Clean QA test data from D1 activity log. Set up Resend email API key.
-- STATUS: Active
-- NOTE: Full site review complete (2026-04-08). 25+ pages tested, all rendering correctly. InlineSelect portal fix VERIFIED working. Phase 28 (next-gen) complete. 33 commits today, 530+ total. Known bugs: WebSocket 400, h1 weight 800 on Grants/Digest/MeetingDetail/CVPage/MyItems/Meetings/ProjectDetail.
-- DECISION: InlineSelect dropdowns use createPortal to document.body to escape table overflow
-- LEARNING: Pages Functions don't pass ctx — must await async work directly. Wrangler secret put creates standalone Workers not Pages secrets — use dashboard. R2 CORS uses nested allowed:{origins,methods,headers}. Free-tier DOs require new_sqlite_classes.
+<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
 
-## Known Bugs (from 2026-04-08 full launch audit)
 
-### CRITICAL
-| Bug | Fix |
-|-----|-----|
-| MeetingDetail page CRASHES (React #310, hook order in sortable) | Fix conditional hook call in MeetingDetail.tsx sortable section |
-| `pub_date` column missing from publications table | Run ALTER TABLE or update queries to use `year`. Affects: PI Dashboard, Trajectory, Narratives, Contributions |
-| Decision creation 500 — `linked_projects` column missing | Run schema-v21 migration on D1 |
-| WebSocket 400 on handshake — console spam on every page | Fix DO or set VITE_WS_HOST='' in build env |
+## Known Bugs — Test-Verified (2026-04-08 audit + 2026-04-09 Playwright run)
 
-### MEDIUM
-| Bug | Fix |
-|-----|-----|
-| Global h1 font-weight 800 (index.css:190) | Change to 600. Remove inline 800 from 7 portal pages. Keep 800 on public pages. |
-| Keyboard shortcuts fire in search input (F triggers focus mode) | Add activeElement guard to keyboard listeners |
-| "Press F" tooltip clips on mobile | Hide below md: breakpoint |
-| QA test data in D1 | Delete test ideas/tasks/activity entries |
+**Test results:** 314 passed, 40 failed, 5 skipped across 359 tests (87.5% pass rate)
 
-### LOW
-| Bug | Fix |
-|-----|-----|
-| No GET /api/tasks/:id or /api/projects/:slug | Add single-resource endpoints |
-| Project Health card shows 0s | Check dashboard card data binding |
-| Schema migration gap (v21+ not applied) | Run pending migrations via admin endpoint |
+### CRITICAL (blocks launch or crashes)
+| # | Bug | Test | Fix |
+|---|-----|------|-----|
+| C1 | MeetingDetail page CRASHES (React #310, hook order in sortable) | `PAGE: Meeting Detail renders without crash` | Fix conditional hook call in MeetingDetail.tsx sortable section |
+| C2 | `pub_date` column missing from publications table | `publications table has pub_date column` | Run ALTER TABLE or update queries to use `year`. Affects: PI Dashboard, Trajectory, Narratives, Contributions |
+| C3 | Decision creation 500 — `linked_projects` column missing | `API POST: Create decision` | Run schema-v21+ migration on D1 |
+| C4 | Question creation 500 | `API POST: Create question` | Same schema migration — questions table missing columns |
+| C5 | `/api/narratives` returns 500 | `API GET Research narratives` | Fix narratives route handler (likely schema/query issue) |
+| C6 | `/api/analytics/pi-dashboard` returns 500 | `API GET PI dashboard analytics` | Fix — depends on pub_date column (C2) |
+| C7 | Project Detail page crashes | `PAGE: Project Detail renders` | React error on project detail page |
 
-### SYNC PIPELINE
-| Bug | Severity | Fix |
-|-----|----------|-----|
-| task_updates table has NO sync handler | CRITICAL | Add pull handler to sync_d1_pull.py for /api/tasks/:id/updates |
-| Push state not updated on sync-bulk failure | HIGH | Fix sync_d1_push.py:365-378 — update state even if pushed=0 |
-| No try/except around resp.json() in push | HIGH | Wrap sync_d1_push.py:368 in try/except |
-| Hub-created tasks can get NULL project_id | MEDIUM | Log warning when slug_map misses, queue for re-link |
-| Pull silently returns [] on network error | MEDIUM | Add explicit failure logging/alerting in d1_get() |
+### API ENDPOINTS — Missing or 500 (new from test run)
+| # | Endpoint | Method | Status | Fix |
+|---|----------|--------|--------|-----|
+| A1 | `/api/tasks/:id/subtasks` | POST | 500 | Add subtask creation handler or fix schema |
+| A2 | `/api/notifications/read-all` | POST | 500 | Fix bulk notification handler |
+| A3 | `/api/tasks/batch` | POST | 500 | Fix batch update handler |
+| A4 | `/api/pb/capture` | POST | 500 | Fix PB capture handler |
+| A5 | `/api/dependencies` | POST | 500 | Fix dependency creation handler |
+| A6 | `/api/expertise` | POST | 500 | Fix expertise tag handler |
+| A7 | `/api/tasks/:id/handoffs` | POST | 500 | Fix handoff creation handler |
+| A8 | `/api/paper-links` | POST | 500 | Fix paper-link handler |
+| A9 | `/api/reactions` | POST | 500 | Fix emoji reaction handler |
+| A10 | `/api/expertise/suggest` | GET | 500 | Fix expertise suggestion route |
+| A11 | `/api/team/:slug/trajectory` | GET | 500 | Fix trajectory route (likely pub_date dep) |
+| A12 | `/api/team/:slug/contributions` | GET | 500 | Fix contributions route |
+| A13 | `/api/analytics/contributions` | GET | 500 | Fix contributions analytics route |
+| A14 | `/api/deadline-cascade/impact` | GET | 500 | Fix impact analysis route |
+
+### MEDIUM (UX/visual issues)
+| # | Bug | Test | Fix |
+|---|-----|------|-----|
+| M1 | Global h1 font-weight 800 (index.css:190) | `VISUAL: No fontWeight 800 on portal h1s` | Change to 600. Remove inline 800 from 7 portal pages. Keep 800 on public pages. |
+| M2 | Ctrl+K command palette not opening | `UX: Ctrl+K opens command palette` | Check keyboard event handler registration |
+| M3 | Enter key doesn't open TaskDetailPanel | `UX: Enter opens TaskDetailPanel` | Fix keyboard shortcut handler for Enter on focused task |
+| M4 | Dashboard horizontal overflow at all breakpoints | `VISUAL: dashboard at mobile/tablet/desktop` | Fix layout overflow — something extends past viewport |
+| M5 | Projects page overflow at tablet (768px) | `VISUAL: projects at tablet` | Fix responsive layout at 768px |
+| M6 | Dashboard horizontal overflow at 375px mobile | `MOBILE: Dashboard at 375px — single column` | Same root cause as M4 |
+| M7 | /my-items page crashes or errors | `ROUTE: My Items renders` | Fix My Items page render |
+| M8 | CV page (/team/:slug/cv) crashes | `ROUTE: CV Page renders` | Fix CV page — may depend on pub_date (C2) |
+| M9 | Create Task modal strict mode violation | `VISUAL: Create Task modal all fields visible` | Use more specific locators (test fix), but modal may have duplicate "Title" text |
+| M10 | Keyboard shortcuts fire in search input | manual audit | Add activeElement guard to keyboard listeners |
+| M11 | "Press F" tooltip clips on mobile | manual audit | Hide below md: breakpoint |
+| M12 | WebSocket 400 on handshake — console spam | manual audit | Fix DO or set VITE_WS_HOST='' in build env |
+| M13 | QA test data in D1 | manual audit | Delete INSPECTION/EDGE/SYNC/JOURNEY test tasks/ideas/decisions |
+
+### SYNC FAILURES (task create/update/status/comment chain broken)
+| # | Bug | Test | Fix |
+|---|-----|------|-----|
+| S1 | Task creation returns no `data.id` (response shape issue) | ALL sync tests + journey lifecycle | Fix POST /api/tasks response — must return `{ data: { id } }` |
+| S2 | Status change not persisting or readback fails | `SYNC: Status change round-trip` | Fix POST /api/tasks/:id/status or GET filter |
+| S3 | Priority change not persisting | `SYNC: Priority change round-trip` | Fix POST /api/tasks/:id field update |
+| S4 | Assignee change + filter not working | `SYNC: Assignee change round-trip` | Fix assignee filter in GET /api/tasks |
+| S5 | Batch status update fails | `SYNC: Batch update verify all changed` | Fix POST /api/tasks/batch (also A3) |
+| S6 | Comment/note persistence broken | `SYNC: Comment and note readback` | Fix — cascades from S1 (task create) |
+
+### SYNC PIPELINE (PB ↔ D1)
+| # | Bug | Severity | Fix |
+|---|-----|----------|-----|
+| P1 | task_updates table has NO sync handler | CRITICAL | Add pull handler to sync_d1_pull.py for /api/tasks/:id/updates |
+| P2 | Push state not updated on sync-bulk failure | HIGH | Fix sync_d1_push.py:365-378 |
+| P3 | No try/except around resp.json() in push | HIGH | Wrap sync_d1_push.py:368 in try/except |
+| P4 | Hub-created tasks can get NULL project_id | MEDIUM | Log warning when slug_map misses |
+| P5 | Pull silently returns [] on network error | MEDIUM | Add explicit failure logging |
+
+### LOW (nice-to-have)
+| # | Bug | Fix |
+|---|-----|-----|
+| L1 | No GET /api/tasks/:id or /api/projects/:slug | Add single-resource endpoints |
+| L2 | Project Health card shows 0s | Check dashboard card data binding |
+| L3 | Schema migration gap (v21+ not applied) | Run pending migrations — ROOT CAUSE of C2, C3, C4, C5, C6, A10-A14 |
 
 ## Session Notes
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->

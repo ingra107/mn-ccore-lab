@@ -1,0 +1,793 @@
+- generic [ref=e3]:
+  - generic [ref=e8]:
+    - complementary [ref=e9]:
+      - link "MN-CCORE MN-CCORE" [ref=e11] [cursor=pointer]:
+        - /url: /
+        - img "MN-CCORE" [ref=e12]
+        - img "MN-CCORE" [ref=e13]
+      - navigation [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]: Workspace
+          - link "Dashboard" [ref=e17] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e19]
+            - generic [ref=e24]: Dashboard
+          - link "My Hub" [ref=e25] [cursor=pointer]:
+            - /url: /personal
+            - img [ref=e27]
+            - generic [ref=e30]: My Hub
+        - generic [ref=e31]:
+          - generic [ref=e33]: Planning
+          - link "My Tasks 13" [ref=e34] [cursor=pointer]:
+            - /url: /my-tasks
+            - img [ref=e36]
+            - generic [ref=e39]: My Tasks
+            - generic [ref=e40]: "13"
+          - link "All Tasks" [ref=e41] [cursor=pointer]:
+            - /url: /tasks
+            - img [ref=e43]
+            - generic [ref=e46]: All Tasks
+          - link "Meetings" [ref=e47] [cursor=pointer]:
+            - /url: /meetings
+            - img [ref=e49]
+            - generic [ref=e54]: Meetings
+          - link "Calendar" [ref=e55] [cursor=pointer]:
+            - /url: /calendar
+            - img [ref=e57]
+            - generic [ref=e59]: Calendar
+          - link "Deadlines" [ref=e60] [cursor=pointer]:
+            - /url: /deadlines
+            - img [ref=e62]
+            - generic [ref=e65]: Deadlines
+        - generic [ref=e66]:
+          - generic [ref=e68]: Research
+          - link "Projects" [ref=e69] [cursor=pointer]:
+            - /url: /projects
+            - img [ref=e71]
+            - generic [ref=e73]: Projects
+          - link "Manuscripts" [ref=e74] [cursor=pointer]:
+            - /url: /manuscripts
+            - img [ref=e76]
+            - generic [ref=e79]: Manuscripts
+          - link "Ideas" [ref=e80] [cursor=pointer]:
+            - /url: /ideas
+            - img [ref=e82]
+            - generic [ref=e84]: Ideas
+          - link "Research Digest" [ref=e85] [cursor=pointer]:
+            - /url: /digest
+            - img [ref=e87]
+            - generic [ref=e89]: Research Digest
+          - link "Search" [ref=e90] [cursor=pointer]:
+            - /url: /search
+            - img [ref=e92]
+            - generic [ref=e95]: Search
+          - link "Grants" [ref=e96] [cursor=pointer]:
+            - /url: /grants
+            - img [ref=e98]
+            - generic [ref=e100]: Grants
+        - generic [ref=e101]:
+          - generic [ref=e103]: Meetings
+          - link "Meeting Transcripts" [ref=e104] [cursor=pointer]:
+            - /url: /meeting-notes
+            - img [ref=e106]
+            - generic [ref=e109]: Meeting Transcripts
+        - generic [ref=e110]:
+          - generic [ref=e112]: Lab
+          - link "Team" [ref=e113] [cursor=pointer]:
+            - /url: /team
+            - img [ref=e115]
+            - generic [ref=e120]: Team
+          - link "Activity" [ref=e121] [cursor=pointer]:
+            - /url: /activity
+            - img [ref=e123]
+            - generic [ref=e125]: Activity
+          - link "Analytics" [ref=e126] [cursor=pointer]:
+            - /url: /analytics
+            - img [ref=e128]
+            - generic [ref=e130]: Analytics
+          - link "Settings" [ref=e131] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e133]
+            - generic [ref=e136]: Settings
+      - generic [ref=e137]:
+        - link "Report a Bug" [ref=e138] [cursor=pointer]:
+          - /url: mailto:ningraha@umn.edu?subject=MN-CCORE%20Hub%20Bug%20Report
+          - img [ref=e139]
+          - generic [ref=e148]: Report a Bug
+        - link "Search Ctrl+K" [ref=e149] [cursor=pointer]:
+          - /url: /search
+          - img [ref=e150]
+          - generic [ref=e153]: Search
+          - generic [ref=e154]: Ctrl+K
+        - link "Back to Website" [ref=e155] [cursor=pointer]:
+          - /url: /
+          - img [ref=e156]
+          - generic [ref=e160]: Back to Website
+        - button "Collapse" [ref=e161] [cursor=pointer]:
+          - img [ref=e162]
+          - generic [ref=e164]: Collapse
+    - generic [ref=e165]:
+      - banner [ref=e166]:
+        - button "Search... ⌘K" [ref=e167] [cursor=pointer]:
+          - img [ref=e168]
+          - generic [ref=e171]: Search...
+          - generic [ref=e172]: ⌘K
+        - button "Switch to compact view" [ref=e173]:
+          - img [ref=e174]
+        - button "Change theme" [ref=e176]:
+          - img [ref=e177]
+      - main [ref=e179]:
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - generic [ref=e183]:
+              - generic [ref=e184]:
+                - img [ref=e186]
+                - heading "All Tasks" [level=1] [ref=e189]
+                - generic [ref=e190]: "18"
+                - generic [ref=e191]: 18 active across the lab
+              - button "New Task" [ref=e193] [cursor=pointer]:
+                - img [ref=e194]
+                - text: New Task
+            - generic [ref=e197]:
+              - button "List" [ref=e198] [cursor=pointer]:
+                - img [ref=e199]
+                - text: List
+              - button "Board" [ref=e200] [cursor=pointer]:
+                - img [ref=e201]
+                - text: Board
+              - button "By Person" [ref=e206] [cursor=pointer]:
+                - img [ref=e207]
+                - text: By Person
+              - button "Timeline" [ref=e212] [cursor=pointer]:
+                - img [ref=e213]
+                - text: Timeline
+              - button "Show 528 done" [ref=e215] [cursor=pointer]:
+                - img [ref=e216]
+                - text: Show 528 done
+              - button "Filter" [ref=e219] [cursor=pointer]:
+                - img [ref=e220]
+                - text: Filter
+              - generic [ref=e222]:
+                - generic [ref=e223]: Press F to toggle filters
+                - button [ref=e224] [cursor=pointer]:
+                  - img [ref=e225]
+          - generic [ref=e229]:
+            - generic [ref=e230]:
+              - button "TITLE" [ref=e231] [cursor=pointer]
+              - button "ASSIGNEE" [ref=e232] [cursor=pointer]
+              - button "DUE DATE" [ref=e233] [cursor=pointer]:
+                - text: DUE DATE
+                - img [ref=e234]
+              - button "STATUS" [ref=e236] [cursor=pointer]
+              - button "PRIORITY" [ref=e237] [cursor=pointer]
+            - generic [ref=e239]:
+              - generic [ref=e241] [cursor=pointer]:
+                - generic [ref=e245]:
+                  - button "Expand subtasks" [ref=e246]:
+                    - img [ref=e247]
+                  - 'button "Update CQODE for CLIF v3.0.0: new input table replaces intake_output" [ref=e249]'
+                  - generic [ref=e250]: sync
+                  - generic "cqode-backbone-umn-clif" [ref=e251]: Cqode Backbone Umn C
+                - generic [ref=e252]:
+                  - button "Nick Ingraham" [ref=e254]:
+                    - img "Nick Ingraham" [ref=e257]
+                    - img [ref=e258]
+                  - generic "Not yet acknowledged" [ref=e260]
+                - button "25d ago" [ref=e263]:
+                  - img [ref=e264]
+                  - generic [ref=e266]: 25d ago
+                  - img [ref=e267]
+                - button "To Do" [ref=e271]:
+                  - generic [ref=e272]:
+                    - img [ref=e273]
+                    - generic [ref=e275]: To Do
+                  - img [ref=e276]
+                - button "Low" [ref=e280]:
+                  - generic [ref=e281]: Low
+                  - img [ref=e282]
+                - generic [ref=e284]:
+                  - button "Quick comment" [ref=e285]:
+                    - img [ref=e286]
+                  - button "Archive task" [ref=e288]:
+                    - img [ref=e289]
+              - generic [ref=e293] [cursor=pointer]:
+                - generic [ref=e297]:
+                  - button "Expand subtasks" [ref=e298]:
+                    - img [ref=e299]
+                  - 'button "CQODE: Review mCIDE update (CLIF v3.0)" [ref=e301]'
+                  - generic [ref=e302]: sync
+                  - generic "cqode-backbone-umn-clif" [ref=e303]: Cqode Backbone Umn C
+                - generic [ref=e304]:
+                  - button "Nick Ingraham" [ref=e306]:
+                    - img "Nick Ingraham" [ref=e309]
+                    - img [ref=e310]
+                  - generic "Not yet acknowledged" [ref=e312]
+                - button "25d ago" [ref=e315]:
+                  - img [ref=e316]
+                  - generic [ref=e318]: 25d ago
+                  - img [ref=e319]
+                - button "To Do" [ref=e323]:
+                  - generic [ref=e324]:
+                    - img [ref=e325]
+                    - generic [ref=e327]: To Do
+                  - img [ref=e328]
+                - button "Medium" [ref=e332]:
+                  - generic [ref=e333]: Medium
+                  - img [ref=e334]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e337] [cursor=pointer]:
+                - generic [ref=e341]:
+                  - button "Expand subtasks" [ref=e342]:
+                    - img [ref=e343]
+                  - button "Review ATS oral Google Doc and outline presentation" [ref=e345]
+                  - generic [ref=e346]: sync
+                  - generic "2026-oral-critically-ill-outside-the-icu" [ref=e347]: 2026 Oral Critically
+                - generic [ref=e348]:
+                  - button "Nick Ingraham" [ref=e350]:
+                    - img "Nick Ingraham" [ref=e353]
+                    - img [ref=e354]
+                  - generic "Not yet acknowledged" [ref=e356]
+                - button "18d ago" [ref=e359]:
+                  - img [ref=e360]
+                  - generic [ref=e362]: 18d ago
+                  - img [ref=e363]
+                - button "To Do" [ref=e367]:
+                  - generic [ref=e368]:
+                    - img [ref=e369]
+                    - generic [ref=e371]: To Do
+                  - img [ref=e372]
+                - button "Medium" [ref=e376]:
+                  - generic [ref=e377]: Medium
+                  - img [ref=e378]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e381] [cursor=pointer]:
+                - generic [ref=e385]:
+                  - button "Expand subtasks" [ref=e386]:
+                    - img [ref=e387]
+                  - button "Cross-reference GDMS survey non-respondent list from Steven Google Sheet — identify unknown emails/names and send personalized reminders" [ref=e389]
+                  - generic [ref=e390]: sync
+                  - generic "decision-making-survey" [ref=e391]: Decision Making Surv
+                - generic [ref=e392]:
+                  - button "Nick Ingraham" [ref=e394]:
+                    - img "Nick Ingraham" [ref=e397]
+                    - img [ref=e398]
+                  - generic "Not yet acknowledged" [ref=e400]
+                - button "15d ago" [ref=e403]:
+                  - img [ref=e404]
+                  - generic [ref=e406]: 15d ago
+                  - img [ref=e407]
+                - button "To Do" [ref=e411]:
+                  - generic [ref=e412]:
+                    - img [ref=e413]
+                    - generic [ref=e415]: To Do
+                  - img [ref=e416]
+                - button "Medium" [ref=e420]:
+                  - generic [ref=e421]: Medium
+                  - img [ref=e422]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e425] [cursor=pointer]:
+                - generic [ref=e429]:
+                  - button "Expand subtasks" [ref=e430]:
+                    - img [ref=e431]
+                  - button "Bring R01 CLIF provider variation aims to Adams for review" [ref=e433]
+                  - generic [ref=e434]: sync
+                  - generic "provider-variation-across-clif" [ref=e435]: Provider Variation A
+                - generic [ref=e436]:
+                  - button "Nick Ingraham" [ref=e438]:
+                    - img "Nick Ingraham" [ref=e441]
+                    - img [ref=e442]
+                  - generic "Not yet acknowledged" [ref=e444]
+                - button "11d ago" [ref=e447]:
+                  - img [ref=e448]
+                  - generic [ref=e450]: 11d ago
+                  - img [ref=e451]
+                - button "To Do" [ref=e455]:
+                  - generic [ref=e456]:
+                    - img [ref=e457]
+                    - generic [ref=e459]: To Do
+                  - img [ref=e460]
+                - button "Medium" [ref=e464]:
+                  - generic [ref=e465]: Medium
+                  - img [ref=e466]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e469] [cursor=pointer]:
+                - generic [ref=e473]:
+                  - button "Expand subtasks" [ref=e474]:
+                    - img [ref=e475]
+                  - button "Fix dx_name delimiter in CQODE backbone (temp fix in place)" [ref=e477]
+                  - generic [ref=e478]: sync
+                  - generic "cqode-backbone-umn-clif" [ref=e479]: Cqode Backbone Umn C
+                - generic [ref=e480]:
+                  - button "Nick Ingraham" [ref=e482]:
+                    - img "Nick Ingraham" [ref=e485]
+                    - img [ref=e486]
+                  - generic "Not yet acknowledged" [ref=e488]
+                - button "11d ago" [ref=e491]:
+                  - img [ref=e492]
+                  - generic [ref=e494]: 11d ago
+                  - img [ref=e495]
+                - button "To Do" [ref=e499]:
+                  - generic [ref=e500]:
+                    - img [ref=e501]
+                    - generic [ref=e503]: To Do
+                  - img [ref=e504]
+                - button "Medium" [ref=e508]:
+                  - generic [ref=e509]: Medium
+                  - img [ref=e510]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e513] [cursor=pointer]:
+                - generic [ref=e517]:
+                  - button "Expand subtasks" [ref=e518]:
+                    - img [ref=e519]
+                  - button "Set up Clinical Implications of Sepsis Definitions project with Vaishvik/Rush" [ref=e521]
+                  - generic [ref=e522]: sync
+                  - generic "clinical-implications-of-sepsis-definitions" [ref=e523]: Clinical Implication
+                - generic [ref=e524]:
+                  - button "Nick Ingraham" [ref=e526]:
+                    - img "Nick Ingraham" [ref=e529]
+                    - img [ref=e530]
+                  - generic "Not yet acknowledged" [ref=e532]
+                - button "5d ago" [ref=e535]:
+                  - img [ref=e536]
+                  - generic [ref=e538]: 5d ago
+                  - img [ref=e539]
+                - button "To Do" [ref=e543]:
+                  - generic [ref=e544]:
+                    - img [ref=e545]
+                    - generic [ref=e547]: To Do
+                  - img [ref=e548]
+                - button "Medium" [ref=e552]:
+                  - generic [ref=e553]: Medium
+                  - img [ref=e554]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e557] [cursor=pointer]:
+                - generic [ref=e561]:
+                  - button "Expand subtasks" [ref=e562]:
+                    - img [ref=e563]
+                  - button "Sign up for Epic Physician Builder class" [ref=e565]
+                  - generic [ref=e566]: sync
+                  - generic "epic-physician-builder-certificate" [ref=e567]: Epic Physician Build
+                - generic [ref=e568]:
+                  - button "Nick Ingraham" [ref=e570]:
+                    - img "Nick Ingraham" [ref=e573]
+                    - img [ref=e574]
+                  - generic "Not yet acknowledged" [ref=e576]
+                - button "Yesterday" [ref=e579]:
+                  - img [ref=e580]
+                  - generic [ref=e582]: Yesterday
+                  - img [ref=e583]
+                - button "To Do" [ref=e587]:
+                  - generic [ref=e588]:
+                    - img [ref=e589]
+                    - generic [ref=e591]: To Do
+                  - img [ref=e592]
+                - button "Medium" [ref=e596]:
+                  - generic [ref=e597]: Medium
+                  - img [ref=e598]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e601] [cursor=pointer]:
+                - generic [ref=e605]:
+                  - button "Expand subtasks" [ref=e606]:
+                    - img [ref=e607]
+                  - button "Re-run summarize_clif.py in data shelter with vectorized loops" [ref=e609]
+                  - generic [ref=e610]: sync
+                  - generic "synthetic-clif-dataset" [ref=e611]: Synthetic Clif Datas
+                - generic [ref=e612]:
+                  - button "Nick Ingraham" [ref=e614]:
+                    - img "Nick Ingraham" [ref=e617]
+                    - img [ref=e618]
+                  - generic "Not yet acknowledged" [ref=e620]
+                - button "Yesterday" [ref=e623]:
+                  - img [ref=e624]
+                  - generic [ref=e626]: Yesterday
+                  - img [ref=e627]
+                - button "To Do" [ref=e631]:
+                  - generic [ref=e632]:
+                    - img [ref=e633]
+                    - generic [ref=e635]: To Do
+                  - img [ref=e636]
+                - button "Medium" [ref=e640]:
+                  - generic [ref=e641]: Medium
+                  - img [ref=e642]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e645] [cursor=pointer]:
+                - generic [ref=e649]:
+                  - button "Expand subtasks" [ref=e650]:
+                    - img [ref=e651]
+                  - button "Review vasopressor escalation protocol v3" [ref=e653]
+                  - generic [ref=e654]: sync
+                  - generic "vasopressor-escalation-protocol-lyons" [ref=e655]: Vasopressor Escalati
+                - generic [ref=e656]:
+                  - button "Nick Ingraham" [ref=e658]:
+                    - img "Nick Ingraham" [ref=e661]
+                    - img [ref=e662]
+                  - generic "Not yet acknowledged" [ref=e664]
+                - button "Yesterday" [ref=e667]:
+                  - img [ref=e668]
+                  - generic [ref=e670]: Yesterday
+                  - img [ref=e671]
+                - button "To Do" [ref=e675]:
+                  - generic [ref=e676]:
+                    - img [ref=e677]
+                    - generic [ref=e679]: To Do
+                  - img [ref=e680]
+                - button "Medium" [ref=e684]:
+                  - generic [ref=e685]: Medium
+                  - img [ref=e686]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e689] [cursor=pointer]:
+                - generic [ref=e693]:
+                  - button "Expand subtasks" [ref=e694]:
+                    - img [ref=e695]
+                  - button "Follow up on UMN data infrastructure gap for clinical trials with Genevieve/Tim Beebe" [ref=e697]
+                  - generic [ref=e698]: sync
+                - generic [ref=e699]:
+                  - button "Nick Ingraham" [ref=e701]:
+                    - img "Nick Ingraham" [ref=e704]
+                    - img [ref=e705]
+                  - generic "Not yet acknowledged" [ref=e707]
+                - button "Yesterday" [ref=e710]:
+                  - img [ref=e711]
+                  - generic [ref=e713]: Yesterday
+                  - img [ref=e714]
+                - button "To Do" [ref=e718]:
+                  - generic [ref=e719]:
+                    - img [ref=e720]
+                    - generic [ref=e722]: To Do
+                  - img [ref=e723]
+                - button "Medium" [ref=e727]:
+                  - generic [ref=e728]: Medium
+                  - img [ref=e729]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e732] [cursor=pointer]:
+                - generic [ref=e736]:
+                  - button "Expand subtasks" [ref=e737]:
+                    - img [ref=e738]
+                  - 'button "Reply to Emma Bromley re: VA IRB funding agency confirmation" [ref=e740]'
+                  - generic [ref=e741]: sync
+                  - generic "decision-making-survey" [ref=e742]: Decision Making Surv
+                - generic [ref=e743]:
+                  - button "Nick Ingraham" [ref=e745]:
+                    - img "Nick Ingraham" [ref=e748]
+                    - img [ref=e749]
+                  - generic "Not yet acknowledged" [ref=e751]
+                - button "Yesterday" [ref=e754]:
+                  - img [ref=e755]
+                  - generic [ref=e757]: Yesterday
+                  - img [ref=e758]
+                - button "To Do" [ref=e762]:
+                  - generic [ref=e763]:
+                    - img [ref=e764]
+                    - generic [ref=e766]: To Do
+                  - img [ref=e767]
+                - button "Medium" [ref=e771]:
+                  - generic [ref=e772]: Medium
+                  - img [ref=e773]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e776] [cursor=pointer]:
+                - generic [ref=e780]:
+                  - button "Expand subtasks" [ref=e781]:
+                    - img [ref=e782]
+                  - button "Add Adams to regular grant writing club meetings" [ref=e784]
+                  - generic [ref=e785]: sync
+                  - generic "mnccore-minnesota-critical-care" [ref=e786]: Mnccore Minnesota Cr
+                - generic [ref=e787]:
+                  - button "Nick Ingraham" [ref=e789]:
+                    - img "Nick Ingraham" [ref=e792]
+                    - img [ref=e793]
+                  - generic "Not yet acknowledged" [ref=e795]
+                - button "Yesterday" [ref=e798]:
+                  - img [ref=e799]
+                  - generic [ref=e801]: Yesterday
+                  - img [ref=e802]
+                - button "To Do" [ref=e806]:
+                  - generic [ref=e807]:
+                    - img [ref=e808]
+                    - generic [ref=e810]: To Do
+                  - img [ref=e811]
+                - button "Medium" [ref=e815]:
+                  - generic [ref=e816]: Medium
+                  - img [ref=e817]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e820] [cursor=pointer]:
+                - generic [ref=e824]:
+                  - button "Expand subtasks" [ref=e825]:
+                    - img [ref=e826]
+                  - button "Run CLIF lung cancer clustering code at UMN" [ref=e828]
+                  - generic [ref=e829]: sync
+                  - generic "lung-cancer-trajectories-graffy" [ref=e830]: Lung Cancer Trajecto
+                - generic [ref=e831]:
+                  - button "Nick Ingraham" [ref=e833]:
+                    - img "Nick Ingraham" [ref=e836]
+                    - img [ref=e837]
+                  - generic "Not yet acknowledged" [ref=e839]
+                - button "Today" [ref=e842]:
+                  - img [ref=e843]
+                  - generic [ref=e845]: Today
+                  - img [ref=e846]
+                - button "To Do" [ref=e850]:
+                  - generic [ref=e851]:
+                    - img [ref=e852]
+                    - generic [ref=e854]: To Do
+                  - img [ref=e855]
+                - button "Medium" [ref=e859]:
+                  - generic [ref=e860]: Medium
+                  - img [ref=e861]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e864] [cursor=pointer]:
+                - generic [ref=e868]:
+                  - button "Expand subtasks" [ref=e869]:
+                    - img [ref=e870]
+                  - button "Complete fixes from last night's audit, work in scratch folder" [ref=e872]
+                  - generic [ref=e873]: sync
+                - generic [ref=e874]:
+                  - button "Nick Ingraham" [ref=e876]:
+                    - img "Nick Ingraham" [ref=e879]
+                    - img [ref=e880]
+                  - generic "Not yet acknowledged" [ref=e882]
+                - button "Today" [ref=e885]:
+                  - img [ref=e886]
+                  - generic [ref=e888]: Today
+                  - img [ref=e889]
+                - button "To Do" [ref=e893]:
+                  - generic [ref=e894]:
+                    - img [ref=e895]
+                    - generic [ref=e897]: To Do
+                  - img [ref=e898]
+                - button "Medium" [ref=e902]:
+                  - generic [ref=e903]: Medium
+                  - img [ref=e904]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e907] [cursor=pointer]:
+                - generic [ref=e911]:
+                  - button "Expand subtasks" [ref=e912]:
+                    - img [ref=e913]
+                  - button "VA WOC health screen" [ref=e915]
+                  - generic [ref=e916]: sync
+                  - generic "va-woc-status" [ref=e917]: Va Woc Status
+                - generic [ref=e918]:
+                  - button "Nick Ingraham" [ref=e920]:
+                    - img "Nick Ingraham" [ref=e923]
+                    - img [ref=e924]
+                  - generic "Not yet acknowledged" [ref=e926]
+                - button "in 3d" [ref=e929]:
+                  - img [ref=e930]
+                  - generic [ref=e932]: in 3d
+                  - img [ref=e933]
+                - button "To Do" [ref=e937]:
+                  - generic [ref=e938]:
+                    - img [ref=e939]
+                    - generic [ref=e941]: To Do
+                  - img [ref=e942]
+                - button "Medium" [ref=e946]:
+                  - generic [ref=e947]: Medium
+                  - img [ref=e948]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e951] [cursor=pointer]:
+                - generic [ref=e955]:
+                  - button "Expand subtasks" [ref=e956]:
+                    - img [ref=e957]
+                  - button "Run EquiSedate CLIF code at UMN" [ref=e959]
+                  - generic [ref=e960]: sync
+                  - generic "equisedate" [ref=e961]: Equisedate
+                - generic [ref=e962]:
+                  - button "Nick Ingraham" [ref=e964]:
+                    - img "Nick Ingraham" [ref=e967]
+                    - img [ref=e968]
+                  - generic "Not yet acknowledged" [ref=e970]
+                - button "in 7d" [ref=e973]:
+                  - img [ref=e974]
+                  - generic [ref=e976]: in 7d
+                  - img [ref=e977]
+                - button "To Do" [ref=e981]:
+                  - generic [ref=e982]:
+                    - img [ref=e983]
+                    - generic [ref=e985]: To Do
+                  - img [ref=e986]
+                - button "Medium" [ref=e990]:
+                  - generic [ref=e991]: Medium
+                  - img [ref=e992]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+              - generic [ref=e995] [cursor=pointer]:
+                - generic [ref=e999]:
+                  - button "Expand subtasks" [ref=e1000]:
+                    - img [ref=e1001]
+                  - button "Run CLIF ARF-NIV Treatment Location Stage 1 (Goldfarb)" [ref=e1003]
+                  - generic [ref=e1004]: sync
+                  - generic "arf-niv-treatment-location-goldfarb" [ref=e1005]: Arf Niv Treatment Lo
+                - generic [ref=e1006]:
+                  - button "Nick Ingraham" [ref=e1008]:
+                    - img "Nick Ingraham" [ref=e1011]
+                    - img [ref=e1012]
+                  - generic "Not yet acknowledged" [ref=e1014]
+                - button "Apr 24" [ref=e1017]:
+                  - img [ref=e1018]
+                  - generic [ref=e1020]: Apr 24
+                  - img [ref=e1021]
+                - button "To Do" [ref=e1025]:
+                  - generic [ref=e1026]:
+                    - img [ref=e1027]
+                    - generic [ref=e1029]: To Do
+                  - img [ref=e1030]
+                - button "Medium" [ref=e1034]:
+                  - generic [ref=e1035]: Medium
+                  - img [ref=e1036]
+                - generic:
+                  - button "Quick comment":
+                    - img
+                  - button "Archive task":
+                    - img
+            - generic [ref=e1039]:
+              - generic [ref=e1040]: Count 18
+              - generic [ref=e1041]: Overdue 13
+              - generic [ref=e1042]: To Do 18
+              - generic [ref=e1043]: In Progress 0
+          - generic [ref=e1047]:
+            - generic [ref=e1048]:
+              - generic [ref=e1049]: Task Detail
+              - generic [ref=e1050]:
+                - generic [ref=e1051]:
+                  - button "Previous task (Alt+↑)" [disabled] [ref=e1052]:
+                    - img [ref=e1053]
+                  - button "Next task (Alt+↓)" [ref=e1055] [cursor=pointer]:
+                    - img [ref=e1056]
+                - button "Copy task link" [ref=e1058] [cursor=pointer]:
+                  - img [ref=e1059]
+                - button [ref=e1062] [cursor=pointer]:
+                  - img [ref=e1063]
+            - generic [ref=e1066]:
+              - 'heading "Update CQODE for CLIF v3.0.0: new input table replaces intake_output" [level=3] [ref=e1067]'
+              - generic [ref=e1068]:
+                - button "To Do" [ref=e1069] [cursor=pointer]:
+                  - img [ref=e1070]
+                  - text: To Do
+                - button "In Progress" [ref=e1072] [cursor=pointer]:
+                  - img [ref=e1073]
+                  - text: In Progress
+                - button "Blocked" [ref=e1076] [cursor=pointer]:
+                  - img [ref=e1077]
+                  - text: Blocked
+                - button "Done" [ref=e1079] [cursor=pointer]:
+                  - img [ref=e1080]
+                  - text: Done
+              - generic [ref=e1084]: sync
+            - generic [ref=e1085]:
+              - button "Overview" [ref=e1086] [cursor=pointer]:
+                - img [ref=e1087]
+                - text: Overview
+              - button "Notes" [ref=e1090] [cursor=pointer]:
+                - img [ref=e1091]
+                - text: Notes
+              - button "Comments" [ref=e1094] [cursor=pointer]:
+                - img [ref=e1095]
+                - text: Comments
+              - button "Activity" [ref=e1097] [cursor=pointer]:
+                - img [ref=e1098]
+                - text: Activity
+              - button "Details" [ref=e1101] [cursor=pointer]:
+                - img [ref=e1102]
+                - text: Details
+            - generic [ref=e1105]:
+              - generic [ref=e1106]:
+                - generic [ref=e1107]:
+                  - img [ref=e1108]
+                  - text: Assignee
+                - button "Nick Ingraham Nick Ingraham" [ref=e1113] [cursor=pointer]:
+                  - img "Nick Ingraham" [ref=e1116]
+                  - generic [ref=e1117]: Nick Ingraham
+                  - img [ref=e1118]
+              - button "Acknowledge Assignment" [ref=e1120] [cursor=pointer]: Acknowledge Assignment
+              - generic [ref=e1122]:
+                - generic [ref=e1123]: Description
+                - generic [ref=e1124]:
+                  - generic [ref=e1125]:
+                    - button [ref=e1126] [cursor=pointer]:
+                      - img [ref=e1127]
+                    - button [ref=e1129] [cursor=pointer]:
+                      - img [ref=e1130]
+                    - button [ref=e1132] [cursor=pointer]:
+                      - img [ref=e1133]
+                    - button [ref=e1135] [cursor=pointer]:
+                      - img [ref=e1136]
+                    - button [ref=e1137] [cursor=pointer]:
+                      - img [ref=e1138]
+                    - button [ref=e1141] [cursor=pointer]:
+                      - img [ref=e1142]
+                  - textbox [ref=e1146]:
+                    - paragraph [ref=e1147]: "## CLIF v3.0.0 Changes Affecting CQODE (March 5, 2026) ### 1. NEW TABLE: `input` (replaces intake side of `intake_output`) **Columns:** hospitalization_id, recorded_dttm, input_name, input_category, input_group, input_volume (mL) **input_group values:** iv_fluids, blood_products, nutrition, medication_fluids, renal_replacement_fluids, flush_irrigation, other_intake **input_category values (16):** - iv_crystalloid, iv_colloid -> iv_fluids - blood_products -> blood_products - parenteral_nutrition, po_intake, enteral_nutrition, enteral_water -> nutrition - iv_medication, enteral_medication -> medication_fluids - renal_replacement_fluids -> renal_replacement_fluids - flush_irrigation_urine, flush_irrigation_drain, flush_irrigation_gi, flush_irrigation_respiratory, flush_irrigation_other -> flush_irrigation - other_input -> other_intake ### 2. NEW TABLE: `output` (replaces output side of `intake_output`) **Columns:** hospitalization_id, recorded_dttm, output_name, output_category, output_group, output_volume (mL) **output_group values:** urine, ultrafiltration, drains, gi, procedure, blood_loss, respiratory, other ### 3. REMOVED: `intake_output` table (split into input + output) ### 4. Other v3.0.0 changes - **labs:** new `loinc_version` column - **medication_admin_continuous:** new `infusion_rate` + `infusion_rate_units` columns - **respiratory_support:** new device_category value \"T Piece\" - **NEW TABLES (not in CQODE scope):** intermittent_dialysis, validated_diagnosis, clinical_notes_facts, clinical_notes_text ### Links - GitHub: https://github.com/Common-Longitudinal-ICU-data-Format/CLIF/issues/179 - Change log: https://clif-icu.com/data-dictionary/change-log - v3.0.0 data dictionary: https://clif-icu.com/data-dictionary/data-dictionary-3.0.0 - mCIDE (3.0 branch): https://github.com/Common-Longitudinal-ICU-data-Format/CLIF/tree/3.0/mCIDE/input ### CQODE Action Items - [ ] Create `input` table mapping from EHR flowsheet data - [ ] Create `output` table mapping from EHR flowsheet data - [ ] Remove or deprecate `intake_output` ETL - [ ] Add `loinc_version` to labs ETL - [ ] Add `infusion_rate` + `infusion_rate_units` to medication_admin_continuous ETL - [ ] Add \"T Piece\" to respiratory_support device_category mapping"
+              - generic [ref=e1148]:
+                - generic [ref=e1149]:
+                  - img [ref=e1150]
+                  - text: Priority
+                - generic [ref=e1153]:
+                  - button "Low" [ref=e1154] [cursor=pointer]:
+                    - img [ref=e1155]
+                    - text: Low
+                  - button "Medium" [ref=e1157] [cursor=pointer]:
+                    - img [ref=e1158]
+                    - text: Medium
+                  - button "High" [ref=e1160] [cursor=pointer]:
+                    - img [ref=e1161]
+                    - text: High
+                  - button "Urgent" [ref=e1163] [cursor=pointer]:
+                    - img [ref=e1164]
+                    - text: Urgent
+              - generic [ref=e1166]:
+                - button "Subtasks" [ref=e1167] [cursor=pointer]:
+                  - img [ref=e1168]
+                  - img [ref=e1170]
+                  - generic [ref=e1173]: Subtasks
+                - generic [ref=e1175]:
+                  - generic [ref=e1176]:
+                    - img [ref=e1177]
+                    - text: Subtasks (0/0)
+                  - generic [ref=e1180]:
+                    - img [ref=e1181]
+                    - textbox "Add subtask..." [ref=e1182]
+    - button "Quick add task (Ctrl+N)" [ref=e1044] [cursor=pointer]:
+      - img [ref=e1045]
+  - status

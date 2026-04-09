@@ -1,0 +1,3837 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\ingra107\\mn-ccore-lab\\playwright.config.ts",
+    "rootDir": "C:/Users/ingra107/mn-ccore-lab/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/ingra107/mn-ccore-lab/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/ingra107/mn-ccore-lab/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "review/audit-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 10,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "inspection-workflows.spec.ts",
+      "file": "inspection-workflows.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "ROUTE — Missing portal pages",
+          "file": "inspection-workflows.spec.ts",
+          "line": 64,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ROUTE: Deadline Cascade (/deadline-cascade) renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-4a069b466268a9fa6dbb",
+              "file": "inspection-workflows.spec.ts",
+              "line": 65,
+              "column": 3
+            },
+            {
+              "title": "ROUTE: My Items (/my-items) renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-d03f62e45a157f250fd7",
+              "file": "inspection-workflows.spec.ts",
+              "line": 73,
+              "column": 3
+            },
+            {
+              "title": "ROUTE: PB Sector / Planner (/pb) renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-050c0abb6b9b46b37a01",
+              "file": "inspection-workflows.spec.ts",
+              "line": 81,
+              "column": 3
+            },
+            {
+              "title": "ROUTE: Pulse / Kiosk (/pulse) renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-7ffb930b701cf4b02ccb",
+              "file": "inspection-workflows.spec.ts",
+              "line": 89,
+              "column": 3
+            },
+            {
+              "title": "ROUTE: Collaboration Network (/network) renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-8834648989883a6df7f2",
+              "file": "inspection-workflows.spec.ts",
+              "line": 95,
+              "column": 3
+            },
+            {
+              "title": "ROUTE: Publication Detail (/publications/:id) renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-4db163ab8a07cb5b64b2",
+              "file": "inspection-workflows.spec.ts",
+              "line": 101,
+              "column": 3
+            },
+            {
+              "title": "ROUTE: CV Page (/team/:slug/cv) renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-af840436fbc8677a8b7f",
+              "file": "inspection-workflows.spec.ts",
+              "line": 110,
+              "column": 3
+            },
+            {
+              "title": "ROUTE: Trainee Trajectory (/team/:slug/trajectory) renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-71747df5565c374afe38",
+              "file": "inspection-workflows.spec.ts",
+              "line": 117,
+              "column": 3
+            },
+            {
+              "title": "ROUTE: Meeting Prep (/meetings/:id/prep) renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-533e5d9b97285bde180b",
+              "file": "inspection-workflows.spec.ts",
+              "line": 124,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "API — Missing GET endpoints",
+          "file": "inspection-workflows.spec.ts",
+          "line": 137,
+          "column": 6,
+          "specs": [
+            {
+              "title": "API GET: All deadline cascades — /api/deadline-cascade/all",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-e27b5154662d0ea3f2f4",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Deadline impact analysis — /api/deadline-cascade/impact",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-d2095a27d731a3250115",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Similar decisions by context — /api/decisions/similar?context=CLIF",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-bc7f9ba0c1dd8c99f33a",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Team by expertise tag — /api/team/by-expertise?tag=critical+care",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-e92a62ec7dff0ae65570",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: CV data for member — /api/team/nick-ingraham/cv-data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-dd15a07d17d9ff4ac253",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Trajectory data for member — /api/team/nick-ingraham/trajectory",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-fd874f16ec47db52bc05",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Contribution data for member — /api/team/nick-ingraham/contributions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-8ab6845cd22188ccfab5",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Expertise suggestions — /api/expertise/suggest",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-996b28cde2c99c718e55",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Collaboration network graph — /api/graph/collaboration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-7bb439c6e1c44a5cfbbb",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Active paper revisions — /api/revisions/active",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-a90de1eb2e929762b1e0",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Active conference submissions — /api/submissions/active",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-ec7ae7c4268a23c6ed67",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Upcoming conferences — /api/conferences/upcoming",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-c0d841db6c58c380229b",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Expiring regulatory items — /api/regulatory/expiring",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-3aa685b9fd5edb11c49d",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Upcoming grant milestones — /api/grant-milestones/upcoming",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-104a0ef358a9dc17f8c2",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Mentee milestones — /api/mentee-milestones",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-6436622ed12c810281e4",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Mentee milestones overview — /api/mentee-milestones/overview",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-0d706d74c57b8ba43c31",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: Contribution analytics — /api/analytics/contributions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-8d77dba730a746ea8f85",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: PB command center — /api/pb/command-center",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-1a1e4834a828ea215d1a",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: PB plan history — /api/pb/plan/history",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-0c70366527d3657b4802",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: PB session history — /api/pb/sessions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-d086e4a00f6cf9632fd3",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: PB session stats — /api/pb/sessions/stats",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-0dd6687d9e144667a10c",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: PB today data — /api/pb/today",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-22d9289d0d248bcfe6b5",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            },
+            {
+              "title": "API GET: PB system health — /api/pb/health",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-1c6962a86af643096ecb",
+              "file": "inspection-workflows.spec.ts",
+              "line": 165,
+              "column": 5
+            }
+          ]
+        },
+        {
+          "title": "API — Missing write endpoints",
+          "file": "inspection-workflows.spec.ts",
+          "line": 173,
+          "column": 6,
+          "specs": [
+            {
+              "title": "API POST: Create subtask on a task",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-2ff72ab41631c225220a",
+              "file": "inspection-workflows.spec.ts",
+              "line": 174,
+              "column": 3
+            },
+            {
+              "title": "API POST: Reorder subtasks",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-3e0aa16bf2ef8c09f002",
+              "file": "inspection-workflows.spec.ts",
+              "line": 183,
+              "column": 3
+            },
+            {
+              "title": "API POST: Create meeting with dedup check",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-13df30f1bab809f0be6c",
+              "file": "inspection-workflows.spec.ts",
+              "line": 196,
+              "column": 3
+            },
+            {
+              "title": "API POST: Add agenda item to meeting",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-76237e543ecc351f48bf",
+              "file": "inspection-workflows.spec.ts",
+              "line": 211,
+              "column": 3
+            },
+            {
+              "title": "API POST: Update decision outcome",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-7642456f810af1e5536f",
+              "file": "inspection-workflows.spec.ts",
+              "line": 220,
+              "column": 3
+            },
+            {
+              "title": "API POST: Mark notification as read",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-5674ae86566cd177ab01",
+              "file": "inspection-workflows.spec.ts",
+              "line": 230,
+              "column": 3
+            },
+            {
+              "title": "API POST: Mark all notifications read",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-0978d6477b9c8ead3699",
+              "file": "inspection-workflows.spec.ts",
+              "line": 238,
+              "column": 3
+            },
+            {
+              "title": "API POST: Batch task update",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-29d20e1718029cfb4144",
+              "file": "inspection-workflows.spec.ts",
+              "line": 243,
+              "column": 3
+            },
+            {
+              "title": "API POST: PB capture (quick capture)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-318e8d7c92933a2a0c63",
+              "file": "inspection-workflows.spec.ts",
+              "line": 253,
+              "column": 3
+            },
+            {
+              "title": "API POST: Create dependency between tasks",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-c0a2ff9c80571172ea63",
+              "file": "inspection-workflows.spec.ts",
+              "line": 260,
+              "column": 3
+            },
+            {
+              "title": "API POST: Add expertise tag",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-acf606d9f9ce4f38c82b",
+              "file": "inspection-workflows.spec.ts",
+              "line": 269,
+              "column": 3
+            },
+            {
+              "title": "API POST: Answer a question (Ask the Lab)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-4d89925dea5dd2d9dedf",
+              "file": "inspection-workflows.spec.ts",
+              "line": 276,
+              "column": 3
+            },
+            {
+              "title": "API POST: Create task handoff",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-2626243c135e44959be1",
+              "file": "inspection-workflows.spec.ts",
+              "line": 286,
+              "column": 3
+            },
+            {
+              "title": "API POST: Link paper to project",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-b5caca5e35165ec1a0d1",
+              "file": "inspection-workflows.spec.ts",
+              "line": 295,
+              "column": 3
+            },
+            {
+              "title": "API POST: Task acknowledge",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-4369a1f62e336648b512",
+              "file": "inspection-workflows.spec.ts",
+              "line": 306,
+              "column": 3
+            },
+            {
+              "title": "API POST: Add emoji reaction",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-badbdbf0a147d05f40b7",
+              "file": "inspection-workflows.spec.ts",
+              "line": 316,
+              "column": 3
+            },
+            {
+              "title": "API: Upload presigned URL generation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-6c4962b71f2e22afa824",
+              "file": "inspection-workflows.spec.ts",
+              "line": 325,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — G+key navigation shortcuts",
+          "file": "inspection-workflows.spec.ts",
+          "line": 338,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: G then D navigates to Dashboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-fad558d3eeebecd1aa68",
+              "file": "inspection-workflows.spec.ts",
+              "line": 351,
+              "column": 5
+            },
+            {
+              "title": "FEATURE: G then T navigates to Tasks",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-c1f7870b578a4b3e871f",
+              "file": "inspection-workflows.spec.ts",
+              "line": 351,
+              "column": 5
+            },
+            {
+              "title": "FEATURE: G then P navigates to Projects",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-d7531037332207d6e3ba",
+              "file": "inspection-workflows.spec.ts",
+              "line": 351,
+              "column": 5
+            },
+            {
+              "title": "FEATURE: G then M navigates to Meetings",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-5133f55168298b3436e4",
+              "file": "inspection-workflows.spec.ts",
+              "line": 351,
+              "column": 5
+            },
+            {
+              "title": "FEATURE: G then C navigates to Calendar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-265b47e79f9102b37c39",
+              "file": "inspection-workflows.spec.ts",
+              "line": 351,
+              "column": 5
+            },
+            {
+              "title": "FEATURE: G then I navigates to Ideas",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-ba9c101cca7f384fc5cb",
+              "file": "inspection-workflows.spec.ts",
+              "line": 351,
+              "column": 5
+            },
+            {
+              "title": "FEATURE: G then K navigates to Deadlines",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-8224d81ca4ef5c3ac8ff",
+              "file": "inspection-workflows.spec.ts",
+              "line": 351,
+              "column": 5
+            },
+            {
+              "title": "FEATURE: G then Y navigates to My Tasks",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-a09e0a323d441290a313",
+              "file": "inspection-workflows.spec.ts",
+              "line": 351,
+              "column": 5
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Space bar peek overlay",
+          "file": "inspection-workflows.spec.ts",
+          "line": 362,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Space opens peek overlay on focused task",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-046608b472925114c631",
+              "file": "inspection-workflows.spec.ts",
+              "line": 363,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Subtask expand/collapse with arrow keys",
+          "file": "inspection-workflows.spec.ts",
+          "line": 381,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: → expands subtasks, ← collapses",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-4b06f2f564c9ba5a8d6c",
+              "file": "inspection-workflows.spec.ts",
+              "line": 382,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Bulk selection and actions",
+          "file": "inspection-workflows.spec.ts",
+          "line": 412,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: X key toggles task selection, toolbar appears",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-dfe053cbcdb59a8ed41e",
+              "file": "inspection-workflows.spec.ts",
+              "line": 413,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Snooze functionality",
+          "file": "inspection-workflows.spec.ts",
+          "line": 442,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Z key or context menu triggers snooze",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-ccc7247adba81e1d5cc6",
+              "file": "inspection-workflows.spec.ts",
+              "line": 443,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Right-click context menu",
+          "file": "inspection-workflows.spec.ts",
+          "line": 464,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Right-click on task row shows context menu",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-f6b86e5bcf22b5173170",
+              "file": "inspection-workflows.spec.ts",
+              "line": 465,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Blocker flagging",
+          "file": "inspection-workflows.spec.ts",
+          "line": 489,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: B key toggles blocker on focused task",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-52f283cf825fa9f26c31",
+              "file": "inspection-workflows.spec.ts",
+              "line": 490,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — S key status cycle",
+          "file": "inspection-workflows.spec.ts",
+          "line": 505,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: S key cycles task status (todo → in_progress → done)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-7140120c2caf8c9e3f7a",
+              "file": "inspection-workflows.spec.ts",
+              "line": 506,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Sidebar collapse",
+          "file": "inspection-workflows.spec.ts",
+          "line": 529,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: [ key collapses sidebar, [ again expands",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-6b948d87e7c8d2c5d409",
+              "file": "inspection-workflows.spec.ts",
+              "line": 530,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Notification bell",
+          "file": "inspection-workflows.spec.ts",
+          "line": 553,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Notification bell click opens dropdown",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-96b2bcf92c089988d545",
+              "file": "inspection-workflows.spec.ts",
+              "line": 554,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Favicon badge",
+          "file": "inspection-workflows.spec.ts",
+          "line": 572,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Favicon changes with notification count",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-6cfe5ea25da537946e2e",
+              "file": "inspection-workflows.spec.ts",
+              "line": 573,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Dashboard customize",
+          "file": "inspection-workflows.spec.ts",
+          "line": 586,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Customize button opens card selection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-a298cd26a7d8e9ef591f",
+              "file": "inspection-workflows.spec.ts",
+              "line": 587,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Welcome banner",
+          "file": "inspection-workflows.spec.ts",
+          "line": 605,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Welcome banner shows and can be dismissed",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-9685a075d5fe7a79fc13",
+              "file": "inspection-workflows.spec.ts",
+              "line": 606,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — CommandPalette quick actions",
+          "file": "inspection-workflows.spec.ts",
+          "line": 624,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Cmd+K shows contextual actions on Tasks page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-3c698e46f855bd3d3401",
+              "file": "inspection-workflows.spec.ts",
+              "line": 625,
+              "column": 3
+            },
+            {
+              "title": "FEATURE: Cmd+K \"Create Task\" action opens modal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-2ec730b8d49cfc2bd1da",
+              "file": "inspection-workflows.spec.ts",
+              "line": 644,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — @mention autocomplete",
+          "file": "inspection-workflows.spec.ts",
+          "line": 661,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: @mention shows team member suggestions",
+              "ok": true,
+              "tags": [
+                "mention",
+                "mention"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-b252bad5da5f3f09d7dc",
+              "file": "inspection-workflows.spec.ts",
+              "line": 662,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Inline date picker",
+          "file": "inspection-workflows.spec.ts",
+          "line": 694,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Click due date shows date picker with presets",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-dfa50173a50312513adf",
+              "file": "inspection-workflows.spec.ts",
+              "line": 695,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Inline assignee picker",
+          "file": "inspection-workflows.spec.ts",
+          "line": 715,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Click assignee shows team member dropdown",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-ee8131170678cdfdec8f",
+              "file": "inspection-workflows.spec.ts",
+              "line": 716,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Meeting NLP quick-add",
+          "file": "inspection-workflows.spec.ts",
+          "line": 734,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: NLP quick-add parses @person, priority, date on meeting page",
+              "ok": true,
+              "tags": [
+                "person,"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-63097c5dbaf872b78d8a",
+              "file": "inspection-workflows.spec.ts",
+              "line": 735,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Calendar view modes",
+          "file": "inspection-workflows.spec.ts",
+          "line": 763,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Calendar Week view renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-c4edab1266f477b43a7e",
+              "file": "inspection-workflows.spec.ts",
+              "line": 764,
+              "column": 3
+            },
+            {
+              "title": "FEATURE: Calendar Day view renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-513df9503699dc90b961",
+              "file": "inspection-workflows.spec.ts",
+              "line": 772,
+              "column": 3
+            },
+            {
+              "title": "FEATURE: Calendar Agenda view renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-4904c03af024e075d8b6",
+              "file": "inspection-workflows.spec.ts",
+              "line": 780,
+              "column": 3
+            },
+            {
+              "title": "FEATURE: Calendar T key jumps to today",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-23296b6a163db3b35fc4",
+              "file": "inspection-workflows.spec.ts",
+              "line": 790,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Saved views",
+          "file": "inspection-workflows.spec.ts",
+          "line": 806,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Saved views selector exists on Tasks page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-186cadb6a415a4649312",
+              "file": "inspection-workflows.spec.ts",
+              "line": 807,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Rich text editor",
+          "file": "inspection-workflows.spec.ts",
+          "line": 815,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Task description uses Tiptap rich text editor",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-d4604861664bb3bf905f",
+              "file": "inspection-workflows.spec.ts",
+              "line": 816,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Copy/Export buttons",
+          "file": "inspection-workflows.spec.ts",
+          "line": 839,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Copy Summary on Meeting Detail",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-59e74adeb33e6d294180",
+              "file": "inspection-workflows.spec.ts",
+              "line": 840,
+              "column": 3
+            },
+            {
+              "title": "FEATURE: Copy as Text on CV page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-9ff2d27b9d2913bf539f",
+              "file": "inspection-workflows.spec.ts",
+              "line": 849,
+              "column": 3
+            },
+            {
+              "title": "FEATURE: Print button on PI Analytics",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-b824eb7e0943ef86af2a",
+              "file": "inspection-workflows.spec.ts",
+              "line": 856,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Onboarding checklist",
+          "file": "inspection-workflows.spec.ts",
+          "line": 864,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Personal Hub shows onboarding progress",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-9cfa30c971c4ebe730a3",
+              "file": "inspection-workflows.spec.ts",
+              "line": 865,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Ideas voting bounce animation",
+          "file": "inspection-workflows.spec.ts",
+          "line": 874,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Vote button works and shows count",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-d1e9cb0d0eb8460de337",
+              "file": "inspection-workflows.spec.ts",
+              "line": 875,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Decision tags and filtering",
+          "file": "inspection-workflows.spec.ts",
+          "line": 888,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Decision tags filter the list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-752686de2e6f7bbfabbe",
+              "file": "inspection-workflows.spec.ts",
+              "line": 889,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Project keyboard shortcuts",
+          "file": "inspection-workflows.spec.ts",
+          "line": 901,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: P key pins/unpins project on Projects page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-7b87b1bafc6265abc871",
+              "file": "inspection-workflows.spec.ts",
+              "line": 902,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FEATURE — Settings interactions",
+          "file": "inspection-workflows.spec.ts",
+          "line": 915,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FEATURE: Settings reset dashboard + clear searches",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-0be4776036fb233b2a87",
+              "file": "inspection-workflows.spec.ts",
+              "line": 916,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Full task lifecycle",
+          "file": "inspection-workflows.spec.ts",
+          "line": 930,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Create task → assign → set date → add subtask → status cycle → complete → reopen",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-e7ffb5255c9a83f2d3e6",
+              "file": "inspection-workflows.spec.ts",
+              "line": 931,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Meeting lifecycle",
+          "file": "inspection-workflows.spec.ts",
+          "line": 987,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Create meeting → add agenda → add action item → prep view → copy summary",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-4fda2c91017bead46625",
+              "file": "inspection-workflows.spec.ts",
+              "line": 988,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Project exploration",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1018,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Projects list → filter by category → click project → each tab → post update",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-7c5ea83f615c0d3514a6",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1019,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Research digest daily flow",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1049,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Open digest → read dates → filter topic → expand abstract → bookmark → dismiss → check counts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-6286afc9e955a32ae49f",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1050,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Manuscript pipeline view",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1083,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Manuscripts → pipeline view → click stage → inline status edit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-bb67d35332a6a9ed57ee",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1084,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Analytics deep dive",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1110,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Analytics → read metrics → scroll charts → copy report",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-a7ccdc6b5c01a0577816",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1111,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Search deep dive",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1138,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Search → type query → filter by type → click result → navigate",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-0d3e7a7d8d4404f45d9b",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1139,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Grants timeline interaction",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1176,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Grants page → see timeline → check mechanism badges → legend",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-35b67de381fcfc0607eb",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1177,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Mentee milestones",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1204,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Mentee page → filter by person → filter by type → see cards",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-658329f2f3660fe9416a",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1205,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — My Tasks daily triage",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1220,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: MyTasks → Overdue pill → see overdue tasks → click one → change status → undo",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-799f01c7b9bc85a66e36",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1221,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — PB Sector planner flow",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1249,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: PB Sector → star task → focus tasks → pomodoro → reflection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-1f0572d2e37c5eb5e7ca",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1250,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Team member exploration",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1273,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Team page → click member → see profile → cv link → trajectory link",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-932dc2fb605d8a7c7c37",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1274,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Publications library",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1300,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Publications → scroll journal covers → search → year filter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-3788c7357453175d5878",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1301,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Activity feed",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1328,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Activity → filter by person → filter by type → scroll",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-cfdb74106d2ab5a90f00",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1329,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "JOURNEY — Deadline cascade",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1349,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY: Deadline cascade → dependency graph → impact view",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-a05a20ccad88634c3ee4",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1350,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "EDGE — Special characters and long text",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1366,
+          "column": 6,
+          "specs": [
+            {
+              "title": "EDGE: Task with special characters in title",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-f1961c222f7ef46422aa",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1367,
+              "column": 3
+            },
+            {
+              "title": "EDGE: Task with very long title (500 chars)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-8650ec28f40d87fc9981",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1383,
+              "column": 3
+            },
+            {
+              "title": "EDGE: Task with Unicode and emoji",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-aff2ec2f1811997a7d77",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1391,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "EDGE — Task with no due date",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1404,
+          "column": 6,
+          "specs": [
+            {
+              "title": "EDGE: Task without due date renders correctly in grid",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-28bab9800bfc8d871a3d",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1405,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "EDGE — Empty API responses",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1418,
+          "column": 6,
+          "specs": [
+            {
+              "title": "EDGE: Search with no results",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-28a0f13228fe94bc26cc",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1419,
+              "column": 3
+            },
+            {
+              "title": "EDGE: Digest with no papers for topic",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-8363cc6bef0b886d846d",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1431,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "EDGE — 404 and invalid routes",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1444,
+          "column": 6,
+          "specs": [
+            {
+              "title": "EDGE: Invalid project slug shows error or 404",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-07836f63c358c837f0d9",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1445,
+              "column": 3
+            },
+            {
+              "title": "EDGE: Invalid meeting ID shows error or 404",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-e50ad0c15cff9a35c8af",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1454,
+              "column": 3
+            },
+            {
+              "title": "EDGE: Invalid team member slug",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-4a45bd6e40e0f9f8e03c",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1461,
+              "column": 3
+            },
+            {
+              "title": "EDGE: Completely bogus route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-4d2b9813799e0593f999",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1468,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "EDGE — API error handling",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1474,
+          "column": 6,
+          "specs": [
+            {
+              "title": "EDGE: Create task with missing required fields",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-7c36e564c67bd68b1347",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1475,
+              "column": 3
+            },
+            {
+              "title": "EDGE: Create idea with missing fields",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-2a52d6d37fba46aa553f",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1481,
+              "column": 3
+            },
+            {
+              "title": "EDGE: Update nonexistent task",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-d48962465d3b54e9bb6e",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1486,
+              "column": 3
+            },
+            {
+              "title": "EDGE: Invalid status value",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-1839a9708a1ad5040db0",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1491,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "SYNC — Status change round-trip",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1504,
+          "column": 6,
+          "specs": [
+            {
+              "title": "SYNC: Change status via API → verify readback → change again → verify",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-ed3747ecb71b2833fb9d",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1505,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "SYNC — Priority change round-trip",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1533,
+          "column": 6,
+          "specs": [
+            {
+              "title": "SYNC: Change priority → readback matches",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-d8b46631bc1618eefd28",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1534,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "SYNC — Assignee change round-trip",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1549,
+          "column": 6,
+          "specs": [
+            {
+              "title": "SYNC: Change assignee → readback matches → filter by new assignee includes task",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-b8e5195f27f797dbd111",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1550,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "SYNC — Cross-tab BroadcastChannel",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1573,
+          "column": 6,
+          "specs": [
+            {
+              "title": "SYNC: Change in one tab → verify other tab gets notified",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-6e7ed91f69430e3faa31",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1574,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "SYNC — Bulk task operations",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1607,
+          "column": 6,
+          "specs": [
+            {
+              "title": "SYNC: Create 3 tasks → batch status update → verify all changed",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-3278ca89913685fc9825",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1608,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "SYNC — Comment and note persistence",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1633,
+          "column": 6,
+          "specs": [
+            {
+              "title": "SYNC: Add comment → add note → readback in correct order",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-e7c798dc0022cf0f2e94",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1634,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "VISUAL — Overdue date red styling",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1670,
+          "column": 6,
+          "specs": [
+            {
+              "title": "VISUAL: Overdue tasks show red date indicator",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-aa5944fd57b7a6bd56b9",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1671,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "VISUAL — Hover row actions",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1683,
+          "column": 6,
+          "specs": [
+            {
+              "title": "VISUAL: Task row hover reveals Edit/Archive actions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-16ebe74348584259f4eb",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1684,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "VISUAL — Loading skeletons",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1701,
+          "column": 6,
+          "specs": [
+            {
+              "title": "VISUAL: Skeleton appears during slow load",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-3efc4a78ed34fe524056",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1702,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "VISUAL — Light mode full check",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1724,
+          "column": 6,
+          "specs": [
+            {
+              "title": "VISUAL: Light mode renders correctly on key pages",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-0eae09b8c25faf5fc41b",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1725,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "VISUAL — Stagger animations",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1749,
+          "column": 6,
+          "specs": [
+            {
+              "title": "VISUAL: Ideas page has staggered card entrance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-f5d322e8e7b672693370",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1750,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "VISUAL — Card hover lift",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1761,
+          "column": 6,
+          "specs": [
+            {
+              "title": "VISUAL: Dashboard card lifts on hover",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-514bc83e13a828494419",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1762,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "VISUAL — Route progress bar",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1779,
+          "column": 6,
+          "specs": [
+            {
+              "title": "VISUAL: Navigation shows progress bar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-693f45598c5dd2704fad",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1780,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "MOBILE — Phone viewport tests",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1799,
+          "column": 6,
+          "specs": [
+            {
+              "title": "MOBILE: Task page at 375px — card layout, no table",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-e900cafa80b51695478f",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1800,
+              "column": 3
+            },
+            {
+              "title": "MOBILE: Dashboard at 375px — single column",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-6db8baeee624a1bf2d90",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1811,
+              "column": 3
+            },
+            {
+              "title": "MOBILE: \"Press F\" tooltip hidden on mobile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-f3a6f3e4b35f5119f4cc",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1823,
+              "column": 3
+            },
+            {
+              "title": "MOBILE: Sidebar hamburger menu works",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-d8d3418e11c7c68ce01a",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1831,
+              "column": 3
+            },
+            {
+              "title": "MOBILE: Project detail at 375px renders without overflow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-76f242752f8d70b7a8ee",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1849,
+              "column": 3
+            },
+            {
+              "title": "MOBILE: Meeting detail at 375px renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-30d918d9ecad3f6dcd11",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1862,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "FILTER — Complex filter combinations",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1875,
+          "column": 6,
+          "specs": [
+            {
+              "title": "FILTER: Tasks API — status + assignee filter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-46ab253d205dcfa3fed6",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1876,
+              "column": 3
+            },
+            {
+              "title": "FILTER: Tasks API — status + priority filter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-f88bd008ac3ae488bf1b",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1887,
+              "column": 3
+            },
+            {
+              "title": "FILTER: Tasks API — overdue filter returns tasks with past dates",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-d5431a21f9039d299c07",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1897,
+              "column": 3
+            },
+            {
+              "title": "FILTER: Activity API — person + limit filter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-6598fa1abe3a75fcc549",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1904,
+              "column": 3
+            },
+            {
+              "title": "FILTER: Decisions API — tag filter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-02e12fb47ec5ce736f25",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1911,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "A11Y — Focus management",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1924,
+          "column": 6,
+          "specs": [
+            {
+              "title": "A11Y: Tab key cycles through interactive elements on Dashboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-685a2a66899eb125d7fd",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1925,
+              "column": 3
+            },
+            {
+              "title": "A11Y: All modals trap focus",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-b2bcda1c1862e649f784",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1939,
+              "column": 3
+            },
+            {
+              "title": "A11Y: PageHeader has aria-live for dynamic content",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-59f9e25ddc06c52cdfc3",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1960,
+              "column": 3
+            },
+            {
+              "title": "A11Y: prefers-reduced-motion disables animations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-b35ecf4e45bc06b220ef",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1969,
+              "column": 3
+            },
+            {
+              "title": "A11Y: Dark mode contrast — text on dark bg meets 4.5:1",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-a71530d5db2e77742905",
+              "file": "inspection-workflows.spec.ts",
+              "line": 1981,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "VISUAL — Missing page screenshots",
+          "file": "inspection-workflows.spec.ts",
+          "line": 1999,
+          "column": 6,
+          "specs": [
+            {
+              "title": "VISUAL: Full screenshot — /deadline-cascade",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-78458374c88a872acb64",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2006,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Full screenshot — /my-items",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-764d1120a0faa18c89a2",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2006,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Full screenshot — /pb",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-9bac24922341e5873bbb",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2006,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Full screenshot — /pulse",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-4fb2a6c804eb0fc00770",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2006,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Full screenshot — /network",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-ebdf005ff236e8aa5137",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2006,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Full screenshot — /team/nick-ingraham/cv",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-715052378db101859313",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2006,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Full screenshot — /team/nick-ingraham/trajectory",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-e7b2d70f9e54c9997b78",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2006,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Mobile screenshot — /deadline-cascade",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-25dfad82e701111cb8c3",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2016,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Mobile screenshot — /my-items",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-2eedbecb8e2fcbee4cca",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2016,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Mobile screenshot — /pb",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-2799fc902eb7312447d0",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2016,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Mobile screenshot — /pulse",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-cbc8047bf2aab1262429",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2016,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Mobile screenshot — /network",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-70f1d61a1b6891865f25",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2016,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Mobile screenshot — /team/nick-ingraham/cv",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-a28afa0de7464970b443",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2016,
+              "column": 5
+            },
+            {
+              "title": "VISUAL: Mobile screenshot — /team/nick-ingraham/trajectory",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "39e2fd30345c5b49a67e-a1cf3f084ae2610af36f",
+              "file": "inspection-workflows.spec.ts",
+              "line": 2016,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-04-09T02:28:57.382Z",
+    "duration": 351.15200000000004,
+    "expected": 0,
+    "skipped": 161,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
