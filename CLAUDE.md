@@ -436,9 +436,11 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 
 **Run:** `bash scripts/run-tests.sh all` (quick/ui/sync/all modes)
 
-**MANDATORY: Clean up after tests.** Tests create prefixed data in both brain.db and D1. Sync pipeline cleanup is built into test_99. For Playwright test data, run after every test session:
+**MANDATORY: Clean up after tests.** Tests create prefixed data in both brain.db and D1. Sync pipeline cleanup is built into test_99. For Playwright + accumulated test data, run after every test session (split queries — combined OR clauses fail on wrangler):
 ```bash
-npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%' OR title LIKE 'SYNC-%' OR title LIKE 'JOURNEY%' OR title LIKE 'DAILYTEST%' OR title LIKE 'SYNCTEST%'"
+npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'SYNCTEST%'"
+npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%' OR title LIKE 'JOURNEY%' OR title LIKE 'DAILYTEST%'"
+npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'SYNC-%'"
 ```
 **Scan for gaps:** `python scripts/inspection-scanner.py --commits 5`
 **Registry:** `tests/feature-registry.json` (353 features, 302 covered = 85.6%)
@@ -495,8 +497,10 @@ npx vitest run src/__tests__/keyboard-shortcuts.test.tsx
 
 **Step 4: Clean up D1 test data** (MANDATORY after every test run)
 ```bash
-# Sync pipeline cleanup is automatic (test_99). Playwright cleanup:
-npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%' OR title LIKE 'SYNC-%' OR title LIKE 'JOURNEY%' OR title LIKE 'DAILYTEST%' OR title LIKE 'SYNCTEST%'"
+# Sync pipeline cleanup is automatic (test_99). Playwright + accumulated cleanup (split queries):
+npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'SYNCTEST%'"
+npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%' OR title LIKE 'JOURNEY%' OR title LIKE 'DAILYTEST%'"
+npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'SYNC-%'"
 ```
 
 ## Test Results (2026-04-09, verified)
