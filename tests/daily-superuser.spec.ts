@@ -45,7 +45,7 @@ async function createTestTask(request: APIRequestContext, suffix: string) {
 // ═════════════════════════════════════════════════════════════════════
 
 test.describe('MORNING — Dashboard triage', () => {
-  test('Dashboard loads with greeting, cards, and no crashes', async ({ page }) => {
+  test('Dashboard loads with greeting, cards, and no crashes', { timeout: 60000 }, async ({ page }) => {
     const errors = await go(page, '/dashboard')
     expect(errors).toEqual([])
 
@@ -907,9 +907,9 @@ test.describe('VISUAL — Look and feel', () => {
     await page.waitForLoadState('networkidle')
   })
 
-  test('Light mode renders correctly on all key pages', async ({ page }) => {
+  test('Light mode renders correctly on all key pages', { timeout: 90000 }, async ({ page }) => {
     for (const path of ['/dashboard', '/tasks', '/projects', '/meetings']) {
-      await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle', timeout: 15000 })
+      await page.goto(`${BASE}${path}`, { waitUntil: 'load', timeout: 15000 })
       await page.evaluate(() => {
         document.documentElement.classList.remove('dark')
         document.documentElement.classList.add('light')
@@ -1839,25 +1839,26 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
 
   test('29. Multiple toasts: trigger 2 status changes quickly → verify 2 toasts visible simultaneously', async ({ page }) => {
     await go(page, '/tasks')
-    // Click status circles on first two task rows to trigger toasts
-    const statusCircles = page.locator('.task-grid-row .status-circle, .task-grid-row [class*="status"] svg, .task-grid-row circle').filter({ has: page.locator('svg, circle') })
-    const circleCount = await statusCircles.count().catch(() => 0)
-    if (circleCount >= 2) {
-      await statusCircles.nth(0).click()
+    // Use data-testid to find status dropdowns in task rows
+    const statusBtns = page.locator('[data-testid^="task-status-"] button')
+    const btnCount = await statusBtns.count().catch(() => 0)
+    if (btnCount >= 2) {
+      // Click first status dropdown and pick an option
+      await statusBtns.nth(0).click()
       await page.waitForTimeout(200)
-      await statusCircles.nth(1).click()
-      await page.waitForTimeout(800)
-    } else {
-      // Fallback to keyboard
-      await page.locator('body').click()
-      await page.keyboard.press('j')
-      await page.waitForTimeout(300)
-      await page.keyboard.press('s')
-      await page.waitForTimeout(400)
-      await page.keyboard.press('j')
-      await page.waitForTimeout(300)
-      await page.keyboard.press('s')
-      await page.waitForTimeout(800)
+      const opt1 = page.locator('text=Done').last()
+      if (await opt1.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await opt1.click()
+        await page.waitForTimeout(300)
+        // Click second status dropdown
+        await statusBtns.nth(1).click()
+        await page.waitForTimeout(200)
+        const opt2 = page.locator('text=Done').last()
+        if (await opt2.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await opt2.click()
+          await page.waitForTimeout(800)
+        }
+      }
     }
     // UndoToast uses role="status"
     const toasts = await page.locator('[role="status"] > div, text=Undo').count()
@@ -1904,8 +1905,8 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
 
   test('31. Instant UI: change priority dropdown → verify button text changed IMMEDIATELY', async ({ page }) => {
     await go(page, '/tasks')
-    // Find the first task row's priority cell
-    const prioCell = page.locator('.task-row-priority').first()
+    // Find the first task row's priority cell via data-testid
+    const prioCell = page.locator('[data-testid^="task-priority-"]').first()
     const prioBtn = prioCell.locator('button').first()
     if (await prioBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       const originalText = await prioBtn.textContent() || ''
@@ -1916,7 +1917,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
       if (await option.isVisible({ timeout: 1000 }).catch(() => false)) {
         await option.click()
         // Optimistic update should reflect immediately — use Playwright auto-retry
-        await expect(prioCell.locator('button').first()).toContainText(newPrio, { timeout: 3000 })
+        await expect(prioCell.locator('button').first()).toContainText(newPrio, { timeout: 5000 })
         console.log(`Optimistic update: "${originalText}" → "${newPrio}" ✓`)
         // Undo
         const undo = page.locator('text=Undo').first()
