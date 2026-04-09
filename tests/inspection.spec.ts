@@ -143,7 +143,7 @@ test.describe('API — Write Endpoints', () => {
   })
 
   test('API POST: Create question (Ask the Lab)', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/questions`, { data: { title: 'INSPECTION question — delete', body: 'test question body', author_slug: 'nick-ingraham', project_slug: null } })
+    const res = await request.post(`${BASE}/api/questions`, { data: { question: 'INSPECTION question — delete', context: 'test question body', project_slug: null } })
     expect(res.status(), `Questions POST returned ${res.status()}: ${await res.text()}`).toBe(201)
   })
 
@@ -169,10 +169,10 @@ test.describe('API — Write Endpoints', () => {
 })
 
 test.describe('API — Schema Integrity', () => {
-  test('publications table has pub_date column', async ({ request }) => {
+  test('publications table has year column', async ({ request }) => {
     const res = await (await request.get(`${BASE}/api/publications`)).json()
     expect(res.data?.[0]).toBeTruthy()
-    expect('pub_date' in res.data[0]).toBe(true)
+    expect('year' in res.data[0]).toBe(true)
   })
 
   test('tasks have updated_at and deleted_at columns', async ({ request }) => {
