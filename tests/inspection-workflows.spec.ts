@@ -222,7 +222,7 @@ test.describe('API — Missing write endpoints', () => {
     const id = decisions.data?.[0]?.id
     if (!id) { test.skip(); return }
     const res = await request.post(`${BASE}/api/decisions/${id}/outcome`, {
-      data: { outcome: 'INSPECTION — delete', outcome_status: 'successful' }
+      data: { outcome: 'INSPECTION — delete', outcome_status: 'recorded' }
     })
     expect([200, 201]).toContain(res.status())
   })

@@ -110,32 +110,36 @@ export async function handleGetQuestionDetail(id: string, env: Env): Promise<Res
 
 export async function handleCreateQuestion(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
-    question: string;
+    question?: string;
+    title?: string;
+    body?: string;
     context?: string;
     project_slug?: string;
   };
 
-  if (!body.question?.trim()) return error('question is required', 400);
+  // Accept both 'question' and 'title' field names
+  const questionText = body.question || body.title;
+  if (!questionText?.trim()) return error('question is required', 400);
 
   const id = generateId();
   const askedBy = actorSlug(user.email);
 
   await env.DB.prepare(
-    'INSERT INTO lab_questions (id, question, context, asked_by, project_slug) VALUES (?, ?, ?, ?, ?)'
+    'INSERT INTO lab_questions (id, title, body, author_slug, project_slug) VALUES (?, ?, ?, ?, ?)'
   ).bind(
     id,
-    body.question.trim(),
-    body.context?.trim() || null,
+    questionText.trim(),
+    body.body || body.context?.trim() || null,
     askedBy,
     body.project_slug || null,
   ).run();
 
-  await logActivity(env, 'question', `New question: "${body.question.trim().slice(0, 80)}"`, askedBy, id, 'question');
+  await logActivity(env, 'question', `New question: "${questionText.trim().slice(0, 80)}"`, askedBy, id, 'question');
 
   // Check for @claude mention in question → create AI request + placeholder answer
   try {
-    if (body.question.toLowerCase().includes('@claude')) {
-      const aiPrompt = body.question.replace(/@claude/gi, '').trim();
+    if (questionText.toLowerCase().includes('@claude')) {
+      const aiPrompt = questionText.replace(/@claude/gi, '').trim();
       if (aiPrompt.length > 5) {
         const aiId = generateId();
         await env.DB.prepare(
