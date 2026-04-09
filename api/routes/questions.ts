@@ -16,7 +16,7 @@ async function handleClaudeMentionInAnswer(
 
   // Get question context
   const question = await env.DB.prepare(
-    'SELECT title as question, project_slug FROM lab_questions WHERE id = ?'
+    'SELECT question, project_slug FROM lab_questions WHERE id = ?'
   ).bind(questionId).first<{ question: string; project_slug: string | null }>();
 
   // Create AI request record
@@ -36,7 +36,7 @@ async function handleClaudeMentionInAnswer(
   // Create a placeholder answer from claude-ai
   const responseId = generateId();
   await env.DB.prepare(
-    'INSERT INTO lab_answers (id, question_id, body, author_slug) VALUES (?, ?, ?, ?)'
+    'INSERT INTO lab_answers (id, question_id, content, author_slug) VALUES (?, ?, ?, ?)'
   ).bind(responseId, questionId, 'Thinking about this... (AI response pending)', 'claude-ai').run();
 }
 
@@ -68,8 +68,7 @@ export async function handleGetQuestions(url: URL, env: Env): Promise<Response> 
   const projectSlug = url.searchParams.get('project_slug');
 
   let query = `
-    SELECT q.id, q.title as question, q.body as context, q.author_slug as asked_by,
-      q.project_slug, q.status, q.created_at,
+    SELECT q.*,
       (SELECT COUNT(*) FROM lab_answers a WHERE a.question_id = q.id) as answer_count
     FROM lab_questions q
     WHERE 1=1
@@ -89,13 +88,13 @@ export async function handleGetQuestions(url: URL, env: Env): Promise<Response> 
 
 export async function handleGetQuestionDetail(id: string, env: Env): Promise<Response> {
   const question = await env.DB.prepare(
-    'SELECT id, title as question, body as context, author_slug as asked_by, project_slug, status, created_at FROM lab_questions WHERE id = ?'
+    'SELECT * FROM lab_questions WHERE id = ?'
   ).bind(id).first<QuestionRow>();
 
   if (!question) return error('Question not found', 404);
 
   const answers = await env.DB.prepare(
-    'SELECT id, question_id, body as content, author_slug, accepted as is_accepted, created_at FROM lab_answers WHERE question_id = ? ORDER BY accepted DESC, created_at ASC'
+    'SELECT * FROM lab_answers WHERE question_id = ? ORDER BY is_accepted DESC, created_at ASC'
   ).bind(id).all<AnswerRow>();
 
   return json({
@@ -126,7 +125,7 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
   const askedBy = actorSlug(user.email);
 
   await env.DB.prepare(
-    'INSERT INTO lab_questions (id, title, body, author_slug, project_slug) VALUES (?, ?, ?, ?, ?)'
+    'INSERT INTO lab_questions (id, question, context, asked_by, project_slug) VALUES (?, ?, ?, ?, ?)'
   ).bind(
     id,
     questionText.trim(),
@@ -149,7 +148,7 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
 
         const responseId = generateId();
         await env.DB.prepare(
-          'INSERT INTO lab_answers (id, question_id, body, author_slug) VALUES (?, ?, ?, ?)'
+          'INSERT INTO lab_answers (id, question_id, content, author_slug) VALUES (?, ?, ?, ?)'
         ).bind(responseId, id, 'Thinking about this... (AI response pending)', 'claude-ai').run();
       }
     }
@@ -170,7 +169,7 @@ export async function handleCreateAnswer(questionId: string, request: Request, u
 
   // Verify question exists
   const question = await env.DB.prepare(
-    'SELECT id, title as question FROM lab_questions WHERE id = ?'
+    'SELECT id, question FROM lab_questions WHERE id = ?'
   ).bind(questionId).first<{ id: string; question: string }>();
   if (!question) return error('Question not found', 404);
 
@@ -178,7 +177,7 @@ export async function handleCreateAnswer(questionId: string, request: Request, u
   const authorSlug = actorSlug(user.email);
 
   await env.DB.prepare(
-    'INSERT INTO lab_answers (id, question_id, body, author_slug) VALUES (?, ?, ?, ?)'
+    'INSERT INTO lab_answers (id, question_id, content, author_slug) VALUES (?, ?, ?, ?)'
   ).bind(id, questionId, body.content.trim(), authorSlug).run();
 
   await logActivity(
@@ -212,7 +211,7 @@ export async function handleAcceptAnswer(answerId: string, user: AuthUser, env: 
 
   // Mark this answer as accepted
   await env.DB.prepare(
-    'UPDATE lab_answers SET accepted = 1 WHERE id = ?'
+    'UPDATE lab_answers SET is_accepted = 1 WHERE id = ?'
   ).bind(answerId).run();
 
   // Mark the question as resolved
