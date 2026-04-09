@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { fetchApi } from '../../lib/api'
 
 // ── Decision mutations ────────────────────────────────────
 
@@ -15,11 +16,10 @@ export function useCreateDecision() {
       tags?: string
       linked_projects?: string
     }) =>
-      fetch('/api/decisions', {
+      fetchApi('/api/decisions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
-      }).then((r) => r.json()),
+      }),
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['decisions'] })
@@ -33,11 +33,10 @@ export function useUpdateDecision() {
 
   return useMutation({
     mutationFn: ({ id, fields }: { id: string; fields: Record<string, unknown> }) =>
-      fetch(`/api/decisions/${id}/update`, {
+      fetchApi(`/api/decisions/${id}/update`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fields),
-      }).then((r) => r.json()),
+      }),
 
     onMutate: async ({ id, fields }) => {
       await queryClient.cancelQueries({ queryKey: ['decisions'] })
@@ -62,11 +61,10 @@ export function useUpdateDecisionOutcome() {
 
   return useMutation({
     mutationFn: ({ id, outcome, outcome_status, outcome_sentiment }: { id: string; outcome: string; outcome_status: string; outcome_sentiment?: string }) =>
-      fetch(`/api/decisions/${id}/outcome`, {
+      fetchApi(`/api/decisions/${id}/outcome`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ outcome, outcome_status, outcome_sentiment }),
-      }).then((r) => r.json()),
+      }),
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['decisions'] })

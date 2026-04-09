@@ -75,21 +75,10 @@ export function useToggleReaction() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: { target_type: string; target_id: string; emoji: string }) =>
-      fetch('/api/reactions', {
+      fetchApi('/api/reactions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
-      }).then((r) => r.json()),
-    onMutate: async (input) => {
-      const key = ['reactions', input.target_type, input.target_id]
-      await queryClient.cancelQueries({ queryKey: key })
-      const prev = queryClient.getQueryData(key)
-      // Optimistically toggle — invalidation will correct
-      return { prev, key }
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.prev) queryClient.setQueryData(context.key, context.prev)
-    },
+      }),
     onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: ['reactions', variables.target_type, variables.target_id] })
     },

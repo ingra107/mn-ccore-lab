@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createProject, updateProject, addProjectComment } from '../../lib/api'
-import { fetchApi } from '../../lib/api'
+import { createProject, updateProject, addProjectComment, fetchApi } from '../../lib/api'
 import type { Project } from '../../data/types'
 import type { Comment } from '../useApiData'
 
@@ -33,13 +32,10 @@ export function useUpdateProject(projectId: string) {
     mutationFn: (fields: Partial<Project>) => updateProject(projectId, fields),
 
     onMutate: async (fields) => {
-      // Cancel in-flight queries
       await queryClient.cancelQueries({ queryKey: ['projects'] })
 
-      // Snapshot current data for rollback
       const previousProjects = queryClient.getQueryData<Project[]>(['projects'])
 
-      // Optimistically update the cache
       if (previousProjects) {
         queryClient.setQueryData<Project[]>(
           ['projects'],
@@ -53,14 +49,12 @@ export function useUpdateProject(projectId: string) {
     },
 
     onError: (_err, _fields, context) => {
-      // Roll back on error
       if (context?.previousProjects) {
         queryClient.setQueryData(['projects'], context.previousProjects)
       }
     },
 
     onSettled: () => {
-      // Refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['projects'] })
       queryClient.invalidateQueries({ queryKey: ['stats'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })

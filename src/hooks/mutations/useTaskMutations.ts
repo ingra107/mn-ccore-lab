@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createTask, updateTaskStatus, updateTask, acknowledgeTask } from '../../lib/api'
+import { createTask, updateTaskStatus, updateTask, acknowledgeTask, fetchApi } from '../../lib/api'
 import type { TaskRow } from '../../lib/api'
 
 // ── Task mutations ──────────────────────────────────────────
@@ -125,11 +125,10 @@ export function useBulkUpdateTasks() {
 
   return useMutation({
     mutationFn: (input: { ids: string[]; action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete'; value?: string }) =>
-      fetch('/api/tasks/batch', {
+      fetchApi('/api/tasks/batch', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
-      }).then((r) => r.json()),
+      }),
 
     onMutate: async ({ ids, action, value }) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
