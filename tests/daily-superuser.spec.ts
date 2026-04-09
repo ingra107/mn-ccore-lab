@@ -1840,23 +1840,24 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
 
   test('29. Multiple toasts: trigger 2 status changes quickly → verify 2 toasts visible simultaneously', async ({ page }) => {
     await go(page, '/tasks')
-    // Use data-testid to find status dropdowns in task rows
-    const statusBtns = page.locator('[data-testid^="task-status-"] button')
-    const btnCount = await statusBtns.count().catch(() => 0)
-    if (btnCount >= 2) {
-      // Click first status dropdown and pick "Done"
-      await statusBtns.nth(0).click({ force: true })
+    // Use data-testid to find status cells in task rows
+    const statusCells = page.locator('[data-testid^="task-status-"]')
+    const cellCount = await statusCells.count().catch(() => 0)
+    if (cellCount >= 2) {
+      // Click first status button to open dropdown
+      await statusCells.nth(0).locator('button').first().click({ force: true })
       await page.waitForTimeout(300)
-      const opt1 = page.locator('text=Done').last()
-      if (await opt1.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await opt1.click()
+      // Pick option from the z-50 dropdown (scoped to the cell's parent)
+      const dropdown1 = statusCells.nth(0).locator('.absolute button, .z-50 button').first()
+      if (await dropdown1.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await dropdown1.click()
         await page.waitForTimeout(800)
-        // Click second status dropdown (force to bypass row click handler)
-        await statusBtns.nth(1).click({ force: true })
-        await page.waitForTimeout(500)
-        const opt2 = page.locator('text=Done').last()
-        if (await opt2.isVisible({ timeout: 1000 }).catch(() => false)) {
-          await opt2.click()
+        // Click second status button
+        await statusCells.nth(1).locator('button').first().click({ force: true })
+        await page.waitForTimeout(300)
+        const dropdown2 = statusCells.nth(1).locator('.absolute button, .z-50 button').first()
+        if (await dropdown2.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await dropdown2.click()
           await page.waitForTimeout(1000)
         }
       }
@@ -1914,7 +1915,8 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
       const newPrio = originalText.includes('Low') ? 'High' : 'Low'
       await prioBtn.click({ force: true })
       await page.waitForTimeout(300)
-      const option = page.locator(`text=${newPrio}`).last()
+      // Pick from dropdown scoped to the priority cell
+      const option = prioCell.locator(`.absolute button:has-text("${newPrio}"), .z-50 button:has-text("${newPrio}")`).first()
       if (await option.isVisible({ timeout: 2000 }).catch(() => false)) {
         await option.click()
         await page.waitForTimeout(1000)
