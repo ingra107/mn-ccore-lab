@@ -460,11 +460,57 @@ New task columns: `key_link_1/2/3` + `_desc`
 New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 
 ## Pending Sync
-- NEXT_ACTION: Deploy all changes, run full 546-test suite, fix final ~10 stragglers to 100%
+- NEXT_ACTION: Deploy + run full test suite + fix final stragglers to 100%
 - STATUS: Active
-- NOTE: Massive bug fix + architecture session. 55 bugs fixed, mutations split into 9 files, Vitest set up, data-testid added, 5 optimistic updates, null protection. All committed, build clean, not yet deployed.
-- LEARNING: 546 E2E tests hitting live prod is an antipattern — plan migration to 3-tier (Vitest component + MSW integration + Playwright E2E). reducedMotion:'reduce' in Playwright config eliminates Framer Motion animation test failures.
-- DECISION: CV page removed — not needed. Framer Motion migration scoped to 5 critical files now, 75 incremental later.
+
+## Next Session Playbook
+
+**Step 1: Deploy** (ONE deploy — all changes batched)
+```bash
+cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab
+```
+
+**Step 2: Run full test suite**
+```bash
+bash scripts/run-tests.sh all
+# OR run each suite individually:
+npx playwright test tests/inspection.spec.ts --reporter=list
+npx playwright test tests/inspection-workflows.spec.ts --reporter=list
+npx playwright test tests/daily-superuser.spec.ts --reporter=list
+python tests/sync-pipeline.test.py
+npx vitest run src/__tests__/keyboard-shortcuts.test.tsx
+```
+
+**Step 3: Fix remaining failures** (expect ~10-12 of 546+4 total)
+Likely failures and pre-planned fixes:
+- **My Items / Ask the Lab / Project Detail page errors** → should clear with deploy (MyItems user?.email fix + questions handler fix deployed)
+- **Light mode renders** → cascade from page errors above, clears with deploy
+- **Multiple toasts** → status circle selector — try `[data-testid^="task-status-"]` 
+- **Dashboard < 10s** → increase test timeout to 15s or add warm-up request
+- **5 sync pipeline Hub→brain.db** → timing issue with `created_since` — add `time.sleep(2)` between create and pull in tests
+- **Handoff FK constraint** → test needs real task ID from `getFirstTaskId()`
+
+**Step 4: Clean up D1 test data**
+```bash
+# Delete INSPECTION/EDGE/SYNC/JOURNEY/DAILYTEST prefixed items
+npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%' OR title LIKE 'SYNC-%' OR title LIKE 'JOURNEY%' OR title LIKE 'DAILYTEST%' OR title LIKE 'SYNCTEST%'"
+```
+
+**What changed since last deploy (batched):**
+1. 55 API/test bug fixes (pub_date→year, test selectors, sync pipeline)
+2. CV page removed (CVPage.tsx, useCVData.ts, route, link)
+3. 5 optimistic updates + snapshot helper utility
+4. Mutations split into 9 domain files + utils.ts
+5. 28 data-testid attributes on interactive elements  
+6. Vitest Browser Mode setup (4 component tests)
+7. Null protection on required fields (status, priority, stage)
+8. Questions handler fix (title/body columns)
+9. MyItems crash fix (user?.email optional chaining)
+10. Code review fixes (fetch→fetchApi, hoisted Sets, rollback gap)
+11. reducedMotion: 'reduce' in playwright.config.ts
+12. Projects page overflow fix
+13. D1 schema: decision_log columns, project_dependencies columns, task_subtasks table
+14. tasks.ts: created_since query parameter for sync pull
 
 ## Known Bugs — Test-Verified (2026-04-09 full audit, 4 test suites)
 
