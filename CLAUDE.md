@@ -29,8 +29,8 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 **Core principles (NEVER violate):**
 1. **Dark-first design.** Dark bg is deep neutral (#0b1017), NOT blue-tinted. Text is #e2e8f0 (not pure white — less glare). Light mode secondary.
 2. **Columnar tables, not card stacks.** Data pages use fixed-column tables with headers (Title|Assignee|Due|Status|Priority). Cards are for dashboards only. Fixed row height for vertical scanning.
-3. **Inline editability with visible affordance.** Every editable field shows "▾" dropdown indicator. Click cell → dropdown/picker by type. Auto-save on blur. No explicit save button. (Research: Pattern 4)
-4. **Typography: light weight, three opacity tiers.** Body font-weight: 400. Active text: 100% opacity. Normal: 70% (--ink = #e2e8f0). Muted: 55% (--muted = `rgba(148,163,184,0.55)`). NEVER use opacity below 0.5 on readable text in dark mode. NEVER 500+ weight for body text. Weight hierarchy: body=400, label/subtitle=500, card metrics=700, heading h1=600.
+3. **Inline editability with visible affordance.** Every editable field shows "▾" dropdown indicator. Click cell → dropdown/picker by type. Auto-save on blur. No explicit save button. Dropdowns with 5+ options show typeahead filter input + arrow key navigation (Airtable pattern). (Research: Pattern 4)
+4. **Typography: 3-tier weight, 5-tier opacity.** Weights: `--weight-body` (400, reading), `--weight-ui` (500, interactive/nav/badges), `--weight-heading` (600, titles/emphasis), `--weight-metric` (700, dashboard numbers only). Opacity: `--ink-primary` (1.0), `--ink-muted` (0.7), `--ink-label` (0.55), `--ink-hint` (0.4), `--ink-disabled` (0.3). NEVER opacity below 0.3 on readable dark-mode text.
 5. **One accent color per view.** Teal for interactive. Everything else neutral. Max 2 non-neutral colors per view.
 6. **More info, more readable.** Density ≠ clutter. LabSync puts 20 sidebar items that are MORE readable than our 17. The secret: font-weight 400, grouped sections with rhythm, consistent icon opacity.
 7. **Zero monospace in content.** JetBrains Mono for `<kbd>` only. ALL other text is DM Sans.
@@ -59,11 +59,15 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 - Inline controls: status/priority dropdowns editable in-row
 - Ghost-style action buttons (outline, not filled)
 
-### Micro-interactions (standardize to 2 constants)
-- `--transition-fast: 150ms` — hover, toggle, status change, row highlight
-- `--transition-panel: 250ms` — sidebar, detail panel, modal, card shadow
-- Card hover: -1px lift.
-- Inline durations standardized to 150ms (fast) / 250ms (panel) as of 2026-04-05.
+### Animation Timing (5 durations + 2 easings)
+- `--duration-instant: 0ms` — state toggles, checkbox
+- `--duration-fast: 100ms` — tooltips, button press
+- `--duration-normal: 150ms` — hover, row highlight (alias: `--transition-fast`)
+- `--duration-moderate: 200ms` — dropdowns, panels (alias: `--transition-panel`)
+- `--duration-slow: 300ms` — sidebar, modals, page transitions
+- `--ease-out: cubic-bezier(0.16, 1, 0.3, 1)` — entering elements
+- `--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1)` — moving elements
+- Card hover: -1px lift. Respects `prefers-reduced-motion` (all durations → 0ms).
 
 ### Sidebar
 - Font-weight 400 for nav items, 500 for active only
@@ -73,8 +77,20 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 - Logo: mark uses CSS filter for dark mode (`invert(1) brightness(1.5)`), text logo swaps to dark variant.
 
 ### Borders & Spacing
-- `--border-light` (gold tint) = semantic. `--border-subtle` (neutral) = structural. Don't mix.
-- Spacing: 4, 8, 12, 16, 20, 24, 32px grid. No off-grid values.
+- `--border-light` (gold tint) = semantic. `--border-subtle/default/strong` (neutral, 3 tiers) = structural.
+- Spacing: `--sp-xs` (4) / `--sp-sm` (8) / `--sp-md` (12) / `--sp-lg` (16) / `--sp-xl` (24) / `--sp-2xl` (32). Strict 8px grid.
+- Radius: `--radius-sm` (4) / `--radius-md` (6) / `--radius-lg` (8) / `--radius-xl` (12) / `--radius-2xl` (16) / `--radius-full` (9999) / `--radius-circle` (50%). All borderRadius MUST use tokens.
+- Typography scale: `--text-micro` (9) / `--text-caption` (10) / `--text-label` (11) / `--text-small` (12) / `--text-body` (13) / `--text-base` (14) / `--text-md` (16) / `--text-lg` (18) / `--text-xl` (24) / `--text-2xl` (32).
+
+### Surface Elevation (Linear pattern)
+- `--surface-0` (page bg) / `--surface-1` (panels, sidebar) / `--surface-2` (cards, dropdowns) / `--surface-3` (hover, active)
+- Dark mode: luminance stepping via `rgba(255,255,255, 0.02→0.06)`. Light mode: subtle tints.
+- Shadows: `--shadow-flat/card/card-hover/elevated/menu`. All boxShadow MUST use tokens.
+
+### Table Density (user-controlled)
+- 3 modes via `DensityToggle` component: Compact (36px) / Default (44px) / Relaxed (52px)
+- CSS vars: `--row-height`, `--row-padding-y`, `--cell-font-size`. Applied to all 7 data table pages.
+- Persisted per-user in localStorage. Numeric columns right-aligned, `tabular-nums` on dates.
 
 ### UX Research Patterns (from task-management-ux-patterns-research.md)
 

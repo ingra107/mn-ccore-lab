@@ -1,37 +1,58 @@
-# Session Handoff — 2026-04-10 (afternoon)
+# Session Handoff — 2026-04-10 (full day, 2 deploys)
 
 ## Summary
 
-14 commits, 1 deploy. short_name feature, table width fixes, test cleanup, Notes removal, Focus Next expansion, design research tokens.
+25+ commits across 2 deploys. Deploy 1: short_name + UX fixes. Deploy 2: design system elevation (pending deploy).
 
-## What was done
+## Deploy 1 (live)
 
-### Features
-1. **short_name field** — D1 migration v39, API allowlist, TypeScript types, inline-editable on ProjectDetail (click below title), subtitle on Projects list (both views). 55 projects synced from brain.db.
-2. **Focus Next expansion** — MyTasks page: auto-suggests top 3 by score, users can pin up to 5 total, reorder via arrows, pin/unpin on hover. localStorage persistence.
+1. **short_name field** — D1 v39 migration, API, types, inline-editable ProjectDetail, subtitle Projects list, 55 projects synced
+2. **Title column widths** — minmax floor across 9 data tables
+3. **Test cleanup** — POST /api/test-cleanup endpoint + expanded afterAll, 55 entries cleaned
+4. **Notes removed** from ProjectDetail Overview (Timeline on Activity is canonical)
+5. **Focus Next** — auto-suggest top 3, pin up to 5, reorder, localStorage
+6. **sync_d1_push fix** — project filter used NULL `type` column, changed to `domain` + name-based category inference + 20 slug remaps
 
-### Fixes
-3. **Title column widths** — TaskGridView + 8 other data tables: added `minmax` floor to prevent title wrapping. Projects/Tasks: `minmax(280px, 3fr)`. Others: `minmax(200px, 1fr)`.
-4. **Test cleanup** — New `POST /api/test-cleanup` endpoint cleans project_updates, ideas, lab_questions, decision_log, notifications, expertise_tags. `test-cleanup.ts` calls it in afterAll. Manually cleaned 55 test entries from D1.
-5. **Notes section removed** — Redundant with Timeline on Activity tab (both use project_updates table). Dead code cleaned.
-6. **sync_d1_push project filter** — Was filtering on `type` column (all NULL). Changed to `domain IN ('Research', 'Grants')` + name-based category inference. Added 20 slug remaps. Now 50 projects sync correctly.
+## Deploy 2 (pushed, not yet deployed)
 
-### Design Research
-7. **6 agents** researched Airtable, Vercel/Geist, Linear, Stripe, Notion design patterns. Full report at `docs/design-system-research.md`. Reference repo: VoltAgent/awesome-design-md.
-8. **Quick-win CSS tokens applied**: heading letter-spacing (--tracking-display/-heading), border tiers (--border-default/--border-strong), tabular-nums on date columns, h1/h2 tracking rules.
+Design system elevation — 10 implementation tasks from world-class research:
 
-### Test Results
-- Build passes (tsc + vite)
-- No Playwright run this session (visual-only changes + new features)
+### Token Foundation
+- 3-tier font weight system (`--weight-body/ui/heading/metric`)
+- 10-step typography scale (`--text-micro` through `--text-2xl`)
+- 5-tier opacity (`--ink-primary/muted/label/hint/disabled`)
+- Luminance surface elevation (`--surface-0/1/2/3`)
+- Menu shadow token (`--shadow-menu`)
+- 5 animation durations + 2 easings + `prefers-reduced-motion`
+- Radius tokens (`--radius-2xl/full/circle`)
 
-## Key Decisions
-- Notes removed from ProjectDetail Overview — Timeline on Activity is the canonical version
-- D1 project push now uses domain column + name inference instead of type column
-- Design research saved as reference doc, not code changes (except quick-win tokens)
+### Component Upgrades
+- DensityToggle — compact 36px / default 44px / relaxed 52px, localStorage, wired to all 7 table pages
+- InlineSelect + InlineCellSelect — typeahead filter (5+ options), arrow key nav, Enter/Escape
+- Sidebar — luminance elevation via `--surface-1`
 
-## Future Work (from design research)
-- Table density toggle (compact 36px / default 44px / relaxed 52px)
-- Luminance-based elevation (Linear pattern)
+### Migrations
+- 223 hardcoded borderRadius → tokens (77 files, zero remaining)
+- 20 hardcoded boxShadow → tokens (18 files, 6 intentional effects kept)
+- Right-aligned numeric columns (already in place)
+
+### Documentation Updated
+- CLAUDE.md Design System section — tokens, weights, opacity, borders, spacing, elevation, density, typeahead
+- design-system-research.md — full reference with sources
+- plan-design-system-elevation.md — 14-task implementation plan
+
+## Design Research
+
+6 agents researched Airtable, Vercel/Geist, Linear, Stripe, Notion. Key repo: VoltAgent/awesome-design-md.
+Full reference: `docs/design-system-research.md`
+
+## Deferred to Future Sessions
 - 10-step semantic color scale (Geist pattern)
-- Right-align numeric columns (Stripe pattern)
-- Three font weight system (400 body / 500 UI / 600 headings)
+- Hardcoded fontWeight mass migration (308 values — tokens defined)
+- Hardcoded transition mass migration (138 values — tokens defined)
+- Hardcoded opacity mass migration (700+ values — tokens defined)
+- Command palette (Linear Cmd+K)
+
+## Test Status
+- Build passes (tsc + vite)
+- No Playwright run (visual changes + new features)
