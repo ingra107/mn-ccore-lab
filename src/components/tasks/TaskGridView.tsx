@@ -133,7 +133,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
       {/* Virtualized scrollable area */}
       <div
         ref={parentRef}
-        style={{ flex: 1, overflow: 'auto', minHeight: Math.min(sorted.length * ROW_HEIGHT + 4, 600) }}
+        style={{ flex: 1, overflow: 'auto', minHeight: Math.min(sorted.length * ROW_HEIGHT + 4, 600), scrollbarGutter: 'stable' }}
       >
         {sorted.length > 0 ? (
           <div
