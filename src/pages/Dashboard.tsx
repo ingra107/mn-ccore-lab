@@ -399,6 +399,7 @@ export default function Dashboard() {
               color: 'var(--ink)',
               margin: 0,
               lineHeight: 1.15,
+              letterSpacing: 'var(--tracking-display)',
             }}
           >
             {greeting}

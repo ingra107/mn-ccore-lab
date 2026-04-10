@@ -56,8 +56,8 @@ export default function BentoCard({
             : 'var(--cream)',
           backdropFilter: glass ? 'blur(12px)' : undefined,
           WebkitBackdropFilter: glass ? 'blur(12px)' : undefined,
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-card)',
+          border: 'none',
+          boxShadow: '0 0 0 1px var(--border-subtle), var(--shadow-card)',
           transition: 'transform 0.25s ease, box-shadow 0.25s ease, background-color 0.3s ease',
         }}
         whileHover={noLift ? undefined : {

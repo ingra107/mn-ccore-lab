@@ -1,0 +1,122 @@
+[
+  {
+    "section": "1-Neutral",
+    "item": "--cream chroma reduced",
+    "pass": true,
+    "detail": "oklch(12% .005 250)"
+  },
+  {
+    "section": "1-Neutral",
+    "item": "Cards use surface tokens",
+    "pass": true,
+    "detail": "{\"bg\":\"oklch(0.12 0.005 250)\",\"bgImage\":\"linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04))\"}"
+  },
+  {
+    "section": "2-Sidebar",
+    "item": "Has background-image overlay",
+    "pass": true,
+    "detail": "linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04))"
+  },
+  {
+    "section": "2-Sidebar",
+    "item": "Border uses neutral color",
+    "pass": true,
+    "detail": "border: rgba(255, 255, 255, 0.06)"
+  },
+  {
+    "section": "3-CardWeight",
+    "item": "BentoCard h3 fontWeight = 500",
+    "pass": true,
+    "detail": "500"
+  },
+  {
+    "section": "4-Tasks",
+    "item": "PROJECT column exists",
+    "pass": true,
+    "detail": "TITLE, ASSIGNEE, PROJECT, DUE DATE, STATUS, PRIORITY, TITLE, ASSIGNEE, PROJECT, DUE DATE, STATUS, PRIORITY, TITLE, ASSIGNEE, PROJECT, DUE DATE, STATUS, PRIORITY, TITLE, ASSIGNEE, PROJECT, DUE DATE, STATUS, PRIORITY, TITLE, ASSIGNEE, PROJECT, DUE DATE, STATUS, PRIORITY"
+  },
+  {
+    "section": "4-Tasks",
+    "item": "Semantic column widths",
+    "pass": true,
+    "detail": "32px minmax(240px, 3fr) 120px 120px 110px 130px 90px 60px"
+  },
+  {
+    "section": "4-Tasks",
+    "item": "Hover-only badges exist",
+    "pass": true,
+    "detail": "{\"count\":8,\"firstOpacity\":\"0\"}"
+  },
+  {
+    "section": "4-Tasks",
+    "item": "Density toggle buttons",
+    "pass": true,
+    "detail": "3 buttons found"
+  },
+  {
+    "section": "5-Borders",
+    "item": "Structural borders are neutral",
+    "pass": true,
+    "detail": "gold: 0, neutral: 5"
+  },
+  {
+    "section": "6-SignIn",
+    "item": "Sign-in link present on Tasks",
+    "pass": true,
+    "detail": "[{\"text\":\"Sign in\",\"href\":\"https://mn-ccore-lab.pages.dev/api/auth/login\"}]"
+  },
+  {
+    "section": "6-SignIn",
+    "item": "Sign-in link on Personal",
+    "pass": true,
+    "detail": "1 links"
+  },
+  {
+    "section": "7-Projects",
+    "item": "Semantic column widths",
+    "pass": false,
+    "detail": "not found"
+  },
+  {
+    "section": "8-Deadlines",
+    "item": "PROJECT column exists",
+    "pass": true,
+    "detail": "TITLE, PROJECT, DUE DATE, ASSIGNEE, STATUS, TYPE, Overdue, This Week, Next Week, Later, Completed (525)"
+  },
+  {
+    "section": "9-Light",
+    "item": "Cards have visible border",
+    "pass": true,
+    "detail": "1px solid rgba(15, 25, 35, 0.06)"
+  },
+  {
+    "section": "9-Light",
+    "item": "Card hover is neutral",
+    "pass": true,
+    "detail": "--gold-light: oklch(95% .01 85)"
+  },
+  {
+    "section": "10-Responsive",
+    "item": "Projects shows mobile cards at 768px",
+    "pass": true,
+    "detail": "{\"mobileCards\":25,\"desktopRowsHidden\":26}"
+  },
+  {
+    "section": "11-TestData",
+    "item": "No test data in production",
+    "pass": true,
+    "detail": "0 test entries found"
+  },
+  {
+    "section": "12-Badges",
+    "item": "Badge opacity >= 0.14",
+    "pass": false,
+    "detail": "{\"bg\":\"rgba(148, 163, 184, 0.1)\",\"opacity\":0.1}"
+  },
+  {
+    "section": "13-Errors",
+    "item": "No console errors across pages",
+    "pass": true,
+    "detail": "All clean"
+  }
+]
