@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { GraduationCap, Plus, ChevronDown, ChevronRight, X, Check, AlertTriangle } from 'lucide-react'
+import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -47,6 +48,7 @@ function getTypeLabel(type: string): string {
 // ── Main Page ──────────────────────────────────────────────
 
 export default function MenteeMilestones() {
+  const [density, setDensity] = useDensity()
   const [filterMentee, setFilterMentee] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
@@ -155,6 +157,8 @@ export default function MenteeMilestones() {
             placeholder="All Statuses"
             options={STATUS_OPTIONS.map((s) => ({ value: s.value, label: s.label }))}
           />
+
+          <DensityToggle value={density} onChange={setDensity} />
 
           {/* Add button */}
           <button
@@ -271,7 +275,7 @@ export default function MenteeMilestones() {
             action={{ label: 'Add Milestone', onClick: () => setShowAddModal(true) }}
           />
         ) : (
-          <div className="table-container">
+          <div className={`table-container ${densityClass(density)}`}>
             {/* Column headers */}
             <div
               className="hidden sm:grid"
@@ -505,7 +509,7 @@ function MilestoneRow({
         className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
         style={{
           gridTemplateColumns: '140px 1fr 120px 120px 100px',
-          padding: '8px 16px',
+          padding: `var(--row-padding-y, 8px) 16px`,
           alignItems: 'center',
         }}
       >
@@ -586,7 +590,7 @@ function MilestoneRow({
       {/* Mobile row */}
       <div
         className="sm:hidden"
-        style={{ padding: '12px 16px' }}
+        style={{ padding: `var(--row-padding-y, 12px) 16px` }}
         onClick={onToggleExpand}
       >
         <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', marginBottom: '4px' }}>

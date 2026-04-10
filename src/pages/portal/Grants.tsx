@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Wallet, Calendar, Banknote, Diamond, ArrowRight, Clock, Telescope, Plus, ClipboardList, X, Check, AlertTriangle } from 'lucide-react'
+import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -60,6 +61,7 @@ function mechanismColor(mechanism: string): { bg: string; color: string } {
 
 export default function Grants() {
   const { data: grants = [], isLoading } = useGrantTimeline()
+  const [density, setDensity] = useDensity()
   const [searchKeywords, setSearchKeywords] = useState('')
   const [activeSearch, setActiveSearch] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
@@ -200,19 +202,22 @@ export default function Grants() {
               </span>
             )}
           </div>
-          <button
-            onClick={() => setShowAddMilestone(true)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
-            style={{
-              background: 'var(--teal)',
-              color: 'white',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <Plus size={12} />
-            Add Milestone
-          </button>
+          <div className="flex items-center gap-2">
+            <DensityToggle value={density} onChange={setDensity} />
+            <button
+              onClick={() => setShowAddMilestone(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
+              style={{
+                background: 'var(--teal)',
+                color: 'white',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <Plus size={12} />
+              Add Milestone
+            </button>
+          </div>
         </div>
 
         {milestonesLoading ? (
@@ -224,7 +229,7 @@ export default function Grants() {
             </p>
           </div>
         ) : (
-          <div>
+          <div className={densityClass(density)}>
             {/* Column headers */}
             <div
               className="hidden sm:grid"
@@ -262,7 +267,7 @@ export default function Grants() {
                   className="sm:grid items-center transition-colors"
                   style={{
                     gridTemplateColumns: 'minmax(140px, 1fr) 140px minmax(200px, 2fr) 100px 100px',
-                    padding: '8px 12px',
+                    padding: `var(--row-padding-y, 8px) 12px`,
                     borderBottom: '1px solid var(--border-subtle)',
                     background: m._isOverdue ? 'rgba(122,0,25,0.04)' : 'transparent',
                     borderLeft: m._isOverdue ? '3px solid var(--maroon)' : '3px solid transparent',

@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation, Download } from 'lucide-react'
+import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -41,6 +42,7 @@ export default function Deadlines() {
   const [view, setView] = useState<ViewMode>('list')
   const [filterType, setFilterType] = useState<string>('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [density, setDensity] = useDensity()
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
   const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
@@ -204,6 +206,7 @@ export default function Deadlines() {
             Export
           </button>
           <PageTooltip id="deadlines-timeline-hint" text="Switch to Timeline for a visual map" />
+          <DensityToggle value={density} onChange={setDensity} />
 
           <select
             value={filterType}
@@ -268,7 +271,7 @@ export default function Deadlines() {
         {isLoading ? (
           <TableSkeleton rows={8} cols={4} />
         ) : view === 'list' ? (
-          <div className="table-container">
+          <div className={`table-container ${densityClass(density)}`}>
             {/* Column headers — hidden on mobile */}
             <div
               className="hidden sm:grid"
@@ -396,7 +399,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
               className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
               style={{
                 gridTemplateColumns: 'minmax(200px, 1fr) 120px 100px 100px 80px',
-                padding: '8px 16px',
+                padding: `var(--row-padding-y, 8px) 16px`,
                 alignItems: 'center',
               }}
             >
@@ -463,7 +466,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
             {/* Mobile row — shown only on mobile */}
             <div
               className="sm:hidden hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
-              style={{ padding: '12px 16px' }}
+              style={{ padding: `var(--row-padding-y, 12px) 16px` }}
             >
               {/* Title */}
               <span style={{

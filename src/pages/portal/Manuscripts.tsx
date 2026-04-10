@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FileText, Plus, List, GitBranch } from 'lucide-react'
+import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
 import ToggleButton from '../../components/ToggleButton'
@@ -45,6 +46,7 @@ export default function Manuscripts() {
     'Track MN-CCORE manuscripts from idea to publication.'
   )
 
+  const [density, setDensity] = useDensity()
   const [view, setView] = useState<'list' | 'pipeline'>('list')
   const [filterPI, setFilterPI] = useState<string>('')
   const [filterCategory, setFilterCategory] = useState<string>('')
@@ -218,6 +220,7 @@ export default function Manuscripts() {
                 <option key={key} value={key}>{label}</option>
               ))}
             </select>
+            <DensityToggle value={density} onChange={setDensity} />
           </div>
         </PageHeader>
 
@@ -231,7 +234,7 @@ export default function Manuscripts() {
 
         {/* ─── LIST VIEW ─── */}
         {!isLoading && view === 'list' && (
-          <div className="table-container">
+          <div className={`table-container ${densityClass(density)}`}>
             {/* Table header — sortable */}
             <div
               className="hidden sm:grid"
@@ -320,7 +323,7 @@ export default function Manuscripts() {
                           className="manuscript-list-row hidden sm:grid"
                           style={{
                             gridTemplateColumns: 'minmax(200px, 1fr) 100px 100px 100px 72px',
-                            padding: '14px 24px',
+                            padding: `var(--row-padding-y, 14px) 24px`,
                             borderBottom: '1px solid var(--border-subtle)',
                             alignItems: 'center',
                             cursor: 'pointer',
@@ -398,7 +401,7 @@ export default function Manuscripts() {
                         <div
                           className="manuscript-list-row sm:hidden"
                           style={{
-                            padding: '12px 16px',
+                            padding: `var(--row-padding-y, 12px) 16px`,
                             borderBottom: '1px solid var(--border-subtle)',
                             cursor: 'pointer',
                             transition: 'background 0.12s ease-out',

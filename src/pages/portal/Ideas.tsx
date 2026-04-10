@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Plus, LayoutGrid, List, ThumbsUp, X, Lightbulb, ArrowUpDown } from 'lucide-react'
+import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { CardSkeleton, TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -42,6 +43,7 @@ const researchAreas = [
 
 export default function Ideas() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [density, setDensity] = useDensity()
   const [view, setView] = useState<ViewMode>('grid')
   const [showCreate, setShowCreate] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('')
@@ -199,11 +201,12 @@ export default function Ideas() {
             <option value="approved">Approved</option>
             <option value="parked">Parked</option>
           </select>
+          <DensityToggle value={density} onChange={setDensity} />
         </div>
       </PageHeader>
 
       {/* Content */}
-      <div className="mt-5">
+      <div className={`mt-5 ${densityClass(density)}`}>
         {isLoading ? (
           view === 'grid' ? <CardSkeleton count={6} /> : <TableSkeleton rows={6} cols={5} />
         ) : view === 'grid' ? (
@@ -335,7 +338,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
             {/* Desktop row — hidden on mobile */}
             <div
               className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
-              style={{ gridTemplateColumns: gridCols, padding: '10px 16px', alignItems: 'center' }}
+              style={{ gridTemplateColumns: gridCols, padding: `var(--row-padding-y, 10px) 16px`, alignItems: 'center' }}
             >
               {/* Votes */}
               <button
@@ -387,7 +390,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
             {/* Mobile row — shown only on mobile */}
             <div
               className="sm:hidden hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
-              style={{ padding: '12px 16px' }}
+              style={{ padding: `var(--row-padding-y, 12px) 16px` }}
             >
               {/* Title */}
               <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>

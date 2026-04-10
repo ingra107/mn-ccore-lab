@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
+import DensityToggle, { useDensity, densityClass } from '../components/DensityToggle'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
@@ -102,6 +103,7 @@ export default function Projects() {
     },
   })
   const headerRef = useScrollReveal<HTMLDivElement>()
+  const [density, setDensity] = useDensity()
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list')
   const [showDeps, setShowDeps] = useState(false)
@@ -306,8 +308,9 @@ export default function Projects() {
             </div>
           </div>
 
-          {/* Summary stats + dependency toggle */}
+          {/* Summary stats + density + dependency toggle */}
           <div className="flex items-center gap-3">
+            <DensityToggle value={density} onChange={setDensity} />
             <span
               className="text-xs"
               style={{
@@ -356,7 +359,7 @@ export default function Projects() {
 
         {/* ─── LIST VIEW ─── */}
         {viewMode === 'list' && (
-          <div className="table-container">
+          <div className={`table-container ${densityClass(density)}`}>
 
             {/* Table header */}
             <div
@@ -459,7 +462,7 @@ export default function Projects() {
                             className={`project-list-row${isFocused ? ' project-row-focused' : ''} hidden sm:grid`}
                             style={{
                               gridTemplateColumns: 'minmax(280px, 3fr) 1fr 1fr 1fr 80px',
-                              padding: '14px 24px',
+                              padding: `var(--row-padding-y, 14px) 24px`,
                               borderBottom: '1px solid var(--border-subtle)',
                               alignItems: 'center',
                               cursor: 'pointer',
@@ -634,7 +637,7 @@ export default function Projects() {
                           <div
                             className={`project-list-row${isFocused ? ' project-row-focused' : ''} sm:hidden`}
                             style={{
-                              padding: '12px 16px',
+                              padding: `var(--row-padding-y, 12px) 16px`,
                               borderBottom: '1px solid var(--border-subtle)',
                               cursor: 'pointer',
                               transition: 'background 0.12s ease-out',
