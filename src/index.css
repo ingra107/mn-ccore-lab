@@ -249,6 +249,14 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   border-color: var(--teal);
 }
 
+/* Dropdown/menu surface — luminance elevation on dark */
+.menu-surface {
+  background: var(--cream);
+}
+.dark .menu-surface {
+  background: color-mix(in oklch, var(--cream), white 4%);
+}
+
 /* Carried forward badge */
 .carried-badge {
   display: inline-flex;

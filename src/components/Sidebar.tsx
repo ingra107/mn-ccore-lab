@@ -168,6 +168,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
       }`}
       style={{
         backgroundColor: 'var(--cream)',
+        backgroundImage: 'linear-gradient(var(--surface-1), var(--surface-1))',
         borderColor: 'var(--border-light)',
       }}
     >
