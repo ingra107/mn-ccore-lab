@@ -60,7 +60,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
+        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
         <TrendingUp size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -125,7 +125,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
               <line
                 x1={padding.left} y1={yScale(v)}
                 x2={width - padding.right} y2={yScale(v)}
-                stroke="var(--border-light, #e8eff5)" strokeWidth={1}
+                stroke="var(--border-subtle, #e8eff5)" strokeWidth={1}
               />
               <text
                 x={padding.left - 8} y={yScale(v) + 4}
@@ -183,7 +183,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
+        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
         <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -262,7 +262,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                     height: '20px',
                     borderRadius: 'var(--radius-sm)',
                     overflow: 'hidden',
-                    backgroundColor: 'var(--border-light, #e8eff5)',
+                    backgroundColor: 'var(--border-subtle, #e8eff5)',
                     position: 'relative',
                   }}
                 >
@@ -426,7 +426,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
+        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
         <BookOpen size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -586,7 +586,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
+        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
         <BarChart3 size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -697,7 +697,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
+        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
         <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -784,7 +784,7 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
+        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
         <Flag size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -916,7 +916,7 @@ function Divider() {
     <div
       style={{
         height: '1px',
-        background: 'linear-gradient(90deg, transparent, var(--border-light, #e8eff5), transparent)',
+        background: 'linear-gradient(90deg, transparent, var(--border-subtle, #e8eff5), transparent)',
         margin: '2.5rem 0',
       }}
     />
@@ -1107,7 +1107,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
     return (
       <div
         className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)', border: '1px solid var(--border-light)' }}
+        style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
         <ClipboardList size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -1474,7 +1474,7 @@ export default function TrajectoryPage() {
             fontSize: '12px',
             background: 'var(--ice)',
             color: 'var(--slate)',
-            border: '1px solid var(--border-light, #e8eff5)',
+            border: '1px solid var(--border-subtle, #e8eff5)',
             cursor: 'pointer',
           }}
         >
@@ -1489,7 +1489,7 @@ export default function TrajectoryPage() {
         style={{
           display: 'flex',
           gap: '0',
-          borderBottom: '2px solid var(--border-light, #e8eff5)',
+          borderBottom: '2px solid var(--border-subtle, #e8eff5)',
           marginBottom: '2rem',
         }}
       >

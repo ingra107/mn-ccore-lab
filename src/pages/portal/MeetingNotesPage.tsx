@@ -66,7 +66,7 @@ export default function MeetingNotesPage() {
       </div>
 
       {/* How it works */}
-      <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+      <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
         <h3 className="text-sm font-normal mb-3 flex items-center gap-2" style={{ color: 'var(--ink)' }}>
           <Brain size={16} style={{ color: 'var(--teal)' }} />
           How Meeting Transcripts Work
@@ -106,7 +106,7 @@ export default function MeetingNotesPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search meetings..."
               className="w-full rounded-lg border pl-8 pr-3 py-1.5 text-xs outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', background: 'var(--cream)' }}
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', background: 'var(--cream)' }}
             />
           </div>
         </div>
@@ -116,7 +116,7 @@ export default function MeetingNotesPage() {
               <Link
                 to={`/meetings/${m.id}`}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm"
-                style={{ borderColor: 'var(--border-light)', textDecoration: 'none' }}
+                style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
               >
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: m.notes ? 'rgba(34,197,94,0.08)' : 'rgba(100,116,139,0.06)' }}>
                   {m.notes ? <CheckCircle2 size={16} style={{ color: 'var(--green)' }} /> : <FileText size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} />}
@@ -225,9 +225,9 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(15,25,35,0.5)' }} onClick={onClose}>
-      <div ref={modalRef} role="dialog" aria-modal="true" aria-label="Process Meeting Notes" className="rounded-xl shadow-xl border w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }} onClick={(e) => e.stopPropagation()}>
-        <div className="px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
-          <h3 className="text-lg flex items-center gap-2" style={{ fontWeight: 400, color: 'var(--ink)' }}>
+      <div ref={modalRef} role="dialog" aria-modal="true" aria-label="Process Meeting Notes" className="rounded-xl shadow-xl border w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }} onClick={(e) => e.stopPropagation()}>
+        <div className="px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-subtle)' }}>
+          <h3 className="text-lg flex items-center gap-2" style={{ fontWeight: 500, color: 'var(--ink)' }}>
             <Brain size={18} style={{ color: 'var(--teal)' }} />
             Process Meeting
           </h3>
@@ -276,7 +276,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               value={meetingId}
               onChange={(e) => setMeetingId(e.target.value)}
               className="w-full rounded-md border px-3 py-2 text-sm"
-              style={{ borderColor: 'var(--border-light)', cursor: 'pointer' }}
+              style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer' }}
             >
               <option value="">Select meeting...</option>
               {meetings.map((m) => (
@@ -297,13 +297,13 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
                 placeholder="Paste your meeting transcript here..."
                 rows={8}
                 className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-                style={{ borderColor: 'var(--border-light)' }}
+                style={{ borderColor: 'var(--border-subtle)' }}
               />
             </div>
           ) : (
             <div
               className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
-              style={{ borderColor: 'var(--border-light)' }}
+              style={{ borderColor: 'var(--border-subtle)' }}
             >
               <Upload size={32} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 8px' }} />
               <p className="text-sm" style={{ color: 'var(--slate)' }}>
@@ -359,7 +359,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
 
           {/* Submit */}
           <div className="flex justify-end gap-2">
-            <button onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
+            <button onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
               Cancel
             </button>
             <button

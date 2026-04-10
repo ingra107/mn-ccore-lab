@@ -99,7 +99,7 @@ export default function MeetingPrep() {
             <button
               onClick={() => window.print()}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors"
-              style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer', opacity: 0.6 }}
+              style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.6 }}
               title="Print prep sheet"
             >
               <Printer size={12} />

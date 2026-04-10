@@ -687,7 +687,7 @@ export default function Digest() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title, author, or journal..."
               className="w-full max-w-md rounded-full border px-3 py-2 pl-9 text-xs outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream, white)' }}
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream, white)' }}
             />
           </div>
 
@@ -783,7 +783,7 @@ export default function Digest() {
                   navigator.clipboard.writeText(bib)
                 }}
                 className="flex items-center gap-1 text-[11px] px-2 py-1 rounded transition-colors"
-                style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer', opacity: 0.6 }}
+                style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: 0.6 }}
                 title="Copy saved papers as bibliography"
               >
                 <Copy size={10} />

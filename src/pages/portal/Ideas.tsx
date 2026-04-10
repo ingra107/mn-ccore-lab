@@ -253,7 +253,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
   const status = statusConfig[idea.status] || statusConfig.new
 
   return (
-    <div className="rounded-xl border p-4 flex flex-col" style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}>
+    <div className="rounded-xl border p-4 flex flex-col" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ color: status.color, backgroundColor: status.bg }}>
@@ -532,11 +532,11 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
         aria-modal="true"
         aria-label="New Idea"
         className="rounded-xl shadow-xl border w-full max-w-md mx-4"
-        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
+        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-lg" style={{ fontWeight: 400, color: 'var(--ink)' }}>
+          <h3 className="text-lg" style={{ fontWeight: 500, color: 'var(--ink)' }}>
             New Idea
           </h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
@@ -555,7 +555,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What's the idea?"
               className="w-full rounded-md border px-3 py-2 text-sm outline-none"
-              style={{ borderColor: 'var(--border-light)' }}
+              style={{ borderColor: 'var(--border-subtle)' }}
               autoFocus
             />
           </div>
@@ -570,7 +570,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
               placeholder="Why is this interesting? What would it involve?"
               rows={3}
               className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-              style={{ borderColor: 'var(--border-light)' }}
+              style={{ borderColor: 'var(--border-subtle)' }}
             />
           </div>
 
@@ -582,7 +582,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
               value={researchArea}
               onChange={(e) => setResearchArea(e.target.value)}
               className="w-full rounded-md border px-2.5 py-2 text-sm"
-              style={{ borderColor: 'var(--border-light)', cursor: 'pointer' }}
+              style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer' }}
             >
               <option value="">Select area (optional)</option>
               {researchAreas.map((a) => (
@@ -592,10 +592,10 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
           </div>
 
           <div className="flex justify-end gap-2 mt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
               Cancel
             </button>
-            <button type="submit" disabled={!title.trim()} className="px-4 py-2 rounded-md text-sm font-medium" style={{ backgroundColor: !title.trim() ? 'var(--border-light)' : 'var(--teal)', color: !title.trim() ? 'var(--slate)' : 'white', cursor: !title.trim() ? 'not-allowed' : 'pointer', border: 'none' }}>
+            <button type="submit" disabled={!title.trim()} className="px-4 py-2 rounded-md text-sm font-medium" style={{ backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--teal)', color: !title.trim() ? 'var(--slate)' : 'white', cursor: !title.trim() ? 'not-allowed' : 'pointer', border: 'none' }}>
               Submit Idea
             </button>
           </div>

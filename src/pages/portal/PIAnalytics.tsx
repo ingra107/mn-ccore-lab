@@ -118,7 +118,7 @@ function CompletionRing({ rate, size = 120 }: { rate: number; size?: number }) {
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
       <circle
         cx={size / 2} cy={size / 2} r={radius}
-        fill="none" stroke="var(--border-light)" strokeWidth={strokeWidth}
+        fill="none" stroke="var(--border-subtle)" strokeWidth={strokeWidth}
       />
       <circle
         cx={size / 2} cy={size / 2} r={radius}
@@ -187,7 +187,7 @@ function BarChart({ data, width = 320, height = 140 }: {
           y1={8 + chartHeight * (1 - frac)}
           x2={width - 4}
           y2={8 + chartHeight * (1 - frac)}
-          stroke="var(--border-light)"
+          stroke="var(--border-subtle)"
           strokeWidth={1}
           strokeDasharray={frac === 0 ? undefined : '3 3'}
         />
@@ -446,7 +446,7 @@ export default function PIAnalytics() {
               setTimeout(() => setCopied(false), 2000)
             }}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-            style={{ color: copied ? 'var(--green)' : 'var(--slate)', border: '1px solid var(--border-light)', background: 'none', cursor: 'pointer', opacity: 0.7 }}
+            style={{ color: copied ? 'var(--green)' : 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.7 }}
           >
             <Copy size={11} />
             {copied ? 'Copied' : 'Copy Report'}
@@ -454,7 +454,7 @@ export default function PIAnalytics() {
           <button
             onClick={() => window.print()}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-            style={{ color: 'var(--slate)', border: '1px solid var(--border-light)', background: 'none', cursor: 'pointer', opacity: 0.7 }}
+            style={{ color: 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.7 }}
           >
             <Printer size={11} />
             Print
@@ -507,7 +507,7 @@ export default function PIAnalytics() {
               Commitment Scorecard
             </h3>
           </div>
-          <div className="rounded-xl border p-6" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="rounded-xl border p-6" style={{ borderColor: 'var(--border-subtle)' }}>
             <div className="flex items-center gap-8 flex-wrap">
               <div className="relative flex-shrink-0">
                 <CompletionRing rate={commitRate} size={120} />
@@ -559,7 +559,7 @@ export default function PIAnalytics() {
               Task creation to completion
             </span>
           </div>
-          <div className="rounded-xl border p-6" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="rounded-xl border p-6" style={{ borderColor: 'var(--border-subtle)' }}>
             <div className="flex items-center gap-6 mb-4">
               <div>
                 <div className="flex items-center gap-2">
@@ -649,7 +649,7 @@ export default function PIAnalytics() {
               Last 30 days
             </span>
           </div>
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
             {data && data.teamEngagement.length > 0 ? (
               <div className="flex flex-col gap-2.5">
                 {data.teamEngagement.map((member) => {
@@ -675,7 +675,7 @@ export default function PIAnalytics() {
                       </span>
                       <div
                         className="flex-1 h-5 rounded overflow-hidden"
-                        style={{ backgroundColor: 'var(--border-light)' }}
+                        style={{ backgroundColor: 'var(--border-subtle)' }}
                       >
                         <div
                           className="h-full rounded flex items-center px-2"
@@ -705,7 +705,7 @@ export default function PIAnalytics() {
                     </div>
                   )
                 })}
-                <div className="flex items-center gap-2 mt-1 pt-2" style={{ borderTop: '1px dashed var(--border-light)' }}>
+                <div className="flex items-center gap-2 mt-1 pt-2" style={{ borderTop: '1px dashed var(--border-subtle)' }}>
                   <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                     Score = comments x3 + updates x2 + completions x1
                   </span>
@@ -733,7 +733,7 @@ export default function PIAnalytics() {
               Mentee Publication Velocity
             </h3>
           </div>
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
             {data && data.menteeVelocity.length > 0 ? (
               <table className="w-full">
                 <thead>
@@ -756,7 +756,7 @@ export default function PIAnalytics() {
                   {data.menteeVelocity.map((mentee) => {
                     const person = getPersonInfo(mentee.slug)
                     return (
-                      <tr key={mentee.slug} className="border-t" style={{ borderColor: 'var(--border-light)' }}>
+                      <tr key={mentee.slug} className="border-t" style={{ borderColor: 'var(--border-subtle)' }}>
                         <td className="py-2.5">
                           <div className="flex items-center gap-2">
                             <div style={{ width: 20, height: 20, flexShrink: 0 }}>
@@ -797,7 +797,7 @@ export default function PIAnalytics() {
                               className="text-[10px] px-1.5 py-0.5 rounded"
                               style={{
                                 color: 'var(--slate)',
-                                backgroundColor: 'var(--border-light)',
+                                backgroundColor: 'var(--border-subtle)',
                               }}
                             >
                               Pre-pub
@@ -831,7 +831,7 @@ export default function PIAnalytics() {
               Publications per Quarter
             </h3>
           </div>
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
             {data && data.pubsByQuarter.length > 0 ? (
               <BarChart
                 data={data.pubsByQuarter.map(q => ({
@@ -860,7 +860,7 @@ export default function PIAnalytics() {
               Grant Pipeline & Projects
             </h3>
           </div>
-          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
             {/* Grants: submitted vs funded */}
             <div className="mb-5">
               <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)' }}>
@@ -874,7 +874,7 @@ export default function PIAnalytics() {
                 <div className="mt-2">
                   <div
                     className="h-2.5 rounded-full overflow-hidden"
-                    style={{ backgroundColor: 'var(--border-light)' }}
+                    style={{ backgroundColor: 'var(--border-subtle)' }}
                   >
                     <div
                       className="h-full rounded-full"
@@ -922,7 +922,7 @@ export default function PIAnalytics() {
             Leadership Insights
           </h3>
         </div>
-        <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
           {insights.length > 0 ? (
             <div className="flex flex-col gap-3">
               {insights.map((insight, i) => {

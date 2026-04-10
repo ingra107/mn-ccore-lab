@@ -40,7 +40,7 @@ function PipelineCard() {
     return [
       { label: 'In Preparation', status: 'In Preparation', count: prep, color: '#ffffff', colorEnd: '#e8e0cc' },
       { label: 'In Review', status: 'In Review', count: review, color: '#c9a84c', colorEnd: '#b8943e' },
-      { label: 'Published', status: 'Published', count: published, color: '#0f1923', colorEnd: '#1a2a3d' },
+      { label: 'Published', status: 'Published', count: published, color: '#0f1923', colorEnd: 'oklch(0.16 0.005 250)' },
     ]
   }, [publications])
 

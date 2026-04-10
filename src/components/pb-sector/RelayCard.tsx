@@ -177,7 +177,7 @@ export default function RelayCard() {
                         onChange={(e) => setFrom(e.target.value)}
                         style={{
                           fontSize: '10px', padding: '3px 4px', borderRadius: 4,
-                          border: '1px solid var(--border-light)', background: 'var(--cream)',
+                          border: '1px solid var(--border-subtle)', background: 'var(--cream)',
                           color: 'var(--ink)', flex: 1,
                         }}
                       >
@@ -190,7 +190,7 @@ export default function RelayCard() {
                         onChange={(e) => setTo(e.target.value)}
                         style={{
                           fontSize: '10px', padding: '3px 4px', borderRadius: 4,
-                          border: '1px solid var(--border-light)', background: 'var(--cream)',
+                          border: '1px solid var(--border-subtle)', background: 'var(--cream)',
                           color: 'var(--ink)', flex: 1,
                         }}
                       >
@@ -205,7 +205,7 @@ export default function RelayCard() {
                       onChange={(e) => setTopic(e.target.value)}
                       style={{
                         fontSize: '10px', padding: '4px 6px', borderRadius: 4,
-                        border: '1px solid var(--border-light)', background: 'var(--cream)',
+                        border: '1px solid var(--border-subtle)', background: 'var(--cream)',
                         color: 'var(--ink)', outline: 'none', width: '100%',
                       }}
                     />
@@ -216,7 +216,7 @@ export default function RelayCard() {
                       rows={2}
                       style={{
                         fontSize: '10px', padding: '4px 6px', borderRadius: 4,
-                        border: '1px solid var(--border-light)', background: 'var(--cream)',
+                        border: '1px solid var(--border-subtle)', background: 'var(--cream)',
                         color: 'var(--ink)', outline: 'none', resize: 'vertical', width: '100%',
                         fontFamily: 'inherit',
                       }}
@@ -240,7 +240,7 @@ export default function RelayCard() {
                         className="px-2 py-1 rounded"
                         style={{
                           fontSize: '10px', background: 'none',
-                          border: '1px solid var(--border-light)',
+                          border: '1px solid var(--border-subtle)',
                           color: 'var(--slate)', cursor: 'pointer',
                         }}
                       >

@@ -238,7 +238,7 @@ export function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onS
       {candidates.length > 0 && (
         <div
           className="absolute left-0 right-0 mt-1 z-50 rounded-lg shadow-lg border py-1 max-h-[200px] overflow-y-auto"
-          style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
+          style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
         >
           {candidates.map(t => (
             <button

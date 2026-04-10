@@ -260,7 +260,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
       </nav>
 
       {/* Bottom section */}
-      <div className="border-t px-2 py-2" style={{ borderColor: 'var(--border-light)' }}>
+      <div className="border-t px-2 py-2" style={{ borderColor: 'var(--border-subtle)' }}>
         {/* Report a Bug */}
         {!collapsed && (
           <a
@@ -284,7 +284,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             <span className="flex-1">Search</span>
             <kbd
               className="text-[9px] px-1.5 py-0.5 rounded border"
-              style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-light)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
+              style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
             >
               {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+K
             </kbd>

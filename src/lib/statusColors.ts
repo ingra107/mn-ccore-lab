@@ -56,43 +56,43 @@ export const STATUS_COLOR: Record<string, string> = {
 
 export const STATUS_BG_EXTENDED: Record<string, string> = {
   // Core task statuses
-  todo: 'rgba(148, 163, 184, 0.12)',
-  in_progress: 'rgba(45, 138, 138, 0.12)',
-  done: 'rgba(22, 163, 74, 0.12)',
-  blocked: 'rgba(122, 0, 25, 0.12)',
-  overdue: 'rgba(122, 0, 25, 0.12)',
+  todo: 'rgba(148, 163, 184, 0.15)',
+  in_progress: 'rgba(45, 138, 138, 0.15)',
+  done: 'rgba(22, 163, 74, 0.15)',
+  blocked: 'rgba(122, 0, 25, 0.15)',
+  overdue: 'rgba(122, 0, 25, 0.15)',
 
   // Submission / revision statuses
-  pending: 'rgba(148, 163, 184, 0.12)',
-  submitted: 'rgba(45, 138, 138, 0.12)',
-  resubmitted: 'rgba(45, 138, 138, 0.12)',
-  accepted: 'rgba(22, 163, 74, 0.12)',
-  rejected: 'rgba(122, 0, 25, 0.12)',
-  wont_fix: 'rgba(122, 0, 25, 0.12)',
-  draft: 'rgba(148, 163, 184, 0.12)',
-  review: 'rgba(201, 168, 76, 0.12)',
-  review_received: 'rgba(201, 168, 76, 0.12)',
-  revision_due: 'rgba(122, 0, 25, 0.12)',
-  withdrawn: 'rgba(100, 116, 139, 0.12)',
-  completed: 'rgba(22, 163, 74, 0.12)',
+  pending: 'rgba(148, 163, 184, 0.15)',
+  submitted: 'rgba(45, 138, 138, 0.15)',
+  resubmitted: 'rgba(45, 138, 138, 0.15)',
+  accepted: 'rgba(22, 163, 74, 0.15)',
+  rejected: 'rgba(122, 0, 25, 0.15)',
+  wont_fix: 'rgba(122, 0, 25, 0.15)',
+  draft: 'rgba(148, 163, 184, 0.15)',
+  review: 'rgba(201, 168, 76, 0.15)',
+  review_received: 'rgba(201, 168, 76, 0.15)',
+  revision_due: 'rgba(122, 0, 25, 0.15)',
+  withdrawn: 'rgba(100, 116, 139, 0.15)',
+  completed: 'rgba(22, 163, 74, 0.15)',
 
   // Conference-specific
-  planning: 'rgba(148, 163, 184, 0.12)',
-  preparing: 'rgba(201, 168, 76, 0.12)',
-  presented: 'rgba(22, 163, 74, 0.12)',
+  planning: 'rgba(148, 163, 184, 0.15)',
+  preparing: 'rgba(201, 168, 76, 0.15)',
+  presented: 'rgba(22, 163, 74, 0.15)',
 
   // Cascade-specific
-  'on-track': 'rgba(45, 138, 138, 0.12)',
-  'at-risk': 'rgba(201, 168, 76, 0.12)',
+  'on-track': 'rgba(45, 138, 138, 0.15)',
+  'at-risk': 'rgba(201, 168, 76, 0.15)',
 
   // Materials
-  not_started: 'rgba(148, 163, 184, 0.12)',
-  drafting: 'rgba(201, 168, 76, 0.12)',
-  final: 'rgba(22, 163, 74, 0.12)',
+  not_started: 'rgba(148, 163, 184, 0.15)',
+  drafting: 'rgba(201, 168, 76, 0.15)',
+  final: 'rgba(22, 163, 74, 0.15)',
 }
 
 const FALLBACK_COLOR = 'var(--slate)'
-const FALLBACK_BG = 'rgba(148, 163, 184, 0.12)'
+const FALLBACK_BG = 'rgba(148, 163, 184, 0.15)'
 
 /**
  * Returns the foreground CSS var for a status string.

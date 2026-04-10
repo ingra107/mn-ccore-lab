@@ -119,6 +119,11 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
               </motion.button>
             )}
           </div>
+          {!isAuthenticated && import.meta.env.PROD && (
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, marginTop: '4px', display: 'inline-block' }}>
+              <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to post updates
+            </span>
+          )}
         </form>
 
         {/* Updates list */}

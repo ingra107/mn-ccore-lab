@@ -98,7 +98,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
   return (
     <div className="table-container" style={{ padding: '16px 20px' }}>
       {/* Sort bar */}
-      <div className="flex items-center gap-1 mb-3 pb-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
+      <div className="flex items-center gap-1 mb-3 pb-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
         <span className="text-[11px] uppercase tracking-wider mr-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           Sort:
         </span>
@@ -124,7 +124,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
                     <CheckCircle2 size={12} style={{ color: 'white' }} />
                   </div>
                 ) : (
-                  <div style={{ width: 18, height: 18, borderRadius: 4, border: '2px solid var(--border-light)' }} />
+                  <div style={{ width: 18, height: 18, borderRadius: 4, border: '2px solid var(--border-subtle)' }} />
                 )}
               </div>
             )}

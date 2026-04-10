@@ -495,7 +495,7 @@ export default function TodayView() {
       className="rounded-xl px-5 py-4"
       style={{
         background: 'var(--gold-light)',
-        border: '1px solid var(--border-light)',
+        border: '1px solid var(--border-subtle)',
       }}
     >
       {/* Last synced hint */}

@@ -49,7 +49,7 @@ export default function ViewDropdown({ currentView, onSelect, views }: ViewDropd
       {open && (
         <div
           className="absolute top-full left-0 mt-1 rounded-lg border shadow-lg z-50 py-1 min-w-[200px]"
-          style={{ backgroundColor: 'var(--card-bg, #fff)', borderColor: 'var(--border-light)' }}
+          style={{ backgroundColor: 'var(--card-bg, #fff)', borderColor: 'var(--border-subtle)' }}
         >
           {views.map((v) => {
             const Icon = v.icon

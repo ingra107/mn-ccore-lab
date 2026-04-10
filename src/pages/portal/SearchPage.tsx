@@ -131,12 +131,12 @@ export default function SearchPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search tasks, projects, meetings, ideas..."
               className="w-full rounded-xl border px-4 py-3.5 pl-11 text-sm outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--ice)', boxShadow: 'var(--shadow-card)' }}
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--ice)', boxShadow: 'var(--shadow-card)' }}
             />
           </div>
           <div className="flex items-center justify-center gap-3 mt-5 flex-wrap">
             {['tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity'].map((t) => (
-              <span key={t} className="text-[10px] px-2.5 py-1 rounded-full border capitalize" style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.4 }}>
+              <span key={t} className="text-[10px] px-2.5 py-1 rounded-full border capitalize" style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', opacity: 0.4 }}>
                 {t}
               </span>
             ))}
@@ -166,7 +166,7 @@ export default function SearchPage() {
                     key={s}
                     onClick={() => { setQuery(s); inputRef.current?.focus() }}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs transition-colors hover:border-[var(--teal)]"
-                    style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
+                    style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer' }}
                   >
                     <Clock size={10} style={{ opacity: 0.4 }} />
                     {s}
@@ -188,7 +188,7 @@ export default function SearchPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search tasks, projects, meetings, ideas..."
               className="w-full rounded-xl border px-4 py-3 pl-11 text-sm outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--ice)' }}
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--ice)' }}
             />
             {query && (
               <button
@@ -244,7 +244,7 @@ export default function SearchPage() {
                         <Link
                           to={item.url || '#'}
                           className="flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-colors hover:shadow-sm"
-                          style={{ borderColor: 'var(--border-light)', textDecoration: 'none' }}
+                          style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
                         >
                           <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.color + '14' }}>
                             <Icon size={14} style={{ color: config.color }} />

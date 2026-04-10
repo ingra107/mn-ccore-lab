@@ -185,7 +185,7 @@ export default function AnalyticsPage() {
             <button
               onClick={copyReport}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
-              style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
+              style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer' }}
             >
               <Copy size={14} />
               Copy Report
@@ -193,7 +193,7 @@ export default function AnalyticsPage() {
             <button
               onClick={exportCSV}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
-              style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer' }}
+              style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer' }}
             >
               <Download size={14} />
               Export CSV
@@ -207,7 +207,7 @@ export default function AnalyticsPage() {
         <button
           onClick={() => setWeekOffset(weekOffset - 1)}
           className="w-8 h-8 flex items-center justify-center rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-          style={{ borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer', color: 'var(--slate)' }}
+          style={{ borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', color: 'var(--slate)' }}
         >
           <ChevronLeft size={16} />
         </button>
@@ -221,7 +221,7 @@ export default function AnalyticsPage() {
           onClick={() => setWeekOffset(weekOffset + 1)}
           disabled={isCurrentWeek}
           className="w-8 h-8 flex items-center justify-center rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-          style={{ borderColor: 'var(--border-light)', background: 'none', cursor: isCurrentWeek ? 'default' : 'pointer', color: 'var(--slate)', opacity: isCurrentWeek ? 0.3 : 1 }}
+          style={{ borderColor: 'var(--border-subtle)', background: 'none', cursor: isCurrentWeek ? 'default' : 'pointer', color: 'var(--slate)', opacity: isCurrentWeek ? 0.3 : 1 }}
         >
           <ChevronRight size={16} />
         </button>
@@ -345,7 +345,7 @@ export default function AnalyticsPage() {
               <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>
                 Team Task Overview
               </h3>
-              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ color: 'var(--slate)', backgroundColor: 'var(--border-light)' }}>
+              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ color: 'var(--slate)', backgroundColor: 'var(--border-subtle)' }}>
                 PI only
               </span>
             </div>
@@ -361,7 +361,7 @@ export default function AnalyticsPage() {
                       {person.name}
                     </span>
                     {/* Progress bar */}
-                    <div className="flex-1 h-4 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
+                    <div className="flex-1 h-4 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
                       <div className="h-full rounded-full transition-all" style={{ width: `${rate}%`, backgroundColor: rate > 70 ? 'var(--green)' : rate > 40 ? 'var(--gold)' : 'var(--maroon)' }} />
                     </div>
                     <span className="text-[11px] w-16 text-right" style={{ color: 'var(--slate)' }}>
@@ -424,7 +424,7 @@ export default function AnalyticsPage() {
               return (
                 <div key={stage} className="flex items-center gap-3">
                   <span className="text-xs w-28" style={{ color: 'var(--ink)' }}>{stage}</span>
-                  <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
+                  <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
                     <div className="h-full rounded transition-all flex items-center px-2" style={{ width: `${width}%`, backgroundColor: stageColors[stage] || 'var(--teal)', minWidth: 24 }}>
                       <span className="text-[9px] font-semibold" style={{ color: 'white' }}>{count}</span>
                     </div>
@@ -521,7 +521,7 @@ export default function AnalyticsPage() {
                         <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
                       </div>
                       <span className="text-[11px] w-20 truncate" style={{ color: 'var(--ink)' }}>{person.name.split(' ')[0]}</span>
-                      <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
+                      <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
                         <div className="h-full rounded-full" style={{
                           width: `${(count / max) * 100}%`,
                           backgroundColor: count > 8 ? 'var(--maroon)' : count > 5 ? 'var(--gold)' : 'var(--teal)',

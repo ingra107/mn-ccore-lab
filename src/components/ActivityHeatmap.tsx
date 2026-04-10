@@ -53,8 +53,8 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
   }, [heatmapData, days])
 
   const getColor = (count: number) => {
-    if (count === 0) return 'var(--border-light)'
-    if (maxCount === 0) return 'var(--border-light)'
+    if (count === 0) return 'var(--border-subtle)'
+    if (maxCount === 0) return 'var(--border-subtle)'
     const intensity = count / maxCount
     if (intensity > 0.75) return 'var(--teal)'
     if (intensity > 0.5) return 'rgba(45,138,138,0.7)'
@@ -98,7 +98,7 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
                 width: 10,
                 height: 10,
                 borderRadius: 2,
-                backgroundColor: intensity === 0 ? 'var(--border-light)' : `rgba(45,138,138,${0.2 + intensity * 0.8})`,
+                backgroundColor: intensity === 0 ? 'var(--border-subtle)' : `rgba(45,138,138,${0.2 + intensity * 0.8})`,
               }}
             />
           ))}

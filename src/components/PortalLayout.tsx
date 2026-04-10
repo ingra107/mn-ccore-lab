@@ -102,7 +102,7 @@ export default function PortalLayout() {
           className={`sticky top-0 z-20 flex items-center px-4 border-b backdrop-blur-sm transition-all duration-200 ${focusMode ? 'h-0 overflow-hidden opacity-0 border-none' : 'h-14'}`}
           style={{
             backgroundColor: 'rgba(var(--bg-rgb, 255,255,255), 0.9)',
-            borderColor: 'var(--border-light)',
+            borderColor: 'var(--border-subtle)',
           }}
         >
           {/* Mobile hamburger */}
@@ -118,11 +118,11 @@ export default function PortalLayout() {
           <button
             onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
             className="hidden sm:flex items-center gap-2 px-5 py-2 rounded-lg border text-sm transition-colors hover:bg-black/5"
-            style={{ borderColor: 'var(--border-light)', color: 'var(--slate)', cursor: 'pointer', background: 'none', minWidth: '220px' }}
+            style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', cursor: 'pointer', background: 'none', minWidth: '220px' }}
           >
             <Search size={14} />
             <span>Search...</span>
-            <kbd className="text-[10px] px-1 py-0.5 rounded border ml-2" style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-light)' }}>
+            <kbd className="text-[10px] px-1 py-0.5 rounded border ml-2" style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)' }}>
               ⌘K
             </kbd>
           </button>
@@ -156,7 +156,7 @@ export default function PortalLayout() {
                 <div className="fixed inset-0 z-40" onClick={() => setShowThemeMenu(false)} />
                 <div
                   className="absolute right-0 top-full mt-1 rounded-lg border shadow-lg z-50 py-1 min-w-[140px]"
-                  style={{ backgroundColor: 'var(--cream, #fff)', borderColor: 'var(--border-light)' }}
+                  style={{ backgroundColor: 'var(--cream, #fff)', borderColor: 'var(--border-subtle)' }}
                 >
                   {([
                     { key: 'light' as const, icon: Sun, label: 'Light' },

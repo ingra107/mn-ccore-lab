@@ -46,7 +46,7 @@ export function HandoffRecipientSelect({ value, onChange, members }: { value: st
         <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--teal)', opacity: 0.6 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[200px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
+        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[200px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
           {members.map((m) => {
             const slug = m.slug!
             const mp = getPersonInfo(slug)
@@ -113,7 +113,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
 
   const inputStyle = {
     color: 'var(--ink)',
-    borderColor: 'var(--border-light)',
+    borderColor: 'var(--border-subtle)',
     backgroundColor: 'var(--cream)',
     fontSize: 'var(--value-size)',
   }
@@ -204,7 +204,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                 disabled={!toSlug || !situation.trim() || createHandoff.isPending}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium"
                 style={{
-                  backgroundColor: (!toSlug || !situation.trim()) ? 'var(--border-light)' : 'var(--teal)',
+                  backgroundColor: (!toSlug || !situation.trim()) ? 'var(--border-subtle)' : 'var(--teal)',
                   color: (!toSlug || !situation.trim()) ? 'var(--slate)' : 'white',
                   border: 'none',
                   cursor: (!toSlug || !situation.trim()) ? 'not-allowed' : 'pointer',
@@ -218,7 +218,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                 type="button"
                 onClick={() => setShowForm(false)}
                 className="px-3 py-1.5 rounded-md text-xs"
-                style={{ background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer', color: 'var(--slate)' }}
+                style={{ background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', color: 'var(--slate)' }}
               >
                 Cancel
               </button>

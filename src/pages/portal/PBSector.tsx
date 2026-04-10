@@ -487,19 +487,19 @@ export default function PBSector() {
               onKeyDown={(e) => { if (e.key === 'Enter') handleCapture() }}
               className="w-full px-4 py-3 rounded-xl text-sm transition-all"
               style={{
-                border: '1px solid var(--border-light)',
+                border: '1px solid var(--border-subtle)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
                 outline: 'none',
                 boxShadow: '0 0 0 0px rgba(45,138,138,0)',
               }}
               onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.boxShadow = '0 0 0 3px color-mix(in srgb, var(--teal) 12%, transparent)' }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.boxShadow = '0 0 0 0px rgba(45,138,138,0)' }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.boxShadow = '0 0 0 0px rgba(45,138,138,0)' }}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center gap-2" style={{
               fontSize: '10px', color: 'var(--slate)', opacity: 0.35,
             }}>
-              <kbd className="px-1.5 py-0.5 rounded" style={{ border: '1px solid var(--border-light)', fontSize: '9px' }}>C</kbd>
+              <kbd className="px-1.5 py-0.5 rounded" style={{ border: '1px solid var(--border-subtle)', fontSize: '9px' }}>C</kbd>
               Enter to capture
             </span>
           </div>

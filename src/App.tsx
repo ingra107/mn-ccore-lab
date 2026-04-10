@@ -52,7 +52,7 @@ class ErrorBoundary extends Component<
             </button>
             <button
               onClick={() => { window.location.href = '/dashboard' }}
-              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border-light)', backgroundColor: 'transparent', color: 'var(--slate)', cursor: 'pointer' }}
+              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border-subtle)', backgroundColor: 'transparent', color: 'var(--slate)', cursor: 'pointer' }}
             >
               Go to Dashboard
             </button>

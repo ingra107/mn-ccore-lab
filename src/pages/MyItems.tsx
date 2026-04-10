@@ -89,6 +89,21 @@ function SignInPrompt() {
           Your action items, notifications, and assignments will appear here once you authenticate
           through Cloudflare Access.
         </p>
+        <a
+          href="/api/auth/login"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: '1rem',
+            fontSize: 'var(--value-size)',
+            color: 'var(--teal)',
+            fontWeight: 'var(--weight-ui)' as any,
+            textDecoration: 'underline',
+          }}
+        >
+          Sign in with @umn.edu
+        </a>
         <Link
           to="/dashboard"
           style={{

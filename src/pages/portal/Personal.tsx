@@ -240,7 +240,9 @@ export default function Personal() {
           <EmptyState
             icon={<User size={32} />}
             title="Your hub is ready"
-            subtitle="Sign in with @umn.edu to see your tasks, notifications, and watchlist."
+            subtitle={<>
+              <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> with @umn.edu to see your tasks, notifications, and watchlist.
+            </>}
           />
         </div>
       )}
@@ -345,7 +347,7 @@ export default function Personal() {
               className="text-[11px] px-2.5 py-1 rounded-full border transition-colors hover:bg-[rgba(45,138,138,0.06)]"
               style={{
                 color: 'var(--slate)',
-                borderColor: 'var(--border-light)',
+                borderColor: 'var(--border-subtle)',
                 textDecoration: 'none',
               }}
             >
@@ -448,7 +450,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
           whiteSpace: 'nowrap',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'var(--border-light)'
+          e.currentTarget.style.borderColor = 'var(--border-subtle)'
         }}
         onMouseLeave={(e) => {
           if (!open) e.currentTarget.style.borderColor = 'transparent'
@@ -539,7 +541,7 @@ function QuickCapture() {
         placeholder="Quick capture — type an idea, thought, or note..."
         className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:ring-1"
         style={{
-          borderColor: 'var(--border-light)',
+          borderColor: 'var(--border-subtle)',
           color: 'var(--ink)',
           backgroundColor: 'var(--cream)',
         }}

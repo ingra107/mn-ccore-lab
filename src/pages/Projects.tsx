@@ -365,7 +365,7 @@ export default function Projects() {
             <div
               className="hidden md:grid"
               style={{
-                gridTemplateColumns: 'minmax(280px, 3fr) 1fr 1fr 1fr 80px',
+                gridTemplateColumns: 'minmax(280px, 3fr) 100px 110px 100px 80px',
                 padding: '8px 24px',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -461,7 +461,7 @@ export default function Projects() {
                           <div
                             className={`project-list-row${isFocused ? ' project-row-focused' : ''} hidden md:grid`}
                             style={{
-                              gridTemplateColumns: 'minmax(280px, 3fr) 1fr 1fr 1fr 80px',
+                              gridTemplateColumns: 'minmax(280px, 3fr) 100px 110px 100px 80px',
                               padding: `var(--row-padding-y, 14px) 24px`,
                               borderBottom: '1px solid var(--border-subtle)',
                               alignItems: 'center',
@@ -832,7 +832,7 @@ export default function Projects() {
                     key={stage}
                     className="pipeline-column"
                     style={{
-                      background: '#f5f5f5',
+                      background: 'var(--ice)',
                       borderRadius: 'var(--radius-xl)',
                       borderTop: '2px solid var(--teal)',
                       padding: '16px',

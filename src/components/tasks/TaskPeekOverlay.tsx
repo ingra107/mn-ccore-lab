@@ -144,7 +144,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                 marginRight: '24px',
                 borderRadius: 12,
                 background: 'var(--cream)',
-                border: '1px solid var(--border-light)',
+                border: '1px solid var(--border-subtle)',
                 boxShadow: 'var(--shadow-elevated)',
                 outline: 'none',
                 overflow: 'hidden',
@@ -159,7 +159,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '14px 18px 12px',
-                  borderBottom: '1px solid var(--border-light)',
+                  borderBottom: '1px solid var(--border-subtle)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -255,7 +255,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                     gap: '12px 24px',
                     marginTop: 18,
                     paddingTop: 14,
-                    borderTop: '1px solid var(--border-light)',
+                    borderTop: '1px solid var(--border-subtle)',
                   }}
                 >
                   {/* Assignee */}
@@ -360,7 +360,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
               <div
                 style={{
                   padding: '10px 18px',
-                  borderTop: '1px solid var(--border-light)',
+                  borderTop: '1px solid var(--border-subtle)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

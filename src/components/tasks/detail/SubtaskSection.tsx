@@ -1,11 +1,15 @@
 import { useState, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  Circle, CheckCircle2, ListChecks, Plus, Trash2,
+  Circle, CheckCircle2, ListChecks, Plus, Trash2, GripVertical,
 } from 'lucide-react'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import CollapsibleSection from '../../CollapsibleSection'
 import { useSubtasks } from '../../../hooks/useApiData'
-import { useCreateSubtask, useToggleSubtask, useDeleteSubtask } from '../../../hooks/useMutations'
+import { useCreateSubtask, useToggleSubtask, useDeleteSubtask, useReorderSubtasks } from '../../../hooks/useMutations'
 
 // ── Subtask Section (collapsible wrapper) ───────────────────
 
@@ -27,6 +31,81 @@ export function SubtaskSection({ taskId }: { taskId: string }) {
   )
 }
 
+// ── Sortable Subtask Item ───────────────────────────────────
+
+function SortableSubtaskItem({
+  subtask,
+  onToggle,
+  onDelete,
+}: {
+  subtask: { id: string; title: string; completed: number }
+  onToggle: (id: string) => void
+  onDelete: (id: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: subtask.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : ('auto' as const),
+  }
+
+  return (
+    <motion.div
+      ref={setNodeRef}
+      style={style}
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -16 }}
+      transition={{ duration: 0.15 }}
+      className="group flex items-center gap-2 py-1.5 px-1 -mx-1 rounded hover:bg-black/[0.02] dark:hover:bg-white/[0.04] transition-colors"
+      {...attributes}
+    >
+      {/* Drag handle — visible on hover */}
+      <button
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+        style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: undefined }}
+      >
+        <GripVertical size={12} style={{ opacity: 0.4 }} />
+      </button>
+
+      {/* Toggle button */}
+      <button
+        onClick={() => onToggle(subtask.id)}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
+      >
+        {subtask.completed ? (
+          <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
+        ) : (
+          <Circle size={16} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+        )}
+      </button>
+
+      {/* Title */}
+      <span
+        className="flex-1 text-sm min-w-0 truncate"
+        style={{
+          color: subtask.completed ? 'var(--slate)' : 'var(--ink)',
+          textDecoration: subtask.completed ? 'line-through' : 'none',
+          opacity: subtask.completed ? 0.5 : 1,
+        }}
+      >
+        {subtask.title}
+      </span>
+
+      {/* Delete button (visible on hover) */}
+      <button
+        onClick={() => onDelete(subtask.id)}
+        className="opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--slate)', flexShrink: 0 }}
+      >
+        <Trash2 size={12} />
+      </button>
+    </motion.div>
+  )
+}
+
 // ── Subtask Checklist ────────────────────────────────────────
 
 export function SubtaskChecklist({ taskId }: { taskId: string }) {
@@ -34,8 +113,11 @@ export function SubtaskChecklist({ taskId }: { taskId: string }) {
   const createSubtask = useCreateSubtask(taskId)
   const toggleSubtask = useToggleSubtask(taskId)
   const deleteSubtask = useDeleteSubtask(taskId)
+  const reorderSubtasks = useReorderSubtasks(taskId)
   const [newTitle, setNewTitle] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const completed = subtasks.filter((s) => s.completed).length
   const total = subtasks.length
@@ -48,6 +130,18 @@ export function SubtaskChecklist({ taskId }: { taskId: string }) {
     createSubtask.mutate(newTitle.trim())
     setNewTitle('')
     inputRef.current?.focus()
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = subtasks.findIndex((s) => s.id === active.id)
+    const newIndex = subtasks.findIndex((s) => s.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(subtasks, oldIndex, newIndex)
+    reorderSubtasks.mutate(reordered.map((s) => s.id))
   }
 
   return (
@@ -64,53 +158,22 @@ export function SubtaskChecklist({ taskId }: { taskId: string }) {
         </div>
       )}
 
-      {/* Subtask list */}
+      {/* Subtask list — sortable */}
       <div className="flex flex-col gap-0.5 mb-2">
-        <AnimatePresence initial={false}>
-          {subtasks.map((s) => (
-            <motion.div
-              key={s.id}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.15 }}
-              className="group flex items-center gap-2 py-1.5 px-1 -mx-1 rounded hover:bg-black/[0.02] dark:hover:bg-white/[0.04] transition-colors"
-            >
-              {/* Toggle button */}
-              <button
-                onClick={() => toggleSubtask.mutate(s.id)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
-              >
-                {s.completed ? (
-                  <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
-                ) : (
-                  <Circle size={16} style={{ color: 'var(--slate)', opacity: 0.3 }} />
-                )}
-              </button>
-
-              {/* Title */}
-              <span
-                className="flex-1 text-sm min-w-0 truncate"
-                style={{
-                  color: s.completed ? 'var(--slate)' : 'var(--ink)',
-                  textDecoration: s.completed ? 'line-through' : 'none',
-                  opacity: s.completed ? 0.5 : 1,
-                }}
-              >
-                {s.title}
-              </span>
-
-              {/* Delete button (visible on hover) */}
-              <button
-                onClick={() => deleteSubtask.mutate(s.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--slate)', flexShrink: 0 }}
-              >
-                <Trash2 size={12} />
-              </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={subtasks.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            <AnimatePresence initial={false}>
+              {subtasks.map((s) => (
+                <SortableSubtaskItem
+                  key={s.id}
+                  subtask={s}
+                  onToggle={(id) => toggleSubtask.mutate(id)}
+                  onDelete={(id) => deleteSubtask.mutate(id)}
+                />
+              ))}
+            </AnimatePresence>
+          </SortableContext>
+        </DndContext>
       </div>
 
       {/* Add subtask input */}

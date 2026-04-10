@@ -558,7 +558,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   color: 'var(--slate)',
                   opacity: 'var(--ink-label)',
                   background: 'none',
-                  border: '1px solid var(--border-light)',
+                  border: '1px solid var(--border-subtle)',
                   cursor: 'pointer',
                 }}
               >
@@ -608,7 +608,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 <button
                   onClick={() => setEditingStrategic(false)}
                   className="px-3 py-1 rounded-md text-xs"
-                  style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer' }}
+                  style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>

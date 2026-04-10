@@ -114,7 +114,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Add a comment..."
             className="flex-1 rounded-md border px-3 py-1.5 text-sm outline-none"
-            style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)', color: 'var(--ink)' }}
+            style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)', color: 'var(--ink)' }}
           />
           {newComment.trim() && (
             <button type="submit" className="p-1.5 rounded-md" style={{ backgroundColor: forClaude ? 'var(--gold)' : 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer', transition: 'background-color 0.15s' }}>

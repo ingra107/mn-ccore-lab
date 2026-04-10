@@ -7,7 +7,7 @@ interface SkeletonProps {
 
 export default function Skeleton({ variant = 'text', width, height, className }: SkeletonProps) {
   const baseStyle = {
-    backgroundColor: 'var(--border-light)',
+    backgroundColor: 'var(--border-subtle)',
     borderRadius: variant === 'circle' ? '50%' : variant === 'card' ? '12px' : '4px',
     animation: 'skeleton-pulse 1.5s ease-in-out infinite',
     width: width || (variant === 'card' ? '100%' : variant === 'circle' ? '40px' : '100%'),
@@ -19,7 +19,7 @@ export default function Skeleton({ variant = 'text', width, height, className }:
 
 export function SkeletonCard() {
   return (
-    <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+    <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
       <div className="flex items-center gap-3 mb-4">
         <Skeleton variant="circle" width={32} height={32} />
         <div className="flex-1">

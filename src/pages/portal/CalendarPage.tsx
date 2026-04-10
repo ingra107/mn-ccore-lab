@@ -125,7 +125,7 @@ export default function CalendarPage() {
           <button
             onClick={exportICal}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors hover:bg-black/5"
-            style={{ borderColor: 'var(--border-light)', color: 'var(--slate)', cursor: 'pointer', background: 'none' }}
+            style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', cursor: 'pointer', background: 'none' }}
           >
             <Download size={14} />
             Export
@@ -151,7 +151,7 @@ export default function CalendarPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button onClick={goToPrev} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}>
+            <button onClick={goToPrev} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}>
               <ChevronLeft size={16} style={{ color: 'var(--ink)' }} />
             </button>
             <button
@@ -161,7 +161,7 @@ export default function CalendarPage() {
             >
               {headerLabel}
             </button>
-            <button onClick={goToNext} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}>
+            <button onClick={goToNext} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}>
               <ChevronRight size={16} style={{ color: 'var(--ink)' }} />
             </button>
 
@@ -193,7 +193,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 pt-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
+      <div className="flex items-center gap-4 mt-4 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
         {Object.entries(eventColors).map(([type, config]) => (
           <div key={type} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: config.color }} />
@@ -237,24 +237,24 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
   }, [events])
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-light)' }}>
+    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-subtle)' }}>
       <div className="grid grid-cols-7">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-          <div key={d} className="px-2 py-2 text-center text-[10px] uppercase tracking-wider font-semibold border-b" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}>
+          <div key={d} className="px-2 py-2 text-center text-[10px] uppercase tracking-wider font-semibold border-b" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
             {d}
           </div>
         ))}
       </div>
       <div className="grid grid-cols-7">
         {Array.from({ length: startOffset }).map((_, i) => (
-          <div key={`empty-${i}`} className="min-h-[80px] border-b border-r" style={{ borderColor: 'var(--border-light)', backgroundColor: 'rgba(0,0,0,0.02)' }} />
+          <div key={`empty-${i}`} className="min-h-[80px] border-b border-r" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'rgba(0,0,0,0.02)' }} />
         ))}
         {days.map((dateStr) => {
           const dayNum = parseInt(dateStr.split('-')[2])
           const isToday = dateStr === today
           const dayEvents = eventsByDate.get(dateStr) || []
           return (
-            <div key={dateStr} className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.06)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
+            <div key={dateStr} className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'rgba(45,138,138,0.06)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
               <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'white' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
                 {dayNum}
               </span>
@@ -316,9 +316,9 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
         const dayEvents = eventsByDate.get(dateStr) || []
 
         return (
-          <div key={dateStr} className="rounded-lg border min-h-[300px]" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.02)' : 'var(--cream)' }}>
+          <div key={dateStr} className="rounded-lg border min-h-[300px]" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)', backgroundColor: isToday ? 'rgba(45,138,138,0.02)' : 'var(--cream)' }}>
             {/* Day header */}
-            <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-light)' }}>
+            <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{dayNames[i]}</div>
               <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8' : ''}`} style={{ color: isToday ? 'white' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
                 {dayNum}
@@ -358,8 +358,8 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
   const isToday = dateStr === new Date().toISOString().split('T')[0]
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-light)' }}>
-      <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.04)' : 'var(--cream)' }}>
+    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-subtle)' }}>
+      <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'rgba(45,138,138,0.04)' : 'var(--cream)' }}>
         <h3 className="text-lg font-normal" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
           {isToday ? 'Today' : formatLongDate(dateStr)}
         </h3>
@@ -380,7 +380,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
 
               return (
                 <motion.div key={e.id} variants={staggerItem}>
-                  <Wrapper {...wrapperProps} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm" style={{ borderColor: 'var(--border-light)', textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }}>
+                  <Wrapper {...wrapperProps} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm" style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }}>
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
                       <Icon size={18} style={{ color: config.color }} />
                     </div>
@@ -438,7 +438,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                 {isToday ? 'Today' : formatLongDate(date)}
               </span>
             </div>
-            <motion.div className="flex flex-col gap-1.5 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-light)' }} variants={staggerContainer} initial="hidden" animate="visible">
+            <motion.div className="flex flex-col gap-1.5 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)' }} variants={staggerContainer} initial="hidden" animate="visible">
               {dayEvents.map((e) => {
                 const config = eventColors[e.type] || eventColors.task
                 const Icon = eventIcons[e.type] || Calendar

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, useCallback } from 'react'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
+import { useProjects } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
 
 interface TaskTimelineViewProps {
@@ -34,6 +35,16 @@ const priorityOpacity: Record<string, number> = {
 export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }: TaskTimelineViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [tooltip, setTooltip] = useState<{ task: TaskRow; x: number; y: number } | null>(null)
+
+  // Project data for displaying project names
+  const { data: projects = [] } = useProjects()
+  const projectMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const p of projects) {
+      if (p.slug) map.set(p.slug, p.short_name || p.title)
+    }
+    return map
+  }, [projects])
 
   // Filter to tasks with due dates for the timeline; undated tasks listed below
   const { datedTasks, undatedTasks, startDate, endDate, totalDays } = useMemo(() => {
@@ -106,12 +117,12 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
   return (
     <div>
       {datedTasks.length > 0 && (
-        <div ref={containerRef} className="relative overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}>
+        <div ref={containerRef} className="relative overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
           <svg width={chartWidth} height={chartHeight} style={{ display: 'block', minWidth: chartWidth }}>
             {/* Week grid lines */}
             {weekMarkers.map((m, i) => (
               <g key={i}>
-                <line x1={m.x} y1={0} x2={m.x} y2={chartHeight} stroke="var(--border-light)" strokeWidth={1} />
+                <line x1={m.x} y1={0} x2={m.x} y2={chartHeight} stroke="var(--border-subtle)" strokeWidth={1} />
                 <text x={m.x} y={chartHeight - 8} textAnchor="middle" fill="var(--slate)" fontSize={9} fontFamily="var(--font-sans)" opacity={0.5}>
                   {m.label}
                 </text>
@@ -205,19 +216,25 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
                 left: tooltip.x + 12,
                 top: tooltip.y - 10,
                 backgroundColor: 'var(--cream)',
-                borderColor: 'var(--border-light)',
+                borderColor: 'var(--border-subtle)',
                 maxWidth: 260,
               }}
             >
               <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
                 {tooltip.task.title || tooltip.task.description}
               </p>
-              <div className="flex items-center gap-2 mt-1 text-[10px]" style={{ color: 'var(--slate)' }}>
+              <div className="flex items-center gap-2 mt-1 text-[10px] flex-wrap" style={{ color: 'var(--slate)' }}>
                 <span>{getPersonInfo(tooltip.task.assignee).name}</span>
                 <span style={{ opacity: 0.3 }}>|</span>
                 <span>Due {formatShortDate(tooltip.task.due_date!)}</span>
                 <span style={{ opacity: 0.3 }}>|</span>
                 <span style={{ color: statusColors[tooltip.task.status] }}>{tooltip.task.status.replace('_', ' ')}</span>
+                {tooltip.task.project_id && projectMap.get(tooltip.task.project_id) && (
+                  <>
+                    <span style={{ opacity: 0.3 }}>|</span>
+                    <span style={{ color: 'var(--teal)' }}>{projectMap.get(tooltip.task.project_id)}</span>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -241,7 +258,7 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
                   key={task.id}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs"
                   style={{
-                    borderColor: 'var(--border-light)',
+                    borderColor: 'var(--border-subtle)',
                     color: 'var(--ink)',
                   }}
                 >

@@ -367,7 +367,7 @@ export default function MyTasks() {
               style={{
                 fontSize: '12px',
                 color: 'var(--slate)',
-                borderColor: 'var(--border-light)',
+                borderColor: 'var(--border-subtle)',
                 cursor: 'pointer',
                 appearance: 'none' as const,
                 WebkitAppearance: 'none' as const,
@@ -547,7 +547,7 @@ export default function MyTasks() {
                 : completedCount > 0
                   ? `Zero active tasks. ${completedCount} completed recently.`
                   : 'You have no active tasks assigned to you.'
-              : 'Sign in to see your personal tasks, or create one below.'}
+              : <><a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to see your personal tasks, or create one below.</>}
             action={{ label: 'Create a task', onClick: () => setShowCreate(true) }}
           />
         ) : view !== 'list' ? (
@@ -559,7 +559,7 @@ export default function MyTasks() {
         ) : groupBy === 'none' ? (
           <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} />
         ) : (
-          <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} />
+          <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} />
         )}
       </div>
 
@@ -673,13 +673,15 @@ function sortTasks(tasks: any[], sortBy: SortBy) {
 }
 
 // ── Grouped Task List ──────────────────────────────────────────
-function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange, onOpenDetail }: {
+function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange, onOpenDetail, selectedIds, onToggleSelect }: {
   tasks: any[]
   groupBy: GroupBy
   sortBy: SortBy
   onStatusChange: (id: string, status: string) => void
   onFieldChange: (id: string, field: string, value: unknown) => void
   onOpenDetail?: (task: TaskRow) => void
+  selectedIds?: Set<string>
+  onToggleSelect?: (id: string) => void
 }) {
   const groups = useMemo(() => {
     const map = new Map<string, any[]>()
@@ -760,7 +762,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
               )
             })()}
           </div>
-          <TaskGridView tasks={items} onStatusChange={onStatusChange} onFieldChange={onFieldChange} onOpenDetail={onOpenDetail} />
+          <TaskGridView tasks={items} onStatusChange={onStatusChange} onFieldChange={onFieldChange} onOpenDetail={onOpenDetail} selectedIds={selectedIds} onToggleSelect={onToggleSelect} />
         </div>
       ))}
     </div>
@@ -803,7 +805,7 @@ function ViewDropdown({ view, setView, views }: { view: ViewMode; setView: (v: V
       {open && (
         <div
           className="absolute top-full left-0 mt-1 rounded-lg border shadow-lg z-50 py-1 min-w-[200px]"
-          style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
+          style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
         >
           {views.map((v) => {
             const Icon = v.icon

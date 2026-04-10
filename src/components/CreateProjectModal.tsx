@@ -39,7 +39,7 @@ const selectStyle: React.CSSProperties = {
   fontSize: 'var(--value-size)',
   color: 'var(--ink)',
   backgroundColor: 'var(--cream)',
-  borderColor: 'var(--border-light)',
+  borderColor: 'var(--border-subtle)',
 }
 
 export default function CreateProjectModal({ open, onClose, onCreate }: CreateProjectModalProps) {
@@ -112,13 +112,13 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
         aria-modal="true"
         aria-label="Create new project"
         className="rounded-xl shadow-xl border w-full max-w-lg mx-4 card-elevated"
-        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
+        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
           className="flex items-center justify-between px-5 py-3.5 border-b"
-          style={{ borderColor: 'var(--border-light)' }}
+          style={{ borderColor: 'var(--border-subtle)' }}
         >
           <h3
             className="text-lg"
@@ -152,7 +152,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1"
               style={{
                 ...selectStyle,
-                borderColor: 'var(--border-light)',
+                borderColor: 'var(--border-subtle)',
               }}
               autoFocus
             />
@@ -214,7 +214,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1"
               style={{
                 ...selectStyle,
-                borderColor: 'var(--border-light)',
+                borderColor: 'var(--border-subtle)',
               }}
             />
           </div>
@@ -247,7 +247,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
                 color: 'var(--slate)',
                 cursor: 'pointer',
                 background: 'none',
-                border: '1px solid var(--border-light)',
+                border: '1px solid var(--border-subtle)',
               }}
             >
               Cancel
@@ -257,7 +257,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               disabled={!title.trim()}
               className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
               style={{
-                backgroundColor: !title.trim() ? 'var(--border-light)' : 'var(--gold)',
+                backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--gold)',
                 color: !title.trim() ? 'var(--slate)' : 'var(--ink)',
                 cursor: !title.trim() ? 'not-allowed' : 'pointer',
                 border: 'none',

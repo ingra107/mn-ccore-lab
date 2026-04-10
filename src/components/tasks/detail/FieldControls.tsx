@@ -211,7 +211,7 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-full border px-2 py-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
-        style={{ borderColor: 'var(--border-light)', cursor: 'pointer', background: 'none' }}
+        style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}
       >
         <div style={{ width: 28, height: 28 }}>
           <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
@@ -220,7 +220,7 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
         <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[240px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
+        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[240px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
           {members.map((m) => {
             const slug = m.slug!
             const mp = getPersonInfo(slug)
@@ -378,7 +378,7 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
         const q = search.toLowerCase()
         const filtered = q ? projectList.filter((p) => p.title.toLowerCase().includes(q)) : projectList
         return (
-        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border min-w-[260px]" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
+        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border min-w-[260px]" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
           <div className="px-2 py-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
             <input
               ref={searchRef}

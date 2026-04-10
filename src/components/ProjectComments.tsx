@@ -106,6 +106,11 @@ export default function ProjectComments({ projectSlug }: Props) {
               onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
               onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}
             />
+            {!isAuthenticated && import.meta.env.PROD && (
+              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to comment
+              </span>
+            )}
             {text.trim() && (
               <motion.button
                 type="submit"

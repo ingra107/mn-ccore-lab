@@ -323,7 +323,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                       <div
                         className="flex items-center justify-center py-8 rounded-lg border border-dashed"
                         style={{
-                          borderColor: 'var(--border-light)',
+                          borderColor: 'var(--border-subtle)',
                           color: 'var(--slate)',
                           opacity: 'var(--ink-hint)',
                           fontSize: '12px',
@@ -412,7 +412,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                                 <div
                                   className="flex items-center justify-center py-4 rounded border border-dashed"
                                   style={{
-                                    borderColor: 'var(--border-light)',
+                                    borderColor: 'var(--border-subtle)',
                                     color: 'var(--slate)',
                                     opacity: 0.3,
                                     fontSize: '10px',

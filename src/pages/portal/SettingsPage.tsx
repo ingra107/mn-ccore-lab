@@ -111,7 +111,7 @@ export default function SettingsPage() {
               value={settings.lab_type || 'clinical_research'}
               onChange={(e) => updateSettings.mutate({ lab_type: e.target.value })}
               className="w-full rounded-md border px-3 py-2 text-sm cursor-pointer"
-              style={{ borderColor: 'var(--border-light)', color: 'var(--ink)' }}
+              style={{ borderColor: 'var(--border-subtle)', color: 'var(--ink)' }}
             >
               <option value="clinical_research">Clinical Research</option>
               <option value="basic_science">Basic Science</option>
@@ -135,7 +135,7 @@ export default function SettingsPage() {
             {templates.map((template) => {
               const stages: string[] = JSON.parse(template.stages)
               return (
-                <motion.div key={template.id} variants={staggerItem} className="rounded-lg border p-4" style={{ borderColor: 'var(--border-light)' }}>
+                <motion.div key={template.id} variants={staggerItem} className="rounded-lg border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
                       {template.name}
@@ -190,7 +190,7 @@ export default function SettingsPage() {
             {team.filter(m => m.slug).slice(0, 20).map((member) => {
               const person = getPersonInfo(member.slug!)
               return (
-                <div key={member.slug} className="flex items-center gap-3 py-2 border-b last:border-b-0" style={{ borderColor: 'var(--border-light)' }}>
+                <div key={member.slug} className="flex items-center gap-3 py-2 border-b last:border-b-0" style={{ borderColor: 'var(--border-subtle)' }}>
                   <div style={{ width: 32, height: 32, flexShrink: 0 }}>
                     <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-8 !h-8 !min-w-0 !min-h-0 !text-[9px]" />
                   </div>
@@ -202,7 +202,7 @@ export default function SettingsPage() {
                     type="text"
                     placeholder="e.g., stats expert, IRB contact, data lead"
                     className="w-48 rounded-md border px-2 py-1 text-xs outline-none"
-                    style={{ fontSize: 'var(--label-size)', borderColor: 'var(--border-light)', color: 'var(--ink)' }}
+                    style={{ fontSize: 'var(--label-size)', borderColor: 'var(--border-subtle)', color: 'var(--ink)' }}
                     defaultValue=""
                   />
                 </div>
@@ -266,7 +266,7 @@ export default function SettingsPage() {
             </button>
           </div>
           <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.6 }}>
-            You can also toggle with <kbd className="text-[9px] px-1 py-0.5 rounded" style={{ background: 'var(--border-light)' }}>Ctrl+.</kbd>
+            You can also toggle with <kbd className="text-[9px] px-1 py-0.5 rounded" style={{ background: 'var(--border-subtle)' }}>Ctrl+.</kbd>
           </p>
         </SettingsSection>
 
@@ -381,7 +381,7 @@ function SettingsInput({ value, onSave, placeholder, multiline }: { value: strin
   const inputStyle = {
     fontSize: '14px',
     color: 'var(--ink)',
-    borderColor: 'var(--border-light)',
+    borderColor: 'var(--border-subtle)',
     backgroundColor: 'var(--cream)',
   }
 
@@ -437,7 +437,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
       <button
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors hover:bg-black/5 mt-2"
-        style={{ borderColor: 'var(--border-light)', color: 'var(--teal)', cursor: 'pointer', background: 'none' }}
+        style={{ borderColor: 'var(--border-subtle)', color: 'var(--teal)', cursor: 'pointer', background: 'none' }}
       >
         <Plus size={14} />
         Create Custom Template
@@ -461,7 +461,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
           onChange={(e) => setName(e.target.value)}
           placeholder="Template name (e.g., Clinical Trial)"
           className="w-full rounded-md border px-3 py-2 text-sm outline-none"
-          style={{ borderColor: 'var(--border-light)' }}
+          style={{ borderColor: 'var(--border-subtle)' }}
           autoFocus
         />
 
@@ -476,7 +476,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
                 onChange={(e) => updateStage(i, e.target.value)}
                 placeholder={`Stage ${i + 1}`}
                 className="flex-1 rounded-md border px-3 py-1.5 text-sm outline-none"
-                style={{ borderColor: 'var(--border-light)' }}
+                style={{ borderColor: 'var(--border-subtle)' }}
               />
               {stages.length > 1 && (
                 <button onClick={() => removeStage(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
@@ -495,7 +495,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
         </div>
 
         <div className="flex justify-end gap-2 mt-1">
-          <button onClick={() => setOpen(false)} className="px-3 py-1.5 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
+          <button onClick={() => setOpen(false)} className="px-3 py-1.5 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
             Cancel
           </button>
           <button

@@ -231,7 +231,7 @@ export default function Publications() {
               navigator.clipboard.writeText(bib)
             }}
             className="inline-flex items-center gap-1 mt-3 text-[11px] px-2.5 py-1 rounded transition-colors"
-            style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer', opacity: 0.5 }}
+            style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: 0.5 }}
           >
             <Copy size={10} />
             Copy bibliography ({filtered.length})

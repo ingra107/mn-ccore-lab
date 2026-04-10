@@ -64,3 +64,31 @@ export function useDeleteSubtask(taskId: string) {
     },
   })
 }
+
+export function useReorderSubtasks(taskId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (subtaskIds: string[]) =>
+      fetchApi(`/api/tasks/${taskId}/subtasks/reorder`, {
+        method: 'POST',
+        body: JSON.stringify({ subtaskIds }),
+      }),
+    onMutate: async (subtaskIds) => {
+      await queryClient.cancelQueries({ queryKey: ['subtasks', taskId] })
+      const prev = queryClient.getQueryData<SubtaskRow[]>(['subtasks', taskId])
+      if (prev) {
+        // Optimistically reorder to match the new order
+        const idOrder = new Map(subtaskIds.map((id, i) => [id, i]))
+        const reordered = [...prev].sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0))
+        queryClient.setQueryData(['subtasks', taskId], reordered)
+      }
+      return { prev }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(['subtasks', taskId], context.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['subtasks', taskId] })
+    },
+  })
+}

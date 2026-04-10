@@ -156,10 +156,10 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
         style={{ backgroundColor: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', maxHeight: '90vh', overflowY: 'auto' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
           <div className="flex items-center gap-2">
             <Scale size={18} style={{ color: 'var(--gold)' }} />
-            <h3 style={{ fontWeight: 400, fontSize: '17px', color: 'var(--ink)', margin: 0 }}>
+            <h3 style={{ fontWeight: 500, fontSize: '17px', color: 'var(--ink)', margin: 0 }}>
               Log a Decision
             </h3>
           </div>
@@ -331,7 +331,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
               {projectSearchQuery && filteredProjects.length > 0 && (
                 <div
                   className="absolute z-10 w-full mt-1 rounded-lg shadow-lg overflow-hidden"
-                  style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--border-light)', maxHeight: '150px', overflowY: 'auto' }}
+                  style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--border-subtle)', maxHeight: '150px', overflowY: 'auto' }}
                 >
                   {filteredProjects.filter((p) => !linkedProjectSlugs.includes(p.slug)).map((p) => (
                     <button
@@ -344,7 +344,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
                         border: 'none',
                         background: 'transparent',
                         cursor: 'pointer',
-                        borderBottom: '1px solid var(--border-light)',
+                        borderBottom: '1px solid var(--border-subtle)',
                       }}
                     >
                       <Search size={10} style={{ display: 'inline', verticalAlign: '-1px', marginRight: '4px', opacity: 0.4 }} />
@@ -358,11 +358,11 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 flex justify-end gap-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="px-6 py-4 flex justify-end gap-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg text-sm"
-            style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-light)', cursor: 'pointer' }}
+            style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
           >
             Cancel
           </button>

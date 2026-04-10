@@ -91,7 +91,7 @@ export default function AskTheLab() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search questions..."
               className="w-full rounded-lg border pl-8 pr-3 py-1.5 text-xs outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', background: 'var(--cream)' }}
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', background: 'var(--cream)' }}
             />
           </div>
         </div>
@@ -265,8 +265,8 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
     return (
       <div className="px-5 py-6 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="animate-pulse flex flex-col gap-3">
-          <div className="h-4 rounded w-3/4" style={{ backgroundColor: 'var(--border-light)' }} />
-          <div className="h-4 rounded w-1/2" style={{ backgroundColor: 'var(--border-light)' }} />
+          <div className="h-4 rounded w-3/4" style={{ backgroundColor: 'var(--border-subtle)' }} />
+          <div className="h-4 rounded w-1/2" style={{ backgroundColor: 'var(--border-subtle)' }} />
         </div>
       </div>
     )
@@ -386,14 +386,14 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
             placeholder="Write your answer..."
             rows={2}
             className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none resize-none"
-            style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
+            style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}
           />
           <button
             type="submit"
             disabled={!answerText.trim() || createAnswerMut.isPending}
             className="self-end flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
-              backgroundColor: !answerText.trim() ? 'var(--border-light)' : 'var(--teal)',
+              backgroundColor: !answerText.trim() ? 'var(--border-subtle)' : 'var(--teal)',
               color: !answerText.trim() ? 'var(--slate)' : 'white',
               cursor: !answerText.trim() ? 'not-allowed' : 'pointer',
               border: 'none',
@@ -466,11 +466,11 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
         aria-modal="true"
         aria-label="New Question"
         className="rounded-xl shadow-xl border w-full max-w-md mx-4"
-        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
+        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-lg" style={{ fontWeight: 400, color: 'var(--ink)' }}>
+          <h3 className="text-lg" style={{ fontWeight: 500, color: 'var(--ink)' }}>
             New Question
           </h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
@@ -489,7 +489,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
               placeholder="What do you want to know?"
               rows={3}
               className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-              style={{ borderColor: 'var(--border-light)' }}
+              style={{ borderColor: 'var(--border-subtle)' }}
               autoFocus
             />
           </div>
@@ -504,7 +504,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
               placeholder="Help others understand your question"
               rows={2}
               className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-              style={{ borderColor: 'var(--border-light)' }}
+              style={{ borderColor: 'var(--border-subtle)' }}
             />
           </div>
 
@@ -516,7 +516,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
               value={projectSlug}
               onChange={(e) => setProjectSlug(e.target.value)}
               className="w-full rounded-md border px-2.5 py-2 text-sm"
-              style={{ borderColor: 'var(--border-light)', cursor: 'pointer' }}
+              style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer' }}
             >
               <option value="">None (general question)</option>
               {projects.map((p) => (
@@ -526,7 +526,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
           </div>
 
           <div className="flex justify-end gap-2 mt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-light)' }}>
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
               Cancel
             </button>
             <button
@@ -534,7 +534,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
               disabled={!questionText.trim()}
               className="px-4 py-2 rounded-md text-sm font-medium"
               style={{
-                backgroundColor: !questionText.trim() ? 'var(--border-light)' : 'var(--teal)',
+                backgroundColor: !questionText.trim() ? 'var(--border-subtle)' : 'var(--teal)',
                 color: !questionText.trim() ? 'var(--slate)' : 'white',
                 cursor: !questionText.trim() ? 'not-allowed' : 'pointer',
                 border: 'none',

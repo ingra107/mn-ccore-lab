@@ -465,7 +465,7 @@ export default function CommandPalette() {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: -4 }}
         transition={spring.snappy}
-        style={{ backgroundColor: 'var(--cream, white)', borderColor: 'var(--border-light)' }}
+        style={{ backgroundColor: 'var(--cream, white)', borderColor: 'var(--border-subtle)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
@@ -484,7 +484,7 @@ export default function CommandPalette() {
             className="flex-1 text-sm outline-none"
             style={{ color: 'var(--ink)', background: 'none', border: 'none' }}
           />
-          <kbd className="text-[10px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 'var(--ink-label)' }}>
+          <kbd className="text-[10px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-subtle)', opacity: 'var(--ink-label)' }}>
             esc
           </kbd>
         </div>
@@ -525,7 +525,7 @@ export default function CommandPalette() {
                         )}
                       </div>
                       {item.shortcut && (
-                        <kbd className="text-[9px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 'var(--ink-label)' }}>
+                        <kbd className="text-[9px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-subtle)', opacity: 'var(--ink-label)' }}>
                           {item.shortcut}
                         </kbd>
                       )}

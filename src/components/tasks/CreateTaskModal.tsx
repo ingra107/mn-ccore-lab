@@ -58,7 +58,7 @@ const selectStyle: React.CSSProperties = {
   fontSize: 'var(--value-size)',
   color: 'var(--ink)',
   backgroundColor: 'var(--cream)',
-  borderColor: 'var(--border-light)',
+  borderColor: 'var(--border-subtle)',
 }
 
 export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskModalProps) {
@@ -194,13 +194,13 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
         aria-modal="true"
         data-testid="create-task-modal"
         className="rounded-xl shadow-xl border w-full max-w-lg mx-4 card-elevated"
-        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}
+        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
           className="flex items-center justify-between px-5 py-3.5 border-b"
-          style={{ borderColor: 'var(--border-light)' }}
+          style={{ borderColor: 'var(--border-subtle)' }}
         >
           <h3
             className="text-lg"
@@ -266,7 +266,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1"
               style={{
                 ...selectStyle,
-                borderColor: 'var(--border-light)',
+                borderColor: 'var(--border-subtle)',
               }}
               autoFocus
             />
@@ -418,7 +418,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                 color: 'var(--slate)',
                 cursor: 'pointer',
                 background: 'none',
-                border: '1px solid var(--border-light)',
+                border: '1px solid var(--border-subtle)',
               }}
             >
               Cancel
@@ -429,7 +429,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               disabled={!title.trim() || !assignee}
               className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
               style={{
-                backgroundColor: !title.trim() || !assignee ? 'var(--border-light)' : 'var(--teal)',
+                backgroundColor: !title.trim() || !assignee ? 'var(--border-subtle)' : 'var(--teal)',
                 color: !title.trim() || !assignee ? 'var(--slate)' : 'white',
                 cursor: !title.trim() || !assignee ? 'not-allowed' : 'pointer',
                 border: 'none',

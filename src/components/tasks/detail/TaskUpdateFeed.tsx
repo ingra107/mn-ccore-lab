@@ -79,12 +79,12 @@ export function TaskUpdateFeed({ taskId }: { taskId: string }) {
             className="flex-1 rounded-md border text-sm outline-none resize-none"
             style={{
               fontSize: 'var(--value-size)', color: 'var(--ink)',
-              background: 'var(--cream)', border: '1px solid var(--border-light)',
+              background: 'var(--cream)', border: '1px solid var(--border-subtle)',
               borderRadius: 'var(--radius-lg)', padding: '8px 10px',
               lineHeight: 1.5, transition: 'border-color 0.15s',
             }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-light)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
           />
           {text.trim() && (
             <motion.button

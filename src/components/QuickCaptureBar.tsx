@@ -61,7 +61,7 @@ export default function QuickCaptureBar() {
           height: 40,
           padding: '0 12px',
           borderRadius: 10,
-          border: '1px solid var(--border-light)',
+          border: '1px solid var(--border-subtle)',
           background: 'var(--cream)',
           transition: 'border-color 150ms ease, box-shadow 150ms ease',
         }}

@@ -109,7 +109,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
         style={{
           width: 'min(480px, 90vw)',
           backgroundColor: 'var(--cream)',
-          borderLeft: '1px solid var(--border-light)',
+          borderLeft: '1px solid var(--border-subtle)',
           animation: 'slideIn 200ms ease-out',
         }}
       >

@@ -345,7 +345,7 @@ export default function DecisionsPage() {
         actions={
           <div className="flex items-center gap-2">
             {/* View mode toggle */}
-            <div className="flex items-center rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-light)' }}>
+            <div className="flex items-center rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
               <button
                 onClick={() => setViewMode('list')}
                 className="px-3 py-1.5 text-xs"
@@ -418,7 +418,7 @@ export default function DecisionsPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search decisions..."
             className="w-full max-w-xs rounded-lg border px-3 py-1.5 text-xs outline-none"
-            style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', background: 'var(--cream)' }}
+            style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', background: 'var(--cream)' }}
           />
         </div>
 

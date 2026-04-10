@@ -106,10 +106,10 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: -4 }}
             transition={spring.snappy}
-            style={{ backgroundColor: 'var(--card-bg, #fff)', borderColor: 'var(--border-light)' }}
+            style={{ backgroundColor: 'var(--card-bg, #fff)', borderColor: 'var(--border-subtle)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+            <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
               <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>
                 Keyboard Shortcuts
               </h3>
@@ -135,7 +135,7 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
                             <kbd
                               key={i}
                               className="text-[11px] px-2 py-0.5 rounded border min-w-[24px] text-center"
-                              style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
+                              style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}
                             >
                               {key}
                             </kbd>

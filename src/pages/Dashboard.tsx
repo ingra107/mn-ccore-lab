@@ -434,7 +434,7 @@ export default function Dashboard() {
           <div
             data-testid="customize-panel"
             className="rounded-xl border p-4 mb-4 customize-panel"
-            style={{ borderColor: 'var(--border-light)' }}
+            style={{ borderColor: 'var(--border-subtle)' }}
           >
             <p className="text-xs font-medium mb-3" style={{ color: 'var(--ink)' }}>
               Toggle cards visible on your dashboard
@@ -520,7 +520,7 @@ export default function Dashboard() {
           <Link
             to="/meetings"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
-            style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', textDecoration: 'none' }}
+            style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
           >
             <CalendarPlus size={14} />
             Schedule Meeting
@@ -528,7 +528,7 @@ export default function Dashboard() {
           <Link
             to="/ideas?create=true"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
-            style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', textDecoration: 'none' }}
+            style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
           >
             <FolderPlus size={14} />
             Submit Idea
@@ -620,7 +620,7 @@ export default function Dashboard() {
                 className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-medium transition-colors border"
                 style={{
                   color: 'var(--slate)',
-                  borderColor: 'var(--border-light)',
+                  borderColor: 'var(--border-subtle)',
                   backgroundColor: 'transparent',
                   cursor: 'pointer',
                   opacity: 0.6,

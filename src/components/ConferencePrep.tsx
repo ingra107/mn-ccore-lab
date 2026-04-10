@@ -136,7 +136,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             <thead>
               <tr
                 style={{
-                  borderBottom: '1px solid var(--border-light)',
+                  borderBottom: '1px solid var(--border-subtle)',
                 }}
               >
                 {['Conference', 'Type', 'Abstract Due', 'Status', 'Materials', 'Travel', ''].map((h) => (
@@ -164,7 +164,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 <tr
                   key={conf.id}
                   style={{
-                    borderBottom: '1px solid var(--border-light)',
+                    borderBottom: '1px solid var(--border-subtle)',
                   }}
                 >
                   {/* Conference name + title */}
@@ -309,7 +309,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             marginTop: activeConfs.length > 0 ? '12px' : '0',
             padding: '12px',
             borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-light)',
+            border: '1px solid var(--border-subtle)',
             background: 'rgba(45,138,138,0.03)',
           }}
         >
@@ -323,7 +323,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 fontSize: '12px',
                 padding: '6px 10px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-light)',
+                border: '1px solid var(--border-subtle)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
                 outline: 'none',
@@ -337,7 +337,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 fontSize: '12px',
                 padding: '6px 10px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-light)',
+                border: '1px solid var(--border-subtle)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
                 outline: 'none',
@@ -352,7 +352,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 fontSize: '12px',
                 padding: '6px 10px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-light)',
+                border: '1px solid var(--border-subtle)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
                 cursor: 'pointer',
@@ -371,7 +371,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 fontSize: '12px',
                 padding: '6px 10px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-light)',
+                border: '1px solid var(--border-subtle)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
               }}
@@ -386,7 +386,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 fontSize: '12px',
                 padding: '6px 10px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-light)',
+                border: '1px solid var(--border-subtle)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
               }}
@@ -417,7 +417,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 fontSize: 'var(--label-size)',
                 padding: '5px 14px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-light)',
+                border: '1px solid var(--border-subtle)',
                 background: 'none',
                 color: 'var(--slate)',
                 cursor: 'pointer',

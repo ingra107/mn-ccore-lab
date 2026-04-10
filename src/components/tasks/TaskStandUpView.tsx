@@ -4,6 +4,7 @@ import Avatar from '../Avatar'
 import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
+import { useProjects } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
 
 interface TaskStandUpViewProps {
@@ -23,6 +24,17 @@ const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, l
 
 export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }: TaskStandUpViewProps) {
   const { showUndo } = useUndoToast()
+
+  // Project data for displaying project names
+  const { data: projects = [] } = useProjects()
+  const projectMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const p of projects) {
+      if (p.slug) map.set(p.slug, p.short_name || p.title)
+    }
+    return map
+  }, [projects])
+
   // Group by assignee, excluding done tasks
   const grouped = useMemo(() => {
     const map = new Map<string, { todo: TaskRow[]; in_progress: TaskRow[]; blocked: TaskRow[]; done: TaskRow[] }>()
@@ -91,10 +103,10 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
           <div
             key={assignee}
             className="rounded-xl border"
-            style={{ borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}
+            style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}
           >
             {/* Person header */}
-            <div className="flex items-center gap-3 p-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
+            <div className="flex items-center gap-3 p-4 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
               <div style={{ width: 36, height: 36 }}>
                 <Avatar
                   name={person.name}
@@ -164,6 +176,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
                   onStatusChange={onStatusChange}
                   onOpenDetail={onOpenDetail}
                   showUndo={showUndo}
+                  projectMap={projectMap}
                 />
               )}
 
@@ -176,6 +189,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
                   onStatusChange={onStatusChange}
                   onOpenDetail={onOpenDetail}
                   showUndo={showUndo}
+                  projectMap={projectMap}
                 />
               )}
 
@@ -188,6 +202,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
                   onStatusChange={onStatusChange}
                   onOpenDetail={onOpenDetail}
                   showUndo={showUndo}
+                  projectMap={projectMap}
                 />
               )}
 
@@ -237,6 +252,7 @@ function TaskSection({
   onStatusChange,
   onOpenDetail,
   showUndo,
+  projectMap,
 }: {
   label: string
   tasks: TaskRow[]
@@ -244,6 +260,7 @@ function TaskSection({
   onStatusChange: (id: string, status: string) => void
   onOpenDetail?: (task: TaskRow) => void
   showUndo: (msg: string, onUndo: () => void) => void
+  projectMap: Map<string, string>
 }) {
   const config = statusIcon[status] || statusIcon.todo
   const Icon = config.icon
@@ -268,6 +285,7 @@ function TaskSection({
       <div className="flex flex-col gap-1 pl-4">
         {tasks.map((task) => {
           const isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
+          const projectName = task.project_id ? projectMap.get(task.project_id) : undefined
           return (
             <div
               key={task.id}
@@ -282,12 +300,19 @@ function TaskSection({
               >
                 <Circle size={14} style={{ color: config.color, opacity: 0.5 }} />
               </button>
-              <span
-                className="text-sm flex-1 task-title-clickable"
-                style={{ color: 'var(--ink)', borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px -4px', transition: 'background var(--transition-fast) ease' }}
-              >
-                {task.title || task.description}
-              </span>
+              <div className="flex-1 min-w-0">
+                <span
+                  className="text-sm task-title-clickable"
+                  style={{ color: 'var(--ink)', borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px -4px', transition: 'background var(--transition-fast) ease' }}
+                >
+                  {task.title || task.description}
+                </span>
+                {projectName && (
+                  <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.7, marginLeft: '6px' }}>
+                    {projectName}
+                  </span>
+                )}
+              </div>
               {task.due_date && (
                 <span
                   className="text-[10px] flex-shrink-0"

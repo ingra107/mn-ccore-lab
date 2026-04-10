@@ -273,7 +273,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   style={{
                     color: 'var(--slate)',
                     background: 'none',
-                    border: '1px solid var(--border-light)',
+                    border: '1px solid var(--border-subtle)',
                     cursor: 'pointer',
                   }}
                 >

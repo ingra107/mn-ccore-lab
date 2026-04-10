@@ -521,7 +521,7 @@ export default function Manuscripts() {
                 <div
                   key={stage}
                   style={{
-                    background: '#f5f5f5',
+                    background: 'var(--ice)',
                     borderRadius: 'var(--radius-xl)',
                     borderTop: '2px solid var(--teal)',
                     padding: '16px',
@@ -529,7 +529,7 @@ export default function Manuscripts() {
                   }}
                 >
                   <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
-                    <h3 style={{ fontWeight: 400, fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
+                    <h3 style={{ fontWeight: 500, fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
                       {stage}
                     </h3>
                     <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4, fontWeight: 500 }}>

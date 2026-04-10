@@ -10,7 +10,7 @@ import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
-import { useTasks, useUpcomingConferences } from '../../hooks/useApiData'
+import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useApiData'
 import { useUpdateTaskStatus } from '../../hooks/useMutations'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
@@ -46,6 +46,14 @@ export default function Deadlines() {
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
   const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
+  const { data: projectsList = [] } = useProjects()
+  const projectMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const p of projectsList) {
+      if (p.slug) map.set(p.slug, p.short_name || p.title)
+    }
+    return map
+  }, [projectsList])
   const updateTaskStatus = useUpdateTaskStatus()
   const { showUndo } = useUndoToast()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
@@ -199,7 +207,7 @@ export default function Deadlines() {
               URL.revokeObjectURL(url)
             }}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs transition-colors border"
-            style={{ color: 'var(--slate)', borderColor: 'var(--border-light)', background: 'none', cursor: 'pointer', opacity: 0.6 }}
+            style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.6 }}
             title="Export deadlines as .ics calendar file"
           >
             <Download size={12} />
@@ -276,12 +284,12 @@ export default function Deadlines() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: 'minmax(200px, 1fr) 120px 100px 100px 80px',
+                gridTemplateColumns: 'minmax(200px, 1fr) 140px 120px 100px 100px 80px',
                 padding: '8px 16px',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
-              {['TITLE', 'DUE DATE', 'ASSIGNEE', 'STATUS', 'TYPE'].map((col) => (
+              {['TITLE', 'PROJECT', 'DUE DATE', 'ASSIGNEE', 'STATUS', 'TYPE'].map((col) => (
                 <span key={col} style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
                   {col}
                 </span>
@@ -298,7 +306,7 @@ export default function Deadlines() {
                 { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
               ].filter(g => g.items.length > 0).map((group) => (
                 <motion.div key={group.title} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}>
-                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onOpenDetail={handleOpenDetail} />
+                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} />
                 </motion.div>
               ))}
             </motion.div>
@@ -368,7 +376,7 @@ const STATUS_OPTIONS = [
   { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
 ]
 
-function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetail }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onOpenDetail?: (item: DeadlineItem) => void }) {
+function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetail, projectMap }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string> }) {
   const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
 
   return (
@@ -398,7 +406,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
             <div
               className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
               style={{
-                gridTemplateColumns: 'minmax(200px, 1fr) 120px 100px 100px 80px',
+                gridTemplateColumns: 'minmax(200px, 1fr) 140px 120px 100px 100px 80px',
                 padding: `var(--row-padding-y, 8px) 16px`,
                 alignItems: 'center',
               }}
@@ -417,6 +425,16 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
                 }}
               >
                 {item.title}
+              </span>
+
+              {/* Project */}
+              <span style={{
+                fontSize: '11px',
+                color: 'var(--teal)',
+                opacity: 0.7,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+              }}>
+                {item.project ? (projectMap.get(item.project) || item.project) : ''}
               </span>
 
               {/* Due date */}
@@ -775,7 +793,7 @@ function UpcomingConferencesSection() {
 
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
         <thead>
-          <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
+          <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
             {['Conference', 'Project', 'Deadline', 'Status', 'Prep'].map((h) => (
               <th
                 key={h}
@@ -805,7 +823,7 @@ function UpcomingConferencesSection() {
               : conf.conference_date
 
             return (
-              <tr key={conf.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+              <tr key={conf.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 <td style={{ padding: '8px', fontWeight: 500, color: 'var(--ink)' }}>
                   {conf.conference}
                   <div
@@ -937,7 +955,7 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
       {/* Vertical line */}
       <div
         className="absolute left-2 top-0 bottom-0 w-0.5"
-        style={{ backgroundColor: 'var(--border-light)' }}
+        style={{ backgroundColor: 'var(--border-subtle)' }}
       />
 
       {byWeek.map(([weekStart, weekItems]) => {

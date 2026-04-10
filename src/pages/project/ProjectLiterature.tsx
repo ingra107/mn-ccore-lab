@@ -267,7 +267,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
           maxHeight: '75vh',
           backgroundColor: 'var(--cream)',
           borderRadius: 'var(--radius-xl)',
-          border: '1px solid var(--border-light)',
+          border: '1px solid var(--border-subtle)',
           display: 'flex',
           flexDirection: 'column',
         }}

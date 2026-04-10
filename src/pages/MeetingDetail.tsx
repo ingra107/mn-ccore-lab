@@ -215,7 +215,7 @@ export default function MeetingDetail() {
               style={{
                 fontSize: 'var(--label-size)',
                 color: copiedSummary ? 'var(--green)' : 'var(--slate)',
-                border: `1px solid ${copiedSummary ? 'var(--green)' : 'var(--border-light)'}`,
+                border: `1px solid ${copiedSummary ? 'var(--green)' : 'var(--border-subtle)'}`,
                 background: copiedSummary ? 'rgba(34,197,94,0.06)' : 'none',
                 cursor: 'pointer',
                 opacity: copiedSummary ? 1 : 0.6,
@@ -404,7 +404,7 @@ export default function MeetingDetail() {
               <button
                 onClick={() => setShowDecisionForm(!showDecisionForm)}
                 style={{
-                  marginLeft: 'auto', background: 'none', border: '1px solid var(--border-light)',
+                  marginLeft: 'auto', background: 'none', border: '1px solid var(--border-subtle)',
                   borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
                   fontSize: 'var(--label-size)', color: 'var(--gold)',
                   display: 'flex', alignItems: 'center', gap: '4px',
@@ -477,7 +477,7 @@ export default function MeetingDetail() {
                     <button
                       type="button"
                       onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale('') }}
-                      style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 6, padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}
+                      style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 6, padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}
                     >
                       Cancel
                     </button>
@@ -505,7 +505,7 @@ export default function MeetingDetail() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} className="mt-8">
           <div className="flex items-center gap-2 mb-3">
             <FileText size={16} style={{ color: 'var(--gold)' }} />
-            <h3 style={{ fontWeight: 400, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+            <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
               Meeting Notes
             </h3>
           </div>
@@ -549,7 +549,7 @@ export default function MeetingDetail() {
                   </button>
                   <button
                     onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(false) }}
-                    style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 6, padding: '6px 16px', fontSize: 'var(--value-size)', cursor: 'pointer', color: 'var(--slate)' }}
+                    style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 6, padding: '6px 16px', fontSize: 'var(--value-size)', cursor: 'pointer', color: 'var(--slate)' }}
                   >
                     Cancel
                   </button>
@@ -790,6 +790,12 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
         )}
       </div>
 
+      {!isAuthenticated && import.meta.env.PROD && (
+        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, marginLeft: '22px', marginTop: '4px', display: 'inline-block' }}>
+          <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to add action items
+        </span>
+      )}
+
       {/* Token preview chips */}
       {parsed && (parsed.assigneeName || parsed.priority || parsed.dueDate || parsed.projectTitle) && (
         <motion.div
@@ -866,6 +872,11 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}
           />
         </div>
+        {!isAuthenticated && import.meta.env.PROD && !text.trim() && (
+          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+            <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to add items
+          </span>
+        )}
         {text.trim() && (
           <>
             <motion.button type="button" onClick={() => setShowDocInput(!showDocInput)}

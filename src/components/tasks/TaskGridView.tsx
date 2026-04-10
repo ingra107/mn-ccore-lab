@@ -1,7 +1,11 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check, GripVertical } from 'lucide-react'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
@@ -9,7 +13,7 @@ import { formatBrandName } from '../BrandName'
 import TaskContextMenu from './TaskContextMenu'
 import { useContextMenu } from '../../hooks/useContextMenu'
 import { useSubtasks, useProjects } from '../../hooks/useApiData'
-import { useCreateSubtask, useToggleSubtask } from '../../hooks/useMutations'
+import { useCreateSubtask, useToggleSubtask, useReorderSubtasks } from '../../hooks/useMutations'
 import { STATUS_OPTIONS, STATUS_BG, PRIORITY_OPTIONS, PRIORITY_CONFIG, PRIORITY_ORDER, STATUS_ORDER } from '../../lib/taskConstants'
 import type { TaskRow } from '../../lib/api'
 
@@ -415,7 +419,7 @@ function TaskGridRow({
         {onToggleSelect ? (
           <div style={{
             width: 16, height: 16, borderRadius: 4,
-            border: selected ? 'none' : '1.5px solid var(--border-light)',
+            border: selected ? 'none' : '1.5px solid var(--border-subtle)',
             background: selected ? 'var(--teal)' : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
@@ -447,7 +451,7 @@ function TaskGridRow({
                 className="absolute left-full ml-2 hidden group-hover:block z-30 rounded-lg shadow-lg border py-2 px-3"
                 style={{
                   backgroundColor: 'var(--cream)',
-                  borderColor: 'var(--border-light)',
+                  borderColor: 'var(--border-subtle)',
                   minWidth: '180px',
                   maxWidth: '260px',
                   top: '50%',
@@ -868,15 +872,69 @@ function TaskKeyLinks({ task }: { task: TaskRow }) {
   )
 }
 
+// ── Inline Sortable Subtask Item ──────────────────────────────
+
+function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; title: string; completed: number }; onToggle: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: subtask.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : ('auto' as const),
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ ...style, transition: `opacity 150ms ease, ${transition || ''}` }}
+      className="flex items-center gap-2 py-1 group"
+      {...attributes}
+    >
+      {/* Compact drag handle */}
+      <button
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+        style={{ background: 'none', border: 'none', padding: '1px', color: 'var(--slate)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical size={10} style={{ opacity: 0.35 }} />
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onToggle(subtask.id) }}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
+      >
+        {subtask.completed ? (
+          <CheckCircle2 size={14} style={{ color: 'var(--teal)' }} />
+        ) : (
+          <Circle size={14} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+        )}
+      </button>
+      <span
+        style={{
+          fontSize: '12px',
+          color: subtask.completed ? 'var(--slate)' : 'var(--ink)',
+          textDecoration: subtask.completed ? 'line-through' : 'none',
+          opacity: subtask.completed ? 0.5 : 0.8,
+        }}
+      >
+        {subtask.title}
+      </span>
+    </div>
+  )
+}
+
 // ── Inline Subtask Row (Linear-style expand) ─────────────────
 
 function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeightChange?: () => void }) {
   const { data: subtasks = [] } = useSubtasks(taskId)
   const createSubtask = useCreateSubtask(taskId)
   const toggleSubtask = useToggleSubtask(taskId)
+  const reorderSubtasks = useReorderSubtasks(taskId)
   const [newTitle, setNewTitle] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const prevSubtaskCount = useRef(subtasks.length)
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   // Auto-focus input when row appears
   useEffect(() => {
@@ -903,6 +961,19 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
     inputRef.current?.focus()
   }
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = subtasks.findIndex((s) => s.id === active.id)
+    const newIndex = subtasks.findIndex((s) => s.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(subtasks, oldIndex, newIndex)
+    reorderSubtasks.mutate(reordered.map((s) => s.id))
+    onHeightChange?.()
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -927,35 +998,18 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
           </div>
         )}
 
-        {/* Subtask list */}
-        {subtasks.map((s) => (
-          <div
-            key={s.id}
-            className="flex items-center gap-2 py-1 group"
-            style={{ transition: 'opacity 150ms ease' }}
-          >
-            <button
-              onClick={(e) => { e.stopPropagation(); toggleSubtask.mutate(s.id) }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
-            >
-              {s.completed ? (
-                <CheckCircle2 size={14} style={{ color: 'var(--teal)' }} />
-              ) : (
-                <Circle size={14} style={{ color: 'var(--slate)', opacity: 0.3 }} />
-              )}
-            </button>
-            <span
-              style={{
-                fontSize: '12px',
-                color: s.completed ? 'var(--slate)' : 'var(--ink)',
-                textDecoration: s.completed ? 'line-through' : 'none',
-                opacity: s.completed ? 0.5 : 0.8,
-              }}
-            >
-              {s.title}
-            </span>
-          </div>
-        ))}
+        {/* Subtask list — sortable */}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={subtasks.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            {subtasks.map((s) => (
+              <InlineSortableSubtask
+                key={s.id}
+                subtask={s}
+                onToggle={(id) => toggleSubtask.mutate(id)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
 
         {/* Add subtask input */}
         <form onSubmit={handleAdd} className="flex items-center gap-2 mt-0.5" onClick={(e) => e.stopPropagation()}>

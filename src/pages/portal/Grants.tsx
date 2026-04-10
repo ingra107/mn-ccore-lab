@@ -133,7 +133,7 @@ export default function Grants() {
 
       {/* Upcoming milestones */}
       {upcomingMilestones.length > 0 && (
-        <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
+        <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
           <h3 className="text-sm font-normal mb-3" style={{ color: 'var(--ink)' }}>
             Upcoming Milestones
           </h3>
@@ -180,7 +180,7 @@ export default function Grants() {
       )}
 
       {/* Post-Award Lifecycle Milestones */}
-      <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-light)' }}>
+      <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <ClipboardList size={14} style={{ color: 'var(--teal)' }} />
@@ -377,7 +377,7 @@ export default function Grants() {
       <div className="mt-6 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Telescope size={16} style={{ color: 'var(--gold)' }} />
-          <h3 style={{ fontWeight: 400, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+          <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
             Grant Landscape (NIH RePORTER)
           </h3>
         </div>
@@ -392,7 +392,7 @@ export default function Grants() {
               flex: 1,
               padding: '8px 12px',
               borderRadius: 8,
-              border: '1px solid var(--border-light)',
+              border: '1px solid var(--border-subtle)',
               fontSize: 'var(--value-size)',
               background: 'var(--cream)',
               color: 'var(--ink)',
@@ -495,7 +495,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
   return (
     <div
       className="rounded-xl border p-5 transition-all hover:shadow-sm"
-      style={{ borderColor: 'var(--border-light)' }}
+      style={{ borderColor: 'var(--border-subtle)' }}
     >
       <div className="flex items-start gap-4">
         {/* Left: mechanism badge */}
@@ -557,7 +557,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
           {/* Progress bar (active grants only) */}
           {!grant.proposed && progress > 0 && (
             <div className="mt-3 flex items-center gap-2">
-              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
                 <div
                   className="h-full rounded-full transition-all"
                   style={{
@@ -637,7 +637,7 @@ function AddGrantMilestoneModal({
     width: '100%',
     padding: '8px 12px',
     borderRadius: 'var(--radius-lg)',
-    border: '1px solid var(--border-light)',
+    border: '1px solid var(--border-subtle)',
     fontSize: 'var(--value-size)',
     background: 'var(--cream)',
     color: 'var(--ink)',
@@ -668,7 +668,7 @@ function AddGrantMilestoneModal({
         style={{
           background: 'var(--cream)',
           borderRadius: 'var(--radius-2xl)',
-          border: '1px solid var(--border-light)',
+          border: '1px solid var(--border-subtle)',
           padding: '24px',
           width: '100%',
           maxWidth: '480px',
@@ -774,7 +774,7 @@ function AddGrantMilestoneModal({
             style={{
               padding: '8px 16px',
               borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--border-light)',
+              border: '1px solid var(--border-subtle)',
               background: 'none',
               fontSize: 'var(--value-size)',
               color: 'var(--slate)',
@@ -791,7 +791,7 @@ function AddGrantMilestoneModal({
               padding: '8px 16px',
               borderRadius: 'var(--radius-lg)',
               border: 'none',
-              background: !grantId || !title.trim() ? 'var(--border-light)' : 'var(--teal)',
+              background: !grantId || !title.trim() ? 'var(--border-subtle)' : 'var(--teal)',
               color: !grantId || !title.trim() ? 'var(--slate)' : 'white',
               fontSize: 'var(--value-size)',
               fontWeight: 600,

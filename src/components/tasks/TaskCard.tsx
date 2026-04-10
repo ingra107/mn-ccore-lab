@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { CalendarDays, FolderKanban, Flag, RotateCcw, Eye, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useUndoToast } from '../UndoToast'
 import Avatar from '../Avatar'
@@ -5,6 +6,7 @@ import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 import { formatBrandName } from '../BrandName'
 import { updateTask } from '../../lib/api'
+import { useProjects } from '../../hooks/useApiData'
 import { STATUS_OPTIONS, PRIORITY_CONFIG, PRIORITY_COLORS, STATUS_CYCLE } from '../../lib/taskConstants'
 import type { TaskRow } from '../../lib/api'
 
@@ -25,6 +27,16 @@ interface TaskCardProps {
 export default function TaskCard({ task, onStatusChange, onPriorityChange, compact = false, onClick, onMouseEnter, onMouseLeave }: TaskCardProps) {
   const { showUndo } = useUndoToast()
   const person = getPersonInfo(task.assignee)
+
+  // Project data for resolving slug → display name
+  const { data: projects = [] } = useProjects()
+  const projectMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const p of projects) {
+      if (p.slug) map.set(p.slug, p.short_name || p.title)
+    }
+    return map
+  }, [projects])
   const priority = PRIORITY_CONFIG[task.priority as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.medium
   const isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
   const isDone = task.status === 'done'
@@ -149,7 +161,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
                 style={{ color: 'var(--gold)', opacity: 0.8 }}
               >
                 <FolderKanban size={10} />
-                {task.project_id}
+                {projectMap.get(task.project_id) || task.project_id}
               </span>
             )}
 
