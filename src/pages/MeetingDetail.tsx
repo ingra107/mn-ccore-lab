@@ -494,7 +494,7 @@ export default function MeetingDetail() {
             ))}
 
             {decisions.length === 0 && !showDecisionForm && (
-              <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+              <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: '16px 0', margin: 0 }}>
                 No decisions logged yet. Record one during the meeting so nobody forgets.
               </p>
             )}
@@ -543,13 +543,13 @@ export default function MeetingDetail() {
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     onClick={() => { updateNotes.mutate(notesDraft); setEditingNotes(false) }}
-                    style={{ background: 'var(--gold)', color: 'var(--ink)', border: 'none', borderRadius: 6, padding: '6px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                    style={{ background: 'var(--gold)', color: 'var(--ink)', border: 'none', borderRadius: 6, padding: '6px 16px', fontSize: 'var(--value-size)', fontWeight: 600, cursor: 'pointer' }}
                   >
                     Save Notes
                   </button>
                   <button
                     onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(false) }}
-                    style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 6, padding: '6px 16px', fontSize: '13px', cursor: 'pointer', color: 'var(--slate)' }}
+                    style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 6, padding: '6px 16px', fontSize: 'var(--value-size)', cursor: 'pointer', color: 'var(--slate)' }}
                   >
                     Cancel
                   </button>
