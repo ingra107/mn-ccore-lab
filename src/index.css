@@ -112,21 +112,23 @@
   letter-spacing: 0.01em;
 }
 
-/* ── Density modes ── */
+/* ── Table Density Modes ── */
 :root {
-  --density-card-padding: 20px;
-  --density-gap: 20px;
-  --density-card-gap: 12px;
-  --density-text-sm: 14px;
-  --density-text-xs: 12px;
+  --row-height: 44px;
+  --row-padding-y: 10px;
+  --cell-font-size: var(--text-body);
 }
 
 .density-compact {
-  --density-card-padding: 12px;
-  --density-gap: 12px;
-  --density-card-gap: 4px;
-  --density-text-sm: 13px;
-  --density-text-xs: 11px;
+  --row-height: 36px;
+  --row-padding-y: 6px;
+  --cell-font-size: var(--text-small);
+}
+
+.density-relaxed {
+  --row-height: 52px;
+  --row-padding-y: 14px;
+  --cell-font-size: var(--text-base);
 }
 
 /* ── UX Tokens — consistent interactive elements across all pages ── */
