@@ -81,7 +81,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     else { setSortKey(key); setSortAsc(true) }
   }
 
-  const colStyle = { display: 'grid', gridTemplateColumns: '32px minmax(200px, 2fr) 1fr 1fr 1fr 1fr 60px', alignItems: 'center' } as const
+  const colStyle = { display: 'grid', gridTemplateColumns: '32px minmax(280px, 3fr) 1fr 1fr 1fr 1fr 60px', alignItems: 'center' } as const
 
   const ROW_HEIGHT = 44
   const parentRef = useRef<HTMLDivElement>(null)
