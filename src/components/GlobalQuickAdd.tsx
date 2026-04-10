@@ -122,8 +122,8 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
               style={{
                 background: 'var(--cream)',
                 border: '1px solid rgba(201,168,76,0.28)',
-                borderRadius: '16px',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.22), 0 4px 16px rgba(0,0,0,0.1)',
+                borderRadius: 'var(--radius-2xl)',
+                boxShadow: 'var(--shadow-elevated)',
                 overflow: 'hidden',
               }}
             >
@@ -158,7 +158,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                     opacity: 0.4,
                     background: 'var(--ice)',
                     padding: '1px 5px',
-                    borderRadius: '4px',
+                    borderRadius: 'var(--radius-sm)',
                     border: '1px solid rgba(201,168,76,0.15)',
                   }}
                 >
@@ -214,7 +214,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                     background: parseQuickAddInput(value).title.trim() ? 'var(--gold)' : 'rgba(201,168,76,0.3)',
                     color: parseQuickAddInput(value).title.trim() ? 'var(--ink)' : 'var(--slate)',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: 'var(--radius-lg)',
                     cursor: parseQuickAddInput(value).title.trim() ? 'pointer' : 'default',
                     padding: '6px 16px',
                     fontSize: '12px',

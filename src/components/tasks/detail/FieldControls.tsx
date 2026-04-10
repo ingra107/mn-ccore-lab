@@ -240,7 +240,7 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
                   <span style={{
                     fontSize: '9px',
                     padding: '1px 5px',
-                    borderRadius: '8px',
+                    borderRadius: 'var(--radius-lg)',
                     backgroundColor: taskCounts[slug] > 8 ? 'rgba(122,0,25,0.1)' : taskCounts[slug] > 4 ? 'rgba(194,65,12,0.1)' : 'rgba(45,138,138,0.08)',
                     color: taskCounts[slug] > 8 ? 'var(--maroon)' : taskCounts[slug] > 4 ? 'var(--orange)' : 'var(--teal)',
                   }}>

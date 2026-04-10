@@ -210,7 +210,7 @@ export default function MentionInput({
                   color: 'var(--gold)',
                   fontWeight: 600,
                   background: 'rgba(201, 168, 76, 0.1)',
-                  borderRadius: '2px',
+                  borderRadius: 'var(--radius-sm)',
                 }}
               >
                 {part.text}
@@ -261,8 +261,8 @@ export default function MentionInput({
               overflowY: 'auto',
               background: 'var(--cream)',
               border: '1px solid rgba(201, 168, 76, 0.2)',
-              borderRadius: '8px',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-menu)',
               zIndex: 50,
               padding: '4px 0',
             }}

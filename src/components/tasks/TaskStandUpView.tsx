@@ -147,7 +147,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
               </div>
               {/* Workload dot */}
               <div style={{
-                width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                width: 8, height: 8, borderRadius: 'var(--radius-circle)', flexShrink: 0,
                 background: activeCount >= 7 ? 'var(--maroon)' : activeCount >= 4 ? 'var(--gold)' : 'var(--green-light)',
                 boxShadow: activeCount >= 7 ? '0 0 6px rgba(122,0,25,0.4)' : 'none',
               }} title={`${activeCount} open tasks`} />
@@ -284,7 +284,7 @@ function TaskSection({
               </button>
               <span
                 className="text-sm flex-1 task-title-clickable"
-                style={{ color: 'var(--ink)', borderRadius: '3px', padding: '1px 4px', margin: '-1px -4px', transition: 'background var(--transition-fast) ease' }}
+                style={{ color: 'var(--ink)', borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px -4px', transition: 'background var(--transition-fast) ease' }}
               >
                 {task.title || task.description}
               </span>

@@ -175,7 +175,7 @@ function CascadeRow({
         <div style={{
           width: 8,
           height: 8,
-          borderRadius: '50%',
+          borderRadius: 'var(--radius-circle)',
           background: color,
           flexShrink: 0,
           boxShadow: isImpacted ? `0 0 6px ${statusColor('at-risk')}` : 'none',
@@ -559,20 +559,20 @@ export default function DeadlineCascade({
               <>
                 {overdueCount > 0 && (
                   <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--maroon)' }} />
+                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--maroon)' }} />
                     <span style={{ color: 'var(--maroon)', fontWeight: 500 }}>{overdueCount}</span>
                     <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>overdue</span>
                   </span>
                 )}
                 {atRiskCount > 0 && (
                   <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)' }} />
+                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--gold)' }} />
                     <span style={{ color: 'var(--gold)', fontWeight: 500 }}>{atRiskCount}</span>
                     <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>at risk</span>
                   </span>
                 )}
                 <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--teal)' }} />
+                  <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--teal)' }} />
                   <span style={{ color: 'var(--teal)', fontWeight: 500 }}>{onTrackCount}</span>
                   <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>on track</span>
                 </span>

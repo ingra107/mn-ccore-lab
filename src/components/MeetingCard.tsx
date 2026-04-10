@@ -24,7 +24,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
       className="meeting-card"
       style={{
         background: 'var(--cream)',
-        borderRadius: '12px',
+        borderRadius: 'var(--radius-xl)',
         borderLeft: pendingActions > 0 ? '3px solid var(--gold)' : '3px solid var(--ice)',
         boxShadow: 'var(--shadow-card)',
         overflow: 'hidden',
@@ -292,7 +292,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              borderRadius: '4px',
+                              borderRadius: 'var(--radius-sm)',
                               transition: 'transform 0.15s ease',
                               minWidth: '44px',
                               minHeight: '44px',

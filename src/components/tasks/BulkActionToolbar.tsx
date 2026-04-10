@@ -265,7 +265,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                       style={{
                         width: 8,
                         height: 8,
-                        borderRadius: '50%',
+                        borderRadius: 'var(--radius-circle)',
                         background: opt.color,
                         flexShrink: 0,
                       }}

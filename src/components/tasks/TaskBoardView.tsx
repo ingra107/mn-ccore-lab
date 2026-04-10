@@ -240,7 +240,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
               alignItems: 'center',
               gap: '4px',
               padding: '3px 10px',
-              borderRadius: '6px',
+              borderRadius: 'var(--radius-md)',
               border: groupBy === field ? '1px solid var(--teal)' : '1px solid transparent',
               background: groupBy === field ? 'rgba(45,138,138,0.08)' : 'none',
               color: groupBy === field ? 'var(--teal)' : 'var(--slate)',
@@ -470,7 +470,7 @@ function CollapsedColumn({
         transition: 'all 150ms ease',
         backgroundColor: isOver ? 'rgba(45, 138, 138, 0.04)' : bg,
         border: isOver ? '2px dashed var(--gold)' : '2px solid transparent',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-lg)',
         padding: '8px 4px',
         cursor: 'pointer',
         display: 'flex',
@@ -538,7 +538,7 @@ function DroppableColumn({ id, children, isOver }: { id: string; children: React
         transition: 'all 150ms ease',
         backgroundColor: isOver ? 'rgba(45, 138, 138, 0.04)' : 'transparent',
         border: isOver ? '2px dashed var(--gold)' : '2px solid transparent',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-lg)',
         padding: '4px',
       }}
     >

@@ -65,7 +65,7 @@ function MyItemsCard() {
                 style={{
                   width: 6,
                   height: 6,
-                  borderRadius: '50%',
+                  borderRadius: 'var(--radius-circle)',
                   background: 'var(--gold)',
                   display: 'inline-block',
                 }}

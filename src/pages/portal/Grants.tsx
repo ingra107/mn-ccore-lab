@@ -631,7 +631,7 @@ function AddGrantMilestoneModal({
   const inputStyle = {
     width: '100%',
     padding: '8px 12px',
-    borderRadius: '8px',
+    borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--border-light)',
     fontSize: 'var(--value-size)',
     background: 'var(--cream)',
@@ -662,7 +662,7 @@ function AddGrantMilestoneModal({
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--cream)',
-          borderRadius: '16px',
+          borderRadius: 'var(--radius-2xl)',
           border: '1px solid var(--border-light)',
           padding: '24px',
           width: '100%',
@@ -768,7 +768,7 @@ function AddGrantMilestoneModal({
             onClick={onClose}
             style={{
               padding: '8px 16px',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-lg)',
               border: '1px solid var(--border-light)',
               background: 'none',
               fontSize: 'var(--value-size)',
@@ -784,7 +784,7 @@ function AddGrantMilestoneModal({
             className="flex items-center gap-1.5"
             style={{
               padding: '8px 16px',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-lg)',
               border: 'none',
               background: !grantId || !title.trim() ? 'var(--border-light)' : 'var(--teal)',
               color: !grantId || !title.trim() ? 'var(--slate)' : 'white',

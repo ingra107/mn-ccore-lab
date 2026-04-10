@@ -70,7 +70,7 @@ export default function ProjectComments({ projectSlug }: Props) {
       <div
         style={{
           background: 'var(--ice)',
-          borderRadius: '12px',
+          borderRadius: 'var(--radius-xl)',
           padding: '16px 20px',
         }}
         className="detail-card"
@@ -96,7 +96,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                 color: 'var(--ink)',
                 background: 'var(--cream)',
                 border: '1px solid rgba(201, 168, 76, 0.15)',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 padding: '10px 12px',
                 resize: 'none',
                 outline: 'none',

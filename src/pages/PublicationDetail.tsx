@@ -222,7 +222,7 @@ export default function PublicationDetail() {
           <div
             style={{
               background: 'var(--ice)',
-              borderRadius: '12px',
+              borderRadius: 'var(--radius-xl)',
               padding: '20px 24px',
             }}
           >
@@ -350,7 +350,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
       <div
         style={{
           background: 'var(--ice)',
-          borderRadius: '12px',
+          borderRadius: 'var(--radius-xl)',
           padding: '16px 20px',
         }}
       >

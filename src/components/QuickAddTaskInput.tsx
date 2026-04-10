@@ -44,7 +44,7 @@ function Chip({ label, value, color = 'var(--slate)' }: ChipProps) {
         alignItems: 'center',
         gap: '4px',
         padding: '2px 7px',
-        borderRadius: '5px',
+        borderRadius: 'var(--radius-md)',
         background: 'var(--cream)',
         border: '1px solid rgba(201,168,76,0.18)',
         fontFamily: FONT_FAMILY,
@@ -71,7 +71,7 @@ function ParsedPreview({ parsed }: { parsed: ParsedQuickAdd }) {
         gap: '6px',
         marginTop: '8px',
         padding: '7px 10px',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-lg)',
         background: 'rgba(201,168,76,0.05)',
         border: '1px solid rgba(201,168,76,0.12)',
       }}
@@ -144,7 +144,7 @@ export default function QuickAddTaskInput({
           position: 'relative',
           background: 'var(--ice)',
           border: '1px solid rgba(201,168,76,0.2)',
-          borderRadius: '8px',
+          borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
           height: '38px',
         }}

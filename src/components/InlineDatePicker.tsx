@@ -87,7 +87,7 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
             color: 'var(--ink)',
             background: 'var(--cream)',
             border: '1px solid var(--teal)',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             padding: '3px 8px',
             outline: 'none',
             width: '130px',

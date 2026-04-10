@@ -237,7 +237,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
                   padding: '6px 12px',
                 }}
               >
-                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--gold)', flexShrink: 0 }} />
+                <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', backgroundColor: 'var(--gold)', flexShrink: 0 }} />
                 {ackTask.isPending ? 'Acknowledging...' : 'Acknowledge Assignment'}
               </button>
             )}

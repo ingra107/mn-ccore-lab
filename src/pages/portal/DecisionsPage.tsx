@@ -221,7 +221,7 @@ function ReviewCard({
             color: 'var(--ink)',
             background: 'var(--cream)',
             border: '1px solid rgba(201,168,76,0.15)',
-            borderRadius: '8px',
+            borderRadius: 'var(--radius-lg)',
             padding: '8px 12px',
             outline: 'none',
             resize: 'vertical',
@@ -237,7 +237,7 @@ function ReviewCard({
               color: 'var(--ink)',
               background: 'var(--cream)',
               border: '1px solid rgba(201,168,76,0.15)',
-              borderRadius: '6px',
+              borderRadius: 'var(--radius-md)',
               padding: '6px 10px',
               outline: 'none',
             }}

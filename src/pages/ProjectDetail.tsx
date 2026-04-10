@@ -358,7 +358,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         <div className="flex items-center gap-4 mt-2 flex-wrap">
           {pendingTasks.length > 0 && (
             <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--teal)', fontWeight: 500 }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--teal)' }} />
+              <span style={{ width: 5, height: 5, borderRadius: 'var(--radius-circle)', background: 'var(--teal)' }} />
               {pendingTasks.length} active
             </span>
           )}
@@ -366,14 +366,14 @@ function ProjectDetailInner({ project }: InnerProps) {
             const overdue = pendingTasks.filter(t => t.due_date && t.due_date < new Date().toISOString().split('T')[0])
             return overdue.length > 0 ? (
               <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--maroon)', fontWeight: 500 }}>
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--maroon)' }} />
+                <span style={{ width: 5, height: 5, borderRadius: 'var(--radius-circle)', background: 'var(--maroon)' }} />
                 {overdue.length} overdue
               </span>
             ) : null
           })()}
           {completedTasks.length > 0 && (
             <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--green)', fontWeight: 500 }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)' }} />
+              <span style={{ width: 5, height: 5, borderRadius: 'var(--radius-circle)', background: 'var(--green)' }} />
               {completedTasks.length} done
             </span>
           )}
@@ -398,7 +398,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               <div
                 style={{
                   background: 'var(--ice)',
-                  borderRadius: '10px',
+                  borderRadius: 'var(--radius-lg)',
                   padding: '12px 16px',
                   border: '1px solid rgba(201, 168, 76, 0.15)',
                 }}
@@ -451,7 +451,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       color: 'var(--ink)',
                       background: 'var(--cream)',
                       border: '1px solid rgba(201, 168, 76, 0.15)',
-                      borderRadius: '8px',
+                      borderRadius: 'var(--radius-lg)',
                       padding: '8px 12px',
                       outline: 'none',
                       transition: 'border-color 0.2s',
@@ -580,7 +580,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   color: 'var(--ink)',
                   background: 'var(--cream)',
                   border: '1px solid var(--gold)',
-                  borderRadius: '8px',
+                  borderRadius: 'var(--radius-lg)',
                   padding: '8px 12px',
                   lineHeight: 1.6,
                   resize: 'vertical',
@@ -716,7 +716,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   style={{
                     width: isCurrent ? '20px' : '14px',
                     height: isCurrent ? '20px' : '14px',
-                    borderRadius: '50%',
+                    borderRadius: 'var(--radius-circle)',
                     border: isCurrent
                       ? '3px solid var(--gold)'
                       : isPast
@@ -764,7 +764,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               style={{
                 marginTop: '12px',
                 padding: '12px 16px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 background: 'var(--ice)',
                 border: '1px solid rgba(201, 168, 76, 0.3)',
                 display: 'flex',
@@ -838,7 +838,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           <div
             style={{
               background: 'var(--ice)',
-              borderRadius: '12px',
+              borderRadius: 'var(--radius-xl)',
               padding: '20px',
             }}
             className="detail-card"
@@ -882,7 +882,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     color: 'var(--ink)',
                     background: 'var(--cream)',
                     border: '1px solid var(--gold)',
-                    borderRadius: '6px',
+                    borderRadius: 'var(--radius-md)',
                     padding: '8px 10px',
                     lineHeight: 1.5,
                     resize: 'vertical',
@@ -1240,7 +1240,7 @@ function ProjectTimeline({ createdAt, stage, tasks, updates }: {
           bottom: '4px',
           width: '2px',
           background: 'var(--border-subtle)',
-          borderRadius: '1px',
+          borderRadius: 'var(--radius-sm)',
         }}
       />
       <div className="flex flex-col gap-3">
@@ -1254,7 +1254,7 @@ function ProjectTimeline({ createdAt, stage, tasks, updates }: {
                 top: '5px',
                 width: '8px',
                 height: '8px',
-                borderRadius: '50%',
+                borderRadius: 'var(--radius-circle)',
                 background: event.color,
                 border: '2px solid var(--cream)',
                 zIndex: 1,

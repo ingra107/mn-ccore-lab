@@ -74,7 +74,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
       style={{
         borderLeft: '3px solid var(--gold)',
         background: 'rgba(201, 168, 76, 0.06)',
-        borderRadius: '0 12px 12px 0',
+        borderRadius: '0 var(--radius-xl) var(--radius-xl) 0',
         padding: '14px 18px',
         marginTop: '1.5rem',
       }}
@@ -108,7 +108,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             style={{
               flex: 1, fontSize: '15px', color: 'var(--ink)',
               background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.25)',
-              borderRadius: '8px', padding: '8px 12px', outline: 'none',
+              borderRadius: 'var(--radius-lg)', padding: '8px 12px', outline: 'none',
               resize: 'vertical', lineHeight: 1.5,
             }}
           />
@@ -118,7 +118,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               onClick={commitEdit}
               title="Save"
               style={{
-                background: 'var(--gold)', border: 'none', borderRadius: '6px',
+                background: 'var(--gold)', border: 'none', borderRadius: 'var(--radius-md)',
                 padding: '7px', cursor: 'pointer', color: '#0f1923',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
@@ -131,7 +131,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               title="Cancel"
               style={{
                 background: 'transparent', border: '1px solid rgba(201, 168, 76, 0.2)',
-                borderRadius: '6px', padding: '7px', cursor: 'pointer', color: 'var(--slate)',
+                borderRadius: 'var(--radius-md)', padding: '7px', cursor: 'pointer', color: 'var(--slate)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >

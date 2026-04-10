@@ -131,7 +131,7 @@ function ToolbarButton({ active, onClick, children }: { active: boolean; onClick
         background: active ? 'rgba(45,138,138,0.12)' : 'transparent',
         color: active ? 'var(--teal)' : 'var(--slate)',
         border: 'none',
-        borderRadius: '4px',
+        borderRadius: 'var(--radius-sm)',
         padding: '4px 6px',
         cursor: 'pointer',
         display: 'flex',

@@ -67,7 +67,7 @@ export default function SystemHealthMiniCard() {
               style={{
                 width: 12,
                 height: 12,
-                borderRadius: '50%',
+                borderRadius: 'var(--radius-circle)',
                 backgroundColor: statusColors[status],
                 boxShadow: `0 0 8px ${statusColors[status]}40`,
                 flexShrink: 0,

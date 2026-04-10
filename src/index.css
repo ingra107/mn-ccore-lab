@@ -204,6 +204,9 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Right-align numeric columns (Stripe pattern) */
+.col-numeric { text-align: right; }
+
 /* Heading letter-spacing — tighten at display sizes (Linear/Vercel/Stripe) */
 h1, .text-display { letter-spacing: var(--tracking-display); }
 h2, .text-heading { letter-spacing: var(--tracking-heading); }

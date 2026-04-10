@@ -58,7 +58,7 @@ function SignInPrompt() {
           style={{
             width: 64,
             height: 64,
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-circle)',
             background: 'var(--gold-light)',
             border: '2px solid var(--gold)',
             display: 'flex',
@@ -275,7 +275,7 @@ function ActionItemCard({
                 style={{
                   width: 18,
                   height: 18,
-                  borderRadius: '50%',
+                  borderRadius: 'var(--radius-circle)',
                   background: person.photoUrl ? undefined : 'var(--gold-light)',
                   border: '1px solid var(--gold)',
                   display: 'flex',
@@ -438,7 +438,7 @@ function NotificationCard({
             style={{
               width: 8,
               height: 8,
-              borderRadius: '50%',
+              borderRadius: 'var(--radius-circle)',
               background: 'var(--gold)',
               flexShrink: 0,
               marginTop: 6,
@@ -525,7 +525,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
                 style={{
                   width: 18,
                   height: 18,
-                  borderRadius: '50%',
+                  borderRadius: 'var(--radius-circle)',
                   background: person.photoUrl ? undefined : 'var(--gold-light)',
                   border: '1px solid var(--gold)',
                   display: 'flex',

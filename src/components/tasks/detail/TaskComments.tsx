@@ -136,7 +136,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
             }}
           >
             <div style={{
-              width: 6, height: 6, borderRadius: '50%',
+              width: 6, height: 6, borderRadius: 'var(--radius-circle)',
               background: forClaude ? 'var(--gold)' : 'var(--slate)',
               opacity: forClaude ? 1 : 0.3,
             }} />

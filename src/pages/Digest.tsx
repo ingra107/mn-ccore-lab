@@ -387,7 +387,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                   marginTop: '4px',
                   background: 'var(--cream)',
                   border: '1px solid rgba(201, 168, 76, 0.2)',
-                  borderRadius: '8px',
+                  borderRadius: 'var(--radius-lg)',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                   minWidth: '220px',
                   maxHeight: '240px',
@@ -607,7 +607,7 @@ export default function Digest() {
                 style={{
                   width: `${((statusCounts.saved + (statusCounts.all - statusCounts.new - statusCounts.saved)) / statusCounts.all) * 100}%`,
                   height: '100%',
-                  borderRadius: '9999px',
+                  borderRadius: 'var(--radius-full)',
                   background: 'var(--gold)',
                   transition: 'width 300ms ease',
                 }}

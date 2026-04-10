@@ -75,7 +75,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                   <div className="flex items-start gap-2">
                     <div
                       style={{
-                        width: 6, height: 6, borderRadius: '50%', flexShrink: 0, marginTop: 5,
+                        width: 6, height: 6, borderRadius: 'var(--radius-circle)', flexShrink: 0, marginTop: 5,
                         background: item.comment_type === 'action' ? 'var(--gold)' : 'var(--slate)',
                         opacity: item.comment_type === 'action' ? 1 : 0.4,
                       }}

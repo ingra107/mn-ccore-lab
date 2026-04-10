@@ -308,7 +308,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
           style={{
             marginTop: activeConfs.length > 0 ? '12px' : '0',
             padding: '12px',
-            borderRadius: '8px',
+            borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-light)',
             background: 'rgba(45,138,138,0.03)',
           }}
@@ -322,7 +322,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               style={{
                 fontSize: '12px',
                 padding: '6px 10px',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
@@ -336,7 +336,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               style={{
                 fontSize: '12px',
                 padding: '6px 10px',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
@@ -351,7 +351,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               style={{
                 fontSize: '12px',
                 padding: '6px 10px',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
@@ -370,7 +370,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               style={{
                 fontSize: '12px',
                 padding: '6px 10px',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
@@ -385,7 +385,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               style={{
                 fontSize: '12px',
                 padding: '6px 10px',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
@@ -401,7 +401,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 fontSize: 'var(--label-size)',
                 fontWeight: 'var(--label-weight)',
                 padding: '5px 14px',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-md)',
                 border: 'none',
                 background: 'var(--teal)',
                 color: '#fff',
@@ -416,7 +416,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               style={{
                 fontSize: 'var(--label-size)',
                 padding: '5px 14px',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-light)',
                 background: 'none',
                 color: 'var(--slate)',

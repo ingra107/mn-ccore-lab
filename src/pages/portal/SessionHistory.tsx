@@ -495,7 +495,7 @@ export default function SessionHistory() {
                               style={{
                                 width: 6,
                                 height: 6,
-                                borderRadius: '50%',
+                                borderRadius: 'var(--radius-circle)',
                                 backgroundColor: getProjectColor(session.project_name),
                                 flexShrink: 0,
                               }}

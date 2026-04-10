@@ -137,7 +137,7 @@ function AddEventForm({
       style={{
         padding: '14px 16px',
         background: 'var(--surface-raised)',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-lg)',
         border: '1px solid var(--border-subtle)',
         marginBottom: '16px',
         overflow: 'hidden',
@@ -157,7 +157,7 @@ function AddEventForm({
                 width: '100%',
                 padding: '6px 28px 6px 10px',
                 fontSize: 'var(--value-size)',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-subtle)',
                 background: 'transparent',
                 color: 'var(--ink)',
@@ -190,7 +190,7 @@ function AddEventForm({
               width: '100%',
               padding: '6px 10px',
               fontSize: 'var(--value-size)',
-              borderRadius: '6px',
+              borderRadius: 'var(--radius-md)',
               border: '1px solid var(--border-subtle)',
               background: 'transparent',
               color: 'var(--ink)',
@@ -213,7 +213,7 @@ function AddEventForm({
             width: '100%',
             padding: '6px 10px',
             fontSize: 'var(--value-size)',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)',
             background: 'transparent',
             color: 'var(--ink)',
@@ -235,7 +235,7 @@ function AddEventForm({
             width: '100%',
             padding: '6px 10px',
             fontSize: 'var(--value-size)',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)',
             background: 'transparent',
             color: 'var(--ink)',
@@ -252,7 +252,7 @@ function AddEventForm({
             padding: '5px 14px',
             fontSize: '12px',
             fontWeight: 'var(--label-weight)',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)',
             background: 'transparent',
             color: 'var(--slate)',
@@ -268,7 +268,7 @@ function AddEventForm({
             padding: '5px 14px',
             fontSize: '12px',
             fontWeight: 600,
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             border: '1px solid var(--teal)',
             background: 'var(--teal)',
             color: '#fff',
@@ -315,7 +315,7 @@ function TimelineEvent({
           style={{
             width: 24,
             height: 24,
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-circle)',
             background: config.bg,
             display: 'flex',
             alignItems: 'center',
@@ -349,7 +349,7 @@ function TimelineEvent({
               fontWeight: 600,
               color: config.color,
               padding: '2px 8px',
-              borderRadius: '10px',
+              borderRadius: 'var(--radius-lg)',
               background: config.bg,
               lineHeight: 1.4,
             }}
@@ -381,7 +381,7 @@ function TimelineEvent({
               color: isOverdue ? 'var(--maroon)' : 'var(--teal)',
               opacity: isOverdue ? 1 : 0.7,
               padding: '1px 6px',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-lg)',
               background: isOverdue ? 'rgba(122, 0, 25, 0.08)' : 'rgba(45, 138, 138, 0.06)',
             }}
           >
@@ -440,7 +440,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
   if (isLoading) {
     return (
       <div style={{ padding: '24px 0' }}>
-        <div style={{ height: '60px', background: 'var(--border-subtle)', opacity: 0.3, borderRadius: '8px' }} />
+        <div style={{ height: '60px', background: 'var(--border-subtle)', opacity: 0.3, borderRadius: 'var(--radius-lg)' }} />
       </div>
     )
   }
@@ -469,7 +469,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
             padding: '4px 10px',
             fontSize: '12px',
             fontWeight: 'var(--label-weight)',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)',
             background: 'transparent',
             color: 'var(--teal)',
@@ -625,7 +625,7 @@ export function ActiveSubmissionsDashboard({
                   fontWeight: 600,
                   color: config.color,
                   padding: '2px 8px',
-                  borderRadius: '10px',
+                  borderRadius: 'var(--radius-lg)',
                   background: config.bg,
                   display: 'inline-block',
                   width: 'fit-content',
@@ -683,7 +683,7 @@ export function ActiveSubmissionsDashboard({
                     fontWeight: 600,
                     color: config.color,
                     padding: '2px 8px',
-                    borderRadius: '10px',
+                    borderRadius: 'var(--radius-lg)',
                     background: config.bg,
                   }}
                 >

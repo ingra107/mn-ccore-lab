@@ -116,7 +116,7 @@ function StageSelectorCompact({ currentStage, onChange }: { currentStage: Stage;
               marginTop: '4px',
               background: 'var(--cream)',
               border: '1px solid rgba(201,168,76,0.3)',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-lg)',
               boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
               zIndex: 50,
               minWidth: '140px',
@@ -161,7 +161,7 @@ function StageSelectorCompact({ currentStage, onChange }: { currentStage: Stage;
                     style={{
                       width: '6px',
                       height: '6px',
-                      borderRadius: '50%',
+                      borderRadius: 'var(--radius-circle)',
                       background: isCurrent ? 'var(--gold)' : 'rgba(201,168,76,0.3)',
                       flexShrink: 0,
                     }}

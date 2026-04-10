@@ -229,7 +229,7 @@ export default function Layout() {
                   backdropFilter: 'blur(12px)',
                   WebkitBackdropFilter: 'blur(12px)',
                   border: '1px solid rgba(201, 168, 76, 0.2)',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                  boxShadow: 'var(--shadow-menu)',
                   opacity: researchOpen ? 1 : 0,
                   transform: researchOpen ? 'translateY(0)' : 'translateY(-4px)',
                   pointerEvents: researchOpen ? 'auto' : 'none',
@@ -277,7 +277,7 @@ export default function Layout() {
                           lineHeight: '16px',
                           width: '16px',
                           height: '16px',
-                          borderRadius: '50%',
+                          borderRadius: 'var(--radius-circle)',
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -452,7 +452,7 @@ export default function Layout() {
                         lineHeight: '16px',
                         width: '16px',
                         height: '16px',
-                        borderRadius: '50%',
+                        borderRadius: 'var(--radius-circle)',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -743,7 +743,7 @@ export default function Layout() {
           style={{
             background: 'var(--gold)',
             color: 'var(--cream)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            boxShadow: 'var(--shadow-card)',
           }}
           aria-label="Scroll to top"
         >

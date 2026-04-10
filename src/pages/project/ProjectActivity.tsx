@@ -86,7 +86,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
         <div
           style={{
             background: 'var(--ice)',
-            borderRadius: '12px',
+            borderRadius: 'var(--radius-xl)',
             padding: '16px 20px',
           }}
           className="detail-card"

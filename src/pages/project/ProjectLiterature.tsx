@@ -58,7 +58,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
       <div
         style={{
           background: 'var(--ice)',
-          borderRadius: '12px',
+          borderRadius: 'var(--radius-xl)',
           padding: '16px 20px',
         }}
         className="detail-card"
@@ -266,7 +266,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
           width: 'min(520px, 90vw)',
           maxHeight: '75vh',
           backgroundColor: 'var(--cream)',
-          borderRadius: '12px',
+          borderRadius: 'var(--radius-xl)',
           border: '1px solid var(--border-light)',
           display: 'flex',
           flexDirection: 'column',

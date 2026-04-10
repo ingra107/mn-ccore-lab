@@ -41,7 +41,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Projects card */}
-        <div className="card p-4" style={{ borderRadius: '12px' }}>
+        <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
             <FlaskConical size={14} style={{ color: 'var(--teal)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
@@ -67,7 +67,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         </div>
 
         {/* Action Items card */}
-        <div className="card p-4" style={{ borderRadius: '12px' }}>
+        <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
             <ListChecks size={14} style={{ color: 'var(--gold)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
@@ -104,7 +104,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         </div>
 
         {/* Publications card */}
-        <div className="card p-4" style={{ borderRadius: '12px' }}>
+        <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
             <BookOpen size={14} style={{ color: 'var(--gold)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
@@ -128,7 +128,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         </div>
 
         {/* Activity summary card */}
-        <div className="card p-4" style={{ borderRadius: '12px' }}>
+        <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={14} style={{ color: 'var(--teal)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>

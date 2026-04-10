@@ -243,7 +243,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                     display: 'inline-flex',
                     alignItems: 'center',
                     padding: '2px 8px',
-                    borderRadius: '9999px',
+                    borderRadius: 'var(--radius-full)',
                     fontSize: '10px',
                     fontWeight: 500,
                     color: stageColor,
@@ -260,7 +260,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                   style={{
                     flex: 1,
                     height: '20px',
-                    borderRadius: '4px',
+                    borderRadius: 'var(--radius-sm)',
                     overflow: 'hidden',
                     backgroundColor: 'var(--border-light, #e8eff5)',
                     position: 'relative',
@@ -284,7 +284,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                         bottom: 0,
                         width: `${Math.max(stageWidth, 8)}%`,
                         backgroundColor: stageColor,
-                        borderRadius: '0 4px 4px 0',
+                        borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
                         opacity: 0.7,
                       }}
                     />
@@ -448,7 +448,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
           width: '2px',
           background: 'var(--teal)',
           opacity: 0.3,
-          borderRadius: '1px',
+          borderRadius: 'var(--radius-sm)',
         }}
       />
 
@@ -471,7 +471,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
               top: '6px',
               width: '16px',
               height: '16px',
-              borderRadius: '50%',
+              borderRadius: 'var(--radius-circle)',
               background: 'var(--gold)',
               border: '3px solid var(--cream, #ffffff)',
               zIndex: 1,
@@ -636,7 +636,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
         style={{
           width: '100%',
           height: `${chartHeight}px`,
-          borderRadius: '8px',
+          borderRadius: 'var(--radius-lg)',
           overflow: 'visible',
         }}
       >
@@ -748,7 +748,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
                     display: 'inline-flex',
                     alignItems: 'center',
                     padding: '2px 8px',
-                    borderRadius: '9999px',
+                    borderRadius: 'var(--radius-full)',
                     fontSize: 'var(--label-size)',
                     fontWeight: 500,
                     color: stageColor,
@@ -947,7 +947,7 @@ function PeriodSelector({
               fontSize: 'var(--label-size)',
               fontWeight: active ? 600 : 400,
               padding: '4px 10px',
-              borderRadius: '6px',
+              borderRadius: 'var(--radius-md)',
               border: `1px solid ${active ? 'var(--gold)' : 'var(--border-light, #e8eff5)'}`,
               background: active ? 'var(--gold)' : 'transparent',
               color: active ? 'var(--ink)' : 'var(--slate)',
@@ -1129,7 +1129,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
           width: '2px',
           background: 'var(--gold)',
           opacity: 0.2,
-          borderRadius: '1px',
+          borderRadius: 'var(--radius-sm)',
         }}
       />
 
@@ -1162,7 +1162,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                 top: '8px',
                 width: '16px',
                 height: '16px',
-                borderRadius: '50%',
+                borderRadius: 'var(--radius-circle)',
                 background: config.color,
                 border: '3px solid var(--cream, #ffffff)',
                 display: 'flex',
@@ -1418,7 +1418,7 @@ export default function TrajectoryPage() {
               style={{
                 width: 56,
                 height: 56,
-                borderRadius: '50%',
+                borderRadius: 'var(--radius-circle)',
                 objectFit: 'cover',
                 border: '2px solid var(--gold)',
               }}
@@ -1428,7 +1428,7 @@ export default function TrajectoryPage() {
               style={{
                 width: 56,
                 height: 56,
-                borderRadius: '50%',
+                borderRadius: 'var(--radius-circle)',
                 background: 'linear-gradient(135deg, var(--gold), var(--teal))',
                 display: 'flex',
                 alignItems: 'center',

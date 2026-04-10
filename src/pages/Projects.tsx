@@ -293,7 +293,7 @@ export default function Projects() {
                   style={{
                     fontWeight: 'var(--label-weight)',
                     fontSize: 'var(--label-size)',
-                    borderRadius: '6px',
+                    borderRadius: 'var(--radius-md)',
                     background: activeCategory === f.key ? 'var(--teal)' : 'transparent',
                     color: activeCategory === f.key ? '#ffffff' : 'var(--slate)',
                     border: activeCategory === f.key ? '1px solid var(--teal)' : '1px solid transparent',
@@ -491,7 +491,7 @@ export default function Projects() {
                                 style={{
                                   width: 6,
                                   height: 6,
-                                  borderRadius: '50%',
+                                  borderRadius: 'var(--radius-circle)',
                                   background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
                                   flexShrink: 0,
                                   opacity: 0.7,
@@ -563,7 +563,7 @@ export default function Projects() {
                                       style={{
                                         width: 4,
                                         height: 4,
-                                        borderRadius: '50%',
+                                        borderRadius: 'var(--radius-circle)',
                                         background: si <= currentIdx ? 'var(--teal)' : 'var(--border-subtle)',
                                         opacity: si <= currentIdx ? 0.8 : 0.4,
                                       }}
@@ -646,7 +646,7 @@ export default function Projects() {
                                 style={{
                                   width: 6,
                                   height: 6,
-                                  borderRadius: '50%',
+                                  borderRadius: 'var(--radius-circle)',
                                   background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
                                   flexShrink: 0,
                                   opacity: 0.7,
@@ -680,7 +680,7 @@ export default function Projects() {
                                   style={{
                                     width: 6,
                                     height: 6,
-                                    borderRadius: '50%',
+                                    borderRadius: 'var(--radius-circle)',
                                     background: HEALTH_STATUS_COLOR[projectHealth.status] ?? 'var(--slate)',
                                     flexShrink: 0,
                                     marginTop: '6px',
@@ -790,7 +790,7 @@ export default function Projects() {
                   right: '2%',
                   height: '2px',
                   background: 'linear-gradient(to right, rgba(45,138,138,0.1), var(--teal), rgba(45,138,138,0.1))',
-                  borderRadius: '1px',
+                  borderRadius: 'var(--radius-sm)',
                 }}
               />
               {STAGES.map((_, i) => (
@@ -802,7 +802,7 @@ export default function Projects() {
                     left: `${(i / (STAGES.length - 1)) * 96 + 2}%`,
                     width: '8px',
                     height: '8px',
-                    borderRadius: '50%',
+                    borderRadius: 'var(--radius-circle)',
                     background: 'var(--teal)',
                     border: '2px solid var(--cream)',
                   }}
@@ -830,7 +830,7 @@ export default function Projects() {
                     className="pipeline-column"
                     style={{
                       background: '#f5f5f5',
-                      borderRadius: '12px',
+                      borderRadius: 'var(--radius-xl)',
                       borderTop: '2px solid var(--teal)',
                       padding: '16px',
                       minHeight: '300px',

@@ -94,7 +94,7 @@ export default function NotificationBell() {
               lineHeight: '16px',
               minWidth: '16px',
               height: '16px',
-              borderRadius: '50%',
+              borderRadius: 'var(--radius-circle)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -123,8 +123,8 @@ export default function NotificationBell() {
               maxHeight: '480px',
               background: 'var(--cream)',
               border: '1px solid rgba(201, 168, 76, 0.2)',
-              borderRadius: '12px',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+              borderRadius: 'var(--radius-xl)',
+              boxShadow: 'var(--shadow-elevated)',
               zIndex: 100,
               overflow: 'hidden',
               display: 'flex',
@@ -253,7 +253,7 @@ export default function NotificationBell() {
                             style={{
                               width: '28px',
                               height: '28px',
-                              borderRadius: '50%',
+                              borderRadius: 'var(--radius-circle)',
                               background: isImpact
                                 ? 'rgba(201, 168, 76, 0.2)'
                                 : isUnread ? 'rgba(201, 168, 76, 0.12)' : 'var(--ice)',
@@ -307,7 +307,7 @@ export default function NotificationBell() {
                           {isUnread && (
                             <div
                               className="flex-shrink-0 mt-2"
-                              style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--gold)' }}
+                              style={{ width: '6px', height: '6px', borderRadius: 'var(--radius-circle)', background: 'var(--gold)' }}
                             />
                           )}
                         </div>

@@ -196,7 +196,7 @@ export default function SavedViewsBar({
                     style={{
                       width: 5,
                       height: 5,
-                      borderRadius: '50%',
+                      borderRadius: 'var(--radius-circle)',
                       background: 'var(--ink)',
                       opacity: 0.4,
                       marginLeft: 2,

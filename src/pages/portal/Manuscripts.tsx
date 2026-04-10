@@ -330,7 +330,7 @@ export default function Manuscripts() {
                           <div className="flex items-center gap-2.5" style={{ paddingRight: '16px' }}>
                             <span
                               style={{
-                                width: 6, height: 6, borderRadius: '50%',
+                                width: 6, height: 6, borderRadius: 'var(--radius-circle)',
                                 background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
                                 flexShrink: 0, opacity: 0.7, marginTop: '-1px',
                               }}
@@ -351,7 +351,7 @@ export default function Manuscripts() {
                                   <div
                                     key={s}
                                     style={{
-                                      width: 5, height: 5, borderRadius: '50%',
+                                      width: 5, height: 5, borderRadius: 'var(--radius-circle)',
                                       background: i <= currentIdx ? 'var(--teal)' : 'var(--border-subtle)',
                                       transition: 'background 200ms',
                                     }}
@@ -408,7 +408,7 @@ export default function Manuscripts() {
                           <div className="flex items-start gap-2" style={{ marginBottom: '8px' }}>
                             <span
                               style={{
-                                width: 6, height: 6, borderRadius: '50%',
+                                width: 6, height: 6, borderRadius: 'var(--radius-circle)',
                                 background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
                                 flexShrink: 0, opacity: 0.7, marginTop: '6px',
                               }}
@@ -519,7 +519,7 @@ export default function Manuscripts() {
                   key={stage}
                   style={{
                     background: '#f5f5f5',
-                    borderRadius: '12px',
+                    borderRadius: 'var(--radius-xl)',
                     borderTop: '2px solid var(--teal)',
                     padding: '16px',
                     minHeight: '200px',
@@ -549,14 +549,14 @@ export default function Manuscripts() {
                               className="project-card"
                               style={{
                                 background: 'var(--cream)',
-                                borderRadius: '8px',
+                                borderRadius: 'var(--radius-lg)',
                                 padding: '14px',
                                 boxShadow: '0 1px 2px rgba(15, 25, 35, 0.04)',
                                 transition: 'box-shadow 0.25s ease',
                               }}
                             >
                               <div className="flex items-start gap-2">
-                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0, opacity: 0.7, marginTop: '5px' }} />
+                                <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: dotColor, flexShrink: 0, opacity: 0.7, marginTop: '5px' }} />
                                 <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
                                   {p.title}
                                 </p>

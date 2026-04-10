@@ -189,7 +189,7 @@ export default function MenteeMilestones() {
                 className="card flex items-center gap-3 p-4 text-left transition-all"
                 style={{
                   border: '1px solid var(--border-subtle)',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--radius-xl)',
                   cursor: 'pointer',
                   background: 'var(--cream)',
                 }}
@@ -540,7 +540,7 @@ function MilestoneRow({
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap' as const,
             cursor: 'pointer',
-            borderRadius: '3px',
+            borderRadius: 'var(--radius-sm)',
             padding: '1px 4px',
             margin: '-1px -4px',
             transition: 'background var(--transition-fast, 150ms) ease',
@@ -654,7 +654,7 @@ function MilestoneRow({
                     color: 'var(--slate)',
                     lineHeight: 1.5,
                     padding: '8px 12px',
-                    borderRadius: '6px',
+                    borderRadius: 'var(--radius-md)',
                     background: 'rgba(45,138,138,0.04)',
                     border: '1px solid var(--border-subtle)',
                   }}
@@ -767,7 +767,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--cream)',
-          borderRadius: '16px',
+          borderRadius: 'var(--radius-2xl)',
           border: '1px solid var(--border-subtle)',
           boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
           width: '100%',
@@ -801,7 +801,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
@@ -827,7 +827,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
@@ -856,7 +856,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
@@ -879,7 +879,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
@@ -902,7 +902,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
@@ -921,7 +921,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             style={{
               padding: '8px 16px',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-lg)',
               border: '1px solid var(--border-light)',
               background: 'transparent',
               color: 'var(--slate)',
@@ -937,7 +937,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
             className="flex items-center gap-1.5"
             style={{
               padding: '8px 16px',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-lg)',
               border: 'none',
               background: title.trim() ? 'var(--teal)' : 'var(--border-light)',
               color: title.trim() ? 'white' : 'var(--slate)',

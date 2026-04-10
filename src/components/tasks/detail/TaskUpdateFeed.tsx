@@ -80,7 +80,7 @@ export function TaskUpdateFeed({ taskId }: { taskId: string }) {
             style={{
               fontSize: 'var(--value-size)', color: 'var(--ink)',
               background: 'var(--cream)', border: '1px solid var(--border-light)',
-              borderRadius: '8px', padding: '8px 10px',
+              borderRadius: 'var(--radius-lg)', padding: '8px 10px',
               lineHeight: 1.5, transition: 'border-color 0.15s',
             }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
@@ -133,7 +133,7 @@ function NoteCard({ update }: { update: TaskUpdateRow }) {
       transition={{ duration: 0.2 }}
       style={{
         background: 'var(--cream)',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-lg)',
         padding: '10px 12px',
         borderLeft: `3px solid ${config.color}`,
         opacity: isSession ? 0.7 : 1,

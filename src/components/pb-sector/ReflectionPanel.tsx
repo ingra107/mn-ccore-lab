@@ -25,7 +25,7 @@ function RatingDots({ value, onChange, label }: { value: number | null; onChange
             key={n}
             onClick={() => onChange(n)}
             style={{
-              width: 18, height: 18, borderRadius: '50%',
+              width: 18, height: 18, borderRadius: 'var(--radius-circle)',
               border: `1.5px solid ${n <= (value || 0) ? 'var(--gold)' : 'var(--slate)'}`,
               background: n <= (value || 0) ? 'var(--gold)' : 'transparent',
               opacity: n <= (value || 0) ? 1 : 0.2,

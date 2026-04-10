@@ -45,7 +45,7 @@ export default function BentoCard({
         layoutId={`bento-${title.replace(/\s+/g, '-').toLowerCase()}`}
         className="bento-card h-full"
         style={{
-          borderRadius: '16px',
+          borderRadius: 'var(--radius-2xl)',
           padding: 'var(--density-card-padding, 1.5rem)',
           display: 'flex',
           flexDirection: 'column',

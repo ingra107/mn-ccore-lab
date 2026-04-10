@@ -184,7 +184,7 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
 
                   {/* Avatar at end */}
                   <foreignObject x={dueX + 6} y={y + 2} width={20} height={20}>
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', overflow: 'hidden', backgroundColor: 'var(--ice)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 20, height: 20, borderRadius: 'var(--radius-circle)', overflow: 'hidden', backgroundColor: 'var(--ice)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {person.photoUrl ? (
                         <img src={person.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
@@ -245,7 +245,7 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
                     color: 'var(--ink)',
                   }}
                 >
-                  <div style={{ width: 16, height: 16, borderRadius: '50%', overflow: 'hidden', backgroundColor: 'var(--ice)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 16, height: 16, borderRadius: 'var(--radius-circle)', overflow: 'hidden', backgroundColor: 'var(--ice)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {person.photoUrl ? (
                       <img src={person.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (

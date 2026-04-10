@@ -130,7 +130,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
     color: 'var(--ink)',
     background: 'var(--cream)',
     border: '1px solid rgba(201,168,76,0.15)',
-    borderRadius: '8px',
+    borderRadius: 'var(--radius-lg)',
     padding: '8px 12px',
     outline: 'none',
   }

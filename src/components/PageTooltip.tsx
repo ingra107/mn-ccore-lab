@@ -48,7 +48,7 @@ export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps
             color: 'var(--cream)',
             fontSize: 11,
             fontWeight: 400,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+            boxShadow: 'var(--shadow-elevated)',
             whiteSpace: 'nowrap',
           }}
         >

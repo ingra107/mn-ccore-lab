@@ -91,7 +91,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                   >
                     {/* Priority dot */}
                     <div style={{
-                      width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                      width: 6, height: 6, borderRadius: 'var(--radius-circle)', flexShrink: 0,
                       background: task.priority === 'urgent' ? 'var(--maroon)' : task.priority === 'high' ? '#e67e22' : task.priority === 'medium' ? 'var(--gold)' : 'var(--slate)',
                     }} />
 

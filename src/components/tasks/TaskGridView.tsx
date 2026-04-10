@@ -124,7 +124,9 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         <div />
         <SortableColumnHeader label="TITLE" field="title" active={sortKey} asc={sortAsc} onSort={handleSort} />
         <SortableColumnHeader label="ASSIGNEE" field="assignee" active={sortKey} asc={sortAsc} onSort={handleSort} />
-        <SortableColumnHeader label="DUE DATE" field="due_date" active={sortKey} asc={sortAsc} onSort={handleSort} />
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <SortableColumnHeader label="DUE DATE" field="due_date" active={sortKey} asc={sortAsc} onSort={handleSort} />
+        </div>
         <SortableColumnHeader label="STATUS" field="status" active={sortKey} asc={sortAsc} onSort={handleSort} />
         <SortableColumnHeader label="PRIORITY" field="priority" active={sortKey} asc={sortAsc} onSort={handleSort} />
         <div /> {/* Actions column spacer */}
@@ -428,7 +430,7 @@ function TaskGridRow({
                   return (
                     <span key={id} className="flex items-center gap-1.5 text-[11px] mb-1" style={{ color: 'var(--ink)' }}>
                       <span style={{
-                        width: 6, height: 6, borderRadius: '50%',
+                        width: 6, height: 6, borderRadius: 'var(--radius-circle)',
                         background: bt.completed ? 'var(--green)' : bt.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)',
                         flexShrink: 0,
                       }} />
@@ -460,7 +462,7 @@ function TaskGridRow({
                 color: 'var(--ink)',
                 background: 'var(--cream)',
                 border: '1px solid var(--teal)',
-                borderRadius: '4px',
+                borderRadius: 'var(--radius-sm)',
                 padding: '2px 6px',
                 outline: 'none',
                 width: '100%',
@@ -481,7 +483,7 @@ function TaskGridRow({
                 textDecoration: isDone ? 'line-through' : 'none',
                 lineHeight: 1.4,
                 cursor: onOpenDetail ? 'pointer' : 'default',
-                borderRadius: '3px',
+                borderRadius: 'var(--radius-sm)',
                 padding: '1px 4px',
                 margin: '-1px -4px',
                 transition: 'background var(--transition-fast) ease',
@@ -496,7 +498,7 @@ function TaskGridRow({
               style={{
                 fontSize: '9px',
                 padding: '1px 5px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 backgroundColor: task.source === 'meeting' ? 'rgba(45,138,138,0.1)' :
                   task.source === 'recurrence' ? 'rgba(201,168,76,0.1)' :
                   'rgba(148,163,184,0.1)',
@@ -519,7 +521,7 @@ function TaskGridRow({
                 style={{
                   fontSize: '9px',
                   padding: '1px 5px',
-                  borderRadius: '8px',
+                  borderRadius: 'var(--radius-lg)',
                   backgroundColor: age > 30 ? 'rgba(122,0,25,0.1)' : 'rgba(194,65,12,0.1)',
                   color: age > 30 ? 'var(--maroon)' : 'var(--orange)',
                   flexShrink: 0,
@@ -535,7 +537,7 @@ function TaskGridRow({
               style={{
                 fontSize: '9px',
                 padding: '1px 5px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 backgroundColor: 'rgba(45,138,138,0.06)',
                 color: 'var(--teal)',
                 flexShrink: 0,
@@ -569,7 +571,7 @@ function TaskGridRow({
             style={{
               width: 6,
               height: 6,
-              borderRadius: '50%',
+              borderRadius: 'var(--radius-circle)',
               backgroundColor: 'var(--gold)',
               flexShrink: 0,
               opacity: 0.8,
@@ -579,7 +581,7 @@ function TaskGridRow({
       </div>
 
       {/* Due date — inline date picker */}
-      <div className="task-row-meta" data-testid={`task-due-${task.id}`} onClick={(e) => e.stopPropagation()}>
+      <div className="task-row-meta col-numeric" data-testid={`task-due-${task.id}`} onClick={(e) => e.stopPropagation()} style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <InlineDatePicker
           value={task.due_date}
           onChange={(date) => onFieldChange(task.id, 'due_date', date)}
@@ -608,7 +610,7 @@ function TaskGridRow({
                 color: Icon.color,
                 background: STATUS_BG[effectiveStatus] || STATUS_BG.todo,
                 padding: '2px 8px',
-                borderRadius: '9999px',
+                borderRadius: 'var(--radius-full)',
               }}
             >
               <IconComp size={13} />
@@ -645,7 +647,7 @@ function TaskGridRow({
               color: opt.color,
               background: cfg?.bg || 'rgba(100, 116, 139, 0.1)',
               padding: '2px 8px',
-              borderRadius: '9999px',
+              borderRadius: 'var(--radius-full)',
             }}>
               {opt.label}
             </span>

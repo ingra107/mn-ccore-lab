@@ -277,7 +277,7 @@ export default function MeetingDetail() {
                   style={{
                     fontSize: 'var(--label-size)',
                     padding: '2px 8px',
-                    borderRadius: '10px',
+                    borderRadius: 'var(--radius-lg)',
                     backgroundColor: 'rgba(45,138,138,0.08)',
                     color: 'var(--teal)',
                     textDecoration: 'none',
@@ -305,7 +305,7 @@ export default function MeetingDetail() {
             {/* Opening Round icebreaker prompt */}
             <RoundPrompt meetingId={meeting.id} />
 
-            <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px', marginTop: '1rem' }} className="detail-card">
+            <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px', marginTop: '1rem' }} className="detail-card">
               {/* Auto-generated agenda items */}
               {autoAgenda.length > 0 && (
                 <div className="mb-4">
@@ -355,7 +355,7 @@ export default function MeetingDetail() {
               </span>
             </div>
 
-            <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px' }} className="detail-card">
+            <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
               {/* Inline add action item */}
               <AddActionItemForm
                 meetingId={meeting.id}
@@ -414,7 +414,7 @@ export default function MeetingDetail() {
               </button>
             )}
           </div>
-          <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px' }} className="detail-card">
+          <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
             {/* Inline decision form */}
             <AnimatePresence>
               {showDecisionForm && (
@@ -488,7 +488,7 @@ export default function MeetingDetail() {
 
             {decisions.map((d, i) => (
               <div key={i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < decisions.length - 1 ? '1px solid rgba(201, 168, 76, 0.06)' : 'none' }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)', marginTop: '7px', flexShrink: 0 }} />
+                <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--gold)', marginTop: '7px', flexShrink: 0 }} />
                 <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>{d}</p>
               </div>
             ))}
@@ -509,7 +509,7 @@ export default function MeetingDetail() {
               Meeting Notes
             </h3>
           </div>
-          <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '20px' }} className="detail-card">
+          <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
             {editingNotes ? (
               <div>
                 <textarea
@@ -668,7 +668,7 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
   return (
     <div
       className="action-item-row flex items-start gap-3 py-2.5"
-      style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)', cursor: 'pointer', borderRadius: '6px', margin: '0 -8px', padding: '10px 8px', transition: 'background 0.15s' }}
+      style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)', cursor: 'pointer', borderRadius: 'var(--radius-md)', margin: '0 -8px', padding: '10px 8px', transition: 'background 0.15s' }}
       onClick={() => onToggle?.(item.id)}
       role="button"
       tabIndex={0}
@@ -859,7 +859,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             disabled={!isAuthenticated && import.meta.env.PROD}
             style={{
               width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
-              background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: '8px',
+              background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: 'var(--radius-lg)',
               padding: '8px 12px', outline: 'none', transition: 'border-color 0.2s',
             }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
@@ -891,7 +891,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
               placeholder="Document URL (Google Doc, PDF, etc.)"
               style={{
                 width: '100%', fontSize: '12px', color: 'var(--ink)',
-                background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: '8px',
+                background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: 'var(--radius-lg)',
                 padding: '6px 10px', outline: 'none', marginTop: '6px',
               }}
             />

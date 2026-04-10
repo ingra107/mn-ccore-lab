@@ -266,7 +266,7 @@ export default function Dashboard() {
                 style={{
                   width: 8,
                   height: 8,
-                  borderRadius: '50%',
+                  borderRadius: 'var(--radius-circle)',
                   background: 'var(--green-light)',
                   boxShadow: '0 0 8px rgba(34, 197, 94, 0.4)',
                   animation: 'status-pulse 2s ease-in-out infinite',
@@ -343,14 +343,14 @@ export default function Dashboard() {
 
         {/* Notion-style tab bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '4px', padding: '3px', borderRadius: '10px', background: 'rgba(15,25,35,0.03)' }}>
+          <div style={{ display: 'flex', gap: '4px', padding: '3px', borderRadius: 'var(--radius-lg)', background: 'rgba(15,25,35,0.03)' }}>
             {TAB_CONFIG.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 style={{
                   padding: '5px 14px',
-                  borderRadius: '7px',
+                  borderRadius: 'var(--radius-lg)',
                   border: 'none',
                   fontSize: '12px',
                   fontWeight: activeTab === tab.id ? 600 : 400,

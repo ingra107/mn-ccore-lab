@@ -376,7 +376,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
         className="flex items-center gap-2 w-full"
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '12px 16px 6px', textAlign: 'left' }}
       >
-        <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
+        <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: color, flexShrink: 0 }} />
         <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
           {title}
         </span>
@@ -409,7 +409,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
                   color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
                   paddingRight: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
                   cursor: item.type === 'task' && onOpenDetail ? 'pointer' : 'default',
-                  borderRadius: '3px', padding: '1px 4px', margin: '-1px -4px',
+                  borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px -4px',
                   transition: 'background var(--transition-fast) ease',
                 }}
               >
@@ -682,7 +682,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               width: '100%',
               resize: 'vertical',
               border: '1px solid rgba(201,168,76,0.15)',
-              borderRadius: '6px',
+              borderRadius: 'var(--radius-md)',
               padding: '8px 10px',
               background: 'var(--cream)',
               outline: 'none',
@@ -870,7 +870,7 @@ function UpcomingConferencesSection() {
                     style={{
                       display: 'inline-block',
                       padding: '2px 8px',
-                      borderRadius: '10px',
+                      borderRadius: 'var(--radius-lg)',
                       fontSize: '10px',
                       fontWeight: 600,
                       background: pill.bg,

@@ -31,14 +31,14 @@ function FactorTooltip({ factors, score }: { factors: HealthFactors; score: numb
         right: 0,
         background: 'var(--ink, #0f1923)',
         color: '#e8e2d6',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-lg)',
         padding: '10px 14px',
         fontSize: 'var(--label-size)',
         fontWeight: 400,
         lineHeight: 1.6,
         whiteSpace: 'nowrap',
         zIndex: 50,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        boxShadow: 'var(--shadow-card-hover)',
         pointerEvents: 'none',
       }}
     >
@@ -92,7 +92,7 @@ function ProjectHealthCard() {
                 style={{
                   width: 8,
                   height: 8,
-                  borderRadius: '50%',
+                  borderRadius: 'var(--radius-circle)',
                   background: STATUS_COLORS[s.status],
                   boxShadow: s.count > 0 ? `0 0 6px ${STATUS_COLORS[s.status]}40` : 'none',
                 }}
@@ -219,7 +219,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
       style={{
         textDecoration: 'none',
         borderBottom: '1px solid rgba(201, 168, 76, 0.04)',
-        borderRadius: '4px',
+        borderRadius: 'var(--radius-sm)',
         padding: '8px 4px',
         margin: '0 -4px',
         minHeight: '44px',
@@ -230,7 +230,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
         style={{
           width: 8,
           height: 8,
-          borderRadius: '50%',
+          borderRadius: 'var(--radius-circle)',
           background: color,
           flexShrink: 0,
           boxShadow: isBad ? `0 0 6px ${color}50` : 'none',
@@ -276,7 +276,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
           style={{
             width: '48px',
             height: '4px',
-            borderRadius: '2px',
+            borderRadius: 'var(--radius-sm)',
             background: 'rgba(201, 168, 76, 0.08)',
             overflow: 'hidden',
           }}
@@ -285,7 +285,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
             style={{
               width: `${project.score}%`,
               height: '100%',
-              borderRadius: '2px',
+              borderRadius: 'var(--radius-sm)',
               background: color,
               transition: 'width 0.3s ease-out, background 0.15s',
             }}
@@ -311,7 +311,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
           style={{
             fontSize: '9px',
             padding: '1px 5px',
-            borderRadius: '3px',
+            borderRadius: 'var(--radius-sm)',
             background: `${color}14`,
             color,
             flexShrink: 0,

@@ -120,7 +120,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
             <div
               style={{
                 background: 'var(--ice)',
-                borderRadius: '10px',
+                borderRadius: 'var(--radius-lg)',
                 padding: '14px 16px',
                 border: '1px solid rgba(45, 138, 138, 0.15)',
               }}
@@ -150,7 +150,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                       color: 'var(--ink)',
                       background: 'var(--cream)',
                       border: '1px solid rgba(201, 168, 76, 0.15)',
-                      borderRadius: '6px',
+                      borderRadius: 'var(--radius-md)',
                       padding: '6px 8px',
                       outline: 'none',
                     }}
@@ -183,7 +183,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                       color: 'var(--ink)',
                       background: 'var(--cream)',
                       border: '1px solid rgba(201, 168, 76, 0.15)',
-                      borderRadius: '6px',
+                      borderRadius: 'var(--radius-md)',
                       padding: '6px 8px',
                       outline: 'none',
                     }}
@@ -218,7 +218,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                       color: 'var(--ink)',
                       background: 'var(--cream)',
                       border: '1px solid rgba(201, 168, 76, 0.15)',
-                      borderRadius: '6px',
+                      borderRadius: 'var(--radius-md)',
                       padding: '6px 8px',
                       outline: 'none',
                     }}
@@ -243,7 +243,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   color: 'var(--ink)',
                   background: 'var(--cream)',
                   border: '1px solid rgba(201, 168, 76, 0.15)',
-                  borderRadius: '6px',
+                  borderRadius: 'var(--radius-md)',
                   padding: '6px 10px',
                   outline: 'none',
                   marginBottom: '10px',
@@ -289,7 +289,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
       <div
         style={{
           background: 'var(--ice)',
-          borderRadius: '12px',
+          borderRadius: 'var(--radius-xl)',
           padding: '16px 20px',
         }}
         className="detail-card"

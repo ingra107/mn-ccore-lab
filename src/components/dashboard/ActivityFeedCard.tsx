@@ -127,7 +127,7 @@ function ActivityFeedCard() {
                     style={{
                       width: '15px',
                       height: '15px',
-                      borderRadius: '50%',
+                      borderRadius: 'var(--radius-circle)',
                       background: item.dotColor,
                       border: item.dotColor === '#ffffff'
                         ? '1.5px solid rgba(201, 168, 76, 0.3)'

@@ -298,7 +298,7 @@ export default function OnboardingChecklist() {
                   style={{
                     width: 6,
                     height: 6,
-                    borderRadius: '50%',
+                    borderRadius: 'var(--radius-circle)',
                     background: allDone ? 'var(--teal)' : unlocked ? 'var(--gold)' : 'var(--slate)',
                     opacity: allDone ? 1 : unlocked ? 0.8 : 0.25,
                     flexShrink: 0,

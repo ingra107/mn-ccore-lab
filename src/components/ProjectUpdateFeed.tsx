@@ -59,7 +59,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
         )}
       </div>
 
-      <div style={{ background: 'var(--ice)', borderRadius: '12px', padding: '16px 20px' }} className="detail-card">
+      <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
         {/* Post update form */}
         <form onSubmit={handleSubmit} style={{ marginBottom: updates.length > 0 ? '16px' : 0 }}>
           {/* Type selector */}
@@ -105,7 +105,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
               style={{
                 fontSize: 'var(--value-size)', color: 'var(--ink)',
                 background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)',
-                borderRadius: '8px', padding: '10px 12px', resize: 'none', outline: 'none',
+                borderRadius: 'var(--radius-lg)', padding: '10px 12px', resize: 'none', outline: 'none',
                 lineHeight: 1.5, transition: 'border-color 0.2s', width: '100%',
               }}
               onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
@@ -154,7 +154,7 @@ function UpdateCard({ update }: { update: ProjectUpdateRow }) {
       transition={{ duration: 0.2 }}
       style={{
         background: 'var(--cream)',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-lg)',
         padding: '12px',
         borderLeft: `3px solid ${config.color}`,
       }}

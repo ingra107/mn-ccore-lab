@@ -101,7 +101,7 @@ export default function NarrativesPage() {
                     <div style={{
                       width: s.count > 0 ? 10 + s.count * 4 : 8,
                       height: s.count > 0 ? 10 + s.count * 4 : 8,
-                      borderRadius: '50%',
+                      borderRadius: 'var(--radius-circle)',
                       background: STAGE_COLORS[s.stage] || '#64748b',
                       opacity: s.count > 0 ? 1 : 0.15,
                       transition: 'all 0.2s',
@@ -127,7 +127,7 @@ export default function NarrativesPage() {
                     className="flex items-center gap-2 p-2 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                     style={{ textDecoration: 'none' }}
                   >
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: STAGE_COLORS[p.stage] || '#64748b', flexShrink: 0 }} />
+                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: STAGE_COLORS[p.stage] || '#64748b', flexShrink: 0 }} />
                     <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', flex: 1 }}>
                       {p.title}
                     </span>

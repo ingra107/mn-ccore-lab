@@ -286,7 +286,7 @@ export default function CLIFMap() {
                 className="px-4 py-3 rounded-lg whitespace-nowrap"
                 style={{
                   background: 'var(--cream)',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                  boxShadow: 'var(--shadow-card-hover)',
                   border: '1px solid rgba(201, 168, 76, 0.3)',
                 }}
               >
@@ -338,7 +338,7 @@ export default function CLIFMap() {
                 display: 'inline-block',
                 width: '8px',
                 height: '8px',
-                borderRadius: '50%',
+                borderRadius: 'var(--radius-circle)',
                 background: '#c9a84c',
               }}
             />

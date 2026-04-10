@@ -39,7 +39,7 @@ function TeamPulseCard() {
         <div className="flex items-center gap-2">
           <div
             style={{
-              width: 8, height: 8, borderRadius: '50%',
+              width: 8, height: 8, borderRadius: 'var(--radius-circle)',
               background: activeThisWeek > 0 ? 'var(--green-light)' : 'rgba(100, 116, 139, 0.3)',
               boxShadow: activeThisWeek > 0 ? '0 0 6px rgba(34, 197, 94, 0.4)' : 'none',
               flexShrink: 0,
@@ -115,7 +115,7 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
     <div className="relative flex-shrink-0" title={name} style={{ width: 32, height: 32 }}>
       <div
         style={{
-          width: 32, height: 32, borderRadius: '50%', overflow: 'hidden',
+          width: 32, height: 32, borderRadius: 'var(--radius-circle)', overflow: 'hidden',
           background: isActive ? 'rgba(34, 197, 94, 0.08)' : 'rgba(100, 116, 139, 0.08)',
           border: isActive ? '1.5px solid rgba(34, 197, 94, 0.35)' : '1.5px solid rgba(100, 116, 139, 0.15)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -134,7 +134,7 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
         )}
       </div>
       <div style={{
-        position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: '50%',
+        position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: 'var(--radius-circle)',
         background: isActive ? 'var(--green-light)' : 'rgba(100, 116, 139, 0.25)',
         border: '1.5px solid var(--cream)',
         boxShadow: isActive ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none',

@@ -623,7 +623,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                       color: '#fff',
                                       background: 'var(--teal)',
                                       border: 'none',
-                                      borderRadius: '6px',
+                                      borderRadius: 'var(--radius-md)',
                                       padding: '4px 10px',
                                       cursor: 'pointer',
                                     }}

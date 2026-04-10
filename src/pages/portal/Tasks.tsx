@@ -391,7 +391,7 @@ export default function Tasks() {
             title="Toggle filters (F)"
           >
             {activeFilterCount > 0 && (
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--teal)', flexShrink: 0 }} />
+              <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--teal)', flexShrink: 0 }} />
             )}
             <Filter size={10} />
             Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}

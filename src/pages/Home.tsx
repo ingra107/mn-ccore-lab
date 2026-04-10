@@ -421,7 +421,7 @@ export default function Home() {
                 className="fade-in-up card p-6 sm:p-7 cursor-default"
                 style={{
                   borderLeft: `4px solid ${pillar.color}`,
-                  borderRadius: '12px',
+                  borderRadius: 'var(--radius-xl)',
                 }}
               >
                 <div className="flex items-start gap-4">

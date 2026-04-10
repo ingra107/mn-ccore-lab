@@ -51,7 +51,7 @@ function GrantTimelineCard() {
                     width: `${widthPct}%`,
                     top: 0,
                     bottom: 0,
-                    borderRadius: '6px',
+                    borderRadius: 'var(--radius-md)',
                     background: g.proposed
                       ? 'transparent'
                       : color,

@@ -224,7 +224,7 @@ function UpcomingCard() {
                 style={{
                   minWidth: '46px',
                   padding: '3px 6px',
-                  borderRadius: '6px',
+                  borderRadius: 'var(--radius-md)',
                   background: isOverdue
                     ? 'rgba(122, 0, 25, 0.1)'
                     : isUrgent
@@ -271,7 +271,7 @@ function UpcomingCard() {
                     style={{
                       width: 6,
                       height: 6,
-                      borderRadius: '50%',
+                      borderRadius: 'var(--radius-circle)',
                       background: typeColor(d.type),
                       opacity: 0.6,
                     }}

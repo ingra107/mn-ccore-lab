@@ -55,7 +55,7 @@ const menuStyles = {
   minWidth: '200px',
   background: 'var(--ice)',
   border: '1px solid var(--border-subtle)',
-  borderRadius: '8px',
+  borderRadius: 'var(--radius-lg)',
   boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
   padding: '4px 0',
   fontSize: 'var(--value-size)',
@@ -331,7 +331,7 @@ export default function TaskContextMenu({
                 <span style={{
                   width: 8,
                   height: 8,
-                  borderRadius: '50%',
+                  borderRadius: 'var(--radius-circle)',
                   background: p.color,
                   flexShrink: 0,
                 }} />

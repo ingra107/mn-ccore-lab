@@ -87,7 +87,7 @@ function PipelineCard() {
                 <div
                   style={{
                     height: '32px',
-                    borderRadius: '8px',
+                    borderRadius: 'var(--radius-lg)',
                     background: 'rgba(201, 168, 76, 0.06)',
                     overflow: 'hidden',
                     position: 'relative',
@@ -97,7 +97,7 @@ function PipelineCard() {
                     style={{
                       height: '100%',
                       width: animated ? `${widthPct}%` : '0%',
-                      borderRadius: '8px',
+                      borderRadius: 'var(--radius-lg)',
                       background: `linear-gradient(135deg, ${stage.color}, ${stage.colorEnd})`,
                       transition: `width 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${i * 150}ms`,
                       border: i === 0 ? '1px solid rgba(201, 168, 76, 0.2)' : 'none',

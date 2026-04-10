@@ -18,7 +18,7 @@ function StatusDot({ timestamp }: { timestamp: string | null }) {
         display: 'inline-block',
         width: 8,
         height: 8,
-        borderRadius: '50%',
+        borderRadius: 'var(--radius-circle)',
         background: color,
         flexShrink: 0,
       }}

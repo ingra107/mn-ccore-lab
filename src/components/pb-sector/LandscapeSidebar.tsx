@@ -209,7 +209,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
         <SidebarCard title="Commitments" icon={Users} iconColor="var(--teal)" linkTo="/portal/tasks" linkLabel={`${openCommitments.length} open`}>
           {openCommitments.map((c: any) => (
             <div key={c.id} className="flex items-start gap-2 py-1">
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.due_date && c.due_date <= today ? 'var(--maroon)' : 'var(--teal)', opacity: 0.5, flexShrink: 0, marginTop: 4 }} />
+              <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: c.due_date && c.due_date <= today ? 'var(--maroon)' : 'var(--teal)', opacity: 0.5, flexShrink: 0, marginTop: 4 }} />
               <div className="flex-1 min-w-0">
                 <span className="block truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', lineHeight: 1.3 }}>
                   {c.description || c.commitment}

@@ -209,7 +209,7 @@ export default function Team() {
                             display: 'inline-block',
                             width: 6,
                             height: 6,
-                            borderRadius: '50%',
+                            borderRadius: 'var(--radius-circle)',
                             background: 'var(--green)',
                             marginLeft: 6,
                             verticalAlign: 'middle',

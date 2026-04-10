@@ -61,7 +61,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
               >
                 <div style={{
-                  width: 20, height: 20, borderRadius: '50%',
+                  width: 20, height: 20, borderRadius: 'var(--radius-circle)',
                   border: '2px solid var(--gold)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }} />

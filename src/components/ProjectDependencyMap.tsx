@@ -202,7 +202,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
           padding: '24px',
           textAlign: 'center',
           background: 'var(--ice)',
-          borderRadius: '12px',
+          borderRadius: 'var(--radius-xl)',
         }}
       >
         <p
@@ -225,7 +225,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
         width={dimensions.width}
         height={dimensions.height}
         viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
-        style={{ display: 'block', borderRadius: '12px', background: 'var(--ice)' }}
+        style={{ display: 'block', borderRadius: 'var(--radius-xl)', background: 'var(--ice)' }}
       >
         {/* Arrow marker defs */}
         <defs>
@@ -368,7 +368,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
                 background: 'var(--ink)',
                 color: 'var(--cream)',
                 padding: '6px 12px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 fontSize: '12px',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
@@ -408,7 +408,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
                 background: 'var(--ink)',
                 color: 'var(--cream)',
                 padding: '8px 14px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 fontSize: '12px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                 zIndex: 10,
@@ -452,7 +452,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
                 width: '16px',
                 height: '3px',
                 background: REL_COLORS[type],
-                borderRadius: '1px',
+                borderRadius: 'var(--radius-sm)',
                 ...(type === 'related_to' ? { backgroundImage: `repeating-linear-gradient(90deg, ${REL_COLORS[type]} 0px, ${REL_COLORS[type]} 4px, transparent 4px, transparent 7px)`, background: 'none' } : {}),
               }}
             />
@@ -473,7 +473,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
                 display: 'inline-block',
                 width: '8px',
                 height: '8px',
-                borderRadius: '50%',
+                borderRadius: 'var(--radius-circle)',
                 background: color,
               }}
             />

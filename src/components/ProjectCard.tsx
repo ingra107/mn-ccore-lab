@@ -29,7 +29,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       className="project-card"
       style={{
         background: 'var(--cream)',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-lg)',
         padding: '16px',
         cursor: 'pointer',
         boxShadow: '0 1px 2px rgba(15, 25, 35, 0.04)',
@@ -42,7 +42,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           style={{
             width: 6,
             height: 6,
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-circle)',
             background: dotColor,
             flexShrink: 0,
             opacity: 0.7,
