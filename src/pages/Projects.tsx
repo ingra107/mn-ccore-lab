@@ -419,7 +419,7 @@ export default function Projects() {
                             className="flex items-center"
                             style={{
                               padding: '20px 16px 8px',
-                              gap: '8px',
+                              gap: 'var(--sp-sm)',
                             }}
                           >
                             <span
@@ -437,7 +437,7 @@ export default function Projects() {
                             </span>
                             <span
                               style={{
-                                fontSize: '11px',
+                                fontSize: 'var(--label-size)',
                                 color: 'var(--slate)',
                                 opacity: 0.35,
                                 flexShrink: 0,

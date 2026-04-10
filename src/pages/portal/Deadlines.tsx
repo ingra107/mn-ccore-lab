@@ -405,7 +405,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
                 onClick={item.type === 'task' && onOpenDetail ? () => onOpenDetail(item) : undefined}
                 className={item.type === 'task' ? 'task-title-clickable' : ''}
                 style={{
-                  fontSize: '13px', fontWeight: 400,
+                  fontSize: 'var(--value-size)', fontWeight: 400,
                   color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
                   paddingRight: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
                   cursor: item.type === 'task' && onOpenDetail ? 'pointer' : 'default',
@@ -452,7 +452,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
 
               {/* Type badge */}
               <span style={{
-                fontSize: '10px', fontWeight: 500,
+                fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
                 color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
                 opacity: 0.7,
               }}>
@@ -476,14 +476,14 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
               {/* Metadata row */}
               <div className="flex items-center gap-3 flex-wrap">
                 <span style={{
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
                   fontWeight: item.isOverdue ? 500 : 400,
                 }}>
                   {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
                 </span>
                 <span style={{
-                  fontSize: '10px', fontWeight: 500,
+                  fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
                   color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
                   opacity: 0.7,
                 }}>

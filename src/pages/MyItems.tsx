@@ -164,9 +164,9 @@ function StatCard({
         </div>
         <div
           style={{
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             color: 'var(--slate)',
-            opacity: 0.7,
+            opacity: 'var(--ink-label)',
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
             marginTop: 2,
@@ -315,7 +315,7 @@ function ActionItemCard({
                 <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     color: overdue ? 'var(--maroon)' : 'var(--slate)',
                     opacity: overdue ? 1 : 0.7,
                     fontWeight: overdue ? 600 : 400,
@@ -565,7 +565,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
                 <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     color: overdue ? 'var(--maroon)' : 'var(--slate)',
                     opacity: overdue ? 1 : 0.7,
                     fontWeight: overdue ? 600 : 400,
@@ -861,7 +861,7 @@ export default function MyItems() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 4,
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   color: 'var(--teal)',
                   opacity: markAllRead.isPending ? 0.5 : 0.8,
                   whiteSpace: 'nowrap',

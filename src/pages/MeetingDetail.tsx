@@ -553,7 +553,7 @@ export default function MeetingDetail() {
                   >
                     Cancel
                   </button>
-                  <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                  <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                     Ctrl+Enter to save · Esc to cancel
                   </span>
                 </div>
@@ -573,7 +573,7 @@ export default function MeetingDetail() {
                 <button
                   onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
                   className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: 'var(--gold)', fontSize: '11px' }}
+                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: 'var(--gold)', fontSize: 'var(--label-size)' }}
                 >
                   Edit
                 </button>
@@ -619,7 +619,7 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
       <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
         <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
-        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
           Added by {item.added_by}
           {item.document_url && (
             <> · <a href={item.document_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)' }}>View document</a></>
@@ -928,10 +928,10 @@ function AttendanceSection({ meetingId, attendees }: { meetingId: string; attend
     <div className="mt-4">
       <div className="flex items-center gap-2 mb-2">
         <Users size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
-        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--label-weight)' }}>
           Attendees
         </span>
-        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           {localAttendees.length}
         </span>
         <button
