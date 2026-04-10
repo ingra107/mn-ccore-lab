@@ -26,6 +26,7 @@ import { useCommitments } from '../hooks/useCommitments'
 import type { CommitmentRow } from '../hooks/useCommitments'
 import { getPersonInfo } from '../data/team'
 import { formatRelativeTime, formatShortDate, isOverdue } from '../lib/dateUtils'
+import { parseCarriedForward } from '../lib/textUtils'
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -256,7 +257,7 @@ function ActionItemCard({
               opacity: item.completed ? 0.5 : 1,
             }}
           >
-            {item.description}
+            {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">↻ carried</span>}{clean}</>); })()}
           </div>
 
           <div

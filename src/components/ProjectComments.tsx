@@ -161,7 +161,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                     className="flex gap-3"
                   >
                     {isAI ? (
-                      /* AI Co-Scientist comment */
+                      /* Hermes AI comment */
                       <div style={{ flex: 1 }}>
                         <div
                           style={{
@@ -179,7 +179,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                                 color: 'var(--gold)',
                               }}
                             >
-                              AI Co-Scientist
+                              Hermes
                             </span>
                             <span
                               style={{

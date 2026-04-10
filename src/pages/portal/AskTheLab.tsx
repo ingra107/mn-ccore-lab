@@ -309,7 +309,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                   <div className="flex items-center gap-1.5 mb-1">
                     <Sparkles size={12} style={{ color: 'var(--gold)' }} />
                     <span style={{ fontSize: '10px', color: 'var(--gold)' }}>
-                      AI Co-Scientist
+                      Hermes
                     </span>
                     <span className="ml-auto" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
                       {formatRelativeTime(answer.created_at)}
