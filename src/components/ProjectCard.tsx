@@ -32,7 +32,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         borderRadius: 'var(--radius-lg)',
         padding: '16px',
         cursor: 'pointer',
-        boxShadow: '0 1px 2px rgba(15, 25, 35, 0.04)',
+        boxShadow: 'var(--shadow-card)',
         transition: 'box-shadow 0.2s ease, background 0.15s ease',
       }}
     >
