@@ -127,6 +127,16 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 **Implementation:** See plan at `~/.claude/plans/graceful-meandering-thimble.md`
 **Peripheral Brain sync scripts:** `scripts/db/sync_d1_push.py`, `sync_d1_pull.py`
 
+## Hermes (AI Research Assistant)
+
+Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comments, or project comments. Responses appear with gold sparkle badge in 20-40 seconds.
+
+- **Detection:** `/@(hermes|claude)\b/i` regex in `api/routes/questions.ts` and `api/routes/projects.ts`
+- **Author slug:** `claude-ai` (display name "Hermes" via `src/data/team.ts`)
+- **Backend:** `hub_ai_listener.py` on home laptop polls `GET /api/ai-requests?status=pending` every 10s
+- **Auth:** Bearer token via `PB_API_KEY` (Cloudflare Pages secret)
+- **Docs:** `docs/hermes.md`
+
 ## Critical Rules
 
 1. **Content visible by default.** `.fade-in-up` starts at opacity:1. NEVER hide content behind animations.
