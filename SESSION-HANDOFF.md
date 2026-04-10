@@ -1,36 +1,53 @@
-# Session Handoff — 2026-04-09 (evening)
+# Session Handoff — 2026-04-09 (late night)
 
 ## What happened this session
 
-Audit + bugfix session. 4 commits, 2 deploys.
+Full audit + bugfix + UX overhaul session. 10 commits, 6 deploys.
 
-### Test Suite: 100%
-- All 4 suites green: 198 + 165 + 131 + 58 = 552 tests
-- Fixed test_04: `limit=200` → `limit=500` (D1 has 1200+ tasks)
-- Fixed test_09: added `time.sleep(2)` for status change propagation
+### Test Suite (start of session)
+- All 552 tests passing (100%)
+- Fixed test_04 limit and test_09 timing
 
-### Bug Fixes (deployed)
-1. **My Items raw data dump (HIGH)** — `/api/action-items` was aliased to `handleTasks`, returning 1200+ tasks instead of 23 real meeting action items. Created proper `handleActionItems()` that queries `action_items` table. Toggle handler checks both tables.
-2. **Network page blank (MEDIUM)** — Two issues: (a) `Math.min/max` on empty array returned `Infinity/-Infinity`, crashing filter init. Added guard. (b) Container used `minHeight: 100vh` instead of `height: 100vh`, causing `flex-1` child to collapse to 0px. Fixed to explicit height.
+### Bug Fixes
+1. **My Items raw data dump** — `/api/action-items` aliased to tasks (1200+). Created proper handler for action_items table (23 real items).
+2. **Network page blank** — empty array guard on Math.min/max + container height fix (minHeight→height for flex-1).
+3. **D1 test data cleanup** — 1700+ rows across 6 tables. Expanded cleanup commands.
 
-### D1 Cleanup
-- Cleaned 1,249 SYNCTEST task rows (from accumulated test runs)
-- Cleaned 205 INSPECTION/EDGE task rows + 198 SYNC- rows
-- Cleaned 20 test ideas, 6 test questions, 8 test decisions, 266 test notifications
-- **Expanded cleanup commands** in CLAUDE.md to cover ideas, lab_questions, decision_log, notifications (previously only covered tasks)
+### UX Overhaul (Phase 1)
+1. **Design tokens** — element heights, spacing rhythm (8px grid), contrast hierarchy, field container styles added to index.css
+2. **FieldBlock refactor** — stacked label-above-value layout (was side-by-side). Labels use --ink-label opacity, --label-weight.
+3. **Field containers** — bordered .field-container class for text inputs/date pickers. Pill-type fields (Assignee, Priority, Project, Watchers) use noContainer.
+4. **Overview tab restructured** — 2-column grid: Assignee+Priority (row 1), DueDate+Project (row 2), then resizable description.
+5. **Description resizable** — height:120px default, min:80px, max:400px, resize:vertical, bordered container.
+6. **Details tab 2-column** — Watchers+Reminder paired, Recurrence row.
+7. **Priority pills** — grid-cols-2 for equal width.
+8. **Project dropdown search** — substring filter, autofocus, Escape to close.
+9. **Tasks table columns** — flexible widths (minmax 2fr title, 1fr data cols). Dead space eliminated.
+10. **Projects table columns** — same flexible treatment.
+11. **Carried forward badge** — `[Carried forward]` prefix → gold badge + clean text.
 
-### Mistake Patterns Logged
-1. "Jumping to auth/config diagnosis before isolating the failing component"
-2. "Guessing test framework conventions instead of reading the runner"
-
-### What to verify next session
-All fixes are deployed and verified. No pending work.
+### What's remaining (next session)
+1. **Token audit pass** — grep hardcoded opacity/height/spacing values across all components, replace with CSS variables. This creates the cross-page rhythm.
+2. **short_name field** — new column on projects (brain.db + D1 + Airtable). Auto-generated on creation, editable, syncs to TODAY.md.
+3. **Carried forward badge** — only applied to MeetingDetail.tsx. Also need MyItems.tsx and Meetings.tsx.
+4. **Run full test suite** — haven't re-run after all changes. Need to verify 552 still pass.
+5. **Dashboard density toggle** — separate scope.
 
 ### Key files modified
 | File | What changed |
 |------|-------------|
-| api/routes/tasks.ts | New `handleActionItems()`, toggle checks both tables |
-| api/index.ts | `/api/action-items` routes to `handleActionItems` |
-| src/pages/Network.tsx | Empty array guard, `height` instead of `minHeight` |
-| tests/sync-pipeline.test.py | `limit=500`, `time.sleep(2)` |
-| CLAUDE.md | Test counts, cleanup commands expanded |
+| src/index.css | Design tokens, field-container, description-editor-wrapper, carried-badge |
+| src/components/tasks/detail/FieldControls.tsx | FieldBlock stacked layout, PrioritySelect grid-cols-2, ProjectSelect search |
+| src/components/tasks/TaskDetailPanel.tsx | Overview 2-col, Details 2-col, description wrapper, noContainer fields |
+| src/components/tasks/TaskGridView.tsx | Flexible column widths |
+| src/pages/Projects.tsx | Flexible column widths |
+| src/pages/MeetingDetail.tsx | Carried forward badge |
+| src/lib/textUtils.ts | parseCarriedForward helper |
+| api/routes/tasks.ts | handleActionItems, toggle both tables |
+| api/index.ts | /api/action-items route fix |
+| src/pages/Network.tsx | Height fix, empty array guard |
+
+### Mistake patterns logged
+- Don't assume auth on API errors — isolate the query first
+- Read test runners before guessing conventions
+- Don't run sync pipeline tests while auto-log hook is active (db locks)
