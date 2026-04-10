@@ -146,14 +146,14 @@ export function StatusSelect({ value, onChange }: { value: string; onChange: (v:
 
 export function PrioritySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="grid grid-cols-2 gap-1.5">
       {PRIORITY_OPTIONS.map((p) => {
         const active = value === p.value
         return (
           <button
             key={p.value}
             onClick={() => onChange(p.value)}
-            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs border transition-colors status-transition"
+            className="flex items-center justify-center gap-1 rounded-lg py-1.5 text-xs border transition-colors status-transition"
             style={{
               fontWeight: active ? 600 : 400,
               color: active ? p.color : 'var(--slate)',

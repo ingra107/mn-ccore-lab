@@ -251,7 +251,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
 
             {/* Row 1: Assignee + Priority */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
-              <FieldBlock label="Assignee" icon={User}>
+              <FieldBlock label="Assignee" icon={User} noContainer>
                 <AssigneeSelect value={task.assignee} onChange={(v) => handleFieldUpdate('assignee', v)} />
               </FieldBlock>
               <FieldBlock label="Priority" icon={Flag} noContainer>
@@ -264,7 +264,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
               <FieldBlock label="Due Date" icon={CalendarDays}>
                 <DateInput value={task.due_date || ''} onChange={(v) => handleFieldUpdate('due_date', v || null)} />
               </FieldBlock>
-              <FieldBlock label="Project" icon={FolderKanban}>
+              <FieldBlock label="Project" icon={FolderKanban} noContainer>
                 <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
               </FieldBlock>
             </div>
@@ -298,7 +298,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
 
             {/* Row: Watchers + Reminder */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
-              <FieldBlock label="Watchers" icon={Users}>
+              <FieldBlock label="Watchers" icon={Users} noContainer>
                 <WatchersPicker value={task.watchers || ''} onChange={(v) => handleFieldUpdate('watchers', v || null)} />
               </FieldBlock>
               <FieldBlock label="Reminder" icon={Bell}>
