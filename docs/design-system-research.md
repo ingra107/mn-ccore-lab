@@ -2,6 +2,9 @@
 
 > Compiled 2026-04-10 from Airtable, Vercel/Geist, Linear, Stripe analysis.
 > Reference for all Hub UI decisions.
+>
+> **Key resource:** [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) — 60+ brand DESIGN.md files with exact hex codes, spacing, shadows, typography. Pull with `npx getdesign@latest add <brand>`.
+> Of our 4 targets, only Vercel/Geist has a first-party public design system (vercel.com/geist).
 
 ## Universal Patterns (3+ of 4 systems agree)
 
