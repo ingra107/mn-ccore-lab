@@ -12,6 +12,7 @@
  * Tags: npx playwright test --grep "MORNING|TASK|MEETING|PROJECT|DIGEST|MOBILE"
  */
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import { cleanupTestTasks } from './test-cleanup'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
 
@@ -2396,4 +2397,12 @@ test.describe('DATA — Dashboard cards show real data', () => {
       }
     }
   })
+})
+
+// ═══════════════════════════════════════════════════════════════════
+// CLEANUP — Delete all test-created tasks from Hub D1
+// ═══════════════════════════════════════════════════════════════════
+test.afterAll(async ({ request }) => {
+  const deleted = await cleanupTestTasks(request)
+  if (deleted > 0) console.log(`Cleanup: deleted ${deleted} test tasks from Hub D1`)
 })

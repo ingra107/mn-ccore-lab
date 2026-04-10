@@ -14,6 +14,7 @@
  * Score:      X passed / Y total = Z%
  */
 import { test, expect, type Page } from '@playwright/test'
+import { cleanupTestTasks } from './test-cleanup'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
 
@@ -1317,4 +1318,12 @@ test.describe('VISUAL — Full page screenshots for visual regression', () => {
       await page.screenshot({ path: `review/fullpage-${pg}.png`, fullPage: true })
     })
   }
+})
+
+// ═══════════════════════════════════════════════════════════════════
+// CLEANUP — Delete all test-created tasks from Hub D1
+// ═══════════════════════════════════════════════════════════════════
+test.afterAll(async ({ request }) => {
+  const deleted = await cleanupTestTasks(request)
+  if (deleted > 0) console.log(`Cleanup: deleted ${deleted} test tasks from Hub D1`)
 })

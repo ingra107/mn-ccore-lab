@@ -18,6 +18,7 @@
  *             npx playwright test tests/inspection-workflows.spec.ts --grep "SYNC"
  */
 import { test, expect, type Page } from '@playwright/test'
+import { cleanupTestTasks } from './test-cleanup'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
 
@@ -2116,4 +2117,12 @@ test.describe('API — New feature endpoints (schema v37+)', () => {
     const data = body.data  // API wraps response in { data: {...} }
     expect(data).toHaveProperty('sync_summary')
   })
+})
+
+// ═══════════════════════════════════════════════════════════════════
+// CLEANUP — Delete all test-created tasks from Hub D1
+// ═══════════════════════════════════════════════════════════════════
+test.afterAll(async ({ request }) => {
+  const deleted = await cleanupTestTasks(request)
+  if (deleted > 0) console.log(`Cleanup: deleted ${deleted} test tasks from Hub D1`)
 })

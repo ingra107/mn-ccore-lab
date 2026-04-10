@@ -1633,24 +1633,54 @@ class TestCleanup:
     """Clean up test data from both brain.db and D1."""
 
     def test_99_cleanup_test_data(self):
-        """Remove all SYNCTEST-prefixed tasks from brain.db and D1."""
-        # Clean brain.db
+        """Hard-delete all SYNCTEST-prefixed tasks from brain.db, D1, and Airtable."""
+        # Hard-delete from brain.db (not soft-delete — actually remove rows)
+        count_before = brain_query(
+            "SELECT COUNT(*) as cnt FROM tasks WHERE name LIKE ?",
+            (f"{TEST_PREFIX}%",)
+        )
         brain_execute(
-            "UPDATE tasks SET status='deleted', completed=1 WHERE name LIKE ?",
+            "DELETE FROM tasks WHERE name LIKE ?",
             (f"{TEST_PREFIX}%",)
         )
-        deleted_brain = brain_query(
-            "SELECT COUNT(*) as cnt FROM tasks WHERE name LIKE ? AND status='deleted'",
-            (f"{TEST_PREFIX}%",)
-        )
-        print(f"  Cleaned brain.db: {deleted_brain[0]['cnt']} test tasks marked deleted")
+        print(f"  Cleaned brain.db: {count_before[0]['cnt']} test tasks hard-deleted")
 
-        # Clean D1 --soft delete via API
+        # Hard-delete from D1 via batch API
         d1_tasks = d1_get("/tasks?limit=500")
         test_tasks = [t for t in d1_tasks.get("data", []) if t.get("title", "").startswith(TEST_PREFIX)]
-        for t in test_tasks:
-            d1_post(f"/tasks/{t['id']}", {"status": "done"})
-        print(f"  Cleaned D1: {len(test_tasks)} test tasks marked done")
+        if test_tasks:
+            test_ids = [t["id"] for t in test_tasks]
+            # Batch delete in groups of 50
+            for i in range(0, len(test_ids), 50):
+                batch = test_ids[i:i + 50]
+                d1_post("/tasks/batch", {"ids": batch, "action": "delete"})
+        print(f"  Cleaned D1: {len(test_tasks)} test tasks deleted")
+
+        # Clean Airtable (test tasks may have been pushed there)
+        try:
+            import os, requests
+            at_token = os.environ.get("AIRTABLE_TOKEN") or os.environ.get("AIRTABLE_PAT")
+            base_id = os.environ.get("AIRTABLE_BASE_ID")
+            if at_token and base_id:
+                url = f"https://api.airtable.com/v0/{base_id}/Tasks"
+                headers = {"Authorization": f"Bearer {at_token}"}
+                # Find test tasks in Airtable
+                params = {"filterByFormula": f"FIND('{TEST_PREFIX}', {{Name}})"}
+                resp = requests.get(url, headers=headers, params=params, timeout=15)
+                if resp.ok:
+                    records = resp.json().get("records", [])
+                    # Delete in batches of 10
+                    for i in range(0, len(records), 10):
+                        batch_ids = [r["id"] for r in records[i:i + 10]]
+                        requests.delete(url, headers=headers, params={"records[]": batch_ids}, timeout=15)
+                    print(f"  Cleaned Airtable: {len(records)} test tasks deleted")
+                else:
+                    print(f"  Airtable query failed: {resp.status_code}")
+            else:
+                print("  Airtable cleanup skipped (no token/base_id in env)")
+        except Exception as e:
+            print(f"  Airtable cleanup error (non-fatal): {e}")
+
         print(f"  ✓ Cleanup complete")
 
 
