@@ -66,6 +66,7 @@ export interface Project {
   category: string
   pi: string
   slug: string
+  short_name?: string
   visibility?: 'public' | 'internal'
   // Pipeline board fields
   stage?: 'Idea' | 'Data Collection' | 'Analysis' | 'Writing' | 'Review' | 'Published'
