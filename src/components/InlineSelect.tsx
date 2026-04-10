@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown } from 'lucide-react'
 
@@ -11,8 +11,11 @@ interface InlineSelectProps {
 
 export default function InlineSelect({ value, options, onChange, size = 'sm' }: InlineSelectProps) {
   const [open, setOpen] = useState(false)
+  const [filter, setFilter] = useState('')
+  const [focusedIdx, setFocusedIdx] = useState(-1)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const filterRef = useRef<HTMLInputElement>(null)
   const [pos, setPos] = useState({ top: 0, left: 0 })
 
   const updatePosition = useCallback(() => {
@@ -41,6 +44,36 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
       window.removeEventListener('scroll', () => setOpen(false), true)
     }
   }, [open, updatePosition])
+
+  useEffect(() => {
+    if (open) {
+      setFilter('')
+      setFocusedIdx(-1)
+      setTimeout(() => filterRef.current?.focus(), 0)
+    }
+  }, [open])
+
+  const filtered = useMemo(() => {
+    if (!filter) return options
+    const lower = filter.toLowerCase()
+    return options.filter(o => o.label.toLowerCase().includes(lower))
+  }, [options, filter])
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setFocusedIdx(i => Math.min(i + 1, filtered.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setFocusedIdx(i => Math.max(i - 1, 0))
+    } else if (e.key === 'Enter' && focusedIdx >= 0 && filtered[focusedIdx]) {
+      e.preventDefault()
+      onChange(filtered[focusedIdx].value)
+      setOpen(false)
+    } else if (e.key === 'Escape') {
+      setOpen(false)
+    }
+  }
 
   const current = options.find((o) => o.value === value)
   const fontSize = size === 'sm' ? '11px' : '12px'
@@ -94,7 +127,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
             background: 'var(--cream)',
             border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-lg)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            boxShadow: 'var(--shadow-menu)',
             zIndex: 9999,
             minWidth: '120px',
             overflow: 'hidden',
@@ -104,7 +137,28 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
             e.stopPropagation()
           }}
         >
-          {options.map((opt) => (
+          {options.length >= 5 && (
+            <div style={{ padding: '6px 8px', borderBottom: '1px solid var(--border-subtle)' }}>
+              <input
+                ref={filterRef}
+                value={filter}
+                onChange={(e) => { setFilter(e.target.value); setFocusedIdx(0) }}
+                onKeyDown={handleKeyDown}
+                placeholder="Filter..."
+                style={{
+                  width: '100%',
+                  fontSize: 'var(--text-small)',
+                  color: 'var(--ink)',
+                  background: 'var(--field-bg)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '4px 8px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+          )}
+          {filtered.map((opt, idx) => (
             <button
               key={opt.value}
               onClick={(e) => {
@@ -113,12 +167,19 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
                 onChange(opt.value)
                 setOpen(false)
               }}
+              onMouseEnter={() => setFocusedIdx(idx)}
+              onMouseLeave={() => setFocusedIdx(-1)}
+              onKeyDown={handleKeyDown}
               style={{
                 display: 'block',
                 width: '100%',
                 padding: '8px 12px',
                 border: 'none',
-                background: opt.value === value ? 'rgba(45,138,138,0.06)' : 'none',
+                background: idx === focusedIdx
+                  ? 'rgba(45,138,138,0.10)'
+                  : opt.value === value
+                    ? 'rgba(45,138,138,0.06)'
+                    : 'none',
                 cursor: 'pointer',
                 fontSize,
                 fontWeight: opt.value === value ? 600 : 400,
@@ -126,8 +187,6 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
                 textAlign: 'left',
                 transition: 'background 0.1s',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(45,138,138,0.08)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = opt.value === value ? 'rgba(45,138,138,0.06)' : 'none' }}
             >
               {opt.label}
             </button>
