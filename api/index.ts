@@ -1,5 +1,6 @@
 import type { Env } from './types';
 import { corsHeaders, json, error, getAuthUser } from './helpers';
+import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
 import { notifyClients } from './lib/notify';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
@@ -83,6 +84,14 @@ export default {
       }
       return response;
     };
+
+    // API key auth for programmatic access (AI Co-Scientist listener)
+    const apiKeyResult = validateApiKey(request, env);
+    if (apiKeyResult === false) {
+      return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+    }
+    // apiKeyResult === true means API key valid (skip browser auth)
+    // apiKeyResult === null means no API key header (use browser auth as normal)
 
     try {
       // Auth endpoint — returns current user from Cloudflare Access JWT

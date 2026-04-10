@@ -7,6 +7,7 @@ export interface Env {
   SENDGRID_API_KEY?: string;
   RESEND_API_KEY?: string;
   NOTIFICATION_HUB?: DurableObjectNamespace;
+  PB_API_KEY?: string;
 }
 
 export interface ApiResponse<T = unknown> {
