@@ -1,6 +1,10 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock } from 'lucide-react'
+import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, GripVertical } from 'lucide-react'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
@@ -93,6 +97,7 @@ const PINNED_KEY = 'mnccore-dashboard-pinned'
 const DEFAULTS_VERSION_KEY = 'mnccore-dashboard-version'
 const CLICKS_KEY = 'mnccore-dashboard-clicks'
 const TAB_KEY = 'mnccore-dashboard-tab'
+const ORDER_KEY = 'mnccore-dashboard-order'
 const CURRENT_DEFAULTS_VERSION = 4 // bump to reset localStorage to new defaults
 
 // ── Adaptive sorting helpers ──────────────────────────────
@@ -127,6 +132,27 @@ function getPinnedCards(): Set<string> {
   return new Set()
 }
 
+function getCardOrder(): string[] {
+  try {
+    const stored = localStorage.getItem(ORDER_KEY)
+    if (stored) return JSON.parse(stored)
+  } catch { /* use defaults */ }
+  return []
+}
+
+function applyCardOrder<T extends { id: string }>(cards: T[], order: string[]): T[] {
+  if (order.length === 0) return cards
+  const orderMap = new Map(order.map((id, i) => [id, i]))
+  return [...cards].sort((a, b) => {
+    const ai = orderMap.get(a.id)
+    const bi = orderMap.get(b.id)
+    if (ai === undefined && bi === undefined) return 0
+    if (ai === undefined) return 1
+    if (bi === undefined) return -1
+    return ai - bi
+  })
+}
+
 function getVisibleCards(roleCards?: string[]): Set<string> {
   try {
     // Reset localStorage if defaults version changed
@@ -143,6 +169,38 @@ function getVisibleCards(roleCards?: string[]): Set<string> {
   localStorage.setItem(DEFAULTS_VERSION_KEY, String(CURRENT_DEFAULTS_VERSION))
   if (roleCards) return new Set(roleCards)
   return new Set(CARD_REGISTRY.filter(c => c.defaultVisible).map(c => c.id))
+}
+
+function SortableCardWrapper({ id, children }: { id: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 20 : ('auto' as const),
+    position: 'relative' as const,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} className="group/drag">
+      <button
+        {...listeners}
+        className="absolute top-2 left-2 opacity-0 group-hover/drag:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+        style={{
+          background: 'rgba(15,25,35,0.06)',
+          border: 'none',
+          borderRadius: 6,
+          padding: '4px',
+          color: 'var(--slate)',
+          zIndex: 10,
+        }}
+        title="Drag to reorder"
+      >
+        <GripVertical size={12} />
+      </button>
+      {children}
+    </div>
+  )
 }
 
 export default function Dashboard() {
@@ -179,7 +237,10 @@ export default function Dashboard() {
   const [pinnedCards, setPinnedCards] = useState<Set<string>>(getPinnedCards)
   const [activeTab, setActiveTab] = useState<DashboardTab>(getSavedTab)
   const [clickCounts, setClickCounts] = useState<Record<string, number>>(getClickCounts)
+  const [cardOrder, setCardOrder] = useState<string[]>(getCardOrder)
   const adaptive = useMemo(() => Object.values(clickCounts).some(c => c > 2), [clickCounts])
+
+  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   const handleTabChange = useCallback((tab: DashboardTab) => {
     setActiveTab(tab)
@@ -233,6 +294,32 @@ export default function Dashboard() {
     return [...cards].sort((a, b) => (clickCounts[b.id] || 0) - (clickCounts[a.id] || 0))
   }, [adaptive, clickCounts])
 
+  const handleCardDragEnd = useCallback((sectionCards: typeof CARD_REGISTRY[number][], event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = sectionCards.findIndex(c => c.id === active.id)
+    const newIndex = sectionCards.findIndex(c => c.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    // Build full order from current visual arrangement
+    const reordered = arrayMove(sectionCards, oldIndex, newIndex)
+    const newOrder = reordered.map(c => c.id)
+
+    // Merge into existing order: replace positions of this section's cards
+    setCardOrder(_prev => {
+      // Start with all card IDs in current order
+      const allIds = CARD_REGISTRY.map(c => c.id)
+      // Build full order: keep previous positions, override section cards
+      const sectionIds = new Set(sectionCards.map(c => c.id))
+      const nonSection = allIds.filter(id => !sectionIds.has(id))
+      const full = [...nonSection]
+      // Insert reordered section cards at their new positions
+      newOrder.forEach(id => full.push(id))
+      localStorage.setItem(ORDER_KEY, JSON.stringify(full))
+      return full
+    })
+  }, [])
+
   const tabFilteredRegistry = useMemo(
     () => CARD_REGISTRY.filter(c => {
       if (activeTab === 'overview') return true
@@ -242,9 +329,9 @@ export default function Dashboard() {
   )
 
   const allVisibleCards = tabFilteredRegistry.filter(c => visibleCards.has(c.id))
-  const pinnedVisibleCards = allVisibleCards.filter(c => pinnedCards.has(c.id))
-  const unpinnedPrimaryCards = sortByUsage(tabFilteredRegistry.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
-  const unpinnedSecondaryCards = sortByUsage(tabFilteredRegistry.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
+  const pinnedVisibleCards = applyCardOrder(allVisibleCards.filter(c => pinnedCards.has(c.id)), cardOrder)
+  const unpinnedPrimaryCards = applyCardOrder(sortByUsage(tabFilteredRegistry.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id))), cardOrder)
+  const unpinnedSecondaryCards = applyCardOrder(sortByUsage(tabFilteredRegistry.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id))), cardOrder)
 
   // Time-of-day greeting
   const greeting = useMemo(() => {
@@ -554,61 +641,73 @@ export default function Dashboard() {
                 Pinned
               </span>
             </div>
-            <div className="bento-grid">
-              {pinnedVisibleCards.map(card => {
-                const Card = card.component
-                return (
-                  <div key={card.id} data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
-                    <Card />
-                    <button
-                      onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{
-                        background: 'rgba(201,168,76,0.15)',
-                        border: 'none',
-                        borderRadius: 6,
-                        padding: '4px',
-                        cursor: 'pointer',
-                        color: 'var(--gold)',
-                      }}
-                      title="Unpin"
-                    >
-                      <Pin size={12} />
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
+            <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => handleCardDragEnd(pinnedVisibleCards, e)}>
+              <SortableContext items={pinnedVisibleCards.map(c => c.id)} strategy={rectSortingStrategy}>
+                <div className="bento-grid">
+                  {pinnedVisibleCards.map(card => {
+                    const Card = card.component
+                    return (
+                      <SortableCardWrapper key={card.id} id={card.id}>
+                        <div data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
+                          <Card />
+                          <button
+                            onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            style={{
+                              background: 'rgba(201,168,76,0.15)',
+                              border: 'none',
+                              borderRadius: 6,
+                              padding: '4px',
+                              cursor: 'pointer',
+                              color: 'var(--gold)',
+                            }}
+                            title="Unpin"
+                          >
+                            <Pin size={12} />
+                          </button>
+                        </div>
+                      </SortableCardWrapper>
+                    )
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
         )}
 
         {/* Primary Cards — always visible (unpinned) */}
         {unpinnedPrimaryCards.length > 0 && (
-          <div className="bento-grid">
-            {unpinnedPrimaryCards.map(card => {
-              const Card = card.component
-              return (
-                <div key={card.id} data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
-                  <Card />
-                  <button
-                    onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
-                    style={{
-                      border: 'none',
-                      borderRadius: 6,
-                      padding: '4px',
-                      cursor: 'pointer',
-                      color: 'var(--slate)',
-                      opacity: 0.5,
-                    }}
-                    title="Pin to top"
-                  >
-                    <Pin size={12} />
-                  </button>
-                </div>
-              )
-            })}
-          </div>
+          <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => handleCardDragEnd(unpinnedPrimaryCards, e)}>
+            <SortableContext items={unpinnedPrimaryCards.map(c => c.id)} strategy={rectSortingStrategy}>
+              <div className="bento-grid">
+                {unpinnedPrimaryCards.map(card => {
+                  const Card = card.component
+                  return (
+                    <SortableCardWrapper key={card.id} id={card.id}>
+                      <div data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
+                        <Card />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
+                          style={{
+                            border: 'none',
+                            borderRadius: 6,
+                            padding: '4px',
+                            cursor: 'pointer',
+                            color: 'var(--slate)',
+                            opacity: 0.5,
+                          }}
+                          title="Pin to top"
+                        >
+                          <Pin size={12} />
+                        </button>
+                      </div>
+                    </SortableCardWrapper>
+                  )
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
 
         {/* Secondary Cards — behind "Show more" (unpinned) */}
@@ -633,31 +732,37 @@ export default function Dashboard() {
 
             {showMore && (
               <>
-                <div className="bento-grid mt-4">
-                  {unpinnedSecondaryCards.map(card => {
-                    const Card = card.component
-                    return (
-                      <div key={card.id} data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
-                        <Card />
-                        <button
-                          onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
-                          style={{
-                            border: 'none',
-                            borderRadius: 6,
-                            padding: '4px',
-                            cursor: 'pointer',
-                            color: 'var(--slate)',
-                            opacity: 0.5,
-                          }}
-                          title="Pin to top"
-                        >
-                          <Pin size={12} />
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
+                <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => handleCardDragEnd(unpinnedSecondaryCards, e)}>
+                  <SortableContext items={unpinnedSecondaryCards.map(c => c.id)} strategy={rectSortingStrategy}>
+                    <div className="bento-grid mt-4">
+                      {unpinnedSecondaryCards.map(card => {
+                        const Card = card.component
+                        return (
+                          <SortableCardWrapper key={card.id} id={card.id}>
+                            <div data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
+                              <Card />
+                              <button
+                                onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
+                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
+                                style={{
+                                  border: 'none',
+                                  borderRadius: 6,
+                                  padding: '4px',
+                                  cursor: 'pointer',
+                                  color: 'var(--slate)',
+                                  opacity: 0.5,
+                                }}
+                                title="Pin to top"
+                              >
+                                <Pin size={12} />
+                              </button>
+                            </div>
+                          </SortableCardWrapper>
+                        )
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
 
                 <button
                   onClick={() => setShowMore(false)}
@@ -768,6 +873,10 @@ export default function Dashboard() {
         /* Pin button background — light/dark */
         .pin-btn { background: rgba(15,25,35,0.05); }
         .dark .pin-btn { background: rgba(255,255,255,0.08); }
+
+        /* Drag handle — light/dark */
+        .group\\/drag > button:first-child { background: rgba(15,25,35,0.06); }
+        .dark .group\\/drag > button:first-child { background: rgba(255,255,255,0.08); }
 
         /* Customize panel — light/dark */
         .customize-panel { background-color: rgba(45,138,138,0.02); }

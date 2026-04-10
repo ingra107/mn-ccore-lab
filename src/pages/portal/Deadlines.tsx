@@ -10,8 +10,9 @@ import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
+import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useApiData'
-import { useUpdateTaskStatus } from '../../hooks/useMutations'
+import { useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
@@ -55,9 +56,37 @@ export default function Deadlines() {
     return map
   }, [projectsList])
   const updateTaskStatus = useUpdateTaskStatus()
+  const updateTask = useUpdateTask()
+  const bulkUpdate = useBulkUpdateTasks()
   const { showUndo } = useUndoToast()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const toggleSelect = (id: string) => setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
   const isLoading = tasksLoading || grantsLoading
+
+  const handleFieldChange = useCallback((id: string, field: string, value: unknown) => {
+    updateTask.mutate({ id, fields: { [field]: value } })
+  }, [updateTask])
+
+  const handleBulkAction = useCallback((action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze' | 'status', value?: string) => {
+    if (action === 'snooze') {
+      const days = parseInt(value || '1', 10)
+      for (const id of selectedIds) {
+        const task = tasks.find(t => t.id === id)
+        if (!task?.due_date) continue
+        const d = new Date(task.due_date + 'T12:00:00')
+        d.setDate(d.getDate() + days)
+        const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        handleFieldChange(id, 'due_date', newDate)
+      }
+      showUndo(`Snoozed ${selectedIds.size} task(s) +${days}d`, () => {})
+      setSelectedIds(new Set())
+      return
+    }
+    bulkUpdate.mutate({ ids: [...selectedIds], action, value }, {
+      onSuccess: () => setSelectedIds(new Set()),
+    })
+  }, [selectedIds, tasks, handleFieldChange, showUndo, bulkUpdate])
 
   const handleOpenDetail = useCallback((item: DeadlineItem) => {
     if (item.type !== 'task') return
@@ -284,11 +313,12 @@ export default function Deadlines() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: 'minmax(200px, 1fr) 140px 120px 100px 100px 80px',
+                gridTemplateColumns: '32px minmax(200px, 1fr) 140px 120px 100px 100px 80px',
                 padding: '8px 16px',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
+              <div />
               {['TITLE', 'PROJECT', 'DUE DATE', 'ASSIGNEE', 'STATUS', 'TYPE'].map((col) => (
                 <span key={col} style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
                   {col}
@@ -306,7 +336,7 @@ export default function Deadlines() {
                 { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
               ].filter(g => g.items.length > 0).map((group) => (
                 <motion.div key={group.title} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}>
-                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} />
+                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
                 </motion.div>
               ))}
             </motion.div>
@@ -363,6 +393,14 @@ export default function Deadlines() {
           onClose={() => setSelectedTask(null)}
         />
       )}
+
+      <BulkActionToolbar
+        selectedIds={selectedIds}
+        selectedTasks={tasks.filter(t => selectedIds.has(t.id))}
+        onClear={() => setSelectedIds(new Set())}
+        onBulkAction={handleBulkAction}
+        isUpdating={bulkUpdate.isPending}
+      />
     </div>
   )
 }
@@ -376,7 +414,7 @@ const STATUS_OPTIONS = [
   { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
 ]
 
-function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetail, projectMap }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string> }) {
+function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
   const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
 
   return (
@@ -406,11 +444,30 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
             <div
               className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
               style={{
-                gridTemplateColumns: 'minmax(200px, 1fr) 140px 120px 100px 100px 80px',
+                gridTemplateColumns: '32px minmax(200px, 1fr) 140px 120px 100px 100px 80px',
                 padding: `var(--row-padding-y, 8px) 16px`,
                 alignItems: 'center',
               }}
             >
+              {/* Checkbox */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {item.type === 'task' && onToggleSelect ? (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id) }}
+                    style={{
+                      width: 18, height: 18, borderRadius: 'var(--radius-sm)',
+                      border: `1.5px solid ${selectedIds?.has(item.id) ? 'var(--teal)' : 'var(--border-default)'}`,
+                      background: selectedIds?.has(item.id) ? 'var(--teal)' : 'transparent',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: 0, transition: 'all 150ms ease', flexShrink: 0,
+                    }}
+                    aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
+                  >
+                    {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'white' }} />}
+                  </button>
+                ) : <div style={{ width: 18 }} />}
+              </div>
+
               {/* Title — clickable for tasks */}
               <span
                 onClick={item.type === 'task' && onOpenDetail ? () => onOpenDetail(item) : undefined}
@@ -483,38 +540,55 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
 
             {/* Mobile row — shown only on mobile */}
             <div
-              className="sm:hidden hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+              className="sm:hidden hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors flex items-start gap-2"
               style={{ padding: `var(--row-padding-y, 12px) 16px` }}
             >
-              {/* Title */}
-              <span style={{
-                fontSize: '14px', fontWeight: 500,
-                color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
-                display: 'block', marginBottom: '4px',
-              }}>
-                {item.title}
-              </span>
-              {/* Metadata row */}
-              <div className="flex items-center gap-3 flex-wrap">
+              {item.type === 'task' && onToggleSelect && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id) }}
+                  style={{
+                    width: 18, height: 18, borderRadius: 'var(--radius-sm)',
+                    border: `1.5px solid ${selectedIds?.has(item.id) ? 'var(--teal)' : 'var(--border-default)'}`,
+                    background: selectedIds?.has(item.id) ? 'var(--teal)' : 'transparent',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: 0, transition: 'all 150ms ease', flexShrink: 0, marginTop: 2,
+                  }}
+                  aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
+                >
+                  {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'white' }} />}
+                </button>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {/* Title */}
                 <span style={{
-                  fontSize: 'var(--label-size)',
-                  color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
-                  fontWeight: item.isOverdue ? 500 : 400,
+                  fontSize: '14px', fontWeight: 500,
+                  color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
+                  display: 'block', marginBottom: '4px',
                 }}>
-                  {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
+                  {item.title}
                 </span>
-                <span style={{
-                  fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
-                  color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
-                  opacity: 0.7,
-                }}>
-                  {item.type === 'milestone' ? 'Milestone' : 'Task'}
-                </span>
-                {person && (
-                  <div style={{ width: 18, height: 18, flexShrink: 0 }}>
-                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[7px]" />
-                  </div>
-                )}
+                {/* Metadata row */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span style={{
+                    fontSize: 'var(--label-size)',
+                    color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
+                    fontWeight: item.isOverdue ? 500 : 400,
+                  }}>
+                    {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
+                  </span>
+                  <span style={{
+                    fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
+                    color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
+                    opacity: 0.7,
+                  }}>
+                    {item.type === 'milestone' ? 'Milestone' : 'Task'}
+                  </span>
+                  {person && (
+                    <div style={{ width: 18, height: 18, flexShrink: 0 }}>
+                      <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[7px]" />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

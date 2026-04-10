@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import RoundPrompt from '../components/RoundPrompt'
@@ -20,6 +20,7 @@ import {
   Scale,
   Copy,
   Check,
+  X,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -97,6 +98,22 @@ export default function MeetingDetail() {
   const [decisionTitle, setDecisionTitle] = useState('')
   const [decisionRationale, setDecisionRationale] = useState('')
 
+  // Multi-select for action items
+  const [selectedActionIds, setSelectedActionIds] = useState<Set<string>>(new Set())
+  const toggleActionSelect = (id: string) => setSelectedActionIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
+
+  const handleBatchComplete = () => {
+    for (const id of selectedActionIds) {
+      toggleAction.mutate(id)
+    }
+    showUndo(`Completed ${selectedActionIds.size} action item(s)`, () => {
+      for (const id of selectedActionIds) {
+        toggleAction.mutate(id)
+      }
+    })
+    setSelectedActionIds(new Set())
+  }
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   usePageMeta(
@@ -150,8 +167,33 @@ export default function MeetingDetail() {
     })
   }
 
-  const pendingActions = actionItems.filter((a) => !a.completed)
-  const completedActions = actionItems.filter((a) => a.completed)
+  const pendingActions = actionItems.filter((a: ActionItemRowType) => !a.completed)
+  const completedActions = actionItems.filter((a: ActionItemRowType) => a.completed)
+
+  // Local action item order — persists in state during session
+  const [actionOrder, setActionOrder] = useState<string[]>([])
+  const orderedPendingActions = useMemo(() => {
+    if (actionOrder.length === 0) return pendingActions
+    const orderMap = new Map(actionOrder.map((id, i) => [id, i]))
+    return [...pendingActions].sort((a, b) => {
+      const ai = orderMap.get(a.id)
+      const bi = orderMap.get(b.id)
+      if (ai === undefined && bi === undefined) return 0
+      if (ai === undefined) return 1
+      if (bi === undefined) return -1
+      return ai - bi
+    })
+  }, [pendingActions, actionOrder])
+
+  function handleActionDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = orderedPendingActions.findIndex(i => i.id === active.id)
+    const newIndex = orderedPendingActions.findIndex(i => i.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    const reordered = arrayMove(orderedPendingActions, oldIndex, newIndex)
+    setActionOrder(reordered.map(i => i.id))
+  }
 
   return (
     <div style={{ minHeight: '100vh' }}>
@@ -363,12 +405,57 @@ export default function MeetingDetail() {
                 onSuccess={() => showSuccess('Action item added')}
               />
 
-              {/* Pending items */}
-              {pendingActions.length > 0 && (
+              {/* Batch action bar */}
+              <AnimatePresence>
+                {selectedActionIds.size >= 2 && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <div
+                      className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg"
+                      style={{
+                        background: 'rgba(45,138,138,0.06)',
+                        border: '1px solid rgba(45,138,138,0.15)',
+                      }}
+                    >
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--teal)' }}>
+                        {selectedActionIds.size} selected
+                      </span>
+                      <button
+                        onClick={handleBatchComplete}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
+                        style={{ background: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+                      >
+                        <CheckCircle2 size={12} />
+                        Complete All
+                      </button>
+                      <button
+                        onClick={() => setSelectedActionIds(new Set())}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors"
+                        style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
+                      >
+                        <X size={11} />
+                        Clear
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Pending items (drag-to-reorder) */}
+              {orderedPendingActions.length > 0 && (
                 <div className="mb-3">
-                  {pendingActions.map((item) => (
-                    <ActionItemRow key={item.id} item={item} onToggle={handleToggleAction} />
-                  ))}
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleActionDragEnd}>
+                    <SortableContext items={orderedPendingActions.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                      {orderedPendingActions.map((item) => (
+                        <SortableActionItem key={item.id} item={item} onToggle={handleToggleAction} selected={selectedActionIds.has(item.id)} onToggleSelect={toggleActionSelect} />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
                 </div>
               )}
 
@@ -379,7 +466,7 @@ export default function MeetingDetail() {
                     Completed
                   </p>
                   {completedActions.map((item) => (
-                    <ActionItemRow key={item.id} item={item} onToggle={handleToggleAction} />
+                    <ActionItemRow key={item.id} item={item} onToggle={handleToggleAction} selected={selectedActionIds.has(item.id)} onToggleSelect={toggleActionSelect} />
                   ))}
                 </div>
               )}
@@ -630,6 +717,31 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
   )
 }
 
+function SortableActionItem({ item, onToggle, selected, onToggleSelect }: { item: ActionItemRowType; onToggle: (id: string) => void; selected?: boolean; onToggleSelect?: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : ('auto' as const),
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center group/action" {...attributes}>
+      <button
+        {...listeners}
+        className="flex-shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover/action:opacity-100 transition-opacity"
+        style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.3 }}
+      >
+        <GripVertical size={14} />
+      </button>
+      <div style={{ flex: 1 }}>
+        <ActionItemRow item={item} onToggle={onToggle} selected={selected} onToggleSelect={onToggleSelect} />
+      </div>
+    </div>
+  )
+}
+
 function AttendeeChip({ slug }: { slug: string }) {
   const p = getPersonInfo(slug)
   const hoverCard = useHoverCard()
@@ -659,7 +771,7 @@ function AttendeeChip({ slug }: { slug: string }) {
   )
 }
 
-function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?: (id: string) => void }) {
+function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: ActionItemRowType; onToggle?: (id: string) => void; selected?: boolean; onToggleSelect?: (id: string) => void }) {
   const person = getPersonInfo(item.assignee)
   const isOverdue = item.due_date && !item.completed && new Date(item.due_date) < new Date()
   const hoverCard = useHoverCard()
@@ -668,12 +780,40 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
   return (
     <div
       className="action-item-row flex items-start gap-3 py-2.5"
-      style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)', cursor: 'pointer', borderRadius: 'var(--radius-md)', margin: '0 -8px', padding: '10px 8px', transition: 'background 0.15s' }}
+      style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)', cursor: 'pointer', borderRadius: 'var(--radius-md)', margin: '0 -8px', padding: '10px 8px', transition: 'background 0.15s', background: selected ? 'rgba(45,138,138,0.04)' : undefined }}
       onClick={() => onToggle?.(item.id)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle?.(item.id) } }}
     >
+      {/* Select checkbox */}
+      {onToggleSelect && (
+        <div className="flex-shrink-0" style={{ display: 'flex', alignItems: 'center', paddingTop: 12 }}>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id) }}
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: 'var(--radius-sm)',
+              border: `1.5px solid ${selected ? 'var(--teal)' : 'var(--border-default)'}`,
+              background: selected ? 'var(--teal)' : 'transparent',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              transition: 'all 150ms ease',
+            }}
+            aria-label={selected ? 'Deselect action item' : 'Select action item'}
+          >
+            {selected && (
+              <Check size={10} style={{ color: 'white' }} />
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Touch target: 44px invisible hit area around the 20px circle */}
       <div className="flex-shrink-0 relative" style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <button type="button" className="cursor-pointer hover:scale-110 transition-transform"

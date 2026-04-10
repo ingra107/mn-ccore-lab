@@ -19,8 +19,9 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions } from '../hooks/useApiData'
-import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useCreateTask } from '../hooks/useMutations'
+import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
+import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import { formatShortDate, formatMediumDate } from '../lib/dateUtils'
@@ -134,8 +135,38 @@ function ProjectDetailInner({ project }: InnerProps) {
   // Tasks for this project
   const { data: projectTasks = [] } = useTasks({ project: project.slug })
   const updateTaskStatus = useUpdateTaskStatus()
+  const updateTask = useUpdateTask()
+  const bulkUpdate = useBulkUpdateTasks()
   const pendingTasks = projectTasks.filter((t) => !t.completed)
   const completedTasks = projectTasks.filter((t) => t.completed)
+
+  // Multi-select for tasks tab
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const toggleSelect = (id: string) => setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
+
+  const handleFieldChange = (id: string, field: string, value: unknown) => {
+    updateTask.mutate({ id, fields: { [field]: value } })
+  }
+
+  const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze' | 'status', value?: string) => {
+    if (action === 'snooze') {
+      const days = parseInt(value || '1', 10)
+      for (const id of selectedIds) {
+        const task = projectTasks.find(t => t.id === id)
+        if (!task?.due_date) continue
+        const d = new Date(task.due_date + 'T12:00:00')
+        d.setDate(d.getDate() + days)
+        const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        handleFieldChange(id, 'due_date', newDate)
+      }
+      showUndo(`Snoozed ${selectedIds.size} task(s) +${days}d`, () => {})
+      setSelectedIds(new Set())
+      return
+    }
+    bulkUpdate.mutate({ ids: [...selectedIds], action, value }, {
+      onSuccess: () => setSelectedIds(new Set()),
+    })
+  }
 
   // Copy link
   const [copied, setCopied] = useState(false)
@@ -1111,20 +1142,44 @@ function ProjectDetailInner({ project }: InnerProps) {
             ) : (
               <div className="flex flex-col gap-2">
                 {filtered.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onStatusChange={(id, status) => {
-                      const prev = task.status
-                      updateTaskStatus.mutate({ id, status })
-                      showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
-                    }}
-                    onClick={() => setSelectedTask(task)}
-                  />
+                  <div key={task.id} className="flex items-start gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleSelect(task.id) }}
+                      style={{
+                        width: 18, height: 18, borderRadius: 'var(--radius-sm)',
+                        border: `1.5px solid ${selectedIds.has(task.id) ? 'var(--teal)' : 'var(--border-default)'}`,
+                        background: selectedIds.has(task.id) ? 'var(--teal)' : 'transparent',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: 0, transition: 'all 150ms ease', flexShrink: 0, marginTop: 10,
+                      }}
+                      aria-label={selectedIds.has(task.id) ? 'Deselect task' : 'Select task'}
+                    >
+                      {selectedIds.has(task.id) && <Check size={12} style={{ color: 'white' }} />}
+                    </button>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <TaskCard
+                        task={task}
+                        onStatusChange={(id, status) => {
+                          const prev = task.status
+                          updateTaskStatus.mutate({ id, status })
+                          showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
+                        }}
+                        onClick={() => setSelectedTask(task)}
+                      />
+                    </div>
+                  </div>
                 ))}
               </div>
             )
           })()}
+
+          <BulkActionToolbar
+            selectedIds={selectedIds}
+            selectedTasks={projectTasks.filter(t => selectedIds.has(t.id))}
+            onClear={() => setSelectedIds(new Set())}
+            onBulkAction={handleBulkAction}
+            isUpdating={bulkUpdate.isPending}
+          />
         </div>
       )}
 
