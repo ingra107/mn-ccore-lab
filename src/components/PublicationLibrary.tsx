@@ -48,9 +48,9 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
             </span>
             <span
               style={{
-                fontSize: '11px',
+                fontSize: 'var(--label-size)',
                 color: 'var(--slate)',
-                opacity: 0.55,
+                opacity: 'var(--ink-label)',
               }}
             >
               {pubs.length} paper{pubs.length !== 1 ? 's' : ''}
@@ -134,7 +134,7 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
                   <p
                     style={{
                       fontSize: '12px',
-                      fontWeight: 500,
+                      fontWeight: 'var(--label-weight)',
                       color: 'var(--ink)',
                       lineHeight: 1.4,
                       margin: 0,
@@ -160,7 +160,7 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
                       {pub.authors.split(',')[0]?.trim() || ''}
                     </span>
                     {link && (
-                      <ExternalLink size={11} style={{ color: 'var(--slate)', opacity: 0.4, flexShrink: 0 }} />
+                      <ExternalLink size={11} style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', flexShrink: 0 }} />
                     )}
                   </div>
                 </a>

@@ -61,14 +61,14 @@ function SortableQuickWin({ task, onComplete, onClickTitle }: {
           className="flex-1 text-left truncate"
           style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-            fontSize: '13px', color: 'var(--ink)',
+            fontSize: 'var(--value-size)', color: 'var(--ink)',
           }}
         >
           {task.title || task.description}
         </button>
 
         {task.project_title && (
-          <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.5, flexShrink: 0 }}>
+          <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }}>
             {task.project_title}
           </span>
         )}
@@ -93,7 +93,7 @@ export default function QuickWinsList({ tasks, onComplete, onClickTitle, onAddCl
           Quick Wins
         </span>
         {tasks.length > 0 && (
-          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
             {tasks.length}
           </span>
         )}

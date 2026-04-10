@@ -75,7 +75,7 @@ function MilestoneRow({ milestone }: { milestone: any }) {
     <div className="flex items-start gap-2 py-1">
       <Flag size={10} style={{ color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.6, flexShrink: 0, marginTop: 2 }} />
       <div className="flex-1 min-w-0">
-        <span className="block truncate" style={{ fontSize: '11px', color: 'var(--ink)', lineHeight: 1.3 }}>
+        <span className="block truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', lineHeight: 1.3 }}>
           {milestone.title || milestone.description}
         </span>
         <span style={{ fontSize: '9px', color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.7 }}>
@@ -154,7 +154,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
             {recentlyCompleted.slice(0, 5).map((t: any) => (
               <div key={t.id} className="flex items-center gap-2 py-0.5">
                 <CheckCircle2 size={10} style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0 }} />
-                <span className="truncate" style={{ fontSize: '11px', color: 'var(--ink)', opacity: 0.6, textDecoration: 'line-through' }}>
+                <span className="truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', opacity: 0.6, textDecoration: 'line-through' }}>
                   {t.title || t.description}
                 </span>
               </div>
@@ -178,7 +178,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
           {stats.overdue > 0 && (
             <div className="flex items-center gap-2 py-1">
               <AlertTriangle size={10} style={{ color: 'var(--maroon)', opacity: 0.7, flexShrink: 0 }} />
-              <Link to="/portal/tasks" style={{ fontSize: '11px', color: 'var(--maroon)', textDecoration: 'none' }}>
+              <Link to="/portal/tasks" style={{ fontSize: 'var(--label-size)', color: 'var(--maroon)', textDecoration: 'none' }}>
                 {stats.overdue} task{stats.overdue !== 1 ? 's' : ''} overdue
               </Link>
             </div>
@@ -187,7 +187,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
           {staleProjects.length > 0 && (
             <div className="flex items-center gap-2 py-1">
               <TrendingDown size={10} style={{ color: 'var(--slate)', opacity: 0.5, flexShrink: 0 }} />
-              <Link to="/projects" style={{ fontSize: '11px', color: 'var(--slate)', textDecoration: 'none', opacity: 0.7 }}>
+              <Link to="/projects" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none', opacity: 0.7 }}>
                 {staleProjects.length} project{staleProjects.length !== 1 ? 's' : ''} stale
               </Link>
             </div>
@@ -211,7 +211,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
             <div key={c.id} className="flex items-start gap-2 py-1">
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.due_date && c.due_date <= today ? 'var(--maroon)' : 'var(--teal)', opacity: 0.5, flexShrink: 0, marginTop: 4 }} />
               <div className="flex-1 min-w-0">
-                <span className="block truncate" style={{ fontSize: '11px', color: 'var(--ink)', lineHeight: 1.3 }}>
+                <span className="block truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', lineHeight: 1.3 }}>
                   {c.description || c.commitment}
                 </span>
                 {c.due_date && (

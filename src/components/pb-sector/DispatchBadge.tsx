@@ -60,7 +60,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                 Dispatch Queue
               </span>
               <button onClick={() => setExpanded(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
-                <X size={12} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+                <X size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
               </button>
             </div>
 

@@ -52,7 +52,7 @@ function Chip({ label, value, color = 'var(--slate)' }: ChipProps) {
         lineHeight: '16px',
       }}
     >
-      <span style={{ color: 'var(--slate)', opacity: 0.55 }}>{label}</span>
+      <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{label}</span>
       <span style={{ color, fontWeight: 600 }}>{value}</span>
     </span>
   )

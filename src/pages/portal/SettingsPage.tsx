@@ -173,7 +173,7 @@ export default function SettingsPage() {
                       )
                     })}
                   </div>
-                  <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                  <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                     {stages.length} stage{stages.length !== 1 ? 's' : ''}
                   </span>
                 </motion.div>
@@ -196,13 +196,13 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{person.name}</div>
-                    <div className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>{member.role}</div>
+                    <div className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{member.role}</div>
                   </div>
                   <input
                     type="text"
                     placeholder="e.g., stats expert, IRB contact, data lead"
                     className="w-48 rounded-md border px-2 py-1 text-xs outline-none"
-                    style={{ fontSize: '11px', borderColor: 'var(--border-light)', color: 'var(--ink)' }}
+                    style={{ fontSize: 'var(--label-size)', borderColor: 'var(--border-light)', color: 'var(--ink)' }}
                     defaultValue=""
                   />
                 </div>
@@ -276,7 +276,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm" style={{ color: 'var(--ink)' }}>Reset Dashboard Layout</p>
-                <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.55 }}>
+                <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   Clears pinned cards, card order, and view preferences
                 </p>
               </div>
@@ -298,7 +298,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm" style={{ color: 'var(--ink)' }}>Clear Recent Searches</p>
-                <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.55 }}>
+                <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   Removes saved search history
                 </p>
               </div>
@@ -359,7 +359,7 @@ function SettingsField({ label, hint, children }: { label: string; hint?: string
         {label}
       </label>
       {hint && (
-        <p className="text-[11px] mb-1.5" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+        <p className="text-[11px] mb-1.5" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           {hint}
         </p>
       )}
@@ -479,7 +479,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
                 style={{ borderColor: 'var(--border-light)' }}
               />
               {stages.length > 1 && (
-                <button onClick={() => removeStage(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.5 }}>
+                <button onClick={() => removeStage(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   <X size={14} />
                 </button>
               )}

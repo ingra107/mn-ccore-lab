@@ -174,9 +174,9 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                     </div>
                     <div
                       style={{
-                        fontSize: '11px',
+                        fontSize: 'var(--label-size)',
                         color: 'var(--slate)',
-                        opacity: 0.65,
+                        opacity: 'var(--ink-label)',
                         lineHeight: 1.3,
                         marginTop: '2px',
                         overflow: 'hidden',
@@ -189,7 +189,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                       {conf.title}
                     </div>
                     {conf.conference_date && (
-                      <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5, marginTop: '1px' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', marginTop: '1px' }}>
                         {formatShortDate(conf.conference_date)}
                       </div>
                     )}
@@ -213,7 +213,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                     {conf.abstract_due ? (
                       <span
                         style={{
-                          fontSize: '11px',
+                          fontSize: 'var(--label-size)',
                           color: new Date(conf.abstract_due + 'T23:59:59') < new Date() && conf.status === 'planning'
                             ? 'var(--maroon)'
                             : 'var(--ink)',
@@ -223,7 +223,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         {formatShortDate(conf.abstract_due)}
                       </span>
                     ) : (
-                      <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.55 }}>--</span>
+                      <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>--</span>
                     )}
                   </td>
 
@@ -245,7 +245,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         onChange={(v) => handleMaterialsChange(conf, v as MaterialsStatus)}
                       />
                     ) : (
-                      <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.55 }}>--</span>
+                      <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>--</span>
                     )}
                   </td>
 
@@ -398,8 +398,8 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               onClick={handleAdd}
               disabled={!form.conference.trim() || !form.title.trim()}
               style={{
-                fontSize: '11px',
-                fontWeight: 500,
+                fontSize: 'var(--label-size)',
+                fontWeight: 'var(--label-weight)',
                 padding: '5px 14px',
                 borderRadius: '6px',
                 border: 'none',
@@ -414,7 +414,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             <button
               onClick={() => setShowForm(false)}
               style={{
-                fontSize: '11px',
+                fontSize: 'var(--label-size)',
                 padding: '5px 14px',
                 borderRadius: '6px',
                 border: '1px solid var(--border-light)',
@@ -435,7 +435,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             alignItems: 'center',
             gap: '4px',
             marginTop: activeConfs.length > 0 ? '8px' : '0',
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             color: 'var(--teal)',
             background: 'none',
             border: 'none',

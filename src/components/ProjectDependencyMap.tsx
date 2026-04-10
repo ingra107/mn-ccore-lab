@@ -209,7 +209,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
           style={{
             fontSize: '14px',
             color: 'var(--slate)',
-            opacity: 0.5,
+            opacity: 'var(--ink-label)',
             margin: 0,
           }}
         >
@@ -380,7 +380,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
               <span style={{ opacity: 0.7 }}>{REL_LABELS[dep.relationship_type] || dep.relationship_type}</span>
               {' '}
               <strong>{to.title}</strong>
-              {dep.note && <span style={{ opacity: 0.5, marginLeft: '6px' }}>-- {dep.note}</span>}
+              {dep.note && <span style={{ opacity: 'var(--ink-label)', marginLeft: '6px' }}>-- {dep.note}</span>}
             </motion.div>
           )
         })()}
@@ -433,7 +433,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
           style={{
             fontSize: '10px',
             color: 'var(--slate)',
-            opacity: 0.5,
+            opacity: 'var(--ink-label)',
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
           }}
@@ -459,7 +459,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
             {label}
           </span>
         ))}
-        <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           Stages:
         </span>
         {Object.entries(STAGE_COLORS).map(([stage, color]) => (

@@ -28,7 +28,7 @@ export default function ProactiveBriefCard() {
         </div>
       ) : !brief ? (
         <div className="flex items-center justify-center h-full">
-          <span className="text-[12px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+          <span className="text-[12px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             No briefing available
           </span>
         </div>

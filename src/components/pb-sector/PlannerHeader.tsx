@@ -52,7 +52,7 @@ function EditableField({ value, placeholder, onSave, icon: Icon }: {
           autoFocus
           className="flex-1"
           style={{
-            fontSize: '13px', color: 'var(--ink)',
+            fontSize: 'var(--value-size)', color: 'var(--ink)',
             background: 'transparent', border: 'none', borderBottom: '1px solid var(--gold)',
             outline: 'none', padding: '2px 0',
           }}
@@ -64,7 +64,7 @@ function EditableField({ value, placeholder, onSave, icon: Icon }: {
           className="flex-1 text-left"
           style={{
             background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0',
-            fontSize: '13px',
+            fontSize: 'var(--value-size)',
             color: value ? 'var(--ink)' : 'var(--slate)',
             opacity: value ? 1 : 0.4,
             fontStyle: value ? 'normal' : 'italic',
@@ -118,7 +118,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
             <button onClick={handlePrevDay} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.4 }} className="hover:opacity-80">
               <ChevronLeft size={14} style={{ color: 'var(--slate)' }} />
             </button>
-            <p style={{ fontSize: '11px', color: 'var(--slate)', margin: 0 }}>
+            <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', margin: 0 }}>
               {formatDate(selectedDate)}
               {!isToday && (
                 <span style={{ marginLeft: 6, color: 'var(--gold)', fontWeight: 600 }}>
@@ -183,7 +183,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
           >
             {mc.label}
           </span>
-          <div className="flex items-center gap-3" style={{ fontSize: '11px', color: 'var(--slate)' }}>
+          <div className="flex items-center gap-3" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>
             <span className="flex items-center gap-1">
               <Clock size={11} /> {stats.totalOpen} open
             </span>

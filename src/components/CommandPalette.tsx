@@ -472,7 +472,7 @@ export default function CommandPalette() {
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
           {isProjectMode
             ? <FolderKanban size={16} style={{ color: 'var(--teal)', opacity: 0.7 }} />
-            : <Search size={16} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+            : <Search size={16} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
           }
           <input
             ref={inputRef}
@@ -484,7 +484,7 @@ export default function CommandPalette() {
             className="flex-1 text-sm outline-none"
             style={{ color: 'var(--ink)', background: 'none', border: 'none' }}
           />
-          <kbd className="text-[10px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.5 }}>
+          <kbd className="text-[10px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 'var(--ink-label)' }}>
             esc
           </kbd>
         </div>
@@ -495,7 +495,7 @@ export default function CommandPalette() {
             .sort(([a], [b]) => (categoryOrder[a] || 9) - (categoryOrder[b] || 9))
             .map(([category, items]) => (
               <div key={category}>
-                <div className="px-4 py-1.5 text-[9px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 0.55 }}>
+                <div className="px-4 py-1.5 text-[9px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   {categoryLabels[category] || category}
                 </div>
                 {items.map((item) => {
@@ -519,31 +519,31 @@ export default function CommandPalette() {
                           {item.label}
                         </span>
                         {item.sublabel && (
-                          <span className="text-[10px] truncate block" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                          <span className="text-[10px] truncate block" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                             {item.sublabel}
                           </span>
                         )}
                       </div>
                       {item.shortcut && (
-                        <kbd className="text-[9px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 0.55 }}>
+                        <kbd className="text-[9px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-light)', opacity: 'var(--ink-label)' }}>
                           {item.shortcut}
                         </kbd>
                       )}
-                      {isSelected && <ArrowRight size={12} style={{ color: 'var(--teal)', opacity: 0.5 }} />}
+                      {isSelected && <ArrowRight size={12} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)' }} />}
                     </div>
                   )
                 })}
               </div>
             ))}
           {filtered.length === 0 && (
-            <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+            <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               No results for "{query}"
             </div>
           )}
         </div>
 
         {/* Footer hint */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 0.55 }}>
+        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           <span>↑↓ navigate</span>
           <span>↵ select</span>
           <span>esc close</span>

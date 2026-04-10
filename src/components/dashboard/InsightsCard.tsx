@@ -52,13 +52,13 @@ function InsightsCard() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.5 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             Analyzing connections...
           </span>
         </div>
       ) : top5.length === 0 ? (
         <div className="flex items-center justify-center py-8">
-          <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4 }}>
+          <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
             No connections detected yet
           </span>
         </div>
@@ -154,7 +154,7 @@ function InsightsCard() {
                         style={{
                           fontSize: '9px',
                           color: 'var(--slate)',
-                          opacity: 0.5,
+                          opacity: 'var(--ink-label)',
                         }}
                       >
                         +{moreCount} more

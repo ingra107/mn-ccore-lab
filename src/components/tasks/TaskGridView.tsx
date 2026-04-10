@@ -223,7 +223,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           font-size: 10px;
           font-weight: 500;
           color: var(--slate);
-          opacity: 0.5;
+          opacity: var(--ink-label);
           text-transform: uppercase;
           letter-spacing: 0.06em;
         }

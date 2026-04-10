@@ -187,7 +187,7 @@ function CascadeRow({
             fontSize: '9px',
             fontWeight: 500,
             color: 'var(--slate)',
-            opacity: 0.5,
+            opacity: 'var(--ink-label)',
             background: 'rgba(148,163,184,0.08)',
             padding: '1px 5px',
             borderRadius: 3,
@@ -199,7 +199,7 @@ function CascadeRow({
 
         {/* Title */}
         <span style={{
-          fontSize: '13px',
+          fontSize: 'var(--value-size)',
           fontWeight: 400,
           color: status === 'completed' ? 'var(--slate)' : 'var(--ink)',
           textDecoration: status === 'completed' ? 'line-through' : 'none',
@@ -213,7 +213,7 @@ function CascadeRow({
 
         {/* Due date */}
         <span style={{
-          fontSize: '11px',
+          fontSize: 'var(--label-size)',
           fontWeight: status === 'overdue' ? 500 : 400,
           color: status === 'overdue' ? 'var(--maroon)' : 'var(--slate)',
           opacity: status === 'overdue' ? 1 : 0.6,
@@ -264,7 +264,7 @@ function CascadeRow({
           fontSize: '9px',
           fontWeight: 500,
           color: node.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
-          opacity: 0.5,
+          opacity: 'var(--ink-label)',
           flexShrink: 0,
         }}>
           {node.type === 'milestone' ? 'Milestone' : 'Task'}
@@ -368,9 +368,9 @@ function WhatIfPanel({
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             color: 'var(--slate)',
-            opacity: 0.5,
+            opacity: 'var(--ink-label)',
           }}
         >
           Close
@@ -378,7 +378,7 @@ function WhatIfPanel({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
           Current: {node.due_date ? formatShortDate(node.due_date) : 'No date'}
         </span>
         <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 0.3 }} />
@@ -400,8 +400,8 @@ function WhatIfPanel({
           onClick={() => { if (newDate) onSimulate(newDate) }}
           disabled={!newDate || isLoading}
           style={{
-            fontSize: '11px',
-            fontWeight: 500,
+            fontSize: 'var(--label-size)',
+            fontWeight: 'var(--label-weight)',
             padding: '4px 12px',
             borderRadius: 4,
             border: '1px solid rgba(201,168,76,0.3)',
@@ -420,7 +420,7 @@ function WhatIfPanel({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
             <AlertTriangle size={12} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
               {impactResults.length} downstream {impactResults.length === 1 ? 'item' : 'items'} affected
             </span>
           </div>
@@ -465,7 +465,7 @@ function WhatIfPanel({
       )}
 
       {impactResults.length === 0 && !isLoading && (
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           No downstream items would be affected.
         </span>
       )}
@@ -523,14 +523,14 @@ export default function DeadlineCascade({
         textAlign: 'center',
         padding: compact ? '24px 16px' : '40px 20px',
         color: 'var(--slate)',
-        opacity: 0.5,
+        opacity: 'var(--ink-label)',
       }}>
         <GitBranch size={compact ? 24 : 32} style={{ margin: '0 auto 8px', opacity: 0.3 }} />
         <p style={{ fontSize: compact ? '12px' : '13px', margin: 0 }}>
           {filterAtRisk ? 'No at-risk dependency chains' : 'No deadline dependencies yet'}
         </p>
         {!compact && (
-          <p style={{ fontSize: '11px', margin: '4px 0 0', opacity: 0.6 }}>
+          <p style={{ fontSize: 'var(--label-size)', margin: '4px 0 0', opacity: 0.6 }}>
             Link milestones and tasks to see how deadlines cascade.
           </p>
         )}
@@ -558,32 +558,32 @@ export default function DeadlineCascade({
             return (
               <>
                 {overdueCount > 0 && (
-                  <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--maroon)' }} />
                     <span style={{ color: 'var(--maroon)', fontWeight: 500 }}>{overdueCount}</span>
-                    <span style={{ color: 'var(--slate)', opacity: 0.5 }}>overdue</span>
+                    <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>overdue</span>
                   </span>
                 )}
                 {atRiskCount > 0 && (
-                  <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)' }} />
                     <span style={{ color: 'var(--gold)', fontWeight: 500 }}>{atRiskCount}</span>
-                    <span style={{ color: 'var(--slate)', opacity: 0.5 }}>at risk</span>
+                    <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>at risk</span>
                   </span>
                 )}
-                <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--teal)' }} />
                   <span style={{ color: 'var(--teal)', fontWeight: 500 }}>{onTrackCount}</span>
-                  <span style={{ color: 'var(--slate)', opacity: 0.5 }}>on track</span>
+                  <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>on track</span>
                 </span>
                 {completedCount > 0 && (
-                  <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <CheckCircle2 size={10} style={{ color: 'var(--green)' }} />
                     <span style={{ color: 'var(--green)', fontWeight: 500 }}>{completedCount}</span>
-                    <span style={{ color: 'var(--slate)', opacity: 0.5 }}>done</span>
+                    <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>done</span>
                   </span>
                 )}
-                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.35 }}>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.35 }}>
                   {graph.dependencies.length} {graph.dependencies.length === 1 ? 'link' : 'links'}
                 </span>
               </>

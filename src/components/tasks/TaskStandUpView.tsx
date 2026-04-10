@@ -65,16 +65,16 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
       {/* Team summary bar */}
       {grouped.length > 1 && (
         <div className="flex items-center gap-4 p-3 rounded-lg" style={{ background: 'rgba(201,168,76,0.03)', border: '1px solid rgba(201,168,76,0.08)' }}>
-          <span style={{ fontSize: '11px', color: 'var(--slate)' }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>
             Team: {totalOpen} open across {grouped.length} people
           </span>
           {totalOverdue > 0 && (
-            <span style={{ fontSize: '11px', color: 'var(--maroon)', fontWeight: 600 }}>
+            <span style={{ fontSize: 'var(--label-size)', color: 'var(--maroon)', fontWeight: 600 }}>
               {totalOverdue} overdue
             </span>
           )}
           {totalBlocked > 0 && (
-            <span style={{ fontSize: '11px', color: 'var(--maroon)' }}>
+            <span style={{ fontSize: 'var(--label-size)', color: 'var(--maroon)' }}>
               {totalBlocked} blocked
             </span>
           )}
@@ -206,7 +206,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
               {activeCount === 0 && (
                 <div
                   className="text-center py-4 text-sm"
-                  style={{ color: 'var(--slate)', opacity: 0.5 }}
+                  style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
                 >
                   All caught up
                 </div>

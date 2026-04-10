@@ -133,7 +133,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
                 border: 'none',
                 cursor: 'pointer',
                 padding: '2px 0',
-                fontWeight: 500,
+                fontWeight: 'var(--label-weight)',
                 opacity: 0.8,
               }}
             >
@@ -214,7 +214,7 @@ export function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onS
   return (
     <div ref={ref} className="relative">
       <div className="flex items-center gap-2 rounded-md border px-2.5 py-1.5" style={{ borderColor: 'var(--teal)', background: 'rgba(45,138,138,0.03)' }}>
-        <Search size={13} style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0 }} />
+        <Search size={13} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
         <input
           ref={inputRef}
           type="text"
@@ -247,7 +247,7 @@ export function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onS
               className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
               style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
             >
-              <Link2 size={12} style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0 }} />
+              <Link2 size={12} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
               <span className="flex-1 truncate">{t.title || t.description}</span>
               <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                 {t.assignee}

@@ -186,7 +186,7 @@ function QuestionCard({
               </span>
             </div>
 
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               {formatRelativeTime(question.created_at)}
             </span>
 
@@ -339,7 +339,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                     <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>
                       {answerPerson.name}
                     </span>
-                    <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                    <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                       {formatRelativeTime(answer.created_at)}
                     </span>
                     {answer.is_accepted === 1 && (

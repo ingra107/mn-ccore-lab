@@ -74,7 +74,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
       >
         <h2
           style={{
-            fontWeight: 500,
+            fontWeight: 'var(--label-weight)',
             fontSize: '16px',
             color: 'var(--ink)',
             margin: '0 0 12px 0',
@@ -129,7 +129,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
                   <div style={{ flex: 1 }}>
                     <p
                       style={{
-                        fontSize: '13px',
+                        fontSize: 'var(--value-size)',
                         color: 'var(--ink)',
                         margin: 0,
                         lineHeight: 1.4,
@@ -144,7 +144,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
                         style={{
                           fontSize: '10px',
                           color: 'var(--slate)',
-                          opacity: 0.5,
+                          opacity: 'var(--ink-label)',
                         }}
                       >
                         {getPersonInfo(item.action.assignee).name}
@@ -154,7 +154,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
                           style={{
                             fontSize: '10px',
                             color: 'var(--slate)',
-                            opacity: 0.5,
+                            opacity: 'var(--ink-label)',
                           }}
                         >
                           Due {formatMediumDate(item.action.dueDate)}
@@ -179,7 +179,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
               style={{
                 fontSize: '12px',
                 color: 'var(--slate)',
-                opacity: 0.4,
+                opacity: 'var(--ink-hint)',
                 textAlign: 'center',
                 padding: '16px 0',
                 margin: 0,

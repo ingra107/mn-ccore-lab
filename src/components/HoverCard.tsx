@@ -201,7 +201,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
                 <MiniAvatar key={slug} slug={slug} />
               ))}
               {data.team.length > 3 && (
-                <span className="text-[9px] pl-1" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                <span className="text-[9px] pl-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   +{data.team.length - 3}
                 </span>
               )}
@@ -277,7 +277,7 @@ function MemberContent({ data }: { data: MemberCardData }) {
 
         {/* Publication count */}
         {data.publicationCount !== undefined && data.publicationCount > 0 && (
-          <div className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+          <div className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             <BookOpen size={10} />
             {data.publicationCount} publication{data.publicationCount !== 1 ? 's' : ''}
           </div>
@@ -316,7 +316,7 @@ function TaskContent({ data }: { data: TaskCardData }) {
           </div>
         )}
         {data.due_date && (
-          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             Due {formatRelativeTime(data.due_date)}
           </span>
         )}

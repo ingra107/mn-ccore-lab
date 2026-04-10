@@ -240,7 +240,7 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-light)' }}>
       <div className="grid grid-cols-7">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-          <div key={d} className="px-2 py-2 text-center text-[10px] uppercase tracking-wider font-semibold border-b" style={{ color: 'var(--slate)', opacity: 0.5, borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}>
+          <div key={d} className="px-2 py-2 text-center text-[10px] uppercase tracking-wider font-semibold border-b" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', borderColor: 'var(--border-light)', backgroundColor: 'var(--cream)' }}>
             {d}
           </div>
         ))}
@@ -270,7 +270,7 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
                   )
                 })}
                 {dayEvents.length > 3 && (
-                  <span className="text-[8px] px-1" style={{ color: 'var(--slate)', opacity: 0.5 }}>+{dayEvents.length - 3} more</span>
+                  <span className="text-[8px] px-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>+{dayEvents.length - 3} more</span>
                 )}
               </div>
             </div>
@@ -319,7 +319,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
           <div key={dateStr} className="rounded-lg border min-h-[300px]" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-light)', backgroundColor: isToday ? 'rgba(45,138,138,0.02)' : 'var(--cream)' }}>
             {/* Day header */}
             <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-light)' }}>
-              <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 0.5 }}>{dayNames[i]}</div>
+              <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{dayNames[i]}</div>
               <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8' : ''}`} style={{ color: isToday ? 'white' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
                 {dayNum}
               </div>
@@ -363,7 +363,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
         <h3 className="text-lg font-normal" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
           {isToday ? 'Today' : formatLongDate(dateStr)}
         </h3>
-        <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+        <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -389,7 +389,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
                         {assignee && (
-                          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>{getPersonInfo(assignee).name}</span>
+                          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{getPersonInfo(assignee).name}</span>
                         )}
                       </div>
                     </div>
@@ -453,7 +453,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                       </div>
                       <span className="flex-1 text-sm" style={{ color: 'var(--ink)' }}>{formatBrandName(e.title)}</span>
                       {assignee && (
-                        <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>{getPersonInfo(assignee).name.split(' ')[0]}</span>
+                        <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{getPersonInfo(assignee).name.split(' ')[0]}</span>
                       )}
                       <span className="text-[10px] capitalize px-1.5 py-0.5 rounded-full" style={{ color: config.color, backgroundColor: config.bg }}>{e.type}</span>
                     </AgendaWrapper>

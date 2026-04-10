@@ -121,7 +121,7 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
             <div className="p-5 max-h-[60vh] overflow-y-auto flex flex-col gap-4">
               {shortcuts.map((group) => (
                 <div key={group.category}>
-                  <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                  <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                     {group.category}
                   </h4>
                   <div className="flex flex-col gap-1">

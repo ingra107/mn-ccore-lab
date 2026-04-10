@@ -220,7 +220,7 @@ export default function SearchPage() {
 
         {!isLoading && results.length > 0 && (
           <div className="flex flex-col gap-6">
-            <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+            <p className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               {results.length} result{results.length !== 1 ? 's' : ''} for "{debouncedQuery}"
             </p>
 
@@ -254,7 +254,7 @@ export default function SearchPage() {
                               {formatBrandName(item.title)}
                             </p>
                             {item.subtitle && (
-                              <p className="text-[10px] truncate mt-0.5" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                              <p className="text-[10px] truncate mt-0.5" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                                 {formatBrandName(item.subtitle)}
                               </p>
                             )}

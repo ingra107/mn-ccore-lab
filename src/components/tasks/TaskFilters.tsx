@@ -54,7 +54,7 @@ function FilterChipSelect({
         onChange={(e) => onChange(e.target.value)}
         className="rounded-full border py-1.5"
         style={{
-          fontSize: '13px',
+          fontSize: 'var(--value-size)',
           color: active ? 'var(--teal)' : 'var(--slate)',
           backgroundColor: active ? 'rgba(45,138,138,0.06)' : 'transparent',
           borderColor: active ? 'var(--teal)' : 'var(--border-light)',

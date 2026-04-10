@@ -70,7 +70,7 @@ function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; p
                 width: '75px',
                 fontSize: '10px',
                 color: 'var(--slate)',
-                opacity: 0.5,
+                opacity: 'var(--ink-label)',
               }}
             >
               {formatShortDate(decision.created_at)}
@@ -107,7 +107,7 @@ function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; p
                 <Link
                   to={`/projects/${decision.project_slug}`}
                   className="flex items-center gap-1 mt-1"
-                  style={{ fontSize: '11px', color: 'var(--teal)', textDecoration: 'none', opacity: 0.7 }}
+                  style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', textDecoration: 'none', opacity: 0.7 }}
                 >
                   <FolderKanban size={10} />
                   {projTitle}
@@ -165,7 +165,7 @@ function ReviewCard({
           </span>
         </div>
         {decision.rationale && (
-          <p style={{ fontSize: '13px', color: 'var(--slate)', lineHeight: 1.5, margin: 0 }}>
+          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', lineHeight: 1.5, margin: 0 }}>
             {decision.rationale}
           </p>
         )}
@@ -173,7 +173,7 @@ function ReviewCard({
           {person && (
             <span className="flex items-center gap-1.5">
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="gold" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
-              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>
+              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>
                 {person.name.split(' ')[0]}
               </span>
             </span>
@@ -182,7 +182,7 @@ function ReviewCard({
             <Link
               to={`/projects/${decision.project_slug}`}
               className="flex items-center gap-1"
-              style={{ fontSize: '11px', color: 'var(--teal)', textDecoration: 'none' }}
+              style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', textDecoration: 'none' }}
             >
               <FolderKanban size={11} />
               {projectTitle}
@@ -202,7 +202,7 @@ function ReviewCard({
       >
         <p
           style={{
-            fontSize: '13px',
+            fontSize: 'var(--value-size)',
             color: 'var(--ink)',
             marginBottom: '10px',
             fontWeight: 500,
@@ -217,7 +217,7 @@ function ReviewCard({
           rows={3}
           style={{
             width: '100%',
-            fontSize: '13px',
+            fontSize: 'var(--value-size)',
             color: 'var(--ink)',
             background: 'var(--cream)',
             border: '1px solid rgba(201,168,76,0.15)',
@@ -425,7 +425,7 @@ export default function DecisionsPage() {
         {/* Tag filters */}
         {tagCounts.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap mt-2">
-            <Tag size={12} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+            <Tag size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
             {filterTag && (
               <button
                 onClick={() => setFilterTag('')}

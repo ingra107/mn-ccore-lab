@@ -70,7 +70,7 @@ function SortableEveningItem({ task, onComplete, onClickTitle }: {
             {task.title || task.description}
           </button>
           {task.project_title && (
-            <span style={{ fontSize: '10px', color: 'var(--gold)', opacity: 0.5 }}>
+            <span style={{ fontSize: '10px', color: 'var(--gold)', opacity: 'var(--ink-label)' }}>
               {task.project_title}
             </span>
           )}
@@ -93,7 +93,7 @@ export default function EveningTaskSlot({ tasks, onComplete, onClickTitle, onAdd
       {/* Subtle divider */}
       <div className="flex items-center gap-3 mb-3 mt-2">
         <div style={{ flex: 1, height: 1, background: 'rgba(201,168,76,0.1)' }} />
-        <span style={{ fontSize: '9px', color: 'var(--gold)', opacity: 0.4, textTransform: 'uppercase', letterSpacing: '1px' }}>
+        <span style={{ fontSize: '9px', color: 'var(--gold)', opacity: 'var(--ink-hint)', textTransform: 'uppercase', letterSpacing: '1px' }}>
           later
         </span>
         <div style={{ flex: 1, height: 1, background: 'rgba(201,168,76,0.1)' }} />
@@ -105,7 +105,7 @@ export default function EveningTaskSlot({ tasks, onComplete, onClickTitle, onAdd
           This Evening
         </span>
         {tasks.length > 0 && (
-          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
             {tasks.length}
           </span>
         )}

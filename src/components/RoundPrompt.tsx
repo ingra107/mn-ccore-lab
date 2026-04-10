@@ -88,7 +88,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
         }}>
           Opening Round
         </span>
-        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           · {categoryLabel}
         </span>
       </div>

@@ -161,7 +161,7 @@ export default function Grants() {
                     }}>
                       <div className="flex items-center gap-1.5 mb-1">
                         <Clock size={10} style={{ color: 'var(--gold)' }} />
-                        <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+                        <span style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--gold)' }}>
                           Note from past you
                         </span>
                       </div>
@@ -241,7 +241,7 @@ export default function Grants() {
                     fontSize: '10px',
                     fontWeight: 500,
                     color: 'var(--slate)',
-                    opacity: 0.5,
+                    opacity: 'var(--ink-label)',
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.06em',
                   }}
@@ -388,7 +388,7 @@ export default function Grants() {
               padding: '8px 12px',
               borderRadius: 8,
               border: '1px solid var(--border-light)',
-              fontSize: '13px',
+              fontSize: 'var(--value-size)',
               background: 'var(--cream)',
               color: 'var(--ink)',
             }}
@@ -401,7 +401,7 @@ export default function Grants() {
               border: 'none',
               borderRadius: 8,
               padding: '8px 16px',
-              fontSize: '13px',
+              fontSize: 'var(--value-size)',
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -413,7 +413,7 @@ export default function Grants() {
         {/* Loading state */}
         {similarGrants.isLoading && (
           <div className="text-center py-6">
-            <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.6 }}>
+            <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.6 }}>
               Searching NIH RePORTER...
             </p>
           </div>
@@ -428,7 +428,7 @@ export default function Grants() {
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
+                <p style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
                   {grant.title}
                 </p>
                 <span style={{ fontSize: '10px', color: 'var(--slate)' }}>
@@ -436,13 +436,13 @@ export default function Grants() {
                 </span>
               </div>
               {grant.award_amount > 0 && (
-                <span style={{ fontSize: '11px', color: 'var(--teal)', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', whiteSpace: 'nowrap' }}>
                   ${(grant.award_amount / 1000).toFixed(0)}K
                 </span>
               )}
             </div>
             {grant.abstract && (
-              <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7, marginTop: '4px', lineHeight: 1.4, marginBottom: 0 }}>
+              <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.7, marginTop: '4px', lineHeight: 1.4, marginBottom: 0 }}>
                 {grant.abstract}...
               </p>
             )}
@@ -451,14 +451,14 @@ export default function Grants() {
 
         {/* Total count */}
         {similarGrants.data && similarGrants.data.total > 0 && !similarGrants.isLoading && (
-          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5, marginTop: '8px' }}>
+          <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', marginTop: '8px' }}>
             Showing {similarGrants.data.data.length} of {similarGrants.data.total.toLocaleString()} results
           </p>
         )}
 
         {/* Empty state after search */}
         {activeSearch && similarGrants.data?.data?.length === 0 && !similarGrants.isLoading && (
-          <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.6, textAlign: 'center', padding: '16px 0' }}>
+          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.6, textAlign: 'center', padding: '16px 0' }}>
             No funded grants found for "{activeSearch}"
           </p>
         )}
@@ -582,7 +582,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
                 >
                   <Diamond size={8} />
                   {m.title}
-                  <span style={{ opacity: 0.5, marginLeft: 2 }}>{formatMediumDate(m.target_date)}</span>
+                  <span style={{ opacity: 'var(--ink-label)', marginLeft: 2 }}>{formatMediumDate(m.target_date)}</span>
                 </span>
               ))}
               {pendingMilestones.length > 3 && (
@@ -633,7 +633,7 @@ function AddGrantMilestoneModal({
     padding: '8px 12px',
     borderRadius: '8px',
     border: '1px solid var(--border-light)',
-    fontSize: '13px',
+    fontSize: 'var(--value-size)',
     background: 'var(--cream)',
     color: 'var(--ink)',
   }
@@ -676,7 +676,7 @@ function AddGrantMilestoneModal({
           </h3>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.5 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
           >
             <X size={18} />
           </button>
@@ -685,7 +685,7 @@ function AddGrantMilestoneModal({
         <div className="flex flex-col gap-3">
           {/* Grant */}
           <div>
-            <label style={{ fontSize: '11px', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
               Grant
             </label>
             <select
@@ -703,7 +703,7 @@ function AddGrantMilestoneModal({
 
           {/* Type */}
           <div>
-            <label style={{ fontSize: '11px', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
               Milestone Type
             </label>
             <select
@@ -721,7 +721,7 @@ function AddGrantMilestoneModal({
 
           {/* Title */}
           <div>
-            <label style={{ fontSize: '11px', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
               Title
             </label>
             <input
@@ -736,7 +736,7 @@ function AddGrantMilestoneModal({
 
           {/* Due date */}
           <div>
-            <label style={{ fontSize: '11px', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
               Due Date
             </label>
             <input
@@ -749,7 +749,7 @@ function AddGrantMilestoneModal({
 
           {/* Notes */}
           <div>
-            <label style={{ fontSize: '11px', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
               Notes (optional)
             </label>
             <textarea
@@ -771,7 +771,7 @@ function AddGrantMilestoneModal({
               borderRadius: '8px',
               border: '1px solid var(--border-light)',
               background: 'none',
-              fontSize: '13px',
+              fontSize: 'var(--value-size)',
               color: 'var(--slate)',
               cursor: 'pointer',
             }}
@@ -788,7 +788,7 @@ function AddGrantMilestoneModal({
               border: 'none',
               background: !grantId || !title.trim() ? 'var(--border-light)' : 'var(--teal)',
               color: !grantId || !title.trim() ? 'var(--slate)' : 'white',
-              fontSize: '13px',
+              fontSize: 'var(--value-size)',
               fontWeight: 600,
               cursor: !grantId || !title.trim() ? 'not-allowed' : 'pointer',
             }}

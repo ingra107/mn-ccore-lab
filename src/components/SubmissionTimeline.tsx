@@ -146,7 +146,7 @@ function AddEventForm({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         {/* Event type */}
         <div>
-          <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
+          <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
             Event Type
           </label>
           <div style={{ position: 'relative' }}>
@@ -156,7 +156,7 @@ function AddEventForm({
               style={{
                 width: '100%',
                 padding: '6px 28px 6px 10px',
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
                 borderRadius: '6px',
                 border: '1px solid var(--border-subtle)',
                 background: 'transparent',
@@ -171,14 +171,14 @@ function AddEventForm({
             </select>
             <ChevronDown
               size={14}
-              style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--slate)', opacity: 0.5 }}
+              style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
             />
           </div>
         </div>
 
         {/* Date */}
         <div>
-          <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
+          <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
             Date
           </label>
           <input
@@ -189,7 +189,7 @@ function AddEventForm({
             style={{
               width: '100%',
               padding: '6px 10px',
-              fontSize: '13px',
+              fontSize: 'var(--value-size)',
               borderRadius: '6px',
               border: '1px solid var(--border-subtle)',
               background: 'transparent',
@@ -201,7 +201,7 @@ function AddEventForm({
 
       {/* Journal */}
       <div style={{ marginBottom: '10px' }}>
-        <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
+        <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
           Journal
         </label>
         <input
@@ -212,7 +212,7 @@ function AddEventForm({
           style={{
             width: '100%',
             padding: '6px 10px',
-            fontSize: '13px',
+            fontSize: 'var(--value-size)',
             borderRadius: '6px',
             border: '1px solid var(--border-subtle)',
             background: 'transparent',
@@ -223,7 +223,7 @@ function AddEventForm({
 
       {/* Notes */}
       <div style={{ marginBottom: '12px' }}>
-        <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
+        <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
           Notes
         </label>
         <textarea
@@ -234,7 +234,7 @@ function AddEventForm({
           style={{
             width: '100%',
             padding: '6px 10px',
-            fontSize: '13px',
+            fontSize: 'var(--value-size)',
             borderRadius: '6px',
             border: '1px solid var(--border-subtle)',
             background: 'transparent',
@@ -251,7 +251,7 @@ function AddEventForm({
           style={{
             padding: '5px 14px',
             fontSize: '12px',
-            fontWeight: 500,
+            fontWeight: 'var(--label-weight)',
             borderRadius: '6px',
             border: '1px solid var(--border-subtle)',
             background: 'transparent',
@@ -333,7 +333,7 @@ function TimelineEvent({
               flex: 1,
               minHeight: '16px',
               background: 'var(--border-subtle)',
-              opacity: 0.5,
+              opacity: 'var(--ink-label)',
             }}
           />
         )}
@@ -360,8 +360,8 @@ function TimelineEvent({
           {/* Date pill */}
           <span
             style={{
-              fontSize: '11px',
-              fontWeight: 500,
+              fontSize: 'var(--label-size)',
+              fontWeight: 'var(--label-weight)',
               color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
               opacity: isOverdue ? 1 : 0.5,
             }}
@@ -376,8 +376,8 @@ function TimelineEvent({
           {/* Relative time */}
           <span
             style={{
-              fontSize: '11px',
-              fontWeight: 500,
+              fontSize: 'var(--label-size)',
+              fontWeight: 'var(--label-weight)',
               color: isOverdue ? 'var(--maroon)' : 'var(--teal)',
               opacity: isOverdue ? 1 : 0.7,
               padding: '1px 6px',
@@ -418,7 +418,7 @@ function TimelineEvent({
 
         {/* Notes */}
         {event.notes && (
-          <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.5, margin: '4px 0 0', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', margin: '4px 0 0', lineHeight: 1.5 }}>
             {event.notes}
           </p>
         )}
@@ -455,7 +455,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
             Submission Timeline
           </h3>
           {events.length > 0 && (
-            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>
+            <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
               {events.length} event{events.length !== 1 ? 's' : ''}
             </span>
           )}
@@ -468,7 +468,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
             gap: '4px',
             padding: '4px 10px',
             fontSize: '12px',
-            fontWeight: 500,
+            fontWeight: 'var(--label-weight)',
             borderRadius: '6px',
             border: '1px solid var(--border-subtle)',
             background: 'transparent',
@@ -552,10 +552,10 @@ export function ActiveSubmissionsDashboard({
         }}
       >
         <Send size={14} style={{ color: 'var(--teal)' }} />
-        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
+        <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>
           Active Submissions
         </span>
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
           {submissions.length}
         </span>
       </div>
@@ -574,7 +574,7 @@ export function ActiveSubmissionsDashboard({
             key={col}
             style={{
               fontSize: '10px',
-              fontWeight: 500,
+              fontWeight: 'var(--label-weight)',
               color: 'var(--slate)',
               opacity: 0.45,
               textTransform: 'uppercase' as const,
@@ -614,14 +614,14 @@ export function ActiveSubmissionsDashboard({
               }}
             >
               {/* Project title */}
-              <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.4 }}>
+              <span style={{ fontSize: 'var(--value-size)', fontWeight: 'var(--label-weight)', color: 'var(--ink)', lineHeight: 1.4 }}>
                 {sub.project_title || sub.project_id}
               </span>
 
               {/* Status badge */}
               <span
                 style={{
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   fontWeight: 600,
                   color: config.color,
                   padding: '2px 8px',
@@ -674,12 +674,12 @@ export function ActiveSubmissionsDashboard({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)', flex: 1 }}>
+                <span style={{ fontSize: 'var(--value-size)', fontWeight: 'var(--label-weight)', color: 'var(--ink)', flex: 1 }}>
                   {sub.project_title || sub.project_id}
                 </span>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     fontWeight: 600,
                     color: config.color,
                     padding: '2px 8px',
@@ -690,7 +690,7 @@ export function ActiveSubmissionsDashboard({
                   {config.label}
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+              <div style={{ display: 'flex', gap: '12px', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                 {sub.journal && <span>{sub.journal}</span>}
                 <span>{sub.days_since_submission}d ago</span>
                 {sub.revision_due_date && (

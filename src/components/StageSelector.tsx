@@ -34,7 +34,7 @@ function StageSelectorFull({ currentStage, onChange }: { currentStage: Stage; on
             onClick={() => onChange(stage)}
             className="cursor-pointer inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium stage-pill"
             style={{
-              fontSize: '11px',
+              fontSize: 'var(--label-size)',
               background: isCurrent
                 ? 'var(--gold)'
                 : isPast
@@ -139,7 +139,7 @@ function StageSelectorCompact({ currentStage, onChange }: { currentStage: Stage;
                   }}
                   className="cursor-pointer w-full text-left px-3 py-2 text-xs stage-dropdown-item"
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     background: isCurrent ? 'rgba(201,168,76,0.15)' : 'transparent',
                     color: isCurrent ? 'var(--gold)' : 'var(--ink)',
                     border: 'none',
@@ -168,7 +168,7 @@ function StageSelectorCompact({ currentStage, onChange }: { currentStage: Stage;
                   />
                   {stage}
                   {isCurrent && (
-                    <span style={{ marginLeft: 'auto', opacity: 0.5, fontSize: '9px' }}>current</span>
+                    <span style={{ marginLeft: 'auto', opacity: 'var(--ink-label)', fontSize: '9px' }}>current</span>
                   )}
                 </button>
               )

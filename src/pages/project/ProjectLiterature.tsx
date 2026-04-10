@@ -21,7 +21,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
         <BookOpen size={16} style={{ color: 'var(--gold)' }} />
         <h2
           style={{
-            fontWeight: 500,
+            fontWeight: 'var(--label-weight)',
             fontSize: '16px',
             color: 'var(--ink)',
             margin: 0,
@@ -31,7 +31,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
         </h2>
         <span
           style={{
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             color: 'var(--slate)',
             opacity: 0.6,
           }}
@@ -74,7 +74,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p
                     style={{
-                      fontSize: '13px',
+                      fontSize: 'var(--value-size)',
                       color: 'var(--ink)',
                       lineHeight: 1.5,
                       margin: 0,
@@ -99,7 +99,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
                         style={{
                           fontSize: '10px',
                           color: 'var(--slate)',
-                          opacity: 0.55,
+                          opacity: 'var(--ink-label)',
                         }}
                       >
                         {p.pub_date}
@@ -109,7 +109,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
                   {p.note && (
                     <p
                       style={{
-                        fontSize: '11px',
+                        fontSize: 'var(--label-size)',
                         color: 'var(--teal)',
                         fontStyle: 'italic',
                         margin: '4px 0 0',
@@ -161,7 +161,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
             style={{
               fontSize: '12px',
               color: 'var(--slate)',
-              opacity: 0.55,
+              opacity: 'var(--ink-label)',
               textAlign: 'center',
               padding: '16px 0',
               margin: 0,
@@ -308,7 +308,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
         {/* Search tab */}
         <div style={{ display: tab === 'search' ? 'flex' : 'none', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           <div className="flex items-center gap-2 px-4 py-2.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-            <Search size={14} style={{ color: 'var(--slate)', opacity: 0.55 }} />
+            <Search size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
             <input
               autoFocus={tab === 'search'}
               value={search}
@@ -320,7 +320,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
             {results.length === 0 ? (
-              <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '24px 0' }}>
+              <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: '24px 0' }}>
                 {search ? 'No matching publications. Try the DOI tab to add a new one.' : 'No publications available.'}
               </p>
             ) : (
@@ -341,11 +341,11 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                     onMouseOver={e => { if (!alreadyLinked) (e.currentTarget.style.backgroundColor = 'rgba(45,138,138,0.05)') }}
                     onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
-                    <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>{pub.title}</p>
+                    <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>{pub.title}</p>
                     <div className="flex items-center gap-2 mt-1">
                       {pub.journal && <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>{pub.journal}</span>}
-                      {pub.year && <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55 }}>{pub.year}</span>}
-                      {alreadyLinked && <span style={{ fontSize: '10px', color: 'var(--teal)', fontWeight: 500 }}>Already linked</span>}
+                      {pub.year && <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{pub.year}</span>}
+                      {alreadyLinked && <span style={{ fontSize: '10px', color: 'var(--teal)', fontWeight: 'var(--label-weight)' }}>Already linked</span>}
                     </div>
                   </button>
                 )
@@ -396,15 +396,15 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                 <CheckCircle2 size={14} style={{ color: 'var(--green)' }} />
                 <span className="text-[11px] font-medium" style={{ color: 'var(--green)' }}>Citation found</span>
               </div>
-              <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0, fontWeight: 500, lineHeight: 1.4 }}>
+              <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, fontWeight: 'var(--label-weight)', lineHeight: 1.4 }}>
                 {doiData.title}
               </p>
-              <p style={{ fontSize: '11px', color: 'var(--slate)', margin: 0 }}>
+              <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', margin: 0 }}>
                 {doiData.authors}
               </p>
               <div className="flex items-center gap-2">
-                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7, fontStyle: 'italic' }}>{doiData.journal}</span>
-                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.55 }}>{doiData.year}</span>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.7, fontStyle: 'italic' }}>{doiData.journal}</span>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{doiData.year}</span>
               </div>
               <button
                 onClick={() => {

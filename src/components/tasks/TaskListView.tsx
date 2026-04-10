@@ -99,7 +99,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
     <div className="table-container" style={{ padding: '16px 20px' }}>
       {/* Sort bar */}
       <div className="flex items-center gap-1 mb-3 pb-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
-        <span className="text-[11px] uppercase tracking-wider mr-1" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+        <span className="text-[11px] uppercase tracking-wider mr-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           Sort:
         </span>
         <SortButton label="Priority" field="priority" />
@@ -150,7 +150,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
             <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
               No tasks match the current filters
             </p>
-            <p className="text-xs mt-1" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+            <p className="text-xs mt-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Try adjusting your sort or filter settings
             </p>
           </div>

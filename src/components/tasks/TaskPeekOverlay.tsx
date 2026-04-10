@@ -36,7 +36,7 @@ const labelStyle: React.CSSProperties = {
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
   color: 'var(--slate)',
-  opacity: 0.5,
+  opacity: 'var(--ink-label)' as unknown as number,
 }
 
 const kbdStyle: React.CSSProperties = {
@@ -171,7 +171,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                       gap: 4,
                       padding: '3px 8px',
                       borderRadius: 999,
-                      fontSize: '11px',
+                      fontSize: 'var(--label-size)',
                       fontWeight: 600,
                       color: status.color,
                       background: status.bg,
@@ -188,8 +188,8 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                       alignItems: 'center',
                       padding: '3px 8px',
                       borderRadius: 999,
-                      fontSize: '11px',
-                      fontWeight: 500,
+                      fontSize: 'var(--label-size)',
+                      fontWeight: 'var(--label-weight)',
                       color: priority.color,
                       background: priority.bg,
                     }}
@@ -237,7 +237,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                 {task.title && task.description && task.title !== task.description && (
                   <p
                     style={{
-                      fontSize: '13px',
+                      fontSize: 'var(--value-size)',
                       lineHeight: 1.5,
                       color: 'var(--slate)',
                       margin: '8px 0 0',
@@ -275,7 +275,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                         variant="ice"
                         className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]"
                       />
-                      <span style={{ fontSize: '13px', color: 'var(--ink)' }}>
+                      <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)' }}>
                         {person.name}
                       </span>
                       {assigneeData && (
@@ -297,7 +297,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                       {task.due_date ? (
                         <span
                           style={{
-                            fontSize: '13px',
+                            fontSize: 'var(--value-size)',
                             color: isOverdue ? 'var(--maroon)' : 'var(--ink)',
                             fontWeight: isOverdue ? 600 : 400,
                           }}
@@ -305,7 +305,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                           {isOverdue ? 'Overdue — ' : ''}{formatShortDate(task.due_date)}
                         </span>
                       ) : (
-                        <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
+                        <span style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                           None
                         </span>
                       )}
@@ -320,7 +320,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                         <Link
                           to={`/portal/meetings/${task.meeting_id}`}
                           style={{
-                            fontSize: '13px',
+                            fontSize: 'var(--value-size)',
                             color: 'var(--teal)',
                             textDecoration: 'none',
                           }}
@@ -342,7 +342,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                         <Link
                           to={`/portal/projects/${task.project_id}`}
                           style={{
-                            fontSize: '13px',
+                            fontSize: 'var(--value-size)',
                             color: 'var(--gold)',
                             textDecoration: 'none',
                           }}

@@ -174,7 +174,7 @@ export default function Pulse() {
           <img src="/logos/mnccore-logo-mark.svg" alt="" style={{ width: 48, height: 48 }} />
           <img src="/logos/mnccore-logo-primary.svg" alt="MN-CCORE" style={{ height: 32, filter: 'brightness(2)' }} />
         </div>
-        <span className="text-sm" style={{ color: 'var(--gold)', opacity: 0.5 }}>
+        <span className="text-sm" style={{ color: 'var(--gold)', opacity: 'var(--ink-label)' }}>
           Lab Pulse
         </span>
       </div>
@@ -217,7 +217,7 @@ function PulseStat({ label, value, color }: { label: string; value: number | str
       <div className="text-5xl font-bold" style={{ fontFamily: 'var(--font-display)', color: color || 'var(--cream)' }}>
         {value}
       </div>
-      <div className="text-sm mt-2" style={{ color: 'var(--gold)', opacity: 0.5 }}>
+      <div className="text-sm mt-2" style={{ color: 'var(--gold)', opacity: 'var(--ink-label)' }}>
         {label}
       </div>
     </div>
@@ -229,7 +229,7 @@ function PulseHealthDot({ color, label, count }: { color: string; label: string;
     <div className="flex flex-col items-center gap-3">
       <div className="w-16 h-16 rounded-full" style={{ backgroundColor: color }} />
       <div className="text-3xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--cream)' }}>{count}</div>
-      <div className="text-sm" style={{ color: 'var(--gold)', opacity: 0.5 }}>{label}</div>
+      <div className="text-sm" style={{ color: 'var(--gold)', opacity: 'var(--ink-label)' }}>{label}</div>
     </div>
   )
 }

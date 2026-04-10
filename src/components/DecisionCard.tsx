@@ -64,14 +64,14 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
           />
           <button
             onClick={() => setExpanded(!expanded)}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '2px', opacity: 0.5 }}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '2px', opacity: 'var(--ink-label)' }}
           >
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
         </div>
 
         {decision.rationale && (
-          <p style={{ fontSize: '13px', color: 'var(--slate)', lineHeight: 1.5, marginBottom: '8px' }}>
+          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', lineHeight: 1.5, marginBottom: '8px' }}>
             {decision.rationale}
           </p>
         )}
@@ -102,7 +102,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
 
         {/* Metadata row */}
         <div className="flex items-center gap-3 flex-wrap mt-2">
-          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
             <Clock size={11} style={{ display: 'inline', verticalAlign: '-1px', marginRight: '3px' }} />
             {formatRelativeTime(decision.created_at)}
           </span>
@@ -110,7 +110,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
           {person && (
             <span className="flex items-center gap-1.5">
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="gold" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
-              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>
+              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>
                 {person.name.split(' ')[0]}
               </span>
             </span>
@@ -120,7 +120,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
             <Link
               to={`/projects/${decision.project_slug}`}
               className="flex items-center gap-1 hover:underline"
-              style={{ fontSize: '11px', color: 'var(--teal)', textDecoration: 'none' }}
+              style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', textDecoration: 'none' }}
             >
               <FolderKanban size={11} />
               {projectTitle}
@@ -141,7 +141,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
         {/* Linked projects */}
         {linkedProjects.length > 0 && (
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>Linked:</span>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Linked:</span>
             {linkedProjects.map((slug) => {
               const title = projects.find((p) => p.slug === slug)?.title || slug
               return (

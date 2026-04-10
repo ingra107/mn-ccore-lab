@@ -37,7 +37,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
           style={{
             fontSize: '9px',
             color: 'var(--slate)',
-            opacity: 0.5,
+            opacity: 'var(--ink-label)',
             fontStyle: 'italic',
           }}
         >
@@ -77,7 +77,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: 'var(--value-size)',
                     fontWeight: 500,
                     color: 'var(--ink)',
                     display: 'block',
@@ -103,7 +103,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
                   ))}
                   {reasons.length > 2 && (
                     <span
-                      style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.5 }}
+                      style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
                     >
                       +{reasons.length - 2}
                     </span>

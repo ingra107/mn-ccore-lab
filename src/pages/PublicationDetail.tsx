@@ -107,7 +107,7 @@ export default function PublicationDetail() {
             <span
               className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
               style={{
-                fontSize: '11px',
+                fontSize: 'var(--label-size)',
                 background: 'rgba(201, 168, 76, 0.1)',
                 color: 'var(--gold)',
                 letterSpacing: '0.04em',
@@ -118,7 +118,7 @@ export default function PublicationDetail() {
             <span
               className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
               style={{
-                fontSize: '11px',
+                fontSize: 'var(--label-size)',
                 background: sc.bg,
                 color: sc.color,
               }}
@@ -129,7 +129,7 @@ export default function PublicationDetail() {
               <span
                 className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
                 style={{
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   background: 'rgba(45,138,138,0.1)',
                   color: 'var(--teal)',
                 }}
@@ -247,7 +247,7 @@ export default function PublicationDetail() {
                     to={`/publications?topic=${encodeURIComponent(t)}`}
                     className="inline-flex items-center px-2.5 py-1 rounded-full transition-colors hover:opacity-80"
                     style={{
-                      fontSize: '11px',
+                      fontSize: 'var(--label-size)',
                       background: 'rgba(201, 168, 76, 0.1)',
                       color: 'var(--gold)',
                       textDecoration: 'none',
@@ -339,7 +339,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
         </h2>
         <span
           style={{
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             color: 'var(--slate)',
             opacity: 0.6,
           }}
@@ -379,7 +379,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
                 </span>
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: 'var(--value-size)',
                     color: 'var(--ink)',
                     flex: 1,
                     overflow: 'hidden',
@@ -405,7 +405,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
                     style={{
                       fontSize: '10px',
                       color: 'var(--slate)',
-                      opacity: 0.5,
+                      opacity: 'var(--ink-label)',
                       flexShrink: 0,
                     }}
                   >

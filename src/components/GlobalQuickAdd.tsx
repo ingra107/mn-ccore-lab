@@ -27,7 +27,7 @@ function TokenHint({ prefix, desc, color }: { prefix: string; desc: string; colo
       }}
     >
       <span style={{ color, fontWeight: 700 }}>{prefix}</span>
-      <span style={{ color: 'var(--slate)', opacity: 0.5 }}>{desc}</span>
+      <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{desc}</span>
     </span>
   )
 }
@@ -142,7 +142,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                   style={{
                     fontSize: '10px',
                     color: 'var(--slate)',
-                    opacity: 0.65,
+                    opacity: 'var(--ink-label)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.07em',
                     fontWeight: 600,

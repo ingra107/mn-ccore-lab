@@ -83,7 +83,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
           End of Day
         </span>
         {hour < 16 && (
-          <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4 }}>
+          <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
             opens at 4pm
           </span>
         )}
@@ -113,7 +113,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   placeholder="What went well?"
                   className="w-full"
                   style={{
-                    fontSize: '13px', color: 'var(--ink)',
+                    fontSize: 'var(--value-size)', color: 'var(--ink)',
                     background: 'transparent', border: 'none', borderBottom: '1px solid rgba(201,168,76,0.15)',
                     outline: 'none', padding: '4px 0',
                   }}
@@ -132,7 +132,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   placeholder="One takeaway from today..."
                   className="w-full"
                   style={{
-                    fontSize: '13px', color: 'var(--ink)',
+                    fontSize: 'var(--value-size)', color: 'var(--ink)',
                     background: 'transparent', border: 'none', borderBottom: '1px solid rgba(201,168,76,0.15)',
                     outline: 'none', padding: '4px 0',
                   }}
@@ -152,7 +152,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   disabled={!hasContent}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
                   style={{
-                    fontSize: '11px', fontWeight: 600,
+                    fontSize: 'var(--label-size)', fontWeight: 600,
                     background: hasContent ? 'var(--gold)' : 'rgba(201,168,76,0.15)',
                     color: hasContent ? '#fff' : 'var(--slate)',
                     border: 'none', cursor: hasContent ? 'pointer' : 'default',
@@ -169,7 +169,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0 }}
                       className="flex items-center gap-1"
-                      style={{ fontSize: '11px', color: 'var(--teal)' }}
+                      style={{ fontSize: 'var(--label-size)', color: 'var(--teal)' }}
                     >
                       <Sparkles size={12} /> Saved
                     </motion.span>

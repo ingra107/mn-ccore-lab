@@ -73,7 +73,7 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
                     style={{
                       height: `${reviewHeight}%`,
                       background: 'var(--gold)',
-                      opacity: 0.5,
+                      opacity: 'var(--ink-label)',
                     }}
                   />
                 )}
@@ -94,7 +94,7 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
                   <div
                     className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                     style={{
-                      fontSize: '11px',
+                      fontSize: 'var(--label-size)',
                       color: 'var(--gold)',
                       fontWeight: 600,
                     }}
@@ -130,7 +130,7 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 0.4 }} />
+          <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 'var(--ink-hint)' }} />
           <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
             In Review / Prep
           </span>

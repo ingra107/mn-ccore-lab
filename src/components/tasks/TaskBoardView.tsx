@@ -227,7 +227,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
     >
       {/* Group By selector */}
       <div className="flex items-center gap-2 mb-3">
-        <Layers size={13} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+        <Layers size={13} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
           Group by:
         </span>
@@ -325,7 +325,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                         style={{
                           borderColor: 'var(--border-light)',
                           color: 'var(--slate)',
-                          opacity: 0.4,
+                          opacity: 'var(--ink-hint)',
                           fontSize: '12px',
                         }}
                       >
@@ -361,14 +361,14 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                   }}
                 >
                   {isLaneCollapsed ? (
-                    <ChevronRight size={14} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+                    <ChevronRight size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
                   ) : (
-                    <ChevronDown size={14} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+                    <ChevronDown size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
                   )}
                   {renderLaneLabel(lane.key)}
                   <span
                     className="text-xs px-1.5 py-0.5 rounded-full ml-1"
-                    style={{ background: 'var(--ice)', color: 'var(--slate)', fontWeight: 500 }}
+                    style={{ background: 'var(--ice)', color: 'var(--slate)', fontWeight: 'var(--label-weight)' }}
                   >
                     {lane.tasks.length}
                   </span>
@@ -501,7 +501,7 @@ function CollapsedColumn({
           writingMode: 'vertical-rl',
           textOrientation: 'mixed',
           fontSize: '12px',
-          fontWeight: 500,
+          fontWeight: 'var(--label-weight)',
           color,
           letterSpacing: '0.04em',
         }}

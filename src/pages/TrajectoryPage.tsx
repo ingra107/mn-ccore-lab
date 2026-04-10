@@ -109,7 +109,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <span style={{ fontSize: '11px', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Cumulative Publications Over Time
         </span>
         <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--teal)' }}>
@@ -198,10 +198,10 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <span style={{ fontSize: '11px', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Time in Pipeline
         </span>
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
           days in current stage / total days
         </span>
       </div>
@@ -225,7 +225,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                 <Link
                   to={`/projects/${project.slug}`}
                   style={{
-                    fontSize: '13px',
+                    fontSize: 'var(--value-size)',
                     fontWeight: 500,
                     color: 'var(--ink)',
                     textDecoration: 'none',
@@ -293,7 +293,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
 
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     color: 'var(--slate)',
                     whiteSpace: 'nowrap',
                     minWidth: '60px',
@@ -405,7 +405,7 @@ function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] })
                 style={{
                   fontSize: '10px',
                   color: 'var(--slate)',
-                  opacity: 0.5,
+                  opacity: 'var(--ink-label)',
                   marginTop: '0.2rem',
                 }}
               >
@@ -508,7 +508,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
               {pub.journal && (
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     color: 'var(--teal)',
                     fontStyle: 'italic',
                   }}
@@ -522,7 +522,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
               {pub.pub_date && (
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     color: 'var(--slate)',
                     opacity: 0.7,
                   }}
@@ -537,7 +537,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   color: 'var(--teal)',
                   textDecoration: 'none',
                   marginTop: '0.25rem',
@@ -611,7 +611,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
       >
         <span
           style={{
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             color: 'var(--slate)',
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
@@ -662,7 +662,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
                 style={{
                   fontSize: '3.5px',
                   fill: 'var(--slate)',
-                  opacity: 0.5,
+                  opacity: 'var(--ink-label)',
                 }}
               >
                 {m.month.slice(5)}
@@ -749,7 +749,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
                     alignItems: 'center',
                     padding: '2px 8px',
                     borderRadius: '9999px',
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     fontWeight: 500,
                     color: stageColor,
                     background: `${stageColor}15`,
@@ -760,7 +760,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
                 {project.category && (
                   <span
                     style={{
-                      fontSize: '11px',
+                      fontSize: 'var(--label-size)',
                       color: 'var(--slate)',
                       opacity: 0.6,
                     }}
@@ -840,7 +840,7 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
                 </h4>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     color: 'var(--slate)',
                     opacity: 0.6,
                   }}
@@ -851,7 +851,7 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
               {ms.due_date && (
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     fontWeight: isOverdue || isUpcoming ? 600 : 400,
                     color: dateColor,
                     whiteSpace: 'nowrap',
@@ -897,7 +897,7 @@ function SectionHeader({
       {count !== undefined && count > 0 && (
         <span
           style={{
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             color: 'var(--slate)',
             opacity: 0.6,
           }}
@@ -944,7 +944,7 @@ function PeriodSelector({
             key={days}
             onClick={() => onChange(days)}
             style={{
-              fontSize: '11px',
+              fontSize: 'var(--label-size)',
               fontWeight: active ? 600 : 400,
               padding: '4px 10px',
               borderRadius: '6px',
@@ -1204,7 +1204,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                   </div>
                   <p
                     style={{
-                      fontSize: '13px',
+                      fontSize: 'var(--value-size)',
                       color: 'var(--ink)',
                       margin: 0,
                       lineHeight: 1.4,
@@ -1215,7 +1215,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                   {entry.subtitle && (
                     <span
                       style={{
-                        fontSize: '11px',
+                        fontSize: 'var(--label-size)',
                         color: 'var(--slate)',
                         opacity: 0.6,
                       }}
@@ -1226,7 +1226,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                 </div>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     color: 'var(--slate)',
                     opacity: 0.6,
                     whiteSpace: 'nowrap',

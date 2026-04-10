@@ -217,7 +217,7 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
           <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
         </div>
         <span className="text-sm" style={{ color: 'var(--ink)' }}>{person.name}</span>
-        <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 0.5 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
       {open && (
         <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[240px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
@@ -293,7 +293,7 @@ export function DateInput({ value, onChange }: { value: string; onChange: (v: st
         <button
           onClick={() => onChange('')}
           className="text-xs px-1.5 py-0.5 rounded"
-          style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.4 }}
+          style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 'var(--ink-hint)' }}
         >
           &times;
         </button>
@@ -362,7 +362,7 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
       >
         <FolderKanban size={13} style={{ opacity: 0.7 }} />
         {current ? current.title : 'No project'}
-        <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 0.4 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
       {/* Project hover preview card */}
       {hoverCardData && !open && (
@@ -418,7 +418,7 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
               )
             })}
             {filtered.length === 0 && (
-              <div className="px-3 py-2 text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>No matches</div>
+              <div className="px-3 py-2 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No matches</div>
             )}
           </div>
         </div>

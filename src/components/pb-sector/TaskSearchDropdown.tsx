@@ -77,7 +77,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
             <div className="max-h-64 overflow-y-auto">
               {filtered.length === 0 ? (
                 <div className="px-4 py-6 text-center">
-                  <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.5 }}>
+                  <span style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                     {query ? 'No matching tasks' : 'No available tasks'}
                   </span>
                 </div>
@@ -107,7 +107,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                     </div>
 
                     {task.due_date && (
-                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5, flexShrink: 0 }}>
+                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }}>
                         {task.due_date}
                       </span>
                     )}

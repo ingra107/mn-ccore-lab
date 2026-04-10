@@ -95,7 +95,7 @@ export default function RelayCard() {
             <div className="px-3 pb-2.5 flex flex-col gap-1.5">
               {/* Pending messages */}
               {pending.length === 0 && !formOpen && (
-                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5, padding: '2px 0' }}>
+                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: '2px 0' }}>
                   No pending relay messages
                 </div>
               )}

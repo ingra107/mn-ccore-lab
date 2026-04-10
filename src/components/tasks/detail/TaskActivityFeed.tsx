@@ -73,7 +73,7 @@ export function TaskActivityFeed({ taskId }: { taskId: string }) {
 
   if (merged.length === 0) {
     return (
-      <p className="text-xs text-center py-4" style={{ color: 'var(--slate)', opacity: 0.4, margin: 0 }}>
+      <p className="text-xs text-center py-4" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', margin: 0 }}>
         No activity yet
       </p>
     )
@@ -110,16 +110,16 @@ function UpdateItem({ update }: { update: TaskUpdateRow }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>{person.name}</span>
+            <span style={{ fontSize: 'var(--label-size)', fontWeight: 600, color: 'var(--ink)' }}>{person.name}</span>
             <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded"
               style={{ fontSize: '8px', background: `color-mix(in srgb, ${config.color} 10%, transparent)`, color: config.color }}>
               <Icon size={8} /> {config.label}
             </span>
-            <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.4, marginLeft: 'auto' }}>
+            <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-hint)', marginLeft: 'auto' }}>
               {formatRelativeTime(update.created_at)}
             </span>
           </div>
-          <p className="mt-0.5" style={{ fontSize: '11px', color: 'var(--ink)', lineHeight: 1.5, margin: '2px 0 0', whiteSpace: 'pre-wrap' }}>
+          <p className="mt-0.5" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', lineHeight: 1.5, margin: '2px 0 0', whiteSpace: 'pre-wrap' }}>
             {update.content}
           </p>
         </div>
@@ -145,16 +145,16 @@ function CommentItem({ comment }: { comment: TaskComment }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>{person.name}</span>
+            <span style={{ fontSize: 'var(--label-size)', fontWeight: 600, color: 'var(--ink)' }}>{person.name}</span>
             <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded"
               style={{ fontSize: '8px', background: 'rgba(201, 168, 76, 0.08)', color: 'var(--gold)' }}>
               <MessageSquare size={8} /> Comment
             </span>
-            <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.4, marginLeft: 'auto' }}>
+            <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-hint)', marginLeft: 'auto' }}>
               {formatRelativeTime(comment.created_at)}
             </span>
           </div>
-          <p className="mt-0.5" style={{ fontSize: '11px', color: 'var(--ink)', lineHeight: 1.5, margin: '2px 0 0', whiteSpace: 'pre-wrap' }}>
+          <p className="mt-0.5" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', lineHeight: 1.5, margin: '2px 0 0', whiteSpace: 'pre-wrap' }}>
             {comment.content}
           </p>
         </div>

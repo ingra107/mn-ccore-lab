@@ -55,7 +55,7 @@ const TASK_TEMPLATES = [
 ]
 
 const selectStyle: React.CSSProperties = {
-  fontSize: '13px',
+  fontSize: 'var(--value-size)',
   color: 'var(--ink)',
   backgroundColor: 'var(--cream)',
   borderColor: 'var(--border-light)',
@@ -281,7 +281,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                     onClick={() => acceptSuggestion(s)}
                     className="rounded-full px-2.5 py-0.5 transition-colors"
                     style={{
-                      fontSize: '11px',
+                      fontSize: 'var(--label-size)',
                       lineHeight: '18px',
                       color: 'var(--teal)',
                       border: '1px solid var(--teal)',
@@ -330,7 +330,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                 className="block text-xs font-medium mb-1"
                 style={{ color: 'var(--slate)' }}
               >
-                Owner * <span style={{ fontWeight: 400, opacity: 0.5 }}>(responsible)</span>
+                Owner * <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(responsible)</span>
               </label>
               <select
                 value={assignee}
@@ -372,7 +372,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                 className="block text-xs font-medium mb-1"
                 style={{ color: 'var(--slate)' }}
               >
-                Project <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span>
+                Project <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(optional)</span>
               </label>
               <select
                 value={projectId}
@@ -405,7 +405,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
 
           {/* Submit */}
           <div className="flex items-center justify-between gap-2 mt-2">
-            <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+            <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
               Tasks can also be created from meetings and project pages
             </p>
           </div>

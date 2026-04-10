@@ -80,7 +80,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
       <div className="flex items-center justify-between mb-3">
         <h2
           style={{
-            fontWeight: 500,
+            fontWeight: 'var(--label-weight)',
             fontSize: '16px',
             color: 'var(--ink)',
             margin: 0,
@@ -95,7 +95,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
             onClick={() => setShowAddForm(true)}
             className="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs"
             style={{
-              fontSize: '11px',
+              fontSize: 'var(--label-size)',
               background: 'rgba(45, 138, 138, 0.08)',
               color: 'var(--teal)',
               border: '1px solid rgba(45, 138, 138, 0.2)',
@@ -299,7 +299,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
             style={{
               fontSize: '12px',
               color: 'var(--slate)',
-              opacity: 0.4,
+              opacity: 'var(--ink-hint)',
               textAlign: 'center',
               padding: '16px 0',
               margin: 0,
@@ -331,11 +331,11 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 >
                   {REL_LABELS[dep.relationship_type] || dep.relationship_type}
                 </span>
-                <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 0.4, flexShrink: 0 }} />
+                <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', flexShrink: 0 }} />
                 <Link
                   to={`/projects/${dep.to_slug}`}
                   style={{
-                    fontSize: '13px',
+                    fontSize: 'var(--value-size)',
                     color: 'var(--ink)',
                     textDecoration: 'none',
                     flex: 1,
@@ -348,7 +348,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                     style={{
                       fontSize: '10px',
                       color: 'var(--slate)',
-                      opacity: 0.5,
+                      opacity: 'var(--ink-label)',
                       maxWidth: '200px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -392,14 +392,14 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 <Link
                   to={`/projects/${dep.from_slug}`}
                   style={{
-                    fontSize: '13px',
+                    fontSize: 'var(--value-size)',
                     color: 'var(--ink)',
                     textDecoration: 'none',
                   }}
                 >
                   {getProjectTitle(dep.from_slug)}
                 </Link>
-                <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 0.4, flexShrink: 0 }} />
+                <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', flexShrink: 0 }} />
                 <span
                   style={{
                     fontSize: '10px',
@@ -414,7 +414,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 </span>
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: 'var(--value-size)',
                     color: 'var(--slate)',
                     opacity: 0.6,
                     flex: 1,
@@ -427,7 +427,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                     style={{
                       fontSize: '10px',
                       color: 'var(--slate)',
-                      opacity: 0.5,
+                      opacity: 'var(--ink-label)',
                       maxWidth: '200px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',

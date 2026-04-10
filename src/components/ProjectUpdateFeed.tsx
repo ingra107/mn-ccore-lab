@@ -49,11 +49,11 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
     >
       <div className="flex items-center gap-2 mb-3">
         <MessageCircle size={16} style={{ color: 'var(--teal)' }} />
-        <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+        <h2 style={{ fontWeight: 'var(--label-weight)', fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
           Project Updates
         </h2>
         {updates.length > 0 && (
-          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
             {updates.length}
           </span>
         )}
@@ -103,7 +103,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
                 }
               }}
               style={{
-                fontSize: '13px', color: 'var(--ink)',
+                fontSize: 'var(--value-size)', color: 'var(--ink)',
                 background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)',
                 borderRadius: '8px', padding: '10px 12px', resize: 'none', outline: 'none',
                 lineHeight: 1.5, transition: 'border-color 0.2s', width: '100%',
@@ -131,7 +131,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
             </AnimatePresence>
           </div>
         ) : (
-          <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4, textAlign: 'center', padding: '12px 0', margin: 0 }}>
+          <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-hint)', textAlign: 'center', padding: '12px 0', margin: 0 }}>
             No updates yet — post the first one to keep the team informed
           </p>
         )}
@@ -165,18 +165,18 @@ function UpdateCard({ update }: { update: ProjectUpdateRow }) {
         </div>
         <div style={{ flex: 1 }}>
           <div className="flex items-center gap-2 mb-1">
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
+            <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>
               {person.name}
             </span>
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs"
               style={{ fontSize: '9px', background: config.bg, color: config.color }}>
               <Icon size={9} /> {config.label}
             </span>
-            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               {formatRelativeTime(update.created_at)}
             </span>
           </div>
-          <p style={{ fontSize: '13px', color: 'var(--ink)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
+          <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
             {update.content}
           </p>
 

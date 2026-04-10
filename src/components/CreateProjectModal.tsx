@@ -36,7 +36,7 @@ const STAGES = [
 ]
 
 const selectStyle: React.CSSProperties = {
-  fontSize: '13px',
+  fontSize: 'var(--value-size)',
   color: 'var(--ink)',
   backgroundColor: 'var(--cream)',
   borderColor: 'var(--border-light)',
@@ -204,7 +204,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--slate)' }}
             >
-              PI <span style={{ fontWeight: 400, opacity: 0.5 }}>(slug, e.g. nick)</span>
+              PI <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(slug, e.g. nick)</span>
             </label>
             <input
               type="text"
@@ -225,7 +225,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--slate)' }}
             >
-              Description <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span>
+              Description <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(optional)</span>
             </label>
             <textarea
               value={description}

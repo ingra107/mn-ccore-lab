@@ -64,8 +64,8 @@ function PipelineCard() {
                 <div className="flex items-baseline justify-between mb-1.5">
                   <span
                     style={{
-                      fontSize: '13px',
-                      fontWeight: 500,
+                      fontSize: 'var(--value-size)',
+                      fontWeight: 'var(--label-weight)',
                       color: 'var(--ink)',
                     }}
                   >
@@ -149,9 +149,9 @@ function PipelineCard() {
         <div
           className="text-center"
           style={{
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             color: 'var(--slate)',
-            opacity: 0.5,
+            opacity: 'var(--ink-label)',
           }}
         >
           {publications.length} total manuscripts tracked

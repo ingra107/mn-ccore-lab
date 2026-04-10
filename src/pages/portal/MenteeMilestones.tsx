@@ -206,11 +206,11 @@ export default function MenteeMilestones() {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>
+                  <div style={{ fontSize: 'var(--value-size)', fontWeight: 500, color: 'var(--ink)' }}>
                     {person.name}
                   </div>
                   <div className="flex items-center gap-3 mt-1">
-                    <span style={{ fontSize: '11px', color: 'var(--teal)' }}>
+                    <span style={{ fontSize: 'var(--label-size)', color: 'var(--teal)' }}>
                       {stats?.upcoming_count ?? 0} upcoming
                     </span>
                     {(stats?.overdue_count ?? 0) > 0 && (
@@ -227,7 +227,7 @@ export default function MenteeMilestones() {
                         {stats?.overdue_count} overdue
                       </span>
                     )}
-                    <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                    <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                       {stats?.completed_count ?? 0} done
                     </span>
                   </div>
@@ -288,7 +288,7 @@ export default function MenteeMilestones() {
                     fontSize: '10px',
                     fontWeight: 500,
                     color: 'var(--slate)',
-                    opacity: 0.5,
+                    opacity: 'var(--ink-label)',
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.06em',
                   }}
@@ -341,7 +341,7 @@ export default function MenteeMilestones() {
                     color: 'var(--green)',
                   },
                 ].map((s) => (
-                  <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                  <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
                     {s.label}{' '}
                     <span
                       style={{
@@ -422,7 +422,7 @@ function MenteeGroup({
         </div>
         <span
           style={{
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             fontWeight: 500,
             color: 'var(--ink)',
             letterSpacing: '0.02em',
@@ -430,7 +430,7 @@ function MenteeGroup({
         >
           {person.name}
         </span>
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.35 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.35 }}>
           {items.length}
         </span>
         {overdueCount > 0 && (
@@ -531,7 +531,7 @@ function MilestoneRow({
           onClick={onToggleExpand}
           className="task-title-clickable"
           style={{
-            fontSize: '13px',
+            fontSize: 'var(--value-size)',
             fontWeight: 400,
             color: 'var(--ink)',
             textDecoration: isDone ? 'line-through' : 'none',
@@ -552,7 +552,7 @@ function MilestoneRow({
         {/* Type */}
         <span
           style={{
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             fontWeight: 500,
             color: 'var(--gold)',
             opacity: 0.7,
@@ -595,7 +595,7 @@ function MilestoneRow({
         <div className="flex items-center gap-3 flex-wrap">
           <span
             style={{
-              fontSize: '11px',
+              fontSize: 'var(--label-size)',
               color: item._isOverdue ? 'var(--maroon)' : 'var(--slate)',
               fontWeight: item._isOverdue ? 500 : 400,
             }}
@@ -671,7 +671,7 @@ function MilestoneRow({
                 </span>
               )}
               {item.due_date && (
-                <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                <div style={{ marginTop: '8px', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
                   Due: {item.due_date}
                   {item.completed_at && ` | Completed: ${item.completed_at.split('T')[0]}`}
                 </div>
@@ -792,7 +792,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
         <div className="flex flex-col gap-4">
           {/* Mentee */}
           <div>
-            <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
+            <label style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
               Mentee
             </label>
             <select
@@ -805,7 +805,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
               }}
             >
               {MENTEE_SLUGS.map((s) => (
@@ -818,7 +818,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
 
           {/* Type */}
           <div>
-            <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
+            <label style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
               Milestone Type
             </label>
             <select
@@ -831,7 +831,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
               }}
             >
               {MILESTONE_TYPES.map((t) => (
@@ -844,7 +844,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
 
           {/* Title */}
           <div>
-            <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
+            <label style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
               Title
             </label>
             <input
@@ -860,7 +860,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
                 outline: 'none',
               }}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
@@ -869,7 +869,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
 
           {/* Due Date */}
           <div>
-            <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
+            <label style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
               Due Date
             </label>
             <input
@@ -883,7 +883,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
                 outline: 'none',
               }}
             />
@@ -891,7 +891,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
 
           {/* Description */}
           <div>
-            <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
+            <label style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
               Description (optional)
             </label>
             <textarea
@@ -906,7 +906,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
                 border: '1px solid var(--border-light)',
                 background: 'var(--cream)',
                 color: 'var(--ink)',
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
                 outline: 'none',
                 resize: 'vertical',
                 lineHeight: 1.5,
@@ -925,7 +925,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
               border: '1px solid var(--border-light)',
               background: 'transparent',
               color: 'var(--slate)',
-              fontSize: '13px',
+              fontSize: 'var(--value-size)',
               cursor: 'pointer',
             }}
           >
@@ -941,7 +941,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
               border: 'none',
               background: title.trim() ? 'var(--teal)' : 'var(--border-light)',
               color: title.trim() ? 'white' : 'var(--slate)',
-              fontSize: '13px',
+              fontSize: 'var(--value-size)',
               fontWeight: 500,
               cursor: title.trim() ? 'pointer' : 'not-allowed',
               opacity: createMilestone.isPending ? 0.7 : 1,

@@ -234,7 +234,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
             background: 'rgba(45,138,138,0.06)',
             border: '1px solid rgba(45,138,138,0.15)',
             cursor: 'pointer',
-            fontWeight: 500,
+            fontWeight: 'var(--label-weight)',
           }}
         >
           <ArrowRightLeft size={12} />
@@ -262,7 +262,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                       </div>
                       <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{from.name}</span>
                     </div>
-                    <ArrowRightLeft size={10} style={{ color: 'var(--teal)', opacity: 0.5 }} />
+                    <ArrowRightLeft size={10} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)' }} />
                     <div className="flex items-center gap-1">
                       <div style={{ width: 20, height: 20 }}>
                         <Avatar name={to.name} initials={to.initials} photoUrl={to.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]" />

@@ -146,7 +146,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
           animate={{ rotate: expanded ? 180 : 0 }}
           transition={{ duration: 0.2 }}
           className="shrink-0"
-          style={{ color: 'var(--slate)', opacity: 0.5 }}
+          style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
         >
           <ChevronDown size={20} />
         </motion.div>
@@ -338,7 +338,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                               {item.dueDate && (
                                 <span
                                   className="text-xs"
-                                  style={{ color: 'var(--slate)', opacity: 0.5 }}
+                                  style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
                                 >
                                   due {formatShortDate(item.dueDate)}
                                 </span>
@@ -375,7 +375,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 to={`/meetings/${meeting.id}`}
                 className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md text-xs font-medium"
                 style={{
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   background: 'var(--gold)',
                   color: '#0f1923',
                   textDecoration: 'none',

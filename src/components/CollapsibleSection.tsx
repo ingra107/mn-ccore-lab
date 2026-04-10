@@ -72,7 +72,7 @@ export default function CollapsibleSection({
           size={12}
           style={{
             color: 'var(--slate)',
-            opacity: 0.5,
+            opacity: 'var(--ink-label)',
             transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
             transition: 'transform 150ms ease',
             flexShrink: 0,
@@ -81,10 +81,10 @@ export default function CollapsibleSection({
         {icon}
         <span
           style={{
-            fontSize: '11px',
-            fontWeight: 500,
+            fontSize: 'var(--label-size)',
+            fontWeight: 'var(--label-weight)',
             color: 'var(--slate)',
-            opacity: 0.65,
+            opacity: 'var(--ink-label)',
             textTransform: 'uppercase' as const,
             letterSpacing: '0.04em',
           }}

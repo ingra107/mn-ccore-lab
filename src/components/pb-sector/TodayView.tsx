@@ -272,9 +272,9 @@ function TaskItem({ line, onToggle }: { line: ParsedLine; onToggle: () => void }
           <span
             className="ml-2 inline-block"
             style={{
-              fontSize: '11px',
+              fontSize: 'var(--label-size)',
               color: dueDateStyle.color,
-              fontWeight: 500,
+              fontWeight: 'var(--label-weight)',
               opacity: 0.85,
             }}
           >
@@ -295,7 +295,7 @@ function CalloutBlock({ line }: { line: ParsedLine }) {
       style={{
         borderLeft: '3px solid var(--teal)',
         background: 'rgba(45, 138, 138, 0.06)',
-        fontSize: '13px',
+        fontSize: 'var(--value-size)',
         lineHeight: '1.5',
         color: 'var(--ink)',
         fontFamily: "'DM Sans', sans-serif",
@@ -358,7 +358,7 @@ function SectionBlock({ section, onToggleTask }: { section: Section; onToggleTas
         {taskCount > 0 && (
           <span
             style={{
-              fontSize: '11px',
+              fontSize: 'var(--label-size)',
               color: 'var(--slate)',
               fontWeight: 400,
               marginLeft: '4px',
@@ -514,7 +514,7 @@ export default function TodayView() {
             TODAY.md
           </span>
         </div>
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           read-only view
         </span>
       </div>

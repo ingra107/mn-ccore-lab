@@ -176,7 +176,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
         {value}
       </div>
       {sub && (
-        <div style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.5, marginTop: 2 }}>
+        <div style={{ fontSize: 11, color: 'var(--slate)', opacity: 'var(--ink-label)', marginTop: 2 }}>
           {sub}
         </div>
       )}
@@ -270,7 +270,7 @@ export default function SessionHistory() {
       >
         {/* Filter bar */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Filter size={14} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+          <Filter size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
 
           {/* Search */}
           <div style={{ position: 'relative', minWidth: 160 }}>
@@ -405,7 +405,7 @@ export default function SessionHistory() {
               fontSize: 10,
               fontWeight: 500,
               color: 'var(--slate)',
-              opacity: 0.5,
+              opacity: 'var(--ink-label)',
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
               borderBottom: '1px solid var(--border-subtle)',

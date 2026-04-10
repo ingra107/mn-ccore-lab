@@ -126,7 +126,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
 
   const inputStyle = {
     width: '100%',
-    fontSize: '13px',
+    fontSize: 'var(--value-size)',
     color: 'var(--ink)',
     background: 'var(--cream)',
     border: '1px solid rgba(201,168,76,0.15)',
@@ -187,14 +187,14 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
               <div className="mt-3 p-3 rounded-lg" style={{ background: 'rgba(201,168,76,0.04)', border: '1px dashed rgba(201,168,76,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-2">
                   <History size={12} style={{ color: 'var(--gold)' }} />
-                  <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+                  <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
                     Similar past decisions
                   </span>
                 </div>
                 {similarDecisions.map(d => (
                   <div key={d.id} className="py-2" style={{ borderBottom: '1px solid rgba(201,168,76,0.06)' }}>
                     <div className="flex items-center gap-2">
-                      <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)', margin: 0 }}>
+                      <p style={{ fontSize: 'var(--value-size)', fontWeight: 500, color: 'var(--ink)', margin: 0 }}>
                         {d.title}
                       </p>
                       {d.outcome_sentiment && d.outcome_sentiment !== 'pending' && (
@@ -206,7 +206,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
                         Outcome: {d.outcome}
                       </p>
                     )}
-                    <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                    <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                       {new Date(d.created_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -263,7 +263,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
               {/* Tag auto-suggestions */}
               {newSuggestions.length > 0 && (
                 <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                  <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Suggested:
                   </span>
                   {newSuggestions.map((tag) => (
@@ -322,7 +322,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
                     border: 'none',
                     outline: 'none',
                     background: 'transparent',
-                    fontSize: '13px',
+                    fontSize: 'var(--value-size)',
                     color: 'var(--ink)',
                     padding: '4px',
                   }}

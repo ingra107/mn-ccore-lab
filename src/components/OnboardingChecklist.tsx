@@ -227,7 +227,7 @@ export default function OnboardingChecklist() {
               <button
                 onClick={() => setExpanded(false)}
                 className="p-1 rounded transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
-                style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.5 }}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
                 title="Collapse"
               >
                 <ChevronUp size={14} />
@@ -432,7 +432,7 @@ export default function OnboardingChecklist() {
           style={{
             fontSize: 10,
             color: 'var(--slate)',
-            opacity: 0.5,
+            opacity: 'var(--ink-label)',
             border: 'none',
             background: 'none',
             cursor: 'pointer',

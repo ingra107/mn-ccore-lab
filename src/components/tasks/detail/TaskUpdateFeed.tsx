@@ -78,7 +78,7 @@ export function TaskUpdateFeed({ taskId }: { taskId: string }) {
             }}
             className="flex-1 rounded-md border text-sm outline-none resize-none"
             style={{
-              fontSize: '13px', color: 'var(--ink)',
+              fontSize: 'var(--value-size)', color: 'var(--ink)',
               background: 'var(--cream)', border: '1px solid var(--border-light)',
               borderRadius: '8px', padding: '8px 10px',
               lineHeight: 1.5, transition: 'border-color 0.15s',
@@ -110,7 +110,7 @@ export function TaskUpdateFeed({ taskId }: { taskId: string }) {
           </AnimatePresence>
         </div>
       ) : (
-        <p className="text-xs text-center py-3" style={{ color: 'var(--slate)', opacity: 0.4, margin: 0 }}>
+        <p className="text-xs text-center py-3" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', margin: 0 }}>
           No notes yet — add one above
         </p>
       )}
@@ -152,7 +152,7 @@ function NoteCard({ update }: { update: TaskUpdateRow }) {
               style={{ fontSize: '9px', background: config.bg, color: config.color }}>
               <Icon size={9} /> {config.label}
             </span>
-            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               {formatRelativeTime(update.created_at)}
             </span>
           </div>

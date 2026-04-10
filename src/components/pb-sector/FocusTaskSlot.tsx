@@ -59,7 +59,7 @@ function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, on
 
         {/* Number */}
         <span style={{
-          fontSize: '11px', fontWeight: 700,
+          fontSize: 'var(--label-size)', fontWeight: 700,
           color: 'var(--teal)', opacity: 0.6, width: 16, textAlign: 'center', flexShrink: 0,
         }}>
           {index + 1}
@@ -120,7 +120,7 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--teal)' }}>
           Focus Tasks
         </span>
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           {tasks.length}/3
         </span>
       </div>

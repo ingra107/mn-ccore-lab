@@ -115,7 +115,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
           className="flex-shrink-0 rounded-md px-2 py-1 text-center"
           style={{
             minWidth: '52px',
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             fontWeight: 600,
           }}
         >
@@ -250,7 +250,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                 style={{
                   fontSize: '9px',
                   color: 'var(--slate)',
-                  opacity: 0.5,
+                  opacity: 'var(--ink-label)',
                   textTransform: 'uppercase' as const,
                   letterSpacing: '0.05em',
                 }}
@@ -278,7 +278,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                     style={{
                       fontSize: '9px',
                       color: 'var(--slate)',
-                      opacity: 0.5,
+                      opacity: 'var(--ink-label)',
                       marginLeft: '4px',
                       alignSelf: 'center',
                     }}
@@ -403,7 +403,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
                     color: 'var(--slate)',
-                    opacity: 0.5,
+                    opacity: 'var(--ink-label)',
                   }}
                 >
                   Link to project
@@ -632,7 +632,7 @@ export default function Digest() {
               <div
                 className="flex items-center gap-2 mb-3"
                 style={{
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   textTransform: 'uppercase' as const,
                   letterSpacing: '0.1em',
                   color: 'var(--slate)',
@@ -851,7 +851,7 @@ export default function Digest() {
             searchQuery ? (
               <div className="text-center py-12">
                 <Search size={32} style={{ color: 'var(--slate)', opacity: 0.2, margin: '0 auto 8px' }} />
-                <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                <p className="text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   No papers matching "{searchQuery}"
                 </p>
               </div>
@@ -863,7 +863,7 @@ export default function Digest() {
           ) : (
             <div className="space-y-3 sm:space-y-4">
               {searchQuery && (
-                <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                <p className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   {filteredPapers.length} of {papers.length} papers matching "{searchQuery}"
                 </p>
               )}

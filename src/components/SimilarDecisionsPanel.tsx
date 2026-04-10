@@ -13,7 +13,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
   if (isLoading) {
     return (
       <div className="px-4 pb-4" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
-        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.5, padding: '8px 0' }}>
+        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: '8px 0' }}>
           Finding related decisions...
         </p>
       </div>
@@ -23,7 +23,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
   if (similar.length === 0) {
     return (
       <div className="px-4 pb-4" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
-        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.5, padding: '8px 0' }}>
+        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: '8px 0' }}>
           No similar decisions found.
         </p>
       </div>
@@ -34,7 +34,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
     <div className="px-4 pb-4" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
       <div className="flex items-center gap-1.5 mt-3 mb-2">
         <History size={12} style={{ color: 'var(--gold)' }} />
-        <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+        <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
           Related Decisions
         </span>
       </div>
@@ -48,7 +48,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
               style={{ background: 'rgba(201,168,76,0.03)', border: '1px dashed rgba(201,168,76,0.12)' }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>
+                <span style={{ fontSize: 'var(--value-size)', fontWeight: 'var(--label-weight)', color: 'var(--ink)' }}>
                   {d.title}
                 </span>
                 {d.outcome_sentiment && d.outcome_sentiment !== 'pending' && (
@@ -57,7 +57,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
                 {d.relevance_score && (
                   <span
                     className="text-[9px] px-1 py-0.5 rounded"
-                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 0.4 }}
+                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}
                   >
                     score: {d.relevance_score}
                   </span>
@@ -69,7 +69,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
                 </p>
               )}
               <div className="flex items-center gap-2 flex-wrap">
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   {new Date(d.created_at).toLocaleDateString()}
                 </span>
                 {projTitle && (

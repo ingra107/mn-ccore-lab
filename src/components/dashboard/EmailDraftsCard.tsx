@@ -25,7 +25,7 @@ export default function EmailDraftsCard() {
         </div>
       ) : count === 0 ? (
         <div className="flex items-center justify-center h-full">
-          <span className="text-[12px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+          <span className="text-[12px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             All sent -- inbox zero
           </span>
         </div>
@@ -70,7 +70,7 @@ export default function EmailDraftsCard() {
           ))}
 
           {count > 3 && (
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               +{count - 3} more
             </span>
           )}

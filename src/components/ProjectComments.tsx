@@ -46,7 +46,7 @@ export default function ProjectComments({ projectSlug }: Props) {
         <MessageSquare size={16} style={{ color: 'var(--gold)' }} />
         <h2
           style={{
-            fontWeight: 500,
+            fontWeight: 'var(--label-weight)',
             fontSize: '16px',
             color: 'var(--ink)',
             margin: 0,
@@ -57,7 +57,7 @@ export default function ProjectComments({ projectSlug }: Props) {
         {comments.length > 0 && (
           <span
             style={{
-              fontSize: '11px',
+              fontSize: 'var(--label-size)',
               color: 'var(--slate)',
               opacity: 0.6,
             }}
@@ -92,7 +92,7 @@ export default function ProjectComments({ projectSlug }: Props) {
               }}
               style={{
                 width: '100%',
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
                 color: 'var(--ink)',
                 background: 'var(--cream)',
                 border: '1px solid rgba(201, 168, 76, 0.15)',
@@ -128,7 +128,7 @@ export default function ProjectComments({ projectSlug }: Props) {
             style={{
               fontSize: '10px',
               color: 'var(--slate)',
-              opacity: 0.4,
+              opacity: 'var(--ink-hint)',
               marginTop: '4px',
             }}
           >
@@ -185,7 +185,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                               style={{
                                 fontSize: '10px',
                                 color: 'var(--slate)',
-                                opacity: 0.5,
+                                opacity: 'var(--ink-label)',
                                 marginLeft: 'auto',
                               }}
                             >
@@ -194,7 +194,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                           </div>
                           <p
                             style={{
-                              fontSize: '13px',
+                              fontSize: 'var(--value-size)',
                               color: 'var(--ink)',
                               lineHeight: 1.5,
                               margin: 0,
@@ -221,7 +221,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                           <div className="flex items-baseline gap-2">
                             <span
                               style={{
-                                fontSize: '13px',
+                                fontSize: 'var(--value-size)',
                                 fontWeight: 600,
                                 color: 'var(--ink)',
                               }}
@@ -232,7 +232,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                               style={{
                                 fontSize: '10px',
                                 color: 'var(--slate)',
-                                opacity: 0.5,
+                                opacity: 'var(--ink-label)',
                               }}
                             >
                               {formatRelativeTime(comment.created_at)}
@@ -240,7 +240,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                           </div>
                           <p
                             style={{
-                              fontSize: '13px',
+                              fontSize: 'var(--value-size)',
                               color: 'var(--ink)',
                               lineHeight: 1.5,
                               margin: '2px 0 0',
@@ -263,7 +263,7 @@ export default function ProjectComments({ projectSlug }: Props) {
             style={{
               fontSize: '12px',
               color: 'var(--slate)',
-              opacity: 0.4,
+              opacity: 'var(--ink-hint)',
               textAlign: 'center',
               padding: '12px 0',
               margin: 0,

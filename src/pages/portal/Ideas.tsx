@@ -315,11 +315,11 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
     <div className="table-container">
       {/* Column headers — hidden on mobile */}
       <div className="hidden sm:grid" style={{ gridTemplateColumns: gridCols, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center' }}>
-        <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em', textAlign: 'center' as const }}>
+        <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', textAlign: 'center' as const }}>
           VOTES
         </span>
         {['TITLE', 'AREA', 'STATUS', 'BY'].map((col) => (
-          <span key={col} style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+          <span key={col} style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
             {col}
           </span>
         ))}
@@ -344,16 +344,16 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}
               >
                 <ThumbsUp size={13} />
-                <span style={{ fontSize: '11px', fontWeight: 600 }}>{idea.votes}</span>
+                <span style={{ fontSize: 'var(--label-size)', fontWeight: 600 }}>{idea.votes}</span>
               </button>
 
               {/* Title + description */}
               <div style={{ minWidth: 0, paddingRight: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 400, color: 'var(--ink)', display: 'block' }}>
+                <span style={{ fontSize: 'var(--value-size)', fontWeight: 400, color: 'var(--ink)', display: 'block' }}>
                   {idea.title}
                 </span>
                 {idea.description && (
-                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, display: 'block' }}>
+                  <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, display: 'block' }}>
                     {idea.description}
                   </span>
                 )}
@@ -401,9 +401,9 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)', padding: 0 }}
                 >
                   <ThumbsUp size={11} />
-                  <span style={{ fontSize: '11px', fontWeight: 600 }}>{idea.votes}</span>
+                  <span style={{ fontSize: 'var(--label-size)', fontWeight: 600 }}>{idea.votes}</span>
                 </button>
-                <span style={{ fontSize: '11px', fontWeight: 500, color: status.color }}>
+                <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: status.color }}>
                   {status.label}
                 </span>
                 {idea.research_area && (
@@ -423,7 +423,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
       {ideas.length === 0 && (
         <div className="text-center py-16">
           <Lightbulb size={24} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 8px' }} />
-          <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
+          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.4 }}>
             No ideas yet
           </p>
         </div>
@@ -458,7 +458,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
             }}
           >
             {stats.map(s => (
-              <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+              <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
                 {s.label}{' '}
                 <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)', opacity: 1 }}>
                   {s.value}

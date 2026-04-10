@@ -125,7 +125,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
             <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--ink)' }}>
               {data.tasks.active}
             </span>
-            <span style={{ color: 'var(--slate)', opacity: 0.5 }}>/</span>
+            <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>/</span>
             <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--slate)' }}>
               {data.tasks.total}
             </span>

@@ -118,7 +118,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
             Revision Rounds
           </h3>
           {revisions.length > 0 && (
-            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
               {revisions.length}
             </span>
           )}
@@ -164,8 +164,8 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                   <label
                     style={{
                       display: 'block',
-                      fontSize: '11px',
-                      fontWeight: 500,
+                      fontSize: 'var(--label-size)',
+                      fontWeight: 'var(--label-weight)',
                       color: 'var(--slate)',
                       marginBottom: '4px',
                     }}
@@ -179,7 +179,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                     placeholder="e.g., AJRCCM"
                     className="w-full rounded-lg px-3 py-1.5"
                     style={{
-                      fontSize: '13px',
+                      fontSize: 'var(--value-size)',
                       color: 'var(--ink)',
                       background: 'var(--ice)',
                       border: '1px solid var(--border-subtle)',
@@ -191,8 +191,8 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                   <label
                     style={{
                       display: 'block',
-                      fontSize: '11px',
-                      fontWeight: 500,
+                      fontSize: 'var(--label-size)',
+                      fontWeight: 'var(--label-weight)',
                       color: 'var(--slate)',
                       marginBottom: '4px',
                     }}
@@ -205,7 +205,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                     onChange={(e) => setNewResponseDue(e.target.value)}
                     className="rounded-lg px-3 py-1.5"
                     style={{
-                      fontSize: '13px',
+                      fontSize: 'var(--value-size)',
                       color: 'var(--ink)',
                       background: 'var(--ice)',
                       border: '1px solid var(--border-subtle)',
@@ -219,7 +219,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                   style={{
                     background: 'var(--teal)',
                     color: '#fff',
-                    fontSize: '13px',
+                    fontSize: 'var(--value-size)',
                     fontWeight: 500,
                     border: 'none',
                     cursor: 'pointer',
@@ -326,7 +326,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
             flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: '13px', fontWeight: 600, color: statusOpt?.color || 'var(--teal)' }}>
+          <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: statusOpt?.color || 'var(--teal)' }}>
             R{revision.round}
           </span>
         </div>
@@ -345,7 +345,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
               </span>
             )}
             {isOverdue && (
-              <span className="flex items-center gap-1" style={{ fontSize: '11px', color: 'var(--maroon)' }}>
+              <span className="flex items-center gap-1" style={{ fontSize: 'var(--label-size)', color: 'var(--maroon)' }}>
                 <AlertTriangle size={12} />
                 Overdue
               </span>
@@ -354,17 +354,17 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
 
           <div className="flex items-center gap-3 mt-1">
             {revision.submitted_at && (
-              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                 Submitted {formatMediumDate(revision.submitted_at)}
               </span>
             )}
             {revision.response_due && (
-              <span style={{ fontSize: '11px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 0.9 : 0.5 }}>
+              <span style={{ fontSize: 'var(--label-size)', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 0.9 : 'var(--ink-label)' }}>
                 Due {formatMediumDate(revision.response_due)}
               </span>
             )}
             {commentCount > 0 && (
-              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                 {resolvedCount}/{commentCount} resolved
               </span>
             )}
@@ -503,8 +503,8 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
               <div className="flex items-center gap-2 mb-2">
                 <span
                   style={{
-                    fontSize: '11px',
-                    fontWeight: 500,
+                    fontSize: 'var(--label-size)',
+                    fontWeight: 'var(--label-weight)',
                     color: 'var(--slate)',
                     opacity: 0.6,
                     textTransform: 'uppercase',
@@ -513,7 +513,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                 >
                   Reviewer {reviewerNum}
                 </span>
-                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.35 }}>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.35 }}>
                   {reviewerComments.length}
                 </span>
                 <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
@@ -556,7 +556,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p
                               style={{
-                                fontSize: '13px',
+                                fontSize: 'var(--value-size)',
                                 color: 'var(--ink)',
                                 lineHeight: 1.5,
                                 margin: 0,
@@ -619,7 +619,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                   <button
                                     onClick={() => handleSaveResponse(comment.id)}
                                     style={{
-                                      fontSize: '11px',
+                                      fontSize: 'var(--label-size)',
                                       color: '#fff',
                                       background: 'var(--teal)',
                                       border: 'none',
@@ -633,7 +633,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                   <button
                                     onClick={() => setEditingResponse(null)}
                                     style={{
-                                      fontSize: '11px',
+                                      fontSize: 'var(--label-size)',
                                       color: 'var(--slate)',
                                       background: 'none',
                                       border: 'none',
@@ -655,7 +655,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                   setResponseDraft('')
                                 }}
                                 style={{
-                                  fontSize: '11px',
+                                  fontSize: 'var(--label-size)',
                                   color: 'var(--teal)',
                                   opacity: 0.6,
                                   background: 'none',
@@ -791,7 +791,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
               rows={3}
               className="w-full rounded-lg px-3 py-2 mb-2"
               style={{
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
                 color: 'var(--ink)',
                 background: 'var(--ice)',
                 border: '1px solid var(--border-subtle)',
@@ -861,7 +861,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
         >
           Active Revisions
         </h2>
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
           {revisions.length}
         </span>
       </div>
@@ -880,10 +880,10 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
             <span
               key={col}
               style={{
-                fontSize: '11px',
-                fontWeight: 500,
+                fontSize: 'var(--label-size)',
+                fontWeight: 'var(--label-weight)',
                 color: 'var(--slate)',
-                opacity: 0.5,
+                opacity: 'var(--ink-label)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
               }}
@@ -924,7 +924,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
                 }}
               >
                 {/* Project title */}
-                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>
+                <span style={{ fontSize: 'var(--value-size)', fontWeight: 500, color: 'var(--ink)' }}>
                   {rev.project_title || rev.project_id}
                 </span>
 
@@ -932,7 +932,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
                 <span
                   className="inline-flex items-center justify-center rounded-md"
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     fontWeight: 600,
                     color: 'var(--teal)',
                     background: getStatusBg('in_progress'),
@@ -962,7 +962,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
 
                 {/* Progress */}
                 <div className="flex items-center gap-2">
-                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6, whiteSpace: 'nowrap' }}>
                     {resolvedCount}/{commentCount}
                   </span>
                   {commentCount > 0 && (

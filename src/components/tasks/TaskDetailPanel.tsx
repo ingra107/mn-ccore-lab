@@ -359,7 +359,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
             {/* Handoffs */}
             <CollapsibleSection
               title="Handoffs"
-              icon={<ArrowRightLeft size={11} style={{ color: 'var(--slate)', opacity: 0.55 }} />}
+              icon={<ArrowRightLeft size={11} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />}
               defaultOpen={false}
               storageKey={`task-handoffs-${task.id}`}
             >
@@ -381,7 +381,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
             {/* Files */}
             <CollapsibleSection
               title="Files"
-              icon={<FileText size={11} style={{ color: 'var(--slate)', opacity: 0.55 }} />}
+              icon={<FileText size={11} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />}
               defaultOpen={false}
               storageKey={`task-files-${task.id}`}
             >

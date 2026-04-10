@@ -441,7 +441,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
           border: '1px solid transparent',
           background: 'none',
           cursor: 'pointer',
-          fontSize: '11px',
+          fontSize: 'var(--label-size)',
           fontWeight: 400,
           color: 'var(--slate)',
           transition: 'border-color 150ms ease, color 150ms ease',
@@ -454,8 +454,8 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
           if (!open) e.currentTarget.style.borderColor = 'transparent'
         }}
       >
-        <span style={{ color: 'var(--teal)', fontSize: '11px' }}>{ROLE_LABELS[role]}</span>
-        <ChevronDown size={10} style={{ opacity: 0.5 }} />
+        <span style={{ color: 'var(--teal)', fontSize: 'var(--label-size)' }}>{ROLE_LABELS[role]}</span>
+        <ChevronDown size={10} style={{ opacity: 'var(--ink-label)' }} />
       </button>
 
       {open && (
@@ -490,7 +490,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
                   border: 'none',
                   background: isActive ? 'rgba(45,138,138,0.06)' : 'transparent',
                   cursor: 'pointer',
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   fontWeight: 400,
                   color: isActive ? 'var(--teal)' : 'var(--slate)',
                   textAlign: 'left',
@@ -574,7 +574,7 @@ function QuickStat({ label, value, color, icon: Icon }: { label: string; value: 
       title={quickStatTooltips[label] || label}
     >
       <Icon size={13} style={{ color }} />
-      <span style={{ fontSize: '13px', fontWeight: 600, color }}>{value}</span>
+      <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color }}>{value}</span>
       <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{label}</span>
     </div>
   )
@@ -604,7 +604,7 @@ function MyTasksCard({ tasks, onStatusChange, onOpenDetail, large }: { tasks: Ta
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
                 title="Cycle status"
               >
-                <Circle size={14} style={{ color: task.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)', opacity: 0.5 }} />
+                <Circle size={14} style={{ color: task.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)', opacity: 'var(--ink-label)' }} />
               </button>
               <span className="flex-1 text-sm truncate" style={{ color: 'var(--ink)' }}>
                 {task.title || task.description}
@@ -623,10 +623,10 @@ function MyTasksCard({ tasks, onStatusChange, onOpenDetail, large }: { tasks: Ta
           )
         })}
         {tasks.length === 0 && (
-          <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>All caught up</p>
+          <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>All caught up</p>
         )}
       </div>
-      <Link to="/my-tasks" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/my-tasks" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         View all tasks <ArrowRight size={11} />
       </Link>
     </BentoCard>
@@ -656,16 +656,16 @@ function DeadlinesCard({ deadlines, overdue, large }: { deadlines: TaskRow[]; ov
             <span className="flex-1 text-xs truncate" style={{ color: 'var(--ink)' }}>
               {t.title || t.description}
             </span>
-            <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+            <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               {formatShortDate(t.due_date!)}
             </span>
           </div>
         ))}
         {deadlines.length === 0 && overdue.length === 0 && (
-          <p className="text-center py-4 text-xs" style={{ color: 'var(--slate)', opacity: 0.5 }}>No upcoming deadlines</p>
+          <p className="text-center py-4 text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No upcoming deadlines</p>
         )}
       </div>
-      <Link to="/deadlines" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/deadlines" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         All deadlines <ArrowRight size={11} />
       </Link>
     </BentoCard>
@@ -690,10 +690,10 @@ function NotificationsCard({ notifications }: { notifications: { id: string; tit
           </div>
         ))}
         {notifications.length === 0 && (
-          <p className="text-center py-4 text-xs" style={{ color: 'var(--slate)', opacity: 0.5 }}>All caught up</p>
+          <p className="text-center py-4 text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>All caught up</p>
         )}
       </div>
-      <Link to="/my-items" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/my-items" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         View all items <ArrowRight size={11} />
       </Link>
     </BentoCard>
@@ -723,7 +723,7 @@ function AssignedByMeCard({ tasks }: { tasks: TaskRow[] }) {
           )
         })}
       </div>
-      <Link to="/tasks" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/tasks" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         All tasks <ArrowRight size={11} />
       </Link>
     </BentoCard>
@@ -775,7 +775,7 @@ function ActivityCard({ activity }: { activity: { id: string; type: string; desc
           </div>
         ))}
         {activity.length === 0 && (
-          <p className="text-center py-4 text-xs" style={{ color: 'var(--slate)', opacity: 0.5 }}>No recent activity</p>
+          <p className="text-center py-4 text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No recent activity</p>
         )}
       </div>
     </BentoCard>
@@ -793,7 +793,7 @@ function LabHealthCard({ health }: { health: { total: number; healthy: number; n
         <HealthDot color="var(--orange)" label="At Risk" count={health.at_risk} />
         <HealthDot color="var(--maroon)" label="Critical" count={health.critical} />
       </div>
-      <Link to="/projects" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/projects" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         View projects <ArrowRight size={11} />
       </Link>
     </BentoCard>
@@ -806,7 +806,7 @@ function HealthDot({ color, label, count }: { color: string; label: string; coun
       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
       <div>
         <span className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{count}</span>
-        <span className="text-[9px] ml-1" style={{ color: 'var(--slate)', opacity: 0.5 }}>{label}</span>
+        <span className="text-[9px] ml-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{label}</span>
       </div>
     </div>
   )
@@ -836,7 +836,7 @@ function GrantMiniCard({ grants }: { grants: { title: string; mechanism: string;
           </div>
         ))}
       </div>
-      <Link to="/grants" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <Link to="/grants" className="flex items-center gap-1 mt-2 pt-2" style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
         Grant timeline <ArrowRight size={11} />
       </Link>
     </BentoCard>
@@ -870,7 +870,7 @@ function WatchingCard({ items, onUnwatch }: { items: WatchItem[]; onUnwatch: (id
         {items.map(item => (
           <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.06)' }}>
             {getWatchTypeIcon(item.type)}
-            <Link to={getWatchItemUrl(item)} style={{ flex: 1, fontSize: '13px', color: 'var(--ink)', textDecoration: 'none' }}>
+            <Link to={getWatchItemUrl(item)} style={{ flex: 1, fontSize: 'var(--value-size)', color: 'var(--ink)', textDecoration: 'none' }}>
               {item.label}
             </Link>
             <button onClick={() => onUnwatch(item.id, item.type)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.3, padding: 2 }}>

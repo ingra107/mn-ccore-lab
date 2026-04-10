@@ -294,7 +294,7 @@ function StackedBar({ segments, height = 28 }: {
 export function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' | string }) {
   if (trend === 'up') return <ArrowUp size={12} style={{ color: 'var(--green)' }} />
   if (trend === 'down') return <ArrowDown size={12} style={{ color: 'var(--maroon)' }} />
-  return <Minus size={12} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+  return <Minus size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
 }
 
 // ── Main Component ─────────────────────────────────────────
@@ -590,8 +590,8 @@ export default function PIAnalytics() {
                     </>
                   ) : (
                     <>
-                      <Minus size={14} style={{ color: 'var(--slate)', opacity: 0.5 }} />
-                      <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                      <Minus size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+                      <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                         Stable
                       </span>
                     </>
@@ -706,7 +706,7 @@ export default function PIAnalytics() {
                   )
                 })}
                 <div className="flex items-center gap-2 mt-1 pt-2" style={{ borderTop: '1px dashed var(--border-light)' }}>
-                  <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                  <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                     Score = comments x3 + updates x2 + completions x1
                   </span>
                 </div>
@@ -714,7 +714,7 @@ export default function PIAnalytics() {
             ) : (
               <p
                 className="text-center py-6 text-sm"
-                style={{ color: 'var(--slate)', opacity: 0.5 }}
+                style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
               >
                 No activity data for the last 30 days
               </p>
@@ -810,7 +810,7 @@ export default function PIAnalytics() {
                 </tbody>
               </table>
             ) : (
-              <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+              <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                 No trainees/fellows in the system
               </p>
             )}
@@ -842,7 +842,7 @@ export default function PIAnalytics() {
                 height={150}
               />
             ) : (
-              <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+              <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                 No publication data
               </p>
             )}
@@ -968,7 +968,7 @@ export default function PIAnalytics() {
           ) : (
             <p
               className="text-center py-4 text-sm"
-              style={{ color: 'var(--slate)', opacity: 0.5 }}
+              style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
             >
               Not enough data to generate insights yet
             </p>

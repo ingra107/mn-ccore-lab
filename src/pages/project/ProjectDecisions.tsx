@@ -25,7 +25,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
       <div className="flex items-center justify-between mb-3">
         <h2
           style={{
-            fontWeight: 500,
+            fontWeight: 'var(--label-weight)',
             fontSize: '16px',
             color: 'var(--ink)',
             margin: 0,
@@ -37,7 +37,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
         <Link
           to="/decisions"
           style={{
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             color: 'var(--teal)',
             textDecoration: 'none',
           }}
@@ -67,7 +67,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
                 <Scale size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: 'var(--value-size)',
                     color: 'var(--ink)',
                     fontWeight: 600,
                   }}
@@ -101,7 +101,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
               {decision.outcome && (
                 <p
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     color: 'var(--teal)',
                     margin: '4px 0 0 20px',
                     fontStyle: 'italic',
@@ -114,7 +114,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
                 style={{
                   fontSize: '10px',
                   color: 'var(--slate)',
-                  opacity: 0.5,
+                  opacity: 'var(--ink-label)',
                   marginLeft: '20px',
                   display: 'inline-block',
                   marginTop: '4px',
@@ -129,7 +129,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
             <Link
               to="/decisions"
               style={{
-                fontSize: '11px',
+                fontSize: 'var(--label-size)',
                 color: 'var(--teal)',
                 textDecoration: 'none',
                 textAlign: 'center',

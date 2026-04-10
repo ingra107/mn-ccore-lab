@@ -82,11 +82,11 @@ export default function NarrativesPage() {
                 <h3 style={{ fontWeight: 400, fontSize: '18px', color: 'var(--ink)', margin: 0 }}>
                   {arc.title}
                 </h3>
-                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
                   {arc.projectCount} project{arc.projectCount !== 1 ? 's' : ''}
                 </span>
                 {arc.connectedCount > 0 && (
-                  <span className="flex items-center gap-1" style={{ fontSize: '11px', color: 'var(--teal)' }}>
+                  <span className="flex items-center gap-1" style={{ fontSize: 'var(--label-size)', color: 'var(--teal)' }}>
                     <GitBranch size={10} />
                     {arc.connectedCount} linked
                   </span>
@@ -128,7 +128,7 @@ export default function NarrativesPage() {
                     style={{ textDecoration: 'none' }}
                   >
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: STAGE_COLORS[p.stage] || '#64748b', flexShrink: 0 }} />
-                    <span style={{ fontSize: '13px', color: 'var(--ink)', flex: 1 }}>
+                    <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', flex: 1 }}>
                       {p.title}
                     </span>
                     <span style={{ fontSize: '10px', color: STAGE_COLORS[p.stage], opacity: 0.7 }}>
@@ -157,8 +157,8 @@ export default function NarrativesPage() {
               {arc.relatedPubs.length > 0 && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <FileText size={10} style={{ color: 'var(--slate)', opacity: 0.5 }} />
-                    <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
+                    <FileText size={10} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+                    <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                       Related publications
                     </span>
                   </div>

@@ -190,9 +190,9 @@ export default function NotificationBell() {
                   />
                   <p
                     style={{
-                      fontSize: '13px',
+                      fontSize: 'var(--value-size)',
                       color: 'var(--slate)',
-                      opacity: 0.5,
+                      opacity: 'var(--ink-label)',
                       margin: 0,
                     }}
                   >
@@ -208,7 +208,7 @@ export default function NotificationBell() {
                         padding: '6px 16px 4px',
                         fontSize: '10px',
                         color: group.label === 'Today' ? 'var(--teal)' : 'var(--slate)',
-                        opacity: group.label === 'Today' ? 1 : 0.5,
+                        opacity: group.label === 'Today' ? 1 : 'var(--ink-label)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                         fontWeight: 600,
@@ -267,7 +267,7 @@ export default function NotificationBell() {
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div
                               style={{
-                                fontSize: '13px',
+                                fontSize: 'var(--value-size)',
                                 fontWeight: isUnread ? 600 : 400,
                                 color: 'var(--ink)',
                                 lineHeight: 1.4,
@@ -297,7 +297,7 @@ export default function NotificationBell() {
                               style={{
                                 fontSize: '10px',
                                 color: 'var(--slate)',
-                                opacity: 0.5,
+                                opacity: 'var(--ink-label)',
                                 marginTop: '2px',
                               }}
                             >
@@ -345,7 +345,7 @@ export default function NotificationBell() {
                 display: 'block',
                 padding: '10px 16px',
                 textAlign: 'center',
-                fontSize: '11px',
+                fontSize: 'var(--label-size)',
                 color: 'var(--gold)',
                 textDecoration: 'none',
                 borderTop: '1px solid rgba(201, 168, 76, 0.15)',

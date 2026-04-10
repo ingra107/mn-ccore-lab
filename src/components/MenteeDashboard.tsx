@@ -44,7 +44,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <FlaskConical size={14} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
+            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Projects
             </span>
           </div>
@@ -70,7 +70,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <ListChecks size={14} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
+            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Action Items
             </span>
             {myPending.length > 0 && (
@@ -107,7 +107,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <BookOpen size={14} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
+            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Publications
             </span>
           </div>
@@ -131,25 +131,25 @@ export default function MenteeDashboard({ slug, name }: Props) {
         <div className="card p-4" style={{ borderRadius: '12px' }}>
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={14} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65 }}>
+            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Summary
             </span>
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>Projects</span>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>{myProjects.length}</span>
+              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Projects</span>
+              <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{myProjects.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>Publications</span>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>{myPubs.length}</span>
+              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Publications</span>
+              <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{myPubs.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>Actions pending</span>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: myPending.length > 0 ? 'var(--gold)' : 'var(--teal)' }}>{myPending.length}</span>
+              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Actions pending</span>
+              <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: myPending.length > 0 ? 'var(--gold)' : 'var(--teal)' }}>{myPending.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span style={{ fontSize: '11px', color: 'var(--slate)' }}>Actions completed</span>
+              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Actions completed</span>
               <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--teal)' }}>{myCompleted.length}</span>
             </div>
           </div>

@@ -51,7 +51,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
           Today
         </span>
         {meetings.length > 0 && (
-          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             {meetings.length} meeting{meetings.length !== 1 ? 's' : ''}
           </span>
         )}
@@ -110,7 +110,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
                 overflow: 'hidden',
               }}
             >
-              <span className="block truncate" style={{ fontSize: '11px', color: 'var(--teal)', fontWeight: 500 }}>
+              <span className="block truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', fontWeight: 'var(--label-weight)' }}>
                 {event.title}
               </span>
             </Link>

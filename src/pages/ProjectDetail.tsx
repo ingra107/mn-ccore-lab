@@ -265,7 +265,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             <div style={{ width: 24, height: 24, flexShrink: 0 }}>
               <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm" variant="gold" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[8px]" />
             </div>
-            <span style={{ fontSize: '13px', color: 'var(--slate)' }}>{pi.name}</span>
+            <span style={{ fontSize: 'var(--value-size)', color: 'var(--slate)' }}>{pi.name}</span>
           </div>
 
           <div style={{ width: '1px', height: '16px', background: 'var(--border-subtle)' }} />
@@ -329,7 +329,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             </span>
           )}
           {project.lastActivity && (
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.55 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Last activity {formatShortDate(project.lastActivity)}
             </span>
           )}
@@ -371,7 +371,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     type="button"
                     onClick={() => { setShowAgendaForm(false); setAgendaNote('') }}
                     className="cursor-pointer"
-                    style={{ background: 'none', border: 'none', color: 'var(--slate)', opacity: 0.5, padding: '2px' }}
+                    style={{ background: 'none', border: 'none', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: '2px' }}
                   >
                     <X size={14} />
                   </button>
@@ -398,7 +398,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     autoFocus
                     style={{
                       flex: 1,
-                      fontSize: '13px',
+                      fontSize: 'var(--value-size)',
                       color: 'var(--ink)',
                       background: 'var(--cream)',
                       border: '1px solid rgba(201, 168, 76, 0.15)',
@@ -464,7 +464,7 @@ function ProjectDetailInner({ project }: InnerProps) {
       <div className="mt-6 mb-6" style={{ padding: '0 4px' }}>
         <div className="flex items-center gap-2 mb-3">
           <Clock size={14} style={{ color: 'var(--gold)' }} />
-          <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Project Timeline
           </span>
         </div>
@@ -507,7 +507,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 className="text-[10px] px-2 py-0.5 rounded"
                 style={{
                   color: 'var(--slate)',
-                  opacity: 0.5,
+                  opacity: 'var(--ink-label)',
                   background: 'none',
                   border: '1px solid var(--border-light)',
                   cursor: 'pointer',
@@ -563,7 +563,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 >
                   Cancel
                 </button>
-                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.55 }}>
+                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   Ctrl+Enter to save
                 </span>
               </div>
@@ -582,9 +582,9 @@ function ProjectDetailInner({ project }: InnerProps) {
           ) : isPi ? (
             <p
               style={{
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
                 color: 'var(--slate)',
-                opacity: 0.5,
+                opacity: 'var(--ink-label)',
                 margin: 0,
                 fontStyle: 'italic',
               }}
@@ -884,7 +884,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                         background: 'none',
                         border: 'none',
                         cursor: 'pointer',
-                        fontSize: '11px',
+                        fontSize: 'var(--label-size)',
                         color: 'var(--teal)',
                         padding: '4px 0',
                         opacity: 0.8,
@@ -930,7 +930,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                         </div>
                         <span
                           style={{
-                            fontSize: '13px',
+                            fontSize: 'var(--value-size)',
                             color: 'var(--ink)',
                           }}
                         >
@@ -1034,7 +1034,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   }}
                   style={{
                     flex: 1,
-                    fontSize: '13px',
+                    fontSize: 'var(--value-size)',
                     color: 'var(--ink)',
                     background: 'var(--cream)',
                     border: '1px solid rgba(201, 168, 76, 0.2)',
@@ -1099,7 +1099,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       </span>
                       <p
                         style={{
-                          fontSize: '13px',
+                          fontSize: 'var(--value-size)',
                           color: 'var(--ink)',
                           lineHeight: 1.5,
                           margin: 0,
@@ -1115,7 +1115,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     style={{
                       fontSize: '12px',
                       color: 'var(--slate)',
-                      opacity: 0.55,
+                      opacity: 'var(--ink-label)',
                       textAlign: 'center',
                       padding: '16px 0',
                       margin: 0,
@@ -1194,7 +1194,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             return filtered.length === 0 ? (
               <div className="text-center py-12">
                 <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 12px' }} />
-                <p style={{ fontSize: '14px', color: 'var(--slate)', opacity: 0.55 }}>
+                <p style={{ fontSize: '14px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   {taskFilter === 'active' ? 'No active tasks.' : taskFilter === 'done' ? 'No completed tasks.' : 'No tasks for this project.'}
                 </p>
               </div>
@@ -1313,7 +1313,7 @@ function ProjectTimeline({ createdAt, stage, tasks, updates }: {
 
   if (events.length === 0) {
     return (
-      <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '12px 0' }}>
+      <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: '12px 0' }}>
         No timeline events yet.
       </p>
     )
@@ -1354,7 +1354,7 @@ function ProjectTimeline({ createdAt, stage, tasks, updates }: {
               <p style={{ fontSize: '12px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
                 {event.label}
               </p>
-              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55 }}>
+              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                 {formatShortDate(event.date)}
                 {event.type === 'task' && <span style={{ color: 'var(--green)', marginLeft: '6px' }}>completed</span>}
                 {event.type === 'update' && <span style={{ color: 'var(--teal)', marginLeft: '6px' }}>note</span>}

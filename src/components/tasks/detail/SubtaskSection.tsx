@@ -17,7 +17,7 @@ export function SubtaskSection({ taskId }: { taskId: string }) {
   return (
     <CollapsibleSection
       title="Subtasks"
-      icon={<ListChecks size={11} style={{ color: 'var(--slate)', opacity: 0.5 }} />}
+      icon={<ListChecks size={11} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />}
       badge={total > 0 ? `${completed}/${total}` : null}
       defaultOpen={total > 0}
       storageKey={`task-subtasks-${taskId}`}
