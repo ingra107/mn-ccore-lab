@@ -306,7 +306,9 @@ export function DateInput({ value, onChange }: { value: string; onChange: (v: st
 
 export function ProjectSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
   const ref = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
   const { data: projectList = [] } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
@@ -372,32 +374,56 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
           cardHandlers={hoverCard.cardHandlers}
         />
       )}
-      {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[240px] max-h-[280px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
-          <button
-            onClick={() => { onChange(''); setOpen(false) }}
-            className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-            style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.6 }}
-          >
-            No project
-            {!value && <Check size={14} style={{ color: 'var(--teal)', marginLeft: 'auto' }} />}
-          </button>
-          {projectList.map((p) => {
-            const selected = p.slug === value
-            return (
+      {open && (() => {
+        const q = search.toLowerCase()
+        const filtered = q ? projectList.filter((p) => p.title.toLowerCase().includes(q)) : projectList
+        return (
+        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border min-w-[260px]" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-light)' }}>
+          <div className="px-2 py-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+            <input
+              ref={searchRef}
+              autoFocus
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search projects..."
+              className="w-full text-sm bg-transparent outline-none px-2 py-1"
+              style={{ color: 'var(--ink)' }}
+              onKeyDown={(e) => { if (e.key === 'Escape') { setSearch(''); setOpen(false) } }}
+            />
+          </div>
+          <div className="py-1 max-h-[240px] overflow-y-auto">
+            {!q && (
               <button
-                key={p.slug}
-                onClick={() => { onChange(p.slug); setOpen(false) }}
+                onClick={() => { onChange(''); setSearch(''); setOpen(false) }}
                 className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+                style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.6 }}
               >
-                <span className="flex-1 truncate">{p.title}</span>
-                {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}
+                No project
+                {!value && <Check size={14} style={{ color: 'var(--teal)', marginLeft: 'auto' }} />}
               </button>
-            )
-          })}
+            )}
+            {filtered.map((p) => {
+              const selected = p.slug === value
+              return (
+                <button
+                  key={p.slug}
+                  onClick={() => { onChange(p.slug); setSearch(''); setOpen(false) }}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                  style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+                >
+                  <span className="flex-1 truncate">{p.title}</span>
+                  {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}
+                </button>
+              )
+            })}
+            {filtered.length === 0 && (
+              <div className="px-3 py-2 text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>No matches</div>
+            )}
+          </div>
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
