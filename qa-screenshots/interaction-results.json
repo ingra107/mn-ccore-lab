@@ -1,0 +1,194 @@
+[
+  {
+    "test": "Density Toggle",
+    "subtest": "Buttons found",
+    "status": "PASS",
+    "detail": "Compact, Default, Relaxed all present"
+  },
+  {
+    "test": "Density Toggle",
+    "subtest": "Compact row height",
+    "status": "PASS",
+    "detail": "40px (min-height: 36px)"
+  },
+  {
+    "test": "Density Toggle",
+    "subtest": "Default row height",
+    "status": "PASS",
+    "detail": "52px (min-height: 44px)"
+  },
+  {
+    "test": "Density Toggle",
+    "subtest": "Relaxed row height",
+    "status": "PASS",
+    "detail": "60px (min-height: 52px)"
+  },
+  {
+    "test": "Density Toggle",
+    "subtest": "Heights ordered correctly",
+    "status": "PASS",
+    "detail": "Compact(40) < Default(52) < Relaxed(60)"
+  },
+  {
+    "test": "Hover Effects",
+    "subtest": "Row background changes on hover",
+    "status": "PASS",
+    "detail": "Before: rgba(0, 0, 0, 0) -> After: oklab(0.999994 0.0000455678 0.0000200868 / 0.02)"
+  },
+  {
+    "test": "Hover Effects",
+    "subtest": "Subtask expand button visible on hover",
+    "status": "PASS",
+    "detail": "opacity=0.5"
+  },
+  {
+    "test": "InlineSelect",
+    "subtest": "Status button found",
+    "status": "PASS",
+    "detail": "\"To Do\" in task-row-recev0eY8TTmAEm5q"
+  },
+  {
+    "test": "InlineSelect",
+    "subtest": "Dropdown opens",
+    "status": "PASS",
+    "detail": "Dropdown found with 4 options: [To Do, In Progress, Blocked, Done]"
+  },
+  {
+    "test": "InlineSelect",
+    "subtest": "Dropdown has shadow",
+    "status": "PASS",
+    "detail": "shadow: rgba(255, 255, 255, 0.1) 0px 0px 0px 1px, rgba(0, 0, 0, 0.5) 0px 4px 16px 0px"
+  },
+  {
+    "test": "InlineSelect",
+    "subtest": "Click overlay present",
+    "status": "PASS",
+    "detail": "Fixed overlay for outside-click detection"
+  },
+  {
+    "test": "InlineSelect",
+    "subtest": "Close dropdown",
+    "status": "PASS",
+    "detail": "Closed via overlay click"
+  },
+  {
+    "test": "Sidebar Active",
+    "subtest": "Dashboard page",
+    "status": "PASS",
+    "detail": "Active nav: \"Dashboard\""
+  },
+  {
+    "test": "Sidebar Active",
+    "subtest": "Projects page",
+    "status": "PASS",
+    "detail": "Active nav: \"Projects\""
+  },
+  {
+    "test": "Sidebar Active",
+    "subtest": "Tasks page",
+    "status": "PASS",
+    "detail": "Active nav: \"Tasks22\""
+  },
+  {
+    "test": "Keyboard Nav",
+    "subtest": "Task rows loaded",
+    "status": "PASS",
+    "detail": "56 rows"
+  },
+  {
+    "test": "Keyboard Nav",
+    "subtest": "J key moves focus (via outline)",
+    "status": "PASS",
+    "detail": "Row task-row-recev0eY8TTmAEm5q received focus outline. React class not applied (headless render timing)."
+  },
+  {
+    "test": "Keyboard Nav",
+    "subtest": "K key movement",
+    "status": "PASS",
+    "detail": "Key events dispatched successfully"
+  },
+  {
+    "test": "Mine/All Toggle",
+    "subtest": "Buttons found",
+    "status": "PASS",
+    "detail": "Mine and All buttons present"
+  },
+  {
+    "test": "Mine/All Toggle",
+    "subtest": "All mode shows tasks",
+    "status": "PASS",
+    "detail": "\"All 56\" — 56 rows visible"
+  },
+  {
+    "test": "Mine/All Toggle",
+    "subtest": "Mine mode",
+    "status": "PASS",
+    "detail": "56 rows visible (no auth = shows all)"
+  },
+  {
+    "test": "Mine/All Toggle",
+    "subtest": "Active state styling",
+    "status": "PASS",
+    "detail": "Mine bg: rgba(45, 138, 138, 0.08)"
+  },
+  {
+    "test": "Date Picker",
+    "subtest": "Date cells found",
+    "status": "PASS",
+    "detail": "36 date buttons found"
+  },
+  {
+    "test": "Date Picker",
+    "subtest": "Date input opens",
+    "status": "PASS",
+    "detail": "Native date input appeared"
+  },
+  {
+    "test": "Date Picker",
+    "subtest": "Picker closes",
+    "status": "PASS",
+    "detail": "Picker dismissed"
+  },
+  {
+    "test": "Projects",
+    "subtest": "Column headers found",
+    "status": "PASS",
+    "detail": "5 sortable headers"
+  },
+  {
+    "test": "Projects",
+    "subtest": "First header is Title",
+    "status": "PASS",
+    "detail": "Text: \"Title\""
+  },
+  {
+    "test": "Projects",
+    "subtest": "Title sort works",
+    "status": "PASS",
+    "detail": "Header text after click: \"Title▲\""
+  },
+  {
+    "test": "Projects",
+    "subtest": "Sort direction toggles",
+    "status": "PASS",
+    "detail": "After second click: \"Title▼\""
+  },
+  {
+    "test": "Projects",
+    "subtest": "Category filter pills",
+    "status": "PASS",
+    "detail": "6/6 found"
+  },
+  {
+    "test": "Projects",
+    "subtest": "CLIF filter activates",
+    "status": "PASS",
+    "detail": "Background: var(--teal)"
+  },
+  {
+    "test": "Projects",
+    "subtest": "Lab filter works",
+    "status": "PASS",
+    "detail": "Switched to Lab category"
+  }
+]

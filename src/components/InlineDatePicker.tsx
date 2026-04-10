@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { ChevronDown, CalendarDays } from 'lucide-react'
 import { formatShortDate } from '../lib/dateUtils'
 
@@ -9,6 +9,7 @@ interface InlineDatePickerProps {
 
 export default function InlineDatePicker({ value, onChange }: InlineDatePickerProps) {
   const [editing, setEditing] = useState(false)
+  const [pendingValue, setPendingValue] = useState<string | null>(value)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -20,6 +21,11 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
   const isTomorrow = dueDate && dueDate.toDateString() === new Date(today.getTime() + 86400000).toDateString()
   const isThisWeek = dueDate && !isOverdue && !isToday && !isTomorrow && dueDate < new Date(today.getTime() + 7 * 86400000)
 
+  // Sync pending value when editing starts
+  useEffect(() => {
+    if (editing) setPendingValue(value)
+  }, [editing, value])
+
   useEffect(() => {
     if (editing && inputRef.current) {
       inputRef.current.focus()
@@ -28,30 +34,37 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
     }
   }, [editing])
 
+  const commitAndClose = useCallback(() => {
+    if (pendingValue !== value) {
+      onChange(pendingValue)
+    }
+    setEditing(false)
+  }, [pendingValue, value, onChange])
+
   // Close on outside click
   useEffect(() => {
     if (!editing) return
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setEditing(false)
+        commitAndClose()
       }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [editing])
+  }, [editing, commitAndClose])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVal = e.target.value || null
-    onChange(newVal)
-    // Don't close here — native date picker fires onChange on month navigation too.
-    // User closes via blur, Enter, Escape, or outside click.
+    // Only update local pending state — don't commit yet.
+    // Native date pickers fire onChange on month navigation too.
+    setPendingValue(e.target.value || null)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      setEditing(false)
+      commitAndClose()
     }
     if (e.key === 'Escape') {
+      setPendingValue(value) // revert
       setEditing(false)
     }
   }
@@ -79,9 +92,9 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
         <input
           ref={inputRef}
           type="date"
-          value={value || ''}
+          value={pendingValue || ''}
           onChange={handleChange}
-          onBlur={() => setTimeout(() => setEditing(false), 200)}
+          onBlur={() => setTimeout(() => commitAndClose(), 200)}
           onKeyDown={handleKeyDown}
           style={{
             fontSize: '12px',

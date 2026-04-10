@@ -80,10 +80,10 @@
   --ink-bright: oklch(1.00 0 0);         /* #ffffff */
   --slate: oklch(0.7 0.02 250);          /* #94a3b8 */
   --gold: oklch(0.73 0.12 85);           /* #c9a84c */
-  --gold-light: oklch(0.18 0.02 240);    /* #1a2332 */
-  --cream: oklch(0.12 0.015 250);        /* #0b1017 with subtle blue tint */
+  --gold-light: oklch(0.18 0.005 240);   /* neutral dark hover */
+  --cream: oklch(0.12 0.005 250);        /* #0e1014 neutral dark — chroma reduced */
   --maroon: oklch(0.65 0.15 20);         /* #e85d7a */
-  --ice: oklch(0.14 0.015 240);          /* #131a24 */
+  --ice: oklch(0.14 0.005 240);          /* neutral dark ice */
   --teal: oklch(0.70 0.1 190);           /* #3db8b8 */
   --orange: oklch(0.65 0.18 45);         /* #e8713a */
   --green: oklch(0.78 0.18 145);         /* #4ade80 */
@@ -478,7 +478,8 @@ a:hover {
 .table-container {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   background: var(--cream);
 }
 
@@ -491,22 +492,24 @@ a:hover {
 .card {
   background: var(--cream);
   box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   transition: box-shadow 0.25s ease, background-color 0.12s ease;
 }
 
 .card:hover {
   box-shadow: var(--shadow-card-hover);
-  background-color: var(--gold-light);
+  background-color: rgba(0, 0, 0, 0.015);
 }
 
 .dark .card {
-  background: #111820;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background-color: var(--cream);
+  background-image: linear-gradient(var(--surface-2), var(--surface-2));
+  border: 1px solid var(--border-subtle);
 }
 
 .dark .card:hover {
-  background: #161f2b;
+  background-image: linear-gradient(var(--surface-3), var(--surface-3));
 }
 
 /* ── Elevated card with dark neumorphism ── */

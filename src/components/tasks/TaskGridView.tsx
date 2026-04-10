@@ -81,7 +81,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     else { setSortKey(key); setSortAsc(true) }
   }
 
-  const colStyle = { display: 'grid', gridTemplateColumns: '32px minmax(280px, 3fr) 1fr 1fr 1fr 1fr 60px', alignItems: 'center' } as const
+  const colStyle = { display: 'grid', gridTemplateColumns: '32px minmax(280px, 3fr) 120px 110px 130px 90px 60px', alignItems: 'center' } as const
 
   const ROW_HEIGHT = 44
   const parentRef = useRef<HTMLDivElement>(null)
@@ -234,6 +234,13 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         }
         .task-grid-row:hover .subtask-expand-btn:hover {
           opacity: 0.8 !important;
+        }
+        .task-grid-row .hover-badge {
+          opacity: 0;
+          transition: opacity var(--transition-fast) ease;
+        }
+        .task-grid-row:hover .hover-badge {
+          opacity: 1;
         }
         @media (max-width: 768px) {
           .task-grid-header {
@@ -517,6 +524,7 @@ function TaskGridRow({
             if (age < 14) return null
             return (
               <span
+                className="hover-badge"
                 title={`Open for ${age} days`}
                 style={{
                   fontSize: '9px',
@@ -534,6 +542,7 @@ function TaskGridRow({
           })()}
           {task.project_id && (
             <span
+              className="hover-badge"
               style={{
                 fontSize: '9px',
                 padding: '1px 5px',
@@ -542,7 +551,6 @@ function TaskGridRow({
                 color: 'var(--teal)',
                 flexShrink: 0,
                 lineHeight: '14px',
-                opacity: 0.7,
                 maxWidth: '100px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',

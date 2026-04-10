@@ -1,0 +1,146 @@
+[
+  {
+    "section": "1-Sidebar",
+    "item": "Shows \"Tasks\" nav entry",
+    "pass": false,
+    "detail": ""
+  },
+  {
+    "section": "1-Sidebar",
+    "item": "\"All Tasks\" separate link is gone",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "section": "1-Sidebar",
+    "item": "Sidebar luminance lift vs page bg",
+    "pass": false,
+    "detail": "sidebar: oklch(0.12 0.015 250), body: oklch(0.12 0.015 250)"
+  },
+  {
+    "section": "1-Sidebar",
+    "item": "Active nav has teal fill",
+    "pass": true,
+    "detail": "\"Dashboard\" bg: color(srgb 0.262713 0.698967 0.674982 / 0.12)"
+  },
+  {
+    "section": "1-Sidebar",
+    "item": "/tasks URL works without error",
+    "pass": true,
+    "detail": "URL: https://mn-ccore-lab.pages.dev/my-tasks"
+  },
+  {
+    "section": "2-Tasks",
+    "item": "Page title contains \"Tasks\"",
+    "pass": true,
+    "detail": "Found: \"Tasks\""
+  },
+  {
+    "section": "2-Tasks",
+    "item": "Mine/All toggle visible",
+    "pass": true,
+    "detail": "Mine: true, All: false"
+  },
+  {
+    "section": "2-Tasks",
+    "item": "Focus Next section appears",
+    "pass": false,
+    "detail": ""
+  },
+  {
+    "section": "3-Density",
+    "item": "Density toggle visible",
+    "pass": true,
+    "detail": "{\"byTestId\":false,\"byClass\":true,\"byAria\":false,\"byTitle\":true,\"densityButtonCount\":3,\"svgButtonCount\":186,\"densityButtonTexts\":[\"Compact view\",\"Compact\",\"Relaxed\"]}"
+  },
+  {
+    "section": "7-ShortName",
+    "item": "Short name subtitles on Projects",
+    "pass": false,
+    "detail": "{\"smallElements\":0,\"subtitleCount\":0,\"rowCount\":51}"
+  },
+  {
+    "section": "7-ShortName",
+    "item": "Project detail page loaded",
+    "pass": true,
+    "detail": "Navigated to: /projects/lpv-precision-practice-assistance"
+  },
+  {
+    "section": "8-Columns",
+    "item": "Table screenshots captured for review",
+    "pass": true,
+    "detail": "tasks, deadlines, manuscripts, grants"
+  },
+  {
+    "section": "9-Tokens",
+    "item": "Heading letter-spacing",
+    "pass": true,
+    "detail": "-0.8px"
+  },
+  {
+    "section": "9-Tokens",
+    "item": "Font weight tokens defined",
+    "pass": true,
+    "detail": "body=400, ui=500, heading=600"
+  },
+  {
+    "section": "9-Tokens",
+    "item": "Surface elevation tokens defined",
+    "pass": true,
+    "detail": "s0=oklch(12% .015 250), s1=#ffffff05"
+  },
+  {
+    "section": "9-Tokens",
+    "item": "Shadow menu token defined",
+    "pass": true,
+    "detail": "0 0 0 1px #ffffff1a, 0 4px 16px #00000080"
+  },
+  {
+    "section": "9-Tokens",
+    "item": "Animation duration tokens defined",
+    "pass": true,
+    "detail": "fast=0s, normal=0s"
+  },
+  {
+    "section": "9-Tokens",
+    "item": "Radius tokens defined",
+    "pass": true,
+    "detail": "sm=4px, md=6px, lg=8px"
+  },
+  {
+    "section": "9-Tokens",
+    "item": "Ink opacity tokens defined",
+    "pass": true,
+    "detail": "primary=1, muted=.7"
+  },
+  {
+    "section": "9-Tokens",
+    "item": "Typography scale tokens defined",
+    "pass": true,
+    "detail": "body=13px, label=11px"
+  },
+  {
+    "section": "9-Tokens",
+    "item": "Tabular numbers in table cells",
+    "pass": false,
+    "detail": "none found"
+  },
+  {
+    "section": "10-Cleanup",
+    "item": "No INSPECTION data in activity",
+    "pass": true,
+    "detail": "Activity tab not found — deferred"
+  },
+  {
+    "section": "11-LightMode",
+    "item": "Text readable in light mode",
+    "pass": true,
+    "detail": "text: oklch(0.15 0.02 250), bg: oklch(1 0 0)"
+  },
+  {
+    "section": "12-Responsive",
+    "item": "Responsive screenshots at 768px",
+    "pass": true,
+    "detail": ""
+  }
+]

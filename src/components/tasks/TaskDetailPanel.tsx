@@ -422,8 +422,9 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
             to { transform: translateX(0); }
           }
           .dark .task-detail-panel {
-            background-color: #162535 !important;
-            border-color: rgba(201, 168, 76, 0.12) !important;
+            background-color: var(--cream) !important;
+            background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+            border-color: var(--border-subtle) !important;
           }
           .dark .task-detail-panel select {
             color-scheme: dark;

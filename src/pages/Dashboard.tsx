@@ -756,12 +756,13 @@ export default function Dashboard() {
 
         /* Dark mode card overrides */
         .dark .bento-card {
-          background: #162535 !important;
-          border-color: rgba(201, 168, 76, 0.12) !important;
+          background-color: var(--cream) !important;
+          background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+          border-color: var(--border-subtle) !important;
         }
 
         .dark .bento-card:hover {
-          background: #1e3048 !important;
+          background-image: linear-gradient(var(--surface-3), var(--surface-3)) !important;
         }
 
         /* Pin button background — light/dark */

@@ -1083,25 +1083,25 @@ export default function Meetings() {
       {/* Scoped styles */}
       <style>{`
         .dark .meeting-card {
-          background: #162535 !important;
+          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
         }
         .dark .action-item-card {
-          background: #162535 !important;
+          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
         }
         .dark .quick-add-form-container {
-          background: #162535 !important;
+          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
         }
         .dark .quick-add-trigger {
-          background: #162535 !important;
+          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
         }
         .dark select, .dark input[type="date"] {
           color-scheme: dark;
         }
         .dark .action-item-card {
-          border-color: rgba(201, 168, 76, 0.12) !important;
+          border-color: var(--border-subtle) !important;
         }
         .dark .meeting-card {
-          border-color: rgba(201, 168, 76, 0.12) !important;
+          border-color: var(--border-subtle) !important;
         }
       `}</style>
     </div>

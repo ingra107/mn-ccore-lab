@@ -81,7 +81,7 @@ export default function SettingsPage() {
     <div>
       <PageHeader icon={<Settings size={20} />} title="Settings" subtitle="Changes are saved automatically" />
 
-      <div className="mt-6 flex flex-col gap-8 max-w-2xl">
+      <div className="mt-6 flex flex-col max-w-2xl">
         {/* Basic Information */}
         <SettingsSection title="Basic Information" subtitle="These appear in the sidebar header and dashboard" icon={Type}>
           <SettingsField label="Lab Name" hint="Shown in the sidebar and page titles">
@@ -258,7 +258,7 @@ export default function SettingsPage() {
                 <Moon size={12} style={{ color: '#c9a84c' }} />
                 <span className="text-[11px] font-medium" style={{ color: '#e2e8f0' }}>Dark</span>
               </div>
-              <div className="rounded" style={{ background: '#111820', padding: 6 }}>
+              <div className="rounded" style={{ background: 'color-mix(in oklch, var(--cream), white 3%)', padding: 6 }}>
                 <div className="h-1.5 rounded-full mb-1.5" style={{ width: '80%', background: '#e2e8f0', opacity: 0.2 }} />
                 <div className="h-1.5 rounded-full mb-1.5" style={{ width: '60%', background: '#e2e8f0', opacity: 0.15 }} />
                 <div className="h-1.5 rounded-full" style={{ width: '70%', background: '#2d8a8a', opacity: 0.3 }} />
@@ -333,7 +333,7 @@ export default function SettingsPage() {
 
 function SettingsSection({ title, subtitle, icon: Icon, children }: { title: string; subtitle: string; icon: typeof Settings; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-light)' }}>
+    <div className="mb-6" style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-xl, 24px)' }}>
       <div className="flex items-center gap-3 mb-4">
         <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(45,138,138,0.08)' }}>
           <Icon size={16} style={{ color: 'var(--teal)' }} />

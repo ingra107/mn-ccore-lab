@@ -363,7 +363,7 @@ export default function Projects() {
 
             {/* Table header */}
             <div
-              className="hidden sm:grid"
+              className="hidden md:grid"
               style={{
                 gridTemplateColumns: 'minmax(280px, 3fr) 1fr 1fr 1fr 80px',
                 padding: '8px 24px',
@@ -459,7 +459,7 @@ export default function Projects() {
                         >
                           {/* Desktop: 5-column grid */}
                           <div
-                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} hidden sm:grid`}
+                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} hidden md:grid`}
                             style={{
                               gridTemplateColumns: 'minmax(280px, 3fr) 1fr 1fr 1fr 80px',
                               padding: `var(--row-padding-y, 14px) 24px`,
@@ -635,7 +635,7 @@ export default function Projects() {
 
                           {/* Mobile: stacked card layout */}
                           <div
-                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} sm:hidden`}
+                            className={`project-list-row${isFocused ? ' project-row-focused' : ''} md:hidden`}
                             style={{
                               padding: `var(--row-padding-y, 12px) 16px`,
                               borderBottom: '1px solid var(--border-subtle)',
@@ -972,13 +972,13 @@ export default function Projects() {
 
         /* Dark mode overrides */
         .dark .pipeline-column {
-          background: #162535 !important;
+          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
         }
         .dark .project-card {
-          background: #0f1923 !important;
+          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-1), var(--surface-1)) !important;
         }
         .dark .project-card:hover {
-          background: #1a2a3a !important;
+          background-image: linear-gradient(var(--surface-3), var(--surface-3)) !important;
         }
         .dark .project-row-focused {
           background: rgba(201, 168, 76, 0.06) !important;

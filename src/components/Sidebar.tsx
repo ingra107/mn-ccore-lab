@@ -166,12 +166,12 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
       }`}
       style={{
         backgroundColor: 'var(--cream)',
-        backgroundImage: 'linear-gradient(var(--surface-1), var(--surface-1))',
-        borderColor: 'var(--border-light)',
+        backgroundImage: 'linear-gradient(var(--surface-2), var(--surface-2))',
+        borderColor: 'var(--border-subtle)',
       }}
     >
       {/* Logo area */}
-      <div className="flex items-center h-14 px-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+      <div className="flex items-center h-14 px-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
         <Link to="/" className="flex items-center gap-2 min-w-0">
           <img
             src="/logos/mnccore-logo-mark.svg"

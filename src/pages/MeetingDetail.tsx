@@ -584,7 +584,7 @@ export default function MeetingDetail() {
       </div>
 
       <style>{`
-        .dark .detail-card { background: #111820 !important; border: 1px solid rgba(255, 255, 255, 0.06); }
+        .dark .detail-card { background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important; border: 1px solid var(--border-subtle); }
         .action-item-row:active { background: rgba(201, 168, 76, 0.06); }
         .action-item-row:hover { background: rgba(201, 168, 76, 0.04); }
         .dark .action-item-row:active { background: rgba(201, 168, 76, 0.1); }

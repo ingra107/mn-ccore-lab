@@ -97,7 +97,7 @@ export default function Network() {
       className="flex flex-col"
       style={{
         height: '100vh',
-        background: 'linear-gradient(135deg, #0f1923 0%, #1a2a3a 40%, #2c3e50 100%)',
+        background: 'linear-gradient(135deg, oklch(0.12 0.005 250) 0%, oklch(0.16 0.005 250) 40%, oklch(0.25 0.01 230) 100%)',
       }}
     >
       {/* Header bar */}

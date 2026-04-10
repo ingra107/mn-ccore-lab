@@ -108,7 +108,7 @@ export default function BentoCard({
           <div className="min-w-0 flex-1">
             <h3
               style={{
-                fontWeight: 400,
+                fontWeight: 500,
                 fontSize: '15px',
                 lineHeight: 1.3,
                 color: 'var(--ink)',

@@ -183,7 +183,7 @@ export default function Home() {
         style={{
           paddingTop: '100px',
           paddingBottom: 'clamp(48px, 6vw, 80px)',
-          background: 'linear-gradient(160deg, #0f1923 0%, #152233 35%, #1a2a3a 60%, #243447 100%)',
+          background: 'linear-gradient(160deg, oklch(0.12 0.005 250) 0%, oklch(0.14 0.005 250) 35%, oklch(0.16 0.005 250) 60%, oklch(0.18 0.005 250) 100%)',
         }}
       >
         {/* Network background */}
