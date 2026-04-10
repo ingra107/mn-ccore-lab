@@ -43,7 +43,8 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVal = e.target.value || null
     onChange(newVal)
-    setEditing(false)
+    // Don't close here — native date picker fires onChange on month navigation too.
+    // User closes via blur, Enter, Escape, or outside click.
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
