@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions } from '../hooks/useApiData'
-import { useUpdateProject, useAddAgendaItem, usePostProjectUpdate, useUpdateTaskStatus, useCreateTask } from '../hooks/useMutations'
+import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useCreateTask } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
@@ -112,7 +112,6 @@ function ProjectDetailInner({ project }: InnerProps) {
   // D1 mutations
   const d1Update = useUpdateProject(project.slug)
   const { showUndo } = useUndoToast()
-  const postUpdate = usePostProjectUpdate(project.slug)
   const { data: projectUpdates = [] } = useProjectUpdates(project.slug)
   const { isAuthenticated, user } = useAuth()
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
@@ -170,8 +169,6 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [shortNameDraft, setShortNameDraft] = useState(project.short_name ?? '')
   const descRef = useRef<HTMLTextAreaElement>(null)
 
-  // Note input
-  const [noteText, setNoteText] = useState('')
 
   // Task detail panel
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
@@ -216,12 +213,6 @@ function ProjectDetailInner({ project }: InnerProps) {
     }
   }
 
-  function handleAddNote() {
-    const text = noteText.trim()
-    if (!text) return
-    postUpdate.mutate({ content: text, update_type: 'progress' })
-    setNoteText('')
-  }
 
   return (
     <>
@@ -824,14 +815,11 @@ function ProjectDetailInner({ project }: InnerProps) {
         </AnimatePresence>
       </motion.div>
 
-      {/* Two-column layout: Details + Notes */}
+      {/* Details section */}
       <div
-        className="grid grid-cols-1 lg:grid-cols-5 gap-8"
         style={{ marginBottom: '2.5rem' }}
       >
-        {/* Left column: Details (3/5) */}
         <motion.div
-          className="lg:col-span-3"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: 0.15 }}
@@ -1050,142 +1038,6 @@ function ProjectDetailInner({ project }: InnerProps) {
           </div>
         </motion.div>
 
-        {/* Right column: Notes (2/5) */}
-        <motion.div
-          className="lg:col-span-2"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.2 }}
-        >
-          <h2
-            style={{
-              fontWeight: 500,
-              fontSize: '16px',
-              color: 'var(--ink)',
-              margin: '0 0 12px 0',
-            }}
-          >
-            Notes
-          </h2>
-
-          <div
-            style={{
-              background: 'var(--ice)',
-              borderRadius: '12px',
-              padding: '16px',
-            }}
-            className="detail-card"
-          >
-            {/* Add note input */}
-            <div style={{ marginBottom: '12px' }}>
-              <div className="flex gap-2">
-                <textarea
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="Add a note..."
-                  rows={2}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                      e.preventDefault()
-                      handleAddNote()
-                    }
-                  }}
-                  style={{
-                    flex: 1,
-                    fontSize: 'var(--value-size)',
-                    color: 'var(--ink)',
-                    background: 'var(--cream)',
-                    border: '1px solid rgba(201, 168, 76, 0.2)',
-                    borderRadius: '6px',
-                    padding: '8px 10px',
-                    resize: 'vertical',
-                    outline: 'none',
-                    lineHeight: 1.5,
-                  }}
-                />
-              </div>
-              {noteText.trim() && (
-                <motion.button
-                  type="button"
-                  onClick={handleAddNote}
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="cursor-pointer mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium"
-                  style={{
-                    background: 'var(--gold)',
-                    color: '#0f1923',
-                    border: 'none',
-                    }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Plus size={12} />
-                  Add Note
-                </motion.button>
-              )}
-            </div>
-
-            {/* Notes list — from project_updates table */}
-            <div className="flex flex-col gap-2">
-              <AnimatePresence mode="popLayout">
-                {projectUpdates.length > 0 ? (
-                  [...projectUpdates].reverse().map((update) => (
-                    <motion.div
-                      key={update.id}
-                      layout
-                      initial={{ opacity: 0, y: -6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.2 }}
-                      style={{
-                        background: 'var(--cream)',
-                        borderRadius: '8px',
-                        padding: '10px 12px',
-                        borderLeft: '2px solid var(--gold)',
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          color: 'var(--slate)',
-                          opacity: 0.7,
-                          display: 'block',
-                          marginBottom: '4px',
-                        }}
-                      >
-                        {formatTimestamp(update.created_at)}
-                        {update.author && ` — ${getPersonInfo(update.author).name}`}
-                      </span>
-                      <p
-                        style={{
-                          fontSize: 'var(--value-size)',
-                          color: 'var(--ink)',
-                          lineHeight: 1.5,
-                          margin: 0,
-                          whiteSpace: 'pre-wrap',
-                        }}
-                      >
-                        {update.content}
-                      </p>
-                    </motion.div>
-                  ))
-                ) : (
-                  <p
-                    style={{
-                      fontSize: '12px',
-                      color: 'var(--slate)',
-                      opacity: 'var(--ink-label)',
-                      textAlign: 'center',
-                      padding: '16px 0',
-                      margin: 0,
-                    }}
-                  >
-                    No notes yet — add one above
-                  </p>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </motion.div>
       </div>
 
       {/* Related Projects (AI Insights) */}
