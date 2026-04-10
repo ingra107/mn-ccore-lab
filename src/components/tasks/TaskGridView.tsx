@@ -352,7 +352,9 @@ function TaskGridRow({
       data-testid={`task-row-${task.id}`}
       style={{
         ...colStyle,
-        padding: '10px 16px',
+        padding: 'var(--row-padding-y, 10px) 16px',
+        minHeight: 'var(--row-height)',
+        fontSize: 'var(--cell-font-size)',
         borderBottom: '1px solid var(--border-subtle)',
         borderLeft: `3px solid ${
           task.priority === 'urgent' ? 'var(--maroon)' :

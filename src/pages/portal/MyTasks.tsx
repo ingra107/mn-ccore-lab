@@ -17,6 +17,7 @@ import type { TaskRow } from '../../lib/api'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import { getPersonInfo } from '../../data/team'
+import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 
 type ViewMode = 'list' | 'board' | 'standup' | 'timeline'
 type QuickFilter = 'all' | 'today' | 'this_week' | 'overdue' | 'no_date'
@@ -51,6 +52,7 @@ export default function MyTasks() {
   const [showCreate, setShowCreate] = useState(false)
   const [groupBy, setGroupBy] = useState<GroupBy>('due_date')
   const [sortBy, setSortBy] = useState<SortBy>('due_date')
+  const [density, setDensity] = useDensity()
 
   // For now, show all tasks (no auth = no current user detection)
   // When Cloudflare Access is enabled, this will filter to the authenticated user's slug
@@ -377,6 +379,8 @@ export default function MyTasks() {
               {showCompleted ? `Hide ${completedCount} done` : `Show ${completedCount} done`}
             </button>
           )}
+
+          <DensityToggle value={density} onChange={setDensity} />
         </div>
       </PageHeader>
 
@@ -526,7 +530,7 @@ export default function MyTasks() {
       )}
 
       {/* Content */}
-      <div className="mt-5">
+      <div className={`mt-5 ${densityClass(density)}`}>
         {isLoading ? (
           <TableSkeleton rows={6} cols={5} />
         ) : tasks.length === 0 ? (
