@@ -14,14 +14,18 @@ import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
 
 // ── Field Block Wrapper ──────────────────────────────────────
 
-export function FieldBlock({ label, icon: Icon, children }: { label: string; icon: typeof Circle; children: React.ReactNode }) {
+export function FieldBlock({ label, icon: Icon, children, noContainer }: { label: string; icon: typeof Circle; children: React.ReactNode; noContainer?: boolean }) {
   return (
-    <div className="flex items-start gap-3">
-      <label className="flex items-center gap-1.5 text-[11px] pt-1.5 shrink-0 w-[88px]" style={{ color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
-        <Icon size={12} style={{ opacity: 0.7 }} />
+    <div className="flex flex-col" style={{ gap: 'var(--sp-xs)' }}>
+      <label className="flex items-center" style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+        <Icon size={11} style={{ opacity: 0.6 }} />
         {label}
       </label>
-      <div className="flex-1 min-w-0">{children}</div>
+      {noContainer ? (
+        <div className="min-w-0">{children}</div>
+      ) : (
+        <div className="field-container">{children}</div>
+      )}
     </div>
   )
 }

@@ -95,6 +95,97 @@
   --density-text-xs: 11px;
 }
 
+/* ── UX Tokens — consistent interactive elements across all pages ── */
+:root {
+  /* Element heights — same height = same affordance everywhere */
+  --el-pill: 32px;
+  --el-input: 36px;
+  --el-avatar-sm: 24px;
+  --el-avatar-md: 32px;
+
+  /* Spacing rhythm — 8px grid, strictly */
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 12px;
+  --sp-lg: 16px;
+  --sp-xl: 24px;
+  --sp-2xl: 32px;
+
+  /* Contrast hierarchy — labels recede, values pop */
+  --ink-primary: 1.0;
+  --ink-label: 0.55;
+  --ink-hint: 0.4;
+  --label-weight: 600;
+  --value-weight: 400;
+  --label-size: 11px;
+  --value-size: 13px;
+
+  /* Field containers */
+  --field-bg: rgba(0, 0, 0, 0.02);
+  --field-bg-hover: rgba(0, 0, 0, 0.04);
+}
+
+.dark {
+  --field-bg: rgba(255, 255, 255, 0.03);
+  --field-bg-hover: rgba(255, 255, 255, 0.06);
+}
+
+/* Field container — bordered home for every editable value */
+.field-container {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-sm) var(--sp-md);
+  min-height: var(--el-input);
+  display: flex;
+  align-items: center;
+  background: var(--field-bg);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+  cursor: pointer;
+  width: 100%;
+}
+.field-container:hover {
+  border-color: var(--border-light);
+  background: var(--field-bg-hover);
+}
+.field-container:focus-within {
+  border-color: var(--teal);
+}
+
+/* Description editor — resizable, constrained */
+.description-editor-wrapper {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--field-bg);
+  min-height: 80px;
+  height: 120px;
+  max-height: 400px;
+  overflow-y: auto;
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+}
+.description-editor-wrapper:hover {
+  border-color: var(--border-light);
+}
+.description-editor-wrapper:focus-within {
+  border-color: var(--teal);
+}
+
+/* Carried forward badge */
+.carried-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  background: rgba(201, 168, 76, 0.12);
+  color: var(--gold);
+  white-space: nowrap;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
 /* ── Tiptap rich text editor styles ── */
 .rich-text-editor .tiptap {
   outline: none;

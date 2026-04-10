@@ -217,27 +217,24 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
         </div>
 
         {/* Tab Content — all rendered, display:none for inactive to preserve state */}
-        <div className="p-5 flex flex-col gap-5">
+        <div className="p-5 flex flex-col" style={{ gap: 'var(--sp-xl)' }}>
 
           {/* ── Overview Tab ── */}
-          <div style={{ display: activeTab === 'overview' ? 'flex' : 'none', flexDirection: 'column', gap: '20px' }}>
-            {/* Assignee */}
-            <FieldBlock label="Assignee" icon={User}>
-              <AssigneeSelect value={task.assignee} onChange={(v) => handleFieldUpdate('assignee', v)} />
-            </FieldBlock>
+          <div style={{ display: activeTab === 'overview' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}>
 
-            {/* Acknowledge button */}
+            {/* Acknowledge button (compact) */}
             {task.assignee && !task.acknowledged_at && task.status !== 'done' && (
               <button
                 onClick={() => ackTask.mutate(task.id)}
                 disabled={ackTask.isPending}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200"
+                className="flex items-center gap-2 rounded-lg text-xs font-medium transition-all duration-200"
                 style={{
                   background: 'rgba(201,168,76,0.08)',
                   color: 'var(--gold)',
                   border: '1px solid rgba(201,168,76,0.2)',
                   cursor: 'pointer',
                   width: 'fit-content',
+                  padding: '6px 12px',
                 }}
               >
                 <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--gold)', flexShrink: 0 }} />
@@ -245,89 +242,103 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
               </button>
             )}
             {task.acknowledged_at && (
-              <div className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+              <div className="flex items-center gap-2" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                 <Clock size={10} />
                 Acknowledged {formatRelativeTime(task.acknowledged_at)}
                 {task.acknowledged_by ? ` by ${task.acknowledged_by}` : ''}
               </div>
             )}
 
-            {/* Description (rich text) */}
-            <div>
-              <label className="block text-[11px] mb-1.5" style={{ color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
-                Description
-              </label>
-              <RichTextEditor
-                content={task.description_json || null}
-                plainTextFallback={task.description}
-                onUpdate={(json) => {
-                  handleFieldUpdate('description_json', json)
-                }}
-                placeholder="Add a description..."
-              />
+            {/* Row 1: Assignee + Priority */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
+              <FieldBlock label="Assignee" icon={User}>
+                <AssigneeSelect value={task.assignee} onChange={(v) => handleFieldUpdate('assignee', v)} />
+              </FieldBlock>
+              <FieldBlock label="Priority" icon={Flag} noContainer>
+                <PrioritySelect value={task.priority} onChange={(v) => handleFieldUpdate('priority', v)} />
+              </FieldBlock>
             </div>
 
-            {/* Priority */}
-            <FieldBlock label="Priority" icon={Flag}>
-              <PrioritySelect value={task.priority} onChange={(v) => handleFieldUpdate('priority', v)} />
-            </FieldBlock>
+            {/* Row 2: Due Date + Project */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
+              <FieldBlock label="Due Date" icon={CalendarDays}>
+                <DateInput value={task.due_date || ''} onChange={(v) => handleFieldUpdate('due_date', v || null)} />
+              </FieldBlock>
+              <FieldBlock label="Project" icon={FolderKanban}>
+                <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
+              </FieldBlock>
+            </div>
+
+            {/* Description (rich text, resizable) */}
+            <div>
+              <label className="flex items-center" style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', marginBottom: 'var(--sp-xs)' }}>
+                Description
+              </label>
+              <div className="description-editor-wrapper">
+                <RichTextEditor
+                  content={task.description_json || null}
+                  plainTextFallback={task.description}
+                  onUpdate={(json) => {
+                    handleFieldUpdate('description_json', json)
+                  }}
+                  placeholder="Add a description..."
+                />
+              </div>
+            </div>
 
             {/* Subtasks */}
             <SubtaskSection taskId={task.id} />
           </div>
 
           {/* ── Details Tab ── */}
-          <div style={{ display: activeTab === 'details' ? 'flex' : 'none', flexDirection: 'column', gap: '20px' }}>
-            <FieldBlock label="Due Date" icon={CalendarDays}>
-              <DateInput value={task.due_date || ''} onChange={(v) => handleFieldUpdate('due_date', v || null)} />
-            </FieldBlock>
+          <div style={{ display: activeTab === 'details' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}>
 
-            <FieldBlock label="Project" icon={FolderKanban}>
-              <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
-            </FieldBlock>
-
-            {/* Key Links */}
+            {/* Key Links (full width) */}
             <DetailKeyLinks task={task} />
 
-            {/* Watchers */}
-            <FieldBlock label="Watchers" icon={Users}>
-              <WatchersPicker value={task.watchers || ''} onChange={(v) => handleFieldUpdate('watchers', v || null)} />
-            </FieldBlock>
+            {/* Row: Watchers + Reminder */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
+              <FieldBlock label="Watchers" icon={Users}>
+                <WatchersPicker value={task.watchers || ''} onChange={(v) => handleFieldUpdate('watchers', v || null)} />
+              </FieldBlock>
+              <FieldBlock label="Reminder" icon={Bell}>
+                <input
+                  type="number"
+                  min={0}
+                  max={30}
+                  value={task.reminder_days ?? ''}
+                  placeholder="e.g. 2"
+                  onChange={(e) => handleFieldUpdate('reminder_days', e.target.value ? Number(e.target.value) : null)}
+                  className="w-full bg-transparent outline-none"
+                  style={{ color: 'var(--ink)', fontSize: 'var(--value-size)' }}
+                />
+              </FieldBlock>
+            </div>
 
-            {/* Reminder */}
-            <FieldBlock label="Reminder (days before)" icon={Bell}>
-              <input
-                type="number"
-                min={0}
-                max={30}
-                value={task.reminder_days ?? ''}
-                placeholder="e.g. 2"
-                onChange={(e) => handleFieldUpdate('reminder_days', e.target.value ? Number(e.target.value) : null)}
-                className="w-20 text-xs px-2 py-1 rounded border bg-transparent"
-                style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
-              />
-            </FieldBlock>
-
-            {/* Recurrence */}
-            <FieldBlock label="Recurrence" icon={RefreshCw}>
-              <select
-                value={task.recurrence || 'none'}
-                onChange={(e) => handleFieldUpdate('recurrence', e.target.value === 'none' ? null : e.target.value)}
-                className="text-xs px-2 py-1 rounded border bg-transparent"
-                style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', cursor: 'pointer' }}
-              >
-                <option value="none">None</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="biweekly">Biweekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-              {task.recurrence && task.recurrence !== 'none' && (
-                <span className="text-[10px] ml-2" style={{ color: 'var(--teal)', opacity: 0.8 }}>
-                  Auto-creates next task when completed
-                </span>
-              )}
-            </FieldBlock>
+            {/* Row: Recurrence (single field) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
+              <FieldBlock label="Recurrence" icon={RefreshCw}>
+                <select
+                  value={task.recurrence || 'none'}
+                  onChange={(e) => handleFieldUpdate('recurrence', e.target.value === 'none' ? null : e.target.value)}
+                  className="w-full bg-transparent outline-none"
+                  style={{ color: 'var(--ink)', fontSize: 'var(--value-size)', cursor: 'pointer', border: 'none' }}
+                >
+                  <option value="none">None</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Biweekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </FieldBlock>
+              <div>
+                {task.recurrence && task.recurrence !== 'none' && (
+                  <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.8 }}>
+                    Auto-creates next task when completed
+                  </span>
+                )}
+              </div>
+            </div>
 
             {/* Instructions */}
             <div>

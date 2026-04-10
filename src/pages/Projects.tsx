@@ -362,7 +362,7 @@ export default function Projects() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: '1fr 100px 100px 100px 72px',
+                gridTemplateColumns: 'minmax(200px, 2fr) 1fr 1fr 1fr 80px',
                 padding: '8px 24px',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -458,7 +458,7 @@ export default function Projects() {
                           <div
                             className={`project-list-row${isFocused ? ' project-row-focused' : ''} hidden sm:grid`}
                             style={{
-                              gridTemplateColumns: '1fr 100px 100px 100px 72px',
+                              gridTemplateColumns: 'minmax(200px, 2fr) 1fr 1fr 1fr 80px',
                               padding: '14px 24px',
                               borderBottom: '1px solid var(--border-subtle)',
                               alignItems: 'center',
