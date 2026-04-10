@@ -166,6 +166,8 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [editingDescription, setEditingDescription] = useState(false)
   const [descExpanded, setDescExpanded] = useState(false)
   const [descDraft, setDescDraft] = useState(project.description ?? '')
+  const [editingShortName, setEditingShortName] = useState(false)
+  const [shortNameDraft, setShortNameDraft] = useState(project.short_name ?? '')
   const descRef = useRef<HTMLTextAreaElement>(null)
 
   // Note input
@@ -206,6 +208,14 @@ function ProjectDetailInner({ project }: InnerProps) {
     }
   }
 
+  function handleShortNameSave() {
+    setEditingShortName(false)
+    const trimmed = shortNameDraft.trim()
+    if (trimmed !== (project.short_name ?? '').trim()) {
+      d1Update.mutate({ short_name: trimmed || undefined } as Partial<Project>)
+    }
+  }
+
   function handleAddNote() {
     const text = noteText.trim()
     if (!text) return
@@ -238,6 +248,54 @@ function ProjectDetailInner({ project }: InnerProps) {
             >
               {project.title}
             </h1>
+            {editingShortName ? (
+              <input
+                value={shortNameDraft}
+                onChange={(e) => setShortNameDraft(e.target.value)}
+                onBlur={handleShortNameSave}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleShortNameSave()
+                  if (e.key === 'Escape') {
+                    setShortNameDraft(project.short_name ?? '')
+                    setEditingShortName(false)
+                  }
+                }}
+                autoFocus
+                placeholder="Add short name..."
+                style={{
+                  fontSize: 'var(--value-size)',
+                  color: 'var(--ink)',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: '1px solid var(--teal)',
+                  outline: 'none',
+                  padding: '2px 0',
+                  marginTop: '2px',
+                  width: '100%',
+                  maxWidth: '280px',
+                  fontFamily: 'inherit',
+                }}
+              />
+            ) : (
+              <span
+                onClick={() => {
+                  setEditingShortName(true)
+                  setShortNameDraft(project.short_name ?? '')
+                }}
+                style={{
+                  fontSize: 'var(--value-size)',
+                  color: 'var(--slate)',
+                  opacity: project.short_name ? 0.7 : 0.4,
+                  fontStyle: project.short_name ? 'normal' : 'italic',
+                  cursor: 'pointer',
+                  padding: '2px 0',
+                  marginTop: '2px',
+                  display: 'block',
+                }}
+              >
+                {project.short_name || 'Add short name...'}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
