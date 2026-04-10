@@ -507,6 +507,17 @@ export default function Projects() {
                                 }}
                               >
                                 {project.title}
+                                {project.short_name && (
+                                  <span style={{
+                                    fontSize: '11px',
+                                    color: 'var(--slate)',
+                                    opacity: 0.5,
+                                    display: 'block',
+                                    marginTop: '1px',
+                                  }}>
+                                    {project.short_name}
+                                  </span>
+                                )}
                               </span>
                               {/* Task count badge */}
                               {(() => {
@@ -652,6 +663,17 @@ export default function Projects() {
                                 }}
                               >
                                 {project.title}
+                                {project.short_name && (
+                                  <span style={{
+                                    fontSize: '11px',
+                                    color: 'var(--slate)',
+                                    opacity: 0.5,
+                                    display: 'block',
+                                    marginTop: '1px',
+                                  }}>
+                                    {project.short_name}
+                                  </span>
+                                )}
                               </span>
                               {projectHealth && (
                                 <span
