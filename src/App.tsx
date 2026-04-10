@@ -1,6 +1,6 @@
 import { lazy, Suspense, Component } from 'react'
 import type { ReactNode, ErrorInfo } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Layout from './components/Layout'
 import PortalLayout from './components/PortalLayout'
@@ -119,7 +119,6 @@ const MyItems = lazy(() => import('./pages/MyItems'))
 
 // New portal pages (Phase H1 — placeholders, built out in later phases)
 const Personal = lazy(() => import('./pages/portal/Personal'))
-const Tasks = lazy(() => import('./pages/portal/Tasks'))
 const MyTasks = lazy(() => import('./pages/portal/MyTasks'))
 const CalendarPage = lazy(() => import('./pages/portal/CalendarPage'))
 const Deadlines = lazy(() => import('./pages/portal/Deadlines'))
@@ -193,7 +192,7 @@ export default function App() {
 
                   {/* Planning */}
                   <Route path="/my-tasks" element={<ErrorBoundary><MyTasks /></ErrorBoundary>} />
-                  <Route path="/tasks" element={<ErrorBoundary><Tasks /></ErrorBoundary>} />
+                  <Route path="/tasks" element={<Navigate to="/my-tasks" replace />} />
                   <Route path="/calendar" element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
                   <Route path="/deadlines" element={<ErrorBoundary><Deadlines /></ErrorBoundary>} />
                   <Route path="/deadline-cascade" element={<ErrorBoundary><DeadlineCascadePage /></ErrorBoundary>} />

@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   User,
   CheckSquare,
-  ListTodo,
   Calendar,
   Clock,
   FolderKanban,
@@ -63,8 +62,7 @@ const navGroups: NavGroup[] = [
   {
     title: 'Planning',
     items: [
-      { to: '/my-tasks', label: 'My Tasks', icon: CheckSquare },
-      { to: '/tasks', label: 'All Tasks', icon: ListTodo },
+      { to: '/my-tasks', label: 'Tasks', icon: CheckSquare },
       { to: '/meetings', label: 'Meetings', icon: UsersIcon },
       { to: '/calendar', label: 'Calendar', icon: Calendar },
       { to: '/deadlines', label: 'Deadlines', icon: Clock },

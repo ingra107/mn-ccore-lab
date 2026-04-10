@@ -16,7 +16,6 @@ import { useAuth } from '../../hooks/useAuth'
 import type { TaskRow } from '../../lib/api'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
-import { getPersonInfo } from '../../data/team'
 import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 
 type ViewMode = 'list' | 'board' | 'standup' | 'timeline'
@@ -65,6 +64,7 @@ export default function MyTasks() {
   const [showCompleted, setShowCompleted] = useState(false)
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showAllTasks, setShowAllTasks] = useState(false)
   const bulkUpdate = useBulkUpdateTasks()
 
   const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze', value?: string) => {
@@ -93,11 +93,12 @@ export default function MyTasks() {
   const { user } = useAuth()
   const currentUser = user?.email?.split('@')[0]?.toLowerCase() || null
 
-  // Filter to current user's tasks
+  // Filter to current user's tasks (or all tasks when showAllTasks is true)
   const tasks = useMemo(() => {
+    if (showAllTasks) return allTasks
     if (!currentUser) return allTasks // Show all if no auth
     return allTasks.filter((t) => t.assignee === currentUser)
-  }, [allTasks, currentUser])
+  }, [allTasks, currentUser, showAllTasks])
 
   const handleStatusChange = (id: string, status: string) => {
     const task = allTasks.find(t => t.id === id)
@@ -264,12 +265,10 @@ export default function MyTasks() {
     return count
   }, [tasks])
 
-  const person = currentUser ? getPersonInfo(currentUser) : null
-
   // Dynamic page title with count
   useEffect(() => {
     const count = tasks.filter(t => !t.completed).length
-    document.title = count > 0 ? `(${count}) My Tasks | MN-CCORE` : 'My Tasks | MN-CCORE'
+    document.title = count > 0 ? `(${count}) Tasks | MN-CCORE` : 'Tasks | MN-CCORE'
     return () => { document.title = 'MN-CCORE Lab Hub' }
   }, [tasks])
 
@@ -277,7 +276,7 @@ export default function MyTasks() {
     <div>
       <PageHeader
         icon={<CheckSquare size={20} />}
-        title={person ? `${person.name.split(' ')[0]}'s Tasks` : 'My Tasks'}
+        title="Tasks"
         subtitle={
           <span className="flex items-center gap-2">
             {pendingCount} active task{pendingCount !== 1 ? 's' : ''}
@@ -384,7 +383,7 @@ export default function MyTasks() {
         </div>
       </PageHeader>
 
-      {!currentUser && (
+      {!currentUser && !showAllTasks && (
         <div
           className="mt-4 px-4 py-3 rounded-lg border text-sm"
           style={{
@@ -397,8 +396,42 @@ export default function MyTasks() {
         </div>
       )}
 
+      {/* Scope toggle: Mine / All */}
+      <div className="flex items-center gap-3 mt-4 flex-wrap">
+        <div className="inline-flex items-center rounded-md overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+          <button
+            onClick={() => setShowAllTasks(false)}
+            style={{
+              padding: '4px 12px',
+              fontSize: 'var(--text-small)',
+              fontWeight: !showAllTasks ? 'var(--weight-ui)' : 'var(--weight-body)',
+              background: !showAllTasks ? 'rgba(45,138,138,0.08)' : 'none',
+              color: !showAllTasks ? 'var(--teal)' : 'var(--slate)',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Mine
+          </button>
+          <button
+            onClick={() => setShowAllTasks(true)}
+            style={{
+              padding: '4px 12px',
+              fontSize: 'var(--text-small)',
+              fontWeight: showAllTasks ? 'var(--weight-ui)' : 'var(--weight-body)',
+              background: showAllTasks ? 'rgba(45,138,138,0.08)' : 'none',
+              color: showAllTasks ? 'var(--teal)' : 'var(--slate)',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            All {allTasks.filter(t => !t.completed).length}
+          </button>
+        </div>
+      </div>
+
       {/* Quick filter pills */}
-      <div className="flex items-center gap-2 mt-4 flex-wrap">
+      <div className="flex items-center gap-2 mt-2 flex-wrap">
         {([
           { key: 'all' as QuickFilter, label: 'All', count: pendingCount },
           { key: 'today' as QuickFilter, label: 'Today', count: filterCounts.today },
@@ -449,8 +482,8 @@ export default function MyTasks() {
         </div>
       )}
 
-      {/* Focus Next — auto-suggest top 3, pin up to 5 */}
-      {focusTasks.length > 0 && quickFilter === 'all' && !showCompleted && (
+      {/* Focus Next — auto-suggest top 3, pin up to 5 (Mine view only) */}
+      {focusTasks.length > 0 && quickFilter === 'all' && !showCompleted && !showAllTasks && (
         <div className="mt-3">
           <div className="flex items-center gap-2 mb-2">
             <Zap size={14} style={{ color: 'var(--gold)' }} />
