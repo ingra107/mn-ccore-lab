@@ -339,7 +339,7 @@ export async function handleRecentUpdates(url: URL, env: Env): Promise<Response>
 
 // POST /api/projects/:id — update project fields
 // Hoisted to module scope — avoids allocation per request
-const PROJECT_ALLOWED_FIELDS = new Set(['title', 'status', 'description', 'category', 'stage', 'pi', 'slug', 'pi_context', 'strategic_context']);
+const PROJECT_ALLOWED_FIELDS = new Set(['title', 'status', 'description', 'category', 'stage', 'pi', 'slug', 'pi_context', 'strategic_context', 'short_name']);
 const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
 
 export async function handleUpdateProject(
