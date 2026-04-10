@@ -151,6 +151,7 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 10. **ONE deploy per session.** KV free tier limit. Batch all work, deploy once.
 11. **`formatBrandName()`** for any text that might contain "MNCCORE".
 12. **Tailwind v4:** `@import` syntax, not `@tailwind`. No `group-hover:` with arbitrary values -- use CSS rules.
+13. **Build verification after batch edits.** After editing 3+ files or any shared module/type, run `npm run build` and fix all TypeScript errors before continuing. After fixing test failures, re-run the full affected test suite (`npx playwright test tests/<suite>`) to confirm zero regressions. Do not commit code that doesn't build.
 
 ## Roadmap
 
