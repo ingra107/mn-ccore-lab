@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame } from 'lucide-react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame, X, Pin } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -155,32 +155,84 @@ export default function MyTasks() {
   }, [tasks])
 
   // "Focus Next" — smart scoring: urgency × priority × freshness
-  const focusNext = useMemo(() => {
+  // Returns top 3 auto-suggestions; user can pin up to 5 total
+  const FOCUS_MAX = 5
+  const FOCUS_AUTO = 3
+
+  const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('mytasks-focus-pinned')
+      return stored ? JSON.parse(stored) : []
+    } catch { return [] }
+  })
+
+  // Persist pinned to localStorage
+  useEffect(() => {
+    localStorage.setItem('mytasks-focus-pinned', JSON.stringify(pinnedIds))
+  }, [pinnedIds])
+
+  const scoredTasks = useMemo(() => {
     const active = tasks.filter(t => !t.completed && t.status !== 'blocked')
-    if (active.length === 0) return null
+    if (active.length === 0) return []
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const scored = active.map(t => {
+    return active.map(t => {
       let score = 0
-      // Priority weight
       const pWeight: Record<string, number> = { urgent: 40, high: 25, medium: 10, low: 2 }
       score += pWeight[t.priority] ?? 10
-      // Due date urgency
       if (t.due_date) {
         const due = new Date(t.due_date + 'T12:00:00')
         const daysUntil = (due.getTime() - today.getTime()) / 86400000
-        if (daysUntil < 0) score += 50 + Math.min(Math.abs(daysUntil) * 3, 30) // overdue bonus
+        if (daysUntil < 0) score += 50 + Math.min(Math.abs(daysUntil) * 3, 30)
         else if (daysUntil <= 1) score += 35
         else if (daysUntil <= 3) score += 20
         else if (daysUntil <= 7) score += 10
       }
-      // In-progress bonus (already started)
       if (t.status === 'in_progress') score += 15
       return { task: t, score }
-    })
-    scored.sort((a, b) => b.score - a.score)
-    return scored[0]?.task ?? null
+    }).sort((a, b) => b.score - a.score)
   }, [tasks])
+
+  // Merge: pinned tasks first (in order), then auto-suggestions to fill up to FOCUS_MAX
+  const focusTasks = useMemo(() => {
+    // Resolve pinned (filter out completed/deleted)
+    const validPinned = pinnedIds
+      .map(id => tasks.find(t => t.id === id && !t.completed))
+      .filter(Boolean) as TaskRow[]
+    // Auto-suggest top N, excluding already pinned
+    const pinnedSet = new Set(pinnedIds)
+    const autoSuggested = scoredTasks
+      .filter(s => !pinnedSet.has(s.task.id))
+      .slice(0, Math.max(0, FOCUS_AUTO - validPinned.length))
+      .map(s => s.task)
+    return [...validPinned, ...autoSuggested].slice(0, FOCUS_MAX)
+  }, [pinnedIds, scoredTasks, tasks])
+
+  const focusPinnedSet = useMemo(() => new Set(pinnedIds), [pinnedIds])
+
+  const pinTask = useCallback((id: string) => {
+    setPinnedIds(prev => {
+      if (prev.includes(id)) return prev
+      if (prev.length >= FOCUS_MAX) return prev
+      return [...prev, id]
+    })
+  }, [])
+
+  const unpinTask = useCallback((id: string) => {
+    setPinnedIds(prev => prev.filter(p => p !== id))
+  }, [])
+
+  const moveFocusTask = useCallback((fromIndex: number, toIndex: number) => {
+    setPinnedIds(prev => {
+      // Ensure all focus tasks are pinned for reordering
+      const allFocusIds = focusTasks.map(t => t.id)
+      const merged = [...new Set([...prev, ...allFocusIds])].slice(0, FOCUS_MAX)
+      const result = [...merged]
+      const [moved] = result.splice(fromIndex, 1)
+      result.splice(toIndex, 0, moved)
+      return result
+    })
+  }, [focusTasks])
 
   // Task completion streak
   const streak = useMemo(() => {
@@ -393,28 +445,84 @@ export default function MyTasks() {
         </div>
       )}
 
-      {/* Focus Next recommendation */}
-      {focusNext && quickFilter === 'all' && !showCompleted && (
-        <button
-          onClick={() => setSelectedTask(focusNext)}
-          className="mt-3 w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-colors"
-          style={{
-            background: 'linear-gradient(135deg, rgba(45,138,138,0.04), rgba(201,168,76,0.04))',
-            borderColor: 'rgba(45,138,138,0.2)',
-            cursor: 'pointer',
-          }}
-        >
-          <Zap size={16} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--teal)', opacity: 0.7 }}>Focus next</div>
-            <div className="text-sm truncate" style={{ color: 'var(--ink)' }}>{focusNext.title || focusNext.description}</div>
-          </div>
-          {focusNext.due_date && (
-            <span className="text-[11px] flex-shrink-0" style={{ color: new Date(focusNext.due_date + 'T23:59:59') < new Date() ? 'var(--maroon)' : 'var(--slate)', opacity: 0.7 }}>
-              {focusNext.due_date}
+      {/* Focus Next — auto-suggest top 3, pin up to 5 */}
+      {focusTasks.length > 0 && quickFilter === 'all' && !showCompleted && (
+        <div className="mt-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap size={14} style={{ color: 'var(--gold)' }} />
+            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--teal)', opacity: 0.7 }}>
+              Focus Next
             </span>
-          )}
-        </button>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+              {focusTasks.length}/{FOCUS_MAX}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            {focusTasks.map((task, idx) => {
+              const isPinned = focusPinnedSet.has(task.id)
+              return (
+                <div
+                  key={task.id}
+                  className="group flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-colors"
+                  style={{
+                    background: isPinned
+                      ? 'linear-gradient(135deg, rgba(45,138,138,0.06), rgba(201,168,76,0.06))'
+                      : 'linear-gradient(135deg, rgba(45,138,138,0.02), rgba(201,168,76,0.02))',
+                    borderColor: isPinned ? 'rgba(45,138,138,0.25)' : 'rgba(45,138,138,0.12)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {/* Reorder arrows */}
+                  <div className="flex flex-col opacity-0 group-hover:opacity-40 transition-opacity" style={{ flexShrink: 0 }}>
+                    {idx > 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); moveFocusTask(idx, idx - 1) }}
+                        className="text-[9px] leading-none hover:text-[var(--teal)]"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '0 2px' }}
+                      >
+                        ▲
+                      </button>
+                    )}
+                    {idx < focusTasks.length - 1 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); moveFocusTask(idx, idx + 1) }}
+                        className="text-[9px] leading-none hover:text-[var(--teal)]"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '0 2px' }}
+                      >
+                        ▼
+                      </button>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-medium" style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0, width: '14px', textAlign: 'center' }}>
+                    {idx + 1}
+                  </span>
+                  <div
+                    className="min-w-0 flex-1"
+                    onClick={() => setSelectedTask(task)}
+                  >
+                    <div className="text-sm truncate" style={{ color: 'var(--ink)' }}>
+                      {task.title || task.description}
+                    </div>
+                  </div>
+                  {task.due_date && (
+                    <span className="text-[10px] flex-shrink-0" style={{ color: new Date(task.due_date + 'T23:59:59') < new Date() ? 'var(--maroon)' : 'var(--slate)', opacity: 0.6 }}>
+                      {task.due_date}
+                    </span>
+                  )}
+                  {/* Pin/unpin button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); isPinned ? unpinTask(task.id) : pinTask(task.id) }}
+                    className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: isPinned ? 'var(--teal)' : 'var(--slate)', padding: '2px', flexShrink: 0 }}
+                    title={isPinned ? 'Unpin from focus' : 'Pin to focus'}
+                  >
+                    {isPinned ? <X size={12} /> : <Pin size={12} />}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       )}
 
       {/* Content */}
