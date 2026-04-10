@@ -457,6 +457,8 @@ npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM ideas WHERE 
 npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM lab_questions WHERE question LIKE 'INSPECTION%' OR question LIKE 'EDGE%'"
 npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM decision_log WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%'"
 npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM notifications WHERE body LIKE 'SYNCTEST%'"
+# brain.db (test tasks get pulled from D1 → brain.db → TODAY.md if not cleaned)
+python -c "import sqlite3; conn=sqlite3.connect('C:/Users/ingra107/Peripheral-Brain/data/brain.db'); conn.execute(\"UPDATE tasks SET status='deleted', completed=1, sync_status='synced' WHERE name LIKE 'SYNCTEST%' OR name LIKE 'INSPECTION%' OR name LIKE 'EDGE%' OR name LIKE 'DAILYTEST%' OR name LIKE 'JOURNEY%' OR name LIKE 'SYNC-%' OR name LIKE 'AAAA%' OR name LIKE 'TEST-%'\"); conn.commit(); print(f'Cleaned {conn.total_changes} test tasks from brain.db'); conn.close()"
 ```
 **Scan for gaps:** `python scripts/inspection-scanner.py --commits 5`
 **Registry:** `tests/feature-registry.json` (353 features, 302 covered = 85.6%)
