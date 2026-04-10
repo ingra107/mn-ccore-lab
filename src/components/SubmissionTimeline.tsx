@@ -564,7 +564,7 @@ export function ActiveSubmissionsDashboard({
       <div
         className="hidden sm:grid"
         style={{
-          gridTemplateColumns: '1fr 120px 120px 100px 100px',
+          gridTemplateColumns: 'minmax(200px, 1fr) 120px 120px 100px 100px',
           padding: '6px 20px',
           borderBottom: '1px solid var(--border-subtle)',
         }}
@@ -605,7 +605,7 @@ export function ActiveSubmissionsDashboard({
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: '1fr 120px 120px 100px 100px',
+                gridTemplateColumns: 'minmax(200px, 1fr) 120px 120px 100px 100px',
                 padding: '10px 20px',
                 borderBottom: '1px solid var(--border-subtle)',
                 alignItems: 'center',

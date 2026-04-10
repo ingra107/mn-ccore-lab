@@ -229,7 +229,7 @@ export default function Grants() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: '1fr 140px 1fr 100px 100px',
+                gridTemplateColumns: 'minmax(140px, 1fr) 140px minmax(200px, 2fr) 100px 100px',
                 padding: '6px 12px',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -261,7 +261,7 @@ export default function Grants() {
                   key={m.id}
                   className="sm:grid items-center transition-colors"
                   style={{
-                    gridTemplateColumns: '1fr 140px 1fr 100px 100px',
+                    gridTemplateColumns: 'minmax(140px, 1fr) 140px minmax(200px, 2fr) 100px 100px',
                     padding: '8px 12px',
                     borderBottom: '1px solid var(--border-subtle)',
                     background: m._isOverdue ? 'rgba(122,0,25,0.04)' : 'transparent',

@@ -276,7 +276,7 @@ export default function MenteeMilestones() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: '140px 1fr 120px 120px 100px',
+                gridTemplateColumns: '140px minmax(200px, 1fr) 120px 120px 100px',
                 padding: '8px 16px',
                 borderBottom: '1px solid var(--border-subtle)',
               }}

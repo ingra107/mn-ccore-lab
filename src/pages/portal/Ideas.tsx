@@ -310,7 +310,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
 // ── Idea List View ───────────────────────────────────────────
 
 function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { ideas: IdeaRow[]; onVote: (id: string) => void; onStatusChange: (id: string, status: string) => void; focusedIndex?: number }) {
-  const gridCols = '40px 1fr 100px 90px 80px'
+  const gridCols = '40px minmax(200px, 1fr) 100px 90px 80px'
   return (
     <div className="table-container">
       {/* Column headers — hidden on mobile */}

@@ -871,7 +871,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
         <div
           className="hidden sm:grid"
           style={{
-            gridTemplateColumns: '1fr 60px 100px 100px 100px',
+            gridTemplateColumns: 'minmax(200px, 1fr) 60px 100px 100px 100px',
             padding: '8px 20px',
             borderBottom: '1px solid var(--border-subtle)',
           }}
@@ -913,7 +913,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
                 className="active-revision-row"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 60px 100px 100px 100px',
+                  gridTemplateColumns: 'minmax(200px, 1fr) 60px 100px 100px 100px',
                   padding: '12px 20px',
                   borderBottom: '1px solid var(--border-subtle)',
                   textDecoration: 'none',

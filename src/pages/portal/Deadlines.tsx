@@ -273,7 +273,7 @@ export default function Deadlines() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: '1fr 120px 100px 100px 80px',
+                gridTemplateColumns: 'minmax(200px, 1fr) 120px 100px 100px 80px',
                 padding: '8px 16px',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -395,7 +395,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
             <div
               className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
               style={{
-                gridTemplateColumns: '1fr 120px 100px 100px 80px',
+                gridTemplateColumns: 'minmax(200px, 1fr) 120px 100px 100px 80px',
                 padding: '8px 16px',
                 alignItems: 'center',
               }}
