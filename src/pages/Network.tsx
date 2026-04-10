@@ -22,6 +22,10 @@ export default function Network() {
   )
 
   const years = useMemo(() => {
+    if (publishedPubs.length === 0) {
+      const now = new Date().getFullYear()
+      return { min: now - 5, max: now }
+    }
     const yrs = publishedPubs.map((p) => p.year)
     return { min: Math.min(...yrs), max: Math.max(...yrs) }
   }, [publishedPubs])

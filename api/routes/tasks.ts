@@ -107,20 +107,50 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
   return json({ data: updated });
 }
 
-// POST /api/action-items/:id/toggle — backward compat (toggles done/todo)
+// GET /api/action-items — query the action_items table (meeting action items, NOT tasks)
+export async function handleActionItems(url: URL, env: Env): Promise<Response> {
+  const assignee = url.searchParams.get('assignee');
+  const completed = url.searchParams.get('completed');
+
+  let query = 'SELECT a.*, m.title as meeting_title, m.date as meeting_date FROM action_items a LEFT JOIN meetings m ON a.meeting_id = m.id WHERE 1=1';
+  const params: (string | number)[] = [];
+
+  if (assignee) { query += ' AND a.assignee = ?'; params.push(assignee); }
+  if (completed === '0') { query += ' AND a.completed = 0'; }
+  else if (completed === '1') { query += ' AND a.completed = 1'; }
+
+  query += ' ORDER BY a.created_at DESC';
+
+  const result = await env.DB.prepare(query).bind(...params).all();
+  return json({ data: result.results || [] });
+}
+
+// POST /api/action-items/:id/toggle — toggles done/todo on action_items
 export async function handleToggleTask(id: string, user: AuthUser, env: Env): Promise<Response> {
-  const item = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ completed: number; title: string; description: string }>();
-  if (!item) return error('Task not found', 404);
+  // Try action_items first, fall back to tasks
+  let item = await env.DB.prepare('SELECT * FROM action_items WHERE id = ?').bind(id).first<{ completed: number; description: string }>();
+  const table = item ? 'action_items' : 'tasks';
+  if (!item) {
+    item = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ completed: number; description: string }>();
+  }
+  if (!item) return error('Item not found', 404);
 
   const newCompleted = item.completed ? 0 : 1;
   const newStatus = newCompleted ? 'done' : 'todo';
-  await env.DB.prepare(
-    "UPDATE tasks SET status = ?, completed = ?, completed_at = ?, completed_by = ?, updated_at = datetime('now') WHERE id = ?"
-  ).bind(newStatus, newCompleted, newCompleted ? new Date().toISOString() : null, newCompleted ? user.email : null, id).run();
 
-  await logActivity(env, 'task', `${newCompleted ? 'Completed' : 'Reopened'}: "${item.title || item.description}"`, user.email, id, 'task');
+  if (table === 'action_items') {
+    await env.DB.prepare(
+      "UPDATE action_items SET completed = ?, completed_at = ?, completed_by = ? WHERE id = ?"
+    ).bind(newCompleted, newCompleted ? new Date().toISOString() : null, newCompleted ? user.email : null, id).run();
+  } else {
+    await env.DB.prepare(
+      "UPDATE tasks SET status = ?, completed = ?, completed_at = ?, completed_by = ?, updated_at = datetime('now') WHERE id = ?"
+    ).bind(newStatus, newCompleted, newCompleted ? new Date().toISOString() : null, newCompleted ? user.email : null, id).run();
+  }
 
-  const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
+  await logActivity(env, 'task', `${newCompleted ? 'Completed' : 'Reopened'}: "${item.description}"`, user.email, id, table === 'action_items' ? 'action_item' : 'task');
+
+  const updated = await env.DB.prepare(`SELECT * FROM ${table} WHERE id = ?`).bind(id).first();
   return json({ data: updated });
 }
 
