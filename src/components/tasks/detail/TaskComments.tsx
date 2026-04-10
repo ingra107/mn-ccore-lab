@@ -56,7 +56,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
     e.preventDefault()
     if (!newComment.trim()) return
     addComment.mutate(newComment.trim())
-    // Also add to dispatch queue if @claude toggle is on
+    // Also add to dispatch queue if @hermes toggle is on
     if (forClaude) {
       fetch('/api/pb/dispatch/add', {
         method: 'POST',
@@ -78,7 +78,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
 
   return (
     <div>
-      <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+      <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
         <MessageSquare size={10} />
         Comments ({comments.length})
       </label>
@@ -95,7 +95,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>{person.name}</span>
-                  <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>{formatRelativeTime(c.created_at)}</span>
+                  <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{formatRelativeTime(c.created_at)}</span>
                 </div>
                 <p className="text-sm mt-0.5" style={{ color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>{c.content}</p>
                 <ReactionBar targetType="task_comment" targetId={c.id} compact />
@@ -140,7 +140,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
               background: forClaude ? 'var(--gold)' : 'var(--slate)',
               opacity: forClaude ? 1 : 0.3,
             }} />
-            {forClaude ? 'For Claude' : '@ Claude'}
+            {forClaude ? 'For Hermes' : '@ Hermes'}
           </button>
         )}
       </form>
@@ -167,15 +167,15 @@ export function TaskActivity({ taskId }: { taskId: string }) {
 
   return (
     <div>
-      <label className="text-[10px] uppercase tracking-wider mb-2 block" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+      <label className="text-[10px] uppercase tracking-wider mb-2 block" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
         Activity
       </label>
       <div className="flex flex-col gap-1">
         {activity.slice(0, 8).map((a) => (
           <div key={a.id} className="flex items-start gap-2 py-0.5">
             <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: 'var(--teal)', opacity: 0.3 }} />
-            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>{a.description}</span>
-            <span className="text-[9px] ml-auto flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.3 }}>{formatRelativeTime(a.timestamp)}</span>
+            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{a.description}</span>
+            <span className="text-[9px] ml-auto flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{formatRelativeTime(a.timestamp)}</span>
           </div>
         ))}
       </div>
@@ -197,7 +197,7 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
 
   if (decisions.length === 0) {
     return (
-      <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+      <p className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
         No decisions linked to this project.
       </p>
     )
@@ -229,12 +229,12 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
               </span>
             </div>
             {d.outcome && (
-              <p style={{ fontSize: '11px', color: 'var(--teal)', margin: '2px 0 0 0' }}>
+              <p style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', margin: '2px 0 0 0' }}>
                 {d.outcome}
               </p>
             )}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.4 }}>
+              <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                 {formatRelativeTime(d.created_at)}
               </span>
               {tags.map(tag => (
@@ -251,7 +251,7 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
         )
       })}
       {decisions.length > 5 && (
-        <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4, textAlign: 'center' }}>
+        <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', textAlign: 'center' }}>
           + {decisions.length - 5} more decisions
         </p>
       )}

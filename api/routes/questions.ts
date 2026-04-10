@@ -1,7 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 
-// ── AI Co-Scientist: detect @claude mentions in answers ──
+// ── AI Co-Scientist: detect @hermes/@claude mentions in answers ──
 async function handleClaudeMentionInAnswer(
   content: string,
   answerId: string,
@@ -9,9 +9,9 @@ async function handleClaudeMentionInAnswer(
   user: AuthUser,
   env: Env,
 ): Promise<void> {
-  if (!content.toLowerCase().includes('@claude')) return;
+  if (!/@(hermes|claude)\b/i.test(content)) return;
 
-  const aiPrompt = content.replace(/@claude/gi, '').trim();
+  const aiPrompt = content.replace(/@(hermes|claude)/gi, '').trim();
   if (aiPrompt.length <= 5) return;
 
   // Get question context
@@ -136,10 +136,10 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
 
   await logActivity(env, 'question', `New question: "${questionText.trim().slice(0, 80)}"`, askedBy, id, 'question');
 
-  // Check for @claude mention in question → create AI request + placeholder answer
+  // Check for @hermes/@claude mention in question → create AI request + placeholder answer
   try {
-    if (questionText.toLowerCase().includes('@claude')) {
-      const aiPrompt = questionText.replace(/@claude/gi, '').trim();
+    if (/@(hermes|claude)\b/i.test(questionText)) {
+      const aiPrompt = questionText.replace(/@(hermes|claude)/gi, '').trim();
       if (aiPrompt.length > 5) {
         const aiId = generateId();
         await env.DB.prepare(
@@ -153,7 +153,7 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
       }
     }
   } catch (e) {
-    console.error('Failed to create AI request for @claude mention in question:', e);
+    console.error('Failed to create AI request for @hermes mention in question:', e);
   }
 
   const created = await env.DB.prepare('SELECT * FROM lab_questions WHERE id = ?').bind(id).first();
@@ -189,11 +189,11 @@ export async function handleCreateAnswer(questionId: string, request: Request, u
     'question',
   );
 
-  // Check for @claude mention → create AI request + placeholder answer
+  // Check for @hermes/@claude mention → create AI request + placeholder answer
   try {
     await handleClaudeMentionInAnswer(body.content, id, questionId, user, env);
   } catch (e) {
-    console.error('Failed to create AI request for @claude mention in answer:', e);
+    console.error('Failed to create AI request for @hermes mention in answer:', e);
   }
 
   const created = await env.DB.prepare('SELECT * FROM lab_answers WHERE id = ?').bind(id).first();

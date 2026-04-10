@@ -1,7 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
 
-// ── AI Co-Scientist: detect @claude mentions and create pending request ──
+// ── AI Co-Scientist: detect @hermes/@claude mentions and create pending request ──
 async function handleClaudeMention(
   content: string,
   sourceType: string,
@@ -10,9 +10,9 @@ async function handleClaudeMention(
   user: AuthUser,
   env: Env,
 ): Promise<void> {
-  if (!content.toLowerCase().includes('@claude')) return;
+  if (!/@(hermes|claude)\b/i.test(content)) return;
 
-  const aiPrompt = content.replace(/@claude/gi, '').trim();
+  const aiPrompt = content.replace(/@(hermes|claude)/gi, '').trim();
   if (aiPrompt.length <= 5) return;
 
   // Create AI request record
@@ -463,11 +463,11 @@ export async function handleAddComment(
     console.error('Failed to create mention notifications for comment:', e);
   }
 
-  // Check for @claude mention → create AI request + placeholder comment
+  // Check for @hermes/@claude mention → create AI request + placeholder comment
   try {
     await handleClaudeMention(body.content, 'project_comment', commentId, projectId, user, env);
   } catch (e) {
-    console.error('Failed to create AI request for @claude mention:', e);
+    console.error('Failed to create AI request for @hermes mention:', e);
   }
 
   return json({ data: { id: commentId, project_id: projectId, content: body.content.trim(), author: user.email } }, 201);
