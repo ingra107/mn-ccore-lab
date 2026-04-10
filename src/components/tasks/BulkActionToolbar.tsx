@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, Circle, UserCheck, Flag, Trash2, X, AlertTriangle, AlarmClock } from 'lucide-react'
+import { CheckCircle2, Circle, UserCheck, Flag, Trash2, X, AlertTriangle, AlarmClock, ListChecks } from 'lucide-react'
 import { getAllMembers, directors } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
 
@@ -8,7 +8,7 @@ interface BulkActionToolbarProps {
   selectedIds: Set<string>
   selectedTasks: TaskRow[]
   onClear: () => void
-  onBulkAction: (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze', value?: string) => void
+  onBulkAction: (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze' | 'status', value?: string) => void
   isUpdating: boolean
 }
 
@@ -19,9 +19,17 @@ const priorityOptions = [
   { value: 'low', label: 'Low', color: '#64748b' },
 ]
 
+const statusOptions = [
+  { value: 'todo', label: 'To Do', color: '#64748b' },
+  { value: 'in_progress', label: 'In Progress', color: '#2d8a8a' },
+  { value: 'done', label: 'Done', color: '#16a34a' },
+  { value: 'blocked', label: 'Blocked', color: '#7a0019' },
+]
+
 export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear, onBulkAction, isUpdating }: BulkActionToolbarProps) {
   const [showAssign, setShowAssign] = useState(false)
   const [showPriority, setShowPriority] = useState(false)
+  const [showStatus, setShowStatus] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
 
   const count = selectedIds.size
@@ -32,6 +40,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
   const closeDropdowns = () => {
     setShowAssign(false)
     setShowPriority(false)
+    setShowStatus(false)
     setDeleteConfirm(false)
   }
 
@@ -53,7 +62,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
 
   return (
     <AnimatePresence>
-      {count > 0 && (
+      {count >= 2 && (
         <motion.div
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -127,11 +136,83 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
             {allCompleted ? 'Reopen' : 'Complete'}
           </button>
 
+          {/* Status */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => {
+                setShowAssign(false)
+                setShowPriority(false)
+                setDeleteConfirm(false)
+                setShowStatus(!showStatus)
+              }}
+              disabled={isUpdating}
+              style={buttonStyle(showStatus)}
+            >
+              <ListChecks size={14} />
+              Status
+            </button>
+
+            {showStatus && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  marginBottom: 8,
+                  background: 'var(--ink)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 10,
+                  padding: 6,
+                  minWidth: 140,
+                  boxShadow: 'var(--shadow-menu)',
+                }}
+              >
+                {statusOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      onBulkAction('status', opt.value)
+                      setShowStatus(false)
+                    }}
+                    className="transition-colors hover:bg-[rgba(255,255,255,0.08)]"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      width: '100%',
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'white',
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 'var(--radius-circle)',
+                        background: opt.color,
+                        flexShrink: 0,
+                      }}
+                    />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Reassign */}
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => {
                 setShowPriority(false)
+                setShowStatus(false)
                 setDeleteConfirm(false)
                 setShowAssign(!showAssign)
               }}
@@ -212,6 +293,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
             <button
               onClick={() => {
                 setShowAssign(false)
+                setShowStatus(false)
                 setDeleteConfirm(false)
                 setShowPriority(!showPriority)
               }}
@@ -304,6 +386,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
               } else {
                 setShowAssign(false)
                 setShowPriority(false)
+                setShowStatus(false)
                 setDeleteConfirm(true)
               }
             }}

@@ -8,7 +8,7 @@ import { useUndoToast } from '../UndoToast'
 import { formatBrandName } from '../BrandName'
 import TaskContextMenu from './TaskContextMenu'
 import { useContextMenu } from '../../hooks/useContextMenu'
-import { useSubtasks } from '../../hooks/useApiData'
+import { useSubtasks, useProjects } from '../../hooks/useApiData'
 import { useCreateSubtask, useToggleSubtask } from '../../hooks/useMutations'
 import { STATUS_OPTIONS, STATUS_BG, PRIORITY_OPTIONS, PRIORITY_CONFIG, PRIORITY_ORDER, STATUS_ORDER } from '../../lib/taskConstants'
 import type { TaskRow } from '../../lib/api'
@@ -34,13 +34,27 @@ function parseBlockedByIds(blockedBy: string | null): string[] {
   return blockedBy.split(',').map(s => s.trim()).filter(Boolean)
 }
 
-type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title'
+type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title' | 'project'
 
 export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
   const [sortKey, setSortKey] = useState<SortKey>('due_date')
   const [sortAsc, setSortAsc] = useState(true)
   const [internalExpanded, setInternalExpanded] = useState<Set<string>>(new Set())
+
+  // Project data for the PROJECT column
+  const { data: projects = [] } = useProjects()
+  const projectMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const p of projects) {
+      if (p.slug) map.set(p.slug, p.short_name || p.title)
+    }
+    return map
+  }, [projects])
+  const projectOptions = useMemo(() => [
+    { value: '', label: 'None' },
+    ...projects.filter(p => p.slug).map(p => ({ value: p.slug, label: p.short_name || p.title })),
+  ], [projects])
   const { state: contextMenuState, openMenu: openContextMenu, closeMenu: closeContextMenu } = useContextMenu()
 
   const expandedTasks = controlledExpanded ?? internalExpanded
@@ -71,17 +85,18 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         case 'due_date': cmp = (a.due_date || '9999').localeCompare(b.due_date || '9999'); break
         case 'assignee': cmp = (a.assignee || '').localeCompare(b.assignee || ''); break
         case 'title': cmp = (a.title || a.description || '').localeCompare(b.title || b.description || ''); break
+        case 'project': cmp = (projectMap.get(a.project_id || '') || a.project_id || '').localeCompare(projectMap.get(b.project_id || '') || b.project_id || ''); break
       }
       return sortAsc ? cmp : -cmp
     })
-  }, [tasks, sortKey, sortAsc])
+  }, [tasks, sortKey, sortAsc, projectMap])
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc)
     else { setSortKey(key); setSortAsc(true) }
   }
 
-  const colStyle = { display: 'grid', gridTemplateColumns: '32px minmax(280px, 3fr) 120px 110px 130px 90px 60px', alignItems: 'center' } as const
+  const colStyle = { display: 'grid', gridTemplateColumns: '32px minmax(240px, 3fr) 120px 120px 110px 130px 90px 60px', alignItems: 'center' } as const
 
   const ROW_HEIGHT = 44
   const parentRef = useRef<HTMLDivElement>(null)
@@ -124,6 +139,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         <div />
         <SortableColumnHeader label="TITLE" field="title" active={sortKey} asc={sortAsc} onSort={handleSort} />
         <SortableColumnHeader label="ASSIGNEE" field="assignee" active={sortKey} asc={sortAsc} onSort={handleSort} />
+        <SortableColumnHeader label="PROJECT" field="project" active={sortKey} asc={sortAsc} onSort={handleSort} />
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <SortableColumnHeader label="DUE DATE" field="due_date" active={sortKey} asc={sortAsc} onSort={handleSort} />
         </div>
@@ -181,10 +197,16 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                     onContextMenu={openContextMenu}
                     expanded={isExpanded}
                     onToggleExpand={() => toggleExpand(task.id)}
+                    projectMap={projectMap}
+                    projectOptions={projectOptions}
                   />
                   <AnimatePresence>
                     {isExpanded && (
-                      <InlineSubtaskRow key={`sub-${task.id}`} taskId={task.id} />
+                      <InlineSubtaskRow
+                        key={`sub-${task.id}`}
+                        taskId={task.id}
+                        onHeightChange={() => virtualizer.measure()}
+                      />
                     )}
                   </AnimatePresence>
                 </div>
@@ -308,7 +330,7 @@ function SortableColumnHeader({ label, field, active, asc, onSort }: { label: st
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand,
+  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions,
 }: {
   task: TaskRow
   allTasks: TaskRow[]
@@ -326,6 +348,8 @@ function TaskGridRow({
   onContextMenu?: (e: React.MouseEvent, taskId: string) => void
   expanded?: boolean
   onToggleExpand?: () => void
+  projectMap: Map<string, string>
+  projectOptions: { value: string; label: string }[]
 }) {
   const isDone = task.status === 'done'
   const blockerIds = useMemo(() => parseBlockedByIds(task.blocked_by), [task.blocked_by])
@@ -588,6 +612,35 @@ function TaskGridRow({
         )}
       </div>
 
+      {/* Project — inline select */}
+      <div className="task-row-meta" data-testid={`task-project-${task.id}`} onClick={(e) => e.stopPropagation()}>
+        <InlineCellSelect
+          value={task.project_id || ''}
+          options={projectOptions}
+          onChange={(val) => onFieldChange(task.id, 'project_id', val || null)}
+          renderValue={(val) => {
+            const name = val ? projectMap.get(val) || val : null
+            return (
+              <span
+                style={{
+                  fontSize: '11px',
+                  color: name ? 'var(--teal)' : 'var(--slate)',
+                  opacity: name ? 0.8 : 'var(--ink-hint)',
+                  maxWidth: '110px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  display: 'block',
+                }}
+                title={name || undefined}
+              >
+                {name || '\u2014'}
+              </span>
+            )
+          }}
+        />
+      </div>
+
       {/* Due date — inline date picker */}
       <div className="task-row-meta col-numeric" data-testid={`task-due-${task.id}`} onClick={(e) => e.stopPropagation()} style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <InlineDatePicker
@@ -817,18 +870,27 @@ function TaskKeyLinks({ task }: { task: TaskRow }) {
 
 // ── Inline Subtask Row (Linear-style expand) ─────────────────
 
-function InlineSubtaskRow({ taskId }: { taskId: string }) {
+function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeightChange?: () => void }) {
   const { data: subtasks = [] } = useSubtasks(taskId)
   const createSubtask = useCreateSubtask(taskId)
   const toggleSubtask = useToggleSubtask(taskId)
   const [newTitle, setNewTitle] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const prevSubtaskCount = useRef(subtasks.length)
 
   // Auto-focus input when row appears
   useEffect(() => {
     const timer = setTimeout(() => inputRef.current?.focus(), 200)
     return () => clearTimeout(timer)
   }, [])
+
+  // Re-measure parent when subtask count changes (adding/removing subtasks changes height)
+  useEffect(() => {
+    if (subtasks.length !== prevSubtaskCount.current) {
+      prevSubtaskCount.current = subtasks.length
+      onHeightChange?.()
+    }
+  }, [subtasks.length, onHeightChange])
 
   const completed = subtasks.filter((s) => s.completed).length
   const total = subtasks.length
@@ -843,15 +905,14 @@ function InlineSubtaskRow({ taskId }: { taskId: string }) {
 
   return (
     <motion.div
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: 'auto', opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      transition={{ duration: 0.2, ease: [0, 0, 0.2, 1] }}
-      style={{ overflow: 'hidden' }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
     >
       <div
         style={{
-          padding: '6px 16px 10px 64px',
+          padding: '6px 16px 10px 48px',
           borderBottom: '1px solid var(--border-subtle)',
           background: 'rgba(45, 138, 138, 0.02)',
         }}

@@ -1,5 +1,9 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
-import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame, X, Pin } from 'lucide-react'
+import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame, X, Pin, GripVertical } from 'lucide-react'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -67,7 +71,7 @@ export default function MyTasks() {
   const [showAllTasks, setShowAllTasks] = useState(false)
   const bulkUpdate = useBulkUpdateTasks()
 
-  const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze', value?: string) => {
+  const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze' | 'status', value?: string) => {
     if (action === 'snooze') {
       const days = parseInt(value || '1', 10)
       for (const id of selectedIds) {
@@ -237,6 +241,21 @@ export default function MyTasks() {
     })
   }, [focusTasks])
 
+  // Drag-and-drop sensors for Focus Next
+  const focusSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
+
+  const handleFocusDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = focusTasks.findIndex(t => t.id === active.id)
+    const newIndex = focusTasks.findIndex(t => t.id === over.id)
+    if (oldIndex !== -1 && newIndex !== -1) {
+      moveFocusTask(oldIndex, newIndex)
+    }
+  }, [focusTasks, moveFocusTask])
+
   // Task completion streak
   const streak = useMemo(() => {
     const completed = tasks.filter(t => t.completed && t.completed_at).map(t => {
@@ -392,7 +411,7 @@ export default function MyTasks() {
             color: 'var(--ink)',
           }}
         >
-          Showing all lab tasks. Sign in with your @umn.edu account to see only your tasks.
+          Showing all lab tasks. <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> with your @umn.edu account to see only your tasks.
         </div>
       )}
 
@@ -494,71 +513,23 @@ export default function MyTasks() {
               {focusTasks.length}/{FOCUS_MAX}
             </span>
           </div>
-          <div className="flex flex-col gap-1">
-            {focusTasks.map((task, idx) => {
-              const isPinned = focusPinnedSet.has(task.id)
-              return (
-                <div
-                  key={task.id}
-                  className="group flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-colors"
-                  style={{
-                    background: isPinned
-                      ? 'linear-gradient(135deg, rgba(45,138,138,0.06), rgba(201,168,76,0.06))'
-                      : 'linear-gradient(135deg, rgba(45,138,138,0.02), rgba(201,168,76,0.02))',
-                    borderColor: isPinned ? 'rgba(45,138,138,0.25)' : 'rgba(45,138,138,0.12)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {/* Reorder arrows */}
-                  <div className="flex flex-col opacity-0 group-hover:opacity-40 transition-opacity" style={{ flexShrink: 0 }}>
-                    {idx > 0 && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); moveFocusTask(idx, idx - 1) }}
-                        className="text-[9px] leading-none hover:text-[var(--teal)]"
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '0 2px' }}
-                      >
-                        ▲
-                      </button>
-                    )}
-                    {idx < focusTasks.length - 1 && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); moveFocusTask(idx, idx + 1) }}
-                        className="text-[9px] leading-none hover:text-[var(--teal)]"
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '0 2px' }}
-                      >
-                        ▼
-                      </button>
-                    )}
-                  </div>
-                  <span className="text-[10px] font-medium" style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0, width: '14px', textAlign: 'center' }}>
-                    {idx + 1}
-                  </span>
-                  <div
-                    className="min-w-0 flex-1"
-                    onClick={() => setSelectedTask(task)}
-                  >
-                    <div className="text-sm truncate" style={{ color: 'var(--ink)' }}>
-                      {task.title || task.description}
-                    </div>
-                  </div>
-                  {task.due_date && (
-                    <span className="text-[10px] flex-shrink-0" style={{ color: new Date(task.due_date + 'T23:59:59') < new Date() ? 'var(--maroon)' : 'var(--slate)', opacity: 0.6 }}>
-                      {task.due_date}
-                    </span>
-                  )}
-                  {/* Pin/unpin button */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); isPinned ? unpinTask(task.id) : pinTask(task.id) }}
-                    className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: isPinned ? 'var(--teal)' : 'var(--slate)', padding: '2px', flexShrink: 0 }}
-                    title={isPinned ? 'Unpin from focus' : 'Pin to focus'}
-                  >
-                    {isPinned ? <X size={12} /> : <Pin size={12} />}
-                  </button>
-                </div>
-              )
-            })}
-          </div>
+          <DndContext sensors={focusSensors} collisionDetection={closestCenter} onDragEnd={handleFocusDragEnd}>
+            <SortableContext items={focusTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-1">
+                {focusTasks.map((task, idx) => (
+                  <SortableFocusItem
+                    key={task.id}
+                    task={task}
+                    index={idx}
+                    isPinned={focusPinnedSet.has(task.id)}
+                    onSelect={setSelectedTask}
+                    onPin={pinTask}
+                    onUnpin={unpinTask}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       )}
 
@@ -622,6 +593,72 @@ export default function MyTasks() {
         onBulkAction={handleBulkAction}
         isUpdating={bulkUpdate.isPending}
       />
+    </div>
+  )
+}
+
+// ── Sortable Focus Item ──────────────────────────────────────
+function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: {
+  task: TaskRow
+  index: number
+  isPinned: boolean
+  onSelect: (task: TaskRow) => void
+  onPin: (id: string) => void
+  onUnpin: (id: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 'auto',
+    background: isPinned
+      ? 'linear-gradient(135deg, rgba(45,138,138,0.06), rgba(201,168,76,0.06))'
+      : 'linear-gradient(135deg, rgba(45,138,138,0.02), rgba(201,168,76,0.02))',
+    borderColor: isPinned ? 'rgba(45,138,138,0.25)' : 'rgba(45,138,138,0.12)',
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="group flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-colors"
+      {...attributes}
+    >
+      {/* Drag handle */}
+      <button
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-40 transition-opacity flex-shrink-0"
+        style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)' }}
+      >
+        <GripVertical size={14} />
+      </button>
+      <span className="text-[10px] font-medium" style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0, width: '14px', textAlign: 'center' }}>
+        {index + 1}
+      </span>
+      <div
+        className="min-w-0 flex-1"
+        onClick={() => onSelect(task)}
+        style={{ cursor: 'pointer' }}
+      >
+        <div className="text-sm truncate" style={{ color: 'var(--ink)' }}>
+          {task.title || task.description}
+        </div>
+      </div>
+      {task.due_date && (
+        <span className="text-[10px] flex-shrink-0" style={{ color: new Date(task.due_date + 'T23:59:59') < new Date() ? 'var(--maroon)' : 'var(--slate)', opacity: 0.6 }}>
+          {task.due_date}
+        </span>
+      )}
+      {/* Pin/unpin button */}
+      <button
+        onClick={(e) => { e.stopPropagation(); isPinned ? onUnpin(task.id) : onPin(task.id) }}
+        className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: isPinned ? 'var(--teal)' : 'var(--slate)', padding: '2px', flexShrink: 0 }}
+        title={isPinned ? 'Unpin from focus' : 'Pin to focus'}
+      >
+        {isPinned ? <X size={12} /> : <Pin size={12} />}
+      </button>
     </div>
   )
 }

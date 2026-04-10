@@ -91,7 +91,7 @@ export function useBulkUpdateTasks() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { ids: string[]; action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete'; value?: string }) =>
+    mutationFn: (input: { ids: string[]; action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'status'; value?: string }) =>
       fetchApi('/api/tasks/batch', {
         method: 'POST',
         body: JSON.stringify(input),
@@ -105,6 +105,7 @@ export function useBulkUpdateTasks() {
           if (!ids.includes(t.id)) return t
           if (action === 'complete') return { ...t, completed: 1, status: TASK_STATUS.DONE }
           if (action === 'uncomplete') return { ...t, completed: 0, status: TASK_STATUS.TODO }
+          if (action === 'status' && value) return { ...t, status: value, completed: value === TASK_STATUS.DONE ? 1 : 0, completed_at: value === TASK_STATUS.DONE ? new Date().toISOString() : null }
           if (action === 'priority' && value) return { ...t, priority: value }
           if (action === 'assign' && value) return { ...t, assignee: value }
           if (action === 'delete') return { ...t, deleted_at: new Date().toISOString() }

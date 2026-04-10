@@ -152,7 +152,7 @@ export default function Tasks() {
     })
   }
 
-  const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze', value?: string) => {
+  const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze' | 'status', value?: string) => {
     if (action === 'snooze') {
       // Snooze: push due date by N days for each selected task
       const days = parseInt(value || '1', 10)

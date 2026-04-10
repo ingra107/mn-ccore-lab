@@ -303,7 +303,7 @@ export async function handleGetTaskActivity(taskId: string, env: Env): Promise<R
 export async function handleBatchUpdateTasks(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
     ids: string[]
-    action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete'
+    action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'status'
     value?: string
   }
 
@@ -324,6 +324,21 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
       await env.DB.prepare(
         `UPDATE tasks SET status = 'todo', completed = 0, completed_at = NULL, completed_by = NULL, updated_at = datetime('now') WHERE id IN (${placeholders})`
       ).bind(...body.ids).run()
+      break
+
+    case 'status':
+      if (!body.value || !['todo', 'in_progress', 'done', 'blocked'].includes(body.value)) {
+        return error('value must be one of: todo, in_progress, done, blocked', 400)
+      }
+      if (body.value === 'done') {
+        await env.DB.prepare(
+          `UPDATE tasks SET status = 'done', completed = 1, completed_at = datetime('now'), completed_by = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
+        ).bind(user.email, ...body.ids).run()
+      } else {
+        await env.DB.prepare(
+          `UPDATE tasks SET status = ?, completed = 0, completed_at = NULL, completed_by = NULL, updated_at = datetime('now') WHERE id IN (${placeholders})`
+        ).bind(body.value, ...body.ids).run()
+      }
       break
 
     case 'assign':
