@@ -376,7 +376,7 @@ export default function AnalyticsPage() {
                 )
               })}
               {completionByPerson.length === 0 && (
-                <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>No task data yet</p>
+                <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No task data yet</p>
               )}
             </div>
           </div>
@@ -397,7 +397,7 @@ export default function AnalyticsPage() {
               </p>
             </div>
             <div className="text-center pt-3 mt-3" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
-              <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.6 }}>
+              <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                 Individual performance metrics are visible to PIs only
               </p>
             </div>
@@ -489,13 +489,13 @@ export default function AnalyticsPage() {
                         opacity: b.count > 0 ? (i < 2 ? 0.6 : 0.8) : 0.15,
                       }}
                     />
-                    <span className="text-[8px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>{b.label}</span>
+                    <span className="text-[8px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{b.label}</span>
                   </div>
                 ))}
               </div>
             )
           })()}
-          <p className="text-[10px] mt-3" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+          <p className="text-[10px] mt-3" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
             {tasks.filter(t => !t.completed && t.created_at && (new Date().getTime() - new Date(t.created_at).getTime()) > 28 * 86400000).length} tasks older than 4 weeks
           </p>
         </div>

@@ -41,7 +41,7 @@ export function HandoffRecipientSelect({ value, onChange, members }: { value: st
             <span className="text-sm" style={{ color: 'var(--ink)' }}>{person.name}</span>
           </>
         ) : (
-          <span className="text-sm px-1" style={{ color: 'var(--slate)', opacity: 0.5 }}>Select team member...</span>
+          <span className="text-sm px-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>Select team member...</span>
         )}
         <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--teal)', opacity: 0.6 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
@@ -115,17 +115,17 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
     color: 'var(--ink)',
     borderColor: 'var(--border-light)',
     backgroundColor: 'var(--cream)',
-    fontSize: '13px',
+    fontSize: 'var(--value-size)',
   }
 
   const labelStyle = {
-    fontSize: '11px' as const,
-    fontWeight: 500,
+    fontSize: 'var(--label-size)',
+    fontWeight: 'var(--label-weight)',
     color: 'var(--slate)',
-    opacity: 0.6,
+    opacity: 'var(--ink-label)',
     marginBottom: '4px',
-    display: 'block' as const,
-  }
+    display: 'block',
+  } as React.CSSProperties
 
   return (
     <div>
@@ -134,7 +134,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
           <div className="p-4 rounded-xl" style={{ background: 'rgba(45,138,138,0.04)', border: '1px solid rgba(45,138,138,0.15)' }}>
             <div className="flex items-center gap-2 mb-3">
               <ArrowRightLeft size={14} style={{ color: 'var(--teal)' }} />
-              <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--teal)' }}>
+              <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--teal)' }}>
                 Handoff to...
               </span>
             </div>
@@ -245,7 +245,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
       {/* Handoff History Timeline */}
       {handoffs.length > 0 && (
         <div className="mt-3">
-          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
             <ArrowRightLeft size={10} />
             Handoff History ({handoffs.length})
           </label>
@@ -269,7 +269,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                       </div>
                       <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{to.name}</span>
                     </div>
-                    <span className="text-[9px] ml-auto" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+                    <span className="text-[9px] ml-auto" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                       {formatRelativeTime(h.created_at)}
                     </span>
                   </div>

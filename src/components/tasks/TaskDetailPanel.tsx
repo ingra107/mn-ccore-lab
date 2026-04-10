@@ -115,7 +115,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
-          <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 0.55 }}>
+          <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             Task Detail
           </span>
           <div className="flex items-center gap-1">
@@ -126,7 +126,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
                   onClick={onPrev}
                   disabled={!onPrev}
                   title="Previous task (Alt+↑)"
-                  style={{ background: 'none', border: 'none', cursor: onPrev ? 'pointer' : 'default', color: 'var(--slate)', padding: '2px', opacity: onPrev ? 0.5 : 0.15 }}
+                  style={{ background: 'none', border: 'none', cursor: onPrev ? 'pointer' : 'default', color: 'var(--slate)', padding: '2px', opacity: onPrev ? 'var(--ink-hint)' : 0.15 }}
                 >
                   <ChevronUp size={14} />
                 </button>
@@ -134,7 +134,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
                   onClick={onNext}
                   disabled={!onNext}
                   title="Next task (Alt+↓)"
-                  style={{ background: 'none', border: 'none', cursor: onNext ? 'pointer' : 'default', color: 'var(--slate)', padding: '2px', opacity: onNext ? 0.5 : 0.15 }}
+                  style={{ background: 'none', border: 'none', cursor: onNext ? 'pointer' : 'default', color: 'var(--slate)', padding: '2px', opacity: onNext ? 'var(--ink-hint)' : 0.15 }}
                 >
                   <ChevronDown size={14} />
                 </button>
@@ -150,7 +150,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
                 })
               }}
               title="Copy task link"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--green)' : 'var(--slate)', padding: '4px', opacity: copied ? 1 : 0.4, transition: 'all 150ms' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--green)' : 'var(--slate)', padding: '4px', opacity: copied ? 1 : 'var(--ink-hint)', transition: 'all 150ms' }}
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
             </button>
@@ -172,7 +172,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
           {/* Task age + source info */}
           <div className="flex items-center gap-2 flex-wrap">
             {task.created_at && (
-              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                 Created {formatRelativeTime(task.created_at)}
               </span>
             )}
@@ -342,7 +342,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
 
             {/* Instructions */}
             <div>
-              <label className="flex items-center gap-1.5 text-[11px] mb-1.5" style={{ color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
+              <label className="flex items-center gap-1.5 mb-1.5" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', fontSize: 'var(--label-size)' }}>
                 <ClipboardList size={11} />
                 Instructions
               </label>
@@ -386,13 +386,13 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
               storageKey={`task-files-${task.id}`}
             >
               <FileUpload entityType="task" entityId={task.id} />
-              <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
+              <div style={{ marginTop: 'var(--sp-md)', borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--sp-md)' }}>
                 <TaskFilesSection taskId={task.id} />
               </div>
             </CollapsibleSection>
 
             {/* Meta info */}
-            <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 0.5 }}>
+            <div className="flex items-center gap-3 text-[10px] pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
               {task.source && <span>Source: {task.source}</span>}
               {task.created_at && <span>Created {formatRelativeTime(task.created_at)}</span>}
               {task.completed_at && <span>Completed {formatRelativeTime(task.completed_at)}</span>}
@@ -400,17 +400,17 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
           </div>
 
           {/* ── Notes Tab ── */}
-          <div style={{ display: activeTab === 'notes' ? 'flex' : 'none', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: activeTab === 'notes' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-lg)' }}>
             <TaskUpdateFeed taskId={task.id} />
           </div>
 
           {/* ── Comments Tab ── */}
-          <div style={{ display: activeTab === 'comments' ? 'flex' : 'none', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: activeTab === 'comments' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}>
             <TaskComments taskId={task.id} taskTitle={task.title} projectSlug={task.project_id} />
           </div>
 
           {/* ── Activity Tab ── */}
-          <div style={{ display: activeTab === 'activity' ? 'flex' : 'none', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: activeTab === 'activity' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-sm)' }}>
             <TaskActivityFeed taskId={task.id} />
           </div>
 
@@ -492,7 +492,7 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
       <button
         onClick={() => setOpen(!open)}
         className="text-[10px] px-1.5 py-0.5 rounded-full"
-        style={{ background: 'none', border: '1px dashed var(--border-subtle)', cursor: 'pointer', color: 'var(--slate)', opacity: 0.6 }}
+        style={{ background: 'none', border: '1px dashed var(--border-subtle)', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
       >
         + Add
       </button>
@@ -586,7 +586,7 @@ function DetailKeyLinkRow({ url, label }: { url: string; label?: string | null }
         >
           {label || url}
         </a>
-        <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+        <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
           {typeLabel}
         </span>
       </div>
@@ -598,7 +598,7 @@ function DetailKeyLinkRow({ url, label }: { url: string; label?: string | null }
           border: 'none',
           cursor: 'pointer',
           color: copied ? 'var(--green)' : 'var(--slate)',
-          opacity: copied ? 1 : 0.4,
+          opacity: copied ? 1 : 'var(--ink-hint)',
           padding: '2px',
           transition: 'all 150ms',
         }}
@@ -620,7 +620,7 @@ function DetailKeyLinks({ task }: { task: TaskRow }) {
 
   return (
     <div>
-      <label className="flex items-center gap-1.5 text-[11px] mb-1.5" style={{ color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
+      <label className="flex items-center gap-1.5 mb-1.5" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', fontSize: 'var(--label-size)' }}>
         <Link2 size={11} />
         Key Links
       </label>
@@ -679,7 +679,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[11px] font-medium" style={{ color: 'var(--slate)', opacity: 0.65 }}>
+        <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', fontSize: 'var(--label-size)' }}>
           Attachments ({files.length})
         </span>
         <button
@@ -743,7 +743,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
               >
                 {f.filename}
               </a>
-              <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+              <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                 <ExternalLink size={12} />
               </a>
               <button
@@ -758,7 +758,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
       ) : !showAdd ? (
         <div style={{ textAlign: 'center', padding: '24px 16px' }}>
           <Upload size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 8px' }} />
-          <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, margin: 0 }}>
+          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', margin: 0 }}>
             No attachments yet. Click "Add Link" to attach a document.
           </p>
         </div>

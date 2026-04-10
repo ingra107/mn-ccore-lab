@@ -49,7 +49,7 @@ interface TaskContextMenuProps {
 
 // ── Styles ─────────────────────────────────────────────────────
 
-const menuStyles: React.CSSProperties = {
+const menuStyles = {
   position: 'fixed',
   zIndex: 9999,
   minWidth: '200px',
@@ -58,36 +58,36 @@ const menuStyles: React.CSSProperties = {
   borderRadius: '8px',
   boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
   padding: '4px 0',
-  fontSize: '13px',
+  fontSize: 'var(--value-size)',
   color: 'var(--ink, #e2e8f0)',
   fontWeight: 400,
-}
+} as React.CSSProperties
 
-const itemStyles: React.CSSProperties = {
+const itemStyles = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  gap: '8px',
+  gap: 'var(--sp-sm)',
   width: '100%',
   padding: '6px 12px',
   border: 'none',
   background: 'none',
   cursor: 'pointer',
-  fontSize: '13px',
+  fontSize: 'var(--value-size)',
   fontWeight: 400,
   color: 'var(--ink, #e2e8f0)',
   textAlign: 'left',
   transition: 'background 100ms ease',
-}
+} as React.CSSProperties
 
-const shortcutStyles: React.CSSProperties = {
+const shortcutStyles = {
   color: 'var(--slate, #94a3b8)',
-  opacity: 0.4,
-  fontSize: '11px',
+  opacity: 'var(--ink-hint)',
+  fontSize: 'var(--label-size)',
   fontWeight: 400,
   marginLeft: 'auto',
   flexShrink: 0,
-}
+} as React.CSSProperties
 
 const dividerStyles: React.CSSProperties = {
   height: '1px',
@@ -305,7 +305,7 @@ export default function TaskContextMenu({
               style={{ color: isCurrent ? 'var(--teal)' : s.color }}
               onClick={() => handleAction(() => onStatusChange(task.id, s.value))}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
                 <Icon size={13} />
                 {s.label}
               </span>
@@ -327,7 +327,7 @@ export default function TaskContextMenu({
                 onFieldChange?.(task.id, 'priority', p.value)
               })}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
                 <span style={{
                   width: 8,
                   height: 8,
@@ -377,7 +377,7 @@ export default function TaskContextMenu({
                 onFieldChange!(task.id, 'due_date', newDate)
               })}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
                 <AlarmClock size={12} style={{ opacity: 0.5 }} />
                 {opt.label}
               </span>
@@ -391,7 +391,7 @@ export default function TaskContextMenu({
       {/* Open detail panel */}
       {onOpenDetail && (
         <MenuItem onClick={() => handleAction(() => onOpenDetail(task))}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
             <ArrowRight size={13} style={{ opacity: 0.5 }} />
             Open detail panel
           </span>
@@ -402,7 +402,7 @@ export default function TaskContextMenu({
       {/* Peek */}
       {onPeek && (
         <MenuItem onClick={() => handleAction(() => onPeek(task))}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
             <Eye size={13} style={{ opacity: 0.5 }} />
             Peek
           </span>
@@ -416,7 +416,7 @@ export default function TaskContextMenu({
       <MenuItem onClick={() => handleAction(() => {
         window.open(`/tasks?open=${task.id}`, '_blank')
       })}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
           <ExternalLink size={13} style={{ opacity: 0.5 }} />
           Open in new tab
         </span>
@@ -424,7 +424,7 @@ export default function TaskContextMenu({
 
       {/* Copy task title */}
       <MenuItem onClick={() => handleAction(() => { copyToClipboard(task.title || task.description) })}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
           <Copy size={13} style={{ opacity: 0.5 }} />
           Copy task title
         </span>
@@ -435,7 +435,7 @@ export default function TaskContextMenu({
         const url = `${window.location.origin}/portal/tasks?task=${task.id}`
         copyToClipboard(url)
       })}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
           <Link size={13} style={{ opacity: 0.5 }} />
           Copy link
         </span>
@@ -451,7 +451,7 @@ export default function TaskContextMenu({
           onStatusChange(task.id, 'done')
         }
       })}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
           <Archive size={13} style={{ opacity: 0.5 }} />
           Archive
         </span>

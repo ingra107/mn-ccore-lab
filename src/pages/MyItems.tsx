@@ -96,7 +96,7 @@ function SignInPrompt() {
             alignItems: 'center',
             gap: 6,
             marginTop: '1.5rem',
-            fontSize: '13px',
+            fontSize: 'var(--value-size)',
             color: 'var(--gold)',
           }}
         >
@@ -183,12 +183,12 @@ function StatCard({
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-md)', marginBottom: '1rem' }}>
       <span
         style={{
-          fontSize: '11px',
+          fontSize: 'var(--label-size)',
           color: 'var(--slate)',
-          opacity: 0.6,
+          opacity: 'var(--ink-label)',
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
           whiteSpace: 'nowrap',
@@ -300,9 +300,9 @@ function ActionItemCard({
               </div>
               <span
                 style={{
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   color: 'var(--slate)',
-                  opacity: 0.7,
+                  opacity: 'var(--ink-label)',
                 }}
               >
                 {item.assignee}
@@ -332,9 +332,9 @@ function ActionItemCard({
                 <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     color: 'var(--slate)',
-                    opacity: 0.5,
+                    opacity: 'var(--ink-hint)',
                   }}
                 >
                   from {item.meeting_title}
@@ -409,9 +409,9 @@ function NotificationCard({
           {notification.body && (
             <div
               style={{
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
                 color: 'var(--slate)',
-                opacity: 0.7,
+                opacity: 'var(--ink-label)',
                 marginTop: 2,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -423,9 +423,9 @@ function NotificationCard({
           )}
           <div
             style={{
-              fontSize: '11px',
+              fontSize: 'var(--label-size)',
               color: 'var(--slate)',
-              opacity: 0.5,
+              opacity: 'var(--ink-hint)',
               marginTop: 4,
             }}
           >
@@ -550,9 +550,9 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
               </div>
               <span
                 style={{
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   color: 'var(--slate)',
-                  opacity: 0.7,
+                  opacity: 'var(--ink-label)',
                 }}
               >
                 To: {item.to_whom}
@@ -582,9 +582,9 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
                 <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     color: 'var(--slate)',
-                    opacity: 0.5,
+                    opacity: 'var(--ink-hint)',
                   }}
                 >
                   from {item.source.replace(/^meeting:\s*/i, '')}
@@ -958,9 +958,9 @@ export default function MyItems() {
             >
               <span
                 style={{
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   color: 'var(--slate)',
-                  opacity: 0.6,
+                  opacity: 'var(--ink-label)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
                   whiteSpace: 'nowrap',
@@ -972,7 +972,7 @@ export default function MyItems() {
               <motion.span
                 animate={{ rotate: showCompleted ? 0 : -90 }}
                 transition={{ duration: 0.2 }}
-                style={{ color: 'var(--slate)', opacity: 0.55, flexShrink: 0 }}
+                style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }}
               >
                 <ChevronDown size={16} />
               </motion.span>

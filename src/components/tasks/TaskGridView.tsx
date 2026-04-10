@@ -191,7 +191,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           </div>
         ) : (
           <div style={{ padding: '48px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.4 }}>
+            <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
               No tasks match the current filters
             </p>
           </div>
@@ -453,7 +453,7 @@ function TaskGridRow({
               onBlur={() => { if (titleDraft.trim() && titleDraft !== task.title) onFieldChange(task.id, 'title', titleDraft); setEditingTitle(false) }}
               onClick={(e) => e.stopPropagation()}
               style={{
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
                 fontWeight: 400,
                 color: 'var(--ink)',
                 background: 'var(--cream)',
@@ -473,7 +473,7 @@ function TaskGridRow({
               onDoubleClick={(e) => { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) }}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOpenDetail?.(task) } if (e.key === 'F2') { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) } }}
               style={{
-                fontSize: '13px',
+                fontSize: 'var(--value-size)',
                 fontWeight: 400,
                 color: 'var(--ink)',
                 textDecoration: isDone ? 'line-through' : 'none',
@@ -850,7 +850,7 @@ function InlineSubtaskRow({ taskId }: { taskId: string }) {
             <div style={{ flex: 1, height: 2, borderRadius: 1, background: 'rgba(201,168,76,0.12)', overflow: 'hidden' }}>
               <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: completed === total ? 'var(--teal)' : 'var(--gold)', borderRadius: 1, transition: 'width 0.3s ease' }} />
             </div>
-            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>{completed}/{total}</span>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{completed}/{total}</span>
           </div>
         )}
 
@@ -996,14 +996,14 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
     <div
       style={{
         display: 'flex',
-        gap: 20,
+        gap: 'var(--sp-xl)',
         padding: '8px 16px',
         borderTop: '1px solid var(--border-subtle)',
         background: 'rgba(45, 138, 138, 0.02)',
       }}
     >
       {stats.map(s => (
-        <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
+        <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
           {s.label}{' '}
           <span style={{ fontWeight: 600, color: s.color || 'var(--slate)', opacity: 1 }}>
             {s.value}

@@ -163,10 +163,10 @@ export default function MeetingDetail() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs"
-              style={{ fontSize: '11px', background: statusStyle.bg, color: statusStyle.text }}>
+              style={{ fontSize: 'var(--label-size)', background: statusStyle.bg, color: statusStyle.text }}>
               <Calendar size={12} /> {meeting.status}
             </span>
-            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               {meeting.type}
             </span>
             <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
@@ -174,7 +174,7 @@ export default function MeetingDetail() {
               to={`/meetings/${meeting.id}/prep`}
               className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs transition-colors"
               style={{
-                fontSize: '11px',
+                fontSize: 'var(--label-size)',
                 color: 'var(--teal)', textDecoration: 'none',
                 border: '1px solid rgba(45,138,138,0.2)',
                 background: 'rgba(45,138,138,0.05)',
@@ -213,7 +213,7 @@ export default function MeetingDetail() {
               }}
               className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
               style={{
-                fontSize: '11px',
+                fontSize: 'var(--label-size)',
                 color: copiedSummary ? 'var(--green)' : 'var(--slate)',
                 border: `1px solid ${copiedSummary ? 'var(--green)' : 'var(--border-light)'}`,
                 background: copiedSummary ? 'rgba(34,197,94,0.06)' : 'none',
@@ -240,14 +240,14 @@ export default function MeetingDetail() {
             return facilitatorInfo ? (
               <div className="flex items-center gap-2 mt-2">
                 <UserCheck size={14} style={{ color: 'var(--teal)' }} />
-                <span style={{ fontSize: '11px', color: 'var(--teal)' }}>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--teal)' }}>
                   Facilitator:
                 </span>
                 <div className="flex items-center gap-1.5">
                   <div style={{ width: 20, height: 20 }}>
                     <Avatar name={facilitatorInfo.name} initials={facilitatorInfo.initials} photoUrl={facilitatorInfo.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
                   </div>
-                  <span style={{ fontSize: '13px', color: 'var(--ink)' }}>
+                  <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)' }}>
                     {facilitatorInfo.name}
                   </span>
                 </div>
@@ -267,7 +267,7 @@ export default function MeetingDetail() {
           if (projectSlugs.length === 0) return null
           return (
             <div className="flex items-center gap-2 mt-4 flex-wrap">
-              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500 }}>
+              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--label-weight)' }}>
                 Projects discussed
               </span>
               {projectSlugs.map((slug: string) => (
@@ -275,13 +275,13 @@ export default function MeetingDetail() {
                   key={slug}
                   href={`/projects/${slug}`}
                   style={{
-                    fontSize: '11px',
+                    fontSize: 'var(--label-size)',
                     padding: '2px 8px',
                     borderRadius: '10px',
                     backgroundColor: 'rgba(45,138,138,0.08)',
                     color: 'var(--teal)',
                     textDecoration: 'none',
-                    fontWeight: 500,
+                    fontWeight: 'var(--label-weight)',
                   }}
                 >
                   {slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
@@ -309,12 +309,12 @@ export default function MeetingDetail() {
               {/* Auto-generated agenda items */}
               {autoAgenda.length > 0 && (
                 <div className="mb-4">
-                  <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '8px' }}>
+                  <p style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', marginBottom: '8px' }}>
                     Prepared agenda
                   </p>
                   <ol style={{ margin: 0, paddingLeft: '20px' }}>
                     {autoAgenda.map((item, i) => (
-                      <li key={i} style={{ fontSize: '13px', color: 'var(--ink)', lineHeight: 1.6, marginBottom: '4px' }}>
+                      <li key={i} style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.6, marginBottom: '4px' }}>
                         {item}
                       </li>
                     ))}
@@ -325,7 +325,7 @@ export default function MeetingDetail() {
               {/* Team-added agenda items (drag-to-reorder) */}
               {teamAgendaItems.length > 0 && (
                 <div className="mb-4">
-                  <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '8px' }}>
+                  <p style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', marginBottom: '8px' }}>
                     Team-added items
                   </p>
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAgendaDragEnd}>
@@ -350,7 +350,7 @@ export default function MeetingDetail() {
               <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
                 Action Items
               </h2>
-              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                 {completedActions.length}/{actionItems.length}
               </span>
             </div>
@@ -375,7 +375,7 @@ export default function MeetingDetail() {
               {/* Completed items */}
               {completedActions.length > 0 && (
                 <div>
-                  <p style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.65, marginBottom: '6px' }}>
+                  <p style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', marginBottom: '6px' }}>
                     Completed
                   </p>
                   {completedActions.map((item) => (
@@ -385,7 +385,7 @@ export default function MeetingDetail() {
               )}
 
               {actionItems.length === 0 && (
-                <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: '16px 0', margin: 0 }}>
                   No action items yet — type above to add one
                 </p>
               )}
@@ -406,7 +406,7 @@ export default function MeetingDetail() {
                 style={{
                   marginLeft: 'auto', background: 'none', border: '1px solid var(--border-light)',
                   borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
-                  fontSize: '11px', color: 'var(--gold)',
+                  fontSize: 'var(--label-size)', color: 'var(--gold)',
                   display: 'flex', alignItems: 'center', gap: '4px',
                 }}
               >
@@ -449,7 +449,7 @@ export default function MeetingDetail() {
                     placeholder="What was decided?"
                     autoFocus
                     style={{
-                      width: '100%', fontSize: '13px', color: 'var(--ink)',
+                      width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
                       background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8,
                       padding: '8px 12px', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
                     }}
@@ -489,7 +489,7 @@ export default function MeetingDetail() {
             {decisions.map((d, i) => (
               <div key={i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < decisions.length - 1 ? '1px solid rgba(201, 168, 76, 0.06)' : 'none' }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)', marginTop: '7px', flexShrink: 0 }} />
-                <p style={{ fontSize: '13px', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>{d}</p>
+                <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>{d}</p>
               </div>
             ))}
 
@@ -565,7 +565,7 @@ export default function MeetingDetail() {
                     {meeting.notes}
                   </div>
                 ) : (
-                  <p style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.5, fontStyle: 'italic', margin: 0, cursor: 'pointer' }}
+                  <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontStyle: 'italic', margin: 0, cursor: 'pointer' }}
                     onClick={() => { setNotesDraft(''); setEditingNotes(true) }}>
                     No notes yet. Click to add.
                   </p>
@@ -618,7 +618,7 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
       </button>
       <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
+        <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
         <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
           Added by {item.added_by}
           {item.document_url && (
@@ -684,7 +684,7 @@ function ActionItemRow({ item, onToggle }: { item: ActionItemRowType; onToggle?:
         </button>
       </div>
       <div style={{ flex: 1, paddingTop: '10px' }}>
-        <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0, lineHeight: 1.4, textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.5 : 1 }}>
+        <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, lineHeight: 1.4, textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.5 : 1 }}>
           {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">↻ carried</span>}{clean}</>); })()}
         </p>
         <div className="flex flex-wrap items-center gap-3 mt-1">
@@ -769,7 +769,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
           placeholder={isAuthenticated || !import.meta.env.PROD ? '@nick Review draft p2 Friday' : 'Sign in to add items'}
           disabled={!isAuthenticated && import.meta.env.PROD}
           style={{
-            flex: 1, fontSize: '13px', color: 'var(--ink)',
+            flex: 1, fontSize: 'var(--value-size)', color: 'var(--ink)',
             background: 'var(--cream)', border: '1px solid color-mix(in srgb, var(--teal) 12%, transparent)', borderRadius: 8,
             padding: '8px 12px', outline: 'none', transition: 'border-color 0.15s',
           }}
@@ -858,7 +858,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             placeholder={isAuthenticated ? 'Add an agenda item...' : 'Sign in to add items'}
             disabled={!isAuthenticated && import.meta.env.PROD}
             style={{
-              width: '100%', fontSize: '13px', color: 'var(--ink)',
+              width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
               background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: '8px',
               padding: '8px 12px', outline: 'none', transition: 'border-color 0.2s',
             }}
@@ -927,7 +927,7 @@ function AttendanceSection({ meetingId, attendees }: { meetingId: string; attend
   return (
     <div className="mt-4">
       <div className="flex items-center gap-2 mb-2">
-        <Users size={14} style={{ color: 'var(--slate)', opacity: 0.55, flexShrink: 0 }} />
+        <Users size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
         <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500 }}>
           Attendees
         </span>
@@ -944,7 +944,7 @@ function AttendanceSection({ meetingId, attendees }: { meetingId: string; attend
       <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {localAttendees.map(slug => <AttendeeChip key={slug} slug={slug} />)}
         {localAttendees.length === 0 && !expanded && (
-          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.55 }}>No attendees logged</span>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No attendees logged</span>
         )}
       </div>
       {expanded && (

@@ -263,7 +263,7 @@ export default function MyTasks() {
           <div className="flex-1" />
 
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>Group by:</span>
+            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Group by:</span>
             <select
               value={groupBy}
               onChange={(e) => setGroupBy(e.target.value as GroupBy)}
@@ -287,7 +287,7 @@ export default function MyTasks() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>Sort:</span>
+            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortBy)}
@@ -387,7 +387,7 @@ export default function MyTasks() {
               )
             })()}
           </div>
-          <span className="text-[9px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+          <span className="text-[9px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
             {tasks.filter(t => !t.completed && t.status === 'in_progress').length} active
           </span>
         </div>
@@ -559,7 +559,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
             <h3 className="text-xs font-normal uppercase tracking-wider" style={{ color: groupColors[label] || 'var(--ink)' }}>
               {label}
             </h3>
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.55 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               {items.length}
             </span>
             {/* Mini progress bar */}

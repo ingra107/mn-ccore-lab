@@ -207,7 +207,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             {!collapsed && (
               <div
                 className="px-2 py-1 text-[9px] font-normal uppercase tracking-wider"
-                style={{ color: 'var(--slate)', opacity: 0.65, letterSpacing: '0.08em' }}
+                style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', letterSpacing: '0.08em' }}
               >
                 {group.title}
               </div>
@@ -285,7 +285,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             <span className="flex-1">Search</span>
             <kbd
               className="text-[9px] px-1.5 py-0.5 rounded border"
-              style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-light)', color: 'var(--slate)', opacity: 0.5 }}
+              style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-light)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
             >
               {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+K
             </kbd>

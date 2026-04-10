@@ -279,7 +279,7 @@ export default function Deadlines() {
               }}
             >
               {['TITLE', 'DUE DATE', 'ASSIGNEE', 'STATUS', 'TYPE'].map((col) => (
-                <span key={col} style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 0.5, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+                <span key={col} style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
                   {col}
                 </span>
               ))}
@@ -313,7 +313,7 @@ export default function Deadlines() {
               <div
                 style={{
                   display: 'flex',
-                  gap: 20,
+                  gap: 'var(--sp-xl)',
                   padding: '8px 16px',
                   borderTop: '1px solid var(--border-subtle)',
                   background: 'rgba(45, 138, 138, 0.02)',
@@ -327,7 +327,7 @@ export default function Deadlines() {
                   { label: 'Later', value: later.length },
                   { label: 'Done', value: completed.length, color: 'var(--green)' },
                 ].map(s => (
-                  <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                  <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                     {s.label}{' '}
                     <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)', opacity: 1 }}>
                       {s.value}
@@ -377,10 +377,10 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '12px 16px 6px', textAlign: 'left' }}
       >
         <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
-        <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--slate)', opacity: 0.6, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+        <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
           {title}
         </span>
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.35 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.35 }}>
           {items.length}
         </span>
         <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
@@ -623,7 +623,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
           <div className="flex items-center justify-between gap-1.5 mb-1">
             <div className="flex items-center gap-1.5">
               <Clock size={10} style={{ color: 'var(--gold)' }} />
-              <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+              <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
                 Note from past you
               </span>
             </div>
@@ -666,7 +666,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         }}>
           <div className="flex items-center gap-1.5 mb-2">
             <Pencil size={10} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
               Note to future me
             </span>
           </div>
@@ -755,10 +755,10 @@ function UpcomingConferencesSection() {
         <Presentation size={14} style={{ color: 'var(--teal)', opacity: 0.7 }} />
         <span
           style={{
-            fontSize: '11px',
-            fontWeight: 500,
+            fontSize: 'var(--label-size)',
+            fontWeight: 'var(--label-weight)',
             color: 'var(--slate)',
-            opacity: 0.65,
+            opacity: 'var(--ink-label)',
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
           }}
@@ -779,10 +779,10 @@ function UpcomingConferencesSection() {
                 style={{
                   textAlign: 'left',
                   padding: '6px 8px',
-                  fontSize: '10px',
-                  fontWeight: 500,
+                  fontSize: 'var(--label-size)',
+                  fontWeight: 'var(--label-weight)',
                   color: 'var(--slate)',
-                  opacity: 0.5,
+                  opacity: 'var(--ink-label)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.04em',
                   whiteSpace: 'nowrap',
@@ -807,9 +807,9 @@ function UpcomingConferencesSection() {
                   {conf.conference}
                   <div
                     style={{
-                      fontSize: '11px',
+                      fontSize: 'var(--label-size)',
                       color: 'var(--slate)',
-                      opacity: 0.6,
+                      opacity: 'var(--ink-label)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -825,7 +825,7 @@ function UpcomingConferencesSection() {
                     <Link
                       to={`/projects/${conf.project_slug}`}
                       style={{
-                        fontSize: '11px',
+                        fontSize: 'var(--label-size)',
                         color: 'var(--teal)',
                         textDecoration: 'none',
                       }}
@@ -833,7 +833,7 @@ function UpcomingConferencesSection() {
                       {conf.project_title || conf.project_slug}
                     </Link>
                   ) : (
-                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>--</span>
+                    <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>--</span>
                   )}
                 </td>
                 <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>
@@ -841,7 +841,7 @@ function UpcomingConferencesSection() {
                     <div>
                       <span
                         style={{
-                          fontSize: '11px',
+                          fontSize: 'var(--label-size)',
                           color: isOverdue ? 'var(--maroon)' : 'var(--ink)',
                           fontWeight: isOverdue ? 600 : 400,
                         }}
@@ -862,7 +862,7 @@ function UpcomingConferencesSection() {
                       )}
                     </div>
                   ) : (
-                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>--</span>
+                    <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>--</span>
                   )}
                 </td>
                 <td style={{ padding: '8px' }}>
@@ -883,11 +883,11 @@ function UpcomingConferencesSection() {
                 </td>
                 <td style={{ padding: '8px' }}>
                   {['accepted', 'preparing'].includes(conf.status) ? (
-                    <span style={{ fontSize: '11px', color: 'var(--ink)' }}>
+                    <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)' }}>
                       {CONF_MATERIALS_LABEL[conf.materials_status] || conf.materials_status}
                     </span>
                   ) : (
-                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>--</span>
+                    <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>--</span>
                   )}
                 </td>
               </tr>

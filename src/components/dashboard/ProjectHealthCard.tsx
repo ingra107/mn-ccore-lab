@@ -33,7 +33,7 @@ function FactorTooltip({ factors, score }: { factors: HealthFactors; score: numb
         color: '#e8e2d6',
         borderRadius: '8px',
         padding: '10px 14px',
-        fontSize: '11px',
+        fontSize: 'var(--label-size)',
         fontWeight: 400,
         lineHeight: 1.6,
         whiteSpace: 'nowrap',
@@ -99,7 +99,7 @@ function ProjectHealthCard() {
               />
               <span
                 style={{
-                  fontSize: '13px',
+                  fontSize: 'var(--value-size)',
                   fontWeight: 700,
                   color: 'var(--ink)',
                   lineHeight: 1,
@@ -111,7 +111,7 @@ function ProjectHealthCard() {
                 style={{
                   fontSize: '9px',
                   color: 'var(--slate)',
-                  opacity: 0.5,
+                  opacity: 'var(--ink-hint)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.03em',
                 }}
@@ -144,9 +144,9 @@ function ProjectHealthCard() {
                   border: 'none',
                   padding: '10px 0',
                   minHeight: '44px',
-                  fontSize: '11px',
+                  fontSize: 'var(--label-size)',
                   color: 'var(--slate)',
-                  opacity: 0.6,
+                  opacity: 'var(--ink-label)',
                 }}
               >
                 {showHealthy ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -184,7 +184,7 @@ function ProjectHealthCard() {
           to="/projects"
           className="flex items-center gap-1 mt-3 pt-2"
           style={{
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             color: 'var(--gold)',
             textDecoration: 'none',
             borderTop: '1px solid rgba(201, 168, 76, 0.1)',

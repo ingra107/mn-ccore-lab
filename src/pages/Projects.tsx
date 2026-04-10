@@ -291,8 +291,8 @@ export default function Projects() {
                   onClick={() => setActiveCategory(f.key)}
                   className="cursor-pointer inline-flex items-center px-2.5 py-1 text-xs filter-pill"
                   style={{
-                    fontWeight: 500,
-                    fontSize: '12px',
+                    fontWeight: 'var(--label-weight)',
+                    fontSize: 'var(--label-size)',
                     borderRadius: '6px',
                     background: activeCategory === f.key ? 'var(--teal)' : 'transparent',
                     color: activeCategory === f.key ? '#ffffff' : 'var(--slate)',
@@ -323,8 +323,8 @@ export default function Projects() {
                 onClick={() => setShowDeps(!showDeps)}
                 className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
                 style={{
-                  fontSize: '11px',
-                  fontWeight: 500,
+                  fontSize: 'var(--label-size)',
+                  fontWeight: 'var(--label-weight)',
                   background: showDeps ? 'var(--teal)' : 'transparent',
                   color: showDeps ? '#ffffff' : 'var(--teal)',
                   border: '1px solid rgba(45, 138, 138, 0.2)',
@@ -372,8 +372,8 @@ export default function Projects() {
                   key={key}
                   onClick={() => toggleSort(key)}
                   style={{
-                    fontSize: '11px',
-                    fontWeight: 500,
+                    fontSize: 'var(--label-size)',
+                    fontWeight: 'var(--label-weight)',
                     color: sortKey === key ? 'var(--teal)' : 'var(--slate)',
                     opacity: sortKey === key ? 0.9 : 0.55,
                     textTransform: 'uppercase',
@@ -424,10 +424,10 @@ export default function Projects() {
                           >
                             <span
                               style={{
-                                fontSize: '11px',
-                                fontWeight: 500,
+                                fontSize: 'var(--label-size)',
+                                fontWeight: 'var(--label-weight)',
                                 color: 'var(--slate)',
-                                opacity: 0.55,
+                                opacity: 'var(--ink-label)',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.06em',
                                 flexShrink: 0,
@@ -713,7 +713,7 @@ export default function Projects() {
                   style={{
                     fontSize: '14px',
                     color: 'var(--slate)',
-                    opacity: 0.55,
+                    opacity: 'var(--ink-label)',
                   }}
                 >
                   No projects in this category
@@ -726,7 +726,7 @@ export default function Projects() {
               <div
                 style={{
                   display: 'flex',
-                  gap: 20,
+                  gap: 'var(--sp-xl)',
                   padding: '8px 24px',
                   borderTop: '1px solid var(--border-subtle)',
                   background: 'rgba(45, 138, 138, 0.02)',
@@ -742,7 +742,7 @@ export default function Projects() {
                     }, {} as Record<string, number>)
                   ).map(([stage, count]) => ({ label: stage, value: count })),
                 ].map(s => (
-                  <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                  <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                     {s.label}{' '}
                     <span style={{ fontWeight: 600, opacity: 1 }}>{s.value}</span>
                   </span>
@@ -794,7 +794,7 @@ export default function Projects() {
               style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${STAGES.length}, minmax(160px, 1fr))`,
-                gap: '16px',
+                gap: 'var(--sp-lg)',
                 overflowX: 'auto',
                 paddingBottom: '1rem',
                 maxWidth: '100%',
@@ -830,10 +830,10 @@ export default function Projects() {
                         </h3>
                         <span
                           style={{
-                            fontSize: '12px',
+                            fontSize: 'var(--label-size)',
                             color: 'var(--slate)',
-                            opacity: 0.55,
-                            fontWeight: 500,
+                            opacity: 'var(--ink-label)',
+                            fontWeight: 'var(--label-weight)',
                           }}
                         >
                           {stageProjects.length}
@@ -844,7 +844,7 @@ export default function Projects() {
                     {/* Cards with stagger animation */}
                     <motion.div
                       className="flex flex-col"
-                      style={{ gap: '12px' }}
+                      style={{ gap: 'var(--sp-md)' }}
                       variants={staggerContainer}
                       initial="hidden"
                       animate="visible"
@@ -869,9 +869,9 @@ export default function Projects() {
                           >
                             <span
                               style={{
-                                fontSize: '12px',
+                                fontSize: 'var(--label-size)',
                                 color: 'var(--slate)',
-                                opacity: 0.5,
+                                opacity: 'var(--ink-label)',
                               }}
                             >
                               No projects

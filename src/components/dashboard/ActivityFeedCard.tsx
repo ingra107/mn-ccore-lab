@@ -151,7 +151,7 @@ function ActivityFeedCard() {
                     </p>
                     <p
                       style={{
-                        fontSize: '11px',
+                        fontSize: 'var(--label-size)',
                         color: 'var(--slate)',
                         fontStyle: 'italic',
                         margin: '2px 0 0 0',
@@ -168,7 +168,7 @@ function ActivityFeedCard() {
                     style={{
                       fontSize: '9px',
                       color: 'var(--slate)',
-                      opacity: 0.5,
+                      opacity: 'var(--ink-hint)',
                       whiteSpace: 'nowrap',
                       marginTop: '2px',
                     }}
@@ -186,7 +186,7 @@ function ActivityFeedCard() {
           to="/publications"
           className="flex items-center gap-1 mt-3 pt-2"
           style={{
-            fontSize: '11px',
+            fontSize: 'var(--label-size)',
             color: 'var(--gold)',
             textDecoration: 'none',
             borderTop: '1px solid rgba(201, 168, 76, 0.1)',

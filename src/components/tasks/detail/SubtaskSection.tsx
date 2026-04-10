@@ -52,7 +52,7 @@ export function SubtaskChecklist({ taskId }: { taskId: string }) {
 
   return (
     <div>
-      <label className="flex items-center gap-1.5 text-[11px] mb-2" style={{ color: 'var(--slate)', opacity: 0.65, fontWeight: 500 }}>
+      <label className="flex items-center gap-1.5 mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', fontSize: 'var(--label-size)' }}>
         <ListChecks size={12} style={{ opacity: 0.7 }} />
         Subtasks ({completed}/{total})
       </label>

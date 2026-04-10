@@ -197,7 +197,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
     if (groupBy === 'priority') {
       const cfg = priorityConfig[key] || priorityConfig.medium
       return (
-        <span className="flex items-center gap-2" style={{ color: cfg.color, fontSize: '13px', fontWeight: 500 }}>
+        <span className="flex items-center gap-2" style={{ color: cfg.color, fontSize: 'var(--value-size)', fontWeight: 'var(--label-weight)' }}>
           <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: cfg.color, opacity: 0.7 }} />
           {cfg.label}
         </span>
@@ -206,7 +206,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
     if (groupBy === 'assignee') {
       const person = getPersonInfo(key)
       return (
-        <span className="flex items-center gap-2" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>
+        <span className="flex items-center gap-2" style={{ fontSize: 'var(--value-size)', fontWeight: 'var(--label-weight)', color: 'var(--ink)' }}>
           <div style={{ width: 20, height: 20 }}>
             <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]" />
           </div>
@@ -214,7 +214,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
         </span>
       )
     }
-    return <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>{key}</span>
+    return <span style={{ fontSize: 'var(--value-size)', fontWeight: 'var(--label-weight)', color: 'var(--ink)' }}>{key}</span>
   }
 
   return (
@@ -228,7 +228,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
       {/* Group By selector */}
       <div className="flex items-center gap-2 mb-3">
         <Layers size={13} style={{ color: 'var(--slate)', opacity: 0.5 }} />
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
           Group by:
         </span>
         {(['status', 'priority', 'assignee'] as const).map((field) => (
@@ -244,8 +244,8 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
               border: groupBy === field ? '1px solid var(--teal)' : '1px solid transparent',
               background: groupBy === field ? 'rgba(45,138,138,0.08)' : 'none',
               color: groupBy === field ? 'var(--teal)' : 'var(--slate)',
-              fontSize: '11px',
-              fontWeight: groupBy === field ? 500 : 400,
+              fontSize: 'var(--label-size)',
+              fontWeight: groupBy === field ? 'var(--label-weight)' : 400,
               cursor: 'pointer',
               textTransform: 'capitalize',
             }}
@@ -476,7 +476,7 @@ function CollapsedColumn({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '8px',
+        gap: 'var(--sp-sm)',
         minHeight: '200px',
       }}
     >

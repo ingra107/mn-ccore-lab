@@ -49,7 +49,7 @@ function ActionBoardCard() {
                       <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>
                         {person.name}
                       </span>
-                      <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.5 }}>
+                      <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                         {assigneeItems.length}
                       </span>
                     </div>
@@ -118,7 +118,7 @@ function ActionBoardCard() {
         </div>
 
         <Link to="/tasks" className="flex items-center gap-1 mt-3 pt-2"
-          style={{ fontSize: '11px', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}>
+          style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}>
           View all tasks <ArrowRight size={11} />
         </Link>
       </div>

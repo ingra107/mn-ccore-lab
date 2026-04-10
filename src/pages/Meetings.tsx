@@ -14,6 +14,7 @@ import MeetingCard from '../components/MeetingCard'
 import QuickAddForm from '../components/QuickAddForm'
 import Avatar from '../components/Avatar'
 import { getMeetingFacilitator } from '../lib/facilitator'
+import { parseCarriedForward } from '../lib/textUtils'
 import PageTooltip from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 
@@ -310,7 +311,7 @@ export default function Meetings() {
     background: 'var(--ice)',
     border: '1px solid rgba(201,168,76,0.15)',
     color: 'var(--ink)',
-    fontSize: '13px',
+    fontSize: 'var(--value-size)',
     outline: 'none',
     borderRadius: '8px',
     padding: '6px 10px',
@@ -447,7 +448,7 @@ export default function Meetings() {
           <div className="p-4 rounded-xl mb-4" style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.12)' }}>
             <div className="flex items-center gap-2 mb-2">
               <Activity size={14} style={{ color: 'var(--gold)' }} />
-              <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--gold)' }}>
+              <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
                 Meeting Cadence
               </span>
             </div>
@@ -456,7 +457,7 @@ export default function Meetings() {
             </p>
             <div className="flex flex-wrap gap-2 mt-2">
               {cadence.reasons.map((r, i) => (
-                <span key={i} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
+                <span key={i} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   {'\u2022'} {r}
                 </span>
               ))}
@@ -524,7 +525,7 @@ export default function Meetings() {
                       </button>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm leading-snug" style={{ color: 'var(--ink)' }}>
-                          {item.description}
+                          {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">↻ carried</span>}{clean}</>); })()}
                         </p>
                         <div className="flex flex-wrap items-center gap-3 mt-1.5">
                           <div className="flex items-center gap-1.5">
@@ -654,7 +655,7 @@ export default function Meetings() {
           {/* If no pending actions but some completed exist — show "no pending" with add form */}
           {pendingActions.length === 0 && allActionItems.length > 0 && (
             <div className="mb-4">
-              <p className="text-sm mb-2" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+              <p className="text-sm mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                 No pending action items.
               </p>
               <QuickAddForm
@@ -769,7 +770,7 @@ export default function Meetings() {
                             opacity: 0.6,
                           }}
                         >
-                          {item.description}
+                          {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">↻ carried</span>}{clean}</>); })()}
                         </p>
                         <div className="flex flex-wrap items-center gap-3 mt-1">
                           <div className="flex items-center gap-1.5">
@@ -789,7 +790,7 @@ export default function Meetings() {
                           </div>
                           <span
                             className="text-xs"
-                            style={{ color: 'var(--slate)', opacity: 0.55 }}
+                            style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
                           >
                             from {formatShortDate(item.meetingDate)}
                           </span>
@@ -804,7 +805,7 @@ export default function Meetings() {
 
           {allActionItems.length === 0 && !showAddAction && (
             <div>
-              <p className="text-sm mb-2" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+              <p className="text-sm mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                 No action items recorded yet.
               </p>
               <QuickAddForm
@@ -900,7 +901,7 @@ export default function Meetings() {
                           onClick={() => toggleAttendee(m.slug)}
                           className="cursor-pointer inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
                           style={{
-                            fontSize: '11px',
+                            fontSize: 'var(--label-size)',
                             background: selected ? 'rgba(201,168,76,0.2)' : 'var(--ice)',
                             color: selected ? 'var(--ink)' : 'var(--slate)',
                             border: selected ? '1px solid var(--gold)' : '1px solid rgba(201,168,76,0.1)',
@@ -932,7 +933,7 @@ export default function Meetings() {
                       <div key={i} className="flex items-center gap-2">
                         <span
                           className="shrink-0 text-xs"
-                          style={{ color: 'var(--slate)', opacity: 0.5, width: '18px' }}
+                          style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', width: '18px' }}
                         >
                           {i + 1}.
                         </span>
@@ -954,7 +955,7 @@ export default function Meetings() {
                               background: 'none',
                               border: 'none',
                               color: 'var(--slate)',
-                              opacity: 0.55,
+                              opacity: 'var(--ink-label)',
                               padding: '4px',
                             }}
                           >
@@ -1015,7 +1016,7 @@ export default function Meetings() {
               <Search
                 size={14}
                 className="absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: 'var(--slate)', opacity: 0.55 }}
+                style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
               />
               <input
                 type="text"
@@ -1059,7 +1060,7 @@ export default function Meetings() {
               ))
             ) : (
               <div className="py-12 text-center">
-                <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                <p className="text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   {searchQuery ? 'No meetings match your search.' : 'No meetings found.'}
                 </p>
               </div>
@@ -1070,7 +1071,7 @@ export default function Meetings() {
           <div className="mt-4 text-center">
             <span
               className="text-xs"
-              style={{ color: 'var(--slate)', opacity: 0.55 }}
+              style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
             >
               {meetings.length} meetings &middot; {allActionItems.length} action items &middot;{' '}
               {meetings.reduce((acc, m) => acc + (m.decisions?.length ?? 0), 0)} decisions

@@ -180,7 +180,7 @@ function UpcomingCard() {
                 fontSize: '10px',
                 color: 'var(--gold)',
                 textDecoration: 'none',
-                fontWeight: 500,
+                fontWeight: 'var(--label-weight)',
                 marginLeft: 'auto',
               }}
             >
@@ -197,7 +197,7 @@ function UpcomingCard() {
           }}
         >
           <CalendarOff size={14} style={{ color: 'var(--slate)', opacity: 0.4 }} />
-          <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.5 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             No meeting scheduled
           </span>
         </div>
@@ -280,7 +280,7 @@ function UpcomingCard() {
                     style={{
                       fontSize: '9px',
                       color: 'var(--slate)',
-                      opacity: 0.5,
+                      opacity: 'var(--ink-hint)',
                       textTransform: 'capitalize',
                     }}
                   >

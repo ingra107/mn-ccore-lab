@@ -109,7 +109,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
               ))}
             </div>
           ) : (
-            <p className="text-[11px] mb-2" style={{ color: 'var(--slate)', opacity: 0.4, margin: '0 0 8px 0' }}>
+            <p className="text-[11px] mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', margin: '0 0 8px 0' }}>
               No blockers
             </p>
           )}
@@ -249,7 +249,7 @@ export function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onS
             >
               <Link2 size={12} style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0 }} />
               <span className="flex-1 truncate">{t.title || t.description}</span>
-              <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+              <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                 {t.assignee}
               </span>
             </button>
@@ -258,7 +258,7 @@ export function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onS
       )}
 
       {query && candidates.length === 0 && (
-        <div className="mt-1 py-3 text-center text-[11px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+        <div className="mt-1 py-3 text-center text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
           No matching tasks
         </div>
       )}
