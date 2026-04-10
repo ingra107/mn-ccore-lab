@@ -388,7 +388,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                   background: 'var(--cream)',
                   border: '1px solid rgba(201, 168, 76, 0.2)',
                   borderRadius: 'var(--radius-lg)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  boxShadow: 'var(--shadow-menu)',
                   minWidth: '220px',
                   maxHeight: '240px',
                   overflowY: 'auto',

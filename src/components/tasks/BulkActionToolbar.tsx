@@ -75,7 +75,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
             gap: 12,
             flexWrap: 'wrap',
             justifyContent: 'center',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            boxShadow: 'var(--shadow-elevated)',
           }}
         >
           {/* Count + clear */}
@@ -157,7 +157,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                   minWidth: 180,
                   maxHeight: 260,
                   overflowY: 'auto',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                  boxShadow: 'var(--shadow-menu)',
                 }}
               >
                 {allMembers.filter((m) => m.slug).map((member) => (
@@ -235,7 +235,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                   borderRadius: 10,
                   padding: 6,
                   minWidth: 140,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                  boxShadow: 'var(--shadow-menu)',
                 }}
               >
                 {priorityOptions.map((opt) => (

@@ -437,7 +437,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
       {/* Drag overlay */}
       <DragOverlay>
         {activeTask && (
-          <div style={{ opacity: 0.85, transform: 'rotate(3deg)', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
+          <div style={{ opacity: 0.85, transform: 'rotate(3deg)', boxShadow: 'var(--shadow-card-hover)' }}>
             <TaskCard task={activeTask} onStatusChange={() => {}} compact />
           </div>
         )}

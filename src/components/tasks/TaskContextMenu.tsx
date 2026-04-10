@@ -56,7 +56,7 @@ const menuStyles = {
   background: 'var(--ice)',
   border: '1px solid var(--border-subtle)',
   borderRadius: 'var(--radius-lg)',
-  boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+  boxShadow: 'var(--shadow-menu)',
   padding: '4px 0',
   fontSize: 'var(--value-size)',
   color: 'var(--ink, #e2e8f0)',

@@ -131,7 +131,7 @@ export default function SearchPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search tasks, projects, meetings, ideas..."
               className="w-full rounded-xl border px-4 py-3.5 pl-11 text-sm outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--ice)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-light)', backgroundColor: 'var(--ice)', boxShadow: 'var(--shadow-card)' }}
             />
           </div>
           <div className="flex items-center justify-center gap-3 mt-5 flex-wrap">

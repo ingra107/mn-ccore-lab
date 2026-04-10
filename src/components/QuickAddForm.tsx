@@ -73,7 +73,7 @@ export default function QuickAddForm({
               style={{
                 background: 'var(--cream)',
                 border: '1px solid rgba(201,168,76,0.2)',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
               {children}

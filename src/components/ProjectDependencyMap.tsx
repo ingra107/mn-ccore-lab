@@ -371,7 +371,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
                 borderRadius: 'var(--radius-lg)',
                 fontSize: '12px',
                 whiteSpace: 'nowrap',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                boxShadow: 'var(--shadow-elevated)',
                 zIndex: 10,
               }}
             >
@@ -410,7 +410,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
                 padding: '8px 14px',
                 borderRadius: 'var(--radius-lg)',
                 fontSize: '12px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                boxShadow: 'var(--shadow-elevated)',
                 zIndex: 10,
                 maxWidth: '300px',
               }}

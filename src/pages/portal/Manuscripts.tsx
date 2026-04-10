@@ -551,7 +551,7 @@ export default function Manuscripts() {
                                 background: 'var(--cream)',
                                 borderRadius: 'var(--radius-lg)',
                                 padding: '14px',
-                                boxShadow: '0 1px 2px rgba(15, 25, 35, 0.04)',
+                                boxShadow: 'var(--shadow-card)',
                                 transition: 'box-shadow 0.25s ease',
                               }}
                             >

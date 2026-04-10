@@ -84,7 +84,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
         style={{
           background: 'var(--cream)',
           border: '1px solid rgba(201, 168, 76, 0.3)',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+          boxShadow: 'var(--shadow-card-hover)',
         }}
       >
         {/* Mechanism + Agency */}

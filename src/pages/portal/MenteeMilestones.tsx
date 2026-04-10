@@ -769,7 +769,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
           background: 'var(--cream)',
           borderRadius: 'var(--radius-2xl)',
           border: '1px solid var(--border-subtle)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+          boxShadow: 'var(--shadow-elevated)',
           width: '100%',
           maxWidth: '480px',
           padding: '24px',

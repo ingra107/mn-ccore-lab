@@ -126,7 +126,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
                 color: 'var(--cream)',
                 fontSize: '13px',
                 fontWeight: toast.type === 'success' ? 400 : 500,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                boxShadow: 'var(--shadow-card-hover)',
                 minWidth: '240px',
                 borderLeft: toast.type === 'success' ? '3px solid var(--teal)' : 'none',
               }}

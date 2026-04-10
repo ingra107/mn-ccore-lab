@@ -145,7 +145,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                 borderRadius: 12,
                 background: 'var(--cream)',
                 border: '1px solid var(--border-light)',
-                boxShadow: '0 20px 60px rgba(15,25,35,0.25), 0 0 0 1px rgba(15,25,35,0.05)',
+                boxShadow: 'var(--shadow-elevated)',
                 outline: 'none',
                 overflow: 'hidden',
                 maxHeight: 'calc(100vh - 120px)',
