@@ -25,6 +25,13 @@
 
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(15, 25, 35, 0.06);
+  --border-default: rgba(15, 25, 35, 0.12);
+  --border-strong: rgba(15, 25, 35, 0.20);
+
+  /* Letter-spacing — tighten at display sizes (Linear/Vercel/Stripe pattern) */
+  --tracking-display: -0.04em;   /* 32px+ headings */
+  --tracking-heading: -0.02em;   /* 24px headings */
+  --tracking-body: 0;            /* 16px and below */
 
   /* Border-radius scale */
   --radius-sm: 4px;
@@ -68,6 +75,8 @@
 
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.16);
 
   --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
   --shadow-card-hover: 0 6px 16px rgba(0, 0, 0, 0.6);
@@ -129,6 +138,18 @@
   --field-bg: rgba(255, 255, 255, 0.03);
   --field-bg-hover: rgba(255, 255, 255, 0.06);
 }
+
+/* Tabular numbers — align digits in date/number columns (Stripe/Vercel pattern) */
+.tabular-nums,
+.task-row-meta,
+[data-testid*="due-"],
+[data-testid*="date"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Heading letter-spacing — tighten at display sizes (Linear/Vercel/Stripe) */
+h1, .text-display { letter-spacing: var(--tracking-display); }
+h2, .text-heading { letter-spacing: var(--tracking-heading); }
 
 /* Field container — bordered home for every editable value */
 .field-container {
