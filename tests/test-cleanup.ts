@@ -67,6 +67,11 @@ export async function cleanupTestTasks(request: APIRequestContext): Promise<numb
     }
   }
 
+  // Clean test data from all non-task tables (project_updates, ideas, lab_questions, etc.)
+  try {
+    await request.post(`${BASE}/api/test-cleanup`, { data: {} })
+  } catch { /* endpoint may not be deployed yet */ }
+
   // Also clean up test settings
   try {
     await request.post(`${BASE}/api/settings`, {

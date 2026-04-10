@@ -1375,6 +1375,33 @@ export default {
           return error(`Unknown migration version: ${body.version}`, 400);
         }
 
+        // POST /api/test-cleanup — remove test data from all tables (auth-gated)
+        if (request.method === 'POST' && path === '/api/test-cleanup') {
+          const prefixes = ['INSPECTION', 'DAILYTEST', 'EDGE', 'SYNC-', 'SYNCTEST', 'JOURNEY', 'KEYLINK TEST', 'AUDIT TEST', 'AUDIT-TEST', 'TIMEZONE-PROBE', 'DUE-DATE-PROBE', 'WORKFLOW-TEST', 'QA ', 'TEST-'];
+          const likeClause = prefixes.map(() => 'content LIKE ?').join(' OR ');
+          const titleLikeClause = prefixes.map(() => 'title LIKE ?').join(' OR ');
+          const questionLikeClause = prefixes.map(() => 'question LIKE ?').join(' OR ');
+          const bodyLikeClause = prefixes.map(() => 'body LIKE ?').join(' OR ');
+          const topicLikeClause = prefixes.map(() => 'topic LIKE ?').join(' OR ');
+          const wildcardPrefixes = prefixes.map(p => `${p}%`);
+          const results: Record<string, number> = {};
+          const tables = [
+            { name: 'project_updates', col: 'content', clause: likeClause },
+            { name: 'ideas', col: 'title', clause: titleLikeClause },
+            { name: 'lab_questions', col: 'question', clause: questionLikeClause },
+            { name: 'decision_log', col: 'title', clause: titleLikeClause },
+            { name: 'notifications', col: 'body', clause: bodyLikeClause },
+            { name: 'expertise_tags', col: 'topic', clause: topicLikeClause },
+          ];
+          for (const { name, clause } of tables) {
+            try {
+              const r = await env.DB.prepare(`DELETE FROM ${name} WHERE ${clause}`).bind(...wildcardPrefixes).run();
+              results[name] = r.meta.changes ?? 0;
+            } catch { results[name] = -1; }
+          }
+          return json({ data: results });
+        }
+
         return error('Not found', 404);
       }
 
