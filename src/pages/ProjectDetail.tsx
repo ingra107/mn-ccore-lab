@@ -23,7 +23,7 @@ import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useCreateTask 
 import { useUndoToast } from '../components/UndoToast'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
-import { formatShortDate, formatMediumDate, formatTimestamp } from '../lib/dateUtils'
+import { formatShortDate, formatMediumDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 import InlineSelect from '../components/InlineSelect'
 import WatchButton from '../components/WatchButton'
