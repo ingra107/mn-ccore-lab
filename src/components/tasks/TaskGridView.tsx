@@ -917,6 +917,26 @@ function InlineCellSelect({
   renderValue: (val: string) => React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
+  const [filter, setFilter] = useState('')
+  const [focusedIdx, setFocusedIdx] = useState(-1)
+  const filterRef = useRef<HTMLInputElement>(null)
+
+  const filtered = useMemo(() => {
+    if (!filter) return options
+    const lower = filter.toLowerCase()
+    return options.filter(o => o.label.toLowerCase().includes(lower))
+  }, [options, filter])
+
+  useEffect(() => {
+    if (open) { setFilter(''); setFocusedIdx(-1); setTimeout(() => filterRef.current?.focus(), 0) }
+  }, [open])
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setFocusedIdx(i => Math.min(i + 1, filtered.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setFocusedIdx(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter' && focusedIdx >= 0 && filtered[focusedIdx]) { e.preventDefault(); onChange(filtered[focusedIdx].value); setOpen(false) }
+    else if (e.key === 'Escape') { setOpen(false) }
+  }
 
   return (
     <div style={{ position: 'relative' }}>
@@ -947,24 +967,43 @@ function InlineCellSelect({
               top: '100%', left: 0, minWidth: '130px',
               background: 'var(--cream)',
               border: '1px solid var(--border-subtle)',
-              boxShadow: 'var(--shadow-card-hover)',
+              boxShadow: 'var(--shadow-menu)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {options.map((opt) => (
+            {options.length >= 5 && (
+              <div style={{ padding: '6px 8px', borderBottom: '1px solid var(--border-subtle)' }}>
+                <input
+                  ref={filterRef}
+                  value={filter}
+                  onChange={(e) => { setFilter(e.target.value); setFocusedIdx(0) }}
+                  onKeyDown={handleKeyDown}
+                  onClick={(e) => e.stopPropagation()}
+                  placeholder="Filter..."
+                  style={{
+                    width: '100%', fontSize: 'var(--text-small)', color: 'var(--ink)',
+                    background: 'var(--field-bg)', border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-sm)', padding: '4px 8px', outline: 'none',
+                  }}
+                />
+              </div>
+            )}
+            {filtered.map((opt, idx) => (
               <button
                 key={opt.value}
                 onClick={(e) => { e.stopPropagation(); onChange(opt.value); setOpen(false) }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
                   padding: '7px 12px', border: 'none', cursor: 'pointer',
-                  background: opt.value === value ? 'rgba(45,138,138,0.06)' : 'none',
+                  background: idx === focusedIdx
+                    ? 'rgba(45,138,138,0.10)'
+                    : opt.value === value ? 'rgba(45,138,138,0.06)' : 'none',
                   fontSize: '12px', fontWeight: opt.value === value ? 500 : 400,
                   color: opt.color || 'var(--ink)', textAlign: 'left',
                   transition: 'background 0.1s',
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(45,138,138,0.08)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = opt.value === value ? 'rgba(45,138,138,0.06)' : 'none' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = idx === focusedIdx ? 'rgba(45,138,138,0.10)' : opt.value === value ? 'rgba(45,138,138,0.06)' : 'none' }}
               >
                 {opt.label}
               </button>
