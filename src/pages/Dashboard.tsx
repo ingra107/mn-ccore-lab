@@ -635,7 +635,7 @@ export default function Dashboard() {
                     const Card = card.component
                     return (
                       <SortableCardWrapper key={card.id} id={card.id}>
-                        <div data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
+                        <div data-testid={`card-${card.id}`} className="relative group" role="button" tabIndex={0} onClick={() => handleCardInteraction(card.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardInteraction(card.id) } }}>
                           <Card />
                           <button
                             onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
@@ -671,7 +671,7 @@ export default function Dashboard() {
                   const Card = card.component
                   return (
                     <SortableCardWrapper key={card.id} id={card.id}>
-                      <div data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
+                      <div data-testid={`card-${card.id}`} className="relative group" role="button" tabIndex={0} onClick={() => handleCardInteraction(card.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardInteraction(card.id) } }}>
                         <Card />
                         <button
                           onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
@@ -726,7 +726,7 @@ export default function Dashboard() {
                         const Card = card.component
                         return (
                           <SortableCardWrapper key={card.id} id={card.id}>
-                            <div data-testid={`card-${card.id}`} className="relative group" onClick={() => handleCardInteraction(card.id)}>
+                            <div data-testid={`card-${card.id}`} className="relative group" role="button" tabIndex={0} onClick={() => handleCardInteraction(card.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardInteraction(card.id) } }}>
                               <Card />
                               <button
                                 onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}

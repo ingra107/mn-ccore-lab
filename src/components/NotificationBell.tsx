@@ -327,7 +327,7 @@ export default function NotificationBell() {
                       }
 
                       return (
-                        <div key={notification.id} onClick={handleClick}>
+                        <div key={notification.id} role="button" tabIndex={0} onClick={handleClick} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}>
                           {content}
                         </div>
                       )
