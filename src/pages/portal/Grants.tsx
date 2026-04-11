@@ -523,7 +523,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
             {/* PI */}
             <div className="flex items-center gap-1.5">
               <div style={{ width: 20, height: 20 }}>
-                <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+                <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="xs" variant="ice" />
               </div>
               <span className="text-xs" style={{ color: 'var(--slate)' }}>
                 {pi.name}

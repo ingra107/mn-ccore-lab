@@ -678,9 +678,8 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                 name={assignee.name}
                                 initials={assignee.initials}
                                 photoUrl={assignee.photoUrl}
-                                size="sm"
                                 variant="ice"
-                                className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]"
+                                size="xs"
                               />
                             </div>
                             <InlineSelect

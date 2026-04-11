@@ -372,7 +372,7 @@ export default function Manuscripts() {
 
                           <div className="flex items-center gap-1.5">
                             <div style={{ width: 22, height: 22, flexShrink: 0 }}>
-                              <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[8px]" />
+                              <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm-plus" variant="ice" />
                             </div>
                             <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
                               {pi.name.split(' ').pop()}
@@ -553,7 +553,7 @@ export default function Manuscripts() {
                               </div>
                               <div className="flex items-center gap-1.5" style={{ marginTop: '6px', marginLeft: '14px' }}>
                                 <div style={{ width: 16, height: 16, flexShrink: 0 }}>
-                                  <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
+                                  <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="2xs" variant="ice" />
                                 </div>
                                 <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
                                   {pi.name.split(' ').pop()}

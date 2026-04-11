@@ -713,7 +713,7 @@ function AssignedByMeCard({ tasks }: { tasks: TaskRow[] }) {
           return (
             <div key={t.id} className="flex items-center gap-2 py-1">
               <div style={{ width: 18, height: 18 }}>
-                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[6px]" />
+                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-icon" variant="ice" />
               </div>
               <span className="flex-1 text-xs truncate" style={{ color: 'var(--ink)' }}>
                 {t.title || t.description}

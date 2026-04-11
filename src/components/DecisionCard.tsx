@@ -109,7 +109,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
 
           {person && (
             <span className="flex items-center gap-1.5">
-              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="gold" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="gold" />
               <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>
                 {person.name.split(' ')[0]}
               </span>

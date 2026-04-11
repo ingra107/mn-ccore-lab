@@ -204,9 +204,8 @@ export default function MenteeMilestones() {
                     name={person.name}
                     initials={person.initials}
                     photoUrl={person.photoUrl}
-                    size="sm"
                     variant="ice"
-                    className="!w-10 !h-10 !min-w-0 !min-h-0 !text-xs"
+                    size="base-xl"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -419,9 +418,8 @@ function MenteeGroup({
             name={person.name}
             initials={person.initials}
             photoUrl={person.photoUrl}
-            size="sm"
             variant="ice"
-            className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]"
+            size="xs"
           />
         </div>
         <span
@@ -520,9 +518,8 @@ function MilestoneRow({
               name={person.name}
               initials={person.initials}
               photoUrl={person.photoUrl}
-              size="sm"
               variant="ice"
-              className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]"
+              size="xs"
             />
           </div>
           <span style={{ fontSize: '12px', color: 'var(--slate)' }}>
@@ -614,9 +611,8 @@ function MilestoneRow({
               name={person.name}
               initials={person.initials}
               photoUrl={person.photoUrl}
-              size="sm"
               variant="ice"
-              className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[7px]"
+              size="sm-icon"
             />
           </div>
         </div>

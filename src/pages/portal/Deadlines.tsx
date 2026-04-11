@@ -527,7 +527,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
               <div className="flex items-center gap-1.5">
                 {person ? (
                   <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
                   </div>
                 ) : (
                   <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
@@ -605,7 +605,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
                   </span>
                   {person && (
                     <div style={{ width: 18, height: 18, flexShrink: 0 }}>
-                      <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[7px]" />
+                      <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-icon" variant="ice" />
                     </div>
                   )}
                 </div>
@@ -711,7 +711,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         {/* Assignee */}
         {person && (
           <div style={{ width: 22, height: 22 }}>
-            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
+            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-plus" variant="ice" />
           </div>
         )}
 

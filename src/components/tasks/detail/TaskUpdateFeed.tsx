@@ -141,7 +141,7 @@ function NoteCard({ update }: { update: TaskUpdateRow }) {
     >
       <div className="flex items-start gap-2.5">
         <div className="flex-shrink-0 mt-0.5" style={{ width: 24, height: 24 }}>
-          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[7px]" />
+          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="tight" variant="ice" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">

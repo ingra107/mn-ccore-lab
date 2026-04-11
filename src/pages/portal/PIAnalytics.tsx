@@ -618,9 +618,8 @@ export default function PIAnalytics() {
                           name={person.name}
                           initials={person.initials}
                           photoUrl={person.photoUrl}
-                          size="sm"
                           variant="ice"
-                          className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[8px]"
+                          size="tight"
                         />
                       </div>
                       <span
@@ -720,9 +719,8 @@ export default function PIAnalytics() {
                                 name={person.name}
                                 initials={person.initials}
                                 photoUrl={person.photoUrl}
-                                size="sm"
                                 variant="gold"
-                                className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]"
+                                size="xs"
                               />
                             </div>
                             <span className="text-sm" style={{ color: 'var(--ink)' }}>

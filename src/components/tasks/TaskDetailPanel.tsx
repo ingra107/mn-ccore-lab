@@ -479,7 +479,7 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
             className="flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full text-[10px]"
             style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)' }}
           >
-            <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" className="!w-[16px] !h-[16px] !min-w-0 !min-h-0 !text-[7px]" />
+            <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="2xs" />
             {p.name.split(' ')[0]}
             <button
               onClick={() => removeWatcher(slug)}
@@ -524,7 +524,7 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
                 onMouseOver={e => (e.currentTarget.style.backgroundColor = 'var(--teal-hover)')}
                 onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
-                <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" className="!w-[20px] !h-[20px] !min-w-0 !min-h-0 !text-[8px]" />
+                <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="xs" />
                 {p.name}
               </button>
             )

@@ -90,7 +90,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
           return (
             <div key={c.id} className="flex gap-2">
               <div style={{ width: 24, height: 24, flexShrink: 0 }}>
-                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[7px]" />
+                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="tight" variant="ice" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">

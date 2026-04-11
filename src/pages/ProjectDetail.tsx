@@ -344,7 +344,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
           <div className="flex items-center gap-1.5">
             <div style={{ width: 24, height: 24, flexShrink: 0 }}>
-              <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm" variant="gold" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[8px]" />
+              <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="tight" variant="gold" />
             </div>
             <span style={{ fontSize: 'var(--value-size)', color: 'var(--slate)' }}>{pi.name}</span>
           </div>
@@ -1001,9 +1001,8 @@ function ProjectDetailInner({ project }: InnerProps) {
                             name={info.name}
                             initials={info.initials}
                             photoUrl={info.photoUrl}
-                            size="sm"
                             variant="ice"
-                            className="!w-7 !h-7 !min-w-0 !min-h-0"
+                            size="base-sm"
                           />
                         </div>
                         <span

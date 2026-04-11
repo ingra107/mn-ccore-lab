@@ -179,7 +179,7 @@ function QuestionCard({
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <div className="flex items-center gap-1.5">
               <div style={{ width: 20, height: 20 }}>
-                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
               </div>
               <span className="text-[11px]" style={{ color: 'var(--slate)' }}>
                 {person.name}
@@ -332,7 +332,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                 }}
               >
                 <div style={{ width: 24, height: 24, flexShrink: 0, paddingTop: 2 }}>
-                  <Avatar name={answerPerson.name} initials={answerPerson.initials} photoUrl={answerPerson.photoUrl} size="sm" variant="gold" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[8px]" />
+                  <Avatar name={answerPerson.name} initials={answerPerson.initials} photoUrl={answerPerson.photoUrl} size="tight" variant="gold" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">

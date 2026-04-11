@@ -106,7 +106,7 @@ function UpdateItem({ update }: { update: TaskUpdateRow }) {
     >
       <div className="flex items-start gap-2">
         <div className="flex-shrink-0 mt-0.5" style={{ width: 20, height: 20 }}>
-          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]" />
+          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -141,7 +141,7 @@ function CommentItem({ comment }: { comment: TaskComment }) {
     >
       <div className="flex items-start gap-2">
         <div className="flex-shrink-0 mt-0.5" style={{ width: 20, height: 20 }}>
-          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]" />
+          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="flex items-center gap-1.5 flex-wrap">

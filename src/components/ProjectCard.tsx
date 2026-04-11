@@ -72,9 +72,8 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             name={pi.name}
             initials={pi.initials}
             photoUrl={pi.photoUrl}
-            size="sm"
             variant="ice"
-            className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[7px]"
+            size="sm-icon"
           />
         </div>
         <span

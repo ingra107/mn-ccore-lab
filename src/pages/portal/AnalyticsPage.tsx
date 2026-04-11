@@ -498,7 +498,7 @@ export default function AnalyticsPage() {
                 return (
                   <div key={slug} className="flex items-center gap-3">
                     <div style={{ width: 28, height: 28 }}>
-                      <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
+                      <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="base-sm" variant="ice" />
                     </div>
                     <span className="text-sm w-28 truncate" style={{ color: 'var(--ink)' }}>
                       {person.name}
@@ -647,7 +647,7 @@ export default function AnalyticsPage() {
                   return (
                     <div key={slug} className="flex items-center gap-2">
                       <div style={{ width: 22, height: 22 }}>
-                        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
+                        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-plus" variant="ice" />
                       </div>
                       <span className="text-[11px] w-20 truncate" style={{ color: 'var(--ink)' }}>{person.name.split(' ')[0]}</span>
                       <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
@@ -690,7 +690,7 @@ export default function AnalyticsPage() {
               return (
                 <div key={slug} style={{ display: 'contents' }}>
                   <div className="flex items-center gap-2 pr-2" style={{ height: 36 }}>
-                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
+                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-plus" variant="ice" />
                     <span className="text-[11px] truncate" style={{ color: 'var(--ink)' }}>{person.name.split(' ')[0]}</span>
                   </div>
                   {counts.map((count, wi) => {

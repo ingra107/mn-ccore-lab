@@ -266,9 +266,8 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                         name={p.name}
                         initials={p.initials}
                         photoUrl={p.photoUrl}
-                        size="sm"
                         variant="ice"
-                        className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]"
+                        size="xs"
                       />
                     </div>
                   )

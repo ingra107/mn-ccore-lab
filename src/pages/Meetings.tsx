@@ -532,9 +532,8 @@ export default function Meetings() {
                                 name={info.name}
                                 initials={info.initials}
                                 photoUrl={info.photoUrl}
-                                size="sm"
                                 variant="ice"
-                                className="!w-[18px] !h-[18px] !min-w-0 !min-h-0"
+                                size="sm-icon"
                               />
                             </div>
                             <span className="text-xs" style={{ color: 'var(--slate)' }}>
@@ -777,9 +776,8 @@ export default function Meetings() {
                                 name={info.name}
                                 initials={info.initials}
                                 photoUrl={info.photoUrl}
-                                size="sm"
                                 variant="ice"
-                                className="!w-4 !h-4 !min-w-0 !min-h-0"
+                                size="2xs"
                               />
                             </div>
                             <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>
@@ -911,9 +909,8 @@ export default function Meetings() {
                               name={m.name}
                               initials={m.initials}
                               photoUrl={m.photoUrl}
-                              size="sm"
                               variant="ice"
-                              className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]"
+                              size="2xs"
                             />
                           </div>
                           {m.name.split(' ')[0]}

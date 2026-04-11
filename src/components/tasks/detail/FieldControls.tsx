@@ -214,7 +214,7 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
         style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}
       >
         <div style={{ width: 28, height: 28 }}>
-          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
+          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="base-sm" variant="ice" />
         </div>
         <span className="text-sm" style={{ color: 'var(--ink)' }}>{person.name}</span>
         <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -233,7 +233,7 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
                 style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
               >
                 <div style={{ width: 24, height: 24 }}>
-                  <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[7px]" />
+                  <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="tight" variant="ice" />
                 </div>
                 <span className="flex-1">{m.name}</span>
                 {taskCounts && taskCounts[slug] ? (

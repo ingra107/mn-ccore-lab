@@ -217,9 +217,8 @@ export default function ProjectComments({ projectSlug }: Props) {
                           <Avatar
                             name={comment.author_name || 'User'}
                             initials={(comment.author_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}
-                            size="sm"
                             variant="ice"
-                            className="!w-7 !h-7 !min-w-0 !min-h-0"
+                            size="base-sm"
                           />
                         </div>
                         <div style={{ flex: 1 }}>

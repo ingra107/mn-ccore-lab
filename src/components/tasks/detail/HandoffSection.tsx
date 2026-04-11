@@ -36,7 +36,7 @@ export function HandoffRecipientSelect({ value, onChange, members }: { value: st
         {person ? (
           <>
             <div style={{ width: 24, height: 24 }}>
-              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0 !text-[7px]" />
+              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="tight" variant="ice" />
             </div>
             <span className="text-sm" style={{ color: 'var(--ink)' }}>{person.name}</span>
           </>
@@ -60,7 +60,7 @@ export function HandoffRecipientSelect({ value, onChange, members }: { value: st
                 style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
               >
                 <div style={{ width: 22, height: 22 }}>
-                  <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
+                  <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm-plus" variant="ice" />
                 </div>
                 <span className="flex-1">{m.name}</span>
                 {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}
@@ -258,14 +258,14 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     <div className="flex items-center gap-1">
                       <div style={{ width: 20, height: 20 }}>
-                        <Avatar name={from.name} initials={from.initials} photoUrl={from.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]" />
+                        <Avatar name={from.name} initials={from.initials} photoUrl={from.photoUrl} size="xs" variant="ice" />
                       </div>
                       <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{from.name}</span>
                     </div>
                     <ArrowRightLeft size={10} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)' }} />
                     <div className="flex items-center gap-1">
                       <div style={{ width: 20, height: 20 }}>
-                        <Avatar name={to.name} initials={to.initials} photoUrl={to.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]" />
+                        <Avatar name={to.name} initials={to.initials} photoUrl={to.photoUrl} size="xs" variant="ice" />
                       </div>
                       <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{to.name}</span>
                     </div>

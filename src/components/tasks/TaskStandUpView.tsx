@@ -112,9 +112,8 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
                   name={person.name}
                   initials={person.initials}
                   photoUrl={person.photoUrl}
-                  size="sm"
                   variant="ice"
-                  className="!w-9 !h-9 !min-w-0 !min-h-0 !text-[10px]"
+                  size="base-lg"
                 />
               </div>
               <div className="flex-1">

@@ -90,9 +90,8 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
             name={person.name}
             initials={person.initials}
             photoUrl={person.photoUrl}
-            size="sm"
             variant="ice"
-            className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]"
+            size="xs"
           />
         </div>
         {!compact && (
@@ -165,9 +164,8 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
                       name={m.name}
                       initials={m.initials}
                       photoUrl={m.photoUrl}
-                      size="sm"
                       variant="ice"
-                      className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[6px]"
+                      size="xs"
                     />
                   </div>
                   <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

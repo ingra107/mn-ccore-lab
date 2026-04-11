@@ -272,9 +272,8 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                         name={person.name}
                         initials={person.initials}
                         photoUrl={person.photoUrl}
-                        size="sm"
                         variant="ice"
-                        className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]"
+                        size="xs"
                       />
                       <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)' }}>
                         {person.name}

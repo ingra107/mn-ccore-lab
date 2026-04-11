@@ -124,9 +124,8 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                   name={info.name}
                   initials={info.initials}
                   photoUrl={info.photoUrl}
-                  size="sm"
                   variant="ice"
-                  className="!w-7 !h-7 !min-w-0 !min-h-0"
+                  size="base-sm"
                 />
               </div>
             )
@@ -194,9 +193,8 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                               name={info.name}
                               initials={info.initials}
                               photoUrl={info.photoUrl}
-                              size="sm"
                               variant="ice"
-                              className="!w-6 !h-6 !min-w-0 !min-h-0"
+                              size="tight"
                             />
                           </div>
                           <span
@@ -326,9 +324,8 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                                     name={info.name}
                                     initials={info.initials}
                                     photoUrl={info.photoUrl}
-                                    size="sm"
                                     variant="ice"
-                                    className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]"
+                                    size="2xs"
                                   />
                                 </div>
                                 <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.7 }}>

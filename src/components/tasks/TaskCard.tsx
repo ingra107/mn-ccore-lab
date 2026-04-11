@@ -190,9 +190,8 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             name={person.name}
             initials={person.initials}
             photoUrl={person.photoUrl}
-            size="sm"
             variant="ice"
-            className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]"
+            size="base-sm"
           />
         </div>
       </div>

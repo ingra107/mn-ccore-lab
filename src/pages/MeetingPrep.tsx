@@ -196,7 +196,7 @@ export default function MeetingPrep() {
                         <Flag size={10} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)', flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
-                          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
+                          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
                         </div>
                       </div>
                     )
@@ -232,7 +232,7 @@ export default function MeetingPrep() {
                         <Circle size={10} style={{ color: 'var(--orange)', flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{item.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
-                          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
+                          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
                         </div>
                       </div>
                     )
@@ -261,7 +261,7 @@ export default function MeetingPrep() {
                       <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.5 }}>{formatShortDate(task.due_date)}</span>
                       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
-                        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
+                        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
                       </div>
                     </div>
                   )
@@ -281,7 +281,7 @@ export default function MeetingPrep() {
                   return (
                     <div key={i} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < Math.min(recentActivity.length, 10) - 1 ? '1px solid rgba(201,168,76,0.04)' : 'none' }}>
                       <div style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }}>
-                        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
+                        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
                       </div>
                       <span style={{ fontSize: 11, color: 'var(--ink)', flex: 1, lineHeight: 1.4 }}>{act.description}</span>
                     </div>
@@ -370,7 +370,7 @@ function ActionRow({ item }: { item: { id: string; description: string; assignee
         {item.description}
       </span>
       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
-        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[6px]" />
+        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
       </div>
     </div>
   )

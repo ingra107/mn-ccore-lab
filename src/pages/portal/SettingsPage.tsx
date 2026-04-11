@@ -192,7 +192,7 @@ export default function SettingsPage() {
               return (
                 <div key={member.slug} className="flex items-center gap-3 py-2 border-b last:border-b-0" style={{ borderColor: 'var(--border-subtle)' }}>
                   <div style={{ width: 32, height: 32, flexShrink: 0 }}>
-                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-8 !h-8 !min-w-0 !min-h-0 !text-[10px]" />
+                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="base" variant="ice" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{person.name}</div>

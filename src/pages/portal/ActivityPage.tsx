@@ -224,7 +224,7 @@ function ActivityAvatar({ slug }: { slug: string }) {
       onMouseEnter={hoverCard.handlers.onMouseEnter}
       onMouseLeave={hoverCard.handlers.onMouseLeave}
     >
-      <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0 !text-[8px]" />
+      <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="base-sm" variant="ice" />
       <HoverCard data={data} isVisible={hoverCard.isVisible} position={hoverCard.position} cardRef={hoverCard.cardRef} cardHandlers={hoverCard.cardHandlers} />
     </div>
   )

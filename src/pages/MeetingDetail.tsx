@@ -287,7 +287,7 @@ export default function MeetingDetail() {
                 </span>
                 <div className="flex items-center gap-1.5">
                   <div style={{ width: 20, height: 20 }}>
-                    <Avatar name={facilitatorInfo.name} initials={facilitatorInfo.initials} photoUrl={facilitatorInfo.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+                    <Avatar name={facilitatorInfo.name} initials={facilitatorInfo.initials} photoUrl={facilitatorInfo.photoUrl} size="xs" variant="ice" />
                   </div>
                   <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)' }}>
                     {facilitatorInfo.name}
@@ -757,7 +757,7 @@ function AttendeeChip({ slug }: { slug: string }) {
       onMouseLeave={hoverCard.handlers.onMouseLeave}
     >
       <div style={{ width: 24, height: 24 }}>
-        <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" variant="ice" className="!w-6 !h-6 !min-w-0 !min-h-0" />
+        <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="tight" variant="ice" />
       </div>
       <span style={{ fontSize: '12px', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{p.name.split(' ')[0]}</span>
       <HoverCard
@@ -835,7 +835,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
             onMouseLeave={hoverCard.handlers.onMouseLeave}
           >
             <div style={{ width: 16, height: 16 }}>
-              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-4 !h-4 !min-w-0 !min-h-0 !text-[7px]" />
+              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
             </div>
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{person.name.split(' ')[0]}</span>
             <HoverCard
@@ -1117,7 +1117,7 @@ function AttendanceSection({ meetingId, attendees }: { meetingId: string; attend
                   opacity: present ? 1 : 0.6,
                 }}
               >
-                <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[7px]" />
+                <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm-icon" />
                 {p.name.split(' ')[0]}
                 {present && <UserCheck size={10} style={{ marginLeft: 'auto' }} />}
               </button>

@@ -166,7 +166,7 @@ function UpdateCard({ update }: { update: ProjectUpdateRow }) {
     >
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
-          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-7 !h-7 !min-w-0 !min-h-0" />
+          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="base-sm" variant="ice" />
         </div>
         <div style={{ flex: 1 }}>
           <div className="flex items-center gap-2 mb-1">

@@ -283,7 +283,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
       <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="flex items-center gap-2">
           <div style={{ width: 20, height: 20 }}>
-            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
           </div>
           <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
             {formatRelativeTime(idea.created_at)}
@@ -383,7 +383,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
               {/* Submitted by */}
               <div className="flex items-center gap-1.5">
                 <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-                  <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-5 !h-5 !min-w-0 !min-h-0 !text-[7px]" />
+                  <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
                 </div>
               </div>
             </div>
@@ -416,7 +416,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
                   </span>
                 )}
                 <div style={{ width: 18, height: 18, flexShrink: 0 }}>
-                  <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[18px] !h-[18px] !min-w-0 !min-h-0 !text-[7px]" />
+                  <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-icon" variant="ice" />
                 </div>
               </div>
             </div>

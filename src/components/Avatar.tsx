@@ -2,12 +2,50 @@ interface AvatarProps {
   name: string
   initials: string
   photoUrl?: string
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xs' | 'xs' | 'sm-icon' | 'sm-plus' | 'tight' | 'base-sm' | 'base' | 'base-lg' | 'base-xl'
   variant?: 'gold' | 'ice'
   className?: string
 }
 
 const sizeConfig = {
+  // Micro sizes for inline/compact contexts — min-w-0 min-h-0 prevents flex inflation
+  '2xs': {
+    container: 'w-4 h-4 min-w-0 min-h-0',
+    text: 'text-[6px]',
+  },
+  'xs': {
+    container: 'w-5 h-5 min-w-0 min-h-0',
+    text: 'text-[7px]',
+  },
+  'sm-icon': {
+    container: 'w-[18px] h-[18px] min-w-0 min-h-0',
+    text: 'text-[7px]',
+  },
+  'sm-plus': {
+    container: 'w-[22px] h-[22px] min-w-0 min-h-0',
+    text: 'text-[7px]',
+  },
+  'tight': {
+    container: 'w-6 h-6 min-w-0 min-h-0',
+    text: 'text-[8px]',
+  },
+  'base-sm': {
+    container: 'w-7 h-7 min-w-0 min-h-0',
+    text: 'text-[8px]',
+  },
+  'base': {
+    container: 'w-8 h-8 min-w-0 min-h-0',
+    text: 'text-[10px]',
+  },
+  'base-lg': {
+    container: 'w-9 h-9 min-w-0 min-h-0',
+    text: 'text-[10px]',
+  },
+  'base-xl': {
+    container: 'w-10 h-10 min-w-0 min-h-0',
+    text: 'text-xs',
+  },
+  // Standard named sizes (profile photos, member cards, etc.)
   sm: {
     container: 'w-14 h-14 sm:w-16 sm:h-16',
     text: 'text-sm sm:text-base',
