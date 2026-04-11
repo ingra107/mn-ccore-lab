@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check, GripVertical } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check, GripVertical, Pin } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
@@ -31,6 +31,8 @@ interface TaskGridViewProps {
   onFocusIndex?: (index: number) => void
   expandedTasks?: Set<string>
   onToggleExpand?: (id: string) => void
+  onPinToFocus?: (id: string) => void
+  pinnedIds?: Set<string>
 }
 
 function parseBlockedByIds(blockedBy: string | null): string[] {
@@ -40,7 +42,7 @@ function parseBlockedByIds(blockedBy: string | null): string[] {
 
 type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title' | 'project'
 
-export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand }: TaskGridViewProps) {
+export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand, onPinToFocus, pinnedIds }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
   const [sortKey, setSortKey] = useState<SortKey>('due_date')
   const [sortAsc, setSortAsc] = useState(true)
@@ -203,6 +205,8 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                     onToggleExpand={() => toggleExpand(task.id)}
                     projectMap={projectMap}
                     projectOptions={projectOptions}
+                    onPinToFocus={onPinToFocus}
+                    isPinnedToFocus={pinnedIds?.has(task.id)}
                   />
                   <AnimatePresence>
                     {isExpanded && (
@@ -334,7 +338,7 @@ function SortableColumnHeader({ label, field, active, asc, onSort }: { label: st
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions,
+  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions, onPinToFocus, isPinnedToFocus,
 }: {
   task: TaskRow
   allTasks: TaskRow[]
@@ -354,6 +358,8 @@ function TaskGridRow({
   onToggleExpand?: () => void
   projectMap: Map<string, string>
   projectOptions: { value: string; label: string }[]
+  onPinToFocus?: (id: string) => void
+  isPinnedToFocus?: boolean
 }) {
   const isDone = task.status === 'done'
   const blockerIds = useMemo(() => parseBlockedByIds(task.blocked_by), [task.blocked_by])
@@ -723,6 +729,15 @@ function TaskGridRow({
 
       {/* Row actions — own grid column, not absolute */}
       <div className="task-grid-row-actions" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2px' }}>
+        {onPinToFocus && !isPinnedToFocus && !task.completed && (
+          <button
+            className="task-grid-row-action-btn"
+            onClick={() => onPinToFocus(task.id)}
+            title="Pin to Focus Next"
+          >
+            <Pin size={12} />
+          </button>
+        )}
         <button
           className="task-grid-row-action-btn"
           onClick={() => setQuickComment(!quickComment)}

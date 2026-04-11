@@ -223,7 +223,10 @@ export default function MyTasks() {
       if (prev.length >= FOCUS_MAX) return prev
       return [...prev, id]
     })
-  }, [])
+    showUndo('Pinned to Focus Next', () => {
+      setPinnedIds(prev => prev.filter(p => p !== id))
+    })
+  }, [showUndo])
 
   const unpinTask = useCallback((id: string) => {
     setPinnedIds(prev => prev.filter(p => p !== id))
@@ -557,9 +560,9 @@ export default function MyTasks() {
             {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} />}
           </>
         ) : groupBy === 'none' ? (
-          <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} />
+          <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} />
         ) : (
-          <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} />
+          <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} />
         )}
       </div>
 
@@ -673,7 +676,7 @@ function sortTasks(tasks: any[], sortBy: SortBy) {
 }
 
 // ── Grouped Task List ──────────────────────────────────────────
-function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange, onOpenDetail, selectedIds, onToggleSelect }: {
+function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange, onOpenDetail, selectedIds, onToggleSelect, onPinToFocus, pinnedIds }: {
   tasks: any[]
   groupBy: GroupBy
   sortBy: SortBy
@@ -682,6 +685,8 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
   onOpenDetail?: (task: TaskRow) => void
   selectedIds?: Set<string>
   onToggleSelect?: (id: string) => void
+  onPinToFocus?: (id: string) => void
+  pinnedIds?: Set<string>
 }) {
   const groups = useMemo(() => {
     const map = new Map<string, any[]>()
@@ -762,7 +767,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
               )
             })()}
           </div>
-          <TaskGridView tasks={items} onStatusChange={onStatusChange} onFieldChange={onFieldChange} onOpenDetail={onOpenDetail} selectedIds={selectedIds} onToggleSelect={onToggleSelect} />
+          <TaskGridView tasks={items} onStatusChange={onStatusChange} onFieldChange={onFieldChange} onOpenDetail={onOpenDetail} selectedIds={selectedIds} onToggleSelect={onToggleSelect} onPinToFocus={onPinToFocus} pinnedIds={pinnedIds} />
         </div>
       ))}
     </div>
