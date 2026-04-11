@@ -228,8 +228,6 @@ export default function PortalLayout() {
         className="fixed right-5 z-40 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{
           bottom: 'calc(24px + 12px)', // above status bar (24px) + 12px gap
-        }}
-        style={{
           background: 'var(--teal)',
           color: 'var(--ink-bright, #fff)',
           border: 'none',
