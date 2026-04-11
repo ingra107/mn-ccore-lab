@@ -116,6 +116,49 @@
   letter-spacing: 0.01em;
 }
 
+/* ── Z-Index Hierarchy ── */
+/* Predictable stacking: every z-index in the codebase references a token */
+:root {
+  --z-base: 1;
+  --z-sticky: 10;          /* sticky headers, floating labels */
+  --z-dropdown: 50;        /* dropdowns, popovers, inline selects */
+  --z-sidebar: 100;        /* sidebar, navigation panels */
+  --z-modal-backdrop: 400; /* modal backdrop overlay */
+  --z-modal: 500;          /* modals, command palette, global quick add */
+  --z-toast: 9999;         /* toasts, route progress bar, hover cards */
+}
+
+/* ── Semantic Overlay & Hover Tokens ── */
+/* Standardized opacity tiers: 0.03 / 0.06 / 0.10 / 0.15 / 0.40 / 0.70 */
+:root {
+  --hover-subtle: rgba(0, 0, 0, 0.03);
+  --hover-light: rgba(0, 0, 0, 0.06);
+  --hover-medium: rgba(0, 0, 0, 0.10);
+  --overlay-light: rgba(0, 0, 0, 0.15);
+  --overlay-medium: rgba(0, 0, 0, 0.40);
+  --overlay-heavy: rgba(0, 0, 0, 0.70);
+
+  --gold-hover: rgba(201, 168, 76, 0.06);
+  --gold-active: rgba(201, 168, 76, 0.10);
+  --gold-emphasis: rgba(201, 168, 76, 0.15);
+  --teal-hover: rgba(45, 138, 138, 0.06);
+  --teal-active: rgba(45, 138, 138, 0.10);
+  --teal-emphasis: rgba(45, 138, 138, 0.15);
+  --maroon-hover: rgba(122, 0, 25, 0.06);
+  --maroon-emphasis: rgba(122, 0, 25, 0.15);
+  --orange-hover: rgba(194, 65, 12, 0.06);
+  --green-hover: rgba(22, 163, 74, 0.06);
+}
+
+.dark {
+  --hover-subtle: rgba(255, 255, 255, 0.03);
+  --hover-light: rgba(255, 255, 255, 0.06);
+  --hover-medium: rgba(255, 255, 255, 0.10);
+  --overlay-light: rgba(0, 0, 0, 0.30);
+  --overlay-medium: rgba(0, 0, 0, 0.50);
+  --overlay-heavy: rgba(0, 0, 0, 0.80);
+}
+
 /* ── Table Density Modes ── */
 /* Row height = text (font * ~1.5 line-height) + 2 * padding + 1px border */
 :root {
