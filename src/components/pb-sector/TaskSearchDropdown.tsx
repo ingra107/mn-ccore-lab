@@ -68,7 +68,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                   background: 'transparent', border: 'none', outline: 'none',
                 }}
               />
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
+              <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
                 <X size={16} style={{ color: 'var(--slate)', opacity: 0.5 }} />
               </button>
             </div>

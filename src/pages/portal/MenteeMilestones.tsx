@@ -782,6 +782,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
           </h3>
           <button
             onClick={onClose}
+            aria-label="Close"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
           >
             <X size={18} />
