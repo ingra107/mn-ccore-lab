@@ -253,12 +253,14 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           {/* Title */}
           <div>
             <label
+              htmlFor="task-title"
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--slate)' }}
             >
               Title *
             </label>
             <input
+              id="task-title"
               type="text"
               data-testid="task-title-input"
               value={title}
@@ -309,12 +311,14 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           {/* Description */}
           <div>
             <label
+              htmlFor="task-description"
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--slate)' }}
             >
               Description
             </label>
             <textarea
+              id="task-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Additional details..."
