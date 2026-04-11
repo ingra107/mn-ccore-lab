@@ -322,7 +322,7 @@ export default function Deadlines() {
               className="hidden sm:grid"
               style={{
                 gridTemplateColumns: '32px minmax(200px, 1fr) 140px 120px 100px 100px 80px',
-                padding: '8px 16px',
+                padding: 'var(--sp-sm) var(--sp-lg)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
@@ -375,7 +375,7 @@ export default function Deadlines() {
                 style={{
                   display: 'flex',
                   gap: 'var(--sp-xl)',
-                  padding: '8px 16px',
+                  padding: 'var(--sp-sm) var(--sp-lg)',
                   borderTop: '1px solid var(--border-subtle)',
                   background: 'rgba(45, 138, 138, 0.02)',
                 }}
@@ -918,7 +918,7 @@ function UpcomingConferencesSection() {
 
             return (
               <tr key={conf.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <td style={{ padding: '8px', fontWeight: 500, color: 'var(--ink)' }}>
+                <td style={{ padding: 'var(--sp-sm)', fontWeight: 500, color: 'var(--ink)' }}>
                   {conf.conference}
                   <div
                     style={{
@@ -935,7 +935,7 @@ function UpcomingConferencesSection() {
                     {conf.title}
                   </div>
                 </td>
-                <td style={{ padding: '8px' }}>
+                <td style={{ padding: 'var(--sp-sm)' }}>
                   {conf.project_slug ? (
                     <Link
                       to={`/projects/${conf.project_slug}`}
@@ -951,7 +951,7 @@ function UpcomingConferencesSection() {
                     <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>--</span>
                   )}
                 </td>
-                <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>
+                <td style={{ padding: 'var(--sp-sm)', whiteSpace: 'nowrap' }}>
                   {relevantDate ? (
                     <div>
                       <span
@@ -980,7 +980,7 @@ function UpcomingConferencesSection() {
                     <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>--</span>
                   )}
                 </td>
-                <td style={{ padding: '8px' }}>
+                <td style={{ padding: 'var(--sp-sm)' }}>
                   <span
                     style={{
                       display: 'inline-block',
@@ -996,7 +996,7 @@ function UpcomingConferencesSection() {
                     {conf.status}
                   </span>
                 </td>
-                <td style={{ padding: '8px' }}>
+                <td style={{ padding: 'var(--sp-sm)' }}>
                   {['accepted', 'preparing'].includes(conf.status) ? (
                     <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)' }}>
                       {CONF_MATERIALS_LABEL[conf.materials_status] || conf.materials_status}

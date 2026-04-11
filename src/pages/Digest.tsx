@@ -398,7 +398,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
               >
                 <div
                   style={{
-                    padding: '8px 12px 4px',
+                    padding: 'var(--sp-sm) var(--sp-md) var(--sp-xs)',
                     fontSize: '10px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
@@ -850,7 +850,7 @@ export default function Digest() {
           ) : filteredPapers.length === 0 ? (
             searchQuery ? (
               <div className="text-center py-12">
-                <Search size={32} style={{ color: 'var(--slate)', opacity: 0.2, margin: '0 auto 8px' }} />
+                <Search size={32} style={{ color: 'var(--slate)', opacity: 0.2, margin: '0 auto var(--sp-sm)' }} />
                 <p className="text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   No papers matching "{searchQuery}"
                 </p>

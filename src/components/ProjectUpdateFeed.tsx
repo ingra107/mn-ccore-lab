@@ -136,7 +136,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
             </AnimatePresence>
           </div>
         ) : (
-          <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-hint)', textAlign: 'center', padding: '12px 0', margin: 0 }}>
+          <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-hint)', textAlign: 'center', padding: 'var(--sp-md) 0', margin: 0 }}>
             No updates yet — post the first one to keep the team informed
           </p>
         )}
@@ -160,7 +160,7 @@ function UpdateCard({ update }: { update: ProjectUpdateRow }) {
       style={{
         background: 'var(--cream)',
         borderRadius: 'var(--radius-lg)',
-        padding: '12px',
+        padding: 'var(--sp-md)',
         borderLeft: `3px solid ${config.color}`,
       }}
     >

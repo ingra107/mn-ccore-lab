@@ -415,7 +415,7 @@ export default function Meetings() {
                 const fSlug = getMeetingFacilitator(dateStr)
                 const fInfo = fSlug ? getPersonInfo(fSlug) : null
                 return fInfo ? (
-                  <p className="flex items-center gap-1.5 text-xs mt-1" style={{ color: 'var(--teal)', margin: '4px 0 0 0' }}>
+                  <p className="flex items-center gap-1.5 text-xs mt-1" style={{ color: 'var(--teal)', margin: 'var(--sp-xs) 0 0 0' }}>
                     <UserCheck size={12} />
                     Facilitated by {fInfo.name}
                   </p>
@@ -500,7 +500,7 @@ export default function Meetings() {
                         style={{
                           background: 'none',
                           border: 'none',
-                          padding: '12px',
+                          padding: 'var(--sp-md)',
                           margin: '-10px',
                           display: 'flex',
                           alignItems: 'center',
@@ -738,7 +738,7 @@ export default function Meetings() {
                         style={{
                           background: 'none',
                           border: 'none',
-                          padding: '12px',
+                          padding: 'var(--sp-md)',
                           margin: '-10px',
                           display: 'flex',
                           alignItems: 'center',
@@ -954,7 +954,7 @@ export default function Meetings() {
                               border: 'none',
                               color: 'var(--slate)',
                               opacity: 'var(--ink-label)',
-                              padding: '4px',
+                              padding: 'var(--sp-xs)',
                             }}
                           >
                             x
@@ -970,7 +970,7 @@ export default function Meetings() {
                         background: 'none',
                         border: 'none',
                         color: 'var(--gold)',
-                        padding: '4px 0',
+                        padding: 'var(--sp-xs) 0',
                       }}
                     >
                       <Plus size={12} />

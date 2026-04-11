@@ -318,7 +318,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
   return (
     <div className="table-container">
       {/* Column headers — hidden on mobile */}
-      <div className="hidden sm:grid" style={{ gridTemplateColumns: gridCols, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center' }}>
+      <div className="hidden sm:grid" style={{ gridTemplateColumns: gridCols, padding: 'var(--sp-sm) var(--sp-lg)', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center' }}>
         <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', textAlign: 'center' as const }}>
           VOTES
         </span>
@@ -426,7 +426,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
 
       {ideas.length === 0 && (
         <div className="text-center py-16">
-          <Lightbulb size={24} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 8px' }} />
+          <Lightbulb size={24} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto var(--sp-sm)' }} />
           <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.4 }}>
             No ideas yet
           </p>
@@ -456,7 +456,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
             style={{
               display: 'flex',
               gap: 20,
-              padding: '8px 16px',
+              padding: 'var(--sp-sm) var(--sp-lg)',
               borderTop: '1px solid var(--border-subtle)',
               background: 'rgba(45, 138, 138, 0.02)',
             }}
@@ -540,7 +540,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
           <h3 className="text-lg" style={{ fontWeight: 500, color: 'var(--ink)' }}>
             New Idea
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
             <X size={18} />
           </button>
         </div>

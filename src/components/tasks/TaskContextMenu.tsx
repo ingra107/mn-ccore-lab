@@ -57,7 +57,7 @@ const menuStyles = {
   border: '1px solid var(--border-subtle)',
   borderRadius: 'var(--radius-lg)',
   boxShadow: 'var(--shadow-menu)',
-  padding: '4px 0',
+  padding: 'var(--sp-xs) 0',
   fontSize: 'var(--value-size)',
   color: 'var(--ink, #e2e8f0)',
   fontWeight: 400,
@@ -92,7 +92,7 @@ const shortcutStyles = {
 const dividerStyles: React.CSSProperties = {
   height: '1px',
   background: 'var(--border-subtle)',
-  margin: '4px 0',
+  margin: 'var(--sp-xs) 0',
 }
 
 const submenuIndicatorStyles: React.CSSProperties = {

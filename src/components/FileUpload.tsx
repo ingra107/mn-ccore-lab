@@ -139,7 +139,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
         style={{
           border: `2px dashed ${dragOver ? 'var(--teal)' : 'var(--border-subtle)'}`,
           borderRadius: 'var(--radius-lg)',
-          padding: '16px',
+          padding: 'var(--sp-lg)',
           textAlign: 'center',
           cursor: 'pointer',
           transition: 'border-color 150ms, background 150ms',

@@ -264,7 +264,7 @@ export default function MentionInput({
               borderRadius: 'var(--radius-lg)',
               boxShadow: 'var(--shadow-menu)',
               zIndex: 'var(--z-dropdown)',
-              padding: '4px 0',
+              padding: 'var(--sp-xs) 0',
             }}
           >
             {filteredSlugs.map((person, index) => (
@@ -281,7 +281,7 @@ export default function MentionInput({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '8px 12px',
+                  padding: 'var(--sp-sm) var(--sp-md)',
                   fontSize: '13px',
                   color: 'var(--ink)',
                   background: index === selectedIndex ? 'rgba(201, 168, 76, 0.08)' : 'transparent',

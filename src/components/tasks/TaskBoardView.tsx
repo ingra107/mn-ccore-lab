@@ -357,7 +357,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                     border: 'none',
                     borderBottom: '1px solid var(--border-subtle)',
                     cursor: 'pointer',
-                    padding: '4px 0',
+                    padding: 'var(--sp-xs) 0',
                   }}
                 >
                   {isLaneCollapsed ? (
@@ -471,7 +471,7 @@ function CollapsedColumn({
         backgroundColor: isOver ? 'rgba(45, 138, 138, 0.04)' : bg,
         border: isOver ? '2px dashed var(--gold)' : '2px solid transparent',
         borderRadius: 'var(--radius-lg)',
-        padding: '8px 4px',
+        padding: 'var(--sp-sm) var(--sp-xs)',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
@@ -539,7 +539,7 @@ function DroppableColumn({ id, children, isOver }: { id: string; children: React
         backgroundColor: isOver ? 'rgba(45, 138, 138, 0.04)' : 'transparent',
         border: isOver ? '2px dashed var(--gold)' : '2px solid transparent',
         borderRadius: 'var(--radius-lg)',
-        padding: '4px',
+        padding: 'var(--sp-xs)',
       }}
     >
       {children}

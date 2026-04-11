@@ -81,7 +81,7 @@ export default function OnboardingChecklist() {
             <p style={{
               fontSize: 13,
               color: 'var(--slate)',
-              margin: '4px 0 0 0',
+              margin: 'var(--sp-xs) 0 0 0',
             }}>
               You completed all {totalSteps} onboarding steps. You are officially a full member.
             </p>

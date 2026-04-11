@@ -367,7 +367,7 @@ export default function Projects() {
               className="hidden md:grid"
               style={{
                 gridTemplateColumns: 'minmax(280px, 3fr) 100px 110px 100px 80px',
-                padding: '8px 24px',
+                padding: 'var(--sp-sm) var(--sp-xl)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
@@ -736,7 +736,7 @@ export default function Projects() {
                 style={{
                   display: 'flex',
                   gap: 'var(--sp-xl)',
-                  padding: '8px 24px',
+                  padding: 'var(--sp-sm) var(--sp-xl)',
                   borderTop: '1px solid var(--border-subtle)',
                   background: 'rgba(45, 138, 138, 0.02)',
                 }}
@@ -819,7 +819,7 @@ export default function Projects() {
                       background: 'var(--ice)',
                       borderRadius: 'var(--radius-xl)',
                       borderTop: '2px solid var(--teal)',
-                      padding: '16px',
+                      padding: 'var(--sp-lg)',
                       minHeight: '300px',
                       minWidth: '200px',
                     }}
@@ -872,7 +872,7 @@ export default function Projects() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             style={{
-                              padding: '32px 12px',
+                              padding: 'var(--sp-2xl) var(--sp-md)',
                               textAlign: 'center',
                             }}
                           >

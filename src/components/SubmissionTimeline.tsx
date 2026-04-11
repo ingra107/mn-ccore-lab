@@ -418,7 +418,7 @@ function TimelineEvent({
 
         {/* Notes */}
         {event.notes && (
-          <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', margin: '4px 0 0', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', margin: 'var(--sp-xs) 0 0', lineHeight: 1.5 }}>
             {event.notes}
           </p>
         )}
@@ -439,7 +439,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
 
   if (isLoading) {
     return (
-      <div style={{ padding: '24px 0' }}>
+      <div style={{ padding: 'var(--sp-xl) 0' }}>
         <div style={{ height: '60px', background: 'var(--border-subtle)', opacity: 0.3, borderRadius: 'var(--radius-lg)' }} />
       </div>
     )

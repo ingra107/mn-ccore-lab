@@ -91,8 +91,8 @@ export default function SavedViewsBar({
     display: 'inline-flex',
     alignItems: 'center',
     gap: 6,
-    paddingLeft: 12,
-    paddingRight: 12,
+    paddingLeft: 'var(--sp-md)',
+    paddingRight: 'var(--sp-md)',
     cursor: 'pointer',
     transition: 'background 150ms, border-color 150ms',
     userSelect: 'none',
@@ -275,7 +275,7 @@ export default function SavedViewsBar({
                 ...pillBase,
                 background: 'var(--ice)',
                 border: '1px solid var(--gold)',
-                gap: 4,
+                gap: 'var(--sp-xs)',
                 paddingRight: 6,
               }}
             >

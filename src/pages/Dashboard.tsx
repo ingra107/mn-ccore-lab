@@ -190,7 +190,7 @@ function SortableCardWrapper({ id, children }: { id: string; children: React.Rea
           background: 'rgba(15,25,35,0.06)',
           border: 'none',
           borderRadius: 'var(--radius-md)',
-          padding: '4px',
+          padding: 'var(--sp-xs)',
           color: 'var(--slate)',
           zIndex: 'var(--z-sticky)',
         }}
@@ -549,7 +549,7 @@ export default function Dashboard() {
                         background: 'none',
                         border: 'none',
                         cursor: 'pointer',
-                        padding: '4px',
+                        padding: 'var(--sp-xs)',
                         color: pinnedCards.has(card.id) ? 'var(--gold)' : 'var(--slate)',
                         opacity: pinnedCards.has(card.id) ? 1 : 0.3,
                       }}
@@ -657,7 +657,7 @@ export default function Dashboard() {
                               background: 'rgba(201,168,76,0.15)',
                               border: 'none',
                               borderRadius: 'var(--radius-md)',
-                              padding: '4px',
+                              padding: 'var(--sp-xs)',
                               cursor: 'pointer',
                               color: 'var(--gold)',
                             }}
@@ -692,7 +692,7 @@ export default function Dashboard() {
                           style={{
                             border: 'none',
                             borderRadius: 'var(--radius-md)',
-                            padding: '4px',
+                            padding: 'var(--sp-xs)',
                             cursor: 'pointer',
                             color: 'var(--slate)',
                             opacity: 0.5,
@@ -747,7 +747,7 @@ export default function Dashboard() {
                                 style={{
                                   border: 'none',
                                   borderRadius: 'var(--radius-md)',
-                                  padding: '4px',
+                                  padding: 'var(--sp-xs)',
                                   cursor: 'pointer',
                                   color: 'var(--slate)',
                                   opacity: 0.5,

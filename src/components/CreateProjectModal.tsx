@@ -128,7 +128,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
           </h3>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}
           >
             <X size={18} />
           </button>

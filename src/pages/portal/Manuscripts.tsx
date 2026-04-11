@@ -241,7 +241,7 @@ export default function Manuscripts() {
               className="hidden sm:grid"
               style={{
                 gridTemplateColumns: 'minmax(200px, 1fr) 100px 100px 100px 72px',
-                padding: '8px 24px',
+                padding: 'var(--sp-sm) var(--sp-xl)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
             >
@@ -472,7 +472,7 @@ export default function Manuscripts() {
                   style={{
                     display: 'flex',
                     gap: 20,
-                    padding: '8px 16px',
+                    padding: 'var(--sp-sm) var(--sp-lg)',
                     borderTop: '1px solid var(--border-subtle)',
                     background: 'rgba(45, 138, 138, 0.02)',
                   }}
@@ -511,7 +511,7 @@ export default function Manuscripts() {
                     background: 'var(--ice)',
                     borderRadius: 'var(--radius-xl)',
                     borderTop: '2px solid var(--teal)',
-                    padding: '16px',
+                    padding: 'var(--sp-lg)',
                     minHeight: '200px',
                   }}
                 >
@@ -565,7 +565,7 @@ export default function Manuscripts() {
                       })}
                     </AnimatePresence>
                     {stageProjects.length === 0 && (
-                      <div style={{ padding: '24px 8px', textAlign: 'center' }}>
+                      <div style={{ padding: 'var(--sp-xl) var(--sp-sm)', textAlign: 'center' }}>
                         <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.3 }}>
                           No projects
                         </span>

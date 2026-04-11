@@ -150,7 +150,7 @@ export default function MeetingPrep() {
           {/* Left: Previous Action Items */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <SectionHeader icon={<CheckCircle2 size={14} />} title="Previous Action Items" subtitle={previousMeeting ? `From ${formatShortDate(previousMeeting.date)}` : undefined} />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '12px 16px' }}>
+            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {pendingPrev.length > 0 && (
                 <div className="mb-3">
                   <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--orange)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -172,7 +172,7 @@ export default function MeetingPrep() {
                 </div>
               )}
               {previousActionItems.length === 0 && (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
                   No previous meeting found
                 </p>
               )}
@@ -182,7 +182,7 @@ export default function MeetingPrep() {
           {/* Center: Suggested Agenda */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
             <SectionHeader icon={<ListChecks size={14} />} title="Suggested Agenda" />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '12px 16px' }}>
+            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {/* Overdue items first */}
               {overdueTasks.length > 0 && (
                 <div className="mb-3">
@@ -241,7 +241,7 @@ export default function MeetingPrep() {
               )}
 
               {agendaItems.length === 0 && overdueTasks.length === 0 && pendingPrev.length === 0 && (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
                   No agenda items yet. The team can add items from the meeting page.
                 </p>
               )}
@@ -251,7 +251,7 @@ export default function MeetingPrep() {
           {/* Right: Upcoming Deadlines + Activity */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <SectionHeader icon={<Calendar size={14} />} title="Upcoming Deadlines" subtitle="Next 14 days" />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '12px 16px', marginBottom: 16 }}>
+            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)', marginBottom: 'var(--sp-lg)' }}>
               {upcomingDeadlines.length > 0 ? (
                 upcomingDeadlines.slice(0, 8).map(task => {
                   const person = getPersonInfo(task.assignee)
@@ -267,14 +267,14 @@ export default function MeetingPrep() {
                   )
                 })
               ) : (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '12px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: 'var(--sp-md) 0', margin: 0 }}>
                   No deadlines in the next two weeks.
                 </p>
               )}
             </div>
 
             <SectionHeader icon={<Activity size={14} />} title="Recent Activity" subtitle="Last 14 days" />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '12px 16px' }}>
+            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {recentActivity.length > 0 ? (
                 recentActivity.slice(0, 10).map((act, i) => {
                   const person = getPersonInfo(act.actor?.split('@')[0] || '')
@@ -288,7 +288,7 @@ export default function MeetingPrep() {
                   )
                 })
               ) : (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: '12px 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: 'var(--sp-md) 0', margin: 0 }}>
                   No recent activity.
                 </p>
               )}

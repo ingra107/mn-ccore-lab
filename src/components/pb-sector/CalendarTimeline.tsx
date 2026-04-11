@@ -120,7 +120,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
         {/* Current time indicator */}
         {isInRange && (
           <div className="absolute left-0 right-0 flex items-center" style={{ top: nowOffset, zIndex: 'var(--z-sticky)' }}>
-            <div style={{ width: 40, display: 'flex', justifyContent: 'flex-end', paddingRight: 4 }}>
+            <div style={{ width: 40, display: 'flex', justifyContent: 'flex-end', paddingRight: 'var(--sp-xs)' }}>
               <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--gold)' }} />
             </div>
             <div className="flex-1" style={{ height: 1.5, background: 'var(--gold)' }} />

@@ -222,7 +222,7 @@ function ReviewCard({
             background: 'var(--cream)',
             border: '1px solid rgba(201,168,76,0.15)',
             borderRadius: 'var(--radius-lg)',
-            padding: '8px 12px',
+            padding: 'var(--sp-sm) var(--sp-md)',
             outline: 'none',
             resize: 'vertical',
             marginBottom: '8px',

@@ -37,13 +37,13 @@ class ErrorBoundary extends Component<
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: '1.25rem', color: 'var(--ink)', margin: '0 0 8px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: '1.25rem', color: 'var(--ink)', margin: '0 0 var(--sp-sm)' }}>
             Something went wrong
           </h2>
           <p style={{ fontSize: '14px', color: 'var(--slate)', maxWidth: 420, margin: '0 0 20px', lineHeight: 1.5 }}>
             This page hit an error, but everything else still works. Try refreshing, or navigate to another page.
           </p>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 'var(--sp-sm)', marginBottom: 'var(--sp-lg)' }}>
             <button
               onClick={() => { this.setState({ hasError: false, error: null, showDetail: false }); window.location.reload() }}
               style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 'var(--radius-lg)', border: 'none', backgroundColor: 'var(--teal)', color: 'white', cursor: 'pointer' }}
@@ -64,7 +64,7 @@ class ErrorBoundary extends Component<
             {this.state.showDetail ? 'Hide details' : 'Show error details'}
           </button>
           {this.state.showDetail && (
-            <pre style={{ marginTop: 12, padding: '12px 16px', borderRadius: 'var(--radius-lg)', backgroundColor: 'rgba(0,0,0,0.03)', fontSize: '11px', color: 'var(--slate)', textAlign: 'left', maxWidth: 500, overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            <pre style={{ marginTop: 'var(--sp-md)', padding: 'var(--sp-md) var(--sp-lg)', borderRadius: 'var(--radius-lg)', backgroundColor: 'rgba(0,0,0,0.03)', fontSize: '11px', color: 'var(--slate)', textAlign: 'left', maxWidth: 500, overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {errorMsg}
             </pre>
           )}

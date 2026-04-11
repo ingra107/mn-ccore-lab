@@ -133,7 +133,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
                 color: 'var(--teal)',
                 textDecoration: 'none',
                 textAlign: 'center',
-                padding: '8px 0',
+                padding: 'var(--sp-sm) 0',
               }}
             >
               +{decisions.length - 5} more decisions

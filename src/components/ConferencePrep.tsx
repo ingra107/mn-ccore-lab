@@ -168,7 +168,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                   }}
                 >
                   {/* Conference name + title */}
-                  <td style={{ padding: '8px', maxWidth: '200px' }}>
+                  <td style={{ padding: 'var(--sp-sm)', maxWidth: '200px' }}>
                     <div style={{ fontWeight: 500, color: 'var(--ink)', lineHeight: 1.3 }}>
                       {conf.conference}
                     </div>
@@ -196,7 +196,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                   </td>
 
                   {/* Type */}
-                  <td style={{ padding: '8px' }}>
+                  <td style={{ padding: 'var(--sp-sm)' }}>
                     <span
                       style={{
                         fontSize: '11px',
@@ -209,7 +209,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                   </td>
 
                   {/* Abstract due */}
-                  <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: 'var(--sp-sm)', whiteSpace: 'nowrap' }}>
                     {conf.abstract_due ? (
                       <span
                         style={{
@@ -228,7 +228,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                   </td>
 
                   {/* Status */}
-                  <td style={{ padding: '8px' }}>
+                  <td style={{ padding: 'var(--sp-sm)' }}>
                     <InlineSelect
                       value={conf.status}
                       options={STATUS_OPTIONS}
@@ -237,7 +237,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                   </td>
 
                   {/* Materials */}
-                  <td style={{ padding: '8px' }}>
+                  <td style={{ padding: 'var(--sp-sm)' }}>
                     {['accepted', 'preparing', 'presented'].includes(conf.status) ? (
                       <InlineSelect
                         value={conf.materials_status}
@@ -250,7 +250,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                   </td>
 
                   {/* Travel */}
-                  <td style={{ padding: '8px', textAlign: 'center' }}>
+                  <td style={{ padding: 'var(--sp-sm)', textAlign: 'center' }}>
                     <button
                       onClick={() => handleTravelToggle(conf)}
                       style={{
@@ -278,7 +278,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                   </td>
 
                   {/* Delete */}
-                  <td style={{ padding: '8px' }}>
+                  <td style={{ padding: 'var(--sp-sm)' }}>
                     <button
                       onClick={() => handleDelete(conf)}
                       style={{
@@ -307,7 +307,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
         <div
           style={{
             marginTop: activeConfs.length > 0 ? '12px' : '0',
-            padding: '12px',
+            padding: 'var(--sp-md)',
             borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
             background: 'rgba(45,138,138,0.03)',
@@ -440,7 +440,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            padding: '4px 0',
+            padding: 'var(--sp-xs) 0',
             opacity: 0.7,
           }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}

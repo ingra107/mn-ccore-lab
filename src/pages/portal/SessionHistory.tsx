@@ -60,7 +60,7 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.6, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.6, marginBottom: 'var(--sp-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         Sessions per day (last 30 days)
       </div>
       <div style={{ position: 'relative' }}>
@@ -139,7 +139,7 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
               transform: 'translateX(-50%)',
               background: 'var(--ink)',
               color: 'var(--bg)',
-              padding: '4px 8px',
+              padding: 'var(--sp-xs) var(--sp-sm)',
               borderRadius: 'var(--radius-md)',
               fontSize: 11,
               fontWeight: 500,
@@ -169,7 +169,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
         border: '1px solid var(--border-subtle)',
       }}
     >
-      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--sp-xs)' }}>
         {label}
       </div>
       <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2, fontFamily: 'var(--font-display)' }}>
@@ -269,7 +269,7 @@ export default function SessionHistory() {
         subtitle={stats ? `${filteredSessions.length}${searchTerm ? ` of ${stats.total_sessions}` : ''} sessions` : undefined}
       >
         {/* Filter bar */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 'var(--sp-sm)', flexWrap: 'wrap', alignItems: 'center' }}>
           <Filter size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
 
           {/* Search */}
@@ -354,7 +354,7 @@ export default function SessionHistory() {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}
+          style={{ display: 'flex', gap: 'var(--sp-md)', flexWrap: 'wrap', marginBottom: 'var(--sp-xl)' }}
         >
           <StatCard
             label="Total Sessions"
@@ -382,9 +382,9 @@ export default function SessionHistory() {
 
       {/* Session list */}
       {isLoading ? (
-        <div style={{ padding: 24 }}>
+        <div style={{ padding: 'var(--sp-xl)' }}>
           {[...Array(5)].map((_, i) => (
-            <div key={i} style={{ height: 36, marginBottom: 4, borderRadius: 'var(--radius-md)', backgroundColor: 'var(--border-subtle)', opacity: 0.3, animation: 'pulse 1.5s ease-in-out infinite' }} />
+            <div key={i} style={{ height: 36, marginBottom: 'var(--sp-xs)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--border-subtle)', opacity: 0.3, animation: 'pulse 1.5s ease-in-out infinite' }} />
           ))}
         </div>
       ) : sessions.length === 0 ? (
@@ -400,8 +400,8 @@ export default function SessionHistory() {
             style={{
               display: 'grid',
               gridTemplateColumns: '100px 80px 1fr 2fr 60px 60px',
-              gap: 8,
-              padding: '8px 12px',
+              gap: 'var(--sp-sm)',
+              padding: 'var(--sp-sm) var(--sp-md)',
               fontSize: 10,
               fontWeight: 500,
               color: 'var(--slate)',
@@ -443,7 +443,7 @@ export default function SessionHistory() {
                   }}
                 >
                   {formatMediumDate(date)}
-                  <span style={{ fontWeight: 400, opacity: 0.6, marginLeft: 8 }}>
+                  <span style={{ fontWeight: 400, opacity: 0.6, marginLeft: 'var(--sp-sm)' }}>
                     {dateSessions.length} session{dateSessions.length !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -461,7 +461,7 @@ export default function SessionHistory() {
                       style={{
                         display: 'grid',
                         gridTemplateColumns: '100px 80px 1fr 2fr 60px 60px',
-                        gap: 8,
+                        gap: 'var(--sp-sm)',
                         padding: '6px 12px',
                         fontSize: 13,
                         color: 'var(--ink)',
@@ -477,7 +477,7 @@ export default function SessionHistory() {
                       onMouseEnter={() => setFocusedIndex(globalIdx)}
                     >
                       {/* Time */}
-                      <div style={{ fontSize: 12, color: 'var(--slate)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <div style={{ fontSize: 12, color: 'var(--slate)', display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
                         <Clock size={11} style={{ opacity: 0.4 }} />
                         {formatTime(session.started_at)}
                       </div>
@@ -557,7 +557,7 @@ export default function SessionHistory() {
 
       {/* Machine legend */}
       {sessions.length > 0 && (
-        <div style={{ marginTop: 20, padding: '12px 16px', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', display: 'flex', gap: 16, alignItems: 'center', fontSize: 11, color: 'var(--slate)', opacity: 0.6 }}>
+        <div style={{ marginTop: 20, padding: 'var(--sp-md) var(--sp-lg)', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', display: 'flex', gap: 'var(--sp-lg)', alignItems: 'center', fontSize: 11, color: 'var(--slate)', opacity: 0.6 }}>
           <Monitor size={12} />
           <span>
             Machines: {[...new Set(sessions.filter(s => s.machine).map(s => s.machine))].join(', ') || 'none recorded'}

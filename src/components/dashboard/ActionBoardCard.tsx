@@ -73,7 +73,7 @@ function ActionBoardCard() {
                               updateStatus.mutate({ id: item.id, status: 'done' })
                               showUndo('Completed task', () => updateStatus.mutate({ id: item.id, status: prev }))
                             }}
-                            style={{ '--status-color': si.color, background: 'none', border: 'none', padding: '8px', margin: '-8px', color: si.color, opacity: 0.5, transition: 'all 0.15s', minWidth: '30px', minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' } as React.CSSProperties}>
+                            style={{ '--status-color': si.color, background: 'none', border: 'none', padding: 'var(--sp-sm)', margin: '-8px', color: si.color, opacity: 0.5, transition: 'all 0.15s', minWidth: '30px', minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' } as React.CSSProperties}>
                             <StatusIcon size={14} />
                           </button>
                           <div style={{ flex: 1 }}>

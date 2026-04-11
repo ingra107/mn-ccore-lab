@@ -112,7 +112,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
                         fontSize: 'var(--label-size)',
                         color: 'var(--teal)',
                         fontStyle: 'italic',
-                        margin: '4px 0 0',
+                        margin: 'var(--sp-xs) 0 0',
                       }}
                     >
                       {p.note}
@@ -163,7 +163,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
               color: 'var(--slate)',
               opacity: 'var(--ink-label)',
               textAlign: 'center',
-              padding: '16px 0',
+              padding: 'var(--sp-lg) 0',
               margin: 0,
             }}
           >
@@ -300,7 +300,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
             <Link2 size={13} />
             Add by DOI
           </button>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '8px 12px' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-sm) var(--sp-md)' }}>
             <X size={16} />
           </button>
         </div>
@@ -318,9 +318,9 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
               style={{ color: 'var(--ink)', border: 'none' }}
             />
           </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--sp-xs) 0' }}>
             {results.length === 0 ? (
-              <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: '24px 0' }}>
+              <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: 'var(--sp-xl) 0' }}>
                 {search ? 'No matching publications. Try the DOI tab to add a new one.' : 'No publications available.'}
               </p>
             ) : (

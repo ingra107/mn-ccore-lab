@@ -146,7 +146,7 @@ export default function PublicationDetail() {
               fontWeight: 600,
               fontSize: 'clamp(1.25rem, 3vw, 2rem)',
               color: 'var(--ink)',
-              margin: '0 0 12px 0',
+              margin: '0 0 var(--sp-md) 0',
               lineHeight: 1.2,
             }}
           >
@@ -232,7 +232,7 @@ export default function PublicationDetail() {
                   fontSize: '14px',
                   color: 'var(--ink)',
                   lineHeight: 1.7,
-                  margin: '0 0 16px 0',
+                  margin: '0 0 var(--sp-lg) 0',
                 }}
               >
                 {pub.abstract}

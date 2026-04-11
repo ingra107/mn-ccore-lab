@@ -113,7 +113,7 @@ export default function SearchPage() {
               fontWeight: 600,
               fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
               color: 'var(--ink)',
-              margin: '0 0 8px',
+              margin: '0 0 var(--sp-sm)',
               textAlign: 'center',
             }}
           >
@@ -205,7 +205,7 @@ export default function SearchPage() {
 
       <div className="mt-6">
         {isLoading && debouncedQuery.length >= 2 && (
-          <div style={{ padding: '24px 0' }}>
+          <div style={{ padding: 'var(--sp-xl) 0' }}>
             <TextSkeleton lines={6} widths={['100%', '88%', '92%', '75%', '95%', '60%']} />
           </div>
         )}

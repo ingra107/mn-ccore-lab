@@ -13,7 +13,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
   if (isLoading) {
     return (
       <div className="px-4 pb-4" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
-        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: '8px 0' }}>
+        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: 'var(--sp-sm) 0' }}>
           Finding related decisions...
         </p>
       </div>
@@ -23,7 +23,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
   if (similar.length === 0) {
     return (
       <div className="px-4 pb-4" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
-        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: '8px 0' }}>
+        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: 'var(--sp-sm) 0' }}>
           No similar decisions found.
         </p>
       </div>

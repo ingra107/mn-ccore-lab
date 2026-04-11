@@ -134,7 +134,7 @@ export default function NotificationBell() {
             {/* Header */}
             <div
               style={{
-                padding: '12px 16px',
+                padding: 'var(--sp-md) var(--sp-lg)',
                 borderBottom: '1px solid rgba(201, 168, 76, 0.12)',
                 display: 'flex',
                 alignItems: 'center',
@@ -180,13 +180,13 @@ export default function NotificationBell() {
               {displayNotifications.length === 0 ? (
                 <div
                   style={{
-                    padding: '32px 16px',
+                    padding: 'var(--sp-2xl) var(--sp-lg)',
                     textAlign: 'center',
                   }}
                 >
                   <Bell
                     size={24}
-                    style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 8px' }}
+                    style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-sm)' }}
                   />
                   <p
                     style={{

@@ -39,7 +39,7 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
           fontWeight: 500,
           color: 'var(--ink)',
           margin: 0,
-          marginTop: 12,
+          marginTop: 'var(--sp-md)',
         }}
       >
         {title}
@@ -72,8 +72,8 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
-            marginTop: 16,
-            padding: '8px 16px',
+            marginTop: 'var(--sp-lg)',
+            padding: 'var(--sp-sm) var(--sp-lg)',
             borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
             background: 'none',

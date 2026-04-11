@@ -150,11 +150,11 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
                 })
               }}
               title="Copy task link"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--green)' : 'var(--slate)', padding: '4px', opacity: copied ? 1 : 'var(--ink-hint)', transition: 'all 150ms' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--green)' : 'var(--slate)', padding: 'var(--sp-xs)', opacity: copied ? 1 : 'var(--ink-hint)', transition: 'all 150ms' }}
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
             </button>
-            <button data-testid="close-detail-panel" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
+            <button data-testid="close-detail-panel" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
               <X size={18} />
             </button>
           </div>
@@ -757,8 +757,8 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
           ))}
         </div>
       ) : !showAdd ? (
-        <div style={{ textAlign: 'center', padding: '24px 16px' }}>
-          <Upload size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 8px' }} />
+        <div style={{ textAlign: 'center', padding: 'var(--sp-xl) var(--sp-lg)' }}>
+          <Upload size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-sm)' }} />
           <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', margin: 0 }}>
             No attachments yet. Click "Add Link" to attach a document.
           </p>

@@ -173,7 +173,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                             background: 'rgba(201,168,76,0.04)',
                             border: '1px solid rgba(201,168,76,0.15)',
                             borderRadius: 'var(--radius-lg)',
-                            padding: '8px 12px',
+                            padding: 'var(--sp-sm) var(--sp-md)',
                           }}
                         >
                           <div className="flex items-center gap-1.5 mb-1">
@@ -270,7 +270,7 @@ export default function ProjectComments({ projectSlug }: Props) {
               color: 'var(--slate)',
               opacity: 'var(--ink-hint)',
               textAlign: 'center',
-              padding: '12px 0',
+              padding: 'var(--sp-md) 0',
               margin: 0,
             }}
           >

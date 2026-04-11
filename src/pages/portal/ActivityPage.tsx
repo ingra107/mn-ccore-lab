@@ -136,10 +136,10 @@ export default function ActivityPage() {
       {/* Activity feed */}
       <div className="mt-5 flex flex-col gap-6">
         {isLoading && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-xl)' }}>
             {[1, 2, 3].map((i) => (
               <div key={i}>
-                <div style={{ marginBottom: 8 }}>
+                <div style={{ marginBottom: 'var(--sp-sm)' }}>
                   <TextSkeleton lines={1} widths={['120px']} />
                 </div>
                 <TextSkeleton lines={4} widths={['100%', '90%', '85%', '70%']} />

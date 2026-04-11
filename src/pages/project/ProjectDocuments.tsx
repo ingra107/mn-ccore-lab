@@ -106,7 +106,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                   key={doc.id}
                   className="flex items-center gap-3"
                   style={{
-                    padding: '8px 4px',
+                    padding: 'var(--sp-sm) var(--sp-xs)',
                     borderBottom: '1px solid var(--border-subtle)',
                     transition: 'background 150ms ease',
                     background: hoveredId === doc.id ? 'rgba(201,168,76,0.04)' : 'transparent',
@@ -181,17 +181,17 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
 
         {/* Empty state */}
         {documents.length === 0 && !showForm && (
-          <div className="text-center" style={{ padding: '16px 0 12px' }}>
+          <div className="text-center" style={{ padding: 'var(--sp-lg) 0 var(--sp-md)' }}>
             <FolderOpen
               size={24}
-              style={{ color: 'var(--slate)', opacity: 0.25, margin: '0 auto 8px' }}
+              style={{ color: 'var(--slate)', opacity: 0.25, margin: '0 auto var(--sp-sm)' }}
             />
             <p
               style={{
                 fontSize: '12px',
                 color: 'var(--slate)',
                 opacity: 'var(--ink-label)',
-                margin: '0 0 4px',
+                margin: '0 0 var(--sp-xs)',
               }}
             >
               No documents linked yet

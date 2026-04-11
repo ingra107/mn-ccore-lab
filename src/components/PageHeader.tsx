@@ -16,14 +16,14 @@ export default function PageHeader({
   count,
 }: PageHeaderProps) {
   return (
-    <div style={{ marginBottom: 24 }}>
+    <div style={{ marginBottom: 'var(--sp-xl)' }}>
       {/* Title row */}
       <div
         style={{
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
-          gap: 16,
+          gap: 'var(--sp-lg)',
           flexWrap: 'wrap',
         }}
       >
@@ -95,7 +95,7 @@ export default function PageHeader({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
+              gap: 'var(--sp-sm)',
               flexShrink: 0,
             }}
           >
@@ -109,13 +109,13 @@ export default function PageHeader({
         style={{
           height: 1,
           backgroundColor: 'var(--border-subtle)',
-          marginTop: 12,
+          marginTop: 'var(--sp-md)',
         }}
       />
 
       {/* Children (filters, view controls, tabs) */}
       {children && (
-        <div style={{ paddingTop: 12 }}>
+        <div style={{ paddingTop: 'var(--sp-md)' }}>
           {children}
         </div>
       )}

@@ -113,7 +113,7 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
               <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>
                 Keyboard Shortcuts
               </h3>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
                 <X size={16} />
               </button>
             </div>

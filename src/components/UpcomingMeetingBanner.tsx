@@ -113,7 +113,7 @@ export default function UpcomingMeetingBanner() {
                   return fInfo ? (
                     <p
                       className="flex items-center gap-1.5 text-xs mt-1"
-                      style={{ color: 'var(--teal)', margin: '4px 0 0 0' }}
+                      style={{ color: 'var(--teal)', margin: 'var(--sp-xs) 0 0 0' }}
                     >
                       <UserCheck size={13} strokeWidth={1.5} aria-hidden="true" />
                       Facilitated by {fInfo.name}

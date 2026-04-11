@@ -114,7 +114,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
           <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
             {myPubs.length}
           </div>
-          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, margin: '4px 0 0' }}>
+          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, margin: 'var(--sp-xs) 0 0' }}>
             {myPubs.filter((p) => p.status === 'Published').length} published
             {myPubs.filter((p) => p.status !== 'Published').length > 0 &&
               ` · ${myPubs.filter((p) => p.status !== 'Published').length} in progress`}

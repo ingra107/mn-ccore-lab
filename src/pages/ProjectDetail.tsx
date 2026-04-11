@@ -431,7 +431,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 style={{
                   background: 'var(--ice)',
                   borderRadius: 'var(--radius-lg)',
-                  padding: '12px 16px',
+                  padding: 'var(--sp-md) var(--sp-lg)',
                   border: '1px solid rgba(201, 168, 76, 0.15)',
                 }}
                 className="detail-card"
@@ -484,7 +484,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       background: 'var(--cream)',
                       border: '1px solid rgba(201, 168, 76, 0.15)',
                       borderRadius: 'var(--radius-lg)',
-                      padding: '8px 12px',
+                      padding: 'var(--sp-sm) var(--sp-md)',
                       outline: 'none',
                       transition: 'border-color 0.2s',
                     }}
@@ -542,7 +542,7 @@ function ProjectDetailInner({ project }: InnerProps) {
       {activeTab === 'overview' && (<>
 
       {/* Project Timeline */}
-      <div className="mt-6 mb-6" style={{ padding: '0 4px' }}>
+      <div className="mt-6 mb-6" style={{ padding: '0 var(--sp-xs)' }}>
         <div className="flex items-center gap-2 mb-3">
           <Clock size={14} style={{ color: 'var(--gold)' }} />
           <span style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -613,7 +613,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   background: 'var(--cream)',
                   border: '1px solid var(--gold)',
                   borderRadius: 'var(--radius-lg)',
-                  padding: '8px 12px',
+                  padding: 'var(--sp-sm) var(--sp-md)',
                   lineHeight: 1.6,
                   resize: 'vertical',
                   outline: 'none',
@@ -689,7 +689,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             fontWeight: 500,
             fontSize: '16px',
             color: 'var(--ink)',
-            margin: '0 0 12px 0',
+            margin: '0 0 var(--sp-md) 0',
           }}
         >
           Stage
@@ -795,7 +795,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               transition={{ duration: 0.15 }}
               style={{
                 marginTop: '12px',
-                padding: '12px 16px',
+                padding: 'var(--sp-md) var(--sp-lg)',
                 borderRadius: 'var(--radius-lg)',
                 background: 'var(--ice)',
                 border: '1px solid rgba(201, 168, 76, 0.3)',
@@ -861,7 +861,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               fontWeight: 500,
               fontSize: '16px',
               color: 'var(--ink)',
-              margin: '0 0 12px 0',
+              margin: '0 0 var(--sp-md) 0',
             }}
           >
             Details
@@ -934,7 +934,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       lineHeight: 1.6,
                       margin: 0,
                       cursor: 'pointer',
-                      padding: '4px 0',
+                      padding: 'var(--sp-xs) 0',
                       opacity: project.description ? 1 : 0.5,
                       borderBottom: '1px dashed transparent',
                       transition: 'border-color 0.2s',
@@ -964,7 +964,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                         cursor: 'pointer',
                         fontSize: 'var(--label-size)',
                         color: 'var(--teal)',
-                        padding: '4px 0',
+                        padding: 'var(--sp-xs) 0',
                         opacity: 0.8,
                       }}
                     >
@@ -1138,7 +1138,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             const filtered = taskFilter === 'all' ? projectTasks : taskFilter === 'active' ? pendingTasks : taskFilter === 'done' ? completedTasks : projectTasks.filter(t => t.status === 'blocked')
             return filtered.length === 0 ? (
               <div className="text-center py-12">
-                <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto 12px' }} />
+                <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
                 <p style={{ fontSize: '14px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   {taskFilter === 'active' ? 'No active tasks.' : taskFilter === 'done' ? 'No completed tasks.' : 'No tasks for this project.'}
                 </p>
@@ -1283,7 +1283,7 @@ function ProjectTimeline({ createdAt, stage, tasks, updates }: {
 
   if (events.length === 0) {
     return (
-      <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: '12px 0' }}>
+      <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: 'var(--sp-md) 0' }}>
         No timeline events yet.
       </p>
     )

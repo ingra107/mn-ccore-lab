@@ -77,7 +77,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
             fontWeight: 'var(--label-weight)',
             fontSize: '16px',
             color: 'var(--ink)',
-            margin: '0 0 12px 0',
+            margin: '0 0 var(--sp-md) 0',
           }}
         >
           Action Items
@@ -99,7 +99,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
                   layout
                   className="flex items-start gap-3"
                   style={{
-                    padding: '8px 0',
+                    padding: 'var(--sp-sm) 0',
                     borderBottom: '1px solid rgba(201, 168, 76, 0.08)',
                   }}
                 >
@@ -181,7 +181,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
                 color: 'var(--slate)',
                 opacity: 'var(--ink-hint)',
                 textAlign: 'center',
-                padding: '16px 0',
+                padding: 'var(--sp-lg) 0',
                 margin: 0,
               }}
             >

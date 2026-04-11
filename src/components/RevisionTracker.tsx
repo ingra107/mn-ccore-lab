@@ -420,7 +420,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
             <div
               style={{
                 borderTop: '1px solid var(--border-subtle)',
-                padding: '12px 16px',
+                padding: 'var(--sp-md) var(--sp-lg)',
               }}
             >
               <RevisionCommentsList
@@ -572,8 +572,8 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                 className="mt-2 pl-3 rounded"
                                 style={{
                                   borderLeft: '2px solid var(--teal)',
-                                  paddingTop: 4,
-                                  paddingBottom: 4,
+                                  paddingTop: 'var(--sp-xs)',
+                                  paddingBottom: 'var(--sp-xs)',
                                 }}
                               >
                                 <p
@@ -661,8 +661,8 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                   background: 'none',
                                   border: 'none',
                                   cursor: 'pointer',
-                                  padding: '4px 0 0',
-                                  marginTop: 4,
+                                  padding: 'var(--sp-xs) 0 0',
+                                  marginTop: 'var(--sp-xs)',
                                   display: 'block',
                                 }}
                               >
@@ -705,7 +705,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
             color: 'var(--slate)',
             opacity: 0.4,
             textAlign: 'center',
-            padding: '12px 0',
+            padding: 'var(--sp-md) 0',
             margin: 0,
           }}
         >
@@ -829,7 +829,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '4px 8px',
+                  padding: 'var(--sp-xs) var(--sp-sm)',
                 }}
               >
                 Cancel

@@ -431,14 +431,14 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
   }, [open])
 
   return (
-    <div ref={ref} style={{ position: 'relative', flexShrink: 0, marginTop: 4 }}>
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0, marginTop: 'var(--sp-xs)' }}>
       <button
         onClick={() => setOpen(!open)}
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 4,
-          padding: '4px 8px',
+          gap: 'var(--sp-xs)',
+          padding: 'var(--sp-xs) var(--sp-sm)',
           borderRadius: 'var(--radius-md)',
           border: '1px solid transparent',
           background: 'none',
@@ -466,7 +466,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
             position: 'absolute',
             top: '100%',
             right: 0,
-            marginTop: 4,
+            marginTop: 'var(--sp-xs)',
             minWidth: 140,
             borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',

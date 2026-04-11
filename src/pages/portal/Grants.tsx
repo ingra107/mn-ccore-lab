@@ -390,7 +390,7 @@ export default function Grants() {
             onKeyDown={(e) => { if (e.key === 'Enter') setActiveSearch(searchKeywords) }}
             style={{
               flex: 1,
-              padding: '8px 12px',
+              padding: 'var(--sp-sm) var(--sp-md)',
               borderRadius: 'var(--radius-lg)',
               border: '1px solid var(--border-subtle)',
               fontSize: 'var(--value-size)',
@@ -405,7 +405,7 @@ export default function Grants() {
               color: 'var(--ink)',
               border: 'none',
               borderRadius: 'var(--radius-lg)',
-              padding: '8px 16px',
+              padding: 'var(--sp-sm) var(--sp-lg)',
               fontSize: 'var(--value-size)',
               fontWeight: 600,
               cursor: 'pointer',
@@ -463,7 +463,7 @@ export default function Grants() {
 
         {/* Empty state after search */}
         {activeSearch && similarGrants.data?.data?.length === 0 && !similarGrants.isLoading && (
-          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.6, textAlign: 'center', padding: '16px 0' }}>
+          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.6, textAlign: 'center', padding: 'var(--sp-lg) 0' }}>
             No funded grants found for "{activeSearch}"
           </p>
         )}
@@ -635,7 +635,7 @@ function AddGrantMilestoneModal({
 
   const inputStyle = {
     width: '100%',
-    padding: '8px 12px',
+    padding: 'var(--sp-sm) var(--sp-md)',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid var(--border-subtle)',
     fontSize: 'var(--value-size)',
@@ -656,7 +656,7 @@ function AddGrantMilestoneModal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: 'var(--sp-lg)',
       }}
       onClick={onClose}
     >
@@ -669,7 +669,7 @@ function AddGrantMilestoneModal({
           background: 'var(--cream)',
           borderRadius: 'var(--radius-2xl)',
           border: '1px solid var(--border-subtle)',
-          padding: '24px',
+          padding: 'var(--sp-xl)',
           width: '100%',
           maxWidth: '480px',
           boxShadow: 'var(--shadow-card-hover)',
@@ -772,7 +772,7 @@ function AddGrantMilestoneModal({
           <button
             onClick={onClose}
             style={{
-              padding: '8px 16px',
+              padding: 'var(--sp-sm) var(--sp-lg)',
               borderRadius: 'var(--radius-lg)',
               border: '1px solid var(--border-subtle)',
               background: 'none',
@@ -788,7 +788,7 @@ function AddGrantMilestoneModal({
             disabled={!grantId || !title.trim() || createMilestone.isPending}
             className="flex items-center gap-1.5"
             style={{
-              padding: '8px 16px',
+              padding: 'var(--sp-sm) var(--sp-lg)',
               borderRadius: 'var(--radius-lg)',
               border: 'none',
               background: !grantId || !title.trim() ? 'var(--border-subtle)' : 'var(--teal)',

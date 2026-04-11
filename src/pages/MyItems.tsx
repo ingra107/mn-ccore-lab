@@ -285,7 +285,7 @@ function ActionItemCard({
             }}
           >
             {/* Assignee */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
               <div
                 style={{
                   width: 18,
@@ -441,7 +441,7 @@ function NotificationCard({
               fontSize: 'var(--label-size)',
               color: 'var(--slate)',
               opacity: 'var(--ink-hint)',
-              marginTop: 4,
+              marginTop: 'var(--sp-xs)',
             }}
           >
             {formatRelativeTime(notification.created_at)}
@@ -535,7 +535,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
             }}
           >
             {/* To whom */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
               <div
                 style={{
                   width: 18,
@@ -875,13 +875,13 @@ export default function MyItems() {
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 4,
+                  gap: 'var(--sp-xs)',
                   fontSize: 'var(--label-size)',
                   color: 'var(--teal)',
                   opacity: markAllRead.isPending ? 0.5 : 0.8,
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
-                  padding: '4px 0',
+                  padding: 'var(--sp-xs) 0',
                 }}
               >
                 <CheckCheck size={14} />
@@ -965,7 +965,7 @@ export default function MyItems() {
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 'var(--sp-sm)',
                 padding: '0.5rem 0',
                 marginBottom: '0.75rem',
                 width: '100%',

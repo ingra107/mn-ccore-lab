@@ -473,7 +473,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
           <h3 className="text-lg" style={{ fontWeight: 500, color: 'var(--ink)' }}>
             New Question
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
             <X size={18} />
           </button>
         </div>

@@ -37,7 +37,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${cols}, 1fr)`,
-          gap: 16,
+          gap: 'var(--sp-lg)',
           padding: '12px 20px',
           borderBottom: '1px solid var(--border-subtle)',
         }}
@@ -54,7 +54,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
           style={{
             display: 'grid',
             gridTemplateColumns: `repeat(${cols}, 1fr)`,
-            gap: 16,
+            gap: 'var(--sp-lg)',
             padding: '14px 20px',
             borderBottom: r < rows - 1 ? '1px solid var(--border-subtle)' : undefined,
           }}
@@ -84,7 +84,7 @@ export function CardSkeleton({ count = 3 }: { count?: number }) {
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-        gap: 16,
+        gap: 'var(--sp-lg)',
       }}
     >
       {Array.from({ length: count }).map((_, i) => (
@@ -96,7 +96,7 @@ export function CardSkeleton({ count = 3 }: { count?: number }) {
             padding: 20,
             display: 'flex',
             flexDirection: 'column',
-            gap: 12,
+            gap: 'var(--sp-md)',
           }}
         >
           {/* Header bar */}

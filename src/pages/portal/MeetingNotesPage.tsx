@@ -305,7 +305,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
               style={{ borderColor: 'var(--border-subtle)' }}
             >
-              <Upload size={32} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 8px' }} />
+              <Upload size={32} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-sm)' }} />
               <p className="text-sm" style={{ color: 'var(--slate)' }}>
                 Click to upload audio file
               </p>

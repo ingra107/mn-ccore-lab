@@ -472,7 +472,7 @@ export default function MeetingDetail() {
               )}
 
               {actionItems.length === 0 && (
-                <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: '16px 0', margin: 0 }}>
+                <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
                   No action items yet — type above to add one
                 </p>
               )}
@@ -538,7 +538,7 @@ export default function MeetingDetail() {
                     style={{
                       width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
                       background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 'var(--radius-lg)',
-                      padding: '8px 12px', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
+                      padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
                     }}
                     onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
                     onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)')}
@@ -581,7 +581,7 @@ export default function MeetingDetail() {
             ))}
 
             {decisions.length === 0 && !showDecisionForm && (
-              <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: '16px 0', margin: 0 }}>
+              <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
                 No decisions logged yet. Record one during the meeting so nobody forgets.
               </p>
             )}
@@ -611,7 +611,7 @@ export default function MeetingDetail() {
                     background: 'var(--cream)',
                     border: '1px solid rgba(201,168,76,0.2)',
                     borderRadius: 'var(--radius-lg)',
-                    padding: '12px 16px',
+                    padding: 'var(--sp-md) var(--sp-lg)',
                     resize: 'vertical',
                     boxSizing: 'border-box',
                   }}
@@ -660,7 +660,7 @@ export default function MeetingDetail() {
                 <button
                   onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
                   className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 'var(--radius-md)', padding: '4px 8px', cursor: 'pointer', color: 'var(--gold)', fontSize: 'var(--label-size)' }}
+                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 'var(--radius-md)', padding: 'var(--sp-xs) var(--sp-sm)', cursor: 'pointer', color: 'var(--gold)', fontSize: 'var(--label-size)' }}
                 >
                   Edit
                 </button>
@@ -788,7 +788,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
     >
       {/* Select checkbox */}
       {onToggleSelect && (
-        <div className="flex-shrink-0" style={{ display: 'flex', alignItems: 'center', paddingTop: 12 }}>
+        <div className="flex-shrink-0" style={{ display: 'flex', alignItems: 'center', paddingTop: 'var(--sp-md)' }}>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id) }}
@@ -911,7 +911,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
           style={{
             flex: 1, fontSize: 'var(--value-size)', color: 'var(--ink)',
             background: 'var(--cream)', border: '1px solid color-mix(in srgb, var(--teal) 12%, transparent)', borderRadius: 'var(--radius-lg)',
-            padding: '8px 12px', outline: 'none', transition: 'border-color 0.15s',
+            padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', transition: 'border-color 0.15s',
           }}
           onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
           onBlur={(e) => (e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--teal) 12%, transparent)')}
@@ -1006,7 +1006,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             style={{
               width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
               background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: 'var(--radius-lg)',
-              padding: '8px 12px', outline: 'none', transition: 'border-color 0.2s',
+              padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', transition: 'border-color 0.2s',
             }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
             onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}

@@ -59,7 +59,7 @@ export default function QuickCaptureBar() {
         className="flex items-center gap-2"
         style={{
           height: 40,
-          padding: '0 12px',
+          padding: '0 var(--sp-md)',
           borderRadius: 'var(--radius-xl)',
           border: '1px solid var(--border-subtle)',
           background: 'var(--cream)',
@@ -112,7 +112,7 @@ export default function QuickCaptureBar() {
               border: 'none',
               cursor: capture.isPending ? 'wait' : 'pointer',
               color: 'var(--teal)',
-              padding: 4,
+              padding: 'var(--sp-xs)',
               display: 'flex',
               alignItems: 'center',
               opacity: capture.isPending ? 0.4 : 0.7,

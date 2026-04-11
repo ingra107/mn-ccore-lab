@@ -287,7 +287,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                             style={{
                               background: 'none',
                               border: 'none',
-                              padding: '12px',
+                              padding: 'var(--sp-md)',
                               margin: '-10px',
                               display: 'flex',
                               alignItems: 'center',

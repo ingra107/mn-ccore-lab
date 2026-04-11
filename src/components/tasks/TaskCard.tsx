@@ -91,7 +91,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             }}
             className="cursor-pointer"
             title={`Status: ${(STATUS_OPTIONS.find((s) => s.value === task.status) || STATUS_OPTIONS[0]).label} — click to advance`}
-            style={{ background: 'none', border: 'none', padding: '4px', margin: '-4px' }}
+            style={{ background: 'none', border: 'none', padding: 'var(--sp-xs)', margin: '-4px' }}
           >
             {(() => {
               const opt = STATUS_OPTIONS.find((s) => s.value === task.status) || STATUS_OPTIONS[0]

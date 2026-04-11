@@ -82,7 +82,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
           className="inline-flex items-center gap-1 rounded-full transition-all"
           style={{
             height: pillHeight,
-            padding: '0 8px',
+            padding: '0 var(--sp-sm)',
             fontSize: '11px',
             lineHeight: 1,
             background: userReacted ? 'rgba(45,138,138,0.08)' : 'transparent',

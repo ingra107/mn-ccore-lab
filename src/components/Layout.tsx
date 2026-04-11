@@ -207,7 +207,7 @@ export default function Layout() {
                   border: 'none',
                   borderBottomStyle: 'solid',
                   borderBottomWidth: '2px',
-                  padding: '8px 0',
+                  padding: 'var(--sp-sm) 0',
                 }}
               >
                 Research

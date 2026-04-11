@@ -29,7 +29,7 @@ export default function WatchButton({ id, type, label, slug, compact }: WatchBut
         cursor: 'pointer',
         color: watching ? 'var(--teal)' : 'var(--slate)',
         opacity: watching ? 1 : 0.5,
-        display: 'flex', alignItems: 'center', gap: 4,
+        display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)',
         fontSize: '11px',
       }}
     >

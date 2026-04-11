@@ -131,7 +131,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
     background: 'var(--cream)',
     border: '1px solid rgba(201,168,76,0.15)',
     borderRadius: 'var(--radius-lg)',
-    padding: '8px 12px',
+    padding: 'var(--sp-sm) var(--sp-md)',
     outline: 'none',
   }
 
@@ -165,7 +165,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}
           >
             <X size={18} />
           </button>
@@ -291,7 +291,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
           <div>
             <label style={labelStyle}>Linked Projects (optional)</label>
             <div className="relative">
-              <div className="flex items-center gap-1" style={{ ...inputStyle, padding: '4px 8px', flexWrap: 'wrap' }}>
+              <div className="flex items-center gap-1" style={{ ...inputStyle, padding: 'var(--sp-xs) var(--sp-sm)', flexWrap: 'wrap' }}>
                 {linkedProjectSlugs.map((slug) => {
                   const projTitle = projects.find((p) => p.slug === slug)?.title || slug
                   return (
@@ -324,7 +324,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
                     background: 'transparent',
                     fontSize: 'var(--value-size)',
                     color: 'var(--ink)',
-                    padding: '4px',
+                    padding: 'var(--sp-xs)',
                   }}
                 />
               </div>

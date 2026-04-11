@@ -64,7 +64,7 @@ export default function CollapsibleSection({
           background: 'none',
           border: 'none',
           cursor: 'pointer',
-          padding: '4px 0',
+          padding: 'var(--sp-xs) 0',
           textAlign: 'left',
         }}
       >

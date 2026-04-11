@@ -115,7 +115,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
               zIndex: 'var(--z-modal)',
               width: '100%',
               maxWidth: '560px',
-              padding: '0 16px',
+              padding: '0 var(--sp-lg)',
             }}
           >
             <div

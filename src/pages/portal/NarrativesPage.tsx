@@ -113,7 +113,7 @@ export default function NarrativesPage() {
                     )}
                   </div>
                 ))}
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4, marginLeft: 8 }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4, marginLeft: 'var(--sp-sm)' }}>
                   Idea → Published
                 </span>
               </div>
@@ -167,7 +167,7 @@ export default function NarrativesPage() {
                       <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
                         {p.title}
                       </span>
-                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4, marginLeft: 8 }}>
+                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4, marginLeft: 'var(--sp-sm)' }}>
                         {p.pub_date}
                       </span>
                     </Link>

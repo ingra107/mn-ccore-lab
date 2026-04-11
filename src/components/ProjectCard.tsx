@@ -30,7 +30,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       style={{
         background: 'var(--cream)',
         borderRadius: 'var(--radius-lg)',
-        padding: '16px',
+        padding: 'var(--sp-lg)',
         cursor: 'pointer',
         boxShadow: 'var(--shadow-card)',
         transition: 'box-shadow 0.2s ease, background 0.15s ease',

@@ -82,7 +82,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <TrendingUp size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
+        <TrendingUp size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No publications with dates yet
         </p>
@@ -158,7 +158,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
+        <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No active projects to track velocity
         </p>
@@ -401,7 +401,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <BookOpen size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
+        <BookOpen size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No publications yet
         </p>
@@ -557,7 +557,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <BarChart3 size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
+        <BarChart3 size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No task completions in the last 12 months
         </p>
@@ -636,7 +636,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
+        <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No active projects
         </p>
@@ -723,7 +723,7 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <Flag size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
+        <Flag size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No milestones tracked
         </p>
@@ -1046,7 +1046,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <ClipboardList size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto 12px' }} />
+        <ClipboardList size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No contributions in this period
         </p>

@@ -21,7 +21,7 @@ export default function MetricCard({ icon: Icon, label, value, color, subtitle, 
         <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{subtitle}</span>
       )}
       {sparklineData && sparklineData.length > 1 && (
-        <svg viewBox={`0 0 ${(sparklineData.length - 1) * 12} 32`} style={{ width: '100%', height: 32, marginTop: 4 }}>
+        <svg viewBox={`0 0 ${(sparklineData.length - 1) * 12} 32`} style={{ width: '100%', height: 32, marginTop: 'var(--sp-xs)' }}>
           <polyline
             fill="none"
             stroke="var(--teal)"

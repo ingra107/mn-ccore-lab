@@ -152,7 +152,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
                   background: 'var(--field-bg)',
                   border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-sm)',
-                  padding: '4px 8px',
+                  padding: 'var(--sp-xs) var(--sp-sm)',
                   outline: 'none',
                 }}
               />
@@ -173,7 +173,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
               style={{
                 display: 'block',
                 width: '100%',
-                padding: '8px 12px',
+                padding: 'var(--sp-sm) var(--sp-md)',
                 border: 'none',
                 background: idx === focusedIdx
                   ? 'rgba(45,138,138,0.10)'

@@ -62,7 +62,7 @@ export default function WelcomeBanner() {
             {nextStep && (
               <p style={{
                 fontSize: 12, color: 'var(--slate)',
-                margin: '4px 0 0 0', opacity: 0.7,
+                margin: 'var(--sp-xs) 0 0 0', opacity: 0.7,
               }}>
                 Next: {nextStep.title}
               </p>

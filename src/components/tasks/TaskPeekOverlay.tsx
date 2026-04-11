@@ -162,13 +162,13 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                   borderBottom: '1px solid var(--border-subtle)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
                   {/* Status pill */}
                   <span
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 4,
+                      gap: 'var(--sp-xs)',
                       padding: '3px 8px',
                       borderRadius: 'var(--radius-full)',
                       fontSize: 'var(--label-size)',
@@ -204,7 +204,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                   style={{
                     background: 'none',
                     border: 'none',
-                    padding: 4,
+                    padding: 'var(--sp-xs)',
                     cursor: 'pointer',
                     color: 'var(--slate)',
                     borderRadius: 'var(--radius-md)',
@@ -241,7 +241,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                       fontSize: 'var(--value-size)',
                       lineHeight: 1.5,
                       color: 'var(--slate)',
-                      margin: '8px 0 0',
+                      margin: 'var(--sp-sm) 0 0',
                     }}
                   >
                     {formatBrandName(task.description)}
@@ -264,7 +264,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                     <span className="peek-label" style={labelStyle}>Assignee</span>
                     <div
                       ref={assigneeHover.triggerRef as React.RefObject<HTMLDivElement>}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, cursor: 'default' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 'var(--sp-xs)', cursor: 'default' }}
                       onMouseEnter={assigneeData ? assigneeHover.handlers.onMouseEnter : undefined}
                       onMouseLeave={assigneeData ? assigneeHover.handlers.onMouseLeave : undefined}
                     >
@@ -294,7 +294,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                   {/* Due date */}
                   <div>
                     <span className="peek-label" style={labelStyle}>Due Date</span>
-                    <div style={{ marginTop: 4 }}>
+                    <div style={{ marginTop: 'var(--sp-xs)' }}>
                       {task.due_date ? (
                         <span
                           style={{
@@ -317,7 +317,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                   {task.meeting_id && (
                     <div>
                       <span className="peek-label" style={labelStyle}>Meeting</span>
-                      <div style={{ marginTop: 4 }}>
+                      <div style={{ marginTop: 'var(--sp-xs)' }}>
                         <Link
                           to={`/portal/meetings/${task.meeting_id}`}
                           style={{
@@ -339,7 +339,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                   {task.project_id && (
                     <div>
                       <span className="peek-label" style={labelStyle}>Project</span>
-                      <div style={{ marginTop: 4 }}>
+                      <div style={{ marginTop: 'var(--sp-xs)' }}>
                         <Link
                           to={`/portal/projects/${task.project_id}`}
                           style={{

@@ -108,7 +108,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             style={{
               flex: 1, fontSize: '15px', color: 'var(--ink)',
               background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.25)',
-              borderRadius: 'var(--radius-lg)', padding: '8px 12px', outline: 'none',
+              borderRadius: 'var(--radius-lg)', padding: 'var(--sp-sm) var(--sp-md)', outline: 'none',
               resize: 'vertical', lineHeight: 1.5,
             }}
           />

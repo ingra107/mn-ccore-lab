@@ -199,7 +199,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
     return (
       <div
         style={{
-          padding: '24px',
+          padding: 'var(--sp-xl)',
           textAlign: 'center',
           background: 'var(--ice)',
           borderRadius: 'var(--radius-xl)',
@@ -427,7 +427,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
       {/* Legend */}
       <div
         className="flex flex-wrap items-center gap-4 mt-3"
-        style={{ padding: '0 4px' }}
+        style={{ padding: '0 var(--sp-xs)' }}
       >
         <span
           style={{

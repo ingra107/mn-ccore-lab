@@ -348,7 +348,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     <div className="table-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Reset view button — only show when config differs from defaults */}
       {configDiffers && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px 16px 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: 'var(--sp-xs) var(--sp-lg) 0', flexShrink: 0 }}>
           <button
             onClick={resetTableConfig}
             title="Reset view to defaults"
@@ -376,7 +376,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         onDragEnd={handleColumnDragEnd}
       >
         <SortableContext items={orderedDataCols} strategy={horizontalListSortingStrategy}>
-          <div className="task-grid-header" style={{ ...colStyle, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+          <div className="task-grid-header" style={{ ...colStyle, padding: 'var(--sp-sm) var(--sp-lg)', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
             <div /> {/* Checkbox spacer — not sortable */}
             {orderedDataCols.map(col => (
               <SortableColumnHeader
@@ -770,7 +770,7 @@ function TaskGridRow({
       data-testid={`task-row-${task.id}`}
       style={{
         ...colStyle,
-        padding: '0 16px',
+        padding: '0 var(--sp-lg)',
         height: 'var(--row-height)',
         boxSizing: 'border-box' as const,
         fontSize: 'var(--cell-font-size)',
@@ -1565,7 +1565,7 @@ function InlineCellSelect({
                   style={{
                     width: '100%', fontSize: 'var(--text-small)', color: 'var(--ink)',
                     background: 'var(--field-bg)', border: '1px solid var(--border-subtle)',
-                    borderRadius: 'var(--radius-sm)', padding: '4px 8px', outline: 'none',
+                    borderRadius: 'var(--radius-sm)', padding: 'var(--sp-xs) var(--sp-sm)', outline: 'none',
                   }}
                 />
               </div>
@@ -1620,7 +1620,7 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
       style={{
         display: 'flex',
         gap: 'var(--sp-xl)',
-        padding: '8px 16px',
+        padding: 'var(--sp-sm) var(--sp-lg)',
         borderTop: '1px solid var(--border-subtle)',
         background: 'rgba(45, 138, 138, 0.02)',
       }}

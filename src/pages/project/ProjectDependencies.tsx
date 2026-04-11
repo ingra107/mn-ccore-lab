@@ -301,7 +301,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
               color: 'var(--slate)',
               opacity: 'var(--ink-hint)',
               textAlign: 'center',
-              padding: '16px 0',
+              padding: 'var(--sp-lg) 0',
               margin: 0,
             }}
           >
@@ -315,7 +315,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 key={dep.id}
                 className="flex items-center gap-3"
                 style={{
-                  padding: '8px 0',
+                  padding: 'var(--sp-sm) 0',
                   borderBottom: '1px solid rgba(201, 168, 76, 0.08)',
                 }}
               >
@@ -385,7 +385,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 key={dep.id}
                 className="flex items-center gap-3"
                 style={{
-                  padding: '8px 0',
+                  padding: 'var(--sp-sm) 0',
                   borderBottom: '1px solid rgba(201, 168, 76, 0.08)',
                 }}
               >

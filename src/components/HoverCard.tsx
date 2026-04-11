@@ -348,7 +348,7 @@ export default function HoverCard({ data, isVisible, position, cardRef, cardHand
             maxWidth: 320,
             width: 'max-content',
             minWidth: 240,
-            padding: '12px 16px',
+            padding: 'var(--sp-md) var(--sp-lg)',
             backgroundColor: 'color-mix(in oklch, var(--cream), white 3%)',
             border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-lg)',

@@ -220,7 +220,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
         textDecoration: 'none',
         borderBottom: '1px solid rgba(201, 168, 76, 0.04)',
         borderRadius: 'var(--radius-sm)',
-        padding: '8px 4px',
+        padding: 'var(--sp-sm) var(--sp-xs)',
         margin: '0 -4px',
         minHeight: '44px',
       }}

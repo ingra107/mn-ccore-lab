@@ -109,7 +109,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
               ))}
             </div>
           ) : (
-            <p className="text-[11px] mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', margin: '0 0 8px 0' }}>
+            <p className="text-[11px] mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', margin: '0 0 var(--sp-sm) 0' }}>
               No blockers
             </p>
           )}

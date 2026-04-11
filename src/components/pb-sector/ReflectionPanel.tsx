@@ -103,7 +103,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
             <div className="space-y-3 pt-2">
               {/* Highlight */}
               <div>
-                <label style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: 4 }}>
+                <label style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: 'var(--sp-xs)' }}>
                   Highlight of the day
                 </label>
                 <input
@@ -115,14 +115,14 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   style={{
                     fontSize: 'var(--value-size)', color: 'var(--ink)',
                     background: 'transparent', border: 'none', borderBottom: '1px solid rgba(201,168,76,0.15)',
-                    outline: 'none', padding: '4px 0',
+                    outline: 'none', padding: 'var(--sp-xs) 0',
                   }}
                 />
               </div>
 
               {/* Learned */}
               <div>
-                <label style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: 4 }}>
+                <label style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: 'var(--sp-xs)' }}>
                   What did I learn?
                 </label>
                 <input
@@ -134,7 +134,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   style={{
                     fontSize: 'var(--value-size)', color: 'var(--ink)',
                     background: 'transparent', border: 'none', borderBottom: '1px solid rgba(201,168,76,0.15)',
-                    outline: 'none', padding: '4px 0',
+                    outline: 'none', padding: 'var(--sp-xs) 0',
                   }}
                 />
               </div>

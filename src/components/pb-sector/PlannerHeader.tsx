@@ -165,7 +165,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
           {quote && (
             <p style={{
               fontSize: '12.5px', fontStyle: 'italic',
-              color: 'var(--slate)', opacity: 0.6, margin: '4px 0 0 0', lineHeight: 1.4,
+              color: 'var(--slate)', opacity: 0.6, margin: 'var(--sp-xs) 0 0 0', lineHeight: 1.4,
             }}>
               "{quote.text}" — {quote.author}
             </p>

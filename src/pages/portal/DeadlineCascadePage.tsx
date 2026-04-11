@@ -101,8 +101,8 @@ export default function DeadlineCascadePage() {
             color: 'var(--slate)',
             opacity: 0.5,
           }}>
-            <GitBranch size={40} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-            <p style={{ fontSize: '14px', fontWeight: 500, margin: '0 0 4px' }}>
+            <GitBranch size={40} style={{ margin: '0 auto var(--sp-md)', opacity: 0.3 }} />
+            <p style={{ fontSize: '14px', fontWeight: 500, margin: '0 0 var(--sp-xs)' }}>
               No deadline chains yet
             </p>
             <p style={{ fontSize: '12px', margin: 0, opacity: 0.6 }}>
@@ -114,7 +114,7 @@ export default function DeadlineCascadePage() {
             initial="hidden"
             animate="visible"
             variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
-            style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-lg)' }}
           >
             {projectGroups.map((group) => {
               // Skip projects with no dependencies if filter is off, or no at-risk if filter is on
@@ -133,7 +133,7 @@ export default function DeadlineCascadePage() {
                     borderBottom: '1px solid var(--border-subtle)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
+                    gap: 'var(--sp-sm)',
                   }}>
                     <span style={{
                       fontSize: '13px',
@@ -153,7 +153,7 @@ export default function DeadlineCascadePage() {
                   </div>
 
                   {/* Cascade view */}
-                  <div style={{ padding: '8px 4px' }}>
+                  <div style={{ padding: 'var(--sp-sm) var(--sp-xs)' }}>
                     <DeadlineCascade
                       graph={group.graph}
                       impactResults={impactResults}

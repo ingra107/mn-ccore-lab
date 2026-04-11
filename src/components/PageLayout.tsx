@@ -15,7 +15,7 @@ export default function PageLayout({ children, className }: PageLayoutProps) {
   return (
     <div
       className={`flex flex-col gap-4 ${className || ''}`}
-      style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}
+      style={{ maxWidth: 1200, margin: '0 auto', padding: '0 var(--sp-xl)' }}
     >
       {children}
     </div>

@@ -440,7 +440,7 @@ export default function MyTasks() {
           <button
             onClick={() => setShowAllTasks(false)}
             style={{
-              padding: '4px 12px',
+              padding: 'var(--sp-xs) var(--sp-md)',
               fontSize: 'var(--text-small)',
               fontWeight: !showAllTasks ? 'var(--weight-ui)' : 'var(--weight-body)',
               background: !showAllTasks ? 'rgba(45,138,138,0.08)' : 'none',
@@ -454,7 +454,7 @@ export default function MyTasks() {
           <button
             onClick={() => setShowAllTasks(true)}
             style={{
-              padding: '4px 12px',
+              padding: 'var(--sp-xs) var(--sp-md)',
               fontSize: 'var(--text-small)',
               fontWeight: showAllTasks ? 'var(--weight-ui)' : 'var(--weight-body)',
               background: showAllTasks ? 'rgba(45,138,138,0.08)' : 'none',
