@@ -32,7 +32,7 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   due_date: 100,
   status: 120,
   priority: 80,
-  actions: 50,
+  actions: 90,
 }
 
 const MIN_WIDTHS: Record<string, number> = {
@@ -43,7 +43,7 @@ const MIN_WIDTHS: Record<string, number> = {
   due_date: 60,
   status: 60,
   priority: 60,
-  actions: 50,
+  actions: 90,
 }
 
 // Display labels for data columns
