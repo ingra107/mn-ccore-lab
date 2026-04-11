@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Activity, Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck } from 'lucide-react'
+import { Activity, Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useListKeyboardNav } from '../hooks/useListKeyboardNav'
@@ -10,11 +11,11 @@ import { useToggleActionItem, useCreateActionItem } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import { directors, getAllMembers, getPersonInfo } from '../data/team'
 import { projects as projectOptions } from '../data/projects'
-import MeetingCard from '../components/MeetingCard'
 import QuickAddForm from '../components/QuickAddForm'
 import Avatar from '../components/Avatar'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { parseCarriedForward } from '../lib/textUtils'
+import { formatFullDate, formatShortDate } from '../lib/dateUtils'
 import PageTooltip from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 
@@ -25,12 +26,9 @@ const ALL_TEAM_MEMBERS = [
   ...getAllMembers().map((m) => ({ slug: m.slug ?? m.name, name: m.name, initials: m.initials, photoUrl: m.photoUrl })),
 ]
 
-// Deduplicate by slug
 const TEAM_OPTIONS = ALL_TEAM_MEMBERS.filter(
   (m, i, arr) => arr.findIndex((x) => x.slug === m.slug) === i
 )
-
-// ── Transform D1 rows → frontend Meeting type ──────────────
 
 function parseJsonArray(val: string | null): string[] {
   if (!val) return []
@@ -66,28 +64,20 @@ function meetingRowToMeeting(row: MeetingRow, actionItems: ActionItemRow[]): Mee
 
 function getNextMeetingDate(meetingsList: Meeting[]): Date {
   const today = new Date()
-  // Find the next upcoming meeting
   const upcoming = meetingsList
     .map((m) => new Date(m.date + 'T12:00:00'))
     .filter((d) => d >= today)
     .sort((a, b) => a.getTime() - b.getTime())
-
   if (upcoming.length > 0) return upcoming[0]
-
-  // Extrapolate from the most recent meeting + 14 days
   const sortedDates = meetingsList
     .map((m) => new Date(m.date + 'T12:00:00'))
     .sort((a, b) => b.getTime() - a.getTime())
-
   if (sortedDates.length > 0) {
-    let next = new Date(sortedDates[0])
+    const next = new Date(sortedDates[0])
     next.setDate(next.getDate() + 14)
-    while (next < today) {
-      next.setDate(next.getDate() + 14)
-    }
+    while (next < today) next.setDate(next.getDate() + 14)
     return next
   }
-
   const day = today.getDay()
   const daysUntilTuesday = (2 - day + 7) % 7 || 7
   const nextTuesday = new Date(today)
@@ -103,7 +93,7 @@ function getDaysUntil(target: Date): number {
   return Math.ceil((t.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-function formatShortDate(dateStr: string): string {
+function formatListDate(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00')
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
@@ -114,18 +104,201 @@ interface ActionItemWithContext extends ActionItem {
   meetingId: string
 }
 
-export default function Meetings() {
-  usePageMeta(
-    'Meeting Hub | MN-CCORE',
-    'MNCCORE biweekly meetings, decisions, and action items archive.'
+// ── Meeting Detail Panel ────────────────────────────────────
+
+interface MeetingDetailProps {
+  meeting: Meeting
+  onToggleAction: (meetingId: string, actionId: string) => void
+}
+
+function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
+  const pendingActions = meeting.actionItems?.filter((a) => !a.completed).length ?? 0
+  const totalActions = meeting.actionItems?.length ?? 0
+  const fSlug = getMeetingFacilitator(meeting.date)
+  const fInfo = fSlug ? getPersonInfo(fSlug) : null
+
+  return (
+    <div>
+      <div className="mb-6">
+        <div className="flex items-start gap-4">
+          <div
+            className="shrink-0 flex flex-col items-center justify-center rounded-xl"
+            style={{ width: '60px', height: '60px', background: 'var(--gold-light)', border: '1px solid rgba(201,168,76,0.3)' }}
+          >
+            <span style={{ fontSize: '10px', color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1 }}>
+              {new Date(meeting.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short' })}
+            </span>
+            <span style={{ fontSize: '22px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}>
+              {new Date(meeting.date + 'T12:00:00').getDate()}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-medium leading-snug" style={{ color: 'var(--ink)', margin: 0 }}>
+              {meeting.title}
+            </h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+              {formatFullDate(meeting.date)}
+            </p>
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--muted)' }}>
+                <Users size={12} />
+                {meeting.attendees?.length ?? 0} attendees
+              </span>
+              {totalActions > 0 && (
+                <span className="flex items-center gap-1 text-xs" style={{ color: pendingActions > 0 ? 'var(--gold)' : 'var(--teal)' }}>
+                  <ListChecks size={12} />
+                  {pendingActions > 0 ? `${pendingActions} pending` : `${totalActions} done`}
+                </span>
+              )}
+              {fInfo && (
+                <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--teal)' }}>
+                  <UserCheck size={12} />
+                  Facilitated by {fInfo.name}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center -space-x-2 shrink-0">
+            {meeting.attendees?.slice(0, 5).map((slug) => {
+              const info = getPersonInfo(slug)
+              return (
+                <div key={slug} style={{ width: 28, height: 28 }}>
+                  <Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="base-sm" />
+                </div>
+              )
+            })}
+            {(meeting.attendees?.length ?? 0) > 5 && (
+              <span className="text-xs pl-2" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+                +{(meeting.attendees?.length ?? 0) - 5}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ height: '1px', background: 'var(--border-subtle)', marginBottom: '1.5rem' }} />
+
+      {meeting.attendees && meeting.attendees.length > 0 && (
+        <div className="mb-6">
+          <h4 className="mtg-section-label mb-2">Attendees</h4>
+          <div className="flex flex-wrap items-center gap-2">
+            {meeting.attendees.map((slug) => {
+              const info = getPersonInfo(slug)
+              return (
+                <div key={slug} className="flex items-center gap-1.5">
+                  <div style={{ width: 24, height: 24 }}>
+                    <Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="tight" />
+                  </div>
+                  <span className="text-xs" style={{ color: 'var(--ink)' }}>{info.name}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {meeting.agenda && meeting.agenda.length > 0 && (
+        <div className="mb-6">
+          <h4 className="mtg-section-label mb-2">Agenda</h4>
+          <ol className="list-decimal list-inside space-y-1">
+            {meeting.agenda.map((item, i) => (
+              <li key={i} className="text-sm leading-relaxed" style={{ color: 'var(--ink)' }}>{item}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {meeting.decisions && meeting.decisions.length > 0 && (
+        <div className="mb-6">
+          <h4 className="mtg-section-label mtg-section-label--gold mb-2">Decisions</h4>
+          <div className="space-y-2">
+            {meeting.decisions.map((decision, i) => (
+              <div key={i} className="flex gap-2 px-3 py-2 rounded-md text-sm"
+                style={{ background: 'var(--gold-active)', border: '1px solid rgba(201,168,76,0.2)', color: 'var(--ink)' }}>
+                <span style={{ color: 'var(--gold)', flexShrink: 0, marginTop: '1px' }}>&#9670;</span>
+                {decision}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {meeting.actionItems && meeting.actionItems.length > 0 && (
+        <div className="mb-6">
+          <h4 className="mtg-section-label mb-2">Action Items</h4>
+          <div className="space-y-2">
+            {meeting.actionItems.map((item, i) => {
+              const info = getPersonInfo(item.assignee)
+              return (
+                <div key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--ink)' }}>
+                  <button
+                    type="button"
+                    className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
+                    style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
+                    onClick={() => { if (item.id) onToggleAction(meeting.id, item.id) }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+                    title={item.completed ? 'Mark as pending' : 'Mark as completed'}
+                  >
+                    {item.completed
+                      ? <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
+                      : <Circle size={16} style={{ color: 'var(--gold)' }} />
+                    }
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <span style={{ textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.6 : 1 }}>
+                      {item.description}
+                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1">
+                        <div style={{ width: 16, height: 16 }}>
+                          <Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="2xs" />
+                        </div>
+                        <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.7 }}>{info.name}</span>
+                      </div>
+                      {item.dueDate && (
+                        <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                          due {formatShortDate(item.dueDate)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {meeting.notes && (
+        <div className="mb-6">
+          <h4 className="mtg-section-label mb-2">Notes</h4>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--slate)' }}>{meeting.notes}</p>
+        </div>
+      )}
+
+      <Link
+        to={`/meetings/${meeting.id}`}
+        className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md text-xs font-medium"
+        style={{ fontSize: 'var(--label-size)', background: 'var(--gold)', color: '#0f1923', textDecoration: 'none', transition: 'opacity 0.2s' }}
+      >
+        View Full Meeting <ArrowRight size={11} />
+      </Link>
+    </div>
   )
+}
+
+// ── Main Component ──────────────────────────────────────────
+
+export default function Meetings() {
+  usePageMeta('Meeting Hub | MN-CCORE', 'MNCCORE biweekly meetings, decisions, and action items archive.')
 
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [filter, setFilter] = useState<FilterMode>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null)
 
-  // D1 API data
   const { data: meetingRows = [] } = useMeetingsApi()
   const { data: actionItemRows = [] } = useActionItems()
   const { data: cadence } = useMeetingCadence()
@@ -138,55 +311,42 @@ export default function Meetings() {
     showUndo('Action item toggled', () => toggleMutation.mutate(id))
   }
 
-  // Transform D1 rows → Meeting objects
   const meetings = useMemo(
     () => meetingRows.map((row) => meetingRowToMeeting(row, actionItemRows)),
     [meetingRows, actionItemRows]
   )
 
-  // Add action item form state
   const [showAddAction, setShowAddAction] = useState(false)
   const [newActionDesc, setNewActionDesc] = useState('')
   const [newActionAssignee, setNewActionAssignee] = useState('nick')
   const [newActionDueDate, setNewActionDueDate] = useState('')
   const [newActionProject, setNewActionProject] = useState('')
 
-  // Add meeting form state
   const [showAddMeeting, setShowAddMeeting] = useState(false)
   const [newMeetingDate, setNewMeetingDate] = useState('')
   const [newMeetingTitle, setNewMeetingTitle] = useState('')
   const [newMeetingAttendees, setNewMeetingAttendees] = useState<string[]>(['nick', 'nate'])
   const [newMeetingAgenda, setNewMeetingAgenda] = useState<string[]>([''])
 
-  // Compute next meeting
   const nextMeeting = useMemo(() => getNextMeetingDate(meetings), [meetings])
   const daysUntil = getDaysUntil(nextMeeting)
+  const nextMeetingDateStr = nextMeeting.toISOString().slice(0, 10)
 
-  // Collect all action items across all meetings with context
-  // Deduplicate: if a "[Carried forward]" version exists, prefer it over the original
   const allActionItems = useMemo(() => {
     const items: ActionItemWithContext[] = []
     for (const mtg of meetings) {
       if (mtg.actionItems) {
         for (const ai of mtg.actionItems) {
-          items.push({
-            ...ai,
-            meetingDate: mtg.date,
-            meetingTitle: mtg.title,
-            meetingId: mtg.id,
-          })
+          items.push({ ...ai, meetingDate: mtg.date, meetingTitle: mtg.title, meetingId: mtg.id })
         }
       }
     }
-    // Deduplicate by normalized description + assignee
     const seen = new Map<string, ActionItemWithContext>()
     for (const item of items) {
       const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
       const key = `${normalized}::${item.assignee}`
       const existing = seen.get(key)
-      if (!existing || item.meetingDate > existing.meetingDate) {
-        seen.set(key, item)
-      }
+      if (!existing || item.meetingDate > existing.meetingDate) seen.set(key, item)
     }
     return [...seen.values()]
   }, [meetings])
@@ -194,22 +354,15 @@ export default function Meetings() {
   const pendingActions = allActionItems.filter((a) => !a.completed)
   const completedActions = allActionItems.filter((a) => a.completed)
 
-  // Filter meetings
   const filteredMeetings = useMemo(() => {
     let result = [...meetings].sort((a, b) => b.date.localeCompare(a.date))
-
-    if (filter === 'decisions') {
-      result = result.filter((m) => m.decisions && m.decisions.length > 0)
-    } else if (filter === 'actions') {
-      result = result.filter((m) => m.actionItems && m.actionItems.length > 0)
-    }
-
+    if (filter === 'decisions') result = result.filter((m) => m.decisions && m.decisions.length > 0)
+    else if (filter === 'actions') result = result.filter((m) => m.actionItems && m.actionItems.length > 0)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       result = result.filter((m) => {
         const searchable = [
-          m.title,
-          m.notes ?? '',
+          m.title, m.notes ?? '',
           ...(m.agenda ?? []),
           ...(m.decisions ?? []),
           ...(m.actionItems?.map((a: ActionItem) => a.description) ?? []),
@@ -217,34 +370,28 @@ export default function Meetings() {
         return searchable.includes(q)
       })
     }
-
     return result
   }, [filter, searchQuery, meetings])
 
-  useListKeyboardNav({
-    itemCount: filteredMeetings.length,
-    focusedIndex,
-    setFocusedIndex,
-  })
+  const effectiveSelectedId = selectedMeetingId ?? filteredMeetings[0]?.id ?? null
+  const selectedMeeting = filteredMeetings.find((m) => m.id === effectiveSelectedId) ?? null
+
+  useListKeyboardNav({ itemCount: filteredMeetings.length, focusedIndex, setFocusedIndex })
 
   const FILTER_OPTIONS: { key: FilterMode; label: string }[] = [
-    { key: 'all', label: 'All Meetings' },
-    { key: 'decisions', label: 'Decisions Only' },
-    { key: 'actions', label: 'Action Items' },
+    { key: 'all', label: 'All' },
+    { key: 'decisions', label: 'Decisions' },
+    { key: 'actions', label: 'Actions' },
   ]
 
-  // Handlers
   function handleToggleAction(_meetingId: string, actionId: string) {
     toggleWithUndo(actionId)
   }
 
   function handleAddActionItem() {
     if (!newActionDesc.trim()) return
-
-    // Find the most recent meeting to attach the action item to
     const sortedMeetings = [...meetings].sort((a, b) => b.date.localeCompare(a.date))
     const targetMeetingId = sortedMeetings[0]?.id
-
     createActionMutation.mutate({
       meeting_id: targetMeetingId,
       description: newActionDesc.trim(),
@@ -252,8 +399,6 @@ export default function Meetings() {
       ...(newActionDueDate ? { due_date: newActionDueDate } : {}),
       ...(newActionProject ? { project_id: newActionProject } : {}),
     })
-
-    // Reset form
     setNewActionDesc('')
     setNewActionAssignee('nick')
     setNewActionDueDate('')
@@ -263,8 +408,6 @@ export default function Meetings() {
 
   function handleAddMeeting() {
     if (!newMeetingDate || !newMeetingTitle.trim()) return
-
-    // POST to D1 API
     fetch('/api/meetings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -275,12 +418,7 @@ export default function Meetings() {
         attendees: newMeetingAttendees,
         agenda: newMeetingAgenda.filter((a) => a.trim()),
       }),
-    }).then(() => {
-      // Refetch meetings
-      window.location.reload()
-    })
-
-    // Reset form
+    }).then(() => { window.location.reload() })
     setNewMeetingDate('')
     setNewMeetingTitle('')
     setNewMeetingAttendees(['nick', 'nate'])
@@ -289,814 +427,407 @@ export default function Meetings() {
   }
 
   function toggleAttendee(slug: string) {
-    setNewMeetingAttendees((prev) =>
-      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
-    )
+    setNewMeetingAttendees((prev) => prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug])
   }
 
-  function addAgendaItem() {
-    setNewMeetingAgenda((prev) => [...prev, ''])
-  }
-
+  function addAgendaItem() { setNewMeetingAgenda((prev) => [...prev, '']) }
   function updateAgendaItem(index: number, value: string) {
     setNewMeetingAgenda((prev) => prev.map((item, i) => (i === index ? value : item)))
   }
-
   function removeAgendaItem(index: number) {
     setNewMeetingAgenda((prev) => prev.filter((_, i) => i !== index))
   }
 
-  // Input style helper
   const inputStyle: React.CSSProperties = {
-    background: 'var(--ice)',
-    border: '1px solid rgba(201,168,76,0.15)',
-    color: 'var(--ink)',
-    fontSize: 'var(--value-size)',
-    outline: 'none',
-    borderRadius: 'var(--radius-lg)',
-    padding: '6px 10px',
-    width: '100%',
+    background: 'var(--ice)', border: '1px solid rgba(201,168,76,0.15)', color: 'var(--ink)',
+    fontSize: 'var(--value-size)', outline: 'none', borderRadius: 'var(--radius-lg)', padding: '6px 10px', width: '100%',
+  }
+  const labelStyle: React.CSSProperties = {
+    fontSize: '10px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px', display: 'block',
   }
 
-  const labelStyle: React.CSSProperties = {
-    fontSize: '10px',
-    color: 'var(--muted)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.06em',
-    marginBottom: '4px',
-    display: 'block',
+  function isNextMeeting(meeting: Meeting): boolean {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const d = new Date(meeting.date + 'T12:00:00')
+    d.setHours(0, 0, 0, 0)
+    return d >= today && meeting.date === nextMeetingDateStr
   }
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <div className="content-container" style={{ paddingBottom: '4rem' }}>
-        {/* Page Header */}
-        <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '2rem', paddingTop: '1.5rem' }}>
-          <div className="flex items-center gap-3">
-            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--teal-active)', flexShrink: 0 }}>
-              <Users size={19} style={{ color: 'var(--teal)' }} />
-            </div>
-            <h1
-              style={{
-                fontWeight: 600,
-                fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
-                color: 'var(--ink)',
-                margin: 0,
-                lineHeight: 1.15,
-              }}
-            >
-              Meeting Hub
-            </h1>
-          </div>
-          <p
-            style={{
-              fontSize: '15px',
-              color: 'var(--muted)',
-              marginTop: '6px',
-              maxWidth: '520px',
-            }}
-          >
-            {meetings.length} meetings tracked
-            {allActionItems.length > 0 && (
-              <> · <span style={{ color: completedActions.length === allActionItems.length ? 'var(--green)' : 'var(--teal)' }}>
-                {Math.round((completedActions.length / allActionItems.length) * 100)}% action items complete
-              </span></>
-            )}
-            {pendingActions.length > 0 && (
-              <> · <span style={{ color: 'var(--gold)' }}>{pendingActions.length} pending</span></>
-            )}
-          </p>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
-          {/* Gold rule */}
-          <div
-            style={{
-              height: '1px',
-              background: 'linear-gradient(to right, var(--gold), transparent)',
-              opacity: 0.3,
-              marginTop: '1.25rem',
-            }}
-          />
-        </div>
-
-        {/* Upcoming Meeting */}
-        <div
-          className="mb-8 p-4 sm:p-5 rounded-xl"
-          style={{
-            background: 'var(--gold-light)',
-            border: '1px solid rgba(201,168,76,0.3)',
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="shrink-0 flex items-center justify-center rounded-lg"
-              style={{
-                width: '44px',
-                height: '44px',
-                background: 'var(--gold)',
-              }}
-            >
-              <Calendar size={22} style={{ color: '#0f1923' }} />
-            </div>
-            <div>
-              <h2
-                className="text-sm font-medium"
-                style={{ color: 'var(--ink)', margin: 0 }}
-              >
-                Next Meeting
-              </h2>
-              <p
-                className="text-xs mt-0.5"
-                style={{ color: 'var(--muted)' }}
-              >
-                {nextMeeting.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-              </p>
-              {(() => {
-                const dateStr = nextMeeting.toISOString().slice(0, 10)
-                const fSlug = getMeetingFacilitator(dateStr)
-                const fInfo = fSlug ? getPersonInfo(fSlug) : null
-                return fInfo ? (
-                  <p className="flex items-center gap-1.5 text-xs mt-1" style={{ color: 'var(--teal)', margin: 'var(--sp-xs) 0 0 0' }}>
-                    <UserCheck size={12} />
-                    Facilitated by {fInfo.name}
-                  </p>
-                ) : null
-              })()}
-            </div>
-            <div className="ml-auto text-right">
-              <div className="flex items-center gap-1.5">
-                <Clock size={14} style={{ color: 'var(--gold)' }} />
-                <span
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--ink)' }}
-                >
-                  {daysUntil === 0
-                    ? 'Today'
-                    : daysUntil === 1
-                      ? 'Tomorrow'
-                      : `${daysUntil} days`}
-                </span>
+      {/* ── Compact header ─────────────────────────────────── */}
+      <div className="content-container" style={{ paddingTop: '1.5rem', paddingBottom: '1rem', flexShrink: 0 }}>
+        <div ref={headerRef} className="fade-in-up">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div style={{ width: 34, height: 34, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--teal-active)', flexShrink: 0 }}>
+                <Users size={17} style={{ color: 'var(--teal)' }} />
+              </div>
+              <div>
+                <h1 style={{ fontWeight: 600, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--ink)', margin: 0, lineHeight: 1.2 }}>
+                  Meeting Hub
+                </h1>
+                <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
+                  {meetings.length} meetings
+                  {allActionItems.length > 0 && (
+                    <> &middot; <span style={{ color: completedActions.length === allActionItems.length ? 'var(--green)' : 'var(--teal)' }}>
+                      {Math.round((completedActions.length / allActionItems.length) * 100)}% complete
+                    </span></>
+                  )}
+                  {pendingActions.length > 0 && (
+                    <> &middot; <span style={{ color: 'var(--gold)' }}>{pendingActions.length} pending</span></>
+                  )}
+                </p>
               </div>
             </div>
-          </div>
-          <PageTooltip id="meetings-prep-hint" text="Click a meeting for prep and actions" />
-        </div>
 
-        {/* Meeting Cadence */}
-        {cadence && cadence.recommendation !== 'no_upcoming' && (
-          <div className="p-4 rounded-xl mb-4" style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.12)' }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Activity size={14} style={{ color: 'var(--gold)' }} />
-              <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
-                Meeting Cadence
-              </span>
-            </div>
-            <p style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600 }}>
-              {cadence.emoji} {cadence.recommendation}
-            </p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {cadence.reasons.map((r, i) => (
-                <span key={i} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                  {'\u2022'} {r}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Action Items Summary */}
-        <div className="mb-8">
-          <h2
-            className="text-lg font-medium mb-3"
-            style={{ color: 'var(--ink)' }}
-          >
-            Action Items
-          </h2>
-
-          {/* Pending */}
-          {pendingActions.length > 0 && (
-            <div className="mb-4">
-              <h3
-                className="text-xs font-normal uppercase tracking-wider mb-2"
-                style={{ color: 'var(--gold)', letterSpacing: '0.06em' }}
-              >
-                Pending ({pendingActions.length})
-              </h3>
-              <div className="space-y-2">
-                {pendingActions.map((item) => {
-                  const info = getPersonInfo(item.assignee)
-                  return (
-                    <div
-                      key={item.id || item.description}
-                      className="flex items-start gap-3 p-3 rounded-lg action-item-card"
-                      style={{
-                        background: 'var(--cream)',
-                        border: '1px solid rgba(201,168,76,0.15)',
-                        boxShadow: 'var(--shadow-card)',
-                      }}
-                    >
-                      <button
-                        type="button"
-                        className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 'var(--sp-md)',
-                          margin: '-10px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: 'var(--radius-sm)',
-                          transition: 'transform 0.15s ease',
-                          minWidth: '44px',
-                          minHeight: '44px',
-                        }}
-                        onClick={() => item.id && toggleWithUndo(item.id)}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'scale(1.2)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'scale(1)'
-                        }}
-                        title="Mark as completed"
-                      >
-                        <Circle size={16} style={{ color: 'var(--gold)' }} />
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm leading-snug" style={{ color: 'var(--ink)' }}>
-                          {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">↻ carried</span>}{clean}</>); })()}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-3 mt-1.5">
-                          <div className="flex items-center gap-1.5">
-                            <div style={{ width: 18, height: 18 }}>
-                              <Avatar
-                                name={info.name}
-                                initials={info.initials}
-                                photoUrl={info.photoUrl}
-                                variant="ice"
-                                size="sm-icon"
-                              />
-                            </div>
-                            <span className="text-xs" style={{ color: 'var(--slate)' }}>
-                              {info.name}
-                            </span>
-                          </div>
-                          {item.dueDate && (
-                            <span
-                              className="text-xs"
-                              style={{ color: 'var(--slate)', opacity: 0.6 }}
-                            >
-                              due {formatShortDate(item.dueDate)}
-                            </span>
-                          )}
-                          {item.projectSlug && (
-                            <span
-                              className="inline-block px-2 py-0.5 rounded-full text-xs"
-                              style={{
-                                background: 'var(--ice)',
-                                color: 'var(--slate)',
-                                fontSize: '10px',
-                              }}
-                            >
-                              {item.projectSlug}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Next meeting pill */}
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                style={{ background: 'var(--gold-light)', border: '1px solid rgba(201,168,76,0.25)' }}>
+                <Calendar size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                <div>
+                  <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>
+                    {nextMeeting.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
+                  <span className="text-xs ml-1.5" style={{ color: 'var(--muted)' }}>
+                    {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil}d`}
+                  </span>
+                  {(() => {
+                    const fSlug = getMeetingFacilitator(nextMeetingDateStr)
+                    const fInfo = fSlug ? getPersonInfo(fSlug) : null
+                    return fInfo ? (
+                      <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--teal)', marginTop: 2 }}>
+                        <UserCheck size={10} />
+                        {fInfo.name.split(' ')[0]}
+                      </span>
+                    ) : null
+                  })()}
+                </div>
+                <Clock size={12} style={{ color: 'var(--gold)', marginLeft: 4 }} />
               </div>
 
-              {/* Add action item form */}
+              {/* Record Meeting */}
               <QuickAddForm
-                isOpen={showAddAction}
-                onToggle={() => setShowAddAction(true)}
-                onSubmit={handleAddActionItem}
-                onCancel={() => {
-                  setShowAddAction(false)
-                  setNewActionDesc('')
-                  setNewActionAssignee('nick')
-                  setNewActionDueDate('')
-                  setNewActionProject('')
-                }}
-                triggerLabel="Add Action Item"
-                submitLabel="Add Item"
-                className="mt-3"
+                isOpen={showAddMeeting}
+                onToggle={() => setShowAddMeeting(true)}
+                onSubmit={handleAddMeeting}
+                onCancel={() => { setShowAddMeeting(false); setNewMeetingDate(''); setNewMeetingTitle(''); setNewMeetingAttendees(['nick', 'nate']); setNewMeetingAgenda(['']) }}
+                triggerLabel="Record Meeting"
+                submitLabel="Save Meeting"
               >
                 <div className="space-y-3">
-                  {/* Description */}
-                  <div>
-                    <label style={labelStyle}>Description</label>
-                    <input
-                      type="text"
-                      value={newActionDesc}
-                      onChange={(e) => setNewActionDesc(e.target.value)}
-                      placeholder="What needs to be done?"
-                      style={inputStyle}
-                      onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Assignee */}
-                    <div>
-                      <label style={labelStyle}>Assignee</label>
-                      <select
-                        value={newActionAssignee}
-                        onChange={(e) => setNewActionAssignee(e.target.value)}
-                        style={inputStyle}
-                      >
-                        {TEAM_OPTIONS.map((m) => (
-                          <option key={m.slug} value={m.slug}>
-                            {m.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Due date */}
-                    <div>
-                      <label style={labelStyle}>Due Date (optional)</label>
-                      <input
-                        type="date"
-                        value={newActionDueDate}
-                        onChange={(e) => setNewActionDueDate(e.target.value)}
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Project link */}
-                  <div>
-                    <label style={labelStyle}>Project (optional)</label>
-                    <select
-                      value={newActionProject}
-                      onChange={(e) => setNewActionProject(e.target.value)}
-                      style={inputStyle}
-                    >
-                      <option value="">No project link</option>
-                      {projectOptions.map((p) => (
-                        <option key={p.title} value={p.title}>
-                          {p.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </QuickAddForm>
-            </div>
-          )}
-
-          {/* If no pending actions but some completed exist — show "no pending" with add form */}
-          {pendingActions.length === 0 && allActionItems.length > 0 && (
-            <div className="mb-4">
-              <p className="text-sm mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                No pending action items.
-              </p>
-              <QuickAddForm
-                isOpen={showAddAction}
-                onToggle={() => setShowAddAction(true)}
-                onSubmit={handleAddActionItem}
-                onCancel={() => {
-                  setShowAddAction(false)
-                  setNewActionDesc('')
-                }}
-                triggerLabel="Add Action Item"
-                submitLabel="Add Item"
-              >
-                <div className="space-y-3">
-                  <div>
-                    <label style={labelStyle}>Description</label>
-                    <input
-                      type="text"
-                      value={newActionDesc}
-                      onChange={(e) => setNewActionDesc(e.target.value)}
-                      placeholder="What needs to be done?"
-                      style={inputStyle}
-                      onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }}
-                    />
-                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label style={labelStyle}>Assignee</label>
-                      <select
-                        value={newActionAssignee}
-                        onChange={(e) => setNewActionAssignee(e.target.value)}
-                        style={inputStyle}
-                      >
-                        {TEAM_OPTIONS.map((m) => (
-                          <option key={m.slug} value={m.slug}>{m.name}</option>
-                        ))}
-                      </select>
+                      <label style={labelStyle}>Date</label>
+                      <input type="date" value={newMeetingDate} onChange={(e) => setNewMeetingDate(e.target.value)} style={inputStyle} />
                     </div>
                     <div>
-                      <label style={labelStyle}>Due Date (optional)</label>
-                      <input type="date" value={newActionDueDate} onChange={(e) => setNewActionDueDate(e.target.value)} style={inputStyle} />
+                      <label style={labelStyle}>Title</label>
+                      <input type="text" value={newMeetingTitle} onChange={(e) => setNewMeetingTitle(e.target.value)} placeholder="Meeting title" style={inputStyle}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }} />
                     </div>
                   </div>
                   <div>
-                    <label style={labelStyle}>Project (optional)</label>
-                    <select value={newActionProject} onChange={(e) => setNewActionProject(e.target.value)} style={inputStyle}>
-                      <option value="">No project link</option>
-                      {projectOptions.map((p) => (<option key={p.title} value={p.title}>{p.title}</option>))}
-                    </select>
-                  </div>
-                </div>
-              </QuickAddForm>
-            </div>
-          )}
-
-          {/* Completed */}
-          {completedActions.length > 0 && (
-            <div>
-              <h3
-                className="text-xs font-normal uppercase tracking-wider mb-2"
-                style={{ color: 'var(--teal)', letterSpacing: '0.06em' }}
-              >
-                Completed ({completedActions.length})
-              </h3>
-              <div className="space-y-1.5">
-                {completedActions.map((item) => {
-                  const info = getPersonInfo(item.assignee)
-                  return (
-                    <div
-                      key={item.id || item.description}
-                      className="flex items-start gap-3 p-2.5 rounded-lg action-item-card"
-                      style={{
-                        background: 'var(--cream)',
-                        opacity: 0.7,
-                      }}
-                    >
-                      <button
-                        type="button"
-                        className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 'var(--sp-md)',
-                          margin: '-10px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: 'var(--radius-sm)',
-                          transition: 'transform 0.15s ease',
-                          minWidth: '44px',
-                          minHeight: '44px',
-                        }}
-                        onClick={() => item.id && toggleWithUndo(item.id)}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'scale(1.2)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'scale(1)'
-                        }}
-                        title="Mark as pending"
-                      >
-                        <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className="text-sm leading-snug"
-                          style={{
-                            color: 'var(--ink)',
-                            textDecoration: 'line-through',
-                            opacity: 0.6,
-                          }}
-                        >
-                          {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">↻ carried</span>}{clean}</>); })()}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-3 mt-1">
-                          <div className="flex items-center gap-1.5">
-                            <div style={{ width: 16, height: 16 }}>
-                              <Avatar
-                                name={info.name}
-                                initials={info.initials}
-                                photoUrl={info.photoUrl}
-                                variant="ice"
-                                size="2xs"
-                              />
-                            </div>
-                            <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>
-                              {info.name}
-                            </span>
-                          </div>
-                          <span
-                            className="text-xs"
-                            style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
-                          >
-                            from {formatShortDate(item.meetingDate)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {allActionItems.length === 0 && !showAddAction && (
-            <div>
-              <p className="text-sm mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                No action items recorded yet.
-              </p>
-              <QuickAddForm
-                isOpen={showAddAction}
-                onToggle={() => setShowAddAction(true)}
-                onSubmit={handleAddActionItem}
-                onCancel={() => setShowAddAction(false)}
-                triggerLabel="Add Action Item"
-                submitLabel="Add Item"
-              >
-                <div>
-                  <label style={labelStyle}>Description</label>
-                  <input
-                    type="text"
-                    value={newActionDesc}
-                    onChange={(e) => setNewActionDesc(e.target.value)}
-                    placeholder="What needs to be done?"
-                    style={inputStyle}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }}
-                  />
-                </div>
-              </QuickAddForm>
-            </div>
-          )}
-        </div>
-
-        {/* Meeting Archive */}
-        <div className="mt-10">
-          <div className="flex items-center justify-between mb-3">
-            <h2
-              className="text-lg font-medium"
-              style={{ color: 'var(--ink)' }}
-            >
-              Meeting Archive
-            </h2>
-
-            {/* Record Meeting button */}
-            <QuickAddForm
-              isOpen={showAddMeeting}
-              onToggle={() => setShowAddMeeting(true)}
-              onSubmit={handleAddMeeting}
-              onCancel={() => {
-                setShowAddMeeting(false)
-                setNewMeetingDate('')
-                setNewMeetingTitle('')
-                setNewMeetingAttendees(['nick', 'nate'])
-                setNewMeetingAgenda([''])
-              }}
-              triggerLabel="Record Meeting"
-              submitLabel="Save Meeting"
-            >
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Date */}
-                  <div>
-                    <label style={labelStyle}>Date</label>
-                    <input
-                      type="date"
-                      value={newMeetingDate}
-                      onChange={(e) => setNewMeetingDate(e.target.value)}
-                      style={inputStyle}
-                    />
-                  </div>
-
-                  {/* Title */}
-                  <div>
-                    <label style={labelStyle}>Title</label>
-                    <input
-                      type="text"
-                      value={newMeetingTitle}
-                      onChange={(e) => setNewMeetingTitle(e.target.value)}
-                      placeholder="Meeting title"
-                      style={inputStyle}
-                      onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
-                    />
-                  </div>
-                </div>
-
-                {/* Attendees */}
-                <div>
-                  <label style={labelStyle}>
-                    <Users size={10} className="inline mr-1" />
-                    Attendees
-                  </label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {TEAM_OPTIONS.slice(0, 10).map((m) => {
-                      const selected = newMeetingAttendees.includes(m.slug)
-                      return (
-                        <button
-                          key={m.slug}
-                          type="button"
-                          onClick={() => toggleAttendee(m.slug)}
-                          className="cursor-pointer inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
-                          style={{
-                            fontSize: 'var(--label-size)',
-                            background: selected ? 'rgba(201,168,76,0.2)' : 'var(--ice)',
-                            color: selected ? 'var(--ink)' : 'var(--slate)',
-                            border: selected ? '1px solid var(--gold)' : '1px solid rgba(201,168,76,0.1)',
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          <div style={{ width: 16, height: 16 }}>
-                            <Avatar
-                              name={m.name}
-                              initials={m.initials}
-                              photoUrl={m.photoUrl}
-                              variant="ice"
-                              size="2xs"
-                            />
-                          </div>
-                          {m.name.split(' ')[0]}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Agenda items */}
-                <div>
-                  <label style={labelStyle}>Agenda</label>
-                  <div className="space-y-2">
-                    {newMeetingAgenda.map((item, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span
-                          className="shrink-0 text-xs"
-                          style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', width: '18px' }}
-                        >
-                          {i + 1}.
-                        </span>
-                        <input
-                          type="text"
-                          value={item}
-                          onChange={(e) => updateAgendaItem(i, e.target.value)}
-                          placeholder="Agenda item"
-                          style={{ ...inputStyle, flex: 1 }}
-                          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
-                        />
-                        {newMeetingAgenda.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeAgendaItem(i)}
-                            className="cursor-pointer shrink-0 text-xs"
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: 'var(--slate)',
-                              opacity: 'var(--ink-label)',
-                              padding: 'var(--sp-xs)',
-                            }}
-                          >
-                            x
+                    <label style={labelStyle}><Users size={10} className="inline mr-1" />Attendees</label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {TEAM_OPTIONS.slice(0, 10).map((m) => {
+                        const selected = newMeetingAttendees.includes(m.slug)
+                        return (
+                          <button key={m.slug} type="button" onClick={() => toggleAttendee(m.slug)}
+                            className="cursor-pointer inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
+                            style={{ fontSize: 'var(--label-size)', background: selected ? 'rgba(201,168,76,0.2)' : 'var(--ice)', color: selected ? 'var(--ink)' : 'var(--slate)', border: selected ? '1px solid var(--gold)' : '1px solid rgba(201,168,76,0.1)', transition: 'all 0.15s ease' }}>
+                            <div style={{ width: 16, height: 16 }}><Avatar name={m.name} initials={m.initials} photoUrl={m.photoUrl} variant="ice" size="2xs" /></div>
+                            {m.name.split(' ')[0]}
                           </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addAgendaItem}
-                      className="cursor-pointer inline-flex items-center gap-1 text-xs"
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--gold)',
-                        padding: 'var(--sp-xs) 0',
-                      }}
-                    >
-                      <Plus size={12} />
-                      Add agenda item
-                    </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Agenda</label>
+                    <div className="space-y-2">
+                      {newMeetingAgenda.map((item, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="shrink-0 text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', width: '18px' }}>{i + 1}.</span>
+                          <input type="text" value={item} onChange={(e) => updateAgendaItem(i, e.target.value)} placeholder="Agenda item"
+                            style={{ ...inputStyle, flex: 1 }}
+                            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }} />
+                          {newMeetingAgenda.length > 1 && (
+                            <button type="button" onClick={() => removeAgendaItem(i)} className="cursor-pointer shrink-0 text-xs"
+                              style={{ background: 'none', border: 'none', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: 'var(--sp-xs)' }}>x</button>
+                          )}
+                        </div>
+                      ))}
+                      <button type="button" onClick={addAgendaItem} className="cursor-pointer inline-flex items-center gap-1 text-xs"
+                        style={{ background: 'none', border: 'none', color: 'var(--gold)', padding: 'var(--sp-xs) 0' }}>
+                        <Plus size={12} />Add agenda item
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </QuickAddForm>
+              </QuickAddForm>
+            </div>
           </div>
 
-          {/* Filter bar + search */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-            {/* Filter pills */}
-            <div className="flex flex-wrap items-center gap-2">
+          {cadence && cadence.recommendation !== 'no_upcoming' && (
+            <div className="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg"
+              style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.12)' }}>
+              <Activity size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+              <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600 }}>{cadence.emoji} {cadence.recommendation}</span>
+              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{cadence.reasons.join(' · ')}</span>
+            </div>
+          )}
+
+          <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.3, marginTop: '1rem' }} />
+        </div>
+      </div>
+
+      {/* ── Split panel ────────────────────────────────────── */}
+      <div className="meetings-split-panel"
+        style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 0, height: 'calc(100vh - 130px)', overflow: 'hidden' }}>
+
+        {/* Left panel: meeting list */}
+        <div style={{ overflowY: 'auto', borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '12px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="flex items-center gap-1.5">
               {FILTER_OPTIONS.map((f) => (
-                <motion.button
-                  key={f.key}
-                  type="button"
-                  onClick={() => setFilter(f.key)}
-                  className="cursor-pointer inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-                  style={{
-                    minHeight: '44px',
-                    background: filter === f.key ? 'var(--gold)' : 'var(--ice)',
-                    color: filter === f.key ? '#0f1923' : 'var(--slate)',
-                    border: 'none',
-                    transitionProperty: 'background-color, color',
-                    transitionDuration: '150ms',
-                    transitionTimingFunction: 'ease',
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  aria-pressed={filter === f.key}
-                >
+                <motion.button key={f.key} type="button" onClick={() => setFilter(f.key)}
+                  className="cursor-pointer inline-flex items-center px-2.5 py-1 rounded-full text-xs"
+                  style={{ background: filter === f.key ? 'var(--gold)' : 'var(--ice)', color: filter === f.key ? '#0f1923' : 'var(--slate)', border: 'none', transitionProperty: 'background-color, color', transitionDuration: '150ms', transitionTimingFunction: 'ease' }}
+                  whileTap={{ scale: 0.95 }} aria-pressed={filter === f.key}>
                   {f.label}
                 </motion.button>
               ))}
             </div>
-
-            {/* Search box */}
-            <div className="relative sm:ml-auto" style={{ maxWidth: '280px', width: '100%' }}>
-              <Search
-                size={14}
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
-              />
-              <input
-                type="text"
-                placeholder="Search meetings..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm"
-                style={{
-                  background: 'var(--ice)',
-                  border: '1px solid rgba(201,168,76,0.15)',
-                  color: 'var(--ink)',
-                  outline: 'none',
-                  minHeight: '44px',
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--gold)'
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--gold-emphasis)'
-                }}
-              />
+            <div className="relative">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+              <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-7 pr-3 py-1.5 rounded-lg text-xs"
+                style={{ background: 'var(--ice)', border: '1px solid rgba(201,168,76,0.15)', color: 'var(--ink)', outline: 'none' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)' }} />
             </div>
           </div>
 
-          {/* Meeting list */}
-          <motion.div
-            className="table-container space-y-3"
-            style={{ padding: '16px 20px' }}
-            initial="hidden"
-            animate="visible"
-            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}
-          >
+          <div style={{ flex: 1, overflowY: 'auto' }}>
             {filteredMeetings.length > 0 ? (
-              filteredMeetings.map((meeting) => (
-                <motion.div key={meeting.id} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
-                  <MeetingCard
-                    meeting={meeting}
-                    onToggleAction={handleToggleAction}
-                  />
-                </motion.div>
-              ))
+              filteredMeetings.map((meeting, idx) => {
+                const isSelected = meeting.id === effectiveSelectedId
+                const isNext = isNextMeeting(meeting)
+                const actionCount = meeting.actionItems?.length ?? 0
+                const pendingCount = meeting.actionItems?.filter((a) => !a.completed).length ?? 0
+                return (
+                  <button key={meeting.id} type="button" className="cursor-pointer w-full text-left"
+                    style={{ display: 'block', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', background: isSelected ? 'rgba(45,138,138,0.08)' : 'transparent', borderLeft: isNext ? '3px solid var(--teal)' : isSelected ? '3px solid rgba(45,138,138,0.4)' : '3px solid transparent', transition: 'background 150ms ease', outline: 'none' }}
+                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(201,168,76,0.04)' }}
+                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
+                    onClick={() => { setSelectedMeetingId(meeting.id); setFocusedIndex(idx) }}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span style={{ fontSize: '11px', color: isNext ? 'var(--teal)' : 'var(--slate)', opacity: isNext ? 1 : 0.6, flexShrink: 0, fontWeight: isNext ? 600 : 400, minWidth: '46px' }}>
+                        {formatListDate(meeting.date)}
+                      </span>
+                      {actionCount > 0 && (
+                        <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', background: pendingCount > 0 ? 'rgba(201,168,76,0.15)' : 'rgba(45,138,138,0.12)', color: pendingCount > 0 ? 'var(--gold)' : 'var(--teal)', flexShrink: 0, fontWeight: 500 }}>
+                          {pendingCount > 0 ? `${pendingCount} actions` : '✓'}
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: '12px', color: isSelected ? 'var(--ink)' : 'var(--slate)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: isSelected ? 1 : 0.85, fontWeight: isSelected ? 500 : 400 }}>
+                      {meeting.title}
+                    </p>
+                    {isNext && (
+                      <span style={{ fontSize: '10px', color: 'var(--teal)', marginTop: '2px', display: 'block', opacity: 0.8 }}>
+                        Next meeting
+                      </span>
+                    )}
+                  </button>
+                )
+              })
             ) : (
-              <div className="py-12 text-center">
-                <p className="text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                  {searchQuery ? 'No meetings match your search.' : 'No meetings found.'}
+              <div className="py-10 text-center px-4">
+                <p className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                  {searchQuery ? 'No matches.' : 'No meetings found.'}
                 </p>
               </div>
             )}
-          </motion.div>
+          </div>
 
-          {/* Stats footer */}
-          <div className="mt-4 text-center">
-            <span
-              className="text-xs"
-              style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
-            >
-              {meetings.length} meetings &middot; {allActionItems.length} action items &middot;{' '}
+          <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+            <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+              {meetings.length} meetings &middot; {allActionItems.length} actions &middot;{' '}
               {meetings.reduce((acc, m) => acc + (m.decisions?.length ?? 0), 0)} decisions
             </span>
           </div>
         </div>
+
+        {/* Right panel: meeting detail */}
+        <div style={{ overflowY: 'auto', padding: 'var(--sp-xl)' }}>
+          {selectedMeeting ? (
+            <motion.div key={selectedMeeting.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+              <MeetingDetail meeting={selectedMeeting} onToggleAction={handleToggleAction} />
+
+              <div style={{ marginTop: '2.5rem', paddingTop: '2rem', borderTop: '1px solid var(--border-subtle)' }}>
+                <h3 className="text-base font-medium mb-4" style={{ color: 'var(--ink)' }}>All Pending Actions</h3>
+
+                {pendingActions.length > 0 ? (
+                  <div className="space-y-2 mb-4">
+                    {pendingActions.map((item) => {
+                      const info = getPersonInfo(item.assignee)
+                      return (
+                        <div key={item.id || item.description} className="flex items-start gap-3 p-3 rounded-lg action-item-card"
+                          style={{ background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', boxShadow: 'var(--shadow-card)' }}>
+                          <button type="button" className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
+                            style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
+                            onClick={() => item.id && toggleWithUndo(item.id)}
+                            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)' }}
+                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+                            title="Mark as completed">
+                            <Circle size={16} style={{ color: 'var(--gold)' }} />
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm leading-snug" style={{ color: 'var(--ink)' }}>
+                              {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">&#x21bb; carried</span>}{clean}</>) })()}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-3 mt-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <div style={{ width: 18, height: 18 }}><Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="sm-icon" /></div>
+                                <span className="text-xs" style={{ color: 'var(--slate)' }}>{info.name}</span>
+                              </div>
+                              {item.dueDate && <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>due {formatListDate(item.dueDate)}</span>}
+                              {item.projectSlug && <span className="inline-block px-2 py-0.5 rounded-full text-xs" style={{ background: 'var(--ice)', color: 'var(--slate)', fontSize: '10px' }}>{item.projectSlug}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm mb-4" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No pending action items.</p>
+                )}
+
+                <QuickAddForm
+                  isOpen={showAddAction}
+                  onToggle={() => setShowAddAction(true)}
+                  onSubmit={handleAddActionItem}
+                  onCancel={() => { setShowAddAction(false); setNewActionDesc(''); setNewActionAssignee('nick'); setNewActionDueDate(''); setNewActionProject('') }}
+                  triggerLabel="Add Action Item"
+                  submitLabel="Add Item"
+                >
+                  <div className="space-y-3">
+                    <div>
+                      <label style={labelStyle}>Description</label>
+                      <input type="text" value={newActionDesc} onChange={(e) => setNewActionDesc(e.target.value)} placeholder="What needs to be done?" style={inputStyle}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label style={labelStyle}>Assignee</label>
+                        <select value={newActionAssignee} onChange={(e) => setNewActionAssignee(e.target.value)} style={inputStyle}>
+                          {TEAM_OPTIONS.map((m) => <option key={m.slug} value={m.slug}>{m.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Due Date (optional)</label>
+                        <input type="date" value={newActionDueDate} onChange={(e) => setNewActionDueDate(e.target.value)} style={inputStyle} />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Project (optional)</label>
+                      <select value={newActionProject} onChange={(e) => setNewActionProject(e.target.value)} style={inputStyle}>
+                        <option value="">No project link</option>
+                        {projectOptions.map((p) => <option key={p.title} value={p.title}>{p.title}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </QuickAddForm>
+
+                {completedActions.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-xs font-normal uppercase tracking-wider mb-2" style={{ color: 'var(--teal)', letterSpacing: '0.06em' }}>
+                      Completed ({completedActions.length})
+                    </h4>
+                    <div className="space-y-1.5">
+                      {completedActions.map((item) => {
+                        const info = getPersonInfo(item.assignee)
+                        return (
+                          <div key={item.id || item.description} className="flex items-start gap-3 p-2.5 rounded-lg action-item-card" style={{ background: 'var(--cream)', opacity: 0.7 }}>
+                            <button type="button" className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
+                              style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
+                              onClick={() => item.id && toggleWithUndo(item.id)}
+                              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)' }}
+                              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+                              title="Mark as pending">
+                              <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
+                            </button>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm leading-snug" style={{ color: 'var(--ink)', textDecoration: 'line-through', opacity: 0.6 }}>
+                                {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">&#x21bb; carried</span>}{clean}</>) })()}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-3 mt-1">
+                                <div className="flex items-center gap-1.5">
+                                  <div style={{ width: 16, height: 16 }}><Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="2xs" /></div>
+                                  <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>{info.name}</span>
+                                </div>
+                                <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>from {formatListDate(item.meetingDate)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+              <Calendar size={32} style={{ marginBottom: '1rem', opacity: 0.4 }} />
+              <p className="text-sm">Select a meeting to view details</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Scoped styles */}
+      <PageTooltip id="meetings-prep-hint" text="Click a meeting for prep and actions" />
+
       <style>{`
-        .dark .meeting-card {
-          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
-        }
         .dark .action-item-card {
-          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+          background-color: var(--cream) !important;
+          background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+          border-color: var(--border-subtle) !important;
         }
         .dark .quick-add-form-container {
-          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+          background-color: var(--cream) !important;
+          background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
         }
         .dark .quick-add-trigger {
-          background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+          background-color: var(--cream) !important;
+          background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
         }
-        .dark select, .dark input[type="date"] {
-          color-scheme: dark;
+        .dark select, .dark input[type="date"] { color-scheme: dark; }
+        .mtg-section-label {
+          font-size: 10px; font-weight: 600; text-transform: uppercase;
+          letter-spacing: 0.06em; color: var(--slate); opacity: 0.6;
         }
-        .dark .action-item-card {
-          border-color: var(--border-subtle) !important;
-        }
-        .dark .meeting-card {
-          border-color: var(--border-subtle) !important;
+        .mtg-section-label--gold { color: var(--gold) !important; opacity: 1 !important; }
+        @media (max-width: 768px) {
+          .meetings-split-panel {
+            grid-template-columns: 1fr !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          .meetings-split-panel > div:first-child {
+            border-right: none !important;
+            border-bottom: 1px solid var(--border-subtle);
+            max-height: 320px;
+          }
         }
       `}</style>
     </div>
