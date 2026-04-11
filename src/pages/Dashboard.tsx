@@ -177,7 +177,7 @@ function SortableCardWrapper({ id, children }: { id: string; children: React.Rea
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 20 : ('auto' as const),
+    zIndex: isDragging ? 'var(--z-dropdown)' : ('auto' as const),
     position: 'relative' as const,
   }
 
@@ -192,7 +192,7 @@ function SortableCardWrapper({ id, children }: { id: string; children: React.Rea
           borderRadius: 6,
           padding: '4px',
           color: 'var(--slate)',
-          zIndex: 10,
+          zIndex: 'var(--z-sticky)',
         }}
         title="Drag to reorder"
       >

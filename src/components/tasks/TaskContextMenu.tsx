@@ -51,7 +51,7 @@ interface TaskContextMenuProps {
 
 const menuStyles = {
   position: 'fixed',
-  zIndex: 9999,
+  zIndex: 'var(--z-toast)',
   minWidth: '200px',
   background: 'var(--ice)',
   border: '1px solid var(--border-subtle)',
@@ -165,7 +165,7 @@ function SubmenuItem({
       left: openLeft ? `${rect.left - submenuWidth - 2}px` : `${rect.right + 2}px`,
       minWidth: `${submenuWidth}px`,
       ...menuStyles,
-      zIndex: 10000,
+      zIndex: 'var(--z-toast)',
     }
   }
 

@@ -629,7 +629,7 @@ function SortableColumnHeader({
     transform: CSS.Transform.toString(transform ? { ...transform, scaleX: 1, scaleY: 1 } : null),
     transition: transition || undefined,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : undefined,
+    zIndex: isDragging ? 'var(--z-sticky)' : undefined,
     position: 'relative' as const,
     display: 'flex',
     alignItems: 'center',
@@ -675,7 +675,7 @@ function SortableColumnHeader({
         align={align}
       />
       <div
-        style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '4px', cursor: 'col-resize', zIndex: 2 }}
+        style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '4px', cursor: 'col-resize', zIndex: 'var(--z-sticky)' }}
         onMouseDown={(e) => { e.stopPropagation(); onResizeStart(field, e) }}
         onDoubleClick={(e) => { e.stopPropagation(); onResizeDoubleClick(field) }}
         className={isResizing ? 'resize-handle-active' : 'resize-handle'}
@@ -1343,7 +1343,7 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : ('auto' as const),
+    zIndex: isDragging ? 'var(--z-sticky)' : ('auto' as const),
   }
 
   return (

@@ -45,7 +45,7 @@ export default function RouteProgressBar() {
         left: 0,
         right: 0,
         height: '2px',
-        zIndex: 9999,
+        zIndex: 'var(--z-toast)',
         pointerEvents: 'none',
       }}
     >

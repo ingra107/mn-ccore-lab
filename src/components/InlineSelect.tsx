@@ -128,7 +128,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
             border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-lg)',
             boxShadow: 'var(--shadow-menu)',
-            zIndex: 9999,
+            zIndex: 'var(--z-toast)',
             minWidth: '120px',
             overflow: 'hidden',
           }}

@@ -652,7 +652,7 @@ function AddGrantMilestoneModal({
         position: 'fixed',
         inset: 0,
         background: 'rgba(0,0,0,0.4)',
-        zIndex: 100,
+        zIndex: 'var(--z-sidebar)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

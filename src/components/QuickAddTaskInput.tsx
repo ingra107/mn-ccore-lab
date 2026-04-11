@@ -161,7 +161,7 @@ export default function QuickAddTaskInput({
             left: 0,
             right: 0,
             pointerEvents: 'none',
-            zIndex: 0,
+            zIndex: 'var(--z-base)',
             height: '38px',
           }}
         >
@@ -222,7 +222,7 @@ export default function QuickAddTaskInput({
           style={{
             ...sharedLayout,
             position: 'relative',
-            zIndex: 1,
+            zIndex: 'var(--z-base)',
             display: 'block',
             background: 'transparent',
             border: 'none',

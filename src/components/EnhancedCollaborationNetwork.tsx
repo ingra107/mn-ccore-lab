@@ -565,7 +565,7 @@ export default function EnhancedCollaborationNetwork({
       {fullPage && (
         <div
           className="absolute bottom-4 right-4 flex flex-col gap-1"
-          style={{ zIndex: 10 }}
+          style={{ zIndex: 'var(--z-sticky)' }}
         >
           <button
             onClick={() => setZoom((z) => Math.min(3, z * 1.2))}
@@ -615,7 +615,7 @@ export default function EnhancedCollaborationNetwork({
       {/* Legend */}
       <div
         className="absolute bottom-4 left-4 flex flex-wrap gap-3 sm:gap-4 text-xs"
-        style={{ zIndex: 10 }}
+        style={{ zIndex: 'var(--z-sticky)' }}
       >
         <div className="flex items-center gap-1.5">
           <span

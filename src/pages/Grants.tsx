@@ -74,7 +74,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
     top: y - 8,
     ...(flipLeft ? { right: chartWidth - x + 8 } : { left: x + 8 }),
     width: 240,
-    zIndex: 50,
+    zIndex: 'var(--z-dropdown)',
     pointerEvents: 'none',
   }
 

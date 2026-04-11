@@ -705,7 +705,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               height: '2px',
               background: 'var(--ice)',
               transform: 'translateY(-50%)',
-              zIndex: 0,
+              zIndex: 'var(--z-base)',
             }}
           />
           {/* Progress fill */}
@@ -720,7 +720,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 height: '2px',
                 background: 'var(--gold)',
                 transform: 'translateY(-50%)',
-                zIndex: 1,
+                zIndex: 'var(--z-base)',
               }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
             />
@@ -738,7 +738,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   flexDirection: 'column',
                   alignItems: 'center',
                   position: 'relative',
-                  zIndex: 2,
+                  zIndex: 'var(--z-sticky)',
                 }}
               >
                 <motion.button
@@ -1317,7 +1317,7 @@ function ProjectTimeline({ createdAt, stage, tasks, updates }: {
                 borderRadius: 'var(--radius-circle)',
                 background: event.color,
                 border: '2px solid var(--cream)',
-                zIndex: 1,
+                zIndex: 'var(--z-base)',
               }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>

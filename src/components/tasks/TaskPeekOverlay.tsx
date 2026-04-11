@@ -115,7 +115,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
             style={{
               position: 'fixed',
               inset: 0,
-              zIndex: 9998,
+              zIndex: 'var(--z-toast)',
               display: 'flex',
               alignItems: 'flex-start',
               justifyContent: 'flex-end',

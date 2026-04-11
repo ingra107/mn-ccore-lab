@@ -694,7 +694,7 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : ('auto' as const),
+    zIndex: isDragging ? 'var(--z-sticky)' : ('auto' as const),
   }
   const Icon = AGENDA_TYPE_ICONS[item.type] || MessageSquarePlus
 
@@ -723,7 +723,7 @@ function SortableActionItem({ item, onToggle, selected, onToggleSelect }: { item
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : ('auto' as const),
+    zIndex: isDragging ? 'var(--z-sticky)' : ('auto' as const),
   }
 
   return (

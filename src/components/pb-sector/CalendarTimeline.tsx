@@ -119,7 +119,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
 
         {/* Current time indicator */}
         {isInRange && (
-          <div className="absolute left-0 right-0 flex items-center" style={{ top: nowOffset, zIndex: 10 }}>
+          <div className="absolute left-0 right-0 flex items-center" style={{ top: nowOffset, zIndex: 'var(--z-sticky)' }}>
             <div style={{ width: 40, display: 'flex', justifyContent: 'flex-end', paddingRight: 4 }}>
               <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--gold)' }} />
             </div>
@@ -129,7 +129,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
 
         {/* "Now" label */}
         {isInRange && (
-          <div className="absolute" style={{ right: 8, top: nowOffset + 4, zIndex: 10 }}>
+          <div className="absolute" style={{ right: 8, top: nowOffset + 4, zIndex: 'var(--z-sticky)' }}>
             <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 600 }}>
               {now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
             </span>

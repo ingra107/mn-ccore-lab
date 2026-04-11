@@ -47,7 +47,7 @@ function SortableSubtaskItem({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : ('auto' as const),
+    zIndex: isDragging ? 'var(--z-sticky)' : ('auto' as const),
   }
 
   return (

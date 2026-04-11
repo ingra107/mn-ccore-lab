@@ -37,7 +37,7 @@ function FactorTooltip({ factors, score }: { factors: HealthFactors; score: numb
         fontWeight: 400,
         lineHeight: 1.6,
         whiteSpace: 'nowrap',
-        zIndex: 50,
+        zIndex: 'var(--z-dropdown)',
         boxShadow: 'var(--shadow-card-hover)',
         pointerEvents: 'none',
       }}

@@ -682,7 +682,7 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : 'auto',
+    zIndex: isDragging ? 'var(--z-sticky)' : 'auto',
     background: isPinned
       ? 'linear-gradient(135deg, rgba(45,138,138,0.06), rgba(201,168,76,0.06))'
       : 'linear-gradient(135deg, rgba(45,138,138,0.02), rgba(201,168,76,0.02))',

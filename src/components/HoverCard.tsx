@@ -344,7 +344,7 @@ export default function HoverCard({ data, isVisible, position, cardRef, cardHand
             left: position.x,
             top: position.placement === 'below' ? position.y : undefined,
             bottom: position.placement === 'above' ? `${window.innerHeight - position.y}px` : undefined,
-            zIndex: 9999,
+            zIndex: 'var(--z-toast)',
             maxWidth: 320,
             width: 'max-content',
             minWidth: 240,

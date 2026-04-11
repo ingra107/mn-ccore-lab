@@ -93,7 +93,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
             style={{
               position: 'fixed',
               inset: 0,
-              zIndex: 500,
+              zIndex: 'var(--z-modal)',
               background: 'rgba(15,25,35,0.55)',
               backdropFilter: 'blur(3px)',
               WebkitBackdropFilter: 'blur(3px)',
@@ -112,7 +112,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
               top: '22%',
               left: '50%',
               transform: 'translateX(-50%)',
-              zIndex: 501,
+              zIndex: 'var(--z-modal)',
               width: '100%',
               maxWidth: '560px',
               padding: '0 16px',

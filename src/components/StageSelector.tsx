@@ -118,7 +118,7 @@ function StageSelectorCompact({ currentStage, onChange }: { currentStage: Stage;
               border: '1px solid rgba(201,168,76,0.3)',
               borderRadius: 'var(--radius-lg)',
               boxShadow: 'var(--shadow-menu)',
-              zIndex: 50,
+              zIndex: 'var(--z-dropdown)',
               minWidth: '140px',
               overflow: 'hidden',
             }}

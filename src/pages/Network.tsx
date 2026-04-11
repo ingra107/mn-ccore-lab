@@ -103,7 +103,7 @@ export default function Network() {
       {/* Header bar */}
       <div
         className="flex-shrink-0 px-4 sm:px-6 pt-4 pb-3"
-        style={{ zIndex: 30 }}
+        style={{ zIndex: 'var(--z-dropdown)' }}
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -185,7 +185,7 @@ export default function Network() {
         {/* Mobile hint */}
         <div
           className="sm:hidden absolute top-2 left-0 right-0 text-center"
-          style={{ zIndex: 5 }}
+          style={{ zIndex: 'var(--z-sticky)' }}
         >
           <span
             className="text-xs px-3 py-1 rounded-full"

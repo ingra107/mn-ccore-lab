@@ -119,7 +119,7 @@ export default function NetworkSidebar({
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             borderLeft: '1px solid rgba(201, 168, 76, 0.2)',
-            zIndex: 20,
+            zIndex: 'var(--z-dropdown)',
           }}
         >
           {/* Close button */}
@@ -130,7 +130,7 @@ export default function NetworkSidebar({
               background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid rgba(201, 168, 76, 0.15)',
               color: 'rgba(255, 255, 255, 0.6)',
-              zIndex: 21,
+              zIndex: 'var(--z-dropdown)',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.4)'

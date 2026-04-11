@@ -392,7 +392,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                   minWidth: '220px',
                   maxHeight: '240px',
                   overflowY: 'auto',
-                  zIndex: 50,
+                  zIndex: 'var(--z-dropdown)',
                 }}
                 onClick={(e) => e.stopPropagation()}
               >

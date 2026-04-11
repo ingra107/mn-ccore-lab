@@ -372,7 +372,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
                 fontSize: '12px',
                 whiteSpace: 'nowrap',
                 boxShadow: 'var(--shadow-elevated)',
-                zIndex: 10,
+                zIndex: 'var(--z-sticky)',
               }}
             >
               <strong>{from.title}</strong>
@@ -411,7 +411,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
                 borderRadius: 'var(--radius-lg)',
                 fontSize: '12px',
                 boxShadow: 'var(--shadow-elevated)',
-                zIndex: 10,
+                zIndex: 'var(--z-sticky)',
                 maxWidth: '300px',
               }}
             >

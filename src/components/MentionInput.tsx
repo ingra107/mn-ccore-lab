@@ -263,7 +263,7 @@ export default function MentionInput({
               border: '1px solid rgba(201, 168, 76, 0.2)',
               borderRadius: 'var(--radius-lg)',
               boxShadow: 'var(--shadow-menu)',
-              zIndex: 50,
+              zIndex: 'var(--z-dropdown)',
               padding: '4px 0',
             }}
           >

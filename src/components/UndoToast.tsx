@@ -98,7 +98,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
           bottom: '24px',
           left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 9999,
+          zIndex: 'var(--z-toast)',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',

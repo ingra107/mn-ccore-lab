@@ -405,7 +405,7 @@ export default function CollaborationGraph({
       {/* Legend */}
       <div
         className="absolute bottom-4 left-4 flex flex-wrap gap-3 sm:gap-4 text-xs"
-        style={{ zIndex: 10, pointerEvents: 'none' }}
+        style={{ zIndex: 'var(--z-sticky)', pointerEvents: 'none' }}
       >
         <div className="flex items-center gap-1.5">
           <span

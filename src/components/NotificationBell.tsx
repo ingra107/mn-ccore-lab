@@ -125,7 +125,7 @@ export default function NotificationBell() {
               border: '1px solid rgba(201, 168, 76, 0.2)',
               borderRadius: 'var(--radius-xl)',
               boxShadow: 'var(--shadow-elevated)',
-              zIndex: 100,
+              zIndex: 'var(--z-sidebar)',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',

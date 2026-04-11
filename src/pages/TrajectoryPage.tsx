@@ -447,7 +447,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
               borderRadius: 'var(--radius-circle)',
               background: 'var(--gold)',
               border: '3px solid var(--cream, #ffffff)',
-              zIndex: 1,
+              zIndex: 'var(--z-base)',
             }}
           />
 
@@ -1105,7 +1105,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                zIndex: 1,
+                zIndex: 'var(--z-base)',
               }}
             />
 

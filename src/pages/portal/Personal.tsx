@@ -472,7 +472,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
             border: '1px solid var(--border-subtle)',
             background: 'var(--cream)',
             boxShadow: 'var(--shadow-card)',
-            zIndex: 50,
+            zIndex: 'var(--z-dropdown)',
             overflow: 'hidden',
           }}
         >

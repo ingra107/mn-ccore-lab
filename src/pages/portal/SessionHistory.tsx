@@ -145,7 +145,7 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
               fontWeight: 500,
               whiteSpace: 'nowrap',
               pointerEvents: 'none',
-              zIndex: 10,
+              zIndex: 'var(--z-sticky)',
             }}
           >
             {formatMediumDate(days[hoveredIdx].day)}: {days[hoveredIdx].count} session{days[hoveredIdx].count !== 1 ? 's' : ''}
