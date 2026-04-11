@@ -51,7 +51,7 @@ const pillars = [
     title: 'Multi-Center Data Science',
     description:
       'Building open data infrastructure through the CLIF Consortium to enable reproducible ICU research.',
-    color: '#5b8abf',
+    color: 'var(--teal)',
     stat: 'Open source',
   },
 ]
@@ -180,11 +180,12 @@ export default function Home() {
           <p
             className="mb-3 transition-all duration-700"
             style={{
-              fontSize: '11px',
+              fontSize: 'var(--text-small, 12px)',
               color: 'var(--gold)',
-              letterSpacing: '0.2em',
+              letterSpacing: '0.15em',
               textTransform: 'uppercase',
-              opacity: heroVisible ? 0.8 : 0,
+              fontWeight: 'var(--weight-ui, 500)',
+              opacity: heroVisible ? 0.9 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(16px)',
             }}
           >
@@ -343,6 +344,13 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ─── Hero → Content Gradient Bridge ─── */}
+      <div style={{
+        height: 80,
+        background: 'linear-gradient(to bottom, oklch(0.12 0 0), var(--page-bg))',
+        marginTop: -1,
+      }} />
 
       {/* ─── Research Pillars ─── */}
       <div className="section-cream">

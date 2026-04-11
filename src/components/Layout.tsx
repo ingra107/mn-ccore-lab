@@ -142,10 +142,12 @@ export default function Layout() {
             ? isDark
               ? 'rgba(15, 25, 35, 0.85)'
               : 'rgba(255, 255, 255, 0.85)'
-            : 'transparent',
-          backdropFilter: scrolled ? 'blur(12px)' : 'none',
-          WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
-          borderBottom: scrolled ? '1px solid rgba(201, 168, 76, 0.2)' : 'none',
+            : isHome
+              ? 'rgba(0, 0, 0, 0.3)'
+              : 'transparent',
+          backdropFilter: scrolled || isHome ? 'blur(8px)' : 'none',
+          WebkitBackdropFilter: scrolled || isHome ? 'blur(8px)' : 'none',
+          borderBottom: scrolled ? '1px solid rgba(201, 168, 76, 0.2)' : isHome ? '1px solid var(--border-subtle)' : 'none',
           padding: scrolled ? '10px 0' : '16px 0',
         }}
       >
