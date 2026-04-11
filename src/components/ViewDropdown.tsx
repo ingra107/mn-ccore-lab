@@ -36,7 +36,7 @@ export default function ViewDropdown({ currentView, onSelect, views }: ViewDropd
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
         style={{
           color: currentOption ? 'var(--teal)' : 'var(--slate)',
-          backgroundColor: currentOption ? 'rgba(45,138,138,0.08)' : 'transparent',
+          backgroundColor: currentOption ? 'var(--teal-active)' : 'transparent',
           borderColor: currentOption ? 'var(--teal)' : 'var(--border-light)',
           cursor: 'pointer',
         }}

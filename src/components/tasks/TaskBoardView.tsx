@@ -29,15 +29,15 @@ type GroupByField = 'status' | 'priority' | 'assignee'
 
 const columns = [
   { key: 'todo', label: 'To Do', icon: Circle, color: 'var(--slate)', bg: 'rgba(100,116,139,0.06)' },
-  { key: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--teal)', bg: 'rgba(45,138,138,0.06)' },
-  { key: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122,0,25,0.06)' },
-  { key: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--green)', bg: 'rgba(34,197,94,0.06)' },
+  { key: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--teal)', bg: 'var(--teal-hover)' },
+  { key: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--maroon)', bg: 'var(--maroon-hover)' },
+  { key: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--green)', bg: 'var(--green-hover)' },
 ]
 
 const priorityConfig: Record<string, { label: string; color: string; bg: string }> = {
-  urgent: { label: 'Urgent', color: 'var(--maroon)', bg: 'rgba(122,0,25,0.06)' },
-  high: { label: 'High', color: 'var(--orange)', bg: 'rgba(194,65,12,0.06)' },
-  medium: { label: 'Medium', color: 'var(--gold)', bg: 'rgba(201,168,76,0.06)' },
+  urgent: { label: 'Urgent', color: 'var(--maroon)', bg: 'var(--maroon-hover)' },
+  high: { label: 'High', color: 'var(--orange)', bg: 'var(--orange-hover)' },
+  medium: { label: 'Medium', color: 'var(--gold)', bg: 'var(--gold-hover)' },
   low: { label: 'Low', color: 'var(--slate)', bg: 'rgba(100,116,139,0.06)' },
 }
 
@@ -242,7 +242,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
               padding: '3px 10px',
               borderRadius: 'var(--radius-md)',
               border: groupBy === field ? '1px solid var(--teal)' : '1px solid transparent',
-              background: groupBy === field ? 'rgba(45,138,138,0.08)' : 'none',
+              background: groupBy === field ? 'var(--teal-active)' : 'none',
               color: groupBy === field ? 'var(--teal)' : 'var(--slate)',
               fontSize: 'var(--label-size)',
               fontWeight: groupBy === field ? 'var(--label-weight)' : 400,
@@ -468,7 +468,7 @@ function CollapsedColumn({
       onClick={onExpand}
       style={{
         transition: 'all 150ms ease',
-        backgroundColor: isOver ? 'rgba(45, 138, 138, 0.04)' : bg,
+        backgroundColor: isOver ? 'var(--teal-hover)' : bg,
         border: isOver ? '2px dashed var(--gold)' : '2px solid transparent',
         borderRadius: 'var(--radius-lg)',
         padding: 'var(--sp-sm) var(--sp-xs)',
@@ -536,7 +536,7 @@ function DroppableColumn({ id, children, isOver }: { id: string; children: React
       ref={setNodeRef}
       style={{
         transition: 'all 150ms ease',
-        backgroundColor: isOver ? 'rgba(45, 138, 138, 0.04)' : 'transparent',
+        backgroundColor: isOver ? 'var(--teal-hover)' : 'transparent',
         border: isOver ? '2px dashed var(--gold)' : '2px solid transparent',
         borderRadius: 'var(--radius-lg)',
         padding: 'var(--sp-xs)',

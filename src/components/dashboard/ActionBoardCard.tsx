@@ -123,8 +123,8 @@ function ActionBoardCard() {
         </Link>
       </div>
       <style>{`
-        .action-board-row:active { background: rgba(201, 168, 76, 0.06); }
-        .action-board-row:hover { background: rgba(201, 168, 76, 0.03); }
+        .action-board-row:active { background: var(--gold-hover); }
+        .action-board-row:hover { background: var(--gold-hover); }
         .action-board-status-btn:hover { opacity: 1 !important; color: var(--teal) !important; }
       `}</style>
     </BentoCard>

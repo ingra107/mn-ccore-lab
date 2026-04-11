@@ -934,8 +934,8 @@ function TaskGridRow({
                         fontSize: '10px',
                         padding: '1px 5px',
                         borderRadius: 'var(--radius-lg)',
-                        backgroundColor: task.source === 'meeting' ? 'rgba(45,138,138,0.1)' :
-                          task.source === 'recurrence' ? 'rgba(201,168,76,0.1)' :
+                        backgroundColor: task.source === 'meeting' ? 'var(--teal-active)' :
+                          task.source === 'recurrence' ? 'var(--gold-active)' :
                           'rgba(148,163,184,0.1)',
                         color: task.source === 'meeting' ? 'var(--teal)' :
                           task.source === 'recurrence' ? 'var(--gold)' :
@@ -1445,12 +1445,12 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
         style={{
           padding: '6px 16px 10px 48px',
           borderBottom: '1px solid var(--border-subtle)',
-          background: 'rgba(45, 138, 138, 0.02)',
+          background: 'var(--teal-hover)',
         }}
       >
         {total > 0 && (
           <div className="flex items-center gap-2 mb-1.5">
-            <div style={{ flex: 1, height: 2, borderRadius: 'var(--radius-sm)', background: 'rgba(201,168,76,0.12)', overflow: 'hidden' }}>
+            <div style={{ flex: 1, height: 2, borderRadius: 'var(--radius-sm)', background: 'var(--gold-emphasis)', overflow: 'hidden' }}>
               <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: completed === total ? 'var(--teal)' : 'var(--gold)', borderRadius: 'var(--radius-sm)', transition: 'width 0.3s ease' }} />
             </div>
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{completed}/{total}</span>
@@ -1533,7 +1533,7 @@ function InlineCellSelect({
           fontSize: '12px',
           fontWeight: 400,
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'rgba(45,138,138,0.04)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--teal-hover)' }}
         onMouseLeave={(e) => { if (!open) { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' } }}
       >
         {renderValue(value)}
@@ -1578,14 +1578,14 @@ function InlineCellSelect({
                   display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
                   padding: '7px 12px', border: 'none', cursor: 'pointer',
                   background: idx === focusedIdx
-                    ? 'rgba(45,138,138,0.10)'
-                    : opt.value === value ? 'rgba(45,138,138,0.06)' : 'none',
+                    ? 'var(--teal-active)'
+                    : opt.value === value ? 'var(--teal-hover)' : 'none',
                   fontSize: '12px', fontWeight: opt.value === value ? 500 : 400,
                   color: opt.color || 'var(--ink)', textAlign: 'left',
                   transition: 'background 0.1s',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(45,138,138,0.08)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = idx === focusedIdx ? 'rgba(45,138,138,0.10)' : opt.value === value ? 'rgba(45,138,138,0.06)' : 'none' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--teal-active)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = idx === focusedIdx ? 'var(--teal-active)' : opt.value === value ? 'var(--teal-hover)' : 'none' }}
               >
                 {opt.label}
               </button>
@@ -1622,7 +1622,7 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
         gap: 'var(--sp-xl)',
         padding: 'var(--sp-sm) var(--sp-lg)',
         borderTop: '1px solid var(--border-subtle)',
-        background: 'rgba(45, 138, 138, 0.02)',
+        background: 'var(--teal-hover)',
       }}
     >
       {stats.map(s => (

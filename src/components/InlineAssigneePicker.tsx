@@ -77,7 +77,7 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = 'var(--border-subtle)'
-          e.currentTarget.style.background = 'rgba(45,138,138,0.04)'
+          e.currentTarget.style.background = 'var(--teal-hover)'
           if (!open && memberData) hoverCard.handlers.onMouseEnter()
         }}
         onMouseLeave={(e) => {
@@ -150,15 +150,15 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
                     padding: '6px 12px',
                     border: 'none',
                     cursor: 'pointer',
-                    background: isSelected ? 'rgba(45,138,138,0.06)' : 'none',
+                    background: isSelected ? 'var(--teal-hover)' : 'none',
                     fontSize: '12px',
                     fontWeight: isSelected ? 500 : 400,
                     color: 'var(--ink)',
                     textAlign: 'left',
                     transition: 'background 0.1s',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(45,138,138,0.08)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = isSelected ? 'rgba(45,138,138,0.06)' : 'none' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--teal-active)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isSelected ? 'var(--teal-hover)' : 'none' }}
                 >
                   <div style={{ width: 20, height: 20, flexShrink: 0 }}>
                     <Avatar

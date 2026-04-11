@@ -20,10 +20,10 @@ interface TokenStyle {
 }
 
 const TOKEN_STYLES: Record<TokenType, TokenStyle> = {
-  assignee: { color: 'var(--gold)', bg: 'rgba(201,168,76,0.13)', fontWeight: 600 },
-  project:  { color: 'var(--teal)', bg: 'rgba(45,138,138,0.11)', fontWeight: 600 },
+  assignee: { color: 'var(--gold)', bg: 'var(--gold-emphasis)', fontWeight: 600 },
+  project:  { color: 'var(--teal)', bg: 'var(--teal-emphasis)', fontWeight: 600 },
   priority: { color: 'var(--ink-bright, #fff)',        bg: 'var(--maroon)',         fontWeight: 700 },
-  date:     { color: 'var(--teal)', bg: 'rgba(45,138,138,0.08)', fontWeight: 600 },
+  date:     { color: 'var(--teal)', bg: 'var(--teal-active)', fontWeight: 600 },
   plain:    { color: 'inherit' },
 }
 
@@ -72,7 +72,7 @@ function ParsedPreview({ parsed }: { parsed: ParsedQuickAdd }) {
         marginTop: '8px',
         padding: '7px 10px',
         borderRadius: 'var(--radius-lg)',
-        background: 'rgba(201,168,76,0.05)',
+        background: 'var(--gold-hover)',
         border: '1px solid rgba(201,168,76,0.12)',
       }}
     >

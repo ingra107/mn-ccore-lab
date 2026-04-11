@@ -129,7 +129,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
             className="flex items-center gap-1.5 self-start px-2 py-0.5 rounded-full transition-colors"
             style={{
               fontSize: '10px', fontWeight: 600,
-              background: forClaude ? 'rgba(201,168,76,0.15)' : 'rgba(100,116,139,0.06)',
+              background: forClaude ? 'var(--gold-emphasis)' : 'rgba(100,116,139,0.06)',
               color: forClaude ? 'var(--gold)' : 'var(--slate)',
               border: `1px solid ${forClaude ? 'rgba(201,168,76,0.3)' : 'rgba(100,116,139,0.1)'}`,
               cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.3px',
@@ -186,10 +186,10 @@ export function TaskActivity({ taskId }: { taskId: string }) {
 // ── Project Decisions Section ────────────────────────────────
 
 const SENTIMENT_BADGE: Record<string, { color: string; bg: string }> = {
-  positive: { color: 'var(--teal)', bg: 'rgba(45,138,138,0.08)' },
+  positive: { color: 'var(--teal)', bg: 'var(--teal-active)' },
   negative: { color: 'var(--maroon)', bg: 'rgba(128,0,0,0.08)' },
   neutral: { color: 'var(--slate)', bg: 'rgba(100,116,139,0.08)' },
-  pending: { color: 'var(--gold)', bg: 'rgba(201,168,76,0.08)' },
+  pending: { color: 'var(--gold)', bg: 'var(--gold-active)' },
 }
 
 export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
@@ -214,7 +214,7 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
           <div
             key={d.id}
             className="p-2.5 rounded-lg"
-            style={{ background: 'rgba(201,168,76,0.03)', border: '1px solid rgba(201,168,76,0.1)' }}
+            style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.1)' }}
           >
             <div className="flex items-center gap-2 mb-1">
               <Scale size={11} style={{ color: 'var(--gold)', flexShrink: 0 }} />
@@ -241,7 +241,7 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
                 <span
                   key={tag}
                   className="text-[10px] px-1 py-0.5 rounded-full"
-                  style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}
+                  style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}
                 >
                   {tag}
                 </span>

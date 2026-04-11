@@ -338,7 +338,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                       opacity: alreadyLinked ? 0.4 : 1,
                       borderBottom: '1px solid var(--border-subtle)',
                     }}
-                    onMouseOver={e => { if (!alreadyLinked) (e.currentTarget.style.backgroundColor = 'rgba(45,138,138,0.05)') }}
+                    onMouseOver={e => { if (!alreadyLinked) (e.currentTarget.style.backgroundColor = 'var(--teal-hover)') }}
                     onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
                     <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>{pub.title}</p>

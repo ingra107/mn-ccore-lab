@@ -38,7 +38,7 @@ function StageSelectorFull({ currentStage, onChange }: { currentStage: Stage; on
               background: isCurrent
                 ? 'var(--gold)'
                 : isPast
-                  ? 'rgba(201,168,76,0.15)'
+                  ? 'var(--gold-emphasis)'
                   : 'var(--ice)',
               color: isCurrent
                 ? '#0f1923'
@@ -49,7 +49,7 @@ function StageSelectorFull({ currentStage, onChange }: { currentStage: Stage; on
                 ? '1px solid var(--gold)'
                 : isPast
                   ? '1px solid rgba(201,168,76,0.3)'
-                  : '1px solid rgba(201,168,76,0.1)',
+                  : '1px solid var(--gold-active)',
               transition: 'all 0.2s ease',
             }}
             whileTap={{ scale: 0.95 }}
@@ -89,7 +89,7 @@ function StageSelectorCompact({ currentStage, onChange }: { currentStage: Stage;
         className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs stage-move-button"
         style={{
           fontSize: '10px',
-          background: 'rgba(201,168,76,0.1)',
+          background: 'var(--gold-active)',
           color: 'var(--gold)',
           border: '1px solid rgba(201,168,76,0.2)',
           transition: 'all 0.2s ease',
@@ -140,7 +140,7 @@ function StageSelectorCompact({ currentStage, onChange }: { currentStage: Stage;
                   className="cursor-pointer w-full text-left px-3 py-2 text-xs stage-dropdown-item"
                   style={{
                     fontSize: 'var(--label-size)',
-                    background: isCurrent ? 'rgba(201,168,76,0.15)' : 'transparent',
+                    background: isCurrent ? 'var(--gold-emphasis)' : 'transparent',
                     color: isCurrent ? 'var(--gold)' : 'var(--ink)',
                     border: 'none',
                     borderBottom: '1px solid rgba(201,168,76,0.08)',
@@ -150,10 +150,10 @@ function StageSelectorCompact({ currentStage, onChange }: { currentStage: Stage;
                     transition: 'background 0.15s ease',
                   }}
                   onMouseEnter={(e) => {
-                    if (!isCurrent) e.currentTarget.style.background = 'rgba(201,168,76,0.08)'
+                    if (!isCurrent) e.currentTarget.style.background = 'var(--gold-active)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = isCurrent ? 'rgba(201,168,76,0.15)' : 'transparent'
+                    e.currentTarget.style.background = isCurrent ? 'var(--gold-emphasis)' : 'transparent'
                   }}
                   disabled={isCurrent}
                 >

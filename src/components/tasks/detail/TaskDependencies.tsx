@@ -93,7 +93,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
                   </button>
                   <span className="text-[10px] px-1.5 py-0.5 rounded" style={{
                     color: bt.status === 'done' ? 'var(--green)' : bt.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)',
-                    background: bt.status === 'done' ? 'rgba(34,197,94,0.1)' : bt.status === 'in_progress' ? 'rgba(45,138,138,0.1)' : 'rgba(100,116,139,0.1)',
+                    background: bt.status === 'done' ? 'rgba(34,197,94,0.1)' : bt.status === 'in_progress' ? 'var(--teal-active)' : 'rgba(100,116,139,0.1)',
                   }}>
                     {bt.status === 'done' ? 'Done' : bt.status === 'in_progress' ? 'In Progress' : bt.status === 'blocked' ? 'Blocked' : 'To Do'}
                   </span>
@@ -163,7 +163,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
                   </button>
                   <span className="text-[10px] px-1.5 py-0.5 rounded" style={{
                     color: 'var(--maroon)',
-                    background: 'rgba(122,0,25,0.06)',
+                    background: 'var(--maroon-hover)',
                   }}>
                     Blocked
                   </span>
@@ -213,7 +213,7 @@ export function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onS
 
   return (
     <div ref={ref} className="relative">
-      <div className="flex items-center gap-2 rounded-md border px-2.5 py-1.5" style={{ borderColor: 'var(--teal)', background: 'rgba(45,138,138,0.03)' }}>
+      <div className="flex items-center gap-2 rounded-md border px-2.5 py-1.5" style={{ borderColor: 'var(--teal)', background: 'var(--teal-hover)' }}>
         <Search size={13} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
         <input
           ref={inputRef}

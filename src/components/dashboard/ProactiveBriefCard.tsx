@@ -51,7 +51,7 @@ export default function ProactiveBriefCard() {
               <span
                 className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium"
                 style={{
-                  backgroundColor: 'rgba(201,168,76,0.12)',
+                  backgroundColor: 'var(--gold-emphasis)',
                   color: 'var(--gold)',
                 }}
               >
@@ -84,7 +84,7 @@ export default function ProactiveBriefCard() {
             <div
               className="flex items-center gap-2 px-3 py-2 rounded-lg mt-1"
               style={{
-                background: 'rgba(45,138,138,0.06)',
+                background: 'var(--teal-hover)',
                 border: '1px solid rgba(45,138,138,0.15)',
               }}
             >
@@ -102,7 +102,7 @@ export default function ProactiveBriefCard() {
                 className="text-[10px] px-2 py-1 rounded-md font-medium flex-shrink-0"
                 style={{
                   color: 'var(--teal)',
-                  background: 'rgba(45,138,138,0.1)',
+                  background: 'var(--teal-active)',
                   textDecoration: 'none',
                 }}
               >

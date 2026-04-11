@@ -86,7 +86,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                   <button
                     key={task.id}
                     onClick={() => { onSelect(task); onClose() }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[rgba(201,168,76,0.04)]"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[var(--gold-hover)]"
                     style={{ background: 'transparent', border: 'none', cursor: 'pointer', borderBottom: '1px solid rgba(201,168,76,0.04)' }}
                   >
                     {/* Priority dot */}

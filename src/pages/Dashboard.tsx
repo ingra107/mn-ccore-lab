@@ -379,7 +379,7 @@ export default function Dashboard() {
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
               style={{
                 color: showCustomize ? 'var(--teal)' : 'var(--slate)',
-                backgroundColor: showCustomize ? 'rgba(45,138,138,0.08)' : 'transparent',
+                backgroundColor: showCustomize ? 'var(--teal-active)' : 'transparent',
                 border: '1px solid',
                 borderColor: showCustomize ? 'var(--teal)' : 'var(--border-light)',
                 cursor: 'pointer',
@@ -490,8 +490,8 @@ export default function Dashboard() {
             <div
               className="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg border"
               style={{
-                background: 'rgba(122,0,25,0.04)',
-                borderColor: 'rgba(122,0,25,0.15)',
+                background: 'var(--maroon-hover)',
+                borderColor: 'var(--maroon-emphasis)',
               }}
             >
               <Clock size={16} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
@@ -508,7 +508,7 @@ export default function Dashboard() {
               <a
                 href="/my-tasks"
                 className="text-[11px] px-2.5 py-1 rounded-full font-medium flex-shrink-0"
-                style={{ color: 'var(--maroon)', background: 'rgba(122,0,25,0.08)', textDecoration: 'none' }}
+                style={{ color: 'var(--maroon)', background: 'var(--maroon-hover)', textDecoration: 'none' }}
               >
                 View
               </a>
@@ -534,7 +534,7 @@ export default function Dashboard() {
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
                     style={{
                       color: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--slate)',
-                      backgroundColor: visibleCards.has(card.id) ? 'rgba(45,138,138,0.08)' : 'transparent',
+                      backgroundColor: visibleCards.has(card.id) ? 'var(--teal-active)' : 'transparent',
                       borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-light)',
                       cursor: 'pointer',
                       opacity: visibleCards.has(card.id) ? 1 : 0.5,
@@ -654,7 +654,7 @@ export default function Dashboard() {
                             onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
                             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                             style={{
-                              background: 'rgba(201,168,76,0.15)',
+                              background: 'var(--gold-emphasis)',
                               border: 'none',
                               borderRadius: 'var(--radius-md)',
                               padding: 'var(--sp-xs)',
@@ -872,18 +872,18 @@ export default function Dashboard() {
 
         /* Pin button background — light/dark */
         .pin-btn { background: rgba(15,25,35,0.05); }
-        .dark .pin-btn { background: rgba(255,255,255,0.08); }
+        .dark .pin-btn { background: var(--hover-medium); }
 
         /* Drag handle — light/dark */
         .group\\/drag > button:first-child { background: rgba(15,25,35,0.06); }
-        .dark .group\\/drag > button:first-child { background: rgba(255,255,255,0.08); }
+        .dark .group\\/drag > button:first-child { background: var(--hover-medium); }
 
         /* Customize panel — light/dark */
-        .customize-panel { background-color: rgba(45,138,138,0.02); }
-        .dark .customize-panel { background-color: rgba(45,138,138,0.06); }
+        .customize-panel { background-color: var(--teal-hover); }
+        .dark .customize-panel { background-color: var(--teal-hover); }
 
         /* Dark mode tab background */
-        .dark .dashboard-tabs { background: rgba(255,255,255,0.04) !important; }
+        .dark .dashboard-tabs { background: var(--hover-light) !important; }
 
         /* Status pulse for header */
         @keyframes status-pulse {

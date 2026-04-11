@@ -56,7 +56,7 @@ function FilterChipSelect({
         style={{
           fontSize: 'var(--value-size)',
           color: active ? 'var(--teal)' : 'var(--slate)',
-          backgroundColor: active ? 'rgba(45,138,138,0.06)' : 'transparent',
+          backgroundColor: active ? 'var(--teal-hover)' : 'transparent',
           borderColor: active ? 'var(--teal)' : 'var(--border-light)',
           cursor: 'pointer',
           appearance: 'none',

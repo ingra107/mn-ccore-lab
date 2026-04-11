@@ -179,7 +179,7 @@ function SubmenuItem({
       <div
         style={{
           ...itemStyles,
-          background: open ? 'rgba(201,168,76,0.06)' : 'none',
+          background: open ? 'var(--gold-hover)' : 'none',
         }}
       >
         <span>{label}</span>

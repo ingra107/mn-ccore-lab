@@ -96,7 +96,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
             className="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs"
             style={{
               fontSize: 'var(--label-size)',
-              background: 'rgba(45, 138, 138, 0.08)',
+              background: 'var(--teal-active)',
               color: 'var(--teal)',
               border: '1px solid rgba(45, 138, 138, 0.2)',
             }}

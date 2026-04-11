@@ -344,7 +344,7 @@ export default function Personal() {
             <Link
               key={page.path}
               to={page.path}
-              className="text-[11px] px-2.5 py-1 rounded-full border transition-colors hover:bg-[rgba(45,138,138,0.06)]"
+              className="text-[11px] px-2.5 py-1 rounded-full border transition-colors hover:bg-[var(--teal-hover)]"
               style={{
                 color: 'var(--slate)',
                 borderColor: 'var(--border-subtle)',
@@ -490,7 +490,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
                   width: '100%',
                   padding: '7px 12px',
                   border: 'none',
-                  background: isActive ? 'rgba(45,138,138,0.06)' : 'transparent',
+                  background: isActive ? 'var(--teal-hover)' : 'transparent',
                   cursor: 'pointer',
                   fontSize: 'var(--label-size)',
                   fontWeight: 400,
@@ -499,7 +499,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
                   transition: 'background 150ms ease, color 150ms ease',
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.background = 'rgba(45,138,138,0.03)'
+                  if (!isActive) e.currentTarget.style.background = 'var(--teal-hover)'
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) e.currentTarget.style.background = 'transparent'
@@ -612,7 +612,7 @@ function MyTasksCard({ tasks, onStatusChange, onOpenDetail, large }: { tasks: Ta
                 {task.title || task.description}
               </span>
               {task.priority === 'urgent' || task.priority === 'high' ? (
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: task.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: task.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: task.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: task.priority === 'urgent' ? 'var(--maroon-hover)' : 'var(--orange-hover)' }}>
                   {task.priority}
                 </span>
               ) : null}
@@ -718,7 +718,7 @@ function AssignedByMeCard({ tasks }: { tasks: TaskRow[] }) {
               <span className="flex-1 text-xs truncate" style={{ color: 'var(--ink)' }}>
                 {t.title || t.description}
               </span>
-              <span className="text-[10px] px-1 py-0.5 rounded" style={{ color: t.status === 'in_progress' ? 'var(--teal)' : t.status === 'blocked' ? 'var(--maroon)' : 'var(--slate)', backgroundColor: t.status === 'in_progress' ? 'rgba(45,138,138,0.08)' : t.status === 'blocked' ? 'rgba(122,0,25,0.08)' : 'transparent', opacity: 0.7 }}>
+              <span className="text-[10px] px-1 py-0.5 rounded" style={{ color: t.status === 'in_progress' ? 'var(--teal)' : t.status === 'blocked' ? 'var(--maroon)' : 'var(--slate)', backgroundColor: t.status === 'in_progress' ? 'var(--teal-active)' : t.status === 'blocked' ? 'var(--maroon-hover)' : 'transparent', opacity: 0.7 }}>
                 {t.status.replace('_', ' ')}
               </span>
             </div>

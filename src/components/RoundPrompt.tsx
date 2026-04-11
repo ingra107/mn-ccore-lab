@@ -73,7 +73,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
       transition={{ duration: 0.25, delay: 0.08 }}
       style={{
         borderLeft: '3px solid var(--gold)',
-        background: 'rgba(201, 168, 76, 0.06)',
+        background: 'var(--gold-hover)',
         borderRadius: '0 var(--radius-xl) var(--radius-xl) 0',
         padding: '14px 18px',
         marginTop: '1.5rem',
@@ -165,7 +165,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             type="button"
             onClick={shuffle}
             title="Try a different prompt"
-            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[rgba(201,168,76,0.08)]"
+            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--gold-active)]"
             style={{
               color: 'var(--slate)',
               background: 'transparent', borderColor: 'rgba(201, 168, 76, 0.2)', cursor: 'pointer',
@@ -178,7 +178,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             type="button"
             onClick={isCustom ? startEdit : startEdit}
             title={isCustom ? 'Edit custom prompt' : 'Write a custom prompt'}
-            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[rgba(201,168,76,0.08)]"
+            className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--gold-active)]"
             style={{
               color: 'var(--slate)',
               background: 'transparent', borderColor: 'rgba(201, 168, 76, 0.2)', cursor: 'pointer',
@@ -192,10 +192,10 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               type="button"
               onClick={() => update({ custom: '' })}
               title="Restore generated prompt"
-              className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[rgba(201,168,76,0.08)]"
+              className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--gold-active)]"
               style={{
                 color: 'var(--slate)', opacity: 0.6,
-                background: 'transparent', borderColor: 'rgba(201, 168, 76, 0.15)', cursor: 'pointer',
+                background: 'transparent', borderColor: 'var(--gold-emphasis)', cursor: 'pointer',
               }}
             >
               <X size={11} /> Reset

@@ -81,7 +81,7 @@ export default function MeetingNotesPage() {
             const Icon = item.icon
             return (
               <div key={item.step} className="flex flex-col items-center text-center gap-2 p-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(45,138,138,0.08)' }}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--teal-active)' }}>
                   <Icon size={18} style={{ color: 'var(--teal)' }} />
                 </div>
                 <h4 className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</h4>
@@ -118,7 +118,7 @@ export default function MeetingNotesPage() {
                 className="flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm"
                 style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
               >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: m.notes ? 'rgba(34,197,94,0.08)' : 'rgba(100,116,139,0.06)' }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: m.notes ? 'var(--green-hover)' : 'rgba(100,116,139,0.06)' }}>
                   {m.notes ? <CheckCircle2 size={16} style={{ color: 'var(--green)' }} /> : <FileText size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} />}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -128,7 +128,7 @@ export default function MeetingNotesPage() {
                   </span>
                 </div>
                 {m.notes ? (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: 'var(--green)', backgroundColor: 'rgba(34,197,94,0.08)' }}>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: 'var(--green)', backgroundColor: 'var(--green-hover)' }}>
                     Notes available
                   </span>
                 ) : (
@@ -244,7 +244,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border"
               style={{
                 borderColor: mode === 'transcript' ? 'var(--teal)' : 'var(--border-light)',
-                backgroundColor: mode === 'transcript' ? 'rgba(45,138,138,0.1)' : 'transparent',
+                backgroundColor: mode === 'transcript' ? 'var(--teal-active)' : 'transparent',
                 color: mode === 'transcript' ? 'var(--teal)' : 'var(--slate)',
                 cursor: 'pointer',
               }}
@@ -257,7 +257,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border"
               style={{
                 borderColor: mode === 'audio' ? 'var(--teal)' : 'var(--border-light)',
-                backgroundColor: mode === 'audio' ? 'rgba(45,138,138,0.1)' : 'transparent',
+                backgroundColor: mode === 'audio' ? 'var(--teal-active)' : 'transparent',
                 color: mode === 'audio' ? 'var(--teal)' : 'var(--slate)',
                 cursor: 'pointer',
               }}
@@ -312,7 +312,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.4 }}>
                 MP3, M4A, WAV, or MP4 (max 25MB)
               </p>
-              <p className="text-[10px] mt-2 px-4 py-1.5 rounded-full inline-block" style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}>
+              <p className="text-[10px] mt-2 px-4 py-1.5 rounded-full inline-block" style={{ color: 'var(--gold)', backgroundColor: 'var(--gold-active)' }}>
                 Audio upload requires AI API key — use "Paste Transcript" for now
               </p>
             </div>
@@ -320,7 +320,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
 
           {/* Results */}
           {result && (
-            <div className="rounded-lg border p-4" style={{ borderColor: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.02)' }}>
+            <div className="rounded-lg border p-4" style={{ borderColor: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}>
               <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5" style={{ color: 'var(--teal)' }}>
                 <Sparkles size={14} />
                 AI Insights

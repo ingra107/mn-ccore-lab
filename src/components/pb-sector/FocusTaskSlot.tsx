@@ -130,7 +130,7 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
         className="rounded-lg overflow-hidden"
         style={{
           border: `1px solid ${isOver ? 'var(--teal)' : 'rgba(45,138,138,0.15)'}`,
-          background: isOver ? 'rgba(45,138,138,0.03)' : 'transparent',
+          background: isOver ? 'var(--teal-hover)' : 'transparent',
           transition: 'all 0.2s ease',
         }}
       >
@@ -168,7 +168,7 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
                     background: 'none', border: 'none', cursor: 'pointer',
                     borderBottom: i < emptySlots - 1 ? '1px solid rgba(201,168,76,0.04)' : undefined,
                   }}
-                  whileHover={{ backgroundColor: 'rgba(45,138,138,0.03)' }}
+                  whileHover={{ backgroundColor: 'var(--teal-hover)' }}
                 >
                   <div style={{ width: 14 }} />
                   <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>
@@ -191,7 +191,7 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
                     background: 'none', border: 'none', cursor: 'pointer',
                     borderBottom: i < emptySlots - 1 ? '1px solid rgba(201,168,76,0.04)' : undefined,
                   }}
-                  whileHover={{ backgroundColor: 'rgba(45,138,138,0.03)' }}
+                  whileHover={{ backgroundColor: 'var(--teal-hover)' }}
                 >
                   <div style={{ width: 14 }} />
                   <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>

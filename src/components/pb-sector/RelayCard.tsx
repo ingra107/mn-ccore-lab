@@ -31,7 +31,7 @@ export default function RelayCard() {
         className="rounded-lg overflow-hidden animate-pulse"
         style={{
           border: '1px solid rgba(201,168,76,0.1)',
-          background: 'rgba(201,168,76,0.02)',
+          background: 'var(--gold-hover)',
           height: 80,
         }}
       />
@@ -43,7 +43,7 @@ export default function RelayCard() {
       className="rounded-lg overflow-hidden"
       style={{
         border: '1px solid rgba(201,168,76,0.1)',
-        background: 'rgba(201,168,76,0.02)',
+        background: 'var(--gold-hover)',
       }}
     >
       {/* Header */}

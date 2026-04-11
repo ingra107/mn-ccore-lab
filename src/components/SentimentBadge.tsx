@@ -1,8 +1,8 @@
 const SENTIMENT_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  positive: { label: 'Positive', color: 'var(--teal)', bg: 'rgba(45,138,138,0.08)' },
+  positive: { label: 'Positive', color: 'var(--teal)', bg: 'var(--teal-active)' },
   negative: { label: 'Negative', color: 'var(--maroon)', bg: 'rgba(128,0,0,0.08)' },
   neutral: { label: 'Neutral', color: 'var(--slate)', bg: 'rgba(100,116,139,0.08)' },
-  pending: { label: 'Pending', color: 'var(--gold)', bg: 'rgba(201,168,76,0.08)' },
+  pending: { label: 'Pending', color: 'var(--gold)', bg: 'var(--gold-active)' },
 }
 
 export { SENTIMENT_CONFIG }

@@ -86,7 +86,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
         color: sortKey === field ? 'var(--teal)' : 'var(--slate)',
         fontWeight: sortKey === field ? 600 : 400,
         cursor: 'pointer',
-        background: sortKey === field ? 'rgba(45,138,138,0.08)' : 'none',
+        background: sortKey === field ? 'var(--teal-active)' : 'none',
         border: 'none',
       }}
     >
@@ -143,7 +143,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
           <div className="text-center py-16">
             <div
               className="mx-auto mb-3"
-              style={{ width: 48, height: 48, borderRadius: 'var(--radius-xl)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.06)' }}
+              style={{ width: 48, height: 48, borderRadius: 'var(--radius-xl)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--teal-hover)' }}
             >
               <CheckCircle2 size={24} style={{ color: 'var(--teal)', opacity: 0.5 }} />
             </div>

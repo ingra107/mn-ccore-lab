@@ -250,7 +250,7 @@ export default function MenteeMilestones() {
             onClick={() => setFilterMentee('')}
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors"
             style={{
-              background: 'rgba(45,138,138,0.1)',
+              background: 'var(--teal-active)',
               color: 'var(--teal)',
               border: '1px solid rgba(45,138,138,0.2)',
               cursor: 'pointer',
@@ -330,7 +330,7 @@ export default function MenteeMilestones() {
                   gap: 20,
                   padding: 'var(--sp-sm) var(--sp-lg)',
                   borderTop: '1px solid var(--border-subtle)',
-                  background: 'rgba(45, 138, 138, 0.02)',
+                  background: 'var(--teal-hover)',
                 }}
               >
                 {[
@@ -497,9 +497,9 @@ function MilestoneRow({
         borderBottom: '1px solid var(--border-subtle)',
         opacity: isDone ? 0.45 : 1,
         background: item._isOverdue
-          ? 'rgba(122,0,25,0.03)'
+          ? 'var(--maroon-hover)'
           : isFocused
-            ? 'rgba(45,138,138,0.04)'
+            ? 'var(--teal-hover)'
             : 'transparent',
         transition: 'background var(--transition-fast, 150ms) ease',
       }}
@@ -659,7 +659,7 @@ function MilestoneRow({
                     lineHeight: 1.5,
                     padding: 'var(--sp-sm) var(--sp-md)',
                     borderRadius: 'var(--radius-md)',
-                    background: 'rgba(45,138,138,0.04)',
+                    background: 'var(--teal-hover)',
                     border: '1px solid var(--border-subtle)',
                   }}
                 >
@@ -709,7 +709,7 @@ function FilterSelect({
       style={{
         fontSize: '12px',
         color: value ? 'var(--teal)' : 'var(--slate)',
-        backgroundColor: value ? 'rgba(45,138,138,0.06)' : 'transparent',
+        backgroundColor: value ? 'var(--teal-hover)' : 'transparent',
         borderColor: value ? 'var(--teal)' : 'var(--border-light)',
         cursor: 'pointer',
         appearance: 'none' as const,
@@ -760,7 +760,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.4)' }}
+      style={{ background: 'var(--overlay-medium)' }}
       onClick={onClose}
     >
       <motion.div

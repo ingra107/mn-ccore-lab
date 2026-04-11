@@ -135,7 +135,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
             cursor: 'pointer',
             transition: 'background 150ms ease-out',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(45,138,138,0.06)')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--teal-hover)')}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
         >
           <Plus size={14} />
@@ -155,7 +155,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
             <div
               className="rounded-xl p-4"
               style={{
-                background: 'rgba(45, 138, 138, 0.04)',
+                background: 'var(--teal-hover)',
                 border: '1px solid var(--border-subtle)',
               }}
             >
@@ -313,7 +313,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
           cursor: 'pointer',
           transition: 'background 150ms',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201, 168, 76, 0.04)')}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--gold-hover)')}
         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
       >
         {/* Round badge */}
@@ -738,7 +738,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
             animate={{ opacity: 1, y: 0 }}
             className="rounded-lg p-3"
             style={{
-              background: 'rgba(45, 138, 138, 0.04)',
+              background: 'var(--teal-hover)',
               border: '1px solid var(--border-subtle)',
             }}
           >
@@ -996,7 +996,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
 
       <style>{`
         .active-revision-row:hover {
-          background: rgba(201, 168, 76, 0.06) !important;
+          background: var(--gold-hover) !important;
         }
       `}</style>
     </div>

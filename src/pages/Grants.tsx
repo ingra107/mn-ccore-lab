@@ -94,8 +94,8 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
             className="px-1.5 py-0.5 rounded text-xs font-bold"
             style={{
               background: grant.proposed
-                ? 'rgba(201, 168, 76, 0.15)'
-                : 'rgba(45, 138, 138, 0.15)',
+                ? 'var(--gold-emphasis)'
+                : 'var(--teal-emphasis)',
               color: grant.proposed ? 'var(--gold)' : 'var(--teal)',
               fontSize: '11px',
             }}
@@ -315,7 +315,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                 width={42}
                 height={BAR_HEIGHT - 8}
                 rx={4}
-                fill={isProposed ? 'rgba(201, 168, 76, 0.12)' : 'rgba(45, 138, 138, 0.12)'}
+                fill={isProposed ? 'var(--gold-emphasis)' : 'var(--teal-emphasis)'}
               />
               <text
                 x={21}
@@ -464,7 +464,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
         <span
           className="px-2 py-0.5 rounded text-xs font-bold"
           style={{
-            background: isProposed ? 'rgba(201, 168, 76, 0.15)' : 'rgba(45, 138, 138, 0.15)',
+            background: isProposed ? 'var(--gold-emphasis)' : 'var(--teal-emphasis)',
             color,
             fontSize: '11px',
             letterSpacing: '0.03em',
@@ -486,7 +486,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
           <span
             className="px-2 py-0.5 rounded-full text-xs"
             style={{
-              background: 'rgba(201, 168, 76, 0.12)',
+              background: 'var(--gold-emphasis)',
               color: 'var(--gold)',
               fontSize: '10px',
               fontWeight: 600,
@@ -498,7 +498,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
           <span
             className="px-2 py-0.5 rounded-full text-xs"
             style={{
-              background: 'rgba(45, 138, 138, 0.12)',
+              background: 'var(--teal-emphasis)',
               color: 'var(--teal)',
               fontSize: '10px',
               fontWeight: 600,
@@ -619,7 +619,7 @@ function GrantSummary({ grants }: { grants: GrantTimelineItem[] }) {
           key={stat.label}
           className="text-center p-4 rounded-lg"
           style={{
-            background: 'rgba(201, 168, 76, 0.04)',
+            background: 'var(--gold-hover)',
             border: '1px solid rgba(201, 168, 76, 0.1)',
           }}
         >
@@ -780,7 +780,7 @@ export default function Grants() {
                   height: 8,
                   borderRadius: 'var(--radius-sm)',
                   border: '1.5px dashed var(--gold)',
-                  background: 'rgba(201, 168, 76, 0.08)',
+                  background: 'var(--gold-active)',
                   opacity: 0.7,
                 }}
               />
@@ -844,11 +844,11 @@ export default function Grants() {
               style={{
                 fontSize: '11px',
                 fontWeight: filter === f ? 600 : 400,
-                background: filter === f ? 'rgba(201, 168, 76, 0.15)' : 'transparent',
+                background: filter === f ? 'var(--gold-emphasis)' : 'transparent',
                 color: filter === f ? 'var(--gold)' : 'var(--slate)',
                 border: filter === f
                   ? '1px solid rgba(201, 168, 76, 0.3)'
-                  : '1px solid rgba(201, 168, 76, 0.1)',
+                  : '1px solid var(--gold-active)',
               }}
             >
               {f === 'all' ? `All (${grants.length})` : f === 'active' ? `Active (${activeCount})` : `Proposed (${proposedCount})`}

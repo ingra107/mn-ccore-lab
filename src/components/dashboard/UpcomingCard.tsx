@@ -135,7 +135,7 @@ function UpcomingCard() {
               className="flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-full"
               style={{
                 background: cadence.score >= 40
-                  ? 'rgba(34, 197, 94, 0.08)'
+                  ? 'var(--green-hover)'
                   : cadence.score >= 20
                     ? 'rgba(234, 179, 8, 0.08)'
                     : cadence.score >= 0
@@ -214,7 +214,7 @@ function UpcomingCard() {
               className="flex items-start gap-2.5 py-2"
               style={{
                 borderBottom: i < deadlines.length - 1
-                  ? '1px solid rgba(201, 168, 76, 0.06)'
+                  ? '1px solid var(--gold-hover)'
                   : 'none',
               }}
             >
@@ -228,7 +228,7 @@ function UpcomingCard() {
                   background: isOverdue
                     ? 'rgba(122, 0, 25, 0.1)'
                     : isUrgent
-                      ? 'rgba(201, 168, 76, 0.12)'
+                      ? 'var(--gold-emphasis)'
                       : 'rgba(100, 116, 139, 0.06)',
                   fontSize: '10px',
                   fontWeight: 600,

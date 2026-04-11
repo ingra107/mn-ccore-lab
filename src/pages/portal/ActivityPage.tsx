@@ -95,7 +95,7 @@ export default function ActivityPage() {
             style={{
               fontSize: '12px',
               color: filterPerson ? 'var(--gold)' : 'var(--slate)',
-              backgroundColor: filterPerson ? 'rgba(201,168,76,0.06)' : 'transparent',
+              backgroundColor: filterPerson ? 'var(--gold-hover)' : 'transparent',
               borderColor: filterPerson ? 'var(--gold)' : 'var(--border-light)',
               cursor: 'pointer',
               appearance: 'none' as const,
@@ -116,7 +116,7 @@ export default function ActivityPage() {
             style={{
               fontSize: '12px',
               color: filterType ? 'var(--teal)' : 'var(--slate)',
-              backgroundColor: filterType ? 'rgba(45,138,138,0.06)' : 'transparent',
+              backgroundColor: filterType ? 'var(--teal-hover)' : 'transparent',
               borderColor: filterType ? 'var(--teal)' : 'var(--border-light)',
               cursor: 'pointer',
               appearance: 'none' as const,
@@ -180,7 +180,7 @@ export default function ActivityPage() {
                             {item.description}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}>
                               {item.type}
                             </span>
                             <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>

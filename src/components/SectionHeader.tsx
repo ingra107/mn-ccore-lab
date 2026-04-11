@@ -46,7 +46,7 @@ export default function SectionHeader({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'rgba(45, 138, 138, 0.1)',
+            background: 'var(--teal-active)',
           }}
         >
           <Icon size={iconConfig.icon} style={{ color: 'var(--teal)' }} />

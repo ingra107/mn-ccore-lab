@@ -320,7 +320,7 @@ export default function PIAnalytics() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-          style={{ backgroundColor: 'rgba(122,0,25,0.06)' }}
+          style={{ backgroundColor: 'var(--maroon-hover)' }}
         >
           <Shield size={24} style={{ color: 'var(--maroon)' }} />
         </div>
@@ -555,7 +555,7 @@ export default function PIAnalytics() {
                 </div>
               </div>
               <div className="flex-1 grid grid-cols-2 gap-3">
-                <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(45, 138, 138, 0.04)' }}>
+                <div className="rounded-lg p-3" style={{ backgroundColor: 'var(--teal-hover)' }}>
                   <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)' }}>
                     Last 90 days
                   </span>
@@ -742,7 +742,7 @@ export default function PIAnalytics() {
                               className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded"
                               style={{
                                 color: 'var(--green)',
-                                backgroundColor: 'rgba(34, 197, 94, 0.08)',
+                                backgroundColor: 'var(--green-hover)',
                               }}
                             >
                               <TrendingUp size={10} />
@@ -891,9 +891,9 @@ export default function PIAnalytics() {
                   info: 'var(--teal)',
                 }
                 const bgMap = {
-                  good: 'rgba(34, 197, 94, 0.04)',
-                  warning: 'rgba(122, 0, 25, 0.04)',
-                  info: 'rgba(45, 138, 138, 0.04)',
+                  good: 'var(--green-hover)',
+                  warning: 'var(--maroon-hover)',
+                  info: 'var(--teal-hover)',
                 }
                 const InsightIcon = iconMap[insight.type]
                 return (

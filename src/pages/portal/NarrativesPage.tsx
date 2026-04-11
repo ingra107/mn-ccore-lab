@@ -94,10 +94,10 @@ export default function NarrativesPage() {
               </div>
 
               {/* Stage pipeline */}
-              <div className="flex items-center gap-1.5 mb-4 p-2 rounded-lg" style={{ background: 'rgba(201,168,76,0.03)' }}>
+              <div className="flex items-center gap-1.5 mb-4 p-2 rounded-lg" style={{ background: 'var(--gold-hover)' }}>
                 {arc.stageDistribution.map((s, i) => (
                   <div key={s.stage} className="flex items-center gap-1">
-                    {i > 0 && <div style={{ width: 12, height: 1, background: 'rgba(201,168,76,0.15)' }} />}
+                    {i > 0 && <div style={{ width: 12, height: 1, background: 'var(--gold-emphasis)' }} />}
                     <div style={{
                       width: s.count > 0 ? 10 + s.count * 4 : 8,
                       height: s.count > 0 ? 10 + s.count * 4 : 8,
@@ -145,7 +145,7 @@ export default function NarrativesPage() {
                     <span
                       key={t.topic}
                       className="px-2 py-0.5 rounded-full text-[10px]"
-                      style={{ background: 'rgba(201,168,76,0.1)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.15)' }}
+                      style={{ background: 'var(--gold-active)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.15)' }}
                     >
                       {t.topic} ({t.count})
                     </span>

@@ -177,12 +177,12 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
               </span>
             )}
             {task.source && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(45,138,138,0.08)', color: 'var(--teal)' }}>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)' }}>
                 {task.source}
               </span>
             )}
             {(task as any).recurrence && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(201,168,76,0.08)', color: 'var(--gold)' }}>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--gold-active)', color: 'var(--gold)' }}>
                 <RefreshCw size={8} style={{ display: 'inline', marginRight: 2 }} />
                 {(task as any).recurrence}
               </span>
@@ -229,7 +229,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
                 disabled={ackTask.isPending}
                 className="flex items-center gap-2 rounded-lg text-xs font-medium transition-all duration-200"
                 style={{
-                  background: 'rgba(201,168,76,0.08)',
+                  background: 'var(--gold-active)',
                   color: 'var(--gold)',
                   border: '1px solid rgba(201,168,76,0.2)',
                   cursor: 'pointer',
@@ -477,7 +477,7 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
           <span
             key={slug}
             className="flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full text-[10px]"
-            style={{ backgroundColor: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}
+            style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)' }}
           >
             <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" className="!w-[16px] !h-[16px] !min-w-0 !min-h-0 !text-[7px]" />
             {p.name.split(' ')[0]}
@@ -521,7 +521,7 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
                 onClick={() => addWatcher(slug)}
                 className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px] transition-colors"
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink)', borderBottom: '1px solid var(--border-subtle)' }}
-                onMouseOver={e => (e.currentTarget.style.backgroundColor = 'rgba(45,138,138,0.05)')}
+                onMouseOver={e => (e.currentTarget.style.backgroundColor = 'var(--teal-hover)')}
                 onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm" className="!w-[20px] !h-[20px] !min-w-0 !min-h-0 !text-[8px]" />

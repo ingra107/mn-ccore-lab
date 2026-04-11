@@ -382,7 +382,7 @@ function TimelineEvent({
               opacity: isOverdue ? 1 : 0.7,
               padding: '1px 6px',
               borderRadius: 'var(--radius-lg)',
-              background: isOverdue ? 'rgba(122, 0, 25, 0.08)' : 'rgba(45, 138, 138, 0.06)',
+              background: isOverdue ? 'var(--maroon-hover)' : 'var(--teal-hover)',
             }}
           >
             {relativeDate}
@@ -476,7 +476,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
             cursor: 'pointer',
             transition: 'background 0.12s ease-out',
           }}
-          onMouseEnter={(e) => { (e.target as HTMLElement).style.background = 'rgba(45, 138, 138, 0.06)' }}
+          onMouseEnter={(e) => { (e.target as HTMLElement).style.background = 'var(--teal-hover)' }}
           onMouseLeave={(e) => { (e.target as HTMLElement).style.background = 'transparent' }}
         >
           <Plus size={12} />
@@ -706,10 +706,10 @@ export function ActiveSubmissionsDashboard({
 
       <style>{`
         .active-submission-row > div:hover {
-          background: rgba(201, 168, 76, 0.06) !important;
+          background: var(--gold-hover) !important;
         }
         .dark .active-submission-row > div:hover {
-          background: rgba(201, 168, 76, 0.08) !important;
+          background: var(--gold-active) !important;
         }
       `}</style>
     </div>

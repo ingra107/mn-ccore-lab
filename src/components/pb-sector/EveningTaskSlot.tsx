@@ -92,11 +92,11 @@ export default function EveningTaskSlot({ tasks, onComplete, onClickTitle, onAdd
     <div className="mb-6">
       {/* Subtle divider */}
       <div className="flex items-center gap-3 mb-3 mt-2">
-        <div style={{ flex: 1, height: 1, background: 'rgba(201,168,76,0.1)' }} />
+        <div style={{ flex: 1, height: 1, background: 'var(--gold-active)' }} />
         <span style={{ fontSize: '10px', color: 'var(--gold)', opacity: 'var(--ink-hint)', textTransform: 'uppercase', letterSpacing: '1px' }}>
           later
         </span>
-        <div style={{ flex: 1, height: 1, background: 'rgba(201,168,76,0.1)' }} />
+        <div style={{ flex: 1, height: 1, background: 'var(--gold-active)' }} />
       </div>
 
       <div className="flex items-center gap-2 mb-2">
@@ -116,7 +116,7 @@ export default function EveningTaskSlot({ tasks, onComplete, onClickTitle, onAdd
         className="rounded-lg"
         style={{
           border: `1px solid ${isOver ? 'var(--gold)' : 'rgba(201,168,76,0.1)'}`,
-          background: isOver ? 'rgba(201,168,76,0.03)' : 'transparent',
+          background: isOver ? 'var(--gold-hover)' : 'transparent',
           transition: 'all 0.2s ease',
           minHeight: tasks.length === 0 ? 40 : undefined,
           opacity: 0.85,
@@ -142,7 +142,7 @@ export default function EveningTaskSlot({ tasks, onComplete, onClickTitle, onAdd
             background: 'none', border: 'none', cursor: 'pointer',
             borderTop: tasks.length > 0 ? '1px solid rgba(201,168,76,0.04)' : undefined,
           }}
-          whileHover={{ backgroundColor: 'rgba(201,168,76,0.03)' }}
+          whileHover={{ backgroundColor: 'var(--gold-hover)' }}
         >
           <Plus size={12} style={{ color: 'var(--gold)', opacity: 0.3 }} />
           <span style={{ fontSize: '11px', color: 'var(--gold)', opacity: 0.3 }}>

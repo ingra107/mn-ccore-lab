@@ -60,7 +60,7 @@ function topicLabel(topic: string): string {
 
 function topicColor(topic: string, isDark: boolean) {
   const tc = TOPIC_COLORS[topic]
-  if (!tc) return { bg: 'rgba(201, 168, 76, 0.1)', color: 'var(--gold)' }
+  if (!tc) return { bg: 'var(--gold-active)', color: 'var(--gold)' }
   return isDark
     ? { bg: tc.darkBg, color: tc.darkColor }
     : { bg: tc.bg, color: tc.color }
@@ -191,7 +191,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
             <span
               className="text-xs font-medium px-2 py-1 rounded"
               style={{
-                background: 'rgba(201, 168, 76, 0.1)',
+                background: 'var(--gold-active)',
                 color: 'var(--gold)',
               }}
             >
@@ -307,7 +307,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                       rel="noopener noreferrer"
                       className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                       style={{
-                        background: 'rgba(201, 168, 76, 0.1)',
+                        background: 'var(--gold-active)',
                         color: 'var(--gold)',
                         border: '1px solid rgba(201, 168, 76, 0.2)',
                         minHeight: '32px',
@@ -324,7 +324,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                       rel="noopener noreferrer"
                       className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
                       style={{
-                        background: 'rgba(201, 168, 76, 0.08)',
+                        background: 'var(--gold-active)',
                         color: 'var(--gold)',
                         border: '1px solid rgba(201, 168, 76, 0.15)',
                         minHeight: '32px',

@@ -99,7 +99,7 @@ export default function BentoCard({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(201, 168, 76, 0.1)',
+                background: 'var(--gold-active)',
               }}
             >
               <Icon size={15} style={{ color: 'var(--gold)' }} />

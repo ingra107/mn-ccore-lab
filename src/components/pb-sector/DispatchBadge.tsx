@@ -31,7 +31,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors"
         style={{
-          background: 'rgba(201,168,76,0.1)',
+          background: 'var(--gold-active)',
           border: '1px solid rgba(201,168,76,0.2)',
           cursor: 'pointer',
         }}

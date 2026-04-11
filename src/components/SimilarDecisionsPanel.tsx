@@ -45,7 +45,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
             <div
               key={d.id}
               className="p-3 rounded-lg"
-              style={{ background: 'rgba(201,168,76,0.03)', border: '1px dashed rgba(201,168,76,0.12)' }}
+              style={{ background: 'var(--gold-hover)', border: '1px dashed rgba(201,168,76,0.12)' }}
             >
               <div className="flex items-center gap-2 mb-1">
                 <span style={{ fontSize: 'var(--value-size)', fontWeight: 'var(--label-weight)', color: 'var(--ink)' }}>
@@ -81,7 +81,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
                   <span
                     key={tag}
                     className="text-[10px] px-1 py-0.5 rounded-full"
-                    style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}
+                    style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-active)' }}
                   >
                     {tag}
                   </span>

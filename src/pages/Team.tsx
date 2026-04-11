@@ -137,7 +137,7 @@ export default function Team() {
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] transition-all hover:opacity-80"
                 style={{
                   fontWeight: 400,
-                  background: 'rgba(45,138,138,0.10)',
+                  background: 'var(--teal-active)',
                   color: 'var(--teal)',
                   border: '1px solid rgba(45,138,138,0.2)',
                   cursor: 'pointer',
@@ -246,7 +246,7 @@ export default function Team() {
                             className="inline-block px-2 py-0.5 rounded-full text-[11px]"
                             style={{
                               fontWeight: 400,
-                              background: 'rgba(45,138,138,0.10)',
+                              background: 'var(--teal-active)',
                               color: 'var(--teal)',
                             }}
                           >
@@ -331,7 +331,7 @@ export default function Team() {
                             className="inline-block px-2 py-0.5 rounded-full text-[11px] cursor-pointer transition-opacity hover:opacity-80"
                             style={{
                               fontWeight: 400,
-                              background: 'rgba(45,138,138,0.10)',
+                              background: 'var(--teal-active)',
                               color: 'var(--teal)',
                             }}
                             onClick={(e) => { e.preventDefault(); setSearchParams({ expertise: t.tag }) }}
@@ -403,7 +403,7 @@ export default function Team() {
                         className="inline-block px-1.5 py-0.5 rounded-full text-[10px]"
                         style={{
                           fontWeight: 400,
-                          background: 'rgba(45,138,138,0.10)',
+                          background: 'var(--teal-active)',
                           color: 'var(--teal)',
                         }}
                       >
@@ -472,7 +472,7 @@ export default function Team() {
                         className="inline-block px-1.5 py-0.5 rounded-full text-[10px]"
                         style={{
                           fontWeight: 400,
-                          background: 'rgba(45,138,138,0.10)',
+                          background: 'var(--teal-active)',
                           color: 'var(--teal)',
                         }}
                       >

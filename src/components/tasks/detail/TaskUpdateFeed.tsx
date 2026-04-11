@@ -11,10 +11,10 @@ import ReactionBar from '../../ReactionBar'
 import { useToast } from '../../../hooks/useToast'
 
 const TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; borderColor: string; label: string }> = {
-  progress: { icon: TrendingUp, color: 'var(--teal)', bg: 'rgba(45, 138, 138, 0.1)', borderColor: 'rgba(45, 138, 138, 0.4)', label: 'Progress' },
+  progress: { icon: TrendingUp, color: 'var(--teal)', bg: 'var(--teal-active)', borderColor: 'rgba(45, 138, 138, 0.4)', label: 'Progress' },
   blocker: { icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122, 0, 25, 0.1)', borderColor: 'rgba(122, 0, 25, 0.4)', label: 'Blocker' },
   result: { icon: CheckCircle, color: 'var(--green)', bg: 'rgba(34, 197, 94, 0.1)', borderColor: 'rgba(34, 197, 94, 0.4)', label: 'Result' },
-  question: { icon: HelpCircle, color: 'var(--gold)', bg: 'rgba(201, 168, 76, 0.1)', borderColor: 'rgba(201, 168, 76, 0.4)', label: 'Question' },
+  question: { icon: HelpCircle, color: 'var(--gold)', bg: 'var(--gold-active)', borderColor: 'rgba(201, 168, 76, 0.4)', label: 'Question' },
   session: { icon: Terminal, color: 'var(--slate)', bg: 'rgba(100, 116, 139, 0.08)', borderColor: 'rgba(100, 116, 139, 0.25)', label: 'Session' },
 }
 

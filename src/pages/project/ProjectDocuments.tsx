@@ -109,7 +109,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                     padding: 'var(--sp-sm) var(--sp-xs)',
                     borderBottom: '1px solid var(--border-subtle)',
                     transition: 'background 150ms ease',
-                    background: hoveredId === doc.id ? 'rgba(201,168,76,0.04)' : 'transparent',
+                    background: hoveredId === doc.id ? 'var(--gold-hover)' : 'transparent',
                     borderRadius: 'var(--radius-sm)',
                   }}
                   onMouseEnter={() => setHoveredId(doc.id)}

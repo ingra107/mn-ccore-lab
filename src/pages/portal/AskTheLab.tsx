@@ -16,8 +16,8 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import type { QuestionRow } from '../../lib/api'
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  open: { label: 'Open', color: 'var(--gold)', bg: 'rgba(201,168,76,0.1)' },
-  resolved: { label: 'Resolved', color: 'var(--teal)', bg: 'rgba(45,138,138,0.1)' },
+  open: { label: 'Open', color: 'var(--gold)', bg: 'var(--gold-active)' },
+  resolved: { label: 'Resolved', color: 'var(--teal)', bg: 'var(--teal-active)' },
 }
 
 export default function AskTheLab() {
@@ -193,7 +193,7 @@ function QuestionCard({
             {question.project_slug && (
               <span
                 className="text-[10px] px-1.5 py-0.5 rounded-full"
-                style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}
+                style={{ color: 'var(--gold)', backgroundColor: 'var(--gold-hover)' }}
               >
                 {question.project_slug}
               </span>
@@ -276,7 +276,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
     <div className="px-5 pb-5 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
       {/* Full context */}
       {detail.context && (
-        <div className="mt-4 px-3 py-2.5 rounded-lg" style={{ backgroundColor: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.1)' }}>
+        <div className="mt-4 px-3 py-2.5 rounded-lg" style={{ backgroundColor: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.1)' }}>
           <p className="text-[11px] mb-1" style={{ color: 'var(--gold)', fontWeight: 500 }}>
             Context
           </p>
@@ -302,7 +302,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                   key={answer.id}
                   className="p-3 rounded-lg"
                   style={{
-                    background: 'rgba(201,168,76,0.04)',
+                    background: 'var(--gold-hover)',
                     border: '1px solid rgba(201,168,76,0.15)',
                   }}
                 >
@@ -327,7 +327,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                 key={answer.id}
                 className="flex gap-3 p-3 rounded-lg"
                 style={{
-                  backgroundColor: answer.is_accepted ? 'rgba(45,138,138,0.04)' : 'rgba(0,0,0,0.015)',
+                  backgroundColor: answer.is_accepted ? 'var(--teal-hover)' : 'rgba(0,0,0,0.015)',
                   border: answer.is_accepted ? '1px solid rgba(45,138,138,0.15)' : '1px solid transparent',
                 }}
               >
@@ -343,7 +343,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                       {formatRelativeTime(answer.created_at)}
                     </span>
                     {answer.is_accepted === 1 && (
-                      <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.1)' }}>
+                      <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-active)' }}>
                         <Check size={10} />
                         Accepted
                       </span>

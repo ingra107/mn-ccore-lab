@@ -373,7 +373,7 @@ export default function PBSector() {
               fontWeight: viewMode === mode ? 500 : 400,
               fontSize: '13px',
               color: viewMode === mode ? 'var(--gold)' : 'var(--slate)',
-              background: viewMode === mode ? 'rgba(201,168,76,0.08)' : 'transparent',
+              background: viewMode === mode ? 'var(--gold-active)' : 'transparent',
               border: viewMode === mode ? '1px solid rgba(201,168,76,0.2)' : '1px solid transparent',
               cursor: 'pointer',
             }}

@@ -319,7 +319,7 @@ export default function MyTasks() {
           <span className="flex items-center gap-2">
             {pendingCount} active task{pendingCount !== 1 ? 's' : ''}
             {streak >= 2 && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: 'rgba(201,168,76,0.12)', color: 'var(--gold)' }}>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: 'var(--gold-emphasis)', color: 'var(--gold)' }}>
                 <Flame size={10} />
                 {streak}d streak
               </span>
@@ -362,7 +362,7 @@ export default function MyTasks() {
               style={{
                 fontSize: '12px',
                 color: groupBy !== 'none' ? 'var(--teal)' : 'var(--slate)',
-                backgroundColor: groupBy !== 'none' ? 'rgba(45,138,138,0.06)' : 'transparent',
+                backgroundColor: groupBy !== 'none' ? 'var(--teal-hover)' : 'transparent',
                 borderColor: groupBy !== 'none' ? 'var(--teal)' : 'var(--border-light)',
                 cursor: 'pointer',
                 appearance: 'none' as const,
@@ -426,7 +426,7 @@ export default function MyTasks() {
           className="mt-4 px-4 py-3 rounded-lg border text-sm"
           style={{
             borderColor: 'var(--gold)',
-            backgroundColor: 'rgba(201,168,76,0.06)',
+            backgroundColor: 'var(--gold-hover)',
             color: 'var(--ink)',
           }}
         >
@@ -443,7 +443,7 @@ export default function MyTasks() {
               padding: 'var(--sp-xs) var(--sp-md)',
               fontSize: 'var(--text-small)',
               fontWeight: !showAllTasks ? 'var(--weight-ui)' : 'var(--weight-body)',
-              background: !showAllTasks ? 'rgba(45,138,138,0.08)' : 'none',
+              background: !showAllTasks ? 'var(--teal-active)' : 'none',
               color: !showAllTasks ? 'var(--teal)' : 'var(--slate)',
               border: 'none',
               cursor: 'pointer',
@@ -457,7 +457,7 @@ export default function MyTasks() {
               padding: 'var(--sp-xs) var(--sp-md)',
               fontSize: 'var(--text-small)',
               fontWeight: showAllTasks ? 'var(--weight-ui)' : 'var(--weight-body)',
-              background: showAllTasks ? 'rgba(45,138,138,0.08)' : 'none',
+              background: showAllTasks ? 'var(--teal-active)' : 'none',
               color: showAllTasks ? 'var(--teal)' : 'var(--slate)',
               border: 'none',
               cursor: 'pointer',
@@ -479,8 +479,8 @@ export default function MyTasks() {
           { key: 'waiting_on' as QuickFilter, label: 'Waiting On', count: filterCounts.waiting_on },
         ]).map(f => {
           const pillColor = f.key === 'overdue' ? { bg: 'rgba(122,0,25,0.1)', fg: 'var(--maroon)', border: 'rgba(122,0,25,0.3)' }
-            : f.key === 'waiting_on' ? { bg: 'rgba(201,168,76,0.12)', fg: 'var(--gold)', border: 'rgba(201,168,76,0.4)' }
-            : { bg: 'rgba(45,138,138,0.1)', fg: 'var(--teal)', border: 'rgba(45,138,138,0.3)' }
+            : f.key === 'waiting_on' ? { bg: 'var(--gold-emphasis)', fg: 'var(--gold)', border: 'rgba(201,168,76,0.4)' }
+            : { bg: 'var(--teal-active)', fg: 'var(--teal)', border: 'rgba(45,138,138,0.3)' }
           return (
           <button
             key={f.key}
@@ -562,13 +562,13 @@ export default function MyTasks() {
 
       {/* Waiting On summary — shown when filter is active */}
       {quickFilter === 'waiting_on' && displayTasks.length > 0 && (
-        <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'rgba(201,168,76,0.3)', backgroundColor: 'rgba(201,168,76,0.04)' }}>
+        <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'rgba(201,168,76,0.3)', backgroundColor: 'var(--gold-hover)' }}>
           <div className="flex items-center gap-2 mb-3">
             <Hourglass size={14} style={{ color: 'var(--gold)' }} />
             <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
               Waiting On Others
             </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.12)' }}>
+            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--gold)', backgroundColor: 'var(--gold-emphasis)' }}>
               {displayTasks.length} task{displayTasks.length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -686,7 +686,7 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
     background: isPinned
       ? 'linear-gradient(135deg, rgba(45,138,138,0.06), rgba(201,168,76,0.06))'
       : 'linear-gradient(135deg, rgba(45,138,138,0.02), rgba(201,168,76,0.02))',
-    borderColor: isPinned ? 'rgba(45,138,138,0.25)' : 'rgba(45,138,138,0.12)',
+    borderColor: isPinned ? 'rgba(45,138,138,0.25)' : 'var(--teal-emphasis)',
   }
 
   return (
@@ -866,7 +866,7 @@ function ViewDropdown({ view, setView, views }: { view: ViewMode; setView: (v: V
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
         style={{
           color: currentView ? 'var(--teal)' : 'var(--slate)',
-          backgroundColor: currentView ? 'rgba(45,138,138,0.08)' : 'transparent',
+          backgroundColor: currentView ? 'var(--teal-active)' : 'transparent',
           borderColor: currentView ? 'var(--teal)' : 'var(--border-light)',
           cursor: 'pointer',
         }}

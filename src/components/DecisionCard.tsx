@@ -79,7 +79,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
         {decision.outcome && (
           <div
             className="mb-2 px-3 py-2 rounded-lg"
-            style={{ background: 'rgba(45,138,138,0.04)', borderLeft: '3px solid var(--teal)' }}
+            style={{ background: 'var(--teal-hover)', borderLeft: '3px solid var(--teal)' }}
           >
             <p style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>
               <span style={{ fontWeight: 500 }}>Outcome:</span> {decision.outcome}
@@ -91,7 +91,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
         {needsOutcome && (
           <div
             className="mb-2 px-3 py-2 rounded-lg flex items-center gap-2"
-            style={{ background: 'rgba(201,168,76,0.06)', borderLeft: '3px solid var(--gold)' }}
+            style={{ background: 'var(--gold-hover)', borderLeft: '3px solid var(--gold)' }}
           >
             <AlertTriangle size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
             <span style={{ fontSize: '12px', color: 'var(--gold)', fontWeight: 500 }}>
@@ -131,7 +131,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
             <span
               key={tag}
               className="text-[10px] px-1.5 py-0.5 rounded-full"
-              style={{ fontWeight: 400, color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}
+              style={{ fontWeight: 400, color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}
             >
               {tag}
             </span>
@@ -149,7 +149,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
                   key={slug}
                   to={`/projects/${slug}`}
                   className="text-[10px] px-1.5 py-0.5 rounded-full hover:underline"
-                  style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.04)', textDecoration: 'none' }}
+                  style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)', textDecoration: 'none' }}
                 >
                   {title}
                 </Link>

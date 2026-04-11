@@ -23,9 +23,9 @@ type ViewMode = 'grid' | 'list'
 type SortMode = 'newest' | 'votes' | 'title'
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  new: { label: 'New', color: 'var(--teal)', bg: 'rgba(45,138,138,0.08)' },
-  under_review: { label: 'Under Review', color: 'var(--gold)', bg: 'rgba(201,168,76,0.08)' },
-  approved: { label: 'Approved', color: 'var(--green)', bg: 'rgba(34,197,94,0.08)' },
+  new: { label: 'New', color: 'var(--teal)', bg: 'var(--teal-active)' },
+  under_review: { label: 'Under Review', color: 'var(--gold)', bg: 'var(--gold-active)' },
+  approved: { label: 'Approved', color: 'var(--green)', bg: 'var(--green-hover)' },
   parked: { label: 'Parked', color: 'var(--slate)', bg: 'rgba(100,116,139,0.08)' },
   archived: { label: 'Archived', color: 'var(--slate)', bg: 'rgba(100,116,139,0.05)' },
 }
@@ -174,7 +174,7 @@ export default function Ideas() {
             style={{
               color: sortMode !== 'newest' ? 'var(--teal)' : 'var(--slate)',
               borderColor: sortMode !== 'newest' ? 'var(--teal)' : 'var(--border-light)',
-              backgroundColor: sortMode !== 'newest' ? 'rgba(45,138,138,0.06)' : 'transparent',
+              backgroundColor: sortMode !== 'newest' ? 'var(--teal-hover)' : 'transparent',
               cursor: 'pointer',
             }}
           >
@@ -189,7 +189,7 @@ export default function Ideas() {
             style={{
               fontSize: '12px',
               color: filterStatus ? 'var(--teal)' : 'var(--slate)',
-              backgroundColor: filterStatus ? 'rgba(45,138,138,0.06)' : 'transparent',
+              backgroundColor: filterStatus ? 'var(--teal-hover)' : 'transparent',
               borderColor: filterStatus ? 'var(--teal)' : 'var(--border-light)',
               cursor: 'pointer', appearance: 'none' as const, WebkitAppearance: 'none' as const,
               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
@@ -261,7 +261,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
           {status.label}
         </span>
         {idea.research_area && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--gold)', backgroundColor: 'var(--gold-hover)' }}>
             {idea.research_area}
           </span>
         )}
@@ -458,7 +458,7 @@ function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { id
               gap: 20,
               padding: 'var(--sp-sm) var(--sp-lg)',
               borderTop: '1px solid var(--border-subtle)',
-              background: 'rgba(45, 138, 138, 0.02)',
+              background: 'var(--teal-hover)',
             }}
           >
             {stats.map(s => (

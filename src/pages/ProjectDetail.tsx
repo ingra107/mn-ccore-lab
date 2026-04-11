@@ -372,7 +372,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               onClick={() => setShowAgendaForm(!showAgendaForm)}
               className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px]"
               style={{
-                background: showAgendaForm ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
+                background: showAgendaForm ? 'var(--gold)' : 'var(--gold-active)',
                 color: showAgendaForm ? '#0f1923' : 'var(--gold)',
                 border: '1px solid rgba(201,168,76,0.2)',
                 fontWeight: 500,
@@ -489,7 +489,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       transition: 'border-color 0.2s',
                     }}
                     onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--gold-emphasis)')}
                   />
                   {agendaNote.trim() && (
                     <motion.button
@@ -527,7 +527,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap"
             style={{
               color: activeTab === tab.id ? 'var(--teal)' : 'var(--slate)',
-              backgroundColor: activeTab === tab.id ? 'rgba(45,138,138,0.08)' : 'transparent',
+              backgroundColor: activeTab === tab.id ? 'var(--teal-active)' : 'transparent',
               border: 'none',
               cursor: 'pointer',
               opacity: activeTab === tab.id ? 1 : 0.6,
@@ -562,7 +562,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         <div
           className="mt-6 p-4 rounded-xl"
           style={{
-            background: 'rgba(201, 168, 76, 0.06)',
+            background: 'var(--gold-hover)',
             border: '1px solid rgba(201, 168, 76, 0.15)',
             marginBottom: '1.5rem',
           }}
@@ -1099,7 +1099,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     onClick={() => setTaskFilter(f)}
                     className="text-[10px] px-2.5 py-1 rounded-full font-medium transition-colors"
                     style={{
-                      background: taskFilter === f ? 'rgba(45,138,138,0.1)' : 'none',
+                      background: taskFilter === f ? 'var(--teal-active)' : 'none',
                       color: taskFilter === f ? 'var(--teal)' : 'var(--slate)',
                       border: `1px solid ${taskFilter === f ? 'var(--teal)' : 'var(--border-subtle)'}`,
                       cursor: 'pointer',

@@ -159,14 +159,14 @@ export default function NotificationBell() {
                   style={{
                     fontSize: '10px',
                     color: 'var(--gold)',
-                    background: 'rgba(201, 168, 76, 0.08)',
+                    background: 'var(--gold-active)',
                     border: 'none',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(201, 168, 76, 0.15)'
+                    e.currentTarget.style.background = 'var(--gold-emphasis)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(201, 168, 76, 0.08)'
+                    e.currentTarget.style.background = 'var(--gold-active)'
                   }}
                 >
                   <CheckCheck size={11} />
@@ -229,22 +229,22 @@ export default function NotificationBell() {
                             cursor: 'pointer',
                             transition: 'background 0.15s',
                             background: isImpact
-                              ? 'rgba(201, 168, 76, 0.07)'
-                              : isUnread ? 'rgba(201, 168, 76, 0.04)' : 'transparent',
+                              ? 'var(--gold-active)'
+                              : isUnread ? 'var(--gold-hover)' : 'transparent',
                             borderLeft: isImpact
                               ? '3px solid var(--gold)'
                               : isUnread ? '3px solid var(--gold)' : '3px solid transparent',
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.background = isImpact
-                              ? 'rgba(201, 168, 76, 0.12)'
-                              : 'rgba(201, 168, 76, 0.08)'
+                              ? 'var(--gold-emphasis)'
+                              : 'var(--gold-active)'
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.background = isImpact
-                              ? 'rgba(201, 168, 76, 0.07)'
+                              ? 'var(--gold-active)'
                               : isUnread
-                                ? 'rgba(201, 168, 76, 0.04)'
+                                ? 'var(--gold-hover)'
                                 : 'transparent'
                           }}
                         >
@@ -256,7 +256,7 @@ export default function NotificationBell() {
                               borderRadius: 'var(--radius-circle)',
                               background: isImpact
                                 ? 'rgba(201, 168, 76, 0.2)'
-                                : isUnread ? 'rgba(201, 168, 76, 0.12)' : 'var(--ice)',
+                                : isUnread ? 'var(--gold-emphasis)' : 'var(--ice)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',

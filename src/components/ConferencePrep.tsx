@@ -310,7 +310,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             padding: 'var(--sp-md)',
             borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
-            background: 'rgba(45,138,138,0.03)',
+            background: 'var(--teal-hover)',
           }}
         >
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>

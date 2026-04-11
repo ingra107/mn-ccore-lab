@@ -141,7 +141,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
+      style={{ backgroundColor: 'var(--overlay-medium)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
@@ -184,7 +184,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
               autoFocus
             />
             {similarDecisions.length > 0 && (
-              <div className="mt-3 p-3 rounded-lg" style={{ background: 'rgba(201,168,76,0.04)', border: '1px dashed rgba(201,168,76,0.2)' }}>
+              <div className="mt-3 p-3 rounded-lg" style={{ background: 'var(--gold-hover)', border: '1px dashed rgba(201,168,76,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-2">
                   <History size={12} style={{ color: 'var(--gold)' }} />
                   <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
@@ -274,7 +274,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
                       className="text-[10px] px-1.5 py-0.5 rounded-full transition-colors"
                       style={{
                         color: 'var(--teal)',
-                        backgroundColor: 'rgba(45,138,138,0.06)',
+                        backgroundColor: 'var(--teal-hover)',
                         border: '1px dashed rgba(45,138,138,0.2)',
                         cursor: 'pointer',
                       }}
@@ -298,7 +298,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
                     <span
                       key={slug}
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]"
-                      style={{ backgroundColor: 'rgba(45,138,138,0.08)', color: 'var(--teal)' }}
+                      style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)' }}
                     >
                       {projTitle}
                       <button

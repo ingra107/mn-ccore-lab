@@ -103,7 +103,7 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = 'rgba(201,168,76,0.25)'
-                    e.currentTarget.style.background = 'rgba(201,168,76,0.05)'
+                    e.currentTarget.style.background = 'var(--gold-hover)'
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = 'transparent'
@@ -121,7 +121,7 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
                     <div
                       className="w-7 h-7 rounded-full flex items-center justify-center"
                       style={{
-                        background: 'rgba(201,168,76,0.12)',
+                        background: 'var(--gold-emphasis)',
                         color: 'var(--gold)',
                         fontSize: '10px',
                         fontWeight: 600,
@@ -146,7 +146,7 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
                           style={{
                             background: source === 'publications'
                               ? 'rgba(59,130,246,0.08)'
-                              : 'rgba(201,168,76,0.08)',
+                              : 'var(--gold-active)',
                             color: source === 'publications'
                               ? '#3b82f6'
                               : 'var(--gold)',

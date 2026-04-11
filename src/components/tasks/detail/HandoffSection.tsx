@@ -131,7 +131,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
     <div>
       {showForm ? (
         <form onSubmit={handleSubmit}>
-          <div className="p-4 rounded-xl" style={{ background: 'rgba(45,138,138,0.04)', border: '1px solid rgba(45,138,138,0.15)' }}>
+          <div className="p-4 rounded-xl" style={{ background: 'var(--teal-hover)', border: '1px solid rgba(45,138,138,0.15)' }}>
             <div className="flex items-center gap-2 mb-3">
               <ArrowRightLeft size={14} style={{ color: 'var(--teal)' }} />
               <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--teal)' }}>
@@ -231,7 +231,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors"
           style={{
             color: 'var(--teal)',
-            background: 'rgba(45,138,138,0.06)',
+            background: 'var(--teal-hover)',
             border: '1px solid rgba(45,138,138,0.15)',
             cursor: 'pointer',
             fontWeight: 'var(--label-weight)',
@@ -254,7 +254,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
               const from = getPersonInfo(h.from_slug)
               const to = getPersonInfo(h.to_slug)
               return (
-                <div key={h.id} className="p-3 rounded-lg" style={{ background: 'rgba(45,138,138,0.03)', borderLeft: '3px solid var(--teal)' }}>
+                <div key={h.id} className="p-3 rounded-lg" style={{ background: 'var(--teal-hover)', borderLeft: '3px solid var(--teal)' }}>
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     <div className="flex items-center gap-1">
                       <div style={{ width: 20, height: 20 }}>
@@ -290,7 +290,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                         className="flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors"
                         style={{
                           color: 'var(--gold)',
-                          background: 'rgba(201,168,76,0.08)',
+                          background: 'var(--gold-active)',
                           border: '1px solid rgba(201,168,76,0.2)',
                           cursor: 'pointer',
                         }}

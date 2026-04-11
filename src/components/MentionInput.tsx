@@ -209,7 +209,7 @@ export default function MentionInput({
                 style={{
                   color: 'var(--gold)',
                   fontWeight: 600,
-                  background: 'rgba(201, 168, 76, 0.1)',
+                  background: 'var(--gold-active)',
                   borderRadius: 'var(--radius-sm)',
                 }}
               >
@@ -284,7 +284,7 @@ export default function MentionInput({
                   padding: 'var(--sp-sm) var(--sp-md)',
                   fontSize: '13px',
                   color: 'var(--ink)',
-                  background: index === selectedIndex ? 'rgba(201, 168, 76, 0.08)' : 'transparent',
+                  background: index === selectedIndex ? 'var(--gold-active)' : 'transparent',
                   border: 'none',
                   transition: 'background 0.1s',
                 }}

@@ -319,7 +319,7 @@ export default function MemberPage() {
                     key={interest}
                     className="inline-flex items-center px-3 py-1.5 rounded-full text-sm"
                     style={{
-                      background: 'rgba(201, 168, 76, 0.1)',
+                      background: 'var(--gold-active)',
                       color: 'var(--gold)',
                       fontWeight: 500,
                       border: '1px solid rgba(201, 168, 76, 0.2)',
@@ -444,7 +444,7 @@ export default function MemberPage() {
                     className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] cursor-pointer transition-opacity hover:opacity-80"
                     style={{
                       fontWeight: 400,
-                      background: 'rgba(45,138,138,0.10)',
+                      background: 'var(--teal-active)',
                       color: 'var(--teal)',
                       border: '1px solid rgba(45,138,138,0.2)',
                     }}

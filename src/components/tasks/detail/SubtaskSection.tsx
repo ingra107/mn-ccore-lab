@@ -153,7 +153,7 @@ export function SubtaskChecklist({ taskId }: { taskId: string }) {
 
       {/* Progress bar */}
       {total > 0 && (
-        <div style={{ width: '100%', height: 4, borderRadius: 'var(--radius-sm)', background: 'rgba(201, 168, 76, 0.15)', overflow: 'hidden', marginBottom: '0.75rem' }}>
+        <div style={{ width: '100%', height: 4, borderRadius: 'var(--radius-sm)', background: 'var(--gold-emphasis)', overflow: 'hidden', marginBottom: '0.75rem' }}>
           <div style={{ width: `${pct}%`, height: '100%', background: allDone ? 'var(--teal)' : 'var(--gold)', borderRadius: 'var(--radius-sm)', transition: 'width 0.3s ease' }} />
         </div>
       )}

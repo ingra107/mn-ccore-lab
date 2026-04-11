@@ -58,10 +58,10 @@ export default function UpcomingMeetingBanner() {
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = 'rgba(201,168,76,0.3)'
             e.currentTarget.style.boxShadow =
-              '0 4px 20px rgba(201,168,76,0.08)'
+              '0 4px 20px var(--gold-active)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)'
+            e.currentTarget.style.borderColor = 'var(--gold-emphasis)'
             e.currentTarget.style.boxShadow = 'none'
           }}
         >
@@ -70,7 +70,7 @@ export default function UpcomingMeetingBanner() {
             <div className="flex items-start gap-4">
               <div
                 className="flex-shrink-0 p-3 rounded-xl"
-                style={{ background: 'rgba(201,168,76,0.12)' }}
+                style={{ background: 'var(--gold-emphasis)' }}
               >
                 <Calendar
                   size={22}

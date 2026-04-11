@@ -116,7 +116,7 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
       <div
         style={{
           width: 32, height: 32, borderRadius: 'var(--radius-circle)', overflow: 'hidden',
-          background: isActive ? 'rgba(34, 197, 94, 0.08)' : 'rgba(100, 116, 139, 0.08)',
+          background: isActive ? 'var(--green-hover)' : 'rgba(100, 116, 139, 0.08)',
           border: isActive ? '1.5px solid rgba(34, 197, 94, 0.35)' : '1.5px solid rgba(100, 116, 139, 0.15)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'border-color 0.2s',

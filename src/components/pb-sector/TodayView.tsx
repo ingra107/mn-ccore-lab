@@ -294,7 +294,7 @@ function CalloutBlock({ line }: { line: ParsedLine }) {
       className="my-2 px-3 py-2 rounded-lg"
       style={{
         borderLeft: '3px solid var(--teal)',
-        background: 'rgba(45, 138, 138, 0.06)',
+        background: 'var(--teal-hover)',
         fontSize: 'var(--value-size)',
         lineHeight: '1.5',
         color: 'var(--ink)',

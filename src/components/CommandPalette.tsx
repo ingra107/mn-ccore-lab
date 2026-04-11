@@ -508,7 +508,7 @@ export default function CommandPalette() {
                       key={item.id}
                       className="flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors"
                       style={{
-                        backgroundColor: isSelected ? 'rgba(45, 138, 138, 0.08)' : 'transparent',
+                        backgroundColor: isSelected ? 'var(--teal-active)' : 'transparent',
                       }}
                       onClick={item.action}
                       onMouseEnter={() => setSelectedIndex(currentIdx)}

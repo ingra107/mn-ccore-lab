@@ -143,7 +143,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
           textAlign: 'center',
           cursor: 'pointer',
           transition: 'border-color 150ms, background 150ms',
-          background: dragOver ? 'rgba(45, 138, 138, 0.05)' : 'transparent',
+          background: dragOver ? 'var(--teal-hover)' : 'transparent',
         }}
         onClick={() => document.getElementById(`file-input-${entityType}-${entityId}`)?.click()}
       >

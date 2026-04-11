@@ -233,7 +233,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                     <span
                       className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full"
                       style={{
-                        backgroundColor: item.hint === 'Today' ? 'rgba(45,138,138,0.1)' : 'rgba(201,168,76,0.08)',
+                        backgroundColor: item.hint === 'Today' ? 'var(--teal-active)' : 'var(--gold-active)',
                         color: item.hint === 'Today' ? 'var(--teal)' : 'var(--gold)',
                       }}
                     >

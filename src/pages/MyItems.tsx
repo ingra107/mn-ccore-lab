@@ -399,7 +399,7 @@ function NotificationCard({
             width: 32,
             height: 32,
             borderRadius: 'var(--radius-lg)',
-            background: isUnread ? 'rgba(201, 168, 76, 0.15)' : 'var(--ice)',
+            background: isUnread ? 'var(--gold-emphasis)' : 'var(--ice)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

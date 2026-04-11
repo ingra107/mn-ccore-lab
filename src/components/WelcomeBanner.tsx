@@ -77,7 +77,7 @@ export default function WelcomeBanner() {
               color: 'var(--teal)',
               border: '1px solid rgba(45,138,138,0.2)',
               textDecoration: 'none',
-              background: 'rgba(45,138,138,0.05)',
+              background: 'var(--teal-hover)',
             }}
           >
             Get Started <ArrowRight size={12} />

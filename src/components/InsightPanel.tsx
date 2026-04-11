@@ -61,7 +61,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
                 e.currentTarget.style.borderColor = 'rgba(45,138,138,0.2)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(45,138,138,0.08)'
+                e.currentTarget.style.borderColor = 'var(--teal-active)'
               }}
             >
               {/* Strength indicator */}
@@ -94,7 +94,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
                       key={i}
                       className="inline-block px-1.5 py-0.5 rounded text-[10px]"
                       style={{
-                        background: 'rgba(45,138,138,0.08)',
+                        background: 'var(--teal-active)',
                         color: 'var(--teal)',
                       }}
                     >

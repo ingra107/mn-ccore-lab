@@ -268,14 +268,14 @@ export default function Home() {
               href="/team"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm transition-all duration-200"
               style={{
-                background: 'rgba(255, 255, 255, 0.06)',
+                background: 'var(--hover-light)',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
                 color: 'rgba(255, 255, 255, 0.85)',
                 fontWeight: 400,
                 textDecoration: 'none',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.10)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-medium)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-light)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)' }}
             >
               Meet the Team
             </a>

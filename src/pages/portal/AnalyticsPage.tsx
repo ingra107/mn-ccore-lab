@@ -511,7 +511,7 @@ export default function AnalyticsPage() {
                       {done}/{total}
                     </span>
                     {overdue > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'var(--maroon-hover)' }}>
                         {overdue} overdue
                       </span>
                     )}

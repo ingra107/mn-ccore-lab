@@ -104,7 +104,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                 transition: 'border-color 0.2s',
               }}
               onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--gold-emphasis)')}
             />
             {!isAuthenticated && import.meta.env.PROD && (
               <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
@@ -170,7 +170,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                       <div style={{ flex: 1 }}>
                         <div
                           style={{
-                            background: 'rgba(201,168,76,0.04)',
+                            background: 'var(--gold-hover)',
                             border: '1px solid rgba(201,168,76,0.15)',
                             borderRadius: 'var(--radius-lg)',
                             padding: 'var(--sp-sm) var(--sp-md)',

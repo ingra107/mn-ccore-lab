@@ -333,7 +333,7 @@ export default function Meetings() {
         {/* Page Header */}
         <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '2rem', paddingTop: '1.5rem' }}>
           <div className="flex items-center gap-3">
-            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.1)', flexShrink: 0 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--teal-active)', flexShrink: 0 }}>
               <Users size={19} style={{ color: 'var(--teal)' }} />
             </div>
             <h1
@@ -443,7 +443,7 @@ export default function Meetings() {
 
         {/* Meeting Cadence */}
         {cadence && cadence.recommendation !== 'no_upcoming' && (
-          <div className="p-4 rounded-xl mb-4" style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.12)' }}>
+          <div className="p-4 rounded-xl mb-4" style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.12)' }}>
             <div className="flex items-center gap-2 mb-2">
               <Activity size={14} style={{ color: 'var(--gold)' }} />
               <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
@@ -595,7 +595,7 @@ export default function Meetings() {
                       placeholder="What needs to be done?"
                       style={inputStyle}
                       onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)' }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
                       onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }}
                     />
                   </div>
@@ -677,7 +677,7 @@ export default function Meetings() {
                       placeholder="What needs to be done?"
                       style={inputStyle}
                       onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)' }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
                       onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }}
                     />
                   </div>
@@ -878,7 +878,7 @@ export default function Meetings() {
                       placeholder="Meeting title"
                       style={inputStyle}
                       onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)' }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
                     />
                   </div>
                 </div>
@@ -942,7 +942,7 @@ export default function Meetings() {
                           placeholder="Agenda item"
                           style={{ ...inputStyle, flex: 1 }}
                           onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                          onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)' }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }}
                         />
                         {newMeetingAgenda.length > 1 && (
                           <button
@@ -1033,7 +1033,7 @@ export default function Meetings() {
                   e.currentTarget.style.borderColor = 'var(--gold)'
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)'
+                  e.currentTarget.style.borderColor = 'var(--gold-emphasis)'
                 }}
               />
             </div>

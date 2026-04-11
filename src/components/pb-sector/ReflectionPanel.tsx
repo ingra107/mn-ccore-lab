@@ -76,7 +76,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-2 px-4 py-3 text-left"
-        style={{ background: 'rgba(201,168,76,0.03)', border: 'none', cursor: 'pointer' }}
+        style={{ background: 'var(--gold-hover)', border: 'none', cursor: 'pointer' }}
       >
         <BookOpen size={14} style={{ color: 'var(--gold)', opacity: 0.6 }} />
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
@@ -153,7 +153,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
                   style={{
                     fontSize: 'var(--label-size)', fontWeight: 600,
-                    background: hasContent ? 'var(--gold)' : 'rgba(201,168,76,0.15)',
+                    background: hasContent ? 'var(--gold)' : 'var(--gold-emphasis)',
                     color: hasContent ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                     border: 'none', cursor: hasContent ? 'pointer' : 'default',
                     opacity: hasContent ? 1 : 0.5,

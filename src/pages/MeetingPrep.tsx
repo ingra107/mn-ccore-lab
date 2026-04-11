@@ -119,7 +119,7 @@ export default function MeetingPrep() {
               <span
                 className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
                 style={{
-                  backgroundColor: days === 0 ? 'rgba(45,138,138,0.1)' : 'rgba(201,168,76,0.08)',
+                  backgroundColor: days === 0 ? 'var(--teal-active)' : 'var(--gold-active)',
                   color: days === 0 ? 'var(--teal)' : 'var(--gold)',
                 }}
               >

@@ -117,7 +117,7 @@ function ActivityFeedCard() {
                   className="flex items-start gap-3 py-2.5 relative group"
                   style={{
                     borderBottom: i < items.length - 1
-                      ? '1px solid rgba(201, 168, 76, 0.06)'
+                      ? '1px solid var(--gold-hover)'
                       : 'none',
                   }}
                 >

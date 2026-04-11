@@ -128,7 +128,7 @@ function ToolbarButton({ active, onClick, children }: { active: boolean; onClick
       type="button"
       onClick={onClick}
       style={{
-        background: active ? 'rgba(45,138,138,0.12)' : 'transparent',
+        background: active ? 'var(--teal-emphasis)' : 'transparent',
         color: active ? 'var(--teal)' : 'var(--slate)',
         border: 'none',
         borderRadius: 'var(--radius-sm)',

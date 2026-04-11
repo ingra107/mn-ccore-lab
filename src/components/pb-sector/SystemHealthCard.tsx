@@ -52,7 +52,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
         className="rounded-lg overflow-hidden animate-pulse"
         style={{
           border: '1px solid rgba(201,168,76,0.1)',
-          background: 'rgba(201,168,76,0.02)',
+          background: 'var(--gold-hover)',
           height: 120,
         }}
       />
@@ -66,7 +66,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
       className="rounded-lg overflow-hidden"
       style={{
         border: '1px solid rgba(201,168,76,0.1)',
-        background: 'rgba(201,168,76,0.02)',
+        background: 'var(--gold-hover)',
       }}
     >
       {/* Header */}

@@ -247,7 +247,7 @@ export default function Layout() {
                         ? '3px solid var(--gold)'
                         : '3px solid transparent',
                       background: location.pathname === link.to
-                        ? 'rgba(201, 168, 76, 0.08)'
+                        ? 'var(--gold-active)'
                         : 'transparent',
                       display: 'flex',
                       alignItems: 'center',
@@ -256,7 +256,7 @@ export default function Layout() {
                     }}
                     onMouseEnter={(e) => {
                       if (location.pathname !== link.to) {
-                        e.currentTarget.style.background = 'rgba(201, 168, 76, 0.06)'
+                        e.currentTarget.style.background = 'var(--gold-hover)'
                         e.currentTarget.style.borderLeftColor = 'rgba(201, 168, 76, 0.4)'
                       }
                     }}
@@ -378,7 +378,7 @@ export default function Layout() {
               className="block px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
               style={{
                 color: location.pathname === '/' ? 'var(--gold)' : 'var(--ink)',
-                background: location.pathname === '/' ? 'rgba(201, 168, 76, 0.1)' : 'transparent',
+                background: location.pathname === '/' ? 'var(--gold-active)' : 'transparent',
                 minHeight: '44px',
                 display: 'flex',
                 alignItems: 'center',
@@ -393,7 +393,7 @@ export default function Layout() {
               className="w-full px-4 py-3 rounded-md cursor-pointer text-base font-medium transition-colors duration-200"
               style={{
                 color: isResearchActive ? 'var(--gold)' : 'var(--ink)',
-                background: isResearchActive ? 'rgba(201, 168, 76, 0.1)' : 'transparent',
+                background: isResearchActive ? 'var(--gold-active)' : 'transparent',
                 minHeight: '44px',
                 display: 'flex',
                 alignItems: 'center',
@@ -429,7 +429,7 @@ export default function Layout() {
                   className="block py-2.5 rounded-md cursor-pointer text-sm font-medium transition-colors duration-200"
                   style={{
                     color: location.pathname === link.to ? 'var(--gold)' : 'var(--ink)',
-                    background: location.pathname === link.to ? 'rgba(201, 168, 76, 0.08)' : 'transparent',
+                    background: location.pathname === link.to ? 'var(--gold-active)' : 'transparent',
                     minHeight: '40px',
                     display: 'flex',
                     alignItems: 'center',
@@ -493,7 +493,7 @@ export default function Layout() {
                       : 'var(--ink)',
                   background:
                     location.pathname === link.to
-                      ? 'rgba(201, 168, 76, 0.1)'
+                      ? 'var(--gold-active)'
                       : 'transparent',
                   minHeight: '44px',
                   display: 'flex',

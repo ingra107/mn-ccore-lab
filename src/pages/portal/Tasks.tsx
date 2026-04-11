@@ -346,7 +346,7 @@ export default function Tasks() {
               onClick={() => setMyTasksOnly(!myTasksOnly)}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
               style={{
-                backgroundColor: myTasksOnly ? 'rgba(45,138,138,0.1)' : 'transparent',
+                backgroundColor: myTasksOnly ? 'var(--teal-active)' : 'transparent',
                 color: myTasksOnly ? 'var(--teal)' : 'var(--slate)',
                 border: `1px solid ${myTasksOnly ? 'rgba(45,138,138,0.3)' : 'var(--border-light)'}`,
                 cursor: 'pointer',
@@ -382,7 +382,7 @@ export default function Tasks() {
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
             style={{
-              backgroundColor: showFilters || activeFilterCount > 0 ? 'rgba(45,138,138,0.08)' : 'transparent',
+              backgroundColor: showFilters || activeFilterCount > 0 ? 'var(--teal-active)' : 'transparent',
               color: showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--slate)',
               border: `1px solid ${showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--border-light)'}`,
               cursor: 'pointer',

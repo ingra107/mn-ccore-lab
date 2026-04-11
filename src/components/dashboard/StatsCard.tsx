@@ -25,7 +25,7 @@ function MiniStat({ icon: Icon, value, label, suffix = '', delay }: StatItem & {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'rgba(201, 168, 76, 0.08)',
+          background: 'var(--gold-active)',
           flexShrink: 0,
         }}
       >

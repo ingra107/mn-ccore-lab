@@ -51,7 +51,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
     padding: '5px 10px',
     borderRadius: 'var(--radius-lg)',
     border: '1px solid rgba(255,255,255,0.1)',
-    background: active ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)',
+    background: active ? 'rgba(255,255,255,0.15)' : 'var(--hover-medium)',
     color: 'var(--ink-bright, #fff)',
     fontSize: 13,
     fontWeight: 'var(--label-weight)',
@@ -108,7 +108,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
               height: 22,
               borderRadius: 'var(--radius-md)',
               border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.08)',
+              background: 'var(--hover-medium)',
               color: 'rgba(255,255,255,0.6)',
               cursor: 'pointer',
               padding: 0,
@@ -175,7 +175,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                       onBulkAction('status', opt.value)
                       setShowStatus(false)
                     }}
-                    className="transition-colors hover:bg-[rgba(255,255,255,0.08)]"
+                    className="transition-colors hover:bg-[var(--hover-medium)]"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -248,7 +248,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                       onBulkAction('assign', member.slug)
                       setShowAssign(false)
                     }}
-                    className="transition-colors hover:bg-[rgba(255,255,255,0.08)]"
+                    className="transition-colors hover:bg-[var(--hover-medium)]"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -269,7 +269,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                         width: 24,
                         height: 24,
                         borderRadius: 'var(--radius-md)',
-                        background: 'rgba(201,168,76,0.15)',
+                        background: 'var(--gold-emphasis)',
                         color: 'var(--gold)',
                         display: 'flex',
                         alignItems: 'center',
@@ -327,7 +327,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                       onBulkAction('priority', opt.value)
                       setShowPriority(false)
                     }}
-                    className="transition-colors hover:bg-[rgba(255,255,255,0.08)]"
+                    className="transition-colors hover:bg-[var(--hover-medium)]"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -394,7 +394,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
             style={{
               ...buttonStyle(deleteConfirm),
               color: 'var(--maroon)',
-              borderColor: deleteConfirm ? 'var(--maroon)' : 'rgba(255,255,255,0.1)',
+              borderColor: deleteConfirm ? 'var(--maroon)' : 'var(--hover-medium)',
             }}
           >
             {deleteConfirm ? <AlertTriangle size={14} /> : <Trash2 size={14} />}

@@ -79,7 +79,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
                     className="text-[10px] px-1.5 py-0.5 rounded-full"
                     style={{
                       color: decision.outcome_status === 'recorded' ? 'var(--teal)' : 'var(--gold)',
-                      backgroundColor: decision.outcome_status === 'recorded' ? 'rgba(45,138,138,0.08)' : 'rgba(201,168,76,0.08)',
+                      backgroundColor: decision.outcome_status === 'recorded' ? 'var(--teal-active)' : 'var(--gold-active)',
                     }}
                   >
                     {decision.outcome_status}

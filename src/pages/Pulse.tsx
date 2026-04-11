@@ -59,7 +59,7 @@ export default function Pulse() {
             {pendingTasks.slice(0, 4).map((t) => {
               const person = getPersonInfo(t.assignee)
               return (
-                <div key={t.id} className="flex items-center gap-3 px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                <div key={t.id} className="flex items-center gap-3 px-4 py-2 rounded-lg" style={{ backgroundColor: 'var(--hover-light)' }}>
                   <span className="text-lg" style={{ color: 'var(--cream)' }}>
                     {formatBrandName(t.title || t.description)}
                   </span>
@@ -96,7 +96,7 @@ export default function Pulse() {
         content: (
           <div className="flex flex-col gap-3">
             {grants.slice(0, 5).map((g, i) => (
-              <div key={i} className="flex items-center gap-4 px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+              <div key={i} className="flex items-center gap-4 px-4 py-2 rounded-lg" style={{ backgroundColor: 'var(--hover-light)' }}>
                 <span className="text-sm font-semibold px-3 py-1 rounded" style={{ color: 'var(--ink-bright, #fff)', backgroundColor: g.proposed ? 'var(--gold)' : 'var(--teal)' }}>
                   {g.mechanism}
                 </span>
@@ -119,7 +119,7 @@ export default function Pulse() {
         content: (
           <div className="flex flex-col gap-3">
             {deadlines.map((t) => (
-              <div key={t.id} className="flex items-center gap-4 px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+              <div key={t.id} className="flex items-center gap-4 px-4 py-2 rounded-lg" style={{ backgroundColor: 'var(--hover-light)' }}>
                 <span className="text-sm font-semibold px-3 py-1 rounded" style={{ color: 'var(--ink-bright, #fff)', backgroundColor: overdueTasks.includes(t) ? 'var(--maroon)' : 'var(--teal)' }}>
                   {formatShortDate(t.due_date!)}
                 </span>
@@ -140,7 +140,7 @@ export default function Pulse() {
         content: (
           <div className="flex flex-col gap-3">
             {activity.map((a) => (
-              <div key={a.id} className="flex items-center gap-3 px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+              <div key={a.id} className="flex items-center gap-3 px-4 py-2 rounded-lg" style={{ backgroundColor: 'var(--hover-light)' }}>
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--gold)', opacity: 0.6 }} />
                 <span className="text-lg" style={{ color: 'var(--cream)' }}>
                   {formatBrandName(a.description)}

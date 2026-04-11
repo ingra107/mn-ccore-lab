@@ -88,7 +88,7 @@ function PipelineCard() {
                   style={{
                     height: '32px',
                     borderRadius: 'var(--radius-lg)',
-                    background: 'rgba(201, 168, 76, 0.06)',
+                    background: 'var(--gold-hover)',
                     overflow: 'hidden',
                     position: 'relative',
                   }}

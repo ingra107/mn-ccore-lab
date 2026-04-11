@@ -149,9 +149,9 @@ function CascadeRow({
           borderRadius: 'var(--radius-md)',
           border: isSelected ? `1px solid ${color}` : '1px solid transparent',
           background: isImpacted
-            ? 'rgba(201,168,76,0.08)'
+            ? 'var(--gold-active)'
             : isSelected
-              ? 'rgba(45,138,138,0.04)'
+              ? 'var(--teal-hover)'
               : 'transparent',
           transition: 'all 150ms ease',
         }}
@@ -231,7 +231,7 @@ function CascadeRow({
               fontSize: '10px',
               fontWeight: 500,
               color: impactItem.shift_days > 0 ? 'var(--gold)' : 'var(--teal)',
-              background: impactItem.shift_days > 0 ? 'rgba(201,168,76,0.12)' : 'color-mix(in srgb, var(--teal) 12%, transparent)',
+              background: impactItem.shift_days > 0 ? 'var(--gold-emphasis)' : 'color-mix(in srgb, var(--teal) 12%, transparent)',
               padding: '2px 6px',
               borderRadius: 'var(--radius-sm)',
               flexShrink: 0,
@@ -305,7 +305,7 @@ function CascadeRow({
                 top: 0,
                 bottom: 0,
                 width: 1,
-                background: 'rgba(255,255,255,0.1)',
+                background: 'var(--hover-medium)',
               }} />
               {node.children.map(child => (
                 <CascadeRow
@@ -352,7 +352,7 @@ function WhatIfPanel({
         padding: 'var(--sp-lg)',
         borderRadius: 'var(--radius-lg)',
         border: '1px solid rgba(201,168,76,0.2)',
-        background: 'rgba(201,168,76,0.03)',
+        background: 'var(--gold-hover)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--sp-md)' }}>
@@ -405,7 +405,7 @@ function WhatIfPanel({
             padding: 'var(--sp-xs) var(--sp-md)',
             borderRadius: 'var(--radius-sm)',
             border: '1px solid rgba(201,168,76,0.3)',
-            background: 'rgba(201,168,76,0.1)',
+            background: 'var(--gold-active)',
             color: 'var(--gold)',
             cursor: !newDate || isLoading ? 'not-allowed' : 'pointer',
             opacity: !newDate || isLoading ? 0.5 : 1,
@@ -432,7 +432,7 @@ function WhatIfPanel({
                 gap: 'var(--sp-sm)',
                 padding: '6px 10px',
                 borderRadius: 'var(--radius-sm)',
-                background: item.shift_days > 0 ? 'rgba(201,168,76,0.06)' : 'rgba(45,138,138,0.06)',
+                background: item.shift_days > 0 ? 'var(--gold-hover)' : 'var(--teal-hover)',
               }}>
                 <span style={{ fontSize: '12px', color: 'var(--ink)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
                   {item.title}

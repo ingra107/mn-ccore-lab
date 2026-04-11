@@ -64,8 +64,8 @@ function parseJsonArray(s: string | null): string[] {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  upcoming: { bg: 'rgba(45, 138, 138, 0.15)', text: 'var(--teal)' },
-  'in-progress': { bg: 'rgba(201, 168, 76, 0.15)', text: 'var(--gold)' },
+  upcoming: { bg: 'var(--teal-emphasis)', text: 'var(--teal)' },
+  'in-progress': { bg: 'var(--gold-emphasis)', text: 'var(--gold)' },
   completed: { bg: 'rgba(34, 197, 94, 0.12)', text: 'var(--green-light)' },
 }
 
@@ -219,7 +219,7 @@ export default function MeetingDetail() {
                 fontSize: 'var(--label-size)',
                 color: 'var(--teal)', textDecoration: 'none',
                 border: '1px solid rgba(45,138,138,0.2)',
-                background: 'rgba(45,138,138,0.05)',
+                background: 'var(--teal-hover)',
               }}
             >
               <ListChecks size={11} /> Prep View
@@ -258,7 +258,7 @@ export default function MeetingDetail() {
                 fontSize: 'var(--label-size)',
                 color: copiedSummary ? 'var(--green)' : 'var(--slate)',
                 border: `1px solid ${copiedSummary ? 'var(--green)' : 'var(--border-subtle)'}`,
-                background: copiedSummary ? 'rgba(34,197,94,0.06)' : 'none',
+                background: copiedSummary ? 'var(--green-hover)' : 'none',
                 cursor: 'pointer',
                 opacity: copiedSummary ? 1 : 0.6,
               }}
@@ -320,7 +320,7 @@ export default function MeetingDetail() {
                     fontSize: 'var(--label-size)',
                     padding: '2px 8px',
                     borderRadius: 'var(--radius-lg)',
-                    backgroundColor: 'rgba(45,138,138,0.08)',
+                    backgroundColor: 'var(--teal-active)',
                     color: 'var(--teal)',
                     textDecoration: 'none',
                     fontWeight: 'var(--label-weight)',
@@ -418,7 +418,7 @@ export default function MeetingDetail() {
                     <div
                       className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg"
                       style={{
-                        background: 'rgba(45,138,138,0.06)',
+                        background: 'var(--teal-hover)',
                         border: '1px solid rgba(45,138,138,0.15)',
                       }}
                     >
@@ -541,7 +541,7 @@ export default function MeetingDetail() {
                       padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
                     }}
                     onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--gold-emphasis)')}
                   />
                   <input
                     type="text"
@@ -660,7 +660,7 @@ export default function MeetingDetail() {
                 <button
                   onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
                   className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 'var(--radius-md)', padding: 'var(--sp-xs) var(--sp-sm)', cursor: 'pointer', color: 'var(--gold)', fontSize: 'var(--label-size)' }}
+                  style={{ background: 'var(--gold-active)', border: 'none', borderRadius: 'var(--radius-md)', padding: 'var(--sp-xs) var(--sp-sm)', cursor: 'pointer', color: 'var(--gold)', fontSize: 'var(--label-size)' }}
                 >
                   Edit
                 </button>
@@ -672,10 +672,10 @@ export default function MeetingDetail() {
 
       <style>{`
         .dark .detail-card { background-color: var(--cream) !important; background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important; border: 1px solid var(--border-subtle); }
-        .action-item-row:active { background: rgba(201, 168, 76, 0.06); }
-        .action-item-row:hover { background: rgba(201, 168, 76, 0.04); }
-        .dark .action-item-row:active { background: rgba(201, 168, 76, 0.1); }
-        .dark .action-item-row:hover { background: rgba(201, 168, 76, 0.06); }
+        .action-item-row:active { background: var(--gold-hover); }
+        .action-item-row:hover { background: var(--gold-hover); }
+        .dark .action-item-row:active { background: var(--gold-active); }
+        .dark .action-item-row:hover { background: var(--gold-hover); }
         .attendee-scroll { scrollbar-width: none; -ms-overflow-style: none; }
         .attendee-scroll::-webkit-scrollbar { display: none; }
         @media (max-width: 640px) {
@@ -780,7 +780,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
   return (
     <div
       className="action-item-row flex items-start gap-3 py-2.5"
-      style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)', cursor: 'pointer', borderRadius: 'var(--radius-md)', margin: '0 -8px', padding: '10px 8px', transition: 'background 0.15s', background: selected ? 'rgba(45,138,138,0.04)' : undefined }}
+      style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)', cursor: 'pointer', borderRadius: 'var(--radius-md)', margin: '0 -8px', padding: '10px 8px', transition: 'background 0.15s', background: selected ? 'var(--teal-hover)' : undefined }}
       onClick={() => onToggle?.(item.id)}
       role="button"
       tabIndex={0}
@@ -944,7 +944,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
           className="flex flex-wrap items-center gap-1.5 mt-1.5 ml-6"
         >
           {parsed.assigneeName && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'rgba(201,168,76,0.12)', color: 'var(--gold)' }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--gold-emphasis)', color: 'var(--gold)' }}>
               @{parsed.assigneeName}
             </span>
           )}
@@ -954,12 +954,12 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
             </span>
           )}
           {parsed.dueDate && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--teal-active)', color: 'var(--teal)' }}>
               Due {parsed.dueDate}
             </span>
           )}
           {parsed.projectTitle && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'var(--teal-active)', color: 'var(--teal)' }}>
               #{parsed.projectTitle}
             </span>
           )}
@@ -1009,7 +1009,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
               padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', transition: 'border-color 0.2s',
             }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-            onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--gold-emphasis)')}
           />
         </div>
         {!isAuthenticated && import.meta.env.PROD && !text.trim() && (
@@ -1110,7 +1110,7 @@ function AttendanceSection({ meetingId, attendees }: { meetingId: string; attend
                 onClick={() => toggleAttendee(slug)}
                 className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] transition-colors"
                 style={{
-                  background: present ? 'rgba(45,138,138,0.1)' : 'none',
+                  background: present ? 'var(--teal-active)' : 'none',
                   border: `1px solid ${present ? 'var(--teal)' : 'var(--border-subtle)'}`,
                   color: present ? 'var(--teal)' : 'var(--slate)',
                   cursor: 'pointer',

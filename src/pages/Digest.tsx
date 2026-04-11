@@ -53,7 +53,7 @@ function parseTopics(topicsJson: string | null): string[] {
 
 function relevanceColor(score: number): { bg: string; text: string; label: string } {
   if (score >= 0.7) return { bg: 'rgba(34, 197, 94, 0.12)', text: 'var(--green)', label: 'High' }
-  if (score >= 0.4) return { bg: 'rgba(201, 168, 76, 0.15)', text: 'var(--gold)', label: 'Medium' }
+  if (score >= 0.4) return { bg: 'var(--gold-emphasis)', text: 'var(--gold)', label: 'Medium' }
   return { bg: 'rgba(100, 116, 139, 0.1)', text: 'var(--slate)', label: 'Low' }
 }
 
@@ -232,7 +232,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                   className="inline-block rounded-full px-2 py-0.5 text-xs"
                   style={{
                     fontSize: '10px',
-                    background: 'rgba(201, 168, 76, 0.1)',
+                    background: 'var(--gold-active)',
                     color: 'var(--gold)',
                     border: '1px solid rgba(201, 168, 76, 0.2)',
                   }}
@@ -327,7 +327,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
             onClick={handleSave}
             className="cursor-pointer p-2 rounded-md transition-colors duration-200"
             style={{
-              background: isSaved ? 'rgba(201, 168, 76, 0.15)' : 'transparent',
+              background: isSaved ? 'var(--gold-emphasis)' : 'transparent',
               color: isSaved ? 'var(--gold)' : 'var(--slate)',
               border: 'none',
               minWidth: '36px',
@@ -364,7 +364,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
               onClick={(e) => { e.stopPropagation(); setShowLinkPicker(!showLinkPicker) }}
               className="cursor-pointer p-2 rounded-md transition-colors duration-200"
               style={{
-                background: showLinkPicker ? 'rgba(201, 168, 76, 0.15)' : 'transparent',
+                background: showLinkPicker ? 'var(--gold-emphasis)' : 'transparent',
                 color: linkSuccess ? 'var(--teal)' : showLinkPicker ? 'var(--gold)' : 'var(--slate)',
                 border: 'none',
                 minWidth: '36px',
@@ -417,7 +417,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                       setLinkSuccess(proj.title)
                       setTimeout(() => setLinkSuccess(null), 2000)
                     }}
-                    className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150 hover:bg-[rgba(201,168,76,0.08)]"
+                    className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150 hover:bg-[var(--gold-active)]"
                     style={{
                       fontSize: '12px',
                       color: 'var(--ink)',
@@ -446,7 +446,7 @@ function EmptyState() {
     <div className="text-center py-16 sm:py-24">
       <div
         className="mx-auto mb-6 w-16 h-16 rounded-2xl flex items-center justify-center"
-        style={{ background: 'rgba(201, 168, 76, 0.1)' }}
+        style={{ background: 'var(--gold-active)' }}
       >
         <Search size={28} style={{ color: 'var(--gold)', opacity: 0.7 }} />
       </div>
@@ -654,7 +654,7 @@ export default function Digest() {
                       className="cursor-pointer rounded-full px-3 py-1.5 text-sm transition-all duration-200"
                       style={{
                         fontWeight: isActive ? 600 : 400,
-                        background: isActive ? 'var(--gold)' : 'rgba(201, 168, 76, 0.08)',
+                        background: isActive ? 'var(--gold)' : 'var(--gold-active)',
                         color: isActive ? 'var(--cream)' : 'var(--ink)',
                         border: isActive
                           ? '1px solid var(--gold)'
@@ -693,7 +693,7 @@ export default function Digest() {
 
           {/* Status filter tabs */}
           <div className="flex flex-wrap items-center gap-4 mb-4">
-            <div className="flex gap-1 rounded-lg p-1" style={{ background: 'rgba(201, 168, 76, 0.06)' }}>
+            <div className="flex gap-1 rounded-lg p-1" style={{ background: 'var(--gold-hover)' }}>
               {(
                 [
                   { key: 'all' as StatusFilter, label: 'All', count: statusCounts.all },
@@ -801,7 +801,7 @@ export default function Digest() {
                   className="cursor-pointer rounded-full px-2.5 py-1 text-xs transition-all duration-200"
                   style={{
                     fontSize: '10px',
-                    background: 'rgba(122, 0, 25, 0.08)',
+                    background: 'var(--maroon-hover)',
                     color: 'var(--maroon)',
                     border: '1px solid rgba(122, 0, 25, 0.2)',
                   }}
@@ -820,11 +820,11 @@ export default function Digest() {
                       fontSize: '10px',
                       background: isActive
                         ? 'var(--gold)'
-                        : 'rgba(201, 168, 76, 0.08)',
+                        : 'var(--gold-active)',
                       color: isActive ? 'var(--cream)' : 'var(--gold)',
                       border: isActive
                         ? '1px solid var(--gold)'
-                        : '1px solid rgba(201, 168, 76, 0.15)',
+                        : '1px solid var(--gold-emphasis)',
                     }}
                   >
                     {topic}

@@ -63,7 +63,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
       style={{
         borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-light)',
         borderLeft: `3px solid ${effectiveBorderColor}`,
-        backgroundColor: isDone ? 'rgba(0,0,0,0.02)' : 'var(--cream)',
+        backgroundColor: isDone ? 'var(--hover-subtle)' : 'var(--cream)',
         opacity: isDone ? 0.7 : 1,
         cursor: onClick ? 'pointer' : 'default',
       }}

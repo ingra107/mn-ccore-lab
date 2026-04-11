@@ -13,10 +13,10 @@ import ReactionBar from './ReactionBar'
 import { useToast } from '../hooks/useToast'
 
 const TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; borderBg: string; label: string }> = {
-  progress: { icon: TrendingUp, color: 'var(--teal)', bg: 'rgba(45, 138, 138, 0.1)', borderBg: 'rgba(45, 138, 138, 0.25)', label: 'Progress' },
+  progress: { icon: TrendingUp, color: 'var(--teal)', bg: 'var(--teal-active)', borderBg: 'rgba(45, 138, 138, 0.25)', label: 'Progress' },
   blocker: { icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122, 0, 25, 0.1)', borderBg: 'rgba(122, 0, 25, 0.25)', label: 'Blocker' },
   result: { icon: CheckCircle, color: 'var(--green-light)', bg: 'rgba(34, 197, 94, 0.1)', borderBg: 'rgba(34, 197, 94, 0.25)', label: 'Result' },
-  question: { icon: HelpCircle, color: 'var(--gold)', bg: 'rgba(201, 168, 76, 0.1)', borderBg: 'rgba(201, 168, 76, 0.25)', label: 'Question' },
+  question: { icon: HelpCircle, color: 'var(--gold)', bg: 'var(--gold-active)', borderBg: 'rgba(201, 168, 76, 0.25)', label: 'Question' },
 }
 
 interface Props {
@@ -109,7 +109,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
                 lineHeight: 1.5, transition: 'border-color 0.2s', width: '100%',
               }}
               onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--gold-emphasis)')}
             />
             {text.trim() && (
               <motion.button type="submit" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}

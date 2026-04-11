@@ -260,7 +260,7 @@ export default function Deadlines() {
             style={{
               fontSize: '12px',
               color: filterType ? 'var(--teal)' : 'var(--slate)',
-              backgroundColor: filterType ? 'rgba(45,138,138,0.06)' : 'transparent',
+              backgroundColor: filterType ? 'var(--teal-hover)' : 'transparent',
               borderColor: filterType ? 'var(--teal)' : 'var(--border-light)',
               cursor: 'pointer',
               appearance: 'none' as const,
@@ -290,7 +290,7 @@ export default function Deadlines() {
           <div
             className="mt-3 flex items-center gap-3 px-4 py-3 rounded-lg border"
             style={{
-              background: isOver ? 'rgba(122,0,25,0.04)' : 'rgba(45,138,138,0.04)',
+              background: isOver ? 'var(--maroon-hover)' : 'var(--teal-hover)',
               borderColor: isOver ? 'rgba(122,0,25,0.2)' : 'rgba(45,138,138,0.2)',
             }}
           >
@@ -301,7 +301,7 @@ export default function Deadlines() {
             <span
               className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
               style={{
-                backgroundColor: isOver ? 'rgba(122,0,25,0.1)' : 'rgba(45,138,138,0.1)',
+                backgroundColor: isOver ? 'rgba(122,0,25,0.1)' : 'var(--teal-active)',
                 color: isOver ? 'var(--maroon)' : 'var(--teal)',
               }}
             >
@@ -377,7 +377,7 @@ export default function Deadlines() {
                   gap: 'var(--sp-xl)',
                   padding: 'var(--sp-sm) var(--sp-lg)',
                   borderTop: '1px solid var(--border-subtle)',
-                  background: 'rgba(45, 138, 138, 0.02)',
+                  background: 'var(--teal-hover)',
                 }}
               >
                 {[
@@ -703,7 +703,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 
         {/* Priority */}
         {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: item.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: item.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: item.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: item.priority === 'urgent' ? 'var(--maroon-hover)' : 'var(--orange-hover)' }}>
             {item.priority}
           </span>
         )}
@@ -731,7 +731,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {/* Future Me note callout — shown when milestone is due within 7 days */}
       {isMilestone && item.future_note && isDueSoon && !isDone && (
         <div className="ml-8 mr-3 mt-1 mb-2 p-3 rounded-lg" style={{
-          background: 'rgba(201,168,76,0.06)',
+          background: 'var(--gold-hover)',
           border: '1px solid rgba(201,168,76,0.15)',
           borderLeft: '3px solid var(--gold)',
         }}>
@@ -776,7 +776,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {/* Inline note editor */}
       {isMilestone && editingNote && (
         <div className="ml-8 mr-3 mt-1 mb-2 p-3 rounded-lg" style={{
-          background: 'rgba(201,168,76,0.04)',
+          background: 'var(--gold-hover)',
           border: '1px solid rgba(201,168,76,0.2)',
         }}>
           <div className="flex items-center gap-1.5 mb-2">
@@ -819,7 +819,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
               style={{
                 color: 'var(--gold)',
-                background: 'rgba(201,168,76,0.1)',
+                background: 'var(--gold-active)',
                 border: '1px solid rgba(201,168,76,0.2)',
                 cursor: saving ? 'wait' : 'pointer',
                 opacity: saving ? 0.6 : 1,
@@ -839,7 +839,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 
 const CONF_STATUS_PILL: Record<string, { bg: string; color: string }> = {
   planning: { bg: 'rgba(129,140,153,0.12)', color: 'var(--slate)' },
-  submitted: { bg: 'rgba(201,168,76,0.12)', color: 'var(--gold)' },
+  submitted: { bg: 'var(--gold-emphasis)', color: 'var(--gold)' },
   accepted: { bg: 'color-mix(in srgb, var(--teal) 12%, transparent)', color: 'var(--teal)' },
   preparing: { bg: 'rgba(91,155,213,0.12)', color: '#5b9bd5' },
   presented: { bg: 'rgba(52,168,83,0.12)', color: '#34a853' },

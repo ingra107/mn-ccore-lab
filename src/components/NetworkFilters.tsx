@@ -46,11 +46,11 @@ function Pill({
       style={{
         fontSize: '11px',
         minHeight: '28px',
-        background: active ? 'rgba(201, 168, 76, 0.9)' : 'rgba(255, 255, 255, 0.08)',
+        background: active ? 'rgba(201, 168, 76, 0.9)' : 'var(--hover-medium)',
         color: active ? '#0f1923' : 'rgba(255, 255, 255, 0.6)',
         border: active
           ? '1px solid rgba(201, 168, 76, 0.6)'
-          : '1px solid rgba(255, 255, 255, 0.1)',
+          : '1px solid var(--hover-medium)',
         transitionProperty: 'background-color, color, border-color',
         transitionDuration: '150ms',
         transitionTimingFunction: 'ease',
@@ -189,7 +189,7 @@ export default function NetworkFilters({
         style={{
           width: '1px',
           height: '20px',
-          background: 'rgba(201, 168, 76, 0.15)',
+          background: 'var(--gold-emphasis)',
         }}
       />
 
@@ -211,7 +211,7 @@ export default function NetworkFilters({
         style={{
           width: '1px',
           height: '20px',
-          background: 'rgba(201, 168, 76, 0.15)',
+          background: 'var(--gold-emphasis)',
         }}
       />
 
@@ -225,11 +225,11 @@ export default function NetworkFilters({
           minHeight: '28px',
           background: filters.mnccoreOnly
             ? 'rgba(201, 168, 76, 0.9)'
-            : 'rgba(255, 255, 255, 0.08)',
+            : 'var(--hover-medium)',
           color: filters.mnccoreOnly ? '#0f1923' : 'rgba(255, 255, 255, 0.6)',
           border: filters.mnccoreOnly
             ? '1px solid rgba(201, 168, 76, 0.6)'
-            : '1px solid rgba(255, 255, 255, 0.1)',
+            : '1px solid var(--hover-medium)',
           transitionProperty: 'background-color, color, border-color',
           transitionDuration: '150ms',
         }}

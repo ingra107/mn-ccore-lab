@@ -140,7 +140,7 @@ export default function OnboardingChecklist() {
             <div style={{
               height: 4,
               borderRadius: 'var(--radius-sm)',
-              background: 'rgba(45,138,138,0.1)',
+              background: 'var(--teal-active)',
               overflow: 'hidden',
             }}>
               <motion.div
@@ -200,7 +200,7 @@ export default function OnboardingChecklist() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'rgba(201,168,76,0.1)',
+            background: 'var(--gold-active)',
             flexShrink: 0,
           }}
         >
@@ -266,7 +266,7 @@ export default function OnboardingChecklist() {
         <div style={{
           height: 6,
           borderRadius: 'var(--radius-sm)',
-          background: 'rgba(45,138,138,0.08)',
+          background: 'var(--teal-active)',
           overflow: 'hidden',
         }}>
           <motion.div
@@ -334,7 +334,7 @@ export default function OnboardingChecklist() {
                         className="flex items-start gap-2.5 py-2 px-2 rounded-lg transition-colors"
                         style={{
                           opacity: !unlocked ? 0.4 : 1,
-                          background: done ? 'rgba(45,138,138,0.03)' : 'transparent',
+                          background: done ? 'var(--teal-hover)' : 'transparent',
                         }}
                       >
                         {/* Checkbox */}
@@ -393,7 +393,7 @@ export default function OnboardingChecklist() {
                         {step.link && !done && unlocked && (
                           <Link
                             to={step.link}
-                            className="flex items-center gap-1 px-2 py-1 rounded-md transition-colors hover:bg-[rgba(45,138,138,0.06)] flex-shrink-0"
+                            className="flex items-center gap-1 px-2 py-1 rounded-md transition-colors hover:bg-[var(--teal-hover)] flex-shrink-0"
                             style={{
                               fontSize: 10,
                               color: 'var(--teal)',

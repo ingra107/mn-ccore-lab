@@ -103,7 +103,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
           transition: 'all 0.12s ease',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(45,138,138,0.06)'
+          e.currentTarget.style.background = 'var(--teal-hover)'
           e.currentTarget.style.borderColor = 'var(--border-subtle)'
         }}
         onMouseLeave={(e) => {
@@ -176,9 +176,9 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
                 padding: 'var(--sp-sm) var(--sp-md)',
                 border: 'none',
                 background: idx === focusedIdx
-                  ? 'rgba(45,138,138,0.10)'
+                  ? 'var(--teal-active)'
                   : opt.value === value
-                    ? 'rgba(45,138,138,0.06)'
+                    ? 'var(--teal-hover)'
                     : 'none',
                 cursor: 'pointer',
                 fontSize,

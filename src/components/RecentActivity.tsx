@@ -94,7 +94,7 @@ export default function RecentActivity() {
                 style={{
                   borderBottom:
                     i < activities.length - 1
-                      ? '1px solid rgba(201, 168, 76, 0.08)'
+                      ? '1px solid var(--gold-active)'
                       : 'none',
                 }}
               >

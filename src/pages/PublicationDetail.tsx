@@ -68,7 +68,7 @@ export default function PublicationDetail() {
 
   const statusColors: Record<string, { bg: string; color: string }> = {
     Published: { bg: 'rgba(34,197,94,0.1)', color: 'var(--green)' },
-    'In Review': { bg: 'rgba(201,168,76,0.1)', color: 'var(--gold)' },
+    'In Review': { bg: 'var(--gold-active)', color: 'var(--gold)' },
     'In Preparation': { bg: 'rgba(100,116,139,0.1)', color: 'var(--slate)' },
   }
   const sc = statusColors[pub.status] ?? statusColors['In Preparation']
@@ -108,7 +108,7 @@ export default function PublicationDetail() {
               className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
               style={{
                 fontSize: 'var(--label-size)',
-                background: 'rgba(201, 168, 76, 0.1)',
+                background: 'var(--gold-active)',
                 color: 'var(--gold)',
                 letterSpacing: '0.04em',
               }}
@@ -130,7 +130,7 @@ export default function PublicationDetail() {
                 className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium"
                 style={{
                   fontSize: 'var(--label-size)',
-                  background: 'rgba(45,138,138,0.1)',
+                  background: 'var(--teal-active)',
                   color: 'var(--teal)',
                 }}
               >
@@ -248,7 +248,7 @@ export default function PublicationDetail() {
                     className="inline-flex items-center px-2.5 py-1 rounded-full transition-colors hover:opacity-80"
                     style={{
                       fontSize: 'var(--label-size)',
-                      background: 'rgba(201, 168, 76, 0.1)',
+                      background: 'var(--gold-active)',
                       color: 'var(--gold)',
                       textDecoration: 'none',
                     }}
@@ -267,7 +267,7 @@ export default function PublicationDetail() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors hover:opacity-80"
                   style={{
-                    background: 'rgba(201, 168, 76, 0.1)',
+                    background: 'var(--gold-active)',
                     color: 'var(--gold)',
                     border: '1px solid rgba(201, 168, 76, 0.2)',
                     textDecoration: 'none',
@@ -284,7 +284,7 @@ export default function PublicationDetail() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors hover:opacity-80"
                   style={{
-                    background: 'rgba(45, 138, 138, 0.08)',
+                    background: 'var(--teal-active)',
                     color: 'var(--teal)',
                     border: '1px solid rgba(45, 138, 138, 0.15)',
                     textDecoration: 'none',
@@ -393,7 +393,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
                   <span
                     className="inline-block px-1.5 py-0.5 rounded text-[10px]"
                     style={{
-                      background: 'rgba(45,138,138,0.08)',
+                      background: 'var(--teal-active)',
                       color: 'var(--teal)',
                     }}
                   >

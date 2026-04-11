@@ -56,7 +56,7 @@ const hoverHandlers = {
   },
   ghost: {
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
-      e.currentTarget.style.background = 'rgba(201,168,76,0.1)'
+      e.currentTarget.style.background = 'var(--gold-active)'
     },
     onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
       e.currentTarget.style.background = 'transparent'

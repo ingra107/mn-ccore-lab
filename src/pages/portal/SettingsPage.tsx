@@ -141,7 +141,7 @@ export default function SettingsPage() {
                       {template.name}
                     </span>
                     {template.is_default === 1 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-active)' }}>
                         Default
                       </span>
                     )}
@@ -150,9 +150,9 @@ export default function SettingsPage() {
                     {stages.map((stage, i) => {
                       // Cycle through palette colors for each stage
                       const colors = [
-                        { bg: 'rgba(45,138,138,0.1)', text: 'var(--teal)', border: 'rgba(45,138,138,0.3)' },
-                        { bg: 'rgba(201,168,76,0.1)', text: 'var(--gold)', border: 'rgba(201,168,76,0.3)' },
-                        { bg: 'rgba(122,0,25,0.08)', text: 'var(--maroon)', border: 'rgba(122,0,25,0.2)' },
+                        { bg: 'var(--teal-active)', text: 'var(--teal)', border: 'rgba(45,138,138,0.3)' },
+                        { bg: 'var(--gold-active)', text: 'var(--gold)', border: 'rgba(201,168,76,0.3)' },
+                        { bg: 'var(--maroon-hover)', text: 'var(--maroon)', border: 'rgba(122,0,25,0.2)' },
                         { bg: 'rgba(34,197,94,0.1)', text: 'var(--green)', border: 'rgba(34,197,94,0.3)' },
                         { bg: 'rgba(59,130,246,0.1)', text: '#2563eb', border: 'rgba(59,130,246,0.3)' },
                         { bg: 'rgba(168,85,247,0.1)', text: '#7c3aed', border: 'rgba(168,85,247,0.3)' },
@@ -335,7 +335,7 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
   return (
     <div className="mb-6" style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-xl, 24px)' }}>
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(45,138,138,0.08)' }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--teal-active)' }}>
           <Icon size={16} style={{ color: 'var(--teal)' }} />
         </div>
         <div>
@@ -446,7 +446,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
   }
 
   return (
-    <div className="mt-2 rounded-lg border p-4" style={{ borderColor: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.02)' }}>
+    <div className="mt-2 rounded-lg border p-4" style={{ borderColor: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>New Workflow Template</span>
         <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>

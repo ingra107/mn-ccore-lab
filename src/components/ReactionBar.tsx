@@ -85,11 +85,11 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
             padding: '0 var(--sp-sm)',
             fontSize: '11px',
             lineHeight: 1,
-            background: userReacted ? 'rgba(45,138,138,0.08)' : 'transparent',
+            background: userReacted ? 'var(--teal-active)' : 'transparent',
             color: userReacted ? 'var(--teal)' : 'var(--slate)',
             border: userReacted
               ? '1px solid rgba(45,138,138,0.35)'
-              : '1px solid var(--border-light, rgba(0,0,0,0.08))',
+              : '1px solid var(--border-light, var(--hover-medium))',
             cursor: 'pointer',
           }}
         >
@@ -107,7 +107,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
             width: pillHeight,
             height: pillHeight,
             background: 'transparent',
-            border: '1px dashed var(--border-light, rgba(0,0,0,0.08))',
+            border: '1px dashed var(--border-light, var(--hover-medium))',
             cursor: 'pointer',
             color: 'var(--slate)',
             opacity: showPicker ? 0.8 : 0.35,
@@ -124,7 +124,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
             className="absolute bottom-full left-0 mb-1 flex items-center gap-0.5 px-1.5 py-1 rounded-lg shadow-lg z-50"
             style={{
               backgroundColor: 'var(--cream, #fff)',
-              border: '1px solid var(--border-light, rgba(0,0,0,0.08))',
+              border: '1px solid var(--border-light, var(--hover-medium))',
             }}
           >
             {EMOJI_OPTIONS.map(({ emoji, label }) => (
@@ -135,7 +135,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
                   setShowPicker(false)
                 }}
                 title={label}
-                className="flex items-center justify-center rounded transition-colors hover:bg-[rgba(0,0,0,0.05)]"
+                className="flex items-center justify-center rounded transition-colors hover:bg-[var(--hover-light)]"
                 style={{
                   width: 28,
                   height: 28,

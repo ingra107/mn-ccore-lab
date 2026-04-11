@@ -17,9 +17,9 @@ interface PlannerHeaderProps {
 }
 
 const modeConfig: Record<string, { label: string; color: string; bg: string }> = {
-  plan: { label: 'PLANNING', color: 'var(--gold)', bg: 'rgba(201,168,76,0.1)' },
-  execute: { label: 'EXECUTING', color: 'var(--teal)', bg: 'rgba(45,138,138,0.1)' },
-  review: { label: 'REVIEWING', color: 'var(--maroon)', bg: 'rgba(122,0,25,0.08)' },
+  plan: { label: 'PLANNING', color: 'var(--gold)', bg: 'var(--gold-active)' },
+  execute: { label: 'EXECUTING', color: 'var(--teal)', bg: 'var(--teal-active)' },
+  review: { label: 'REVIEWING', color: 'var(--maroon)', bg: 'var(--maroon-hover)' },
   capture: { label: 'CAPTURE', color: 'var(--slate)', bg: 'rgba(100,116,139,0.08)' },
 }
 
@@ -137,7 +137,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
                   fontSize: '10px', fontWeight: 700,
                   textTransform: 'uppercase', letterSpacing: '0.5px',
                   color: isToday ? 'var(--cream)' : 'var(--slate)',
-                  background: isToday ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
+                  background: isToday ? 'var(--gold)' : 'var(--gold-active)',
                   border: 'none', borderRadius: 'var(--radius-sm)', padding: '2px 8px', cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
@@ -150,7 +150,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
                   fontSize: '10px', fontWeight: 700,
                   textTransform: 'uppercase', letterSpacing: '0.5px',
                   color: isTomorrow ? 'var(--cream)' : 'var(--slate)',
-                  background: isTomorrow ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
+                  background: isTomorrow ? 'var(--gold)' : 'var(--gold-active)',
                   border: 'none', borderRadius: 'var(--radius-sm)', padding: '2px 8px', cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}

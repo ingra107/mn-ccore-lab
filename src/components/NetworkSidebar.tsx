@@ -127,7 +127,7 @@ export default function NetworkSidebar({
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-lg cursor-pointer transition-colors duration-200"
             style={{
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: 'var(--hover-light)',
               border: '1px solid rgba(201, 168, 76, 0.15)',
               color: 'rgba(255, 255, 255, 0.6)',
               zIndex: 'var(--z-dropdown)',
@@ -137,7 +137,7 @@ export default function NetworkSidebar({
               e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.15)'
+              e.currentTarget.style.borderColor = 'var(--gold-emphasis)'
               e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
             }}
             aria-label="Close panel"
@@ -266,7 +266,7 @@ function NodeDetail({
       <div
         className="grid grid-cols-2 gap-3 mb-6 p-4 rounded-lg"
         style={{
-          background: 'rgba(255, 255, 255, 0.04)',
+          background: 'var(--hover-light)',
           border: '1px solid rgba(201, 168, 76, 0.1)',
         }}
       >
@@ -312,7 +312,7 @@ function NodeDetail({
           to={slug === 'nick' || slug === 'nate' ? `/${slug}` : `/team/${slug}`}
           className="flex items-center gap-2 mb-6 px-4 py-3 rounded-lg transition-all duration-200"
           style={{
-            background: 'rgba(201, 168, 76, 0.08)',
+            background: 'var(--gold-active)',
             border: '1px solid rgba(201, 168, 76, 0.2)',
             color: 'var(--gold)',
             textDecoration: 'none',
@@ -320,11 +320,11 @@ function NodeDetail({
             fontWeight: 500,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(201, 168, 76, 0.15)'
+            e.currentTarget.style.background = 'var(--gold-emphasis)'
             e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.4)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(201, 168, 76, 0.08)'
+            e.currentTarget.style.background = 'var(--gold-active)'
             e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.2)'
           }}
         >
@@ -360,7 +360,7 @@ function NodeDetail({
                   key={c.node.id}
                   className="flex items-center justify-between px-3 py-2 rounded-md"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.03)',
+                    background: 'var(--hover-subtle)',
                     border: '1px solid rgba(201, 168, 76, 0.06)',
                   }}
                 >
@@ -485,7 +485,7 @@ function EdgeDetail({
               key={paper.id}
               className="p-3 rounded-lg"
               style={{
-                background: 'rgba(255, 255, 255, 0.03)',
+                background: 'var(--hover-subtle)',
                 border: '1px solid rgba(201, 168, 76, 0.06)',
               }}
             >

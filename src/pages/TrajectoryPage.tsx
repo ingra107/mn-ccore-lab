@@ -244,7 +244,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                     style={{
                       width: `${Math.max(totalWidth, 4)}%`,
                       height: '100%',
-                      backgroundColor: 'rgba(45,138,138,0.15)',
+                      backgroundColor: 'var(--teal-emphasis)',
                       position: 'relative',
                     }}
                   >

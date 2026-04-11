@@ -78,7 +78,7 @@ function MiniAvatar({ slug }: { slug: string }) {
     <div
       className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
       style={{
-        background: info.photoUrl ? 'transparent' : 'rgba(201, 168, 76, 0.15)',
+        background: info.photoUrl ? 'transparent' : 'var(--gold-emphasis)',
         border: '1px solid rgba(201, 168, 76, 0.2)',
         fontSize: '10px',
         color: 'var(--gold)',
@@ -225,7 +225,7 @@ function MemberContent({ data }: { data: MemberCardData }) {
       <div
         className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
         style={{
-          background: data.photoUrl ? 'transparent' : 'rgba(201, 168, 76, 0.15)',
+          background: data.photoUrl ? 'transparent' : 'var(--gold-emphasis)',
           border: '1px solid rgba(201, 168, 76, 0.25)',
           fontSize: '12px',
           color: 'var(--gold)',
@@ -264,7 +264,7 @@ function MemberContent({ data }: { data: MemberCardData }) {
                 className="inline-flex px-1.5 py-0.5 rounded text-[10px]"
                 style={{
                   color: 'var(--teal)',
-                  background: 'rgba(45, 138, 138, 0.1)',
+                  background: 'var(--teal-active)',
                   border: '1px solid rgba(45, 138, 138, 0.15)',
                   fontWeight: 400,
                 }}
@@ -357,7 +357,7 @@ export default function HoverCard({ data, isVisible, position, cardRef, cardHand
             // Force dark text colors inside the card regardless of page theme
             '--ink': '#e2e8f0',
             '--slate': '#94a3b8',
-            '--border-subtle': 'rgba(255, 255, 255, 0.06)',
+            '--border-subtle': 'var(--hover-light)',
           } as React.CSSProperties}
         >
           {data.type === 'project' && <ProjectContent data={data} />}

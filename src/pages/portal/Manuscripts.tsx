@@ -474,7 +474,7 @@ export default function Manuscripts() {
                     gap: 20,
                     padding: 'var(--sp-sm) var(--sp-lg)',
                     borderTop: '1px solid var(--border-subtle)',
-                    background: 'rgba(45, 138, 138, 0.02)',
+                    background: 'var(--teal-hover)',
                   }}
                 >
                   {stats.map(s => (
@@ -587,16 +587,16 @@ export default function Manuscripts() {
 
       <style>{`
         .manuscript-list-row:hover {
-          background: rgba(201, 168, 76, 0.06) !important;
+          background: var(--gold-hover) !important;
         }
         .manuscript-list-row:active {
-          background: rgba(201, 168, 76, 0.10) !important;
+          background: var(--gold-active) !important;
         }
         .new-project-btn:hover {
-          background: rgba(45, 138, 138, 0.06) !important;
+          background: var(--teal-hover) !important;
         }
         .dark .manuscript-list-row:hover {
-          background: rgba(201, 168, 76, 0.08) !important;
+          background: var(--gold-active) !important;
         }
       `}</style>
     </div>

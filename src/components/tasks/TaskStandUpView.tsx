@@ -76,7 +76,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
     <div className="table-container flex flex-col gap-6" style={{ padding: '16px 20px' }}>
       {/* Team summary bar */}
       {grouped.length > 1 && (
-        <div className="flex items-center gap-4 p-3 rounded-lg" style={{ background: 'rgba(201,168,76,0.03)', border: '1px solid rgba(201,168,76,0.08)' }}>
+        <div className="flex items-center gap-4 p-3 rounded-lg" style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.08)' }}>
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>
             Team: {totalOpen} open across {grouped.length} people
           </span>
@@ -129,7 +129,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
                     className="text-[10px] px-1.5 py-0.5 rounded"
                     style={{
                       color: activeCount > 8 ? 'var(--maroon)' : activeCount > 5 ? 'var(--orange)' : 'var(--teal)',
-                      backgroundColor: activeCount > 8 ? 'rgba(122,0,25,0.08)' : activeCount > 5 ? 'rgba(194,65,12,0.08)' : 'rgba(45,138,138,0.08)',
+                      backgroundColor: activeCount > 8 ? 'var(--maroon-hover)' : activeCount > 5 ? 'var(--orange-hover)' : 'var(--teal-active)',
                       fontWeight: activeCount > 5 ? 600 : 400,
                     }}
                   >
@@ -140,18 +140,18 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
                       (t) => t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()
                     ).length
                     return overdueCount > 0 ? (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'var(--maroon-hover)' }}>
                         {overdueCount} overdue
                       </span>
                     ) : null
                   })()}
                   {groups.blocked.length > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.06)' }}>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'var(--maroon-hover)' }}>
                       {groups.blocked.length} blocked
                     </span>
                   )}
                   {nextDeadline && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--gold)', backgroundColor: 'var(--gold-active)' }}>
                       next: {formatShortDate(nextDeadline)}
                     </span>
                   )}

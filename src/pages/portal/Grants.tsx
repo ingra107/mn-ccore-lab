@@ -52,10 +52,10 @@ function formatFunding(amount: number): string {
 
 function mechanismColor(mechanism: string): { bg: string; color: string } {
   switch (mechanism) {
-    case 'R01': return { bg: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }
-    case 'K23': return { bg: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }
+    case 'R01': return { bg: 'var(--teal-active)', color: 'var(--teal)' }
+    case 'K23': return { bg: 'var(--teal-active)', color: 'var(--teal)' }
     case 'R03': return { bg: 'rgba(122,0,25,0.1)', color: 'var(--maroon)' }
-    default: return { bg: 'rgba(201,168,76,0.1)', color: 'var(--gold)' }
+    default: return { bg: 'var(--gold-active)', color: 'var(--gold)' }
   }
 }
 
@@ -148,7 +148,7 @@ export default function Grants() {
                     <span className="flex-1 text-sm truncate" style={{ color: 'var(--ink)' }}>
                       {m.title}
                     </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-active)' }}>
                       {m.grantMechanism}
                     </span>
                     <span className="text-[11px] flex-shrink-0 w-20 text-right" style={{ color: 'var(--slate)', opacity: 0.6 }}>
@@ -157,7 +157,7 @@ export default function Grants() {
                   </div>
                   {m.future_note && isDueSoon && (
                     <div className="ml-8 mr-3 mt-1 mb-1 p-3 rounded-lg" style={{
-                      background: 'rgba(201,168,76,0.06)',
+                      background: 'var(--gold-hover)',
                       border: '1px solid rgba(201,168,76,0.15)',
                       borderLeft: '3px solid var(--gold)',
                     }}>
@@ -269,7 +269,7 @@ export default function Grants() {
                     gridTemplateColumns: 'minmax(140px, 1fr) 140px minmax(200px, 2fr) 100px 100px',
                     padding: `var(--row-padding-y, 8px) 12px`,
                     borderBottom: '1px solid var(--border-subtle)',
-                    background: m._isOverdue ? 'rgba(122,0,25,0.04)' : 'transparent',
+                    background: m._isOverdue ? 'var(--maroon-hover)' : 'transparent',
                     borderLeft: m._isOverdue ? '3px solid var(--maroon)' : '3px solid transparent',
                   }}
                 >
@@ -280,7 +280,7 @@ export default function Grants() {
                         className="inline-block mr-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold"
                         style={{
                           color: 'var(--teal)',
-                          background: 'rgba(45,138,138,0.1)',
+                          background: 'var(--teal-active)',
                         }}
                       >
                         {m.grant_mechanism}
@@ -429,7 +429,7 @@ export default function Grants() {
           <div
             key={grant.project_num}
             className="p-3 rounded-lg mb-2"
-            style={{ background: 'rgba(201,168,76,0.03)', border: '1px solid rgba(201,168,76,0.08)' }}
+            style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.08)' }}
           >
             <div className="flex items-start justify-between gap-2">
               <div>
@@ -583,7 +583,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
                 <span
                   key={m.id}
                   className="text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1"
-                  style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.08)' }}
+                  style={{ color: 'var(--gold)', backgroundColor: 'var(--gold-active)' }}
                 >
                   <Diamond size={8} />
                   {m.title}
@@ -651,7 +651,7 @@ function AddGrantMilestoneModal({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.4)',
+        background: 'var(--overlay-medium)',
         zIndex: 'var(--z-sidebar)',
         display: 'flex',
         alignItems: 'center',

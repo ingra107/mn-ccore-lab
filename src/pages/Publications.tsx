@@ -263,12 +263,12 @@ export default function Publications() {
                 <div
                   key={pub.id}
                   className="flex items-start gap-3 py-2 px-3 rounded-lg transition-colors duration-200"
-                  style={{ background: 'rgba(201, 168, 76, 0.04)' }}
+                  style={{ background: 'var(--gold-hover)' }}
                 >
                   <span
                     className="flex-shrink-0 text-xs mt-0.5 px-1.5 py-0.5 rounded"
                     style={{
-                      background: 'rgba(201, 168, 76, 0.12)',
+                      background: 'var(--gold-emphasis)',
                       color: 'var(--gold)',
                       fontSize: '10px',
                     }}
@@ -317,7 +317,7 @@ export default function Publications() {
               onClick={() => setViewMode('list')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
               style={{
-                backgroundColor: viewMode === 'list' ? 'rgba(45,138,138,0.1)' : 'transparent',
+                backgroundColor: viewMode === 'list' ? 'var(--teal-active)' : 'transparent',
                 color: viewMode === 'list' ? 'var(--teal)' : 'var(--slate)',
                 border: `1px solid ${viewMode === 'list' ? 'var(--teal)' : 'var(--border-light)'}`,
                 cursor: 'pointer',
@@ -331,7 +331,7 @@ export default function Publications() {
               onClick={() => setViewMode('library')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
               style={{
-                backgroundColor: viewMode === 'library' ? 'rgba(45,138,138,0.1)' : 'transparent',
+                backgroundColor: viewMode === 'library' ? 'var(--teal-active)' : 'transparent',
                 color: viewMode === 'library' ? 'var(--teal)' : 'var(--slate)',
                 border: `1px solid ${viewMode === 'library' ? 'var(--teal)' : 'var(--border-light)'}`,
                 cursor: 'pointer',

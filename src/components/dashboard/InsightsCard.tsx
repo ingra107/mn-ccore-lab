@@ -33,7 +33,7 @@ function InsightsCard() {
           className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-md transition-colors"
           style={{
             color: 'var(--teal)',
-            background: 'rgba(45,138,138,0.06)',
+            background: 'var(--teal-hover)',
             border: '1px solid color-mix(in srgb, var(--teal) 12%, transparent)',
             cursor: refreshing ? 'default' : 'pointer',
             opacity: refreshing ? 0.5 : 1,
@@ -139,7 +139,7 @@ function InsightsCard() {
                     <span
                       className="inline-block px-1.5 py-0.5 rounded text-[10px]"
                       style={{
-                        background: 'rgba(45,138,138,0.08)',
+                        background: 'var(--teal-active)',
                         color: 'var(--teal)',
                         maxWidth: '260px',
                         overflow: 'hidden',
@@ -170,7 +170,7 @@ function InsightsCard() {
                     background: edge.strength > 0.7
                       ? 'color-mix(in srgb, var(--teal) 12%, transparent)'
                       : edge.strength > 0.4
-                      ? 'rgba(201,168,76,0.1)'
+                      ? 'var(--gold-active)'
                       : 'rgba(100,116,139,0.08)',
                     color: edge.strength > 0.7
                       ? 'var(--teal)'

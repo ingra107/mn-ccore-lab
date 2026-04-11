@@ -250,7 +250,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                         key={i}
                         className="flex gap-2 px-3 py-2 rounded-md text-sm"
                         style={{
-                          background: 'rgba(201,168,76,0.08)',
+                          background: 'var(--gold-active)',
                           border: '1px solid rgba(201,168,76,0.2)',
                           color: 'var(--ink)',
                           }}

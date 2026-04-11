@@ -84,7 +84,7 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
             transition: 'background 0.15s ease',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(45, 138, 138, 0.06)'
+            e.currentTarget.style.background = 'var(--teal-hover)'
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'none'

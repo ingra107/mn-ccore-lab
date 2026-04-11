@@ -211,7 +211,7 @@ export default function Projects() {
         {/* Page Header */}
         <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1rem', paddingTop: '1rem' }}>
           <div className="flex items-center gap-2.5">
-            <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)', flexShrink: 0 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--teal-active)', flexShrink: 0 }}>
               <FolderKanban size={16} style={{ color: 'var(--teal)' }} />
             </div>
             <h1
@@ -738,7 +738,7 @@ export default function Projects() {
                   gap: 'var(--sp-xl)',
                   padding: 'var(--sp-sm) var(--sp-xl)',
                   borderTop: '1px solid var(--border-subtle)',
-                  background: 'rgba(45, 138, 138, 0.02)',
+                  background: 'var(--teal-hover)',
                 }}
               >
                 {[
@@ -923,17 +923,17 @@ export default function Projects() {
         }
 
         .project-list-row:hover {
-          background: rgba(201, 168, 76, 0.06) !important;
+          background: var(--gold-hover) !important;
           transition: background 0.12s ease-out !important;
         }
         .project-list-row:active {
-          background: rgba(201, 168, 76, 0.10) !important;
+          background: var(--gold-active) !important;
           transition: background 0.05s ease-out !important;
         }
 
         .project-row-focused {
           position: relative;
-          background: rgba(201, 168, 76, 0.04) !important;
+          background: var(--gold-hover) !important;
         }
         .project-row-focused::before {
           content: '';
@@ -947,7 +947,7 @@ export default function Projects() {
         }
 
         .new-project-btn:hover {
-          background: rgba(45, 138, 138, 0.06) !important;
+          background: var(--teal-hover) !important;
         }
 
         .filter-pill:hover {
@@ -965,13 +965,13 @@ export default function Projects() {
           background-image: linear-gradient(var(--surface-3), var(--surface-3)) !important;
         }
         .dark .project-row-focused {
-          background: rgba(201, 168, 76, 0.06) !important;
+          background: var(--gold-hover) !important;
         }
         .dark .project-list-row:hover {
-          background: rgba(201, 168, 76, 0.08) !important;
+          background: var(--gold-active) !important;
         }
         .dark .project-list-row:active {
-          background: rgba(201, 168, 76, 0.12) !important;
+          background: var(--gold-emphasis) !important;
         }
       `}</style>
     </div>

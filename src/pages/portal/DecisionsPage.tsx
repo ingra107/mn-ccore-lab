@@ -90,7 +90,7 @@ function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; p
                   <span
                     key={tag}
                     className="text-[10px] px-1.5 py-0.5 rounded-full"
-                    style={{ fontWeight: 400, color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}
+                    style={{ fontWeight: 400, color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}
                   >
                     {tag}
                   </span>
@@ -195,7 +195,7 @@ function ReviewCard({
       <div
         className="p-4"
         style={{
-          background: 'rgba(201,168,76,0.06)',
+          background: 'var(--gold-hover)',
           borderTop: '1px solid rgba(201,168,76,0.15)',
           borderLeft: '3px solid var(--gold)',
         }}
@@ -352,7 +352,7 @@ export default function DecisionsPage() {
                 style={{
                   fontWeight: 500,
                   color: viewMode === 'list' ? 'var(--teal)' : 'var(--slate)',
-                  backgroundColor: viewMode === 'list' ? 'rgba(45,138,138,0.08)' : 'transparent',
+                  backgroundColor: viewMode === 'list' ? 'var(--teal-active)' : 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                 }}
@@ -366,7 +366,7 @@ export default function DecisionsPage() {
                 style={{
                   fontWeight: 500,
                   color: viewMode === 'timeline' ? 'var(--teal)' : 'var(--slate)',
-                  backgroundColor: viewMode === 'timeline' ? 'rgba(45,138,138,0.08)' : 'transparent',
+                  backgroundColor: viewMode === 'timeline' ? 'var(--teal-active)' : 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                 }}
@@ -400,7 +400,7 @@ export default function DecisionsPage() {
               className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
               style={{
                 color: filterStatus === f.key ? 'var(--teal)' : 'var(--slate)',
-                backgroundColor: filterStatus === f.key ? 'rgba(45,138,138,0.1)' : 'transparent',
+                backgroundColor: filterStatus === f.key ? 'var(--teal-active)' : 'transparent',
                 border: `1px solid ${filterStatus === f.key ? 'rgba(45,138,138,0.25)' : 'var(--border-light)'}`,
                 cursor: 'pointer',
               }}
@@ -447,7 +447,7 @@ export default function DecisionsPage() {
                 className="px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors"
                 style={{
                   color: filterTag === tc.tag ? 'var(--ink-bright, #fff)' : 'var(--teal)',
-                  backgroundColor: filterTag === tc.tag ? 'var(--teal)' : 'rgba(45,138,138,0.06)',
+                  backgroundColor: filterTag === tc.tag ? 'var(--teal)' : 'var(--teal-hover)',
                   border: `1px solid ${filterTag === tc.tag ? 'var(--teal)' : 'rgba(45,138,138,0.15)'}`,
                   cursor: 'pointer',
                 }}
@@ -476,7 +476,7 @@ export default function DecisionsPage() {
             </h2>
             <span
               className="text-xs px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: 'rgba(201,168,76,0.12)', color: 'var(--gold)' }}
+              style={{ backgroundColor: 'var(--gold-emphasis)', color: 'var(--gold)' }}
             >
               {reviewDecisions.length}
             </span>

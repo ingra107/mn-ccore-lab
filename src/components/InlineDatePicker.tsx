@@ -125,7 +125,7 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
               className="px-2 py-1 rounded text-[10px] transition-colors"
               style={{
                 border: 'none',
-                background: value === p.value ? 'rgba(45,138,138,0.12)' : 'transparent',
+                background: value === p.value ? 'var(--teal-emphasis)' : 'transparent',
                 color: value === p.value ? 'var(--teal)' : 'var(--slate)',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
@@ -163,7 +163,7 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           color: isOverdue ? 'var(--maroon)' : isToday ? 'var(--teal)' : isThisWeek ? 'var(--gold)' : value ? 'var(--slate)' : 'var(--slate)',
           opacity: value ? 1 : 0.3,
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'rgba(45,138,138,0.04)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--teal-hover)' }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' }}
       >
         <CalendarDays size={11} />

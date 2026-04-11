@@ -250,7 +250,7 @@ export default function Contact() {
               <div
                 className="p-3 sm:p-4 rounded-lg"
                 style={{
-                  background: 'rgba(201, 168, 76, 0.08)',
+                  background: 'var(--gold-active)',
                   border: '1px solid rgba(201, 168, 76, 0.12)',
                 }}
               >

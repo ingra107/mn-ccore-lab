@@ -36,9 +36,9 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
             ? '2px solid var(--gold)'
             : `2px dashed ${isOver ? 'var(--gold)' : 'rgba(201,168,76,0.25)'}`,
           background: task
-            ? 'rgba(201,168,76,0.04)'
-            : isOver ? 'rgba(201,168,76,0.06)' : 'transparent',
-          boxShadow: task ? '0 0 20px rgba(201,168,76,0.1)' : undefined,
+            ? 'var(--gold-hover)'
+            : isOver ? 'var(--gold-hover)' : 'transparent',
+          boxShadow: task ? '0 0 20px var(--gold-active)' : undefined,
           transition: 'all 0.2s ease',
           padding: task ? 0 : undefined,
         }}
@@ -104,7 +104,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
               {suggestion ? (
                 <button
                   onClick={() => onAcceptSuggestion?.(suggestion)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[rgba(201,168,76,0.04)]"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--gold-hover)]"
                   style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                 >
                   <span style={{ fontSize: '10px', color: suggestion._isCarried ? 'var(--teal)' : 'var(--gold)', opacity: 0.5, textTransform: 'uppercase', flexShrink: 0 }}>
