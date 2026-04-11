@@ -27,6 +27,7 @@ interface LabPageLayoutProps {
   sections?: SectionAnchor[]
   photoUrl?: string
   children: ReactNode
+  breadcrumb?: ReactNode
 }
 
 export default function LabPageLayout({
@@ -40,6 +41,7 @@ export default function LabPageLayout({
   sections,
   photoUrl,
   children,
+  breadcrumb,
 }: LabPageLayoutProps) {
   const [activeSection, setActiveSection] = useState<string>('')
 
@@ -78,6 +80,7 @@ export default function LabPageLayout({
 
   return (
     <div className="pt-8 pb-8 sm:pb-12 lg:pb-16 content-container">
+      {breadcrumb}
       <div className="lg:grid lg:grid-cols-12 lg:gap-12">
         {/* Left Column (Sticky) */}
         <aside className="lg:col-span-4 xl:col-span-3 mb-12 lg:mb-0">

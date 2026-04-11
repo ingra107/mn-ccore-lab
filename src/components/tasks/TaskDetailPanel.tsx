@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import {
   X, Circle, Clock, User, Flag, Scale,
   CalendarDays, FolderKanban, ArrowRightLeft,
@@ -9,7 +9,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
-import RichTextEditor from '../RichTextEditor'
+const RichTextEditor = lazy(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
@@ -275,14 +275,16 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
                 Description
               </label>
               <div className="description-editor-wrapper">
-                <RichTextEditor
-                  content={task.description_json || null}
-                  plainTextFallback={task.description}
-                  onUpdate={(json) => {
-                    handleFieldUpdate('description_json', json)
-                  }}
-                  placeholder="Add a description..."
-                />
+                <Suspense fallback={<div style={{ height: 120, padding: 'var(--sp-lg)', opacity: 0.3, fontSize: 'var(--text-small)' }}>Loading editor...</div>}>
+                  <RichTextEditor
+                    content={task.description_json || null}
+                    plainTextFallback={task.description}
+                    onUpdate={(json) => {
+                      handleFieldUpdate('description_json', json)
+                    }}
+                    placeholder="Add a description..."
+                  />
+                </Suspense>
               </div>
             </div>
 

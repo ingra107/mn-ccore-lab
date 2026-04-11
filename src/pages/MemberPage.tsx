@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useParams, Navigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
+import Breadcrumb from '../components/Breadcrumb'
 import { FlaskConical, GraduationCap, Handshake, CheckCircle2, TrendingUp, Sparkles, X, Plus, Activity } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
@@ -244,6 +245,7 @@ export default function MemberPage() {
       bio={member.bio || mentee?.bio}
       links={memberLinks}
       photoUrl={member.photoUrl}
+      breadcrumb={<Breadcrumb backTo="/team" backLabel="Team" current={member.name} />}
       sections={[
         ...(mentee
           ? [{ id: 'research-focus', label: 'Research Focus' }]

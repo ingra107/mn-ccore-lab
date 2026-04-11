@@ -947,24 +947,30 @@ function TaskGridRow({
                       {task.source === 'meeting' ? 'meeting' : task.source === 'recurrence' ? 'recurring' : task.source}
                     </span>
                   )}
-                  {!isDone && task.created_at && (() => {
-                    const age = Math.floor((Date.now() - new Date(task.created_at).getTime()) / 86400000)
-                    if (age < 14) return null
+                  {!isDone && (() => {
+                    const dateStr = task.updated_at || task.created_at
+                    if (!dateStr) return null
+                    const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
+                    if (days < 7) return null
+                    const bgColor = days > 30 ? 'var(--maroon-hover)' : days > 14 ? 'var(--gold-hover)' : 'var(--hover-light)'
+                    const textColor = days > 30 ? 'var(--maroon)' : days > 14 ? 'var(--gold)' : 'var(--slate)'
                     return (
                       <span
                         className="hover-badge"
-                        title={`Open for ${age} days`}
+                        title={`Last updated ${days} days ago`}
                         style={{
-                          fontSize: '10px',
-                          padding: '1px 5px',
-                          borderRadius: 'var(--radius-lg)',
-                          backgroundColor: age > 30 ? 'rgba(122,0,25,0.1)' : 'rgba(194,65,12,0.1)',
-                          color: age > 30 ? 'var(--maroon)' : 'var(--orange)',
+                          fontSize: 'var(--text-caption)',
+                          fontWeight: 'var(--weight-ui)',
+                          padding: '1px 4px',
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: bgColor,
+                          color: textColor,
+                          opacity: 0.7,
                           flexShrink: 0,
                           lineHeight: '14px',
                         }}
                       >
-                        {age}d
+                        {days}d
                       </span>
                     )
                   })()}

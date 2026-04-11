@@ -15,6 +15,7 @@ import { useDensity } from '../hooks/useDensity'
 import { useFavicon } from '../hooks/useFavicon'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { UndoToastProvider } from './UndoToast'
+import StatusBar from './StatusBar'
 
 export default function PortalLayout() {
   const { mode, setTheme } = useDarkMode()
@@ -96,6 +97,7 @@ export default function PortalLayout() {
         className={`transition-all duration-200 ${
           focusMode ? '' : sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'
         }`}
+        style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}
       >
         {/* Top bar (hidden in focus mode) */}
         <header
@@ -187,13 +189,16 @@ export default function PortalLayout() {
         </header>
 
         {/* Page content */}
-        <main className="portal-content p-4 md:p-6 lg:p-8">
+        <main className="portal-content p-4 md:p-6 lg:p-8" style={{ flex: 1 }}>
           <AnimatePresence mode="wait">
             <PageTransition>
               <Outlet />
             </PageTransition>
           </AnimatePresence>
         </main>
+
+        {/* Status bar */}
+        <StatusBar onOpenShortcuts={() => setShowHelp(true)} />
       </div>
 
       {/* Command Palette (global) */}
@@ -220,7 +225,10 @@ export default function PortalLayout() {
       <button
         data-testid="fab-quick-add"
         onClick={() => setQuickAddOpen(true)}
-        className="fixed bottom-5 right-5 z-40 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+        className="fixed right-5 z-40 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
+        style={{
+          bottom: 'calc(24px + 12px)', // above status bar (24px) + 12px gap
+        }}
         style={{
           background: 'var(--teal)',
           color: 'var(--ink-bright, #fff)',
@@ -239,7 +247,7 @@ export default function PortalLayout() {
 
       {/* G-key pending indicator */}
       {gPending && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-full shadow-lg border" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--teal)' }}>
+        <div className="fixed left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-full shadow-lg border" style={{ bottom: 'calc(24px + 12px)', backgroundColor: 'var(--cream)', borderColor: 'var(--teal)' }}>
           <span className="text-xs" style={{ color: 'var(--teal)' }}>
             G → press a key to navigate...
           </span>
