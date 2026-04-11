@@ -490,7 +490,7 @@ export default function Projects() {
                                   fontSize: '14px',
                                   fontWeight: 500,
                                   color: 'var(--ink)',
-                                  lineHeight: 1.4,
+                                  lineHeight: 1.35,
                                 }}
                               >
                                 {project.title}
@@ -645,7 +645,7 @@ export default function Projects() {
                                   fontSize: '14px',
                                   fontWeight: 500,
                                   color: 'var(--ink)',
-                                  lineHeight: 1.4,
+                                  lineHeight: 1.35,
                                   flex: 1,
                                 }}
                               >

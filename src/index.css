@@ -372,6 +372,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 /* Softer task grid row separators — barely-there luminance shifts (Linear pattern) */
 .task-grid-row {
   border-bottom-color: rgba(0, 0, 0, 0.04) !important;
+  line-height: 1.35;
 }
 .dark .task-grid-row {
   border-bottom-color: rgba(255, 255, 255, 0.03) !important;
@@ -783,6 +784,7 @@ a:hover {
 .table-row-hover {
   transition: background-color 0.12s ease-out;
   cursor: pointer;
+  line-height: 1.35;
 }
 .table-row-hover:hover {
   background-color: rgba(201, 168, 76, 0.06);

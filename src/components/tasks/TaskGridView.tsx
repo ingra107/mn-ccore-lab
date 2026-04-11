@@ -916,7 +916,7 @@ function TaskGridRow({
                         fontWeight: 400,
                         color: 'var(--ink)',
                         textDecoration: isDone ? 'line-through' : 'none',
-                        lineHeight: 1.4,
+                        lineHeight: 1.35,
                         cursor: onOpenDetail ? 'pointer' : 'default',
                         borderRadius: 'var(--radius-sm)',
                         padding: '1px 4px',

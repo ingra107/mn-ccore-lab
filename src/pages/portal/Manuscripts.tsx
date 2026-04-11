@@ -325,7 +325,7 @@ export default function Manuscripts() {
                                 flexShrink: 0, opacity: 0.7, marginTop: '-1px',
                               }}
                             />
-                            <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.4 }}>
+                            <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.35 }}>
                               {project.title}
                             </span>
                             {tc > 0 && (
@@ -403,7 +403,7 @@ export default function Manuscripts() {
                                 flexShrink: 0, opacity: 0.7, marginTop: '6px',
                               }}
                             />
-                            <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.4, flex: 1 }}>
+                            <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.35, flex: 1 }}>
                               {project.title}
                             </span>
                             {tc > 0 && (
