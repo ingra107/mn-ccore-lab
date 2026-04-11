@@ -506,9 +506,9 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
 
               {/* Project */}
               <span style={{
-                fontSize: '11px',
+                fontSize: 'var(--text-small)',
                 color: 'var(--teal)',
-                opacity: 0.7,
+                opacity: 0.55,
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
               }}>
                 {item.project ? (projectMap.get(item.project) || item.project) : ''}
@@ -516,9 +516,11 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
 
               {/* Due date */}
               <span style={{
-                fontSize: '12px',
+                fontSize: 'var(--text-label)',
                 color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
                 fontWeight: item.isOverdue ? 500 : 400,
+                opacity: item.isOverdue ? 1 : 0.5,
+                fontVariantNumeric: 'tabular-nums',
               }}>
                 {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
               </span>

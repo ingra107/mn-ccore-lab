@@ -154,7 +154,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
             </button>
-            <button data-testid="close-detail-panel" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
+            <button data-testid="close-detail-panel" onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
               <X size={18} />
             </button>
           </div>

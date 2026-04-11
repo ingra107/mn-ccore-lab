@@ -1047,9 +1047,9 @@ function TaskGridRow({
                     return (
                       <span
                         style={{
-                          fontSize: '11px',
+                          fontSize: 'var(--text-small)',
                           color: name ? 'var(--teal)' : 'var(--slate)',
-                          opacity: name ? 0.8 : 'var(--ink-hint)',
+                          opacity: name ? 0.55 : 'var(--ink-hint)',
                           maxWidth: '110px',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',

@@ -165,6 +165,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}
           >
             <X size={18} />

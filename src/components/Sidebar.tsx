@@ -53,19 +53,12 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    title: 'Workspace',
+    title: '',
     items: [
       { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { to: '/personal', label: 'My Hub', icon: User },
-    ],
-  },
-  {
-    title: 'Planning',
-    items: [
       { to: '/my-tasks', label: 'Tasks', icon: CheckSquare },
-      { to: '/meetings', label: 'Meetings', icon: UsersIcon },
       { to: '/calendar', label: 'Calendar', icon: Calendar },
-      { to: '/deadlines', label: 'Deadlines', icon: Clock },
     ],
   },
   {
@@ -73,21 +66,17 @@ const navGroups: NavGroup[] = [
     items: [
       { to: '/projects', label: 'Projects', icon: FolderKanban },
       { to: '/manuscripts', label: 'Manuscripts', icon: FileText },
+      { to: '/grants', label: 'Grants', icon: DollarSign },
+      { to: '/deadlines', label: 'Deadlines', icon: Clock },
       { to: '/ideas', label: 'Ideas', icon: Lightbulb },
       { to: '/digest', label: 'Research Digest', icon: BookOpen },
-      { to: '/search', label: 'Search', icon: Search },
-      { to: '/grants', label: 'Grants', icon: DollarSign },
-    ],
-  },
-  {
-    title: 'Meetings',
-    items: [
-      { to: '/meeting-notes', label: 'Meeting Transcripts', icon: FileText },
     ],
   },
   {
     title: 'Lab',
     items: [
+      { to: '/meetings', label: 'Meetings', icon: UsersIcon },
+      { to: '/meeting-notes', label: 'Transcripts', icon: FileText },
       { to: '/team', label: 'Team', icon: UsersIcon },
       { to: '/activity', label: 'Activity', icon: Activity },
       { to: '/analytics', label: 'Analytics', icon: BarChart3 },
@@ -165,8 +154,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         collapsed ? 'w-16' : 'w-60'
       }`}
       style={{
-        backgroundColor: 'color-mix(in oklch, var(--cream), black 12%)',
-        backgroundImage: 'linear-gradient(var(--surface-2), var(--surface-2))',
+        backgroundColor: 'var(--sidebar-bg)',
         borderColor: 'var(--border-subtle)',
       }}
     >
@@ -203,7 +191,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                 }}
               />
             )}
-            {!collapsed && (
+            {!collapsed && group.title && (
               <div
                 className="px-2 py-1 text-[10px] font-normal uppercase tracking-wider"
                 style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', letterSpacing: '0.08em' }}

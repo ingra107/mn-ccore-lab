@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Send, Check } from 'lucide-react'
 import { usePBCapture } from '../hooks/useMutations'
 
-export default function QuickCaptureBar() {
+export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
   const [text, setText] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -50,7 +50,7 @@ export default function QuickCaptureBar() {
 
   return (
     <div
-      className="relative mb-4"
+      className={noMargin ? 'relative' : 'relative mb-4'}
       style={{
         width: '100%',
       }}

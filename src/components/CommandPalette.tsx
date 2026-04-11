@@ -30,10 +30,10 @@ export default function CommandPalette() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const { data: tasks = [] } = useTasks()
-  const { data: projects = [] } = useProjects()
-  const { data: team = [] } = useTeam()
-  const { data: meetings = [] } = useMeetingsApi()
+  const { data: tasks = [] } = useTasks(undefined, { enabled: open })
+  const { data: projects = [] } = useProjects(undefined, { enabled: open })
+  const { data: team = [] } = useTeam({ enabled: open })
+  const { data: meetings = [] } = useMeetingsApi({ enabled: open })
 
   // Global Cmd+K listener
   useEffect(() => {

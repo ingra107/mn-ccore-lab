@@ -181,7 +181,7 @@ export function usePublications(params?: {
   })
 }
 
-export function useTeam() {
+export function useTeam(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['team'],
     queryFn: async () => {
@@ -191,10 +191,11 @@ export function useTeam() {
     initialData: () => getAllMembers(),
     staleTime: STALE_TIME,
     retry: false,
+    enabled: options?.enabled ?? true,
   })
 }
 
-export function useProjects(params?: { status?: string; category?: string }) {
+export function useProjects(params?: { status?: string; category?: string }, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['projects', params],
     queryFn: async () => {
@@ -204,6 +205,7 @@ export function useProjects(params?: { status?: string; category?: string }) {
     initialData: params ? undefined : () => staticProjects,
     staleTime: STALE_TIME,
     retry: false,
+    enabled: options?.enabled ?? true,
   })
 }
 

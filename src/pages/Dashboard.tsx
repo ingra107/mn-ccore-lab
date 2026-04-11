@@ -345,98 +345,117 @@ export default function Dashboard() {
   return (
     <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
       <div className="content-container" style={{ paddingBottom: '4rem', maxWidth: '100%' }}>
-        {/* Page Header */}
-        <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1.5rem', paddingTop: '0.25rem' }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 mb-2">
+        {/* Page Header — compact single row */}
+        {(() => {
+          const overdue = allTasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date())
+          return (
+            <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '0.75rem', paddingTop: '0.25rem' }}>
               <div
                 style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 'var(--radius-circle)',
-                  background: 'var(--green-light)',
-                  boxShadow: '0 0 8px rgba(34, 197, 94, 0.4)',
-                  animation: 'status-pulse 2s ease-in-out infinite',
-                }}
-              />
-              <span
-                style={{
-                  fontSize: '11px',
-                  color: 'var(--slate)',
-                  opacity: 0.6,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minHeight: '40px',
+                  gap: '0.75rem',
                 }}
               >
-                Live overview
-              </span>
+                {/* Left: live dot + greeting + inline stats */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: 'var(--radius-circle)',
+                      background: 'var(--green-light)',
+                      boxShadow: '0 0 8px rgba(34, 197, 94, 0.4)',
+                      animation: 'status-pulse 2s ease-in-out infinite',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
+                      color: 'var(--ink)',
+                      lineHeight: 1.2,
+                      letterSpacing: 'var(--tracking-display)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {greeting}
+                  </span>
+                  <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
+                  <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.65, whiteSpace: 'nowrap' }}>
+                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                  </span>
+                  {todayProgress.completedToday > 0 && (
+                    <>
+                      <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <span style={{ fontSize: '12px', color: 'var(--green)', whiteSpace: 'nowrap' }}>{todayProgress.completedToday} done</span>
+                    </>
+                  )}
+                  {todayProgress.dueToday > 0 && (
+                    <>
+                      <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <span style={{ fontSize: '12px', color: 'var(--teal)', whiteSpace: 'nowrap' }}>{todayProgress.dueToday} due</span>
+                    </>
+                  )}
+                  {overdue.length > 0 && (
+                    <>
+                      <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <a
+                        href="/my-tasks"
+                        style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                      >
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: 'var(--radius-circle)',
+                            background: 'var(--maroon)',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span style={{ fontSize: '12px', color: 'var(--maroon)' }}>{overdue.length} overdue</span>
+                      </a>
+                    </>
+                  )}
+                </div>
+
+                {/* Right: customize button */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                  <button
+                    data-testid="dashboard-customize"
+                    onClick={() => setShowCustomize(!showCustomize)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+                    style={{
+                      color: showCustomize ? 'var(--teal)' : 'var(--slate)',
+                      backgroundColor: showCustomize ? 'var(--teal-active)' : 'transparent',
+                      border: '1px solid',
+                      borderColor: showCustomize ? 'var(--teal)' : 'var(--border-light)',
+                      cursor: 'pointer',
+                      opacity: showCustomize ? 1 : 0.6,
+                    }}
+                  >
+                    <Settings2 size={12} />
+                    Customize
+                  </button>
+                  <PageTooltip id="dashboard-filter-hint" text="Press F to toggle filters on any page" />
+                </div>
+              </div>
             </div>
-
-            {/* Customize button */}
-            <button
-              data-testid="dashboard-customize"
-              onClick={() => setShowCustomize(!showCustomize)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-              style={{
-                color: showCustomize ? 'var(--teal)' : 'var(--slate)',
-                backgroundColor: showCustomize ? 'var(--teal-active)' : 'transparent',
-                border: '1px solid',
-                borderColor: showCustomize ? 'var(--teal)' : 'var(--border-light)',
-                cursor: 'pointer',
-                opacity: showCustomize ? 1 : 0.6,
-              }}
-            >
-              <Settings2 size={12} />
-              Customize
-            </button>
-            <PageTooltip id="dashboard-filter-hint" text="Press F to toggle filters on any page" />
-          </div>
-
-          <h1
-            style={{
-              fontWeight: 600,
-              fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
-              color: 'var(--ink)',
-              margin: 0,
-              lineHeight: 1.15,
-              letterSpacing: 'var(--tracking-display)',
-            }}
-          >
-            {greeting}
-          </h1>
-          <p
-            style={{
-              fontSize: '15px',
-              color: 'var(--muted)',
-              marginTop: '6px',
-              maxWidth: '520px',
-            }}
-          >
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            {todayProgress.completedToday > 0 && <> · <span style={{ color: 'var(--green)' }}>{todayProgress.completedToday} done today</span></>}
-            {todayProgress.dueToday > 0 && <> · <span style={{ color: 'var(--teal)' }}>{todayProgress.dueToday} due today</span></>}
-          </p>
-
-          {/* Gold rule */}
-          <div
-            style={{
-              height: '1px',
-              background: 'linear-gradient(to right, var(--gold), transparent)',
-              opacity: 0.3,
-              marginTop: '1.25rem',
-            }}
-          />
-        </div>
+          )
+        })()}
 
         {/* Notion-style tab bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '4px', padding: '3px', borderRadius: 'var(--radius-lg)', background: 'rgba(15,25,35,0.03)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '2px', padding: '2px', borderRadius: 'var(--radius-lg)', background: 'rgba(15,25,35,0.03)' }}>
             {TAB_CONFIG.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 style={{
-                  padding: '5px 14px',
+                  padding: '4px 12px',
                   borderRadius: 'var(--radius-lg)',
                   border: 'none',
                   fontSize: '12px',
@@ -481,40 +500,6 @@ export default function Dashboard() {
 
         {/* Welcome banner (first-visit onboarding) */}
         <WelcomeBanner />
-
-        {/* Overdue alert banner */}
-        {(() => {
-          const overdue = allTasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date())
-          if (overdue.length === 0) return null
-          return (
-            <div
-              className="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg border"
-              style={{
-                background: 'var(--maroon-hover)',
-                borderColor: 'var(--maroon-emphasis)',
-              }}
-            >
-              <Clock size={16} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
-              <div className="flex-1 min-w-0">
-                <span className="text-sm" style={{ color: 'var(--ink)' }}>
-                  <strong style={{ color: 'var(--maroon)' }}>{overdue.length}</strong> overdue task{overdue.length !== 1 ? 's' : ''} need attention
-                </span>
-                {overdue.length <= 3 && (
-                  <span className="text-[11px] ml-2" style={{ color: 'var(--slate)', opacity: 0.6 }}>
-                    {overdue.map(t => t.title || t.description).join(' · ')}
-                  </span>
-                )}
-              </div>
-              <a
-                href="/my-tasks"
-                className="text-[11px] px-2.5 py-1 rounded-full font-medium flex-shrink-0"
-                style={{ color: 'var(--maroon)', background: 'var(--maroon-hover)', textDecoration: 'none' }}
-              >
-                View
-              </a>
-            </div>
-          )
-        })()}
 
         {/* Customize panel */}
         {showCustomize && (
@@ -594,36 +579,38 @@ export default function Dashboard() {
           </Link>
         )}
 
-        {/* Quick Actions */}
-        <div className="flex items-center gap-2.5 mb-4 flex-wrap">
-          <Link
-            to="/tasks?create=true"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
-            style={{ color: 'var(--ink-bright, #fff)', backgroundColor: 'var(--teal)', textDecoration: 'none' }}
-          >
-            <Plus size={14} />
-            New Task
-          </Link>
-          <Link
-            to="/meetings"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
-            style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
-          >
-            <CalendarPlus size={14} />
-            Schedule Meeting
-          </Link>
-          <Link
-            to="/ideas?create=true"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
-            style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
-          >
-            <FolderPlus size={14} />
-            Submit Idea
-          </Link>
+        {/* Quick Capture + Actions — merged into one row */}
+        <div className="flex items-center gap-2 mb-4" style={{ flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <QuickCaptureBar noMargin />
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <Link
+              to="/tasks?create=true"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+              style={{ color: 'var(--ink-bright, #fff)', backgroundColor: 'var(--teal)', textDecoration: 'none' }}
+            >
+              <Plus size={12} />
+              Task
+            </Link>
+            <Link
+              to="/meetings"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
+              style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
+            >
+              <CalendarPlus size={12} />
+              Meeting
+            </Link>
+            <Link
+              to="/ideas?create=true"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
+              style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
+            >
+              <FolderPlus size={12} />
+              Idea
+            </Link>
+          </div>
         </div>
-
-        {/* Quick Capture */}
-        <QuickCaptureBar />
 
         {/* Pinned Cards — always at the top */}
         {pinnedVisibleCards.length > 0 && (

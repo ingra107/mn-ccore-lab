@@ -2,6 +2,7 @@ import { lazy, Suspense, Component } from 'react'
 import type { ReactNode, ErrorInfo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MotionConfig } from 'framer-motion'
 import Layout from './components/Layout'
 import PortalLayout from './components/PortalLayout'
 import ViewTransitionWrapper from './components/ViewTransitionWrapper'
@@ -160,6 +161,7 @@ function PageLoader() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <MotionConfig reducedMotion="user">
       <BrowserRouter>
         <AuthProvider>
           <ViewTransitionWrapper>
@@ -229,6 +231,7 @@ export default function App() {
           </ViewTransitionWrapper>
         </AuthProvider>
       </BrowserRouter>
+      </MotionConfig>
     </QueryClientProvider>
   )
 }

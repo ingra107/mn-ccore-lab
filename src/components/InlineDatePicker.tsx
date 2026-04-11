@@ -158,10 +158,11 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           border: '1px solid transparent',
           background: 'none',
           cursor: 'pointer',
-          fontSize: '12px',
+          fontSize: 'var(--text-label)',
           fontWeight: isOverdue || isToday ? 500 : 400,
           color: isOverdue ? 'var(--maroon)' : isToday ? 'var(--teal)' : isThisWeek ? 'var(--gold)' : value ? 'var(--slate)' : 'var(--slate)',
-          opacity: value ? 1 : 0.3,
+          opacity: value ? 0.5 : 0.3,
+          fontVariantNumeric: 'tabular-nums',
         }}
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--teal-hover)' }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' }}

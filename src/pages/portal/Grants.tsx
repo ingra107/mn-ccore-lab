@@ -681,6 +681,7 @@ function AddGrantMilestoneModal({
           </h3>
           <button
             onClick={onClose}
+            aria-label="Close"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
           >
             <X size={18} />

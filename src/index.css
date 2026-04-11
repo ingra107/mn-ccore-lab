@@ -22,7 +22,7 @@
   --font-sans: 'DM Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --muted: rgba(148, 163, 184, 0.76);
+  --muted: #6b7280; /* WCAG AA: ~5.0:1 on white — was rgba(148,163,184,0.76) @ 1.98:1 */
 
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(15, 25, 35, 0.06);
@@ -202,9 +202,10 @@
   --weight-metric: 700;    /* dashboard hero numbers only */
 
   /* Contrast hierarchy — labels recede, values pop */
+  /* Light mode: opacity values raised to meet WCAG AA 4.5:1 on white bg */
   --ink-primary: 1.0;
-  --ink-label: 0.55;
-  --ink-hint: 0.4;
+  --ink-label: 0.70;      /* WCAG AA light mode: ~5.3:1 on white — was 0.55 @ 3.94:1 */
+  --ink-hint: 0.62;       /* WCAG AA light mode: ~4.6:1 on white — was 0.40 @ 2.54:1 */
   --ink-muted: 0.7;       /* secondary text, metadata, inactive icons */
   --ink-disabled: 0.3;    /* disabled controls, decorative elements */
   --label-weight: var(--weight-heading);
@@ -227,11 +228,19 @@
   /* Field containers */
   --field-bg: rgba(0, 0, 0, 0.02);
   --field-bg-hover: rgba(0, 0, 0, 0.04);
+
+  /* Sidebar surface — distinct from page background for visual separation */
+  --sidebar-bg: #ebebeb; /* ~7% darker than white; distinct from --page-bg #f5f5f5 */
 }
 
 .dark {
   --field-bg: rgba(255, 255, 255, 0.03);
   --field-bg-hover: rgba(255, 255, 255, 0.06);
+  /* Dark mode: restore original visual receding hierarchy (dark bg has contrast headroom) */
+  --ink-label: 0.55;
+  --ink-hint: 0.40;
+  /* Sidebar: slightly elevated surface in dark mode */
+  --sidebar-bg: color-mix(in oklch, var(--cream), white 10%);
 }
 
 @media (prefers-reduced-motion: reduce) {

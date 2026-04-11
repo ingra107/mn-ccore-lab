@@ -540,7 +540,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
           <h3 className="text-lg" style={{ fontWeight: 500, color: 'var(--ink)' }}>
             New Idea
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
             <X size={18} />
           </button>
         </div>

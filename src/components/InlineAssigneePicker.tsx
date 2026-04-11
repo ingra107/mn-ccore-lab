@@ -96,8 +96,9 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
         </div>
         {!compact && (
           <span style={{
-            fontSize: '12px',
+            fontSize: 'var(--text-small)',
             color: 'var(--slate)',
+            opacity: 0.6,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap' as const,

@@ -374,12 +374,12 @@ export default function Manuscripts() {
                             <div style={{ width: 22, height: 22, flexShrink: 0 }}>
                               <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm-plus" variant="ice" />
                             </div>
-                            <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
+                            <span style={{ fontSize: 'var(--text-small)', color: 'var(--slate)', opacity: 0.6 }}>
                               {pi.name.split(' ').pop()}
                             </span>
                           </div>
 
-                          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4 }}>
+                          <span style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', opacity: 0.4 }}>
                             {catLabel}
                           </span>
                         </div>
