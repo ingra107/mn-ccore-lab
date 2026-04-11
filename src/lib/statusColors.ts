@@ -57,15 +57,15 @@ export const STATUS_COLOR: Record<string, string> = {
 export const STATUS_BG_EXTENDED: Record<string, string> = {
   // Core task statuses
   todo: 'rgba(148, 163, 184, 0.15)',
-  in_progress: 'rgba(45, 138, 138, 0.15)',
+  in_progress: 'rgba(60, 130, 130, 0.12)',
   done: 'rgba(22, 163, 74, 0.15)',
   blocked: 'rgba(122, 0, 25, 0.15)',
   overdue: 'rgba(122, 0, 25, 0.15)',
 
   // Submission / revision statuses
   pending: 'rgba(148, 163, 184, 0.15)',
-  submitted: 'rgba(45, 138, 138, 0.15)',
-  resubmitted: 'rgba(45, 138, 138, 0.15)',
+  submitted: 'rgba(60, 130, 130, 0.12)',
+  resubmitted: 'rgba(60, 130, 130, 0.12)',
   accepted: 'rgba(22, 163, 74, 0.15)',
   rejected: 'rgba(122, 0, 25, 0.15)',
   wont_fix: 'rgba(122, 0, 25, 0.15)',
@@ -82,7 +82,7 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
   presented: 'rgba(22, 163, 74, 0.15)',
 
   // Cascade-specific
-  'on-track': 'rgba(45, 138, 138, 0.15)',
+  'on-track': 'rgba(60, 130, 130, 0.12)',
   'at-risk': 'rgba(201, 168, 76, 0.15)',
 
   // Materials

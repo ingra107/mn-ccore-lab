@@ -165,7 +165,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         collapsed ? 'w-16' : 'w-60'
       }`}
       style={{
-        backgroundColor: 'var(--cream)',
+        backgroundColor: 'color-mix(in oklch, var(--cream), black 12%)',
         backgroundImage: 'linear-gradient(var(--surface-2), var(--surface-2))',
         borderColor: 'var(--border-subtle)',
       }}
@@ -221,7 +221,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   onClick={onNavigate}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] transition-colors mb-0.5"
                   style={{
-                    backgroundColor: active ? 'color-mix(in srgb, var(--teal) 12%, transparent)' : 'transparent',
+                    backgroundColor: active ? 'color-mix(in srgb, var(--teal-subtle) 12%, transparent)' : 'transparent',
                     color: active ? 'var(--teal)' : 'var(--slate)',
                     fontWeight: active ? 500 : 400,
                   }}

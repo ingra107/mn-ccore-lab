@@ -12,6 +12,7 @@
   --maroon: oklch(0.35 0.15 20);         /* #7a0019 */
   --ice: oklch(0.97 0.005 250);          /* #f4f5f7 */
   --teal: oklch(0.55 0.1 190);           /* #2d8a8a */
+  --teal-subtle: oklch(0.45 0.04 190);  /* desaturated teal for bulk/ambient use */
   --orange: oklch(0.6 0.18 45);          /* #c2410c */
   --green: oklch(0.6 0.18 145);          /* #16a34a */
   --green-light: oklch(0.70 0.17 145);   /* #22c55e */
@@ -70,7 +71,7 @@
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
   --bg-rgb: 255, 255, 255;
-  --page-bg: #fafafa;
+  --page-bg: #f5f5f5;
   color-scheme: light dark;
 }
 
@@ -79,13 +80,14 @@
 .dark {
   --ink: oklch(0.92 0.01 250);           /* #e2e8f0 */
   --ink-bright: oklch(1.00 0 0);         /* #ffffff */
-  --slate: oklch(0.7 0.02 250);          /* #94a3b8 */
+  --slate: oklch(0.7 0.005 250);         /* reduced chroma, minimal warmth */
   --gold: oklch(0.73 0.12 85);           /* #c9a84c */
-  --gold-light: oklch(0.18 0.005 240);   /* neutral dark hover */
-  --cream: oklch(0.12 0.005 250);        /* #0e1014 neutral dark — chroma reduced */
+  --gold-light: oklch(0.18 0 0);         /* true achromatic */
+  --cream: oklch(0.12 0 0);              /* true achromatic, zero hue */
   --maroon: oklch(0.65 0.15 20);         /* #e85d7a */
-  --ice: oklch(0.14 0.005 240);          /* neutral dark ice */
+  --ice: oklch(0.14 0 0);                /* true achromatic */
   --teal: oklch(0.70 0.1 190);           /* #3db8b8 */
+  --teal-subtle: oklch(0.55 0.04 190);  /* desaturated teal for bulk/ambient use */
   --orange: oklch(0.65 0.18 45);         /* #e8713a */
   --green: oklch(0.78 0.18 145);         /* #4ade80 */
   --green-light: oklch(0.78 0.18 145);   /* #4ade80 */
@@ -102,9 +104,9 @@
   --shadow-elevated: 0 4px 12px rgba(0,0,0,0.4);
 
   --surface-0: var(--cream);
-  --surface-1: rgba(255, 255, 255, 0.02);
-  --surface-2: rgba(255, 255, 255, 0.04);
-  --surface-3: rgba(255, 255, 255, 0.06);
+  --surface-1: rgba(255, 255, 255, 0.03);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --surface-3: rgba(255, 255, 255, 0.10);
 
   --shadow-menu: 0 0 0 1px var(--border-default), 0 4px 16px rgba(0, 0, 0, 0.5);
 
@@ -509,7 +511,7 @@ a:hover {
 /* ── Card base ── */
 .card {
   background: var(--cream);
-  box-shadow: 0 0 0 1px var(--border-subtle), var(--shadow-card);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
   border: none;
   border-radius: var(--radius-xl);
   transition: box-shadow 0.25s ease, background-color 0.12s ease;
@@ -523,7 +525,7 @@ a:hover {
 .dark .card {
   background-color: var(--cream);
   background-image: linear-gradient(var(--surface-2), var(--surface-2));
-  box-shadow: 0 0 0 1px var(--border-subtle), var(--shadow-card);
+  box-shadow: 0 0 0 1px var(--border-subtle), var(--shadow-card), inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
 .dark .card:hover {
@@ -553,11 +555,11 @@ a:hover {
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
+  padding: 2px 8px;
   border-radius: 9999px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   font-family: var(--font-sans);
 }
