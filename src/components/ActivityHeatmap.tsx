@@ -97,7 +97,7 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
               style={{
                 width: 10,
                 height: 10,
-                borderRadius: 2,
+                borderRadius: 'var(--radius-sm)',
                 backgroundColor: intensity === 0 ? 'var(--border-subtle)' : `rgba(45,138,138,${0.2 + intensity * 0.8})`,
               }}
             />
