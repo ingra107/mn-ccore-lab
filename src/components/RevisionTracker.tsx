@@ -218,7 +218,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg"
                   style={{
                     background: 'var(--teal)',
-                    color: '#fff',
+                    color: 'var(--ink-bright, #fff)',
                     fontSize: 'var(--value-size)',
                     fontWeight: 500,
                     border: 'none',
@@ -620,7 +620,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                     onClick={() => handleSaveResponse(comment.id)}
                                     style={{
                                       fontSize: 'var(--label-size)',
-                                      color: '#fff',
+                                      color: 'var(--ink-bright, #fff)',
                                       background: 'var(--teal)',
                                       border: 'none',
                                       borderRadius: 'var(--radius-md)',
@@ -808,7 +808,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                 style={{
                   fontSize: '12px',
                   fontWeight: 500,
-                  color: '#fff',
+                  color: 'var(--ink-bright, #fff)',
                   background: newCommentText.trim() ? 'var(--teal)' : 'var(--slate)',
                   border: 'none',
                   cursor: newCommentText.trim() ? 'pointer' : 'not-allowed',

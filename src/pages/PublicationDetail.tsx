@@ -308,8 +308,8 @@ export default function PublicationDetail() {
 // ── Linked Projects Section ─────────────────────────────────
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  clif: { bg: 'var(--maroon)', text: '#ffffff', label: 'CLIF' },
-  lab: { bg: 'var(--teal)', text: '#ffffff', label: 'Lab' },
+  clif: { bg: 'var(--maroon)', text: 'var(--ink-bright, #fff)', label: 'CLIF' },
+  lab: { bg: 'var(--teal)', text: 'var(--ink-bright, #fff)', label: 'Lab' },
   nate: { bg: 'var(--gold)', text: '#0f1923', label: 'Mesfin' },
 }
 
@@ -358,7 +358,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
           {linkedProjects.map((project) => {
             const cat = CATEGORY_COLORS[project.category ?? ''] ?? {
               bg: 'var(--slate)',
-              text: '#ffffff',
+              text: 'var(--ink-bright, #fff)',
               label: project.category ?? 'Other',
             }
             return (

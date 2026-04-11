@@ -223,7 +223,7 @@ export default function PortalLayout() {
         className="fixed bottom-5 right-5 z-40 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{
           background: 'var(--teal)',
-          color: 'white',
+          color: 'var(--ink-bright, #fff)',
           border: 'none',
           cursor: 'pointer',
           boxShadow: '0 2px 8px rgba(45,138,138,0.25)',

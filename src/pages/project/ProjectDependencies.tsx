@@ -258,7 +258,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   className="cursor-pointer px-3 py-1.5 rounded-md text-xs font-medium"
                   style={{
                     background: newTarget ? 'var(--teal)' : 'var(--ice)',
-                    color: newTarget ? '#ffffff' : 'var(--slate)',
+                    color: newTarget ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                     border: 'none',
                     opacity: newTarget ? 1 : 0.5,
                   }}

@@ -337,7 +337,7 @@ export default function SessionHistory() {
                     return 'var(--surface)'
                   })()
                   : (preset === 'all' && !sinceFilter) ? 'var(--teal)' : 'var(--surface)',
-                color: (preset === 'all' && !sinceFilter) ? 'white' : 'var(--slate)',
+                color: (preset === 'all' && !sinceFilter) ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                 cursor: 'pointer',
                 transition: 'all 0.15s',
               }}

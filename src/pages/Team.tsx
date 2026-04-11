@@ -121,7 +121,7 @@ export default function Team() {
                 style={{
                   fontWeight: 400,
                   background: 'var(--teal)',
-                  color: 'white',
+                  color: 'var(--ink-bright, #fff)',
                   border: 'none',
                   cursor: 'pointer',
                 }}

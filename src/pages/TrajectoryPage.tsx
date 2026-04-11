@@ -23,11 +23,11 @@ import ActivityHeatmap from '../components/ActivityHeatmap'
 // ── Stage colors ───────────────────────────────────────────
 
 const STAGE_COLORS: Record<string, string> = {
-  Idea: '#64748b',
+  Idea: 'var(--slate)',
   'Data Collection': '#5b8abf',
-  Analysis: '#2d8a8a',
-  Writing: '#c9a84c',
-  Review: '#7a0019',
+  Analysis: 'var(--teal)',
+  Writing: 'var(--gold)',
+  Review: 'var(--maroon)',
   Published: 'var(--green-light)',
 }
 
@@ -181,7 +181,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
 
       <div className="flex flex-col gap-3">
         {projectStages.map((project, i) => {
-          const stageColor = STAGE_COLORS[project.stage] || '#64748b'
+          const stageColor = STAGE_COLORS[project.stage] || 'var(--slate)'
           const totalWidth = (project.total_days / maxDays) * 100
           const stageWidth = project.total_days > 0
             ? (project.days_in_stage / project.total_days) * 100
@@ -650,7 +650,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
       style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
     >
       {projects.map((project, i) => {
-        const stageColor = STAGE_COLORS[project.stage] || '#64748b'
+        const stageColor = STAGE_COLORS[project.stage] || 'var(--slate)'
         return (
           <motion.div
             key={project.id}
@@ -1372,7 +1372,7 @@ export default function TrajectoryPage() {
                 justifyContent: 'center',
                 fontSize: '18px',
                 fontWeight: 700,
-                color: 'white',
+                color: 'var(--ink-bright, #fff)',
               }}
             >
               {member.initials}

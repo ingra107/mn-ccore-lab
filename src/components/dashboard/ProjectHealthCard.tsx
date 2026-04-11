@@ -9,10 +9,10 @@ import { useProjectHealth } from '../../hooks/useApiData'
 import type { ProjectHealth, HealthFactors } from '../../hooks/useApiData'
 
 const STATUS_COLORS: Record<string, string> = {
-  'Healthy': '#16a34a',
-  'Needs Attention': '#c9a84c',
-  'At Risk': '#c2410c',
-  'Critical': '#7a0019',
+  'Healthy': 'var(--green)',
+  'Needs Attention': 'var(--gold)',
+  'At Risk': 'var(--orange)',
+  'Critical': 'var(--maroon)',
 }
 
 const FACTOR_LABELS: Record<keyof HealthFactors, { label: string; max: number }> = {

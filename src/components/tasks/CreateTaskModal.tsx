@@ -430,7 +430,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
               style={{
                 backgroundColor: !title.trim() || !assignee ? 'var(--border-subtle)' : 'var(--teal)',
-                color: !title.trim() || !assignee ? 'var(--slate)' : 'white',
+                color: !title.trim() || !assignee ? 'var(--slate)' : 'var(--ink-bright, #fff)',
                 cursor: !title.trim() || !assignee ? 'not-allowed' : 'pointer',
                 border: 'none',
               }}

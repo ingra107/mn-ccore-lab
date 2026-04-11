@@ -333,7 +333,7 @@ export default function MyTasks() {
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
               backgroundColor: 'var(--teal)',
-              color: 'white',
+              color: 'var(--ink-bright, #fff)',
               border: 'none',
               cursor: 'pointer',
             }}

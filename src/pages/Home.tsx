@@ -200,7 +200,7 @@ export default function Home() {
               fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
               lineHeight: 0.95,
               letterSpacing: '-0.03em',
-              color: '#ffffff',
+              color: 'var(--ink-bright, #fff)',
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(24px)',
               transitionDelay: '100ms',
@@ -466,7 +466,7 @@ export default function Home() {
                 fontFamily: 'var(--font-display)',
                 fontWeight: 500,
                 fontSize: 'clamp(1.6rem, 3.5vw, 2.5rem)',
-                color: '#ffffff',
+                color: 'var(--ink-bright, #fff)',
                 lineHeight: 1.15,
                 letterSpacing: '-0.02em',
               }}

@@ -53,7 +53,7 @@ export default function ResearchImpact() {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 500,
-              color: '#ffffff',
+              color: 'var(--ink-bright, #fff)',
             }}
           >
             Research Output

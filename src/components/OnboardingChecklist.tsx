@@ -358,7 +358,7 @@ export default function OnboardingChecklist() {
                           }}
                           title={done ? 'Completed' : unlocked ? 'Mark as done' : `Unlocks on Day ${day}`}
                         >
-                          {done && <Check size={11} style={{ color: 'white' }} strokeWidth={3} />}
+                          {done && <Check size={11} style={{ color: 'var(--ink-bright, #fff)' }} strokeWidth={3} />}
                         </button>
 
                         {/* Content */}

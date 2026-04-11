@@ -209,7 +209,7 @@ export default function Grants() {
               className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
               style={{
                 background: 'var(--teal)',
-                color: 'white',
+                color: 'var(--ink-bright, #fff)',
                 border: 'none',
                 cursor: 'pointer',
               }}
@@ -792,7 +792,7 @@ function AddGrantMilestoneModal({
               borderRadius: 'var(--radius-lg)',
               border: 'none',
               background: !grantId || !title.trim() ? 'var(--border-subtle)' : 'var(--teal)',
-              color: !grantId || !title.trim() ? 'var(--slate)' : 'white',
+              color: !grantId || !title.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)',
               fontSize: 'var(--value-size)',
               fontWeight: 600,
               cursor: !grantId || !title.trim() ? 'not-allowed' : 'pointer',

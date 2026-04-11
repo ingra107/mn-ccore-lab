@@ -245,7 +245,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                       className="ml-auto text-xs px-1.5 py-0.5 rounded-full"
                       style={{
                         backgroundColor: 'var(--maroon)',
-                        color: 'white',
+                        color: 'var(--ink-bright, #fff)',
                         animation: item.to === '/my-tasks' ? 'badge-pulse 2s ease-in-out infinite' : undefined,
                       }}
                     >

@@ -373,7 +373,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
             className="cursor-pointer px-4 py-2 rounded-lg text-sm font-medium"
             style={{
               background: title.trim() ? 'var(--teal)' : 'var(--ice)',
-              color: title.trim() ? 'white' : 'var(--slate)',
+              color: title.trim() ? 'var(--ink-bright, #fff)' : 'var(--slate)',
               border: 'none',
               opacity: title.trim() ? 1 : 0.5,
             }}

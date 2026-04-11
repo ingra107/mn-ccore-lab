@@ -47,7 +47,7 @@ export default function SystemHealthMiniCard() {
   }
 
   const statusColors: Record<string, string> = {
-    green: '#22c55e',
+    green: 'var(--green-light)',
     amber: '#f59e0b',
     red: '#ef4444',
   }

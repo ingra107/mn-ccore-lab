@@ -378,7 +378,7 @@ export default function AnalyticsPage() {
               className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
               style={{
                 background: range === r ? 'var(--teal)' : 'transparent',
-                color: range === r ? 'white' : 'var(--slate)',
+                color: range === r ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                 border: 'none',
                 cursor: 'pointer',
               }}
@@ -569,7 +569,7 @@ export default function AnalyticsPage() {
                   <span className="text-xs w-28" style={{ color: 'var(--ink)' }}>{stage}</span>
                   <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
                     <div className="h-full rounded transition-all flex items-center px-2" style={{ width: `${width}%`, backgroundColor: stageColors[stage] || 'var(--teal)', minWidth: 24 }}>
-                      <span className="text-[10px] font-semibold" style={{ color: 'white' }}>{count}</span>
+                      <span className="text-[10px] font-semibold" style={{ color: 'var(--ink-bright, #fff)' }}>{count}</span>
                     </div>
                   </div>
                 </div>

@@ -272,7 +272,7 @@ export default function Layout() {
                       <span
                         style={{
                           background: 'var(--maroon)',
-                          color: '#fff',
+                          color: 'var(--ink-bright, #fff)',
                           fontSize: '10px',
                           lineHeight: '16px',
                           width: '16px',
@@ -447,7 +447,7 @@ export default function Layout() {
                     <span
                       style={{
                         background: 'var(--maroon)',
-                        color: '#fff',
+                        color: 'var(--ink-bright, #fff)',
                         fontSize: '10px',
                         lineHeight: '16px',
                         width: '16px',
@@ -532,7 +532,7 @@ export default function Layout() {
                 className="text-lg font-normal mb-4 tracking-wider"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  color: '#ffffff',
+                  color: 'var(--ink-bright, #fff)',
                 }}
               >
                 MN-CCORE
@@ -571,7 +571,7 @@ export default function Layout() {
                 className="text-lg font-normal mb-4"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  color: '#ffffff',
+                  color: 'var(--ink-bright, #fff)',
                 }}
               >
                 Research Portal
@@ -584,7 +584,7 @@ export default function Layout() {
                       className="text-sm cursor-pointer transition-colors duration-200"
                       style={{ color: 'rgba(255, 255, 255, 0.7)' }}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = '#c9a84c')
+                        (e.currentTarget.style.color = 'var(--gold)')
                       }
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')
@@ -603,7 +603,7 @@ export default function Layout() {
                 className="text-lg font-normal mb-4"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  color: '#ffffff',
+                  color: 'var(--ink-bright, #fff)',
                 }}
               >
                 Quick Links
@@ -616,7 +616,7 @@ export default function Layout() {
                       className="text-sm cursor-pointer transition-colors duration-200"
                       style={{ color: 'rgba(255, 255, 255, 0.7)' }}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = '#c9a84c')
+                        (e.currentTarget.style.color = 'var(--gold)')
                       }
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')
@@ -635,7 +635,7 @@ export default function Layout() {
                 className="text-lg font-normal mb-4"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  color: '#ffffff',
+                  color: 'var(--ink-bright, #fff)',
                 }}
               >
                 Affiliates
@@ -664,7 +664,7 @@ export default function Layout() {
                       className="text-sm cursor-pointer transition-colors duration-200"
                       style={{ color: 'rgba(255, 255, 255, 0.7)' }}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = '#c9a84c')
+                        (e.currentTarget.style.color = 'var(--gold)')
                       }
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')
@@ -679,7 +679,7 @@ export default function Layout() {
                 className="text-lg font-normal mb-4 mt-6"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  color: '#ffffff',
+                  color: 'var(--ink-bright, #fff)',
                 }}
               >
                 Social
@@ -698,7 +698,7 @@ export default function Layout() {
                       className="text-sm cursor-pointer transition-colors duration-200"
                       style={{ color: 'rgba(255, 255, 255, 0.7)' }}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = '#c9a84c')
+                        (e.currentTarget.style.color = 'var(--gold)')
                       }
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')

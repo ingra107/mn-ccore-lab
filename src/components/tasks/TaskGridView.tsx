@@ -805,7 +805,7 @@ function TaskGridRow({
             background: selected ? 'var(--teal)' : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            {selected && <CheckCircle2 size={10} style={{ color: 'white' }} />}
+            {selected && <CheckCircle2 size={10} style={{ color: 'var(--ink-bright, #fff)' }} />}
           </div>
         ) : <div style={{ width: 16 }} />}
       </div>

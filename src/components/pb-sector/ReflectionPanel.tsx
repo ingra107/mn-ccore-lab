@@ -154,7 +154,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   style={{
                     fontSize: 'var(--label-size)', fontWeight: 600,
                     background: hasContent ? 'var(--gold)' : 'rgba(201,168,76,0.15)',
-                    color: hasContent ? '#fff' : 'var(--slate)',
+                    color: hasContent ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                     border: 'none', cursor: hasContent ? 'pointer' : 'default',
                     opacity: hasContent ? 1 : 0.5,
                   }}

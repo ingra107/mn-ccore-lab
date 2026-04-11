@@ -133,7 +133,7 @@ export default function RelayCard() {
                       style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                       title="Mark completed"
                     >
-                      <Check size={12} style={{ color: '#22c55e', opacity: 0.6 }} />
+                      <Check size={12} style={{ color: 'var(--green-light)', opacity: 0.6 }} />
                     </button>
                   </div>
                 )
@@ -146,7 +146,7 @@ export default function RelayCard() {
                   className="flex items-center gap-2"
                   style={{ fontSize: '10px', opacity: 0.3 }}
                 >
-                  <Check size={10} style={{ color: '#22c55e', flexShrink: 0 }} />
+                  <Check size={10} style={{ color: 'var(--green-light)', flexShrink: 0 }} />
                   <span style={{ color: 'var(--slate)', fontFamily: 'JetBrains Mono, monospace' }}>
                     {msg.from}-&gt;{msg.to}
                   </span>

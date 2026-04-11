@@ -59,7 +59,7 @@ function relevanceColor(score: number): { bg: string; text: string; label: strin
 
 function relevanceColorDark(score: number): { bg: string; text: string } {
   if (score >= 0.7) return { bg: 'rgba(34, 197, 94, 0.15)', text: 'var(--green-light)' }
-  if (score >= 0.4) return { bg: 'rgba(201, 168, 76, 0.2)', text: '#c9a84c' }
+  if (score >= 0.4) return { bg: 'rgba(201, 168, 76, 0.2)', text: 'var(--gold)' }
   return { bg: 'rgba(100, 116, 139, 0.15)', text: '#94a3b8' }
 }
 

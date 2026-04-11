@@ -599,7 +599,7 @@ export default function Dashboard() {
           <Link
             to="/tasks?create=true"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
-            style={{ color: 'white', backgroundColor: 'var(--teal)', textDecoration: 'none' }}
+            style={{ color: 'var(--ink-bright, #fff)', backgroundColor: 'var(--teal)', textDecoration: 'none' }}
           >
             <Plus size={14} />
             New Task

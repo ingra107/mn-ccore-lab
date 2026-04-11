@@ -97,7 +97,7 @@ export default function Pulse() {
           <div className="flex flex-col gap-3">
             {grants.slice(0, 5).map((g, i) => (
               <div key={i} className="flex items-center gap-4 px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                <span className="text-sm font-semibold px-3 py-1 rounded" style={{ color: 'white', backgroundColor: g.proposed ? 'var(--gold)' : 'var(--teal)' }}>
+                <span className="text-sm font-semibold px-3 py-1 rounded" style={{ color: 'var(--ink-bright, #fff)', backgroundColor: g.proposed ? 'var(--gold)' : 'var(--teal)' }}>
                   {g.mechanism}
                 </span>
                 <span className="text-lg" style={{ color: 'var(--cream)' }}>{g.title}</span>
@@ -120,7 +120,7 @@ export default function Pulse() {
           <div className="flex flex-col gap-3">
             {deadlines.map((t) => (
               <div key={t.id} className="flex items-center gap-4 px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                <span className="text-sm font-semibold px-3 py-1 rounded" style={{ color: 'white', backgroundColor: overdueTasks.includes(t) ? 'var(--maroon)' : 'var(--teal)' }}>
+                <span className="text-sm font-semibold px-3 py-1 rounded" style={{ color: 'var(--ink-bright, #fff)', backgroundColor: overdueTasks.includes(t) ? 'var(--maroon)' : 'var(--teal)' }}>
                   {formatShortDate(t.due_date!)}
                 </span>
                 <span className="text-lg" style={{ color: 'var(--cream)' }}>

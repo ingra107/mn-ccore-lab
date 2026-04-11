@@ -278,7 +278,7 @@ export default function Publications() {
                   <div className="min-w-0">
                     <p
                       className="text-sm font-medium leading-snug"
-                      style={{ color: '#ffffff' }}
+                      style={{ color: 'var(--ink-bright, #fff)' }}
                     >
                       {pub.title}
                     </p>

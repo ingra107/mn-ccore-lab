@@ -255,7 +255,7 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
           const dayEvents = eventsByDate.get(dateStr) || []
           return (
             <div key={dateStr} className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'rgba(45,138,138,0.06)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
-              <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'white' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
+              <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
                 {dayNum}
               </span>
               <div className="flex flex-col gap-0.5 mt-0.5">
@@ -320,7 +320,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
             {/* Day header */}
             <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{dayNames[i]}</div>
-              <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8' : ''}`} style={{ color: isToday ? 'white' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
+              <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8' : ''}`} style={{ color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
                 {dayNum}
               </div>
             </div>

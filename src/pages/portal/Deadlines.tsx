@@ -483,7 +483,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
                     }}
                     aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
                   >
-                    {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'white' }} />}
+                    {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
                   </button>
                 ) : <div style={{ width: 18 }} />}
               </div>
@@ -575,7 +575,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
                   }}
                   aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
                 >
-                  {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'white' }} />}
+                  {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
                 </button>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>

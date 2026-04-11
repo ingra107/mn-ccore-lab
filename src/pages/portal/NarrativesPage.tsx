@@ -9,11 +9,11 @@ import { usePageMeta } from '../../hooks/usePageMeta'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 const STAGE_COLORS: Record<string, string> = {
-  Idea: '#64748b',
+  Idea: 'var(--slate)',
   'Data Collection': '#5b8abf',
-  Analysis: '#2d8a8a',
-  Writing: '#c9a84c',
-  Review: '#7a0019',
+  Analysis: 'var(--teal)',
+  Writing: 'var(--gold)',
+  Review: 'var(--maroon)',
   Published: 'var(--green-light)',
 }
 
@@ -102,7 +102,7 @@ export default function NarrativesPage() {
                       width: s.count > 0 ? 10 + s.count * 4 : 8,
                       height: s.count > 0 ? 10 + s.count * 4 : 8,
                       borderRadius: 'var(--radius-circle)',
-                      background: STAGE_COLORS[s.stage] || '#64748b',
+                      background: STAGE_COLORS[s.stage] || 'var(--slate)',
                       opacity: s.count > 0 ? 1 : 0.15,
                       transition: 'all 0.2s',
                     }} title={`${s.stage}: ${s.count}`} />
@@ -127,7 +127,7 @@ export default function NarrativesPage() {
                     className="flex items-center gap-2 p-2 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                     style={{ textDecoration: 'none' }}
                   >
-                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: STAGE_COLORS[p.stage] || '#64748b', flexShrink: 0 }} />
+                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: STAGE_COLORS[p.stage] || 'var(--slate)', flexShrink: 0 }} />
                     <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', flex: 1 }}>
                       {p.title}
                     </span>

@@ -117,7 +117,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
             style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)', color: 'var(--ink)' }}
           />
           {newComment.trim() && (
-            <button type="submit" className="p-1.5 rounded-md" style={{ backgroundColor: forClaude ? 'var(--gold)' : 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer', transition: 'background-color 0.15s' }}>
+            <button type="submit" className="p-1.5 rounded-md" style={{ backgroundColor: forClaude ? 'var(--gold)' : 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer', transition: 'background-color 0.15s' }}>
               <Send size={14} />
             </button>
           )}

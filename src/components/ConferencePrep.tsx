@@ -404,7 +404,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 borderRadius: 'var(--radius-md)',
                 border: 'none',
                 background: 'var(--teal)',
-                color: '#fff',
+                color: 'var(--ink-bright, #fff)',
                 cursor: !form.conference.trim() || !form.title.trim() ? 'not-allowed' : 'pointer',
                 opacity: !form.conference.trim() || !form.title.trim() ? 0.5 : 1,
               }}

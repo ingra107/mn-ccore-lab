@@ -550,7 +550,7 @@ function QuickCapture() {
         <button
           type="submit"
           className="p-2 rounded-lg transition-colors"
-          style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+          style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
         >
           <Send size={14} />
         </button>

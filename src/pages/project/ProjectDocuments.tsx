@@ -345,7 +345,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                 className="px-3 py-1.5 rounded-md text-xs font-medium"
                 style={{
                   background: title.trim() && url.trim() ? 'var(--teal)' : 'var(--slate)',
-                  color: 'white',
+                  color: 'var(--ink-bright, #fff)',
                   border: 'none',
                   cursor: title.trim() && url.trim() ? 'pointer' : 'not-allowed',
                   opacity: title.trim() && url.trim() ? 1 : 0.4,

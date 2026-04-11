@@ -124,7 +124,7 @@ export default function Ideas() {
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+            style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
           >
             <Plus size={16} />
             New Idea
@@ -596,7 +596,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
               Cancel
             </button>
-            <button type="submit" disabled={!title.trim()} className="px-4 py-2 rounded-md text-sm font-medium" style={{ backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--teal)', color: !title.trim() ? 'var(--slate)' : 'white', cursor: !title.trim() ? 'not-allowed' : 'pointer', border: 'none' }}>
+            <button type="submit" disabled={!title.trim()} className="px-4 py-2 rounded-md text-sm font-medium" style={{ backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--teal)', color: !title.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)', cursor: !title.trim() ? 'not-allowed' : 'pointer', border: 'none' }}>
               Submit Idea
             </button>
           </div>

@@ -103,7 +103,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors"
                 style={{
                   fontSize: '11px', fontWeight: 600,
-                  background: 'var(--gold)', color: '#fff',
+                  background: 'var(--gold)', color: 'var(--ink-bright, #fff)',
                   border: 'none', cursor: isSending ? 'wait' : 'pointer',
                   opacity: isSending ? 0.7 : 1,
                 }}

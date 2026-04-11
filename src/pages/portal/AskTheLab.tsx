@@ -62,7 +62,7 @@ export default function AskTheLab() {
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+            style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
           >
             <Plus size={16} />
             New Question
@@ -394,7 +394,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
             className="self-end flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
               backgroundColor: !answerText.trim() ? 'var(--border-subtle)' : 'var(--teal)',
-              color: !answerText.trim() ? 'var(--slate)' : 'white',
+              color: !answerText.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)',
               cursor: !answerText.trim() ? 'not-allowed' : 'pointer',
               border: 'none',
             }}
@@ -535,7 +535,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
               className="px-4 py-2 rounded-md text-sm font-medium"
               style={{
                 backgroundColor: !questionText.trim() ? 'var(--border-subtle)' : 'var(--teal)',
-                color: !questionText.trim() ? 'var(--slate)' : 'white',
+                color: !questionText.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)',
                 cursor: !questionText.trim() ? 'not-allowed' : 'pointer',
                 border: 'none',
               }}

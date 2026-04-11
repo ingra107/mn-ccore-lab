@@ -46,7 +46,7 @@ class ErrorBoundary extends Component<
           <div style={{ display: 'flex', gap: 'var(--sp-sm)', marginBottom: 'var(--sp-lg)' }}>
             <button
               onClick={() => { this.setState({ hasError: false, error: null, showDetail: false }); window.location.reload() }}
-              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 'var(--radius-lg)', border: 'none', backgroundColor: 'var(--teal)', color: 'white', cursor: 'pointer' }}
+              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 'var(--radius-lg)', border: 'none', backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', cursor: 'pointer' }}
             >
               Try again
             </button>

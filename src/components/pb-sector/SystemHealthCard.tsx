@@ -7,7 +7,7 @@ function StatusDot({ timestamp }: { timestamp: string | null }) {
     if (!timestamp) return 'var(--maroon)'
     const age = Date.now() - new Date(timestamp).getTime()
     const hours = age / (1000 * 60 * 60)
-    if (hours < 1) return '#22c55e'     // green — fresh
+    if (hours < 1) return 'var(--green-light)'     // green — fresh
     if (hours < 6) return 'var(--gold)' // gold — stale
     return 'var(--maroon)'              // red — very stale
   }, [timestamp])

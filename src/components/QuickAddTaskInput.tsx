@@ -22,7 +22,7 @@ interface TokenStyle {
 const TOKEN_STYLES: Record<TokenType, TokenStyle> = {
   assignee: { color: 'var(--gold)', bg: 'rgba(201,168,76,0.13)', fontWeight: 600 },
   project:  { color: 'var(--teal)', bg: 'rgba(45,138,138,0.11)', fontWeight: 600 },
-  priority: { color: '#fff',        bg: 'var(--maroon)',         fontWeight: 700 },
+  priority: { color: 'var(--ink-bright, #fff)',        bg: 'var(--maroon)',         fontWeight: 700 },
   date:     { color: 'var(--teal)', bg: 'rgba(45,138,138,0.08)', fontWeight: 600 },
   plain:    { color: 'inherit' },
 }

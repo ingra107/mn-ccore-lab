@@ -378,7 +378,7 @@ export default function DecisionsPage() {
             <button
               onClick={() => setShowCreate(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+              style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
             >
               <Plus size={16} />
               Log Decision
@@ -446,7 +446,7 @@ export default function DecisionsPage() {
                 onClick={() => setFilterTag(filterTag === tc.tag ? '' : tc.tag)}
                 className="px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors"
                 style={{
-                  color: filterTag === tc.tag ? 'white' : 'var(--teal)',
+                  color: filterTag === tc.tag ? 'var(--ink-bright, #fff)' : 'var(--teal)',
                   backgroundColor: filterTag === tc.tag ? 'var(--teal)' : 'rgba(45,138,138,0.06)',
                   border: `1px solid ${filterTag === tc.tag ? 'var(--teal)' : 'rgba(45,138,138,0.15)'}`,
                   cursor: 'pointer',

@@ -49,7 +49,7 @@ export default function MeetingNotesPage() {
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+            style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
           >
             <Upload size={16} />
             Upload Audio
@@ -366,7 +366,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               onClick={handleProcess}
               disabled={!transcript.trim() || processing}
               className="px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-              style={{ backgroundColor: 'var(--teal)', color: 'white', cursor: 'pointer', border: 'none', opacity: (!transcript.trim() || processing) ? 0.5 : 1 }}
+              style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', cursor: 'pointer', border: 'none', opacity: (!transcript.trim() || processing) ? 0.5 : 1 }}
             >
               {processing ? <Clock size={14} className="animate-spin" /> : <Brain size={14} />}
               {processing ? 'Processing...' : 'Process with AI'}

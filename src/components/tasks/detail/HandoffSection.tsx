@@ -205,7 +205,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium"
                 style={{
                   backgroundColor: (!toSlug || !situation.trim()) ? 'var(--border-subtle)' : 'var(--teal)',
-                  color: (!toSlug || !situation.trim()) ? 'var(--slate)' : 'white',
+                  color: (!toSlug || !situation.trim()) ? 'var(--slate)' : 'var(--ink-bright, #fff)',
                   border: 'none',
                   cursor: (!toSlug || !situation.trim()) ? 'not-allowed' : 'pointer',
                   opacity: createHandoff.isPending ? 0.6 : 1,

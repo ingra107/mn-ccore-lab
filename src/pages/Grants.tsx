@@ -407,7 +407,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                   dominantBaseline="middle"
                   style={{
                     fontSize: '10px',
-                    fill: isProposed ? 'var(--gold)' : '#fff',
+                    fill: isProposed ? 'var(--gold)' : 'var(--ink-bright, #fff)',
                     opacity: isProposed ? 0.8 : 0.9,
                   }}
                 >

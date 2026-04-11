@@ -271,7 +271,7 @@ function AddEventForm({
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--teal)',
             background: 'var(--teal)',
-            color: '#fff',
+            color: 'var(--ink-bright, #fff)',
             cursor: createEvent.isPending ? 'wait' : 'pointer',
             opacity: createEvent.isPending ? 0.6 : 1,
           }}

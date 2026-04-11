@@ -715,7 +715,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
               onClick={() => { if (filename && url) addFile.mutate({ filename, url }) }}
               disabled={!filename || !url}
               className="text-[11px] px-3 py-1 rounded-lg font-medium"
-              style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer', opacity: filename && url ? 1 : 0.4 }}
+              style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer', opacity: filename && url ? 1 : 0.4 }}
             >
               Add
             </button>

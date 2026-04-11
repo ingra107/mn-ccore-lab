@@ -166,7 +166,7 @@ export default function MenteeMilestones() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
             style={{
               background: 'var(--teal)',
-              color: 'white',
+              color: 'var(--ink-bright, #fff)',
               border: 'none',
               cursor: 'pointer',
             }}
@@ -944,7 +944,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
               borderRadius: 'var(--radius-lg)',
               border: 'none',
               background: title.trim() ? 'var(--teal)' : 'var(--border-subtle)',
-              color: title.trim() ? 'white' : 'var(--slate)',
+              color: title.trim() ? 'var(--ink-bright, #fff)' : 'var(--slate)',
               fontSize: 'var(--value-size)',
               fontWeight: 500,
               cursor: title.trim() ? 'pointer' : 'not-allowed',

@@ -375,7 +375,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-medium"
               style={{
                 backgroundColor: 'var(--teal)',
-                color: 'white',
+                color: 'var(--ink-bright, #fff)',
                 border: 'none',
                 cursor: 'pointer',
                 opacity: doiLoading || !doi.trim() ? 0.5 : 1,
@@ -415,7 +415,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                 className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-medium w-fit"
                 style={{
                   backgroundColor: 'var(--teal)',
-                  color: 'white',
+                  color: 'var(--ink-bright, #fff)',
                   border: 'none',
                   cursor: 'pointer',
                   opacity: createAndLink.isPending ? 0.5 : 1,

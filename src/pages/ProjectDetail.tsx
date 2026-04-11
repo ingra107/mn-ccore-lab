@@ -49,8 +49,8 @@ const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Pub
 type Stage = (typeof STAGES)[number]
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  clif: { bg: 'var(--maroon)', text: '#ffffff', label: 'CLIF' },
-  lab: { bg: 'var(--teal)', text: '#ffffff', label: 'Lab' },
+  clif: { bg: 'var(--maroon)', text: 'var(--ink-bright, #fff)', label: 'CLIF' },
+  lab: { bg: 'var(--teal)', text: 'var(--ink-bright, #fff)', label: 'Lab' },
   nate: { bg: 'var(--gold)', text: '#0f1923', label: 'Mesfin' },
 }
 
@@ -184,7 +184,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   const cat = CATEGORY_COLORS[project.category] ?? {
     bg: 'var(--slate)',
-    text: '#ffffff',
+    text: 'var(--ink-bright, #fff)',
     label: project.category,
   }
   const pi = getPersonInfo(project.pi)
@@ -1127,7 +1127,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               <button
                 onClick={() => setShowCreateTask(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-                style={{ backgroundColor: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+                style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
               >
                 <Plus size={13} />
                 New Task
@@ -1158,7 +1158,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       }}
                       aria-label={selectedIds.has(task.id) ? 'Deselect task' : 'Select task'}
                     >
-                      {selectedIds.has(task.id) && <Check size={12} style={{ color: 'white' }} />}
+                      {selectedIds.has(task.id) && <Check size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
                     </button>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <TaskCard

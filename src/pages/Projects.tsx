@@ -42,10 +42,10 @@ const CATEGORY_DOT: Record<string, string> = {
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
 const HEALTH_STATUS_COLOR: Record<string, string> = {
-  'Healthy': '#16a34a',
-  'Needs Attention': '#c9a84c',
-  'At Risk': '#c2410c',
-  'Critical': '#7a0019',
+  'Healthy': 'var(--green)',
+  'Needs Attention': 'var(--gold)',
+  'At Risk': 'var(--orange)',
+  'Critical': 'var(--maroon)',
 }
 
 function getStageProjects(stage: Stage, filtered: Project[]): Project[] {
@@ -260,7 +260,7 @@ export default function Projects() {
                 style={{
                   fontWeight: 500,
                   background: viewMode === 'list' ? 'var(--teal)' : 'transparent',
-                  color: viewMode === 'list' ? '#ffffff' : 'var(--slate)',
+                  color: viewMode === 'list' ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                   border: 'none',
                   transition: 'all 0.15s',
                 }}
@@ -274,7 +274,7 @@ export default function Projects() {
                 style={{
                   fontWeight: 500,
                   background: viewMode === 'pipeline' ? 'var(--teal)' : 'transparent',
-                  color: viewMode === 'pipeline' ? '#ffffff' : 'var(--slate)',
+                  color: viewMode === 'pipeline' ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                   border: 'none',
                   transition: 'all 0.15s',
                 }}
@@ -298,7 +298,7 @@ export default function Projects() {
                     fontSize: 'var(--label-size)',
                     borderRadius: 'var(--radius-md)',
                     background: activeCategory === f.key ? 'var(--teal)' : 'transparent',
-                    color: activeCategory === f.key ? '#ffffff' : 'var(--slate)',
+                    color: activeCategory === f.key ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                     border: activeCategory === f.key ? '1px solid var(--teal)' : '1px solid transparent',
                     transition: 'all 0.15s',
                   }}
@@ -330,7 +330,7 @@ export default function Projects() {
                   fontSize: 'var(--label-size)',
                   fontWeight: 'var(--label-weight)',
                   background: showDeps ? 'var(--teal)' : 'transparent',
-                  color: showDeps ? '#ffffff' : 'var(--teal)',
+                  color: showDeps ? 'var(--ink-bright, #fff)' : 'var(--teal)',
                   border: '1px solid rgba(45, 138, 138, 0.2)',
                   transition: 'all 0.2s',
                   whiteSpace: 'nowrap',
