@@ -9,7 +9,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (545+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (555+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Testing | Playwright 1.59 (E2E, 214+ inspection tests) + Vitest 4.1 (component, browser mode) |
@@ -93,6 +93,14 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 - Spacing: `--sp-xs` (4) / `--sp-sm` (8) / `--sp-md` (12) / `--sp-lg` (16) / `--sp-xl` (24) / `--sp-2xl` (32). Strict 8px grid.
 - Radius: `--radius-sm` (4) / `--radius-md` (6) / `--radius-lg` (8) / `--radius-xl` (12) / `--radius-2xl` (16) / `--radius-full` (9999) / `--radius-circle` (50%). All borderRadius MUST use tokens.
 - Typography scale: `--text-micro` (10, was 9 — eliminated all 9px text) / `--text-caption` (10) / `--text-label` (11) / `--text-small` (12) / `--text-body` (13) / `--text-base` (14) / `--text-md` (16) / `--text-lg` (18) / `--text-xl` (24) / `--text-2xl` (32).
+
+### Z-Index Hierarchy (Phase 31)
+- `--z-base` (1) / `--z-sticky` (10) / `--z-dropdown` (50) / `--z-sidebar` (100) / `--z-modal-backdrop` (400) / `--z-modal` (500) / `--z-toast` (9999). All zIndex MUST use tokens.
+
+### Semantic Hover/Overlay Tokens (Phase 31)
+- Accent hovers: `--gold-hover/active/emphasis`, `--teal-hover/active/emphasis`, `--maroon-hover/emphasis`, `--orange-hover`, `--green-hover`
+- Neutral overlays: `--hover-subtle/light/medium`, `--overlay-light/medium/heavy` (with dark mode overrides — light uses black-based, dark uses white-based for hovers)
+- Standardized opacity tiers: 0.03 / 0.06 / 0.10 / 0.15 / 0.40 / 0.70. Snap to nearest tier.
 
 ### Surface Elevation (Linear pattern)
 - `--surface-0` (page bg) / `--surface-1` 3% (panels) / `--surface-2` 6% (cards, sidebar, dropdowns) / `--surface-3` 10% (hover, active)
@@ -600,6 +608,27 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 *Tests:*
 - 16 new tests in Phase 30 block (inspection.spec.ts: 198→214)
 - 17 new feature registry entries (369 features, 86.2% coverage)
+
+## Phase 31: COMPLETE (11 commits, 2026-04-11). Token Compliance + Visual Polish:
+
+*Complete Design Token Migration (~1,062 replacements):*
+- Z-index: defined 7-tier semantic hierarchy (`--z-base` through `--z-toast`), migrated 47 values across 22 files
+- Semantic rgba tokens: `--gold-hover/active/emphasis`, `--teal-hover/active/emphasis`, `--maroon-hover/emphasis`, `--orange-hover`, `--green-hover`, neutral overlays `--hover-subtle/light/medium`, `--overlay-light/medium/heavy` (with dark mode overrides)
+- borderRadius: 100% compliance — all 388 instances now use `--radius-*` tokens (0 hardcoded)
+- Spacing: 317 on-scale values migrated to `--sp-*` tokens across 83 files
+- Color literals: ~95 `#fff`/`white` replaced with `var(--ink-bright)` or `var(--cream)` in 42 files
+- Hex colors: ~25 palette colors replaced with `var(--gold/teal/maroon/orange/green/slate)` in 10 files
+- RGBA: 444 inline rgba() replaced with semantic hover/overlay tokens across 120 files. Opacity rationalized from 15+ tiers to 6 standardized tiers (0.03/0.06/0.10/0.15/0.40/0.70)
+
+*Visual Improvements:*
+- Table row line-height reduced from 1.6 to 1.35 (denser data scanning, Linear/LabSync feel)
+- Homepage: nav backdrop blur bar for readability on dark hero, UMN label enlarged (12px/500/0.9), 4th pillar off-palette blue (#5b8abf) → var(--teal), gradient bridge between hero and content
+- Avatar component: 13 named size tiers (2xs through xl) replacing 65 `!important` className overrides
+
+*Housekeeping:*
+- 38 stale worktree branches deleted (preserved xenodochial-engelbart for Open Science work)
+- Welcome banner + persistent tooltip: confirmed already localStorage-gated
+- project_id restoration: 520 D1 tasks restored via targeted UPDATE SQL (sync bug fixed in push script)
 
 ## Pending Sync
 
