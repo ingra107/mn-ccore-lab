@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, ChevronDown, ChevronRight, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check, GripVertical, Pin, RotateCcw } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
+import { SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
@@ -20,7 +20,9 @@ import { ColumnHeader } from '../table'
 import type { TaskRow } from '../../lib/api'
 
 // ── Column definitions for resize + tab nav ─────────────────
-const COLUMNS = ['checkbox', 'title', 'assignee', 'project', 'due_date', 'status', 'priority', 'actions'] as const
+// Full column set: checkbox + DATA_COLUMNS + actions
+// Sortable data columns (excludes checkbox and actions which are pinned at edges)
+const DATA_COLUMNS = ['title', 'assignee', 'project', 'due_date', 'status', 'priority'] as const
 
 const DEFAULT_WIDTHS: Record<string, number> = {
   checkbox: 32,
@@ -44,7 +46,17 @@ const MIN_WIDTHS: Record<string, number> = {
   actions: 50,
 }
 
-// Editable columns for Tab navigation (indices into COLUMNS)
+// Display labels for data columns
+const COLUMN_LABELS: Record<string, string> = {
+  title: 'TITLE',
+  assignee: 'ASSIGNEE',
+  project: 'PROJECT',
+  due_date: 'DUE DATE',
+  status: 'STATUS',
+  priority: 'PRIORITY',
+}
+
+// Legacy: static editable column indices (used as fallback)
 const EDITABLE_COL_INDICES = [1, 2, 3, 4, 5, 6] // title, assignee, project, due_date, status, priority
 
 const DEFAULT_TABLE_CONFIG = {
@@ -55,15 +67,24 @@ const DEFAULT_TABLE_CONFIG = {
   filters: {},
 }
 
-function buildGridTemplate(widths: Record<string, number>): string {
-  return COLUMNS.map(col => {
+function buildGridTemplate(widths: Record<string, number>, orderedDataCols: string[]): string {
+  // Always: checkbox first, actions last, data columns in orderedDataCols order
+  const parts: string[] = []
+  // Checkbox
+  parts.push(`${widths.checkbox ?? DEFAULT_WIDTHS.checkbox}px`)
+  // Data columns in order
+  for (const col of orderedDataCols) {
     if (col === 'title') {
       const w = widths.title && widths.title > 0 ? widths.title : 0
-      return w > 0 ? `${w}px` : 'minmax(200px, 3fr)'
+      parts.push(w > 0 ? `${w}px` : 'minmax(200px, 3fr)')
+    } else {
+      const w = widths[col] ?? DEFAULT_WIDTHS[col]
+      parts.push(`${w}px`)
     }
-    const w = widths[col] ?? DEFAULT_WIDTHS[col]
-    return `${w}px`
-  }).join(' ')
+  }
+  // Actions
+  parts.push(`${widths.actions ?? DEFAULT_WIDTHS.actions}px`)
+  return parts.join(' ')
 }
 
 interface TaskGridViewProps {
@@ -94,12 +115,45 @@ type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title' | 'proj
 export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand, onPinToFocus, pinnedIds }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
 
-  // ── Table config (persisted sort + column widths) ──
-  const { config: tableConfig, setSortKey: handleSortKey, addSecondarySort, setColumnWidth, reset: resetTableConfig } = useTableConfig('task-grid', DEFAULT_TABLE_CONFIG)
+  // ── Table config (persisted sort + column widths + column order) ──
+  const { config: tableConfig, setSortKey: handleSortKey, addSecondarySort, setColumnWidth, setColumnOrder, reset: resetTableConfig } = useTableConfig('task-grid', DEFAULT_TABLE_CONFIG)
   const sortKey = tableConfig.sortKey as SortKey
   const sortAsc = tableConfig.sortAsc
   const sorts = tableConfig.sorts
   const colWidths = tableConfig.columnWidths
+
+  // ── Ordered data columns (user-reorderable, excludes checkbox/actions) ──
+  const orderedDataCols = useMemo(() => {
+    const order = tableConfig.columnOrder
+    if (!order?.length) return [...DATA_COLUMNS]
+    // Build ordered list from saved order, only including valid data columns
+    const validSet = new Set<string>(DATA_COLUMNS)
+    const result: string[] = []
+    for (const key of order) {
+      if (validSet.has(key)) {
+        result.push(key)
+        validSet.delete(key)
+      }
+    }
+    // Append any new columns not in saved order
+    for (const key of DATA_COLUMNS) {
+      if (validSet.has(key)) result.push(key)
+    }
+    return result
+  }, [tableConfig.columnOrder])
+
+  // ── Column reorder DnD (separate from subtask DnD) ──
+  const columnSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 10 } }))
+
+  const handleColumnDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = orderedDataCols.indexOf(active.id as string)
+    const newIndex = orderedDataCols.indexOf(over.id as string)
+    if (oldIndex === -1 || newIndex === -1) return
+    const newOrder = arrayMove(orderedDataCols, oldIndex, newIndex)
+    setColumnOrder(newOrder)
+  }, [orderedDataCols, setColumnOrder])
 
   // ── Column resize state ──
   const [resizingCol, setResizingCol] = useState<string | null>(null)
@@ -223,7 +277,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     }
   }, [handleSortKey, addSecondarySort])
 
-  const gridTemplate = useMemo(() => buildGridTemplate(colWidths), [colWidths])
+  const gridTemplate = useMemo(() => buildGridTemplate(colWidths, orderedDataCols), [colWidths, orderedDataCols])
   const colStyle = useMemo(() => ({
     display: 'grid' as const,
     gridTemplateColumns: gridTemplate,
@@ -267,9 +321,11 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
 
   // Check if config differs from defaults (for Reset view button)
   const hasMultiSort = sorts.length > 1
+  const hasColumnReorder = tableConfig.columnOrder?.length ? !DATA_COLUMNS.every((c, i) => tableConfig.columnOrder![i] === c) : false
   const configDiffers = sortKey !== DEFAULT_TABLE_CONFIG.sortKey ||
     sortAsc !== DEFAULT_TABLE_CONFIG.sortAsc ||
     hasMultiSort ||
+    hasColumnReorder ||
     Object.keys(colWidths).some(k => colWidths[k] !== DEFAULT_WIDTHS[k])
 
   return (
@@ -296,17 +352,34 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         </div>
       )}
 
-      {/* Column headers — clickable for sort, hidden on mobile */}
-      <div className="task-grid-header" style={{ ...colStyle, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
-        <div />
-        <ResizableColumnHeader label="TITLE" field="title" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'title'} />
-        <ResizableColumnHeader label="ASSIGNEE" field="assignee" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'assignee'} />
-        <ResizableColumnHeader label="PROJECT" field="project" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'project'} />
-        <ResizableColumnHeader label="DUE DATE" field="due_date" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'due_date'} align="right" />
-        <ResizableColumnHeader label="STATUS" field="status" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'status'} />
-        <ResizableColumnHeader label="PRIORITY" field="priority" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'priority'} />
-        <div /> {/* Actions column spacer */}
-      </div>
+      {/* Column headers — clickable for sort, draggable for reorder, hidden on mobile */}
+      <DndContext
+        id="column-reorder"
+        sensors={columnSensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleColumnDragEnd}
+      >
+        <SortableContext items={orderedDataCols} strategy={horizontalListSortingStrategy}>
+          <div className="task-grid-header" style={{ ...colStyle, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+            <div /> {/* Checkbox spacer — not sortable */}
+            {orderedDataCols.map(col => (
+              <SortableColumnHeader
+                key={col}
+                columnKey={col}
+                label={COLUMN_LABELS[col] || col.toUpperCase()}
+                field={col}
+                sorts={sorts}
+                onSort={handleSort}
+                onResizeStart={handleResizeStart}
+                onResizeDoubleClick={handleResizeDoubleClick}
+                isResizing={resizingCol === col}
+                align={col === 'due_date' ? 'right' : undefined}
+              />
+            ))}
+            <div /> {/* Actions spacer — not sortable */}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Virtualized scrollable area */}
       <div
@@ -345,6 +418,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                     allTasks={allTasks || tasks}
                     index={virtualRow.index}
                     colStyle={colStyle}
+                    orderedDataCols={orderedDataCols}
                     onStatusChange={onStatusChange}
                     onFieldChange={onFieldChange}
                     onSelect={onSelect}
@@ -419,6 +493,17 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         .resize-handle-active {
           background: var(--teal);
           opacity: 0.6;
+        }
+        /* Column drag handles — subtle on hover */
+        .col-drag-handle {
+          opacity: 0;
+          transition: opacity var(--transition-fast) ease;
+        }
+        .task-grid-header > div:hover .col-drag-handle {
+          opacity: 0.35;
+        }
+        .col-drag-handle:hover {
+          opacity: 0.6 !important;
         }
         /* Cell focus ring for Tab navigation */
         .cell-focused {
@@ -503,11 +588,12 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
   )
 }
 
-// ── Resizable Column Header (wraps shared ColumnHeader + resize handle) ──
+// ── Sortable + Resizable Column Header (drag to reorder + resize handle) ──
 
-function ResizableColumnHeader({
-  label, field, sorts, onSort, onResizeStart, onResizeDoubleClick, isResizing, align,
+function SortableColumnHeader({
+  columnKey, label, field, sorts, onSort, onResizeStart, onResizeDoubleClick, isResizing, align,
 }: {
+  columnKey: string
   label: string
   field: string
   sorts: { key: string; asc: boolean }[]
@@ -517,16 +603,52 @@ function ResizableColumnHeader({
   isResizing: boolean
   align?: 'left' | 'right'
 }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: columnKey })
   const sortIdx = sorts.findIndex(s => s.key === field)
   const isActive = sortIdx >= 0
   const currentAsc = isActive ? sorts[sortIdx].asc : true
   const sortRank = sorts.length > 1 && isActive ? sortIdx + 1 : undefined
 
+  const dragStyle: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform ? { ...transform, scaleX: 1, scaleY: 1 } : null),
+    transition: transition || undefined,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+    position: 'relative' as const,
+    display: 'flex',
+    alignItems: 'center',
+  }
+
   return (
     <div
-      style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
-      onClick={(e) => onSort(field, e.shiftKey)}
+      ref={setNodeRef}
+      style={dragStyle}
+      {...attributes}
+      onClick={(e) => {
+        // Only sort on click if not dragging
+        if (!isDragging) onSort(field, e.shiftKey)
+      }}
     >
+      {/* Drag handle — small grip area before the label */}
+      <span
+        {...listeners}
+        style={{
+          cursor: isDragging ? 'grabbing' : 'grab',
+          display: 'inline-flex',
+          alignItems: 'center',
+          padding: '0 2px',
+          marginRight: '2px',
+          color: 'var(--slate)',
+          opacity: 0.25,
+          flexShrink: 0,
+          transition: 'opacity var(--transition-fast) ease',
+        }}
+        className="col-drag-handle"
+        onClick={(e) => e.stopPropagation()}
+        title="Drag to reorder column"
+      >
+        <GripVertical size={10} />
+      </span>
       <ColumnHeader
         label={label}
         sortKey={field}
@@ -549,12 +671,13 @@ function ResizableColumnHeader({
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions, onPinToFocus, isPinnedToFocus, focusedCell, onCellTab, onCellFocus,
+  task, allTasks, index, colStyle, orderedDataCols, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions, onPinToFocus, isPinnedToFocus, focusedCell, onCellTab, onCellFocus,
 }: {
   task: TaskRow
   allTasks: TaskRow[]
   index: number
   colStyle: React.CSSProperties
+  orderedDataCols: string[]
   onStatusChange: (id: string, status: string) => void
   onFieldChange: (id: string, field: string, value: unknown) => void
   onSelect?: (task: TaskRow) => void
@@ -670,347 +793,370 @@ function TaskGridRow({
         ) : <div style={{ width: 16 }} />}
       </div>
 
-      {/* Title */}
-      <div
-        className={`task-row-title ${cellProps(1).className}`}
-        ref={el => { cellRefs.current[1] = el }}
-        tabIndex={cellProps(1).tabIndex}
-        onFocus={cellProps(1).onFocus}
-        onKeyDown={(e) => {
-          cellProps(1).onKeyDown(e)
-          if (e.key === 'Enter') { e.preventDefault(); onOpenDetail?.(task) }
-        }}
-        style={{ minWidth: 0, paddingRight: '12px' }}
-      >
-        <div className="flex items-center gap-1">
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleExpand?.() }}
-            className="subtask-expand-btn"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
-              display: 'flex', alignItems: 'center', flexShrink: 0,
-              color: 'var(--slate)', opacity: expanded ? 0.7 : 0.25,
-              transition: 'opacity var(--transition-fast) ease',
-            }}
-            title={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
-          >
-            <ChevronRight size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform var(--transition-fast) ease' }} />
-          </button>
-          {hasBlockers && (
-            <span className="relative group" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
-              <Link2 size={12} style={{ color: 'var(--maroon)', opacity: 0.7 }} />
-              <span
-                className="absolute left-full ml-2 hidden group-hover:block z-30 rounded-lg shadow-lg border py-2 px-3"
-                style={{
-                  backgroundColor: 'var(--cream)',
-                  borderColor: 'var(--border-subtle)',
-                  minWidth: '180px',
-                  maxWidth: '260px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
+      {/* Data cells — rendered in orderedDataCols order */}
+      {orderedDataCols.map((col, colIdx) => {
+        // colIdx + 1 because grid position 0 is checkbox
+        const gridPos = colIdx + 1
+        const cp = cellProps(gridPos)
+        switch (col) {
+          case 'title':
+            return (
+              <div
+                key="title"
+                className={`task-row-title ${cp.className}`}
+                ref={el => { cellRefs.current[gridPos] = el }}
+                tabIndex={cp.tabIndex}
+                onFocus={cp.onFocus}
+                onKeyDown={(e) => {
+                  cp.onKeyDown(e)
+                  if (e.key === 'Enter') { e.preventDefault(); onOpenDetail?.(task) }
                 }}
+                style={{ minWidth: 0, paddingRight: '12px' }}
               >
-                <span className="text-[10px] uppercase tracking-wider block mb-1.5" style={{ color: 'var(--maroon)', fontWeight: 600 }}>Blocked by</span>
-                {blockerIds.map(id => {
-                  const bt = allTasks.find(t => t.id === id)
-                  if (!bt) return null
-                  return (
-                    <span key={id} className="flex items-center gap-1.5 text-[11px] mb-1" style={{ color: 'var(--ink)' }}>
-                      <span style={{
-                        width: 6, height: 6, borderRadius: 'var(--radius-circle)',
-                        background: bt.completed ? 'var(--green)' : bt.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)',
-                        flexShrink: 0,
-                      }} />
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {bt.title || bt.description}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleExpand?.() }}
+                    className="subtask-expand-btn"
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+                      display: 'flex', alignItems: 'center', flexShrink: 0,
+                      color: 'var(--slate)', opacity: expanded ? 0.7 : 0.25,
+                      transition: 'opacity var(--transition-fast) ease',
+                    }}
+                    title={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
+                  >
+                    <ChevronRight size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform var(--transition-fast) ease' }} />
+                  </button>
+                  {hasBlockers && (
+                    <span className="relative group" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
+                      <Link2 size={12} style={{ color: 'var(--maroon)', opacity: 0.7 }} />
+                      <span
+                        className="absolute left-full ml-2 hidden group-hover:block z-30 rounded-lg shadow-lg border py-2 px-3"
+                        style={{
+                          backgroundColor: 'var(--cream)',
+                          borderColor: 'var(--border-subtle)',
+                          minWidth: '180px',
+                          maxWidth: '260px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                        }}
+                      >
+                        <span className="text-[10px] uppercase tracking-wider block mb-1.5" style={{ color: 'var(--maroon)', fontWeight: 600 }}>Blocked by</span>
+                        {blockerIds.map(id => {
+                          const bt = allTasks.find(t => t.id === id)
+                          if (!bt) return null
+                          return (
+                            <span key={id} className="flex items-center gap-1.5 text-[11px] mb-1" style={{ color: 'var(--ink)' }}>
+                              <span style={{
+                                width: 6, height: 6, borderRadius: 'var(--radius-circle)',
+                                background: bt.completed ? 'var(--green)' : bt.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)',
+                                flexShrink: 0,
+                              }} />
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {bt.title || bt.description}
+                              </span>
+                            </span>
+                          )
+                        })}
                       </span>
                     </span>
+                  )}
+                  {editingTitle ? (
+                    <input
+                      ref={titleInputRef}
+                      autoFocus
+                      value={titleDraft}
+                      onChange={(e) => setTitleDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { onFieldChange(task.id, 'title', titleDraft); setEditingTitle(false) }
+                        if (e.key === 'Escape') setEditingTitle(false)
+                        e.stopPropagation()
+                      }}
+                      onBlur={() => { if (titleDraft.trim() && titleDraft !== task.title) onFieldChange(task.id, 'title', titleDraft); setEditingTitle(false) }}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        fontSize: 'var(--value-size)',
+                        fontWeight: 400,
+                        color: 'var(--ink)',
+                        background: 'var(--cream)',
+                        border: '1px solid var(--teal)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '2px 6px',
+                        outline: 'none',
+                        width: '100%',
+                      }}
+                    />
+                  ) : (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      data-testid={`task-title-${task.id}`}
+                      onClick={(e) => { e.stopPropagation(); onOpenDetail?.(task) }}
+                      onDoubleClick={(e) => { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOpenDetail?.(task) } if (e.key === 'F2') { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) } }}
+                      style={{
+                        fontSize: 'var(--value-size)',
+                        fontWeight: 400,
+                        color: 'var(--ink)',
+                        textDecoration: isDone ? 'line-through' : 'none',
+                        lineHeight: 1.4,
+                        cursor: onOpenDetail ? 'pointer' : 'default',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '1px 4px',
+                        margin: '-1px -4px',
+                        transition: 'background var(--transition-fast) ease',
+                      }}
+                      className="task-title-clickable"
+                    >
+                      {formatBrandName(task.title || task.description)}
+                    </span>
+                  )}
+                  {task.source && task.source !== 'manual' && (
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        padding: '1px 5px',
+                        borderRadius: 'var(--radius-lg)',
+                        backgroundColor: task.source === 'meeting' ? 'rgba(45,138,138,0.1)' :
+                          task.source === 'recurrence' ? 'rgba(201,168,76,0.1)' :
+                          'rgba(148,163,184,0.1)',
+                        color: task.source === 'meeting' ? 'var(--teal)' :
+                          task.source === 'recurrence' ? 'var(--gold)' :
+                          'var(--slate)',
+                        flexShrink: 0,
+                        lineHeight: '14px',
+                      }}
+                    >
+                      {task.source === 'meeting' ? 'meeting' : task.source === 'recurrence' ? 'recurring' : task.source}
+                    </span>
+                  )}
+                  {!isDone && task.created_at && (() => {
+                    const age = Math.floor((Date.now() - new Date(task.created_at).getTime()) / 86400000)
+                    if (age < 14) return null
+                    return (
+                      <span
+                        className="hover-badge"
+                        title={`Open for ${age} days`}
+                        style={{
+                          fontSize: '10px',
+                          padding: '1px 5px',
+                          borderRadius: 'var(--radius-lg)',
+                          backgroundColor: age > 30 ? 'rgba(122,0,25,0.1)' : 'rgba(194,65,12,0.1)',
+                          color: age > 30 ? 'var(--maroon)' : 'var(--orange)',
+                          flexShrink: 0,
+                          lineHeight: '14px',
+                        }}
+                      >
+                        {age}d
+                      </span>
+                    )
+                  })()}
+                  {task.project_id && (
+                    <span
+                      className="hover-badge"
+                      style={{
+                        fontSize: '10px',
+                        padding: '1px 5px',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'var(--surface-3)',
+                        borderLeft: '2px solid var(--teal)',
+                        color: 'var(--slate)',
+                        flexShrink: 0,
+                        lineHeight: '14px',
+                        maxWidth: '100px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title={task.project_id}
+                    >
+                      {task.project_id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).slice(0, 20)}
+                    </span>
+                  )}
+                  <TaskKeyLinks task={task} />
+                </div>
+              </div>
+            )
+          case 'assignee':
+            return (
+              <div
+                key="assignee"
+                className={`task-row-meta flex items-center gap-1.5 ${cp.className}`}
+                ref={el => { cellRefs.current[gridPos] = el }}
+                tabIndex={cp.tabIndex}
+                onFocus={cp.onFocus}
+                onKeyDown={cp.onKeyDown}
+                data-testid={`task-assignee-${task.id}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <InlineAssigneePicker
+                  value={task.assignee}
+                  onChange={(slug) => onFieldChange(task.id, 'assignee', slug)}
+                  compact
+                />
+                {task.assignee && !task.acknowledged_at && !isDone && (
+                  <span
+                    title="Not yet acknowledged"
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 'var(--radius-circle)',
+                      backgroundColor: 'var(--gold)',
+                      flexShrink: 0,
+                      opacity: 0.8,
+                    }}
+                  />
+                )}
+              </div>
+            )
+          case 'project':
+            return (
+              <div
+                key="project"
+                className={`task-row-meta ${cp.className}`}
+                ref={el => { cellRefs.current[gridPos] = el }}
+                tabIndex={cp.tabIndex}
+                onFocus={cp.onFocus}
+                onKeyDown={cp.onKeyDown}
+                data-testid={`task-project-${task.id}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <InlineCellSelect
+                  value={task.project_id || ''}
+                  options={projectOptions}
+                  onChange={(val) => onFieldChange(task.id, 'project_id', val || null)}
+                  renderValue={(val) => {
+                    const name = val ? projectMap.get(val) || val : null
+                    return (
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          color: name ? 'var(--teal)' : 'var(--slate)',
+                          opacity: name ? 0.8 : 'var(--ink-hint)',
+                          maxWidth: '110px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          display: 'block',
+                        }}
+                        title={name || undefined}
+                      >
+                        {name || '\u2014'}
+                      </span>
+                    )
+                  }}
+                />
+              </div>
+            )
+          case 'due_date':
+            return (
+              <div
+                key="due_date"
+                className={`task-row-meta col-numeric ${cp.className}`}
+                ref={el => { cellRefs.current[gridPos] = el }}
+                tabIndex={cp.tabIndex}
+                onFocus={cp.onFocus}
+                onKeyDown={cp.onKeyDown}
+                data-testid={`task-due-${task.id}`}
+                onClick={(e) => e.stopPropagation()}
+                style={{ display: 'flex', justifyContent: 'flex-end' }}
+              >
+                <InlineDatePicker
+                  value={task.due_date}
+                  onChange={(date) => onFieldChange(task.id, 'due_date', date)}
+                />
+              </div>
+            )
+          case 'status':
+            return (
+              <div
+                key="status"
+                className={`task-row-status ${cp.className}`}
+                ref={el => { cellRefs.current[gridPos] = el }}
+                tabIndex={cp.tabIndex}
+                onFocus={cp.onFocus}
+                onKeyDown={cp.onKeyDown}
+                data-testid={`task-status-${task.id}`}
+              >
+                <InlineCellSelect
+                  value={task.status}
+                  options={STATUS_OPTIONS}
+                  onChange={(val) => {
+                    const prev = task.status
+                    onStatusChange(task.id, val)
+                    showUndo(`Status \u2192 ${STATUS_OPTIONS.find(o => o.value === val)?.label}`, () => onStatusChange(task.id, prev))
+                  }}
+                  renderValue={(opt) => {
+                    const effectiveStatus = (hasBlockers && opt !== 'done') ? 'blocked' : opt
+                    const Icon = (STATUS_OPTIONS.find(o => o.value === effectiveStatus) || STATUS_OPTIONS[0])
+                    const IconComp = Icon.icon
+                    return (
+                      <span
+                        className={`flex items-center gap-1.5 status-transition ${completingAnim && opt === 'done' ? 'task-complete-anim' : ''}`}
+                        style={{
+                          color: Icon.color,
+                          background: STATUS_BG[effectiveStatus] || STATUS_BG.todo,
+                          padding: '2px 8px',
+                          borderRadius: 'var(--radius-full)',
+                        }}
+                      >
+                        <IconComp size={13} />
+                        <span>{(hasBlockers && opt !== 'done' && opt !== 'blocked') ? 'Blocked' : Icon.label}</span>
+                      </span>
+                    )
+                  }}
+                />
+                {task.status === 'in_progress' && task.created_at && (() => {
+                  const days = Math.floor((Date.now() - new Date(task.created_at).getTime()) / 86400000)
+                  if (days < 7) return null
+                  return (
+                    <span
+                      title={`In progress for ${days} days \u2014 consider updating`}
+                      style={{ fontSize: '8px', color: 'var(--orange)', opacity: 0.7, marginTop: '1px' }}
+                    >
+                      {'\u26A0'} {days}d
+                    </span>
                   )
-                })}
-              </span>
-            </span>
-          )}
-          {editingTitle ? (
-            <input
-              ref={titleInputRef}
-              autoFocus
-              value={titleDraft}
-              onChange={(e) => setTitleDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') { onFieldChange(task.id, 'title', titleDraft); setEditingTitle(false) }
-                if (e.key === 'Escape') setEditingTitle(false)
-                e.stopPropagation()
-              }}
-              onBlur={() => { if (titleDraft.trim() && titleDraft !== task.title) onFieldChange(task.id, 'title', titleDraft); setEditingTitle(false) }}
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                fontSize: 'var(--value-size)',
-                fontWeight: 400,
-                color: 'var(--ink)',
-                background: 'var(--cream)',
-                border: '1px solid var(--teal)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '2px 6px',
-                outline: 'none',
-                width: '100%',
-              }}
-            />
-          ) : (
-            <span
-              role="button"
-              tabIndex={0}
-              data-testid={`task-title-${task.id}`}
-              onClick={(e) => { e.stopPropagation(); onOpenDetail?.(task) }}
-              onDoubleClick={(e) => { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) }}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOpenDetail?.(task) } if (e.key === 'F2') { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) } }}
-              style={{
-                fontSize: 'var(--value-size)',
-                fontWeight: 400,
-                color: 'var(--ink)',
-                textDecoration: isDone ? 'line-through' : 'none',
-                lineHeight: 1.4,
-                cursor: onOpenDetail ? 'pointer' : 'default',
-                borderRadius: 'var(--radius-sm)',
-                padding: '1px 4px',
-                margin: '-1px -4px',
-                transition: 'background var(--transition-fast) ease',
-              }}
-              className="task-title-clickable"
-            >
-              {formatBrandName(task.title || task.description)}
-            </span>
-          )}
-          {task.source && task.source !== 'manual' && (
-            <span
-              style={{
-                fontSize: '10px',
-                padding: '1px 5px',
-                borderRadius: 'var(--radius-lg)',
-                backgroundColor: task.source === 'meeting' ? 'rgba(45,138,138,0.1)' :
-                  task.source === 'recurrence' ? 'rgba(201,168,76,0.1)' :
-                  'rgba(148,163,184,0.1)',
-                color: task.source === 'meeting' ? 'var(--teal)' :
-                  task.source === 'recurrence' ? 'var(--gold)' :
-                  'var(--slate)',
-                flexShrink: 0,
-                lineHeight: '14px',
-              }}
-            >
-              {task.source === 'meeting' ? 'meeting' : task.source === 'recurrence' ? 'recurring' : task.source}
-            </span>
-          )}
-          {!isDone && task.created_at && (() => {
-            const age = Math.floor((Date.now() - new Date(task.created_at).getTime()) / 86400000)
-            if (age < 14) return null
-            return (
-              <span
-                className="hover-badge"
-                title={`Open for ${age} days`}
-                style={{
-                  fontSize: '10px',
-                  padding: '1px 5px',
-                  borderRadius: 'var(--radius-lg)',
-                  backgroundColor: age > 30 ? 'rgba(122,0,25,0.1)' : 'rgba(194,65,12,0.1)',
-                  color: age > 30 ? 'var(--maroon)' : 'var(--orange)',
-                  flexShrink: 0,
-                  lineHeight: '14px',
-                }}
-              >
-                {age}d
-              </span>
+                })()}
+              </div>
             )
-          })()}
-          {task.project_id && (
-            <span
-              className="hover-badge"
-              style={{
-                fontSize: '10px',
-                padding: '1px 5px',
-                borderRadius: 'var(--radius-sm)',
-                backgroundColor: 'var(--surface-3)',
-                borderLeft: '2px solid var(--teal)',
-                color: 'var(--slate)',
-                flexShrink: 0,
-                lineHeight: '14px',
-                maxWidth: '100px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-              title={task.project_id}
-            >
-              {task.project_id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).slice(0, 20)}
-            </span>
-          )}
-          <TaskKeyLinks task={task} />
-        </div>
-      </div>
-
-      {/* Assignee */}
-      <div
-        className={`task-row-meta flex items-center gap-1.5 ${cellProps(2).className}`}
-        ref={el => { cellRefs.current[2] = el }}
-        tabIndex={cellProps(2).tabIndex}
-        onFocus={cellProps(2).onFocus}
-        onKeyDown={cellProps(2).onKeyDown}
-        data-testid={`task-assignee-${task.id}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <InlineAssigneePicker
-          value={task.assignee}
-          onChange={(slug) => onFieldChange(task.id, 'assignee', slug)}
-          compact
-        />
-        {task.assignee && !task.acknowledged_at && !isDone && (
-          <span
-            title="Not yet acknowledged"
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: 'var(--radius-circle)',
-              backgroundColor: 'var(--gold)',
-              flexShrink: 0,
-              opacity: 0.8,
-            }}
-          />
-        )}
-      </div>
-
-      {/* Project — inline select */}
-      <div
-        className={`task-row-meta ${cellProps(3).className}`}
-        ref={el => { cellRefs.current[3] = el }}
-        tabIndex={cellProps(3).tabIndex}
-        onFocus={cellProps(3).onFocus}
-        onKeyDown={cellProps(3).onKeyDown}
-        data-testid={`task-project-${task.id}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <InlineCellSelect
-          value={task.project_id || ''}
-          options={projectOptions}
-          onChange={(val) => onFieldChange(task.id, 'project_id', val || null)}
-          renderValue={(val) => {
-            const name = val ? projectMap.get(val) || val : null
+          case 'priority':
             return (
-              <span
-                style={{
-                  fontSize: '11px',
-                  color: name ? 'var(--teal)' : 'var(--slate)',
-                  opacity: name ? 0.8 : 'var(--ink-hint)',
-                  maxWidth: '110px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  display: 'block',
-                }}
-                title={name || undefined}
+              <div
+                key="priority"
+                className={`task-row-priority ${cp.className}`}
+                ref={el => { cellRefs.current[gridPos] = el }}
+                tabIndex={cp.tabIndex}
+                onFocus={cp.onFocus}
+                onKeyDown={cp.onKeyDown}
+                data-testid={`task-priority-${task.id}`}
               >
-                {name || '\u2014'}
-              </span>
+                <InlineCellSelect
+                  value={task.priority}
+                  options={PRIORITY_OPTIONS}
+                  onChange={(val) => onFieldChange(task.id, 'priority', val)}
+                  renderValue={(val) => {
+                    const opt = PRIORITY_OPTIONS.find(o => o.value === val) || PRIORITY_OPTIONS[1]
+                    const cfg = PRIORITY_CONFIG[val as keyof typeof PRIORITY_CONFIG]
+                    return (
+                      <span className="status-transition" style={{
+                        color: opt.color,
+                        opacity: 0.7,
+                        background: cfg?.bg || 'rgba(100, 116, 139, 0.1)',
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-full)',
+                      }}>
+                        {opt.label}
+                      </span>
+                    )
+                  }}
+                />
+              </div>
             )
-          }}
-        />
-      </div>
-
-      {/* Due date — inline date picker */}
-      <div
-        className={`task-row-meta col-numeric ${cellProps(4).className}`}
-        ref={el => { cellRefs.current[4] = el }}
-        tabIndex={cellProps(4).tabIndex}
-        onFocus={cellProps(4).onFocus}
-        onKeyDown={cellProps(4).onKeyDown}
-        data-testid={`task-due-${task.id}`}
-        onClick={(e) => e.stopPropagation()}
-        style={{ display: 'flex', justifyContent: 'flex-end' }}
-      >
-        <InlineDatePicker
-          value={task.due_date}
-          onChange={(date) => onFieldChange(task.id, 'due_date', date)}
-        />
-      </div>
-
-      {/* Status — inline dropdown */}
-      <div
-        className={`task-row-status ${cellProps(5).className}`}
-        ref={el => { cellRefs.current[5] = el }}
-        tabIndex={cellProps(5).tabIndex}
-        onFocus={cellProps(5).onFocus}
-        onKeyDown={cellProps(5).onKeyDown}
-        data-testid={`task-status-${task.id}`}
-      >
-      <InlineCellSelect
-        value={task.status}
-        options={STATUS_OPTIONS}
-        onChange={(val) => {
-          const prev = task.status
-          onStatusChange(task.id, val)
-          showUndo(`Status \u2192 ${STATUS_OPTIONS.find(o => o.value === val)?.label}`, () => onStatusChange(task.id, prev))
-        }}
-        renderValue={(opt) => {
-          const effectiveStatus = (hasBlockers && opt !== 'done') ? 'blocked' : opt
-          const Icon = (STATUS_OPTIONS.find(o => o.value === effectiveStatus) || STATUS_OPTIONS[0])
-          const IconComp = Icon.icon
-          return (
-            <span
-              className={`flex items-center gap-1.5 status-transition ${completingAnim && opt === 'done' ? 'task-complete-anim' : ''}`}
-              style={{
-                color: Icon.color,
-                background: STATUS_BG[effectiveStatus] || STATUS_BG.todo,
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-full)',
-              }}
-            >
-              <IconComp size={13} />
-              <span>{(hasBlockers && opt !== 'done' && opt !== 'blocked') ? 'Blocked' : Icon.label}</span>
-            </span>
-          )
-        }}
-      />
-      {task.status === 'in_progress' && task.created_at && (() => {
-        const days = Math.floor((Date.now() - new Date(task.created_at).getTime()) / 86400000)
-        if (days < 7) return null
-        return (
-          <span
-            title={`In progress for ${days} days \u2014 consider updating`}
-            style={{ fontSize: '8px', color: 'var(--orange)', opacity: 0.7, marginTop: '1px' }}
-          >
-            \u26A0 {days}d
-          </span>
-        )
-      })()}
-      </div>
-
-      {/* Priority — inline dropdown */}
-      <div
-        className={`task-row-priority ${cellProps(6).className}`}
-        ref={el => { cellRefs.current[6] = el }}
-        tabIndex={cellProps(6).tabIndex}
-        onFocus={cellProps(6).onFocus}
-        onKeyDown={cellProps(6).onKeyDown}
-        data-testid={`task-priority-${task.id}`}
-      >
-      <InlineCellSelect
-        value={task.priority}
-        options={PRIORITY_OPTIONS}
-        onChange={(val) => onFieldChange(task.id, 'priority', val)}
-        renderValue={(val) => {
-          const opt = PRIORITY_OPTIONS.find(o => o.value === val) || PRIORITY_OPTIONS[1]
-          const cfg = PRIORITY_CONFIG[val as keyof typeof PRIORITY_CONFIG]
-          return (
-            <span className="status-transition" style={{
-              color: opt.color,
-              opacity: 0.7,
-              background: cfg?.bg || 'rgba(100, 116, 139, 0.1)',
-              padding: '2px 8px',
-              borderRadius: 'var(--radius-full)',
-            }}>
-              {opt.label}
-            </span>
-          )
-        }}
-      />
-      </div>
+          default:
+            return null
+        }
+      })}
 
       {/* Row actions — own grid column, not absolute */}
       <div className="task-grid-row-actions" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2px' }}>
