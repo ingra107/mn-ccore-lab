@@ -332,12 +332,14 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label
+                htmlFor="task-assignee"
                 className="block text-xs font-medium mb-1"
                 style={{ color: 'var(--slate)' }}
               >
                 Owner * <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(responsible)</span>
               </label>
               <select
+                id="task-assignee"
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
                 className="w-full rounded-md border px-2.5 py-2 text-sm"
@@ -351,12 +353,14 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             </div>
             <div>
               <label
+                htmlFor="task-priority"
                 className="block text-xs font-medium mb-1"
                 style={{ color: 'var(--slate)' }}
               >
                 Priority
               </label>
               <select
+                id="task-priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
                 className="w-full rounded-md border px-2.5 py-2 text-sm"
