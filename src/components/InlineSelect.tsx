@@ -83,6 +83,8 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
     <>
       <button
         ref={buttonRef}
+        aria-expanded={open}
+        aria-haspopup="listbox"
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
@@ -120,6 +122,8 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
       {open && createPortal(
         <div
           ref={dropdownRef}
+          role="listbox"
+          aria-label="Select options"
           style={{
             position: 'fixed',
             top: pos.top,
@@ -161,6 +165,8 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
           {filtered.map((opt, idx) => (
             <button
               key={opt.value}
+              role="option"
+              aria-selected={opt.value === value}
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()

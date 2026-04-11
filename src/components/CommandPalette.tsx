@@ -483,6 +483,11 @@ export default function CommandPalette() {
             placeholder={isProjectMode ? "Switch to project..." : "Search tasks, projects, people, or type a command..."}
             className="flex-1 text-sm outline-none"
             style={{ color: 'var(--ink)', background: 'none', border: 'none' }}
+            role="combobox"
+            aria-expanded={filtered.length > 0}
+            aria-controls="command-palette-results"
+            aria-autocomplete="list"
+            aria-activedescendant={selectedIndex >= 0 ? `cmd-result-${selectedIndex}` : undefined}
           />
           <kbd className="text-[10px] px-1.5 py-0.5 rounded border" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-subtle)', opacity: 'var(--ink-label)' }}>
             esc
@@ -490,7 +495,7 @@ export default function CommandPalette() {
         </div>
 
         {/* Results */}
-        <div ref={listRef} className="max-h-[50vh] overflow-y-auto py-1" style={{ scrollbarWidth: 'thin' }}>
+        <div ref={listRef} id="command-palette-results" role="listbox" aria-label="Search results" className="max-h-[50vh] overflow-y-auto py-1" style={{ scrollbarWidth: 'thin' }}>
           {Object.entries(grouped)
             .sort(([a], [b]) => (categoryOrder[a] || 9) - (categoryOrder[b] || 9))
             .map(([category, items]) => (
@@ -506,6 +511,10 @@ export default function CommandPalette() {
                   return (
                     <div
                       key={item.id}
+                      role="option"
+                      id={`cmd-result-${currentIdx}`}
+                      aria-selected={isSelected}
+                      tabIndex={-1}
                       className="flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors"
                       style={{
                         backgroundColor: isSelected ? 'var(--teal-active)' : 'transparent',
