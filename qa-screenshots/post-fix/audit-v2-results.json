@@ -1,0 +1,110 @@
+{
+  "timestamp": "2026-04-11T02:24:06.669Z",
+  "summary": {
+    "passed": 19,
+    "failed": 1,
+    "total": 20
+  },
+  "tests": [
+    {
+      "test": "1. Column resize handles",
+      "status": "PASS",
+      "details": "Found 24 handles; cursor=col-resize, width=4px"
+    },
+    {
+      "test": "2. Cell focus outline",
+      "status": "PASS",
+      "details": "cell-focused class found. Outline: {\"outline\":\"oklch(0.7 0.1 190) solid 2px\",\"outlineColor\":\"oklch(0.7 0.1 190)\",\"outlineWidth\":\"2px\"}"
+    },
+    {
+      "test": "2b. Cell Tab navigation",
+      "status": "PASS",
+      "details": "Focus moved to: task-priority-recev0eY8TTmAEm5q"
+    },
+    {
+      "test": "3. Pin to Focus button",
+      "status": "PASS",
+      "details": "Pin button found: Pin to Focus Next"
+    },
+    {
+      "test": "4. Project column header",
+      "status": "PASS",
+      "details": "PROJECT header found"
+    },
+    {
+      "test": "4b. Project column data",
+      "status": "PASS",
+      "details": "16 of 19 checked cells show project names"
+    },
+    {
+      "test": "5. Density toggle",
+      "status": "PASS",
+      "details": "Compact=45.375px, Default=57.375px, Relaxed=65.375px (initial=57.375px). Heights correctly vary"
+    },
+    {
+      "test": "6. Hover-only badges",
+      "status": "PASS",
+      "details": "Found 24 badges; default opacity=0 (expected: 0). In row: true"
+    },
+    {
+      "test": "7. InlineCellSelect dropdown open",
+      "status": "PASS",
+      "details": "Dropdown opened with 4 options: To Do, In Progress, Blocked, Done. Backdrop: true"
+    },
+    {
+      "test": "7b. InlineCellSelect close via backdrop",
+      "status": "PASS",
+      "details": "Closed: true. Value before: \"To Do\", after: \"To Do\""
+    },
+    {
+      "test": "8. Batch selection + BulkActionToolbar",
+      "status": "PASS",
+      "details": "Toolbar visible: \"2 selectedCompleteStatusReassignPriority+1 dayDelete\""
+    },
+    {
+      "test": "9. Date picker",
+      "status": "FAIL",
+      "details": "No date picker input found after clicking (cell: selected, text: \"27d ago\")"
+    },
+    {
+      "test": "10. Column headers sortable",
+      "status": "PASS",
+      "details": "Sort indicator present: true, color: oklch(0.7 0.1 190)"
+    },
+    {
+      "test": "11. Deadlines PROJECT column",
+      "status": "PASS",
+      "details": "PROJECT column header found"
+    },
+    {
+      "test": "12. Deadlines batch selection checkboxes",
+      "status": "PASS",
+      "details": "Found 38 checkbox buttons on deadline rows"
+    },
+    {
+      "test": "13. Category filter pills",
+      "status": "PASS",
+      "details": "Found 6 pills: All, CLIF, Lab, Mesfin Lab, Mentees, Needs Attention"
+    },
+    {
+      "test": "14. Projects column headers sortable",
+      "status": "PASS",
+      "details": "Found 5 headers: TITLE, STATUS, STAGE▲, PI, GROUP. Clicked Title: true. Sort indicator: ▲"
+    },
+    {
+      "test": "15. Recharts elements on Analytics",
+      "status": "PASS",
+      "details": "Recharts elements: 7, SVG rects: 106, SVG paths: 114, Total SVGs: 51"
+    },
+    {
+      "test": "16. Dashboard card drag handles",
+      "status": "PASS",
+      "details": "Found 6 GripVertical handles. Sample visibility: [{\"opacity\":\"0\",\"display\":\"block\",\"visibility\":\"visible\"},{\"opacity\":\"0\",\"display\":\"block\",\"visibility\":\"visible\"}]"
+    },
+    {
+      "test": "17. MetricCard sparklines (on /analytics)",
+      "status": "PASS",
+      "details": "Found 4 polyline elements. Details: [{\"viewBox\":\"0 0 84 32\",\"height\":\"32px\"},{\"viewBox\":\"0 0 84 32\",\"height\":\"32px\"},{\"viewBox\":\"0 0 84 32\",\"height\":\"32px\"},{\"viewBox\":\"0 0 84 32\",\"height\":\"32px\"}]"
+    }
+  ]
+}

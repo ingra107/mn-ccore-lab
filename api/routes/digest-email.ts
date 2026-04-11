@@ -86,10 +86,10 @@ export async function generateDigest(memberSlug: string, env: Env): Promise<Dige
 
     // Recent activity on their tasks (status changes, comments, assignments) - last 3 days
     env.DB.prepare(
-      `SELECT type, description, created_at FROM activity_log
+      `SELECT type, description, timestamp as created_at FROM activity_log
        WHERE (description LIKE ? OR description LIKE ?)
-       AND created_at >= ?
-       ORDER BY created_at DESC
+       AND timestamp >= ?
+       ORDER BY timestamp DESC
        LIMIT 15`
     ).bind(`%${memberSlug}%`, `%${memberName}%`, threeDaysAgo).all(),
   ]);
