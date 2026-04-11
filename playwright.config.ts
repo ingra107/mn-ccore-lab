@@ -6,6 +6,9 @@ export default defineConfig({
   retries: 0,
   use: {
     baseURL: 'https://mn-ccore-lab.pages.dev',
+    extraHTTPHeaders: {
+      'X-Test-Mode': 'true',
+    },
     headless: true,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',

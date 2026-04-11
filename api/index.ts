@@ -76,6 +76,12 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
+    // Test mode: swap DB to test database when X-Test-Mode header is present.
+    // This isolates Playwright tests from production data entirely.
+    if (request.headers.get('X-Test-Mode') === 'true' && env.DB_TEST) {
+      env = { ...env, DB: env.DB_TEST };
+    }
+
     // Helper: bump version + notify DO after successful mutations
     const withVersionBump = async (response: Response): Promise<Response> => {
       if (method !== 'GET' && response.status >= 200 && response.status < 300) {

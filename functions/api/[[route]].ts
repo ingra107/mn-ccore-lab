@@ -10,6 +10,7 @@ import handler from '../../api/index'
 
 interface Env {
   DB: D1Database
+  DB_TEST?: D1Database
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {

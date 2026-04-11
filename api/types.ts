@@ -1,5 +1,6 @@
 export interface Env {
   DB: D1Database;
+  DB_TEST?: D1Database;
   FILES?: R2Bucket;
   R2_ACCESS_KEY_ID?: string;
   R2_SECRET_ACCESS_KEY?: string;

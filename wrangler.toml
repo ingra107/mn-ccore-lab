@@ -8,6 +8,11 @@ binding = "DB"
 database_name = "mnccore-lab"
 database_id = "b8453e9b-7c5f-4029-b07d-dd89c05d00cf"
 
+[[d1_databases]]
+binding = "DB_TEST"
+database_name = "mnccore-lab-test"
+database_id = "PENDING_CREATE"  # Run: wrangler d1 create mnccore-lab-test
+
 [triggers]
 # Morning pulse email: weekdays at 7 AM CT (13:00 UTC)
 # To activate: wrangler secret put SENDGRID_API_KEY

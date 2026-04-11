@@ -13,6 +13,7 @@ import type { APIRequestContext } from '@playwright/test'
 const BASE = 'https://mn-ccore-lab.pages.dev'
 
 const TEST_PREFIXES = [
+  '_TEST_DELETE_',
   'INSPECTION',
   'DAILYTEST',
   'EDGE',
