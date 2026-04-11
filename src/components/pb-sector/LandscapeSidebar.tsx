@@ -47,7 +47,7 @@ function SidebarCard({ title, icon: Icon, iconColor, children, linkTo, linkLabel
         {linkTo && linkLabel && (
           <Link
             to={linkTo}
-            style={{ fontSize: '9px', color: 'var(--teal)', textDecoration: 'none', opacity: 0.6 }}
+            style={{ fontSize: '10px', color: 'var(--teal)', textDecoration: 'none', opacity: 0.6 }}
           >
             {linkLabel}
           </Link>
@@ -78,7 +78,7 @@ function MilestoneRow({ milestone }: { milestone: any }) {
         <span className="block truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', lineHeight: 1.3 }}>
           {milestone.title || milestone.description}
         </span>
-        <span style={{ fontSize: '9px', color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.7 }}>
+        <span style={{ fontSize: '10px', color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.7 }}>
           {milestone.project_title && `${milestone.project_title} · `}
           {daysUntil !== null ? (
             isOverdue ? `${Math.abs(daysUntil)}d overdue` : daysUntil === 0 ? 'Today' : `${daysUntil}d`
@@ -215,7 +215,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
                   {c.description || c.commitment}
                 </span>
                 {c.due_date && (
-                  <span style={{ fontSize: '9px', color: c.due_date <= today ? 'var(--maroon)' : 'var(--slate)', opacity: 0.6 }}>
+                  <span style={{ fontSize: '10px', color: c.due_date <= today ? 'var(--maroon)' : 'var(--slate)', opacity: 0.6 }}>
                     Due {c.due_date}
                   </span>
                 )}

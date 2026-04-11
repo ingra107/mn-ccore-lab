@@ -8,6 +8,7 @@ import PublicationSearch from '../components/PublicationSearch'
 import PublicationCard from '../components/PublicationCard'
 import PublicationLibrary from '../components/PublicationLibrary'
 import SectionDivider from '../components/SectionDivider'
+import PageLayout from '../components/PageLayout'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 
@@ -170,7 +171,7 @@ export default function Publications() {
   const pubsRef = useScrollRevealGroup('.fade-in-up', 80)
 
   return (
-    <>
+    <PageLayout>
       {/* Header */}
       <section className="pt-4 pb-6 sm:pb-8 content-container">
         <h1
@@ -425,6 +426,6 @@ export default function Publications() {
           ))
         )}
       </section>
-    </>
+    </PageLayout>
   )
 }

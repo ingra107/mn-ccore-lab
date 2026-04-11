@@ -141,7 +141,7 @@ export default function SettingsPage() {
                       {template.name}
                     </span>
                     {template.is_default === 1 && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}>
                         Default
                       </span>
                     )}
@@ -192,7 +192,7 @@ export default function SettingsPage() {
               return (
                 <div key={member.slug} className="flex items-center gap-3 py-2 border-b last:border-b-0" style={{ borderColor: 'var(--border-subtle)' }}>
                   <div style={{ width: 32, height: 32, flexShrink: 0 }}>
-                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-8 !h-8 !min-w-0 !min-h-0 !text-[9px]" />
+                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-8 !h-8 !min-w-0 !min-h-0 !text-[10px]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{person.name}</div>
@@ -266,7 +266,7 @@ export default function SettingsPage() {
             </button>
           </div>
           <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.6 }}>
-            You can also toggle with <kbd className="text-[9px] px-1 py-0.5 rounded" style={{ background: 'var(--border-subtle)' }}>Ctrl+.</kbd>
+            You can also toggle with <kbd className="text-[10px] px-1 py-0.5 rounded" style={{ background: 'var(--border-subtle)' }}>Ctrl+.</kbd>
           </p>
         </SettingsSection>
 

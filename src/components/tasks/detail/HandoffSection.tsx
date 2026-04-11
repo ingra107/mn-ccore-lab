@@ -269,7 +269,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                       </div>
                       <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{to.name}</span>
                     </div>
-                    <span className="text-[9px] ml-auto" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+                    <span className="text-[10px] ml-auto" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                       {formatRelativeTime(h.created_at)}
                     </span>
                   </div>

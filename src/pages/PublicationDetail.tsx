@@ -372,7 +372,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
                 }}
               >
                 <span
-                  className="inline-block px-1.5 py-0.5 rounded text-[9px] font-medium flex-shrink-0"
+                  className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0"
                   style={{ background: cat.bg, color: cat.text, letterSpacing: '0.04em' }}
                 >
                   {cat.label}
@@ -391,7 +391,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
                 </span>
                 {project.link_type && project.link_type !== 'output' && (
                   <span
-                    className="inline-block px-1.5 py-0.5 rounded text-[9px]"
+                    className="inline-block px-1.5 py-0.5 rounded text-[10px]"
                     style={{
                       background: 'rgba(45,138,138,0.08)',
                       color: 'var(--teal)',

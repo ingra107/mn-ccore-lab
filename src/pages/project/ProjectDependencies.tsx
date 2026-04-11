@@ -131,7 +131,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 <div>
                   <label
                     style={{
-                      fontSize: '9px',
+                      fontSize: '10px',
                       color: 'var(--slate)',
                       opacity: 0.6,
                       textTransform: 'uppercase',
@@ -164,7 +164,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 <div>
                   <label
                     style={{
-                      fontSize: '9px',
+                      fontSize: '10px',
                       color: 'var(--slate)',
                       opacity: 0.6,
                       textTransform: 'uppercase',
@@ -198,7 +198,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 <div style={{ flex: 1, minWidth: '160px' }}>
                   <label
                     style={{
-                      fontSize: '9px',
+                      fontSize: '10px',
                       color: 'var(--slate)',
                       opacity: 0.6,
                       textTransform: 'uppercase',

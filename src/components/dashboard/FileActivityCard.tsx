@@ -113,7 +113,7 @@ export default function FileActivityCard() {
 
           {/* Legend */}
           <div className="flex items-center gap-1.5 mt-2 justify-end">
-            <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Less</span>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Less</span>
             {[0, 3, 10, 25].map((v, i) => (
               <div
                 key={i}
@@ -125,7 +125,7 @@ export default function FileActivityCard() {
                 }}
               />
             ))}
-            <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>More</span>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>More</span>
           </div>
         </div>
       )}

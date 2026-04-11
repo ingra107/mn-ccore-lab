@@ -688,7 +688,7 @@ export default function PIAnalytics() {
                           }}
                         >
                           <span
-                            className="text-[9px] font-semibold"
+                            className="text-[10px] font-semibold"
                             style={{ color: 'white' }}
                           >
                             {member.actions}

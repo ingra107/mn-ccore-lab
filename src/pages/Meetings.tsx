@@ -320,8 +320,7 @@ export default function Meetings() {
 
   const labelStyle: React.CSSProperties = {
     fontSize: '10px',
-    color: 'var(--slate)',
-    opacity: 0.7,
+    color: 'var(--muted)',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
     marginBottom: '4px',
@@ -352,8 +351,7 @@ export default function Meetings() {
           <p
             style={{
               fontSize: '15px',
-              color: 'var(--slate)',
-              opacity: 0.7,
+              color: 'var(--muted)',
               marginTop: '6px',
               maxWidth: '520px',
             }}
@@ -408,7 +406,7 @@ export default function Meetings() {
               </h2>
               <p
                 className="text-xs mt-0.5"
-                style={{ color: 'var(--slate)', opacity: 0.7 }}
+                style={{ color: 'var(--muted)' }}
               >
                 {nextMeeting.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
               </p>

@@ -134,6 +134,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
               className="text-[11px] px-1.5 py-0.5 rounded font-medium status-transition"
               style={{
                 color: priority.color,
+                opacity: 0.7,
                 backgroundColor: priority.bg,
               }}
             >
@@ -158,7 +159,13 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             {task.project_id && !compact && (
               <span
                 className="flex items-center gap-1 text-[11px]"
-                style={{ color: 'var(--gold)', opacity: 0.8 }}
+                style={{
+                  color: 'var(--slate)',
+                  backgroundColor: 'var(--surface-3)',
+                  borderLeft: '2px solid var(--teal)',
+                  padding: '1px 5px',
+                  borderRadius: 'var(--radius-sm)',
+                }}
               >
                 <FolderKanban size={10} />
                 {projectMap.get(task.project_id) || task.project_id}

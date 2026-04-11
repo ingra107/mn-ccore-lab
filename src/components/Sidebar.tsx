@@ -205,7 +205,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             )}
             {!collapsed && (
               <div
-                className="px-2 py-1 text-[9px] font-normal uppercase tracking-wider"
+                className="px-2 py-1 text-[10px] font-normal uppercase tracking-wider"
                 style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', letterSpacing: '0.08em' }}
               >
                 {group.title}
@@ -231,7 +231,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   {!collapsed && <span className="truncate">{item.label}</span>}
                   {!collapsed && item.hint && (
                     <span
-                      className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full"
+                      className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full"
                       style={{
                         backgroundColor: item.hint === 'Today' ? 'rgba(45,138,138,0.1)' : 'rgba(201,168,76,0.08)',
                         color: item.hint === 'Today' ? 'var(--teal)' : 'var(--gold)',
@@ -283,7 +283,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             <Search size={16} />
             <span className="flex-1">Search</span>
             <kbd
-              className="text-[9px] px-1.5 py-0.5 rounded border"
+              className="text-[10px] px-1.5 py-0.5 rounded border"
               style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
             >
               {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+K

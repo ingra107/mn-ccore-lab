@@ -75,7 +75,7 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="text-xs"
-            style={{ color: 'var(--slate)', opacity: 0.7 }}
+            style={{ color: 'var(--muted)' }}
           >
             No experts found for "{searchTopic}"
           </motion.p>

@@ -96,7 +96,7 @@ export default function Deadlines() {
 
   const handleStatusChange = useCallback((id: string, newStatus: string, prevStatus: string) => {
     updateTaskStatus.mutate({ id, status: newStatus })
-    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked' }
+    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked', waiting_external: 'Waiting (External)' }
     showUndo(`Status → ${labels[newStatus] || newStatus}`, () => updateTaskStatus.mutate({ id, status: prevStatus }))
   }, [updateTaskStatus, showUndo])
 
@@ -683,7 +683,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 
         {/* Priority */}
         {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ color: item.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: item.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: item.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: item.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
             {item.priority}
           </span>
         )}
@@ -740,7 +740,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {isMilestone && item.future_note && !isDueSoon && !isDone && (
         <div className="ml-8 mr-3 mt-0.5 mb-1 flex items-center gap-1.5">
           <Clock size={9} style={{ color: 'var(--gold)', opacity: 0.4 }} />
-          <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.4 }}>
+          <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4 }}>
             Future Me note attached
           </span>
           <button

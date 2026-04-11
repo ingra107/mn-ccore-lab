@@ -49,7 +49,7 @@ function ActionBoardCard() {
                       <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>
                         {person.name}
                       </span>
-                      <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                         {assigneeItems.length}
                       </span>
                     </div>
@@ -82,18 +82,18 @@ function ActionBoardCard() {
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               {item.due_date && (
-                                <span style={{ fontSize: '9px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
+                                <span style={{ fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
                                   {isOverdue ? 'Overdue' : `Due ${formatShortDate(item.due_date)}`}
                                 </span>
                               )}
                               {item.priority && item.priority !== 'medium' && (
-                                <span style={{ fontSize: '9px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? 'var(--orange)' : 'var(--slate)', opacity: 0.7 }}>
+                                <span style={{ fontSize: '10px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? 'var(--orange)' : 'var(--slate)', opacity: 0.7 }}>
                                   {item.priority}
                                 </span>
                               )}
                               {item.meeting_title && (
                                 <Link to={`/meetings/${item.meeting_id}`}
-                                  style={{ fontSize: '9px', color: 'var(--gold)', textDecoration: 'none', opacity: 0.7 }}
+                                  style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none', opacity: 0.7 }}
                                   onClick={(e) => e.stopPropagation()}>
                                   {formatBrandName(item.meeting_title?.split(':')[0] || '')}
                                 </Link>

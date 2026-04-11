@@ -1,4 +1,4 @@
-import { Circle, Clock, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Circle, Clock, CheckCircle2, AlertTriangle, Hourglass } from 'lucide-react'
 import { STATUS_BG_EXTENDED } from './statusColors'
 
 // ── Status ──
@@ -8,11 +8,13 @@ export const STATUS_CONFIG = {
   in_progress: { label: 'In Progress', color: 'var(--teal)', icon: 'Clock' },
   done: { label: 'Done', color: 'var(--green)', icon: 'CheckCircle2' },
   blocked: { label: 'Blocked', color: 'var(--maroon)', icon: 'AlertTriangle' },
+  waiting_external: { label: 'Waiting (External)', color: 'var(--orange)', icon: 'Hourglass' },
 } as const
 
 export const STATUS_OPTIONS = [
   { value: 'todo', label: 'To Do', icon: Circle, color: 'var(--slate)' },
   { value: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--teal)' },
+  { value: 'waiting_external', label: 'Waiting (External)', icon: Hourglass, color: 'var(--orange)' },
   { value: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--maroon)' },
   { value: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--green)' },
 ]
@@ -20,7 +22,7 @@ export const STATUS_OPTIONS = [
 /** Delegates to the shared STATUS_BG_EXTENDED map from statusColors.ts */
 export const STATUS_BG: Record<string, string> = STATUS_BG_EXTENDED
 
-export const STATUS_ORDER: Record<string, number> = { blocked: 0, in_progress: 1, todo: 2, done: 3 }
+export const STATUS_ORDER: Record<string, number> = { blocked: 0, waiting_external: 1, in_progress: 2, todo: 3, done: 4 }
 export const STATUS_CYCLE = ['todo', 'in_progress', 'done'] as const
 
 // ── Priority ──

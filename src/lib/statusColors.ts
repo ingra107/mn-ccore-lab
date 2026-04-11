@@ -21,6 +21,7 @@ export const STATUS_COLOR: Record<string, string> = {
   in_progress: 'var(--teal)',
   done: 'var(--green)',
   blocked: 'var(--maroon)',
+  waiting_external: 'var(--orange)',
   overdue: 'var(--maroon)',
 
   // Submission / revision statuses
@@ -60,6 +61,7 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
   in_progress: 'rgba(60, 130, 130, 0.12)',
   done: 'rgba(22, 163, 74, 0.15)',
   blocked: 'rgba(122, 0, 25, 0.15)',
+  waiting_external: 'rgba(194, 65, 12, 0.14)',
   overdue: 'rgba(122, 0, 25, 0.15)',
 
   // Submission / revision statuses

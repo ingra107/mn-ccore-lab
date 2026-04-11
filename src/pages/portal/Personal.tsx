@@ -324,7 +324,7 @@ export default function Personal() {
       {/* Priority distribution mini-bar */}
       {pendingTasks.length > 0 && (
         <div className="flex items-center gap-2 mt-3">
-          <span className="text-[9px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.4 }}>Priority</span>
+          <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.4 }}>Priority</span>
           <div className="flex-1 flex rounded-full overflow-hidden" style={{ height: 4, maxWidth: 200 }}>
             {(['urgent', 'high', 'medium', 'low'] as const).map(p => {
               const count = pendingTasks.filter(t => t.priority === p).length
@@ -612,7 +612,7 @@ function MyTasksCard({ tasks, onStatusChange, onOpenDetail, large }: { tasks: Ta
                 {task.title || task.description}
               </span>
               {task.priority === 'urgent' || task.priority === 'high' ? (
-                <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ color: task.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: task.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: task.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)', backgroundColor: task.priority === 'urgent' ? 'rgba(122,0,25,0.08)' : 'rgba(194,65,12,0.08)' }}>
                   {task.priority}
                 </span>
               ) : null}
@@ -647,7 +647,7 @@ function DeadlinesCard({ deadlines, overdue, large }: { deadlines: TaskRow[]; ov
             <span className="flex-1 text-xs truncate" style={{ color: 'var(--maroon)' }}>
               {t.title || t.description}
             </span>
-            <span className="text-[9px]" style={{ color: 'var(--maroon)', fontWeight: 600 }}>
+            <span className="text-[10px]" style={{ color: 'var(--maroon)', fontWeight: 600 }}>
               {formatShortDate(t.due_date!)}
             </span>
           </div>
@@ -658,7 +658,7 @@ function DeadlinesCard({ deadlines, overdue, large }: { deadlines: TaskRow[]; ov
             <span className="flex-1 text-xs truncate" style={{ color: 'var(--ink)' }}>
               {t.title || t.description}
             </span>
-            <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               {formatShortDate(t.due_date!)}
             </span>
           </div>
@@ -686,7 +686,7 @@ function NotificationsCard({ notifications }: { notifications: { id: string; tit
             {n.body && (
               <p className="text-[10px] mt-0.5 truncate" style={{ color: 'var(--slate)', opacity: 0.6 }}>{n.body}</p>
             )}
-            <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
               {formatRelativeTime(n.created_at)}
             </span>
           </div>
@@ -718,7 +718,7 @@ function AssignedByMeCard({ tasks }: { tasks: TaskRow[] }) {
               <span className="flex-1 text-xs truncate" style={{ color: 'var(--ink)' }}>
                 {t.title || t.description}
               </span>
-              <span className="text-[9px] px-1 py-0.5 rounded" style={{ color: t.status === 'in_progress' ? 'var(--teal)' : t.status === 'blocked' ? 'var(--maroon)' : 'var(--slate)', backgroundColor: t.status === 'in_progress' ? 'rgba(45,138,138,0.08)' : t.status === 'blocked' ? 'rgba(122,0,25,0.08)' : 'transparent', opacity: 0.7 }}>
+              <span className="text-[10px] px-1 py-0.5 rounded" style={{ color: t.status === 'in_progress' ? 'var(--teal)' : t.status === 'blocked' ? 'var(--maroon)' : 'var(--slate)', backgroundColor: t.status === 'in_progress' ? 'rgba(45,138,138,0.08)' : t.status === 'blocked' ? 'rgba(122,0,25,0.08)' : 'transparent', opacity: 0.7 }}>
                 {t.status.replace('_', ' ')}
               </span>
             </div>
@@ -744,9 +744,9 @@ function CommitmentsCard({ commitments }: { commitments: { id: string; commitmen
             <div key={c.id} className="py-1" style={{ borderLeft: isOverdue ? '2px solid var(--maroon)' : '2px solid var(--gold)', paddingLeft: '8px' }}>
               <p className="text-xs" style={{ color: 'var(--ink)' }}>{c.commitment}</p>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[9px]" style={{ color: 'var(--gold)', opacity: 0.7 }}>to {c.to_whom}</span>
+                <span className="text-[10px]" style={{ color: 'var(--gold)', opacity: 0.7 }}>to {c.to_whom}</span>
                 {c.due_date && (
-                  <span className="text-[9px]" style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', fontWeight: isOverdue ? 600 : 400, opacity: isOverdue ? 1 : 0.5 }}>
+                  <span className="text-[10px]" style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', fontWeight: isOverdue ? 600 : 400, opacity: isOverdue ? 1 : 0.5 }}>
                     {isOverdue ? 'Overdue' : formatShortDate(c.due_date)}
                   </span>
                 )}
@@ -770,7 +770,7 @@ function ActivityCard({ activity }: { activity: { id: string; type: string; desc
             <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: 'var(--teal)', opacity: 0.4 }} />
             <div className="flex-1 min-w-0">
               <p className="text-xs truncate" style={{ color: 'var(--ink)' }}>{a.description}</p>
-              <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
                 {formatRelativeTime(a.timestamp)}
               </span>
             </div>
@@ -808,7 +808,7 @@ function HealthDot({ color, label, count }: { color: string; label: string; coun
       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
       <div>
         <span className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{count}</span>
-        <span className="text-[9px] ml-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{label}</span>
+        <span className="text-[10px] ml-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{label}</span>
       </div>
     </div>
   )

@@ -109,7 +109,7 @@ function ProjectHealthCard() {
               </span>
               <span
                 style={{
-                  fontSize: '9px',
+                  fontSize: '10px',
                   color: 'var(--slate)',
                   opacity: 'var(--ink-hint)',
                   textTransform: 'uppercase',
@@ -309,7 +309,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
         {/* Status label */}
         <span
           style={{
-            fontSize: '9px',
+            fontSize: '10px',
             padding: '1px 5px',
             borderRadius: 'var(--radius-sm)',
             background: `${color}14`,

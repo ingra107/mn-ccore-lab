@@ -17,6 +17,7 @@ import { useToast } from '../../hooks/useToast'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { IdeaRow } from '../../lib/api'
+import PageLayout from '../../components/PageLayout'
 
 type ViewMode = 'grid' | 'list'
 type SortMode = 'newest' | 'votes' | 'title'
@@ -113,7 +114,7 @@ export default function Ideas() {
   const activeCount = ideas.filter((i) => i.status !== 'archived' && i.status !== 'parked').length
 
   return (
-    <div>
+    <PageLayout>
       <PageHeader
         icon={<Lightbulb size={20} />}
         title="Ideas Board"
@@ -242,7 +243,7 @@ export default function Ideas() {
 
       {/* Create modal */}
       <CreateIdeaModal open={showCreate} onClose={() => setShowCreate(false)} />
-    </div>
+    </PageLayout>
   )
 }
 
@@ -260,7 +261,7 @@ function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () 
           {status.label}
         </span>
         {idea.research_area && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}>
             {idea.research_area}
           </span>
         )}

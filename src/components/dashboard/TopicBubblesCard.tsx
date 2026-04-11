@@ -197,7 +197,7 @@ function TopicBubblesCard() {
                   textAnchor="middle"
                   dominantBaseline="central"
                   style={{
-                    fontSize: '9px',
+                    fontSize: '10px',
                     fill: '#fff',
                     fontWeight: 400,
                     pointerEvents: 'none',

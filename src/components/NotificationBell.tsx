@@ -90,7 +90,7 @@ export default function NotificationBell() {
               right: '2px',
               background: 'var(--gold)',
               color: '#0f1923',
-              fontSize: '9px',
+              fontSize: '10px',
               lineHeight: '16px',
               minWidth: '16px',
               height: '16px',

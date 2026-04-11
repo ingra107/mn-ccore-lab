@@ -168,7 +168,7 @@ function StageSelectorCompact({ currentStage, onChange }: { currentStage: Stage;
                   />
                   {stage}
                   {isCurrent && (
-                    <span style={{ marginLeft: 'auto', opacity: 'var(--ink-label)', fontSize: '9px' }}>current</span>
+                    <span style={{ marginLeft: 'auto', opacity: 'var(--ink-label)', fontSize: '10px' }}>current</span>
                   )}
                 </button>
               )

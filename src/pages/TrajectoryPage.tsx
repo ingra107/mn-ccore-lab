@@ -130,7 +130,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
               <text
                 x={padding.left - 8} y={yScale(v) + 4}
                 textAnchor="end"
-                style={{ fontSize: '9px', fill: 'var(--slate)' }}
+                style={{ fontSize: '10px', fill: 'var(--slate)' }}
                 opacity={0.5}
               >
                 {v}

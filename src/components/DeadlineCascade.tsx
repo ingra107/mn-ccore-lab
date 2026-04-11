@@ -184,7 +184,7 @@ function CascadeRow({
         {/* Lag indicator for non-root nodes */}
         {node.depth > 0 && node.lagDays > 0 && (
           <span style={{
-            fontSize: '9px',
+            fontSize: '10px',
             fontWeight: 500,
             color: 'var(--slate)',
             opacity: 'var(--ink-label)',
@@ -250,7 +250,7 @@ function CascadeRow({
 
         {/* Status badge */}
         <span style={{
-          fontSize: '9px',
+          fontSize: '10px',
           fontWeight: 500,
           color,
           opacity: 0.7,
@@ -261,7 +261,7 @@ function CascadeRow({
 
         {/* Type badge */}
         <span style={{
-          fontSize: '9px',
+          fontSize: '10px',
           fontWeight: 500,
           color: node.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
           opacity: 'var(--ink-label)',
@@ -273,7 +273,7 @@ function CascadeRow({
         {/* Downstream count indicator */}
         {node.downstreamCount > 0 && (
           <span style={{
-            fontSize: '9px',
+            fontSize: '10px',
             fontWeight: 500,
             color: 'var(--slate)',
             opacity: 0.4,
@@ -450,7 +450,7 @@ function WhatIfPanel({
                   {formatShortDate(item.projected_date)}
                 </span>
                 <span style={{
-                  fontSize: '9px',
+                  fontSize: '10px',
                   fontWeight: 500,
                   color: item.shift_days > 0 ? 'var(--maroon)' : 'var(--teal)',
                   opacity: 0.7,

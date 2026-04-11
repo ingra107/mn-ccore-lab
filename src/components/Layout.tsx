@@ -273,7 +273,7 @@ export default function Layout() {
                         style={{
                           background: 'var(--maroon)',
                           color: '#fff',
-                          fontSize: '9px',
+                          fontSize: '10px',
                           lineHeight: '16px',
                           width: '16px',
                           height: '16px',
@@ -291,7 +291,7 @@ export default function Layout() {
                     {link.label === 'Meetings' && nextMeetingLabel && (
                       <span
                         style={{
-                          fontSize: '9px',
+                          fontSize: '10px',
                           color: 'var(--gold)',
                           opacity: 0.8,
                           whiteSpace: 'nowrap',
@@ -448,7 +448,7 @@ export default function Layout() {
                       style={{
                         background: 'var(--maroon)',
                         color: '#fff',
-                        fontSize: '9px',
+                        fontSize: '10px',
                         lineHeight: '16px',
                         width: '16px',
                         height: '16px',
@@ -466,7 +466,7 @@ export default function Layout() {
                   {link.label === 'Meetings' && nextMeetingLabel && (
                     <span
                       style={{
-                        fontSize: '9px',
+                        fontSize: '10px',
                         color: 'var(--gold)',
                         opacity: 0.8,
                         whiteSpace: 'nowrap',
@@ -724,7 +724,7 @@ export default function Layout() {
             Minnesota. All rights reserved.
             <div
               style={{
-                fontSize: '9px',
+                fontSize: '10px',
                 opacity: 0.3,
                 marginTop: '6px',
               }}

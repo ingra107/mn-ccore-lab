@@ -90,7 +90,7 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
           {totalContributions} contribution{totalContributions !== 1 ? 's' : ''} in the last {days} days
         </span>
         <div className="flex items-center gap-1">
-          <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>Less</span>
+          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>Less</span>
           {[0, 0.25, 0.5, 0.75, 1].map((intensity) => (
             <div
               key={intensity}
@@ -102,7 +102,7 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
               }}
             />
           ))}
-          <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>More</span>
+          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.5 }}>More</span>
         </div>
       </div>
 

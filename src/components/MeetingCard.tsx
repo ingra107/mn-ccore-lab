@@ -85,7 +85,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
           <div className="flex items-center gap-3 mt-1">
             <span
               className="flex items-center gap-1 text-xs"
-              style={{ color: 'var(--slate)', opacity: 0.7 }}
+              style={{ color: 'var(--muted)' }}
             >
               <Users size={12} />
               {meeting.attendees?.length ?? 0}

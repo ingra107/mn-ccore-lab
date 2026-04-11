@@ -46,11 +46,11 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
   return json({ data: result.results, count: result.results.length });
 }
 
-// POST /api/tasks/:id/status — change task status (todo/in_progress/done/blocked)
+// POST /api/tasks/:id/status — change task status (todo/in_progress/done/blocked/waiting_external)
 export async function handleUpdateTaskStatus(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { status: string };
-  if (!body.status || !['todo', 'in_progress', 'done', 'blocked'].includes(body.status)) {
-    return error('status must be one of: todo, in_progress, done, blocked', 400);
+  if (!body.status || !['todo', 'in_progress', 'done', 'blocked', 'waiting_external'].includes(body.status)) {
+    return error('status must be one of: todo, in_progress, done, blocked, waiting_external', 400);
   }
 
   const item = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null }>();
@@ -327,8 +327,8 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
       break
 
     case 'status':
-      if (!body.value || !['todo', 'in_progress', 'done', 'blocked'].includes(body.value)) {
-        return error('value must be one of: todo, in_progress, done, blocked', 400)
+      if (!body.value || !['todo', 'in_progress', 'done', 'blocked', 'waiting_external'].includes(body.value)) {
+        return error('value must be one of: todo, in_progress, done, blocked, waiting_external', 400)
       }
       if (body.value === 'done') {
         await env.DB.prepare(

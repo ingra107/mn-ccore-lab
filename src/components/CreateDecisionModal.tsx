@@ -263,7 +263,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
               {/* Tag auto-suggestions */}
               {newSuggestions.length > 0 && (
                 <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                  <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Suggested:
                   </span>
                   {newSuggestions.map((tag) => (

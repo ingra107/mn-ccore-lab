@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createProject, updateProject, addProjectComment, fetchApi } from '../../lib/api'
 import type { Project } from '../../data/types'
-import type { Comment } from '../useApiData'
+import type { Comment, ProjectDocumentRow } from '../useApiData'
 
 // ── Project mutations ───────────────────────────────────────
 
@@ -124,6 +124,85 @@ export function usePostProjectUpdate(projectSlug: string) {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['project-updates', projectSlug] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+// ── Project Document mutations ─────────────────────────────
+
+export function useAddProjectDocument(projectSlug: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { title: string; url: string; doc_type?: string }) =>
+      fetchApi<ProjectDocumentRow>(`/api/projects/${projectSlug}/documents`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: ['project-documents', projectSlug] })
+      const previous = queryClient.getQueryData<ProjectDocumentRow[]>(['project-documents', projectSlug])
+
+      const optimistic: ProjectDocumentRow = {
+        id: `temp-${Date.now()}`,
+        project_id: projectSlug,
+        title: input.title,
+        url: input.url,
+        doc_type: (input.doc_type as ProjectDocumentRow['doc_type']) || 'link',
+        created_at: new Date().toISOString(),
+        created_by: null,
+      }
+
+      queryClient.setQueryData<ProjectDocumentRow[]>(
+        ['project-documents', projectSlug],
+        [optimistic, ...(previous || [])]
+      )
+
+      return { previous }
+    },
+
+    onError: (_err, _input, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-documents', projectSlug], context.previous)
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-documents', projectSlug] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+export function useDeleteProjectDocument(projectSlug: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (docId: string) =>
+      fetch(`/api/projects/${projectSlug}/documents/${docId}/delete`, { method: 'POST' }).then(r => r.json()),
+
+    onMutate: async (docId) => {
+      await queryClient.cancelQueries({ queryKey: ['project-documents', projectSlug] })
+      const previous = queryClient.getQueryData<ProjectDocumentRow[]>(['project-documents', projectSlug])
+
+      queryClient.setQueryData<ProjectDocumentRow[]>(
+        ['project-documents', projectSlug],
+        (previous || []).filter(d => d.id !== docId)
+      )
+
+      return { previous }
+    },
+
+    onError: (_err, _docId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-documents', projectSlug], context.previous)
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-documents', projectSlug] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })

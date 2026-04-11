@@ -191,6 +191,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                       fontSize: 'var(--label-size)',
                       fontWeight: 'var(--label-weight)',
                       color: priority.color,
+                      opacity: 0.7,
                       background: priority.bg,
                     }}
                   >

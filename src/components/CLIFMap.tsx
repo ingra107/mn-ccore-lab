@@ -225,7 +225,7 @@ export default function CLIFMap() {
                     textAnchor="middle"
                     fill="rgba(201, 168, 76, 0.6)"
                     style={{
-                      fontSize: '9px',
+                      fontSize: '10px',
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
                     }}

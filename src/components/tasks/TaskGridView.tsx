@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check, GripVertical, Pin, RotateCcw } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronRight, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check, GripVertical, Pin, RotateCcw } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
@@ -16,6 +16,7 @@ import { useSubtasks, useProjects } from '../../hooks/useApiData'
 import { useCreateSubtask, useToggleSubtask, useReorderSubtasks } from '../../hooks/useMutations'
 import { STATUS_OPTIONS, STATUS_BG, PRIORITY_OPTIONS, PRIORITY_CONFIG, PRIORITY_ORDER, STATUS_ORDER } from '../../lib/taskConstants'
 import { useTableConfig } from '../../hooks/useTableConfig'
+import { ColumnHeader } from '../table'
 import type { TaskRow } from '../../lib/api'
 
 // ── Column definitions for resize + tab nav ─────────────────
@@ -49,6 +50,7 @@ const EDITABLE_COL_INDICES = [1, 2, 3, 4, 5, 6] // title, assignee, project, due
 const DEFAULT_TABLE_CONFIG = {
   sortKey: 'due_date',
   sortAsc: true,
+  sorts: [{ key: 'due_date', asc: true }],
   columnWidths: { ...DEFAULT_WIDTHS },
   filters: {},
 }
@@ -93,9 +95,10 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
   const { showUndo } = useUndoToast()
 
   // ── Table config (persisted sort + column widths) ──
-  const { config: tableConfig, setSortKey: handleSortKey, setColumnWidth, reset: resetTableConfig } = useTableConfig('task-grid', DEFAULT_TABLE_CONFIG)
+  const { config: tableConfig, setSortKey: handleSortKey, addSecondarySort, setColumnWidth, reset: resetTableConfig } = useTableConfig('task-grid', DEFAULT_TABLE_CONFIG)
   const sortKey = tableConfig.sortKey as SortKey
   const sortAsc = tableConfig.sortAsc
+  const sorts = tableConfig.sorts
   const colWidths = tableConfig.columnWidths
 
   // ── Column resize state ──
@@ -185,25 +188,40 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     [contextMenuState.taskId, tasks]
   )
 
+  // Compare two tasks by a single sort key
+  const compareByKey = useCallback((a: TaskRow, b: TaskRow, key: string): number => {
+    switch (key) {
+      case 'priority': return (PRIORITY_ORDER[a.priority] ?? 2) - (PRIORITY_ORDER[b.priority] ?? 2)
+      case 'status': return (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2)
+      case 'due_date': return (a.due_date || '9999').localeCompare(b.due_date || '9999')
+      case 'assignee': return (a.assignee || '').localeCompare(b.assignee || '')
+      case 'title': return (a.title || a.description || '').localeCompare(b.title || b.description || '')
+      case 'project': return (projectMap.get(a.project_id || '') || a.project_id || '').localeCompare(projectMap.get(b.project_id || '') || b.project_id || '')
+      default: return 0
+    }
+  }, [projectMap])
+
   const sorted = useMemo(() => {
+    const activeSorts = sorts.length > 0 ? sorts : [{ key: sortKey, asc: sortAsc }]
     return [...tasks].sort((a, b) => {
       if (a.completed !== b.completed) return a.completed - b.completed
-      let cmp = 0
-      switch (sortKey) {
-        case 'priority': cmp = (PRIORITY_ORDER[a.priority] ?? 2) - (PRIORITY_ORDER[b.priority] ?? 2); break
-        case 'status': cmp = (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2); break
-        case 'due_date': cmp = (a.due_date || '9999').localeCompare(b.due_date || '9999'); break
-        case 'assignee': cmp = (a.assignee || '').localeCompare(b.assignee || ''); break
-        case 'title': cmp = (a.title || a.description || '').localeCompare(b.title || b.description || ''); break
-        case 'project': cmp = (projectMap.get(a.project_id || '') || a.project_id || '').localeCompare(projectMap.get(b.project_id || '') || b.project_id || ''); break
+      // Chain through sort levels (max 2)
+      for (const s of activeSorts) {
+        const cmp = compareByKey(a, b, s.key)
+        if (cmp !== 0) return s.asc ? cmp : -cmp
       }
-      return sortAsc ? cmp : -cmp
+      return 0
     })
-  }, [tasks, sortKey, sortAsc, projectMap])
+  }, [tasks, sorts, sortKey, sortAsc, compareByKey])
 
-  const handleSort = (key: SortKey) => {
-    handleSortKey(key)
-  }
+  /** Regular click replaces sort; Shift+Click adds secondary sort */
+  const handleSort = useCallback((key: string, shiftKey?: boolean) => {
+    if (shiftKey) {
+      addSecondarySort(key)
+    } else {
+      handleSortKey(key)
+    }
+  }, [handleSortKey, addSecondarySort])
 
   const gridTemplate = useMemo(() => buildGridTemplate(colWidths), [colWidths])
   const colStyle = useMemo(() => ({
@@ -248,8 +266,10 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
   }, [focusedIndex, sorted.length, virtualizer])
 
   // Check if config differs from defaults (for Reset view button)
+  const hasMultiSort = sorts.length > 1
   const configDiffers = sortKey !== DEFAULT_TABLE_CONFIG.sortKey ||
     sortAsc !== DEFAULT_TABLE_CONFIG.sortAsc ||
+    hasMultiSort ||
     Object.keys(colWidths).some(k => colWidths[k] !== DEFAULT_WIDTHS[k])
 
   return (
@@ -279,20 +299,12 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
       {/* Column headers — clickable for sort, hidden on mobile */}
       <div className="task-grid-header" style={{ ...colStyle, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
         <div />
-        <ResizableColumnHeader label="TITLE" field="title" active={sortKey} asc={sortAsc} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'title'} />
-        <ResizableColumnHeader label="ASSIGNEE" field="assignee" active={sortKey} asc={sortAsc} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'assignee'} />
-        <ResizableColumnHeader label="PROJECT" field="project" active={sortKey} asc={sortAsc} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'project'} />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative' }}>
-          <SortableColumnHeader label="DUE DATE" field="due_date" active={sortKey} asc={sortAsc} onSort={handleSort} />
-          <div
-            style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '4px', cursor: 'col-resize', zIndex: 2 }}
-            onMouseDown={(e) => handleResizeStart('due_date', e)}
-            onDoubleClick={() => handleResizeDoubleClick('due_date')}
-            className={resizingCol === 'due_date' ? 'resize-handle-active' : 'resize-handle'}
-          />
-        </div>
-        <ResizableColumnHeader label="STATUS" field="status" active={sortKey} asc={sortAsc} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'status'} />
-        <ResizableColumnHeader label="PRIORITY" field="priority" active={sortKey} asc={sortAsc} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'priority'} />
+        <ResizableColumnHeader label="TITLE" field="title" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'title'} />
+        <ResizableColumnHeader label="ASSIGNEE" field="assignee" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'assignee'} />
+        <ResizableColumnHeader label="PROJECT" field="project" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'project'} />
+        <ResizableColumnHeader label="DUE DATE" field="due_date" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'due_date'} align="right" />
+        <ResizableColumnHeader label="STATUS" field="status" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'status'} />
+        <ResizableColumnHeader label="PRIORITY" field="priority" sorts={sorts} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'priority'} />
         <div /> {/* Actions column spacer */}
       </div>
 
@@ -395,15 +407,6 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
       />
 
       <style>{`
-        .col-header {
-          font-family: var(--font-sans);
-          font-size: 10px;
-          font-weight: 500;
-          color: var(--slate);
-          opacity: var(--ink-label);
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-        }
         /* Resize handles */
         .resize-handle {
           background: transparent;
@@ -500,53 +503,43 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
   )
 }
 
-// ── Sortable Column Header ─────────────────────────────────
-
-function SortableColumnHeader({ label, field, active, asc, onSort }: { label: string; field: SortKey; active: SortKey; asc: boolean; onSort: (k: SortKey) => void }) {
-  const isActive = active === field
-  return (
-    <button
-      onClick={() => onSort(field)}
-      className="col-header"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '3px',
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        padding: 0,
-        opacity: isActive ? 0.9 : undefined,
-        color: isActive ? 'var(--teal)' : undefined,
-      }}
-    >
-      {label}
-      {isActive && (asc ? <ChevronUp size={10} /> : <ChevronDown size={10} />)}
-    </button>
-  )
-}
-
-// ── Resizable Column Header (wraps SortableColumnHeader + resize handle) ──
+// ── Resizable Column Header (wraps shared ColumnHeader + resize handle) ──
 
 function ResizableColumnHeader({
-  label, field, active, asc, onSort, onResizeStart, onResizeDoubleClick, isResizing,
+  label, field, sorts, onSort, onResizeStart, onResizeDoubleClick, isResizing, align,
 }: {
   label: string
-  field: SortKey
-  active: SortKey
-  asc: boolean
-  onSort: (k: SortKey) => void
+  field: string
+  sorts: { key: string; asc: boolean }[]
+  onSort: (key: string, shiftKey?: boolean) => void
   onResizeStart: (col: string, e: React.MouseEvent) => void
   onResizeDoubleClick: (col: string) => void
   isResizing: boolean
+  align?: 'left' | 'right'
 }) {
+  const sortIdx = sorts.findIndex(s => s.key === field)
+  const isActive = sortIdx >= 0
+  const currentAsc = isActive ? sorts[sortIdx].asc : true
+  const sortRank = sorts.length > 1 && isActive ? sortIdx + 1 : undefined
+
   return (
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-      <SortableColumnHeader label={label} field={field} active={active} asc={asc} onSort={onSort} />
+    <div
+      style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+      onClick={(e) => onSort(field, e.shiftKey)}
+    >
+      <ColumnHeader
+        label={label}
+        sortKey={field}
+        currentSort={isActive ? field : ''}
+        sortAsc={currentAsc}
+        onSort={() => {/* handled by parent div onClick for shiftKey access */}}
+        sortRank={sortRank}
+        align={align}
+      />
       <div
         style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '4px', cursor: 'col-resize', zIndex: 2 }}
-        onMouseDown={(e) => onResizeStart(field, e)}
-        onDoubleClick={() => onResizeDoubleClick(field)}
+        onMouseDown={(e) => { e.stopPropagation(); onResizeStart(field, e) }}
+        onDoubleClick={(e) => { e.stopPropagation(); onResizeDoubleClick(field) }}
         className={isResizing ? 'resize-handle-active' : 'resize-handle'}
       />
     </div>
@@ -717,7 +710,7 @@ function TaskGridRow({
                   transform: 'translateY(-50%)',
                 }}
               >
-                <span className="text-[9px] uppercase tracking-wider block mb-1.5" style={{ color: 'var(--maroon)', fontWeight: 600 }}>Blocked by</span>
+                <span className="text-[10px] uppercase tracking-wider block mb-1.5" style={{ color: 'var(--maroon)', fontWeight: 600 }}>Blocked by</span>
                 {blockerIds.map(id => {
                   const bt = allTasks.find(t => t.id === id)
                   if (!bt) return null
@@ -790,7 +783,7 @@ function TaskGridRow({
           {task.source && task.source !== 'manual' && (
             <span
               style={{
-                fontSize: '9px',
+                fontSize: '10px',
                 padding: '1px 5px',
                 borderRadius: 'var(--radius-lg)',
                 backgroundColor: task.source === 'meeting' ? 'rgba(45,138,138,0.1)' :
@@ -814,7 +807,7 @@ function TaskGridRow({
                 className="hover-badge"
                 title={`Open for ${age} days`}
                 style={{
-                  fontSize: '9px',
+                  fontSize: '10px',
                   padding: '1px 5px',
                   borderRadius: 'var(--radius-lg)',
                   backgroundColor: age > 30 ? 'rgba(122,0,25,0.1)' : 'rgba(194,65,12,0.1)',
@@ -831,11 +824,12 @@ function TaskGridRow({
             <span
               className="hover-badge"
               style={{
-                fontSize: '9px',
+                fontSize: '10px',
                 padding: '1px 5px',
-                borderRadius: 'var(--radius-lg)',
-                backgroundColor: 'rgba(45,138,138,0.06)',
-                color: 'var(--teal)',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--surface-3)',
+                borderLeft: '2px solid var(--teal)',
+                color: 'var(--slate)',
                 flexShrink: 0,
                 lineHeight: '14px',
                 maxWidth: '100px',
@@ -1006,6 +1000,7 @@ function TaskGridRow({
           return (
             <span className="status-transition" style={{
               color: opt.color,
+              opacity: 0.7,
               background: cfg?.bg || 'rgba(100, 116, 139, 0.1)',
               padding: '2px 8px',
               borderRadius: 'var(--radius-full)',

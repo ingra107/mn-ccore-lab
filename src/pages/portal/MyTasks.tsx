@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
-import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame, X, Pin, GripVertical } from 'lucide-react'
+import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame, X, Pin, GripVertical, Hourglass } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
@@ -20,10 +20,11 @@ import { useAuth } from '../../hooks/useAuth'
 import type { TaskRow } from '../../lib/api'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
+import { getPersonInfo } from '../../data/team'
 import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 
 type ViewMode = 'list' | 'board' | 'standup' | 'timeline'
-type QuickFilter = 'all' | 'today' | 'this_week' | 'overdue' | 'no_date'
+type QuickFilter = 'all' | 'today' | 'this_week' | 'overdue' | 'no_date' | 'waiting_on'
 
 const alternateViews: { key: ViewMode; label: string; icon: typeof List; description: string }[] = [
   { key: 'board', label: 'Board', icon: LayoutGrid, description: 'Kanban columns by status' },
@@ -108,7 +109,7 @@ export default function MyTasks() {
     const task = allTasks.find(t => t.id === id)
     const prev = task?.status || 'todo'
     updateStatus.mutate({ id, status })
-    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked' }
+    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked', waiting_external: 'Waiting (External)' }
     showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id, status: prev }))
   }
 
@@ -128,8 +129,22 @@ export default function MyTasks() {
   const pendingCount = tasks.filter((t) => !t.completed).length
   const completedCount = tasks.filter((t) => t.completed).length
 
+  // PI slug for "Waiting On" filter — uses auth if available, else defaults to 'nick'
+  const piSlug = currentUser || 'nick'
+
   // Quick date filter
   const quickFiltered = useMemo(() => {
+    // "Waiting On" uses allTasks — shows tasks delegated to others, regardless of Mine/All toggle
+    if (quickFilter === 'waiting_on') {
+      return allTasks
+        .filter(t => !t.completed && t.assignee !== piSlug && (t.status === 'todo' || t.status === 'in_progress' || t.status === 'waiting_external'))
+        .sort((a, b) => {
+          // Sort by staleness: tasks with oldest updated_at first (most stale at top)
+          const aDate = a.updated_at || a.created_at
+          const bDate = b.updated_at || b.created_at
+          return aDate.localeCompare(bDate)
+        })
+    }
     const base = showCompleted ? tasks : tasks.filter((t) => !t.completed)
     if (quickFilter === 'all') return base
     const now = new Date()
@@ -143,7 +158,7 @@ export default function MyTasks() {
       case 'no_date': return base.filter(t => !t.due_date)
       default: return base
     }
-  }, [tasks, showCompleted, quickFilter])
+  }, [tasks, allTasks, showCompleted, quickFilter, piSlug])
   const displayTasks = quickFiltered
 
   // Quick filter counts for pills
@@ -158,8 +173,9 @@ export default function MyTasks() {
       this_week: active.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < weekEnd).length,
       overdue: active.filter(t => t.due_date && new Date(t.due_date + 'T23:59:59') < now).length,
       no_date: active.filter(t => !t.due_date).length,
+      waiting_on: allTasks.filter(t => !t.completed && t.assignee !== piSlug && (t.status === 'todo' || t.status === 'in_progress' || t.status === 'waiting_external')).length,
     }
-  }, [tasks])
+  }, [tasks, allTasks, piSlug])
 
   // "Focus Next" — smart scoring: urgency × priority × freshness
   // Returns top 3 auto-suggestions; user can pin up to 5 total
@@ -179,7 +195,7 @@ export default function MyTasks() {
   }, [pinnedIds])
 
   const scoredTasks = useMemo(() => {
-    const active = tasks.filter(t => !t.completed && t.status !== 'blocked')
+    const active = tasks.filter(t => !t.completed && t.status !== 'blocked' && t.status !== 'waiting_external')
     if (active.length === 0) return []
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -460,15 +476,20 @@ export default function MyTasks() {
           { key: 'this_week' as QuickFilter, label: 'This Week', count: filterCounts.this_week },
           { key: 'overdue' as QuickFilter, label: 'Overdue', count: filterCounts.overdue },
           { key: 'no_date' as QuickFilter, label: 'No Date', count: filterCounts.no_date },
-        ]).map(f => (
+          { key: 'waiting_on' as QuickFilter, label: 'Waiting On', count: filterCounts.waiting_on },
+        ]).map(f => {
+          const pillColor = f.key === 'overdue' ? { bg: 'rgba(122,0,25,0.1)', fg: 'var(--maroon)', border: 'rgba(122,0,25,0.3)' }
+            : f.key === 'waiting_on' ? { bg: 'rgba(201,168,76,0.12)', fg: 'var(--gold)', border: 'rgba(201,168,76,0.4)' }
+            : { bg: 'rgba(45,138,138,0.1)', fg: 'var(--teal)', border: 'rgba(45,138,138,0.3)' }
+          return (
           <button
             key={f.key}
             onClick={() => setQuickFilter(f.key)}
             className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
             style={{
-              backgroundColor: quickFilter === f.key ? (f.key === 'overdue' ? 'rgba(122,0,25,0.1)' : 'rgba(45,138,138,0.1)') : 'transparent',
-              color: quickFilter === f.key ? (f.key === 'overdue' ? 'var(--maroon)' : 'var(--teal)') : 'var(--slate)',
-              border: `1px solid ${quickFilter === f.key ? (f.key === 'overdue' ? 'rgba(122,0,25,0.3)' : 'rgba(45,138,138,0.3)') : 'var(--border-light)'}`,
+              backgroundColor: quickFilter === f.key ? pillColor.bg : 'transparent',
+              color: quickFilter === f.key ? pillColor.fg : 'var(--slate)',
+              border: `1px solid ${quickFilter === f.key ? pillColor.border : 'var(--border-light)'}`,
               cursor: 'pointer',
               opacity: quickFilter === f.key ? 1 : 0.6,
             }}
@@ -476,7 +497,8 @@ export default function MyTasks() {
             {f.label}
             {f.count > 0 && <span style={{ opacity: 0.7 }}>{f.count}</span>}
           </button>
-        ))}
+          )
+        })}
       </div>
 
       {/* Status distribution bar */}
@@ -488,17 +510,19 @@ export default function MyTasks() {
               const todo = active.filter(t => t.status === 'todo').length
               const inProgress = active.filter(t => t.status === 'in_progress').length
               const blocked = active.filter(t => t.status === 'blocked').length
+              const waitingExt = active.filter(t => t.status === 'waiting_external').length
               const total = active.length || 1
               return (
                 <>
                   {inProgress > 0 && <div style={{ width: `${(inProgress / total) * 100}%`, background: 'var(--teal)', transition: 'width 300ms ease' }} />}
                   {todo > 0 && <div style={{ width: `${(todo / total) * 100}%`, background: 'var(--slate)', opacity: 0.4, transition: 'width 300ms ease' }} />}
+                  {waitingExt > 0 && <div style={{ width: `${(waitingExt / total) * 100}%`, background: 'var(--orange)', transition: 'width 300ms ease' }} />}
                   {blocked > 0 && <div style={{ width: `${(blocked / total) * 100}%`, background: 'var(--maroon)', transition: 'width 300ms ease' }} />}
                 </>
               )
             })()}
           </div>
-          <span className="text-[9px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+          <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
             {tasks.filter(t => !t.completed && t.status === 'in_progress').length} active
           </span>
         </div>
@@ -536,11 +560,55 @@ export default function MyTasks() {
         </div>
       )}
 
+      {/* Waiting On summary — shown when filter is active */}
+      {quickFilter === 'waiting_on' && displayTasks.length > 0 && (
+        <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'rgba(201,168,76,0.3)', backgroundColor: 'rgba(201,168,76,0.04)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <Hourglass size={14} style={{ color: 'var(--gold)' }} />
+            <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
+              Waiting On Others
+            </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.12)' }}>
+              {displayTasks.length} task{displayTasks.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {displayTasks.slice(0, 5).map(task => {
+              const now = new Date()
+              const lastUpdate = task.updated_at || task.created_at
+              const daysWaiting = Math.floor((now.getTime() - new Date(lastUpdate).getTime()) / 86400000)
+              const person = getPersonInfo(task.assignee)
+              return (
+                <div key={task.id} className="flex items-center gap-2 text-xs" style={{ color: 'var(--ink)' }}>
+                  <span className="w-14 flex-shrink-0 text-right font-medium" style={{
+                    color: daysWaiting >= 14 ? 'var(--maroon)' : daysWaiting >= 7 ? 'var(--orange)' : daysWaiting >= 3 ? 'var(--gold)' : 'var(--slate)',
+                    fontSize: '10px',
+                  }}>
+                    {daysWaiting}d waiting
+                  </span>
+                  <span className="w-20 truncate flex-shrink-0" style={{ color: 'var(--slate)', fontSize: '10px' }}>
+                    {person.name.split(' ')[0]}
+                  </span>
+                  <span className="truncate" style={{ cursor: 'pointer' }} onClick={() => setSelectedTask(task)}>
+                    {task.title || task.description}
+                  </span>
+                </div>
+              )
+            })}
+            {displayTasks.length > 5 && (
+              <span className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+                +{displayTasks.length - 5} more in the table below
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div className={`mt-5 ${densityClass(density)}`}>
         {isLoading ? (
           <TableSkeleton rows={6} cols={5} />
-        ) : tasks.length === 0 ? (
+        ) : displayTasks.length === 0 && quickFilter !== 'waiting_on' ? (
           <EmptyState
             icon={<CheckCircle2 size={40} />}
             title={currentUser ? 'All caught up!' : 'No tasks yet'}
@@ -737,6 +805,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
     'High': 'var(--orange)',
     'In Progress': 'var(--teal)',
     'Blocked': 'var(--maroon)',
+    'Waiting External': 'var(--orange)',
   }
 
   return (
@@ -762,7 +831,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
                   <div style={{ width: 40, height: 3, borderRadius: 2, background: 'var(--border-subtle)', overflow: 'hidden' }}>
                     <div style={{ width: `${pct}%`, height: '100%', borderRadius: 2, background: 'var(--green)', transition: 'width 300ms ease' }} />
                   </div>
-                  <span className="text-[9px]" style={{ color: 'var(--green)', opacity: 0.7 }}>{pct}%</span>
+                  <span className="text-[10px]" style={{ color: 'var(--green)', opacity: 0.7 }}>{pct}%</span>
                 </div>
               )
             })()}

@@ -52,6 +52,7 @@ import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulator
 import { handleGrantMilestones, handleUpcomingGrantMilestones, handleCreateGrantMilestone, handleUpdateGrantMilestone, handleCompleteGrantMilestone } from './routes/grant-milestones';
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
 import { handleGetEmailDrafts, handleGetPendingDrafts, handleSyncEmailDrafts } from './routes/email-drafts';
+import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeleteProjectDocument } from './routes/project-documents';
 import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail } from './routes/digest-email';
@@ -225,6 +226,11 @@ export default {
         const projectUpdatesGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/updates$/);
         if (projectUpdatesGet) {
           return await handleGetProjectUpdates(projectUpdatesGet[1], env);
+        }
+
+        const projectDocsGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/documents$/);
+        if (projectDocsGet) {
+          return await handleGetProjectDocuments(projectDocsGet[1], env);
         }
 
         const projectPapersGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/papers$/);
@@ -635,6 +641,18 @@ export default {
         const updateMatch = path.match(/^\/api\/projects\/([^/]+)\/updates$/);
         if (request.method === 'POST' && updateMatch) {
           return withVersionBump(await handlePostProjectUpdate(updateMatch[1], request, user, env));
+        }
+
+        // POST /api/projects/:slug/documents — add a document link
+        const projectDocCreateMatch = path.match(/^\/api\/projects\/([^/]+)\/documents$/);
+        if (request.method === 'POST' && projectDocCreateMatch) {
+          return withVersionBump(await handleCreateProjectDocument(projectDocCreateMatch[1], request, user, env));
+        }
+
+        // POST /api/projects/:slug/documents/:docId/delete — remove a document link
+        const projectDocDeleteMatch = path.match(/^\/api\/projects\/([^/]+)\/documents\/([^/]+)\/delete$/);
+        if (request.method === 'POST' && projectDocDeleteMatch) {
+          return withVersionBump(await handleDeleteProjectDocument(projectDocDeleteMatch[2], env));
         }
 
         // POST /api/meetings — create meeting
@@ -1389,6 +1407,26 @@ export default {
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_task_updates_task ON task_updates(task_id)').run(); results.push('created task index'); } catch (e) { results.push(`task index: ${e}`); }
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_task_updates_created ON task_updates(created_at)').run(); results.push('created created_at index'); } catch (e) { results.push(`created_at index: ${e}`); }
             return json({ data: { version: 36, results } });
+          }
+          if (body.version === 38) {
+            const results: string[] = [];
+            try {
+              await env.DB.prepare(`
+                CREATE TABLE IF NOT EXISTS project_documents (
+                  id TEXT PRIMARY KEY,
+                  project_id TEXT NOT NULL,
+                  title TEXT NOT NULL,
+                  url TEXT NOT NULL,
+                  doc_type TEXT DEFAULT 'link',
+                  created_at TEXT DEFAULT (datetime('now')),
+                  created_by TEXT,
+                  FOREIGN KEY (project_id) REFERENCES projects(id)
+                )
+              `).run();
+              results.push('created project_documents');
+            } catch (e) { results.push(`project_documents: ${e}`); }
+            try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_project_documents_project ON project_documents(project_id)').run(); results.push('created project index'); } catch (e) { results.push(`project index: ${e}`); }
+            return json({ data: { version: 38, results } });
           }
           return error(`Unknown migration version: ${body.version}`, 400);
         }

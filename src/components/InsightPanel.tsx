@@ -35,7 +35,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
         </span>
         <span
           style={{
-            fontSize: '9px',
+            fontSize: '10px',
             color: 'var(--slate)',
             opacity: 'var(--ink-label)',
             fontStyle: 'italic',
@@ -92,7 +92,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
                   {reasons.slice(0, 2).map((r, i) => (
                     <span
                       key={i}
-                      className="inline-block px-1.5 py-0.5 rounded text-[9px]"
+                      className="inline-block px-1.5 py-0.5 rounded text-[10px]"
                       style={{
                         background: 'rgba(45,138,138,0.08)',
                         color: 'var(--teal)',
@@ -103,7 +103,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
                   ))}
                   {reasons.length > 2 && (
                     <span
-                      style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
+                      style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
                     >
                       +{reasons.length - 2}
                     </span>

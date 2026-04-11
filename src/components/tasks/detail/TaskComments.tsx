@@ -95,7 +95,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>{person.name}</span>
-                  <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{formatRelativeTime(c.created_at)}</span>
+                  <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{formatRelativeTime(c.created_at)}</span>
                 </div>
                 <p className="text-sm mt-0.5" style={{ color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>{c.content}</p>
                 <ReactionBar targetType="task_comment" targetId={c.id} compact />
@@ -128,7 +128,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
             onClick={() => setForClaude(!forClaude)}
             className="flex items-center gap-1.5 self-start px-2 py-0.5 rounded-full transition-colors"
             style={{
-              fontSize: '9px', fontWeight: 600,
+              fontSize: '10px', fontWeight: 600,
               background: forClaude ? 'rgba(201,168,76,0.15)' : 'rgba(100,116,139,0.06)',
               color: forClaude ? 'var(--gold)' : 'var(--slate)',
               border: `1px solid ${forClaude ? 'rgba(201,168,76,0.3)' : 'rgba(100,116,139,0.1)'}`,
@@ -175,7 +175,7 @@ export function TaskActivity({ taskId }: { taskId: string }) {
           <div key={a.id} className="flex items-start gap-2 py-0.5">
             <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: 'var(--teal)', opacity: 0.3 }} />
             <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{a.description}</span>
-            <span className="text-[9px] ml-auto flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{formatRelativeTime(a.timestamp)}</span>
+            <span className="text-[10px] ml-auto flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{formatRelativeTime(a.timestamp)}</span>
           </div>
         ))}
       </div>
@@ -222,7 +222,7 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
                 {d.title}
               </span>
               <span
-                className="text-[9px] px-1 py-0.5 rounded-full ml-auto"
+                className="text-[10px] px-1 py-0.5 rounded-full ml-auto"
                 style={{ fontWeight: 'var(--label-weight)', color: badge.color, backgroundColor: badge.bg }}
               >
                 {sentiment}
@@ -234,13 +234,13 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
               </p>
             )}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                 {formatRelativeTime(d.created_at)}
               </span>
               {tags.map(tag => (
                 <span
                   key={tag}
-                  className="text-[9px] px-1 py-0.5 rounded-full"
+                  className="text-[10px] px-1 py-0.5 rounded-full"
                   style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.06)' }}
                 >
                   {tag}

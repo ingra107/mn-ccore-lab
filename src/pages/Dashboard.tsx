@@ -407,8 +407,7 @@ export default function Dashboard() {
           <p
             style={{
               fontSize: '15px',
-              color: 'var(--slate)',
-              opacity: 0.7,
+              color: 'var(--muted)',
               marginTop: '6px',
               maxWidth: '520px',
             }}
@@ -582,7 +581,7 @@ export default function Dashboard() {
               <div style={{ fontSize: '13px', fontWeight: 500 }}>
                 {upcomingMeeting.date === new Date().toISOString().split('T')[0] ? 'Meeting today' : 'Meeting tomorrow'}: {upcomingMeeting.title}
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
+              <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
                 {formatMediumDate(upcomingMeeting.date)}
               </div>
             </div>

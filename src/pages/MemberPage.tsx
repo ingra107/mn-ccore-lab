@@ -400,7 +400,7 @@ export default function MemberPage() {
                   {project.stage && (
                     <p
                       className="text-xs mt-2"
-                      style={{ color: 'var(--slate)', opacity: 0.7 }}
+                      style={{ color: 'var(--muted)' }}
                     >
                       Stage: {project.stage}
                     </p>
@@ -456,7 +456,7 @@ export default function MemberPage() {
                     {t.source !== 'manual' && (
                       <span
                         style={{
-                          fontSize: '9px',
+                          fontSize: '10px',
                           opacity: 0.5,
                           marginLeft: '2px',
                         }}
@@ -795,13 +795,13 @@ function ContributionScoreCard({ slug }: { slug: string }) {
       {/* Trend arrow */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
         <span style={{ fontSize: '18px', color: trend.color, lineHeight: 1 }}>{trend.symbol}</span>
-        <span style={{ fontSize: '9px', color: trend.color, textTransform: 'capitalize' }}>{data.trend}</span>
+        <span style={{ fontSize: '10px', color: trend.color, textTransform: 'capitalize' }}>{data.trend}</span>
       </div>
 
       {/* Sparkline */}
       <div style={{ flex: 1 }}>
         <MiniSparkline data={data.sparkline} />
-        <div style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.55, marginTop: 2 }}>
+        <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, marginTop: 2 }}>
           Last 14 days (decay-weighted)
         </div>
       </div>
@@ -815,7 +815,7 @@ function ContributionScoreCard({ slug }: { slug: string }) {
           .map(([type, v]) => (
             <div key={type} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>{v.count}</div>
-              <div style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.5 }}>{type}s</div>
+              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>{type}s</div>
             </div>
           ))}
       </div>

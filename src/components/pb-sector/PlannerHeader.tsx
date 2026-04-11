@@ -134,7 +134,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
               <button
                 onClick={handleToday}
                 style={{
-                  fontSize: '9px', fontWeight: 700,
+                  fontSize: '10px', fontWeight: 700,
                   textTransform: 'uppercase', letterSpacing: '0.5px',
                   color: isToday ? 'var(--cream)' : 'var(--slate)',
                   background: isToday ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
@@ -147,7 +147,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
               <button
                 onClick={handleTomorrow}
                 style={{
-                  fontSize: '9px', fontWeight: 700,
+                  fontSize: '10px', fontWeight: 700,
                   textTransform: 'uppercase', letterSpacing: '0.5px',
                   color: isTomorrow ? 'var(--cream)' : 'var(--slate)',
                   background: isTomorrow ? 'var(--gold)' : 'rgba(201,168,76,0.08)',

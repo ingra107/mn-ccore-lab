@@ -192,7 +192,7 @@ function QuestionCard({
 
             {question.project_slug && (
               <span
-                className="text-[9px] px-1.5 py-0.5 rounded-full"
+                className="text-[10px] px-1.5 py-0.5 rounded-full"
                 style={{ color: 'var(--gold)', backgroundColor: 'rgba(201,168,76,0.06)' }}
               >
                 {question.project_slug}

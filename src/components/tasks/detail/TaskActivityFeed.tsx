@@ -115,7 +115,7 @@ function UpdateItem({ update }: { update: TaskUpdateRow }) {
               style={{ fontSize: '8px', background: `color-mix(in srgb, ${config.color} 10%, transparent)`, color: config.color }}>
               <Icon size={8} /> {config.label}
             </span>
-            <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-hint)', marginLeft: 'auto' }}>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)', marginLeft: 'auto' }}>
               {formatRelativeTime(update.created_at)}
             </span>
           </div>
@@ -150,7 +150,7 @@ function CommentItem({ comment }: { comment: TaskComment }) {
               style={{ fontSize: '8px', background: 'rgba(201, 168, 76, 0.08)', color: 'var(--gold)' }}>
               <MessageSquare size={8} /> Comment
             </span>
-            <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-hint)', marginLeft: 'auto' }}>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)', marginLeft: 'auto' }}>
               {formatRelativeTime(comment.created_at)}
             </span>
           </div>
@@ -170,7 +170,7 @@ function SystemItem({ entry }: { entry: ActivityEntry }) {
       <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6, flex: 1 }}>
         {entry.description}
       </span>
-      <span className="text-[9px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.3 }}>
+      <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.3 }}>
         {formatRelativeTime(entry.timestamp)}
       </span>
     </div>

@@ -39,6 +39,7 @@ import ConferencePrep from '../components/ConferencePrep'
 import InsightPanel from '../components/InsightPanel'
 import ProjectLiterature from './project/ProjectLiterature'
 import ProjectActivity from './project/ProjectActivity'
+import ProjectDocuments from './project/ProjectDocuments'
 
 type Tab = 'overview' | 'tasks' | 'revisions' | 'activity' | 'literature'
 
@@ -1070,6 +1071,9 @@ function ProjectDetailInner({ project }: InnerProps) {
         </motion.div>
 
       </div>
+
+      {/* Key Documents */}
+      <ProjectDocuments projectSlug={project.slug} />
 
       {/* Related Projects (AI Insights) */}
       <InsightPanel projectSlug={project.slug} />

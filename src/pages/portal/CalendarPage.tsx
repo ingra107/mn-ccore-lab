@@ -333,14 +333,14 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
                 return (
                   <div key={e.id} className="flex items-start gap-1 p-1.5 rounded" style={{ backgroundColor: config.bg }}>
                     <Icon size={10} style={{ color: config.color, marginTop: 2, flexShrink: 0 }} />
-                    <span className="text-[9px] leading-tight" style={{ color: config.color }}>
+                    <span className="text-[10px] leading-tight" style={{ color: config.color }}>
                       {(() => { const t = formatBrandName(e.title); return t.length > 32 ? t.slice(0, 32) + '...' : t })()}
                     </span>
                   </div>
                 )
               })}
               {dayEvents.length === 0 && (
-                <div className="text-center py-4 text-[9px]" style={{ color: 'var(--slate)', opacity: 0.3 }}>—</div>
+                <div className="text-center py-4 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.3 }}>—</div>
               )}
             </div>
           </div>

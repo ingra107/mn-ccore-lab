@@ -56,7 +56,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
                 )}
                 {d.relevance_score && (
                   <span
-                    className="text-[9px] px-1 py-0.5 rounded"
+                    className="text-[10px] px-1 py-0.5 rounded"
                     style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}
                   >
                     score: {d.relevance_score}
@@ -80,7 +80,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
                 {d.shared_tags && d.shared_tags.length > 0 && d.shared_tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-[9px] px-1 py-0.5 rounded-full"
+                    className="text-[10px] px-1 py-0.5 rounded-full"
                     style={{ color: 'var(--teal)', backgroundColor: 'rgba(45,138,138,0.08)' }}
                   >
                     {tag}

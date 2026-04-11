@@ -34,6 +34,15 @@ function formatWeekRange(start: Date): string {
   return `${fmt(start)} - ${fmt(end)}, ${end.getFullYear()}`
 }
 
+type TimeRange = '7d' | '4w' | '3m' | 'all'
+
+const RANGE_WEEKS: Record<TimeRange, number> = {
+  '7d': 1,
+  '4w': 4,
+  '3m': 13,
+  'all': 52,
+}
+
 export default function AnalyticsPage() {
   const { user } = useAuth()
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
@@ -42,6 +51,9 @@ export default function AnalyticsPage() {
   const { data: ideas = [] } = useIdeas()
   const { data: activity = [] } = useActivity(100)
   const { data: healthData } = useProjectHealth()
+
+  // Time range filter
+  const [range, setRange] = useState<TimeRange>('4w')
 
   // Week navigation
   const [weekOffset, setWeekOffset] = useState(0)
@@ -109,11 +121,12 @@ export default function AnalyticsPage() {
     return map
   }, [tasks])
 
-  // 8-week velocity data (used for chart + sparklines)
-  const velocityWeeks = useMemo(() => {
+  // Velocity data: compute up to 52 weeks, slice by range for display
+  const allVelocityWeeks = useMemo(() => {
     const now = new Date()
+    const totalWeeks = 52
     const weeks: { week: string; completed: number; created: number }[] = []
-    for (let i = 7; i >= 0; i--) {
+    for (let i = totalWeeks - 1; i >= 0; i--) {
       const wStart = new Date(now)
       wStart.setDate(wStart.getDate() - wStart.getDay() - i * 7)
       wStart.setHours(0, 0, 0, 0)
@@ -128,6 +141,11 @@ export default function AnalyticsPage() {
     }
     return weeks
   }, [tasks])
+
+  const velocityWeeks = useMemo(() => {
+    const numWeeks = RANGE_WEEKS[range]
+    return allVelocityWeeks.slice(-numWeeks)
+  }, [allVelocityWeeks, range])
 
   // Task age histogram data for Recharts
   const taskAgeBuckets = useMemo(() => {
@@ -148,9 +166,10 @@ export default function AnalyticsPage() {
     return buckets
   }, [tasks])
 
-  // Sparkline arrays (trailing 8-week values per metric)
-  const sparkCompleted = useMemo(() => velocityWeeks.map(w => w.completed), [velocityWeeks])
-  const sparkCreated = useMemo(() => velocityWeeks.map(w => w.created), [velocityWeeks])
+  // Sparkline arrays (always trailing 8-week values for metric cards)
+  const spark8 = useMemo(() => allVelocityWeeks.slice(-8), [allVelocityWeeks])
+  const sparkCompleted = useMemo(() => spark8.map(w => w.completed), [spark8])
+  const sparkCreated = useMemo(() => spark8.map(w => w.created), [spark8])
   const sparkOverdue = useMemo(() => {
     const now = new Date()
     const data: number[] = []
@@ -179,6 +198,49 @@ export default function AnalyticsPage() {
     }
     return data
   }, [activity])
+
+  // Cross-project resource heatmap: tasks per person per week (this week + 3 future weeks)
+  const workloadHeatmap = useMemo(() => {
+    if (!isPi) return { members: [], weeks: [] }
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    // Get Monday of current week
+    const day = todayStart.getDay()
+    const mondayOffset = day === 0 ? -6 : 1 - day
+    const thisMonday = new Date(todayStart)
+    thisMonday.setDate(thisMonday.getDate() + mondayOffset)
+
+    const weeks: { label: string; start: Date; end: Date }[] = []
+    for (let i = 0; i < 4; i++) {
+      const wStart = new Date(thisMonday)
+      wStart.setDate(wStart.getDate() + i * 7)
+      const wEnd = new Date(wStart)
+      wEnd.setDate(wEnd.getDate() + 7)
+      const label = i === 0 ? 'This Week' : i === 1 ? 'Next Week' : `Week ${i + 1}`
+      weeks.push({ label, start: wStart, end: wEnd })
+    }
+
+    const active = tasks.filter(t => !t.completed && t.due_date)
+    const memberMap = new Map<string, number[]>()
+    for (const t of active) {
+      const due = new Date(t.due_date! + 'T12:00:00')
+      for (let wi = 0; wi < weeks.length; wi++) {
+        if (due >= weeks[wi].start && due < weeks[wi].end) {
+          if (!memberMap.has(t.assignee)) memberMap.set(t.assignee, [0, 0, 0, 0])
+          memberMap.get(t.assignee)![wi]++
+          break
+        }
+      }
+    }
+
+    // Sort by total task count (busiest first)
+    const members = [...memberMap.entries()]
+      .map(([slug, counts]) => ({ slug, counts, total: counts.reduce((a, b) => a + b, 0) }))
+      .filter(m => m.total > 0)
+      .sort((a, b) => b.total - a.total)
+
+    return { members, weeks }
+  }, [tasks, isPi])
 
   const health = healthData?.summary
   const pendingTasks = tasks.filter((t) => !t.completed).length
@@ -274,7 +336,7 @@ export default function AnalyticsPage() {
         ) : undefined}
       />
 
-      {/* Week Navigator */}
+      {/* Week Navigator + Range Selector */}
       <div className="mt-5 flex items-center gap-3 flex-wrap">
         <button
           onClick={() => setWeekOffset(weekOffset - 1)}
@@ -306,6 +368,25 @@ export default function AnalyticsPage() {
             This Week
           </button>
         )}
+
+        {/* Range selector pills */}
+        <div className="flex items-center gap-1 ml-auto rounded-lg border p-0.5" style={{ borderColor: 'var(--border-subtle)' }}>
+          {(['7d', '4w', '3m', 'all'] as const).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
+              style={{
+                background: range === r ? 'var(--teal)' : 'transparent',
+                color: range === r ? 'white' : 'var(--slate)',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {r === 'all' ? 'All' : r.toUpperCase()}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Weekly Summary Cards */}
@@ -318,7 +399,7 @@ export default function AnalyticsPage() {
 
       {/* Lab health summary */}
       {health && (
-        <div className="mt-3 flex items-center gap-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+        <div className="mt-3 flex items-center gap-2 text-[11px]" style={{ color: 'var(--muted)' }}>
           <span>Lab health:</span>
           <span style={{ color: 'var(--green)' }}>{health.healthy} healthy</span>
           {(health.needs_attention || 0) > 0 && <span style={{ color: 'var(--gold)' }}>{health.needs_attention} need attention</span>}
@@ -336,7 +417,7 @@ export default function AnalyticsPage() {
             <h3 className="text-sm font-normal" style={{ color: 'var(--maroon)' }}>
               Attention Required
             </h3>
-            <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+            <span className="text-xs" style={{ color: 'var(--muted)' }}>
               {weekStats.overdue} overdue task{weekStats.overdue > 1 ? 's' : ''} need attention
             </span>
           </div>
@@ -354,9 +435,17 @@ export default function AnalyticsPage() {
         <div className="mt-4 rounded-xl border p-4 text-center" style={{ borderColor: 'var(--border-subtle)' }}>
           <CheckCircle2 size={24} style={{ color: 'var(--green)', margin: '0 auto 6px' }} />
           <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>All caught up!</p>
-          <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>No overdue tasks. Keep up the momentum.</p>
+          <p className="text-xs" style={{ color: 'var(--muted)' }}>No overdue tasks. Keep up the momentum.</p>
         </div>
       )}
+
+      {/* Lab-wide Activity Heatmap — above the fold */}
+      <div className="mt-4 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+        <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>
+          Lab Activity
+        </h3>
+        <ActivityHeatmap days={range === '7d' ? 30 : range === '4w' ? 90 : range === '3m' ? 180 : 365} />
+      </div>
 
       {/* Second row: summary stats */}
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -399,7 +488,7 @@ export default function AnalyticsPage() {
               <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>
                 Team Task Overview
               </h3>
-              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ color: 'var(--slate)', backgroundColor: 'var(--border-subtle)' }}>
+              <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--slate)', backgroundColor: 'var(--border-subtle)' }}>
                 PI only
               </span>
             </div>
@@ -422,7 +511,7 @@ export default function AnalyticsPage() {
                       {done}/{total}
                     </span>
                     {overdue > 0 && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'rgba(122,0,25,0.08)' }}>
                         {overdue} overdue
                       </span>
                     )}
@@ -430,7 +519,7 @@ export default function AnalyticsPage() {
                 )
               })}
               {completionByPerson.length === 0 && (
-                <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No task data yet</p>
+                <p className="text-center py-6 text-sm" style={{ color: 'var(--muted)' }}>No task data yet</p>
               )}
             </div>
           </div>
@@ -446,12 +535,12 @@ export default function AnalyticsPage() {
                 </span>
                 <span className="text-sm" style={{ color: 'var(--slate)' }}>tasks completed</span>
               </div>
-              <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+              <p className="text-xs" style={{ color: 'var(--muted)' }}>
                 {pendingTasks} still pending across the lab
               </p>
             </div>
             <div className="text-center pt-3 mt-3" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
-              <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+              <p style={{ fontSize: 'var(--value-size)', color: 'var(--muted)' }}>
                 Individual performance metrics are visible to PIs only
               </p>
             </div>
@@ -480,7 +569,7 @@ export default function AnalyticsPage() {
                   <span className="text-xs w-28" style={{ color: 'var(--ink)' }}>{stage}</span>
                   <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
                     <div className="h-full rounded transition-all flex items-center px-2" style={{ width: `${width}%`, backgroundColor: stageColors[stage] || 'var(--teal)', minWidth: 24 }}>
-                      <span className="text-[9px] font-semibold" style={{ color: 'white' }}>{count}</span>
+                      <span className="text-[10px] font-semibold" style={{ color: 'white' }}>{count}</span>
                     </div>
                   </div>
                 </div>
@@ -535,7 +624,7 @@ export default function AnalyticsPage() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <p className="text-[10px] mt-3" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+          <p className="text-[10px] mt-3" style={{ color: 'var(--muted)' }}>
             {tasks.filter(t => !t.completed && t.created_at && (new Date().getTime() - new Date(t.created_at).getTime()) > 28 * 86400000).length} tasks older than 4 weeks
           </p>
         </div>
@@ -578,13 +667,80 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Lab-wide Activity Heatmap */}
-      <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-        <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>
-          Lab Activity
-        </h3>
-        <ActivityHeatmap days={90} />
-      </div>
+      {/* Cross-Project Resource Heatmap — PI only */}
+      {isPi && workloadHeatmap.members.length > 0 && (
+        <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>Team Workload Forecast</h3>
+            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--slate)', backgroundColor: 'var(--border-subtle)' }}>
+              PI only
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '120px repeat(4, 1fr)', gap: 2 }}>
+            {/* Header row */}
+            <div />
+            {workloadHeatmap.weeks.map((w, i) => (
+              <div key={i} className="text-center text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+                {w.label}
+              </div>
+            ))}
+            {/* Member rows */}
+            {workloadHeatmap.members.map(({ slug, counts }) => {
+              const person = getPersonInfo(slug)
+              return (
+                <div key={slug} style={{ display: 'contents' }}>
+                  <div className="flex items-center gap-2 pr-2" style={{ height: 36 }}>
+                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm" variant="ice" className="!w-[22px] !h-[22px] !min-w-0 !min-h-0 !text-[7px]" />
+                    <span className="text-[11px] truncate" style={{ color: 'var(--ink)' }}>{person.name.split(' ')[0]}</span>
+                  </div>
+                  {counts.map((count, wi) => {
+                    const bg = count === 0 ? 'var(--border-subtle)'
+                      : count <= 2 ? 'rgba(22, 163, 74, 0.2)'
+                      : count <= 5 ? 'rgba(201, 168, 76, 0.25)'
+                      : 'rgba(122, 0, 25, 0.25)'
+                    const fg = count === 0 ? 'var(--slate)'
+                      : count <= 2 ? 'var(--green)'
+                      : count <= 5 ? 'var(--gold)'
+                      : 'var(--maroon)'
+                    return (
+                      <div
+                        key={wi}
+                        className="flex items-center justify-center rounded"
+                        style={{
+                          background: bg,
+                          height: 36,
+                          fontSize: '13px',
+                          fontWeight: count > 5 ? 600 : 500,
+                          color: fg,
+                          opacity: count === 0 ? 0.4 : 1,
+                          transition: 'background 200ms ease',
+                        }}
+                      >
+                        {count}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+          <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(22, 163, 74, 0.2)' }} />
+              <span className="text-[10px]" style={{ color: 'var(--slate)' }}>0-2 tasks</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(201, 168, 76, 0.25)' }} />
+              <span className="text-[10px]" style={{ color: 'var(--slate)' }}>3-5 tasks</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(122, 0, 25, 0.25)' }} />
+              <span className="text-[10px]" style={{ color: 'var(--slate)' }}>6+ tasks</span>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

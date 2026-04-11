@@ -166,7 +166,7 @@ function ActivityFeedCard() {
                   <span
                     className="flex-shrink-0"
                     style={{
-                      fontSize: '9px',
+                      fontSize: '10px',
                       color: 'var(--slate)',
                       opacity: 'var(--ink-hint)',
                       whiteSpace: 'nowrap',

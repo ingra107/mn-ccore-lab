@@ -308,7 +308,7 @@ function TaskSection({
                   {task.title || task.description}
                 </span>
                 {projectName && (
-                  <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.7, marginLeft: '6px' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--slate)', backgroundColor: 'var(--surface-3)', borderLeft: '2px solid var(--teal)', padding: '1px 5px', borderRadius: 'var(--radius-sm)', marginLeft: '6px' }}>
                     {projectName}
                   </span>
                 )}

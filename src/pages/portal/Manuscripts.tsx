@@ -273,7 +273,7 @@ export default function Manuscripts() {
                 >
                   {col.label}
                   {sortKey === col.key && (
-                    <span style={{ marginLeft: 2, fontSize: '9px' }}>{sortAsc ? '▲' : '▼'}</span>
+                    <span style={{ marginLeft: 2, fontSize: '10px' }}>{sortAsc ? '▲' : '▼'}</span>
                   )}
                 </button>
               ))}

@@ -802,6 +802,36 @@ export function useProjectUpdates(slug: string) {
   })
 }
 
+// ── Project Documents ───────────────────────────────────────
+
+export interface ProjectDocumentRow {
+  id: string
+  project_id: string
+  title: string
+  url: string
+  doc_type: 'folder' | 'draft' | 'data' | 'protocol' | 'submission' | 'link'
+  created_at: string
+  created_by: string | null
+}
+
+export function useProjectDocuments(slug: string) {
+  return useQuery({
+    queryKey: ['project-documents', slug],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`/api/projects/${slug}/documents`)
+        if (!res.ok) return []
+        const data = await res.json()
+        return data.data as ProjectDocumentRow[]
+      } catch {
+        return []
+      }
+    },
+    staleTime: 60 * 1000,
+    enabled: !!slug,
+  })
+}
+
 export function useTaskUpdates(taskId: string) {
   return useQuery({
     queryKey: ['task-updates', taskId],

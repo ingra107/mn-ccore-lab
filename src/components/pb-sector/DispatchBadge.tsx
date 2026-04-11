@@ -85,7 +85,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                         {item.comment}
                       </span>
                       {item.task_title && (
-                        <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.6 }}>
+                        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>
                           {item.task_title}
                         </span>
                       )}

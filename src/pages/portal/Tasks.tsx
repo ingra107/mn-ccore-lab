@@ -122,7 +122,7 @@ export default function Tasks() {
     const task = tasks.find(t => t.id === id)
     const prev = task?.status || 'todo'
     updateStatus.mutate({ id, status })
-    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked' }
+    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked', waiting_external: 'Waiting (External)' }
     showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id, status: prev }))
   }
 

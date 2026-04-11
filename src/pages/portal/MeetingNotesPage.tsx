@@ -128,11 +128,11 @@ export default function MeetingNotesPage() {
                   </span>
                 </div>
                 {m.notes ? (
-                  <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ color: 'var(--green)', backgroundColor: 'rgba(34,197,94,0.08)' }}>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: 'var(--green)', backgroundColor: 'rgba(34,197,94,0.08)' }}>
                     Notes available
                   </span>
                 ) : (
-                  <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
                     No notes
                   </span>
                 )}

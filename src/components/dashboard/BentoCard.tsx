@@ -73,7 +73,7 @@ export default function BentoCard({
               position: 'absolute',
               top: 12,
               right: 12,
-              fontSize: '9px',
+              fontSize: '10px',
               fontWeight: 500,
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -121,9 +121,8 @@ export default function BentoCard({
               <p
                 style={{
                   fontSize: '12px',
-                  color: 'var(--slate)',
+                  color: 'var(--muted)',
                   margin: '2px 0 0 0',
-                  opacity: 0.7,
                 }}
               >
                 {subtitle}

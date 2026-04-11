@@ -393,7 +393,7 @@ export default function Projects() {
                 >
                   {label}
                   {sortKey === key && (
-                    <span style={{ fontSize: '9px' }}>{sortAsc ? '▲' : '▼'}</span>
+                    <span style={{ fontSize: '10px' }}>{sortAsc ? '▲' : '▼'}</span>
                   )}
                 </button>
               ))}
@@ -580,7 +580,7 @@ export default function Projects() {
                                 if (days < 7) return null
                                 return (
                                   <span style={{
-                                    fontSize: '9px',
+                                    fontSize: '10px',
                                     color: days > 30 ? 'var(--maroon)' : days > 14 ? 'var(--orange)' : 'var(--slate)',
                                     opacity: 0.6,
                                     flexShrink: 0,

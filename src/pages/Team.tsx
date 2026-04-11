@@ -144,7 +144,7 @@ export default function Team() {
                 }}
               >
                 {tag}
-                <span style={{ opacity: 0.5, fontSize: '9px' }}>{count}</span>
+                <span style={{ opacity: 0.5, fontSize: '10px' }}>{count}</span>
               </button>
             ))}
           </div>

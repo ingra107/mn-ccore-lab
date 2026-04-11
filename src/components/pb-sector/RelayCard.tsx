@@ -64,7 +64,7 @@ export default function RelayCard() {
         </span>
         {pending.length > 0 && (
           <span style={{
-            fontSize: '9px',
+            fontSize: '10px',
             fontWeight: 700,
             color: 'var(--cream)',
             background: 'var(--teal)',

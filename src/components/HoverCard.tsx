@@ -80,7 +80,7 @@ function MiniAvatar({ slug }: { slug: string }) {
       style={{
         background: info.photoUrl ? 'transparent' : 'rgba(201, 168, 76, 0.15)',
         border: '1px solid rgba(201, 168, 76, 0.2)',
-        fontSize: '9px',
+        fontSize: '10px',
         color: 'var(--gold)',
         fontWeight: 500,
       }}
@@ -178,7 +178,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
       {data.description && (
         <p
           className="text-[11px] leading-relaxed line-clamp-2"
-          style={{ color: 'var(--slate)', opacity: 0.7, fontWeight: 400, margin: 0 }}
+          style={{ color: 'var(--muted)', fontWeight: 400, margin: 0 }}
         >
           {data.description}
         </p>
@@ -201,7 +201,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
                 <MiniAvatar key={slug} slug={slug} />
               ))}
               {data.team.length > 3 && (
-                <span className="text-[9px] pl-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                <span className="text-[10px] pl-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   +{data.team.length - 3}
                 </span>
               )}
@@ -261,7 +261,7 @@ function MemberContent({ data }: { data: MemberCardData }) {
             {data.expertise.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="inline-flex px-1.5 py-0.5 rounded text-[9px]"
+                className="inline-flex px-1.5 py-0.5 rounded text-[10px]"
                 style={{
                   color: 'var(--teal)',
                   background: 'rgba(45, 138, 138, 0.1)',

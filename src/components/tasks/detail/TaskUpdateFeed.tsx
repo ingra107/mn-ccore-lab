@@ -149,7 +149,7 @@ function NoteCard({ update }: { update: TaskUpdateRow }) {
               {person.name}
             </span>
             <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-xs"
-              style={{ fontSize: '9px', background: config.bg, color: config.color }}>
+              style={{ fontSize: '10px', background: config.bg, color: config.color }}>
               <Icon size={9} /> {config.label}
             </span>
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>

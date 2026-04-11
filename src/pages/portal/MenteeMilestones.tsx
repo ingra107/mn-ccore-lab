@@ -441,7 +441,7 @@ function MenteeGroup({
           <span
             className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
             style={{
-              fontSize: '9px',
+              fontSize: '10px',
               fontWeight: 600,
               color: 'var(--maroon)',
               background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',

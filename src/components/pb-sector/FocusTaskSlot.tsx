@@ -174,7 +174,7 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
                   <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>
                     {tasks.length + i + 1}
                   </span>
-                  <span style={{ fontSize: '9px', color: suggestion._isCarried ? 'var(--gold)' : 'var(--teal)', opacity: 0.4, textTransform: 'uppercase', flexShrink: 0 }}>
+                  <span style={{ fontSize: '10px', color: suggestion._isCarried ? 'var(--gold)' : 'var(--teal)', opacity: 0.4, textTransform: 'uppercase', flexShrink: 0 }}>
                     {suggestion._isCarried ? 'Carried' : 'Suggested'}
                   </span>
                   <span className="truncate" style={{ fontSize: '13px', color: 'var(--ink)', opacity: 0.35 }}>

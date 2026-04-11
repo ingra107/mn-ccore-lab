@@ -546,7 +546,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
               <span
                 className="text-xs uppercase"
                 style={{
-                  fontSize: '9px',
+                  fontSize: '10px',
                   letterSpacing: '0.08em',
                   color: 'var(--slate)',
                   opacity: 0.7,
@@ -577,7 +577,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
                         : project.status === 'Published' ? 'badge-published'
                         : 'badge-preparation'
                     }`}
-                    style={{ fontSize: '9px', padding: '1px 6px' }}
+                    style={{ fontSize: '10px', padding: '1px 6px' }}
                   >
                     {project.status}
                   </span>

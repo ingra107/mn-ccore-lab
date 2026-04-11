@@ -73,7 +73,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
                 className="flex-shrink-0 text-right pr-2"
                 style={{
                   width: 40,
-                  fontSize: '9px', color: 'var(--slate)', opacity: 0.25,
+                  fontSize: '10px', color: 'var(--slate)', opacity: 0.25,
                   lineHeight: `${HOUR_HEIGHT}px`,
                 }}
               >
@@ -130,7 +130,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
         {/* "Now" label */}
         {isInRange && (
           <div className="absolute" style={{ right: 8, top: nowOffset + 4, zIndex: 10 }}>
-            <span style={{ fontSize: '9px', color: 'var(--gold)', fontWeight: 600 }}>
+            <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 600 }}>
               {now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
             </span>
           </div>

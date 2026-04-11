@@ -86,7 +86,7 @@
   --cream: oklch(0.12 0 0);              /* true achromatic, zero hue */
   --maroon: oklch(0.65 0.15 20);         /* #e85d7a */
   --ice: oklch(0.14 0 0);                /* true achromatic */
-  --teal: oklch(0.70 0.1 190);           /* #3db8b8 */
+  --teal: oklch(0.65 0.07 190);           /* desaturated teal — less wash */
   --teal-subtle: oklch(0.55 0.04 190);  /* desaturated teal for bulk/ambient use */
   --orange: oklch(0.65 0.18 45);         /* #e8713a */
   --green: oklch(0.78 0.18 145);         /* #4ade80 */
@@ -169,7 +169,7 @@
   --value-size: var(--text-body);
 
   /* Typography scale — named sizes for consistency */
-  --text-micro: 9px;      /* badges, tiny labels */
+  --text-micro: 10px;     /* badges, tiny labels — bumped from 9px for legibility */
   --text-caption: 10px;   /* timestamps, meta, column headers (uppercase) */
   --text-label: 11px;     /* field labels, section dividers */
   --text-small: 12px;     /* secondary content, table cells, sidebar items */
@@ -274,7 +274,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 9999px;
@@ -344,8 +344,19 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   padding-top: 4px !important;
   padding-bottom: 4px !important;
 }
+/* ── Shared column header base (used by ColumnHeader component) ── */
+.col-header {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--slate);
+  opacity: var(--ink-label);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .density-compact .table-container .col-header {
-  font-size: 9px;
+  font-size: 10px;
 }
 .density-compact .manuscript-list-row {
   padding-top: 8px !important;

@@ -130,7 +130,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
           </div>
           <div
             className="mt-0.5 text-center"
-            style={{ fontSize: '9px', color: 'var(--slate)', letterSpacing: '0.05em' }}
+            style={{ fontSize: '10px', color: 'var(--slate)', letterSpacing: '0.05em' }}
           >
             {rel.label}
           </div>
@@ -248,7 +248,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
             <div className="flex items-center gap-1.5 mb-2">
               <span
                 style={{
-                  fontSize: '9px',
+                  fontSize: '10px',
                   color: 'var(--slate)',
                   opacity: 'var(--ink-label)',
                   textTransform: 'uppercase' as const,
@@ -276,7 +276,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                 {paper.relevant_members.length > 5 && (
                   <span
                     style={{
-                      fontSize: '9px',
+                      fontSize: '10px',
                       color: 'var(--slate)',
                       opacity: 'var(--ink-label)',
                       marginLeft: '4px',
@@ -399,7 +399,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
                 <div
                   style={{
                     padding: '8px 12px 4px',
-                    fontSize: '9px',
+                    fontSize: '10px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
                     color: 'var(--slate)',

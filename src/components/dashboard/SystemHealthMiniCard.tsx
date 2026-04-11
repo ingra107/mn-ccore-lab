@@ -85,7 +85,7 @@ export default function SystemHealthMiniCard() {
                 <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
                   Last sync
                 </span>
-                <span className="text-[10px]" style={{ color: 'var(--ink)', opacity: 0.7 }}>
+                <span className="text-[10px]" style={{ color: 'var(--muted)' }}>
                   {formatAge(health.lastTaskSync)}
                 </span>
               </div>
@@ -93,7 +93,7 @@ export default function SystemHealthMiniCard() {
                 <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
                   Active tasks
                 </span>
-                <span className="text-[10px]" style={{ color: 'var(--ink)', opacity: 0.7 }}>
+                <span className="text-[10px]" style={{ color: 'var(--muted)' }}>
                   {health.tasks.active}
                 </span>
               </div>
@@ -101,7 +101,7 @@ export default function SystemHealthMiniCard() {
                 <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
                   Active projects
                 </span>
-                <span className="text-[10px]" style={{ color: 'var(--ink)', opacity: 0.7 }}>
+                <span className="text-[10px]" style={{ color: 'var(--muted)' }}>
                   {health.projects.active}
                 </span>
               </div>

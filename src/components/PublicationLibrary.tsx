@@ -118,7 +118,7 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
                   {/* Journal */}
                   <span
                     style={{
-                      fontSize: '9px',
+                      fontSize: '10px',
                       fontWeight: 600,
                       color: accent,
                       textTransform: 'uppercase',

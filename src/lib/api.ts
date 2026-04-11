@@ -107,7 +107,7 @@ export interface TaskRow {
   assigned_by: string | null
   due_date: string | null
   priority: string // low, medium, high, urgent
-  status: string // todo, in_progress, done, blocked
+  status: string // todo, in_progress, done, blocked, waiting_external
   source: string // manual, meeting, sync
   completed: number
   completed_at: string | null
@@ -128,6 +128,7 @@ export interface TaskRow {
   key_link_3: string | null
   key_link_3_desc: string | null
   created_at: string
+  updated_at?: string
   meeting_title?: string
   meeting_date?: string
 }

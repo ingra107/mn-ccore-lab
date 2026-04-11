@@ -88,7 +88,7 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
     if (status === task.status) return
     const prev = task.status
     updateStatus.mutate({ id: task.id, status })
-    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked' }
+    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked', waiting_external: 'Waiting (External)' }
     showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id: task.id, status: prev }))
   }
 
@@ -587,7 +587,7 @@ function DetailKeyLinkRow({ url, label }: { url: string; label?: string | null }
         >
           {label || url}
         </a>
-        <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+        <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
           {typeLabel}
         </span>
       </div>

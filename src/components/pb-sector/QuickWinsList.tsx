@@ -68,7 +68,7 @@ function SortableQuickWin({ task, onComplete, onClickTitle }: {
         </button>
 
         {task.project_title && (
-          <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }}>
+          <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }}>
             {task.project_title}
           </span>
         )}

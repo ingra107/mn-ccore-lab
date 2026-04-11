@@ -155,7 +155,7 @@ function UpcomingCard() {
             >
               <span style={{ fontSize: '10px', lineHeight: 1 }}>{cadence.emoji}</span>
               <span style={{
-                fontSize: '9px',
+                fontSize: '10px',
                 color: 'var(--slate)',
                 opacity: 0.8,
               }}>
@@ -278,7 +278,7 @@ function UpcomingCard() {
                   />
                   <span
                     style={{
-                      fontSize: '9px',
+                      fontSize: '10px',
                       color: 'var(--slate)',
                       opacity: 'var(--ink-hint)',
                       textTransform: 'capitalize',

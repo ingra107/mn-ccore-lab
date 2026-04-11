@@ -7,6 +7,7 @@ import type { GrantTimelineItem, GrantMilestone } from '../hooks/useGrantTimelin
 import { getPersonInfo } from '../data/team'
 import { formatMediumDate } from '../lib/dateUtils'
 import SectionDivider from '../components/SectionDivider'
+import PageLayout from '../components/PageLayout'
 
 // ── Constants ──────────────────────────────────────────────────
 
@@ -110,7 +111,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
           {grant.proposed ? (
             <span
               className="text-xs ml-auto"
-              style={{ color: 'var(--gold)', fontSize: '9px' }}
+              style={{ color: 'var(--gold)', fontSize: '10px' }}
             >
               PROPOSED
             </span>
@@ -158,7 +159,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
           <div className="mt-2 pt-2" style={{ borderTop: '1px solid rgba(201, 168, 76, 0.2)' }}>
             <span
               className="text-xs block mb-1"
-              style={{ color: 'var(--gold)', fontSize: '9px' }}
+              style={{ color: 'var(--gold)', fontSize: '10px' }}
             >
               MILESTONES
             </span>
@@ -280,7 +281,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
           y={CHART_PADDING_TOP - 20}
           textAnchor="middle"
           style={{
-            fontSize: '9px',
+            fontSize: '10px',
             fill: 'var(--maroon)',
             fontWeight: 700,
           }}
@@ -563,7 +564,7 @@ function GrantCard({ grant }: { grant: GrantTimelineItem }) {
             className="text-xs block mb-1.5"
             style={{
               color: 'var(--gold)',
-              fontSize: '9px',
+              fontSize: '10px',
               letterSpacing: '0.1em',
             }}
           >
@@ -689,7 +690,7 @@ export default function Grants() {
   const mechanisms = [...new Set(grants.map(g => g.mechanism).filter(Boolean))]
 
   return (
-    <>
+    <PageLayout>
       {/* Page Header */}
       <section className="pt-4 pb-6 sm:pb-8 content-container">
         <h1
@@ -890,6 +891,6 @@ export default function Grants() {
           </div>
         )}
       </section>
-    </>
+    </PageLayout>
   )
 }

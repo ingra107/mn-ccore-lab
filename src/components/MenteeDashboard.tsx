@@ -181,7 +181,7 @@ function MenteeProjectLink({ project }: { project: { slug: string; title: string
       onMouseEnter={hoverCard.handlers.onMouseEnter}
       onMouseLeave={hoverCard.handlers.onMouseLeave}
     >
-      <span style={{ fontSize: '9px', color: 'var(--gold)', marginRight: '4px' }}>
+      <span style={{ fontSize: '10px', color: 'var(--gold)', marginRight: '4px' }}>
         {project.stage || project.status}
       </span>
       {project.title.length > 50 ? project.title.slice(0, 47) + '...' : project.title}

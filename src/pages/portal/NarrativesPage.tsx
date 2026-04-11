@@ -107,13 +107,13 @@ export default function NarrativesPage() {
                       transition: 'all 0.2s',
                     }} title={`${s.stage}: ${s.count}`} />
                     {s.count > 0 && (
-                      <span style={{ fontSize: '9px', color: STAGE_COLORS[s.stage], fontWeight: 600 }}>
+                      <span style={{ fontSize: '10px', color: STAGE_COLORS[s.stage], fontWeight: 600 }}>
                         {s.count}
                       </span>
                     )}
                   </div>
                 ))}
-                <span style={{ fontSize: '9px', color: 'var(--slate)', opacity: 0.4, marginLeft: 8 }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4, marginLeft: 8 }}>
                   Idea → Published
                 </span>
               </div>
@@ -164,7 +164,7 @@ export default function NarrativesPage() {
                   </div>
                   {arc.relatedPubs.map((p) => (
                     <Link key={p.id} to={`/publications/${p.id}`} className="block py-1" style={{ textDecoration: 'none' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--ink)', opacity: 0.7 }}>
+                      <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
                         {p.title}
                       </span>
                       <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4, marginLeft: 8 }}>

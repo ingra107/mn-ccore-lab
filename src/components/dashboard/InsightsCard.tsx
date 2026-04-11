@@ -137,7 +137,7 @@ function InsightsCard() {
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span
-                      className="inline-block px-1.5 py-0.5 rounded text-[9px]"
+                      className="inline-block px-1.5 py-0.5 rounded text-[10px]"
                       style={{
                         background: 'rgba(45,138,138,0.08)',
                         color: 'var(--teal)',
@@ -152,7 +152,7 @@ function InsightsCard() {
                     {moreCount > 0 && (
                       <span
                         style={{
-                          fontSize: '9px',
+                          fontSize: '10px',
                           color: 'var(--slate)',
                           opacity: 'var(--ink-label)',
                         }}
@@ -165,7 +165,7 @@ function InsightsCard() {
 
                 {/* Strength badge */}
                 <span
-                  className="flex-shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded"
+                  className="flex-shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded"
                   style={{
                     background: edge.strength > 0.7
                       ? 'color-mix(in srgb, var(--teal) 12%, transparent)'
