@@ -8,6 +8,7 @@ interface BreadcrumbProps {
   maxLength?: number
 }
 
+// Breadcrumb: lightweight trail for nested/detail pages (ProjectDetail, MeetingDetail, MemberPage)
 export default function Breadcrumb({ backTo, backLabel, current, maxLength = 40 }: BreadcrumbProps) {
   const truncated = current && current.length > maxLength
     ? current.slice(0, maxLength) + '...'
