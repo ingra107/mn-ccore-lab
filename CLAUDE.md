@@ -9,13 +9,13 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (530+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (545+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
-| Testing | Playwright 1.59 (E2E, 546 tests) + Vitest 4.1 (component, browser mode) |
-| Data | TanStack Query v5 + Cloudflare D1 (57 tables, 182+ endpoints) -- ALL LIVE |
+| Testing | Playwright 1.59 (E2E, 214+ inspection tests) + Vitest 4.1 (component, browser mode) |
+| Data | TanStack Query v5 + Cloudflare D1 (58 tables, 190+ endpoints) + Recharts -- ALL LIVE |
 | D1 database | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM) |
-| D1 tables | 57 |
+| D1 tables | 58 (added project_documents) |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
 | Reference | `REFERENCE.md` in this repo -- D1 tables, API endpoints, key files, feature list |
@@ -46,18 +46,26 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 
 ### Palette
 - **Light:** bg white `#ffffff` / ink `#0f1923` / slate `#2c3e50`
-- **Dark:** bg `#0b1017` / ink `#e2e8f0` / slate `#94a3b8` (neutral, not blue-tinted)
-- **Accents:** gold `#c9a84c` / teal `#2d8a8a` / maroon `#7a0019` / orange `#c2410c` / green `#16a34a`
-- **Containers:** light `#f5f5f5` / dark `#111820`
+- **Dark:** bg `oklch(0.12 0 0)` true achromatic / ink `#e2e8f0` / slate `oklch(0.7 0.005 250)`
+- **Accents:** gold `#c9a84c` / teal `oklch(0.65 0.07 190)` (desaturated for dark) / teal-subtle `oklch(0.55 0.04 190)` (ambient) / maroon `#7a0019` / orange `#c2410c` / green `#16a34a`
+- **Containers:** light `#f5f5f5` page + `#ffffff` cards / dark uses surface tokens (no hardcoded hex)
 - Category dots: 6px, 0.7 opacity -- maroon=CLIF, teal=Lab, gold=Mesfin
 
 ### Table Pattern (apply to ALL data pages)
-- Bordered container with subtle border and small radius
-- Column headers: uppercase, 11px, 0.5 opacity, 0.06em letter-spacing
+- Shared `ColumnHeader` + `TableContainer` components (`src/components/table/`)
+- Column headers: uppercase, 11px, 0.55 opacity, 0.06em letter-spacing — shared across Tasks, Projects, Manuscripts, Deadlines
+- Column resize: drag handles on right edge, min widths, persisted via `useTableConfig`
+- Column reorder: drag headers horizontally, persisted to localStorage
+- Cell focus: 2px teal outline, Tab/Shift+Tab between editable cells
+- Multi-sort: Shift+Click for secondary sort, ①② rank indicators
+- Frozen columns: checkbox + title sticky at ≤1024px viewport
+- Table config persistence: `useTableConfig(id)` hook saves sort/widths/order to localStorage, Reset View button
 - Stage group headers: quiet uppercase labels with extending rule line
-- Row hover: gold-tinted `rgba(201, 168, 76, 0.06)`, active at `0.10`
+- Row hover: neutral `rgba(255,255,255,0.02)` (dark), barely-there luminance shift
+- Row separators: `rgba(255,255,255,0.03)` (dark) — structure felt not seen
 - Inline controls: status/priority dropdowns editable in-row
-- Ghost-style action buttons (outline, not filled)
+- Hover-only badges: age/project badges hidden until row hover (`.hover-badge` CSS class)
+- Ghost-style action buttons (outline, not filled) + Pin-to-Focus button on MyTasks
 
 ### Animation Timing (5 durations + 2 easings)
 - `--duration-instant: 0ms` — state toggles, checkbox
@@ -70,22 +78,29 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 - Card hover: -1px lift. Respects `prefers-reduced-motion` (all durations → 0ms).
 
 ### Sidebar
+- **3-plane depth**: sidebar darker than content via `color-mix(in oklch, var(--cream), black 12%)` + `--surface-2` overlay
 - Font-weight 400 for nav items, 500 for active only
-- Active: teal bg fill, no left border. Inactive: --slate color, icon opacity 0.7.
-- Section labels: 9px uppercase, opacity 0.5. Divider lines between groups.
+- Active: `--teal-subtle` bg fill (desaturated), full teal on text/icon. No left border.
+- Inactive: --slate color, icon opacity 0.7.
+- Borders: `--border-subtle` (neutral), NOT `--border-light` (gold)
+- Section labels: 10px uppercase, opacity 0.5. Divider lines between groups.
 - Row height: py-2 (compact). Font: 12px. Group gap: 4px. Section divider margin: 6px/8px.
 - Logo: mark uses CSS filter for dark mode (`invert(1) brightness(1.5)`), text logo swaps to dark variant.
 
 ### Borders & Spacing
-- `--border-light` (gold tint) = semantic. `--border-subtle/default/strong` (neutral, 3 tiers) = structural.
+- `--border-light` (gold tint) = ONLY for filter toggle inactive states and intentional brand accents. `--border-subtle/default/strong` (neutral, 3 tiers) = ALL structural borders. 222 structural borders migrated in Phase 30.
 - Spacing: `--sp-xs` (4) / `--sp-sm` (8) / `--sp-md` (12) / `--sp-lg` (16) / `--sp-xl` (24) / `--sp-2xl` (32). Strict 8px grid.
 - Radius: `--radius-sm` (4) / `--radius-md` (6) / `--radius-lg` (8) / `--radius-xl` (12) / `--radius-2xl` (16) / `--radius-full` (9999) / `--radius-circle` (50%). All borderRadius MUST use tokens.
-- Typography scale: `--text-micro` (9) / `--text-caption` (10) / `--text-label` (11) / `--text-small` (12) / `--text-body` (13) / `--text-base` (14) / `--text-md` (16) / `--text-lg` (18) / `--text-xl` (24) / `--text-2xl` (32).
+- Typography scale: `--text-micro` (10, was 9 — eliminated all 9px text) / `--text-caption` (10) / `--text-label` (11) / `--text-small` (12) / `--text-body` (13) / `--text-base` (14) / `--text-md` (16) / `--text-lg` (18) / `--text-xl` (24) / `--text-2xl` (32).
 
 ### Surface Elevation (Linear pattern)
-- `--surface-0` (page bg) / `--surface-1` (panels, sidebar) / `--surface-2` (cards, dropdowns) / `--surface-3` (hover, active)
-- Dark mode: luminance stepping via `rgba(255,255,255, 0.02→0.06)`. Light mode: subtle tints.
+- `--surface-0` (page bg) / `--surface-1` 3% (panels) / `--surface-2` 6% (cards, sidebar, dropdowns) / `--surface-3` 10% (hover, active)
+- Dark mode: luminance stepping via `rgba(255,255,255, 0.03→0.10)` — 10% total range (Linear-equivalent)
+- Light mode: `--page-bg: #f5f5f5` (off-white), cards `#ffffff` with 3-layer box-shadow (Vercel pattern)
+- Card borders: `box-shadow: 0 0 0 1px var(--border-subtle)` technique (not CSS border)
+- Dark cards: `inset 0 1px 0 rgba(255,255,255,0.03)` top-edge highlight
 - Shadows: `--shadow-flat/card/card-hover/elevated/menu`. All boxShadow MUST use tokens.
+- `--muted`: derived from `--ink` via `color-mix(in oklch, var(--ink) 70%, transparent)` in dark mode
 
 ### Table Density (user-controlled)
 - 3 modes via `DensityToggle` component: Compact (36px) / Default (44px) / Relaxed (52px)
@@ -119,7 +134,7 @@ Airtable ←CRDT→ brain.db ←LWW→ D1 (mnccore-lab) ←API→ React + TanSta
 - **Data:** TanStack Query v5 → D1 API (prod), static TS fallback (dev)
 - **API:** Cloudflare Worker, 110+ endpoints, auth-gated writes
 - **Auth:** Open now. Cloudflare Access for April 21 launch (@umn.edu)
-- **Email:** Worker cron + SendGrid (dormant -- needs API key)
+- **Email:** Resend (`api/lib/email.ts`) + daily digest (`api/routes/digest-email.ts`). Needs `RESEND_API_KEY` Cloudflare secret. Preview: `/api/digest-preview?member=nick`
 - **Sync:** `sync_d1_push.py` / `sync_d1_pull.py` in PB, scheduled + /process-triggered
 
 ### Sync Architecture (Decision: 2026-04-06)
@@ -452,11 +467,11 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 
 ## Office of Inspection (Testing Infrastructure)
 
-**552 tests** across 4 suites. Self-updating via feature registry + scanner.
+**568+ tests** across 4 suites. Self-updating via feature registry + scanner.
 
 | Suite | Tests | File |
 |-------|-------|------|
-| Inspection | 198 | `tests/inspection.spec.ts` |
+| Inspection | 214 | `tests/inspection.spec.ts` |
 | Workflows | 167 | `tests/inspection-workflows.spec.ts` |
 | Daily Super-User | 131 | `tests/daily-superuser.spec.ts` |
 | Sync Pipeline | 58 | `tests/sync-pipeline.test.py` |
@@ -478,7 +493,7 @@ npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM notification
 python -c "import sqlite3; conn=sqlite3.connect('C:/Users/ingra107/Peripheral-Brain/data/brain.db'); conn.execute(\"UPDATE tasks SET status='deleted', completed=1, sync_status='synced' WHERE name LIKE 'SYNCTEST%' OR name LIKE 'INSPECTION%' OR name LIKE 'EDGE%' OR name LIKE 'DAILYTEST%' OR name LIKE 'JOURNEY%' OR name LIKE 'SYNC-%' OR name LIKE 'AAAA%' OR name LIKE 'TEST-%'\"); conn.commit(); print(f'Cleaned {conn.total_changes} test tasks from brain.db'); conn.close()"
 ```
 **Scan for gaps:** `python scripts/inspection-scanner.py --commits 5`
-**Registry:** `tests/feature-registry.json` (353 features, 302 covered = 85.6%)
+**Registry:** `tests/feature-registry.json` (369 features, 318 covered = 86.2%)
 **Guide:** `TESTING.md`
 **Skill:** `/test-hub` (scan, run, generate, update, report)
 
@@ -501,13 +516,82 @@ New D1 tables: `email_drafts`, `file_activity_daily`
 New task columns: `key_link_1/2/3` + `_desc`
 New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 
-## Pending Sync
-<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
+## Phase 30: COMPLETE (14 commits, 9 deploys, 2026-04-10/11). Visual QA + Enhancement Marathon:
 
+*Design System Overhaul (4 consultant audits: SaaS 7.4, Dark Mode 7.0, Tables 7.2, Academic UX 8.2):*
+- True achromatic dark base: `oklch(0.12 0 0)` zero hue/chroma (was 0.015 chroma blue tint)
+- Sidebar 3-plane depth: `color-mix(in oklch, var(--cream), black 12%)` — darker than content
+- Surface steps widened: 3%/6%/10% (was 2%/4%/6%), matching Linear's spread
+- Teal desaturation: `--teal-subtle` for ambient, full chroma only on interactive
+- 222 structural `--border-light` (gold) → `--border-subtle` (neutral) across 55 files
+- Card borders: box-shadow-as-border technique (Vercel pattern), inset top highlight
+- Light mode: `#f5f5f5` page bg, 3-layer card shadows, stronger contrast
+- Badge refinement: 11px/500 (was 12px/600), opacity 0.15/0.14 (was 0.12/0.10)
+- 138 instances of 9px text → 10px minimum
+- 8 modal/section heading weights 400→500
+- `--muted` token unified: `color-mix(in oklch, var(--ink) 70%, transparent)` in dark mode
+- Letter-spacing tokens applied: h1/h2 get -0.02em, text-2xl/3xl get -0.04em
+- Softer row separators: luminance shifts instead of visible grid lines
+- Priority badges opacity 0.7, project tags neutral bg + teal left-border accent
+
+*Task Grid Power Features (TaskGridView.tsx — now 1200+ lines):*
+- Column resize: drag handles, min widths, double-click reset, localStorage
+- Column reorder: horizontal DnD, GripVertical handles, separate DndContext
+- Cell focus ring: 2px teal outline, Tab/Shift+Tab between cells
+- Multi-column sort: Shift+Click for secondary, ①② indicators
+- PROJECT column: InlineCellSelect with project dropdown
+- Pin-to-Focus: hover action button, undo toast, works in grouped view
+- Hover-only badges: age/project hidden until row hover
+- Semantic column widths: 110/130/100/120/80/50px
+- Frozen columns: checkbox + title sticky at ≤1024px
+- `useTableConfig` hook: sort, widths, column order → localStorage, Reset View button
+- Shared `ColumnHeader` + `TableContainer` components (src/components/table/)
+- Density tuned: rows now hit 36/44/52px targets (height not minHeight, boxSizing)
+
+*Batch Operations:*
+- BulkActionToolbar: Status dropdown (added to existing Complete/Reassign/Priority/Snooze/Delete)
+- Surfaces: Tasks, MyTasks, MyTasks grouped, Deadlines, ProjectDetail, MeetingDetail action items
+
+*Drag-and-Drop (@dnd-kit):*
+- Focus Next: GripVertical handles, SortableFocusItem
+- Subtasks: both SubtaskSection (detail) + InlineSubtaskRow (grid), useReorderSubtasks mutation
+- Dashboard cards: rectSortingStrategy, SortableCardWrapper, localStorage order
+- Meeting action items: SortableActionItem, session-local order
+- Column headers: horizontalListSortingStrategy
+
+*PI Oversight Features:*
+- "Waiting On" QuickFilter: gold pill, staleness badges (Xd waiting), top 5 summary card
+- Team Workload Forecast: heatmap on Analytics (green/gold/red by task count/week/person)
+- `waiting_external` status: orange pill, wired across all task surfaces + API
+- Project document links: schema v38, API, ProjectDocuments component, 36 links populated
+
+*Charts & Analytics:*
+- Recharts integration: 7 hand-rolled charts → proper BarChart/AreaChart with axes/tooltips
+- MetricCard sparklines: 8-week trailing SVG polyline on 4 top metrics
+- Time-range selector: 7d/4w/3m/All filtering all charts
+- Activity heatmap moved above the fold
+
+*Infrastructure:*
+- Email digest: POST /api/digest-email, GET /api/digest-preview, POST /api/digest-email/send
+- Sign-in links: 8 surfaces with clickable `<a href="/api/auth/login">`
+- Shared DataTable: ColumnHeader + TableContainer adopted by Projects, Manuscripts, Deadlines
+- Deadlines: now has sortable columns (was static headers)
+- InlineDatePicker + DateInput: pending-value pattern (month nav doesn't save)
+- Subtask expand fix: opacity-only animation, virtualizer.measure() callback
+- project_id sync fix: slug generation from project names in push/pull scripts
+- Sync script handles missing short_name column gracefully
+- Homepage redesign: confident hero, Stripe-style impact strip, CLIF context section
+- Cloudflare Access: code ready (useAuth, /api/auth/me, CF-Access-JWT), needs dashboard config
+
+*Tests:*
+- 16 new tests in Phase 30 block (inspection.spec.ts: 198→214)
+- 17 new feature registry entries (369 features, 86.2% coverage)
+
+## Pending Sync
 
 ## Next Session Playbook
 
-**READ `SESSION-HANDOFF.md` FIRST** — full context from 2026-04-09 session (15 commits, sync overhaul, 13 new tests).
+**READ `SESSION-HANDOFF.md` FIRST** — full context from 2026-04-10/11 session (14 commits, 9 deploys).
 
 **Deploy command:**
 ```bash
@@ -516,19 +600,17 @@ cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dis
 
 **Step 2: Run full test suite**
 ```bash
-bash scripts/run-tests.sh all
-# OR run each suite individually:
 npx playwright test tests/inspection.spec.ts --reporter=list
 npx playwright test tests/inspection-workflows.spec.ts --reporter=list
 npx playwright test tests/daily-superuser.spec.ts --reporter=list
 python tests/sync-pipeline.test.py
-npx vitest run src/__tests__/keyboard-shortcuts.test.tsx
 ```
 
-**Step 3: Target 100%.** All 552 tests should pass. If failures appear, check:
-- Sync pipeline `limit=500` (D1 has 1200+ tasks, lower limits miss new ones)
-- Hub→brain.db timing: `time.sleep(2)` between D1 writes and pulls
-- Page errors: usually means a deploy is needed first
+**Step 3: Remaining items (by user choice)**
+- Table row height decrease (line-height 1.6→1.35 in tables)
+- Automated progress report generator (NIH/annual reports from Hub data)
+- Activate email digest: configure RESEND_API_KEY as Cloudflare Pages secret
+- Cloudflare Access: configure @umn.edu policy on Cloudflare dashboard (April 21 target)
 
 **Step 4: Clean up D1 test data** (MANDATORY after every test run)
 ```bash
