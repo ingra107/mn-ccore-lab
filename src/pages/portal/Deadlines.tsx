@@ -11,6 +11,7 @@ import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
+import { ColumnHeader, TableContainer } from '../../components/table'
 import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useApiData'
 import { useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
@@ -44,6 +45,13 @@ export default function Deadlines() {
   const [filterType, setFilterType] = useState<string>('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [density, setDensity] = useDensity()
+  type DeadlineSortKey = 'title' | 'project' | 'due_date' | 'assignee' | 'status' | 'type'
+  const [sortKey, setSortKey] = useState<DeadlineSortKey>('due_date')
+  const [sortAsc, setSortAsc] = useState(true)
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortAsc(!sortAsc)
+    else { setSortKey(key as DeadlineSortKey); setSortAsc(true) }
+  }
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
   const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
@@ -308,7 +316,7 @@ export default function Deadlines() {
         {isLoading ? (
           <TableSkeleton rows={8} cols={4} />
         ) : view === 'list' ? (
-          <div className={`table-container ${densityClass(density)}`}>
+          <TableContainer className={densityClass(density)}>
             {/* Column headers — hidden on mobile */}
             <div
               className="hidden sm:grid"
@@ -319,10 +327,22 @@ export default function Deadlines() {
               }}
             >
               <div />
-              {['TITLE', 'PROJECT', 'DUE DATE', 'ASSIGNEE', 'STATUS', 'TYPE'].map((col) => (
-                <span key={col} style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
-                  {col}
-                </span>
+              {([
+                { label: 'Title', key: 'title' as const },
+                { label: 'Project', key: 'project' as const },
+                { label: 'Due Date', key: 'due_date' as const },
+                { label: 'Assignee', key: 'assignee' as const },
+                { label: 'Status', key: 'status' as const },
+                { label: 'Type', key: 'type' as const },
+              ]).map((col) => (
+                <ColumnHeader
+                  key={col.key}
+                  label={col.label}
+                  sortKey={col.key}
+                  currentSort={sortKey}
+                  sortAsc={sortAsc}
+                  onSort={handleSort}
+                />
               ))}
             </div>
 
@@ -377,7 +397,7 @@ export default function Deadlines() {
                 ))}
               </div>
             )}
-          </div>
+          </TableContainer>
         ) : (
           <DeadlineTimeline items={[...overdue, ...thisWeek, ...nextWeek, ...later]} />
         )}

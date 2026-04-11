@@ -13,6 +13,7 @@ import InlineSelect from '../components/InlineSelect'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
+import { ColumnHeader, TableContainer } from '../components/table'
 import { directors } from '../data/team'
 import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
@@ -359,7 +360,7 @@ export default function Projects() {
 
         {/* ─── LIST VIEW ─── */}
         {viewMode === 'list' && (
-          <div className={`table-container ${densityClass(density)}`}>
+          <TableContainer className={densityClass(density)}>
 
             {/* Table header */}
             <div
@@ -371,31 +372,14 @@ export default function Projects() {
               }}
             >
               {([['Title', 'title'], ['Status', 'status'], ['Stage', 'stage'], ['PI', 'pi'], ['Group', 'category']] as const).map(([label, key]) => (
-                <button
+                <ColumnHeader
                   key={key}
-                  onClick={() => toggleSort(key)}
-                  style={{
-                    fontSize: 'var(--label-size)',
-                    fontWeight: 'var(--label-weight)',
-                    color: sortKey === key ? 'var(--teal)' : 'var(--slate)',
-                    opacity: sortKey === key ? 0.9 : 0.55,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 0,
-                    textAlign: 'left',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '3px',
-                  }}
-                >
-                  {label}
-                  {sortKey === key && (
-                    <span style={{ fontSize: '10px' }}>{sortAsc ? '▲' : '▼'}</span>
-                  )}
-                </button>
+                  label={label}
+                  sortKey={key}
+                  currentSort={sortKey}
+                  sortAsc={sortAsc}
+                  onSort={(k) => toggleSort(k as ProjectSortKey)}
+                />
               ))}
             </div>
 
@@ -774,7 +758,7 @@ export default function Projects() {
                 ))}
               </div>
             )}
-          </div>
+          </TableContainer>
         )}
 
         {/* ─── PIPELINE VIEW ─── */}

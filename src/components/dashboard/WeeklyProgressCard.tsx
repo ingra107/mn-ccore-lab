@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { TrendingUp } from 'lucide-react'
 import { useTasks } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
@@ -31,31 +32,37 @@ export default function WeeklyProgressCard() {
     return { bars: days, totalCompleted: total, trend: trendDir }
   }, [tasks])
 
-  const max = Math.max(...bars.map(b => b.count), 1)
-
   return (
     <BentoCard title="Weekly Progress" subtitle={`${totalCompleted} tasks completed`}>
-      <div className="flex items-end gap-1.5" style={{ height: 64 }}>
-        {bars.map((bar, i) => (
-          <div key={i} className="flex-1 flex flex-col items-center gap-1">
-            <div
-              className="w-full rounded-sm transition-all"
-              style={{
-                height: `${Math.max((bar.count / max) * 48, bar.count > 0 ? 4 : 2)}px`,
-                backgroundColor: bar.isToday
-                  ? 'var(--teal)'
-                  : bar.count > 0
-                    ? 'rgba(45,138,138,0.4)'
-                    : 'var(--border-subtle)',
-                minHeight: 2,
-              }}
-            />
-            <span className="text-[8px]" style={{ color: bar.isToday ? 'var(--teal)' : 'var(--slate)', opacity: bar.isToday ? 1 : 0.5 }}>
-              {bar.label}
-            </span>
-          </div>
-        ))}
-      </div>
+      <ResponsiveContainer width="100%" height={64}>
+        <BarChart data={bars} barCategoryGap="15%">
+          <XAxis
+            dataKey="label"
+            tick={{ fill: 'var(--slate)', fontSize: 8 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip
+            contentStyle={{
+              background: 'var(--cream)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 11,
+              color: 'var(--ink)',
+            }}
+            labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
+            formatter={(value) => [value, 'Completed']}
+          />
+          <Bar dataKey="count" radius={[2, 2, 0, 0]} name="Completed">
+            {bars.map((bar, index) => (
+              <Cell
+                key={index}
+                fill={bar.isToday ? 'var(--teal)' : bar.count > 0 ? 'rgba(45,138,138,0.4)' : 'var(--border-subtle)'}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
       {trend !== 'flat' && (
         <div className="flex items-center gap-1 mt-2">
           <TrendingUp size={10} style={{ color: trend === 'up' ? 'var(--green)' : 'var(--maroon)', transform: trend === 'down' ? 'scaleY(-1)' : undefined }} />

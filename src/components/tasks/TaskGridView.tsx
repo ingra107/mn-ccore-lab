@@ -285,19 +285,35 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     gap: '0 4px',
   }), [gridTemplate])
 
-  const ROW_HEIGHT = 44
   const parentRef = useRef<HTMLDivElement>(null)
+
+  // Read row height from CSS variable (density-aware)
+  const [rowHeight, setRowHeight] = useState(44)
+  useEffect(() => {
+    const el = parentRef.current
+    if (!el) return
+    const readHeight = () => {
+      const val = getComputedStyle(el).getPropertyValue('--row-height').trim()
+      const px = parseInt(val, 10)
+      if (px > 0) setRowHeight(px)
+    }
+    readHeight()
+    // Re-read when density class changes on a parent element
+    const observer = new MutationObserver(readHeight)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
 
   // Estimate row size: expanded rows are taller to account for subtask section
   const estimateSize = useCallback(
     (index: number) => {
       const task = sorted[index]
       if (task && expandedTasks.has(task.id)) {
-        return ROW_HEIGHT + 160 // base row + estimated subtask section
+        return rowHeight + 160 // base row + estimated subtask section
       }
-      return ROW_HEIGHT
+      return rowHeight
     },
-    [sorted, expandedTasks],
+    [sorted, expandedTasks, rowHeight],
   )
 
   const virtualizer = useVirtualizer({
@@ -384,7 +400,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
       {/* Virtualized scrollable area */}
       <div
         ref={parentRef}
-        style={{ flex: 1, overflow: 'auto', minHeight: Math.min(sorted.length * ROW_HEIGHT + 4, 600), scrollbarGutter: 'stable' }}
+        style={{ flex: 1, overflow: 'auto', minHeight: Math.min(sorted.length * rowHeight + 4, 600), scrollbarGutter: 'stable' }}
       >
         {sorted.length > 0 ? (
           <div
@@ -754,8 +770,9 @@ function TaskGridRow({
       data-testid={`task-row-${task.id}`}
       style={{
         ...colStyle,
-        padding: 'var(--row-padding-y, 10px) 16px',
-        minHeight: 'var(--row-height)',
+        padding: '0 16px',
+        height: 'var(--row-height)',
+        boxSizing: 'border-box' as const,
         fontSize: 'var(--cell-font-size)',
         borderBottom: '1px solid var(--border-subtle)',
         borderLeft: `3px solid ${

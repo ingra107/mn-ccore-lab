@@ -6,16 +6,12 @@ import {
   Brain,
   Database,
   ExternalLink,
-  Handshake,
-  GraduationCap,
-  TrendingUp,
   ArrowRight,
 } from 'lucide-react'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import { useCountUp } from '../hooks/useCountUp'
-import { usePublications, useProjects } from '../hooks/useApiData'
+import { usePublications, useProjects, useTeam, useGrants } from '../hooks/useApiData'
 import NetworkBackground from '../components/NetworkBackground'
-import ImpactMetrics from '../components/ImpactMetrics'
 import FeaturedResearch from '../components/FeaturedResearch'
 import ResearchImpact from '../components/ResearchImpact'
 import CollaborationNetwork from '../components/CollaborationNetwork'
@@ -83,40 +79,12 @@ const affiliates = [
   },
 ]
 
-const DEFAULT_HERO_STATS = [
-  { value: 13, suffix: '+', label: 'ICU Centers', detail: 'in the CLIF Consortium' },
-  { value: 80, suffix: '+', label: 'Researchers', detail: 'across institutions' },
-  { value: 63, suffix: '+', label: 'Publications', detail: 'in top journals' },
-]
-
-const pathways = [
-  {
-    icon: Handshake,
-    title: 'Collaborate',
-    description: 'Multi-center research network',
-    to: '/network',
-    accent: 'var(--gold)',
-  },
-  {
-    icon: GraduationCap,
-    title: 'Meet Our Team',
-    description: 'Faculty, trainees, and collaborators',
-    to: '/team',
-    accent: 'var(--teal)',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Research Impact',
-    description: 'Data, publications, and outcomes',
-    to: '/dashboard',
-    accent: 'var(--maroon)',
-  },
-]
-
-function HeroStat({ value, suffix }: { value: number; suffix: string }) {
-  const { count } = useCountUp(value, 1800, false)
+function ImpactNumber({ value, suffix }: { value: number; suffix: string }) {
+  const { count, ref } = useCountUp(value, 2000)
   return (
-    <span>{count}{suffix}</span>
+    <span ref={ref}>
+      {count}{suffix}
+    </span>
   )
 }
 
@@ -128,17 +96,18 @@ export default function Home() {
   const [heroVisible, setHeroVisible] = useState(false)
   const { data: publications = [] } = usePublications()
   const { data: projects = [] } = useProjects()
-  const heroStats = useMemo(() => {
-    const pubCount = publications.length || DEFAULT_HERO_STATS[2].value
-    const projCount = projects.filter(p => p.status === 'Active').length
-    return [
-      DEFAULT_HERO_STATS[0], // ICU Centers (static)
-      DEFAULT_HERO_STATS[1], // Researchers (static)
-      { value: pubCount, suffix: '+', label: 'Publications', detail: projCount > 0 ? `${projCount} active projects` : 'in top journals' },
-    ]
-  }, [publications, projects])
+  const { data: team = [] } = useTeam()
+  const { data: grants = [] } = useGrants()
   const pillarsRef = useScrollRevealGroup('.fade-in-up', 150)
   const affiliatesRef = useScrollRevealGroup('.fade-in-up', 100)
+
+  const impactMetrics = useMemo(() => {
+    const pubCount = publications.length || 63
+    const activeProjects = projects.filter(p => p.status === 'Active').length || 6
+    const teamCount = team.length || 12
+    const activeGrants = grants.filter(g => !g.proposed).length || 2
+    return { pubCount, activeProjects, teamCount, activeGrants }
+  }, [publications, projects, team, grants])
 
   // JSON-LD structured data for organization
   useEffect(() => {
@@ -177,34 +146,25 @@ export default function Home() {
 
   return (
     <>
-      {/* Hero */}
+      {/* ─── Hero ─── */}
       <section
         className="relative overflow-hidden"
         style={{
-          paddingTop: '100px',
-          paddingBottom: 'clamp(48px, 6vw, 80px)',
+          paddingTop: '80px',
+          paddingBottom: '0',
           background: 'linear-gradient(160deg, oklch(0.12 0.005 250) 0%, oklch(0.14 0.005 250) 35%, oklch(0.16 0.005 250) 60%, oklch(0.18 0.005 250) 100%)',
         }}
       >
         {/* Network background */}
         <NetworkBackground />
 
-        {/* Animated gradient overlay — golden glow */}
+        {/* Golden glow overlay */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(ellipse at 20% 40%, rgba(201,168,76,0.1) 0%, transparent 55%), radial-gradient(ellipse at 80% 60%, rgba(45,138,138,0.06) 0%, transparent 50%)',
+              'radial-gradient(ellipse at 20% 40%, rgba(201,168,76,0.12) 0%, transparent 55%), radial-gradient(ellipse at 80% 60%, rgba(45,138,138,0.08) 0%, transparent 50%)',
             animation: 'gradientShift 20s ease-in-out infinite alternate',
-          }}
-        />
-
-        {/* Bottom fade to cream */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-24"
-          style={{
-            background: 'linear-gradient(to top, var(--cream), transparent)',
-            opacity: 0.15,
           }}
         />
 
@@ -215,282 +175,327 @@ export default function Home() {
           }
         `}</style>
 
-        <div className="relative z-10 content-container">
-          {/* Typography-first hero — left-aligned for editorial feel */}
-          <div className="max-w-4xl">
-            <p
-              className="mb-3 sm:mb-4 transition-all duration-700"
-              style={{
-                fontSize: '11px',
-                color: 'var(--gold)',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                opacity: heroVisible ? 0.8 : 0,
-                transform: heroVisible ? 'translateY(0)' : 'translateY(16px)',
-              }}
-            >
-              University of Minnesota
-            </p>
+        <div className="relative z-10 content-container" style={{ paddingBottom: 'clamp(40px, 5vw, 64px)' }}>
+          {/* Eyebrow */}
+          <p
+            className="mb-3 transition-all duration-700"
+            style={{
+              fontSize: '11px',
+              color: 'var(--gold)',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              opacity: heroVisible ? 0.8 : 0,
+              transform: heroVisible ? 'translateY(0)' : 'translateY(16px)',
+            }}
+          >
+            University of Minnesota
+          </p>
 
-            <h1
-              className="transition-all duration-700 inline-flex items-baseline gap-1"
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 800,
-                fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
-                lineHeight: 0.95,
-                letterSpacing: '-0.02em',
-                color: '#ffffff',
-                opacity: heroVisible ? 1 : 0,
-                transform: heroVisible ? 'translateY(0)' : 'translateY(24px)',
-                transitionDelay: '100ms',
-              }}
-            >
-              MN
-              <svg viewBox="0 0 44 22" style={{ width: 'clamp(2rem, 5vw, 4rem)', height: 'auto', display: 'inline-block', verticalAlign: 'baseline', marginBottom: '0.08em' }}>
-                <path
-                  d="M 2 11 L 8 11 L 12 3 L 17 19 L 22 7 L 27 13 L 32 9 L 42 9"
-                  stroke="var(--gold)"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              </svg>
-              CCORE
-            </h1>
+          {/* Title */}
+          <h1
+            className="transition-all duration-700 inline-flex items-baseline gap-1"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 800,
+              fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
+              lineHeight: 0.95,
+              letterSpacing: '-0.03em',
+              color: '#ffffff',
+              opacity: heroVisible ? 1 : 0,
+              transform: heroVisible ? 'translateY(0)' : 'translateY(24px)',
+              transitionDelay: '100ms',
+            }}
+          >
+            MN
+            <svg viewBox="0 0 44 22" style={{ width: 'clamp(2rem, 5vw, 4rem)', height: 'auto', display: 'inline-block', verticalAlign: 'baseline', marginBottom: '0.08em' }}>
+              <path
+                d="M 2 11 L 8 11 L 12 3 L 17 19 L 22 7 L 27 13 L 32 9 L 42 9"
+                stroke="var(--gold)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </svg>
+            CCORE
+          </h1>
 
-            <p
-              className="mt-2 sm:mt-3 mb-6 sm:mb-8 transition-all duration-700"
-              style={{
-                fontSize: 'clamp(1rem, 2vw, 1.3rem)',
-                lineHeight: 1.5,
-                color: 'rgba(255, 255, 255, 0.6)',
-                maxWidth: '540px',
-                opacity: heroVisible ? 1 : 0,
-                transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-                transitionDelay: '200ms',
-              }}
-            >
-              Advancing critical care through data-driven discovery, multi-center collaboration, and open science.
-            </p>
+          {/* Tagline — the single value proposition */}
+          <p
+            className="mt-3 mb-6 transition-all duration-700"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 300,
+              fontSize: 'clamp(1.15rem, 2.2vw, 1.65rem)',
+              lineHeight: 1.35,
+              letterSpacing: '-0.02em',
+              color: 'rgba(255, 255, 255, 0.75)',
+              maxWidth: '600px',
+              opacity: heroVisible ? 1 : 0,
+              transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
+              transitionDelay: '200ms',
+            }}
+          >
+            Advancing critical care through collaborative, data-driven research.
+          </p>
 
-            {/* Stats — inline, editorial */}
+          {/* CTA buttons */}
+          <div
+            className="flex flex-wrap gap-3 mb-0 transition-all duration-700"
+            style={{
+              opacity: heroVisible ? 1 : 0,
+              transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
+              transitionDelay: '300ms',
+            }}
+          >
+            <a
+              href="/publications"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm transition-all duration-200"
+              style={{
+                background: 'var(--gold)',
+                color: '#0b1017',
+                fontWeight: 500,
+                textDecoration: 'none',
+                letterSpacing: '0.01em',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
+            >
+              Explore Research
+              <ArrowRight size={15} aria-hidden="true" />
+            </a>
+            <a
+              href="/team"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm transition-all duration-200"
+              style={{
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                color: 'rgba(255, 255, 255, 0.85)',
+                fontWeight: 400,
+                textDecoration: 'none',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.10)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)' }}
+            >
+              Meet the Team
+            </a>
+          </div>
+        </div>
+
+        {/* ─── Impact Strip ─── */}
+        <div
+          className="relative z-10 transition-all duration-700"
+          style={{
+            borderTop: '1px solid rgba(201, 168, 76, 0.25)',
+            background: 'rgba(0, 0, 0, 0.2)',
+            backdropFilter: 'blur(12px)',
+            opacity: heroVisible ? 1 : 0,
+            transform: heroVisible ? 'translateY(0)' : 'translateY(12px)',
+            transitionDelay: '400ms',
+          }}
+        >
+          <div className="content-container">
             <div
-              className="flex flex-wrap gap-6 sm:gap-10 mb-10 sm:mb-14 transition-all duration-700"
-              style={{
-                opacity: heroVisible ? 1 : 0,
-                transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-                transitionDelay: '300ms',
-              }}
+              className="grid grid-cols-2 sm:grid-cols-4 py-5 sm:py-6"
+              style={{ gap: 0 }}
             >
-              {heroStats.map((stat) => (
-                <div key={stat.label}>
-                  <div style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)',
-                    fontWeight: 700,
-                    color: 'var(--gold)',
-                    lineHeight: 1,
-                  }}>
-                    <HeroStat value={stat.value} suffix={stat.suffix} />
+              {[
+                { value: impactMetrics.pubCount, suffix: '+', label: 'Publications' },
+                { value: impactMetrics.activeProjects, suffix: '', label: 'Active Projects' },
+                { value: 13, suffix: '+', label: 'Consortium Sites' },
+                { value: impactMetrics.teamCount, suffix: '', label: 'Team Members' },
+              ].map((metric, i) => (
+                <div
+                  key={metric.label}
+                  className="text-center px-2"
+                  style={{
+                    borderRight: i < 3 ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+                    // On 2-col mobile, remove border on 2nd and 4th items
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 700,
+                      fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
+                      letterSpacing: '-0.03em',
+                      color: 'var(--gold)',
+                      lineHeight: 1,
+                    }}
+                  >
+                    <ImpactNumber value={metric.value} suffix={metric.suffix} />
                   </div>
-                  <div style={{
-                    fontSize: '10px',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    marginTop: '4px',
-                  }}>
-                    {stat.label}
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      marginTop: '6px',
+                      fontWeight: 400,
+                    }}
+                  >
+                    {metric.label}
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Audience pathway cards */}
-          <div
-            className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 transition-all duration-700"
-            style={{
-              opacity: heroVisible ? 1 : 0,
-              transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-              transitionDelay: '400ms',
-            }}
-          >
-            {pathways.map((path) => {
-              const Icon = path.icon
-              return (
-                <a
-                  key={path.title}
-                  href={path.to}
-                  className="hero-pathway group rounded-xl p-5 sm:p-6 flex items-center gap-4 transition-all duration-300"
-                  style={{
-                    textDecoration: 'none',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    backdropFilter: 'blur(8px)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
-                    e.currentTarget.style.borderColor = `${path.accent}55`
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }}
-                >
-                  <div
-                    className="flex-shrink-0 p-3 rounded-lg"
-                    style={{ background: `${path.accent}18` }}
-                  >
-                    <Icon size={22} strokeWidth={1.5} style={{ color: path.accent }} aria-hidden="true" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3
-                      className="text-base font-normal"
-                      style={{ fontWeight: 400, color: '#ffffff', lineHeight: 1.2 }}
-                    >
-                      {path.title}
-                    </h3>
-                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255, 255, 255, 0.45)' }}>
-                      {path.description}
-                    </p>
-                  </div>
-                  <ArrowRight
-                    size={16}
-                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 group-hover:translate-x-1"
-                    style={{ color: path.accent }}
-                    aria-hidden="true"
-                  />
-                </a>
-              )
-            })}
-          </div>
         </div>
       </section>
 
-      {/* Sections alternate backgrounds */}
-
-      {/* Research Pillars — narrative structure */}
+      {/* ─── Research Pillars ─── */}
       <div className="section-cream">
         <section
           id="research-pillars"
-          className="py-12 sm:py-16 lg:py-24 content-container"
+          className="py-10 sm:py-14 lg:py-18 content-container"
           ref={pillarsRef}
         >
-        <div className="mb-10 sm:mb-14 lg:mb-18 max-w-2xl">
-          <p
-            className="fade-in-up text-xs mb-3"
-            style={{
-              color: 'var(--gold)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.15em',
-            }}
-          >
-            What We Study
-          </p>
-          <h2
-            className="fade-in-up mb-4 sm:mb-5"
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 500,
-              fontSize: 'clamp(1.8rem, 4vw, 3rem)',
-              color: 'var(--ink)',
-              lineHeight: 1.1,
-            }}
-          >
-            Four pillars of critical care research
-          </h2>
-          <p
-            className="fade-in-up text-base sm:text-lg leading-relaxed"
-            style={{ color: 'var(--slate)' }}
-          >
-            Our work investigates how ICU care is delivered, measured, and improved — from individual provider decisions to consortium-wide data infrastructure.
-          </p>
-        </div>
+          <div className="mb-8 sm:mb-10 max-w-2xl">
+            <p
+              className="fade-in-up text-xs mb-2"
+              style={{
+                color: 'var(--gold)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.15em',
+              }}
+            >
+              What We Study
+            </p>
+            <h2
+              className="fade-in-up mb-3"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 500,
+                fontSize: 'clamp(1.8rem, 4vw, 3rem)',
+                color: 'var(--ink)',
+                lineHeight: 1.1,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Four pillars of critical care research
+            </h2>
+            <p
+              className="fade-in-up text-base leading-relaxed"
+              style={{ color: 'var(--slate)' }}
+            >
+              Our work investigates how ICU care is delivered, measured, and improved — from individual provider decisions to consortium-wide data infrastructure.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-          {pillars.map((pillar) => {
-            const Icon = pillar.icon
-            return (
-              <div
-                key={pillar.title}
-                className="fade-in-up card p-6 sm:p-7 cursor-default"
-                style={{
-                  borderLeft: `4px solid ${pillar.color}`,
-                  borderRadius: 'var(--radius-xl)',
-                }}
-              >
-                <div className="flex items-start gap-4">
-                  <div
-                    className="flex-shrink-0 p-3 rounded-xl"
-                    style={{
-                      background: `${pillar.color}15`,
-                    }}
-                  >
-                    <Icon size={24} strokeWidth={1.5} style={{ color: pillar.color }} aria-hidden="true" />
-                  </div>
-                  <div className="flex-1">
-                    <h3
-                      className="text-lg sm:text-xl mb-2"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            {pillars.map((pillar) => {
+              const Icon = pillar.icon
+              return (
+                <div
+                  key={pillar.title}
+                  className="fade-in-up card p-6 sm:p-7 cursor-default"
+                  style={{
+                    borderLeft: `4px solid ${pillar.color}`,
+                    borderRadius: 'var(--radius-xl)',
+                  }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div
+                      className="flex-shrink-0 p-3 rounded-xl"
                       style={{
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 400,
-                        color: 'var(--ink)',
+                        background: `${pillar.color}15`,
                       }}
                     >
-                      {pillar.title}
-                    </h3>
-                    <p
-                      className="text-sm sm:text-base leading-relaxed mb-3"
-                      style={{ color: 'var(--slate)' }}
-                    >
-                      {pillar.description}
-                    </p>
-                    <span
-                      className="inline-block text-xs px-2.5 py-1 rounded-full"
-                      style={{
-                        fontSize: '10px',
-                        letterSpacing: '0.04em',
-                        background: `${pillar.color}12`,
-                        color: pillar.color,
-                        border: `1px solid ${pillar.color}20`,
-                      }}
-                    >
-                      {pillar.stat}
-                    </span>
+                      <Icon size={24} strokeWidth={1.5} style={{ color: pillar.color }} aria-hidden="true" />
+                    </div>
+                    <div className="flex-1">
+                      <h3
+                        className="text-lg sm:text-xl mb-2"
+                        style={{
+                          fontFamily: 'var(--font-display)',
+                          fontWeight: 400,
+                          color: 'var(--ink)',
+                        }}
+                      >
+                        {pillar.title}
+                      </h3>
+                      <p
+                        className="text-sm sm:text-base leading-relaxed mb-3"
+                        style={{ color: 'var(--slate)' }}
+                      >
+                        {pillar.description}
+                      </p>
+                      <span
+                        className="inline-block text-xs px-2.5 py-1 rounded-full"
+                        style={{
+                          fontSize: '10px',
+                          letterSpacing: '0.04em',
+                          background: `${pillar.color}12`,
+                          color: pillar.color,
+                          border: `1px solid ${pillar.color}20`,
+                        }}
+                      >
+                        {pillar.stat}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-      </section>
+              )
+            })}
+          </div>
+        </section>
       </div>
 
       <UpcomingMeetingBanner />
 
       <FeaturedResearch />
 
-      <ImpactMetrics />
+      {/* ─── CLIF Consortium — Map + Context ─── */}
+      <div className="section-ink">
+        <section className="py-10 sm:py-14 content-container">
+          <div className="mb-6 sm:mb-8 max-w-2xl">
+            <p
+              className="text-xs mb-2"
+              style={{
+                color: 'var(--gold)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.15em',
+              }}
+            >
+              Multi-Center Network
+            </p>
+            <h2
+              className="mb-3"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 500,
+                fontSize: 'clamp(1.6rem, 3.5vw, 2.5rem)',
+                color: '#ffffff',
+                lineHeight: 1.15,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              The CLIF Consortium
+            </h2>
+            <p
+              className="text-sm sm:text-base leading-relaxed"
+              style={{ color: 'rgba(255, 255, 255, 0.6)' }}
+            >
+              13 academic medical centers contributing harmonized ICU data through the Common Longitudinal ICU Format. Together, we are building the open infrastructure that makes reproducible critical care research possible.
+            </p>
+          </div>
+        </section>
+      </div>
+      <CLIFMap />
 
       <ResearchImpact />
 
       <CollaborationNetwork />
 
-      <CLIFMap />
-
       <RecentActivity />
 
       <LatestDigest />
 
-      {/* Funding */}
+      {/* ─── Funding ─── */}
       <div className="section-cream">
-        <section className="py-8 sm:py-12 lg:py-16 content-container">
-          <div className="text-center mb-6 sm:mb-8">
+        <section className="py-8 sm:py-10 content-container">
+          <div className="text-center mb-6">
             <p
               className="text-xs sm:text-sm mb-4"
               style={{
@@ -570,25 +575,26 @@ export default function Home() {
         </section>
       </div>
 
-      {/* Consortium & Affiliations */}
+      {/* ─── Consortium & Affiliations ─── */}
       <div style={{ background: 'var(--ice)' }}>
         <section
-          className="py-8 sm:py-12 lg:py-16 content-container"
+          className="py-8 sm:py-10 content-container"
           ref={affiliatesRef}
         >
-          <div className="mb-8 sm:mb-12 lg:mb-16 max-w-2xl">
+          <div className="mb-6 sm:mb-8 max-w-2xl">
             <h2
-              className="fade-in-up text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4"
+              className="fade-in-up text-2xl sm:text-3xl mb-2"
               style={{
                 fontFamily: 'var(--font-display)',
                 fontWeight: 500,
                 color: 'var(--ink)',
+                letterSpacing: '-0.02em',
               }}
             >
               Consortium & Affiliations
             </h2>
             <p
-              className="fade-in-up text-base sm:text-lg"
+              className="fade-in-up text-sm sm:text-base"
               style={{ color: 'var(--slate)' }}
             >
               We are part of a growing network of institutions committed to
@@ -596,19 +602,19 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {affiliates.map((affiliate) => (
               <a
                 key={affiliate.name}
                 href={affiliate.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="fade-in-up card p-5 sm:p-6 cursor-pointer group"
+                className="fade-in-up card p-5 cursor-pointer group"
                 style={{ textDecoration: 'none' }}
               >
-                <div className="flex items-start justify-between mb-2 sm:mb-3">
+                <div className="flex items-start justify-between mb-2">
                   <h3
-                    className="text-sm sm:text-base font-normal"
+                    className="text-sm font-normal"
                     style={{
                       color: 'var(--ink)',
                     }}
@@ -623,7 +629,7 @@ export default function Home() {
                   />
                 </div>
                 <p
-                  className="text-xs sm:text-sm leading-relaxed"
+                  className="text-xs leading-relaxed"
                   style={{ color: 'var(--slate)' }}
                 >
                   {affiliate.description}

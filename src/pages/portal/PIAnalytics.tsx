@@ -2,6 +2,15 @@ import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import {
+  BarChart as RechartsBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
+import {
   Shield,
   Target,
   Users,
@@ -164,85 +173,32 @@ export function Sparkline({ values, width = 60, height = 24, color = 'var(--teal
   )
 }
 
-// Bar chart — SVG bar chart for publications per quarter
-function BarChart({ data, width = 320, height = 140 }: {
-  data: Array<{ label: string; value: number; color?: string }>
-  width?: number
-  height?: number
+// Bar chart — Recharts bar chart for publications per quarter
+function PubsBarChart({ data }: {
+  data: Array<{ label: string; value: number }>
 }) {
   if (data.length === 0) return null
-  const max = Math.max(...data.map(d => d.value), 1)
-  const barWidth = Math.min((width - 20) / data.length - 4, 28)
-  const chartLeft = 24
-  const chartBottom = 24
-  const chartHeight = height - chartBottom - 8
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', maxWidth: width }}>
-      {/* Y-axis gridlines */}
-      {[0, 0.5, 1].map((frac) => (
-        <line
-          key={frac}
-          x1={chartLeft}
-          y1={8 + chartHeight * (1 - frac)}
-          x2={width - 4}
-          y2={8 + chartHeight * (1 - frac)}
-          stroke="var(--border-subtle)"
-          strokeWidth={1}
-          strokeDasharray={frac === 0 ? undefined : '3 3'}
+    <ResponsiveContainer width="100%" height={150}>
+      <RechartsBarChart data={data} barCategoryGap="20%">
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+        <XAxis dataKey="label" tick={{ fill: 'var(--slate)', fontSize: 9 }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fill: 'var(--slate)', fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
+        <Tooltip
+          contentStyle={{
+            background: 'var(--cream)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            fontSize: 12,
+            color: 'var(--ink)',
+          }}
+          labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
+          formatter={(value) => [value, 'Publications']}
         />
-      ))}
-      {/* Y-axis labels */}
-      <text x={0} y={12} fill="var(--slate)" fontSize={9} fontFamily="var(--font-sans)" style={{ opacity: 0.6 }}>
-        {max}
-      </text>
-      <text x={0} y={8 + chartHeight + 4} fill="var(--slate)" fontSize={9} fontFamily="var(--font-sans)" style={{ opacity: 0.6 }}>
-        0
-      </text>
-      {/* Bars */}
-      {data.map((d, i) => {
-        const barH = (d.value / max) * chartHeight
-        const x = chartLeft + i * ((width - chartLeft - 4) / data.length) + ((width - chartLeft - 4) / data.length - barWidth) / 2
-        const y = 8 + chartHeight - barH
-        return (
-          <g key={i}>
-            <rect
-              x={x}
-              y={y}
-              width={barWidth}
-              height={barH}
-              rx={3}
-              fill={d.color || 'var(--teal)'}
-              style={{ opacity: 0.85, transition: 'height 0.4s ease, y 0.4s ease' }}
-            />
-            {d.value > 0 && (
-              <text
-                x={x + barWidth / 2}
-                y={y - 3}
-                textAnchor="middle"
-                fill="var(--ink)"
-                fontSize={9}
-                fontFamily="var(--font-sans)"
-                fontWeight={500}
-              >
-                {d.value}
-              </text>
-            )}
-            <text
-              x={x + barWidth / 2}
-              y={height - 4}
-              textAnchor="middle"
-              fill="var(--slate)"
-              fontSize={8}
-              fontFamily="var(--font-sans)"
-              style={{ opacity: 0.7 }}
-            >
-              {d.label}
-            </text>
-          </g>
-        )
-      })}
-    </svg>
+        <Bar dataKey="value" fill="var(--teal)" radius={[4, 4, 0, 0]} name="Publications" />
+      </RechartsBarChart>
+    </ResponsiveContainer>
   )
 }
 
@@ -833,13 +789,11 @@ export default function PIAnalytics() {
           </div>
           <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
             {data && data.pubsByQuarter.length > 0 ? (
-              <BarChart
+              <PubsBarChart
                 data={data.pubsByQuarter.map(q => ({
                   label: `${q.quarter} '${String(q.year).slice(2)}`,
                   value: q.count,
-                  color: 'var(--teal)',
                 }))}
-                height={150}
               />
             ) : (
               <p className="text-center py-6 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>

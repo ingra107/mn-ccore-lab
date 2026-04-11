@@ -18,6 +18,7 @@ import { getPersonInfo } from '../../data/team'
 import type { Project } from '../../data/types'
 import PageHeader from '../../components/PageHeader'
 import { ActiveRevisionsDashboard } from '../../components/RevisionTracker'
+import { ColumnHeader, TableContainer } from '../../components/table'
 // EmptyState available if needed
 
 import { usePageMeta } from '../../hooks/usePageMeta'
@@ -234,7 +235,7 @@ export default function Manuscripts() {
 
         {/* ─── LIST VIEW ─── */}
         {!isLoading && view === 'list' && (
-          <div className={`table-container ${densityClass(density)}`}>
+          <TableContainer className={densityClass(density)}>
             {/* Table header — sortable */}
             <div
               className="hidden sm:grid"
@@ -251,31 +252,17 @@ export default function Manuscripts() {
                 { label: 'PI', key: 'pi' as const },
                 { label: 'Group', key: 'category' as const },
               ]).map((col) => (
-                <button
+                <ColumnHeader
                   key={col.key}
-                  onClick={() => {
-                    if (sortKey === col.key) setSortAsc(!sortAsc)
-                    else { setSortKey(col.key); setSortAsc(true) }
+                  label={col.label}
+                  sortKey={col.key}
+                  currentSort={sortKey}
+                  sortAsc={sortAsc}
+                  onSort={(k) => {
+                    if (sortKey === k) setSortAsc(!sortAsc)
+                    else { setSortKey(k as typeof sortKey); setSortAsc(true) }
                   }}
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 500,
-                    color: sortKey === col.key ? 'var(--teal)' : 'var(--slate)',
-                    opacity: sortKey === col.key ? 0.8 : 0.5,
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.06em',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    padding: 0,
-                  }}
-                >
-                  {col.label}
-                  {sortKey === col.key && (
-                    <span style={{ marginLeft: 2, fontSize: '10px' }}>{sortAsc ? '▲' : '▼'}</span>
-                  )}
-                </button>
+                />
               ))}
             </div>
 
@@ -501,7 +488,7 @@ export default function Manuscripts() {
                 </div>
               )
             })()}
-          </div>
+          </TableContainer>
         )}
 
         {/* ─── PIPELINE VIEW ─── */}

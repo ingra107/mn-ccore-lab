@@ -117,22 +117,23 @@
 }
 
 /* ── Table Density Modes ── */
+/* Row height = text (font * ~1.5 line-height) + 2 * padding + 1px border */
 :root {
   --row-height: 44px;
-  --row-padding-y: 10px;
-  --cell-font-size: var(--text-body);
+  --row-padding-y: 11px;
+  --cell-font-size: var(--text-body);  /* 13px → ~20px text height → 20+22+1 ≈ 43px */
 }
 
 .density-compact {
   --row-height: 36px;
-  --row-padding-y: 6px;
-  --cell-font-size: var(--text-small);
+  --row-padding-y: 8px;
+  --cell-font-size: var(--text-small);  /* 12px → ~18px text height → 18+16+1 ≈ 35px */
 }
 
 .density-relaxed {
   --row-height: 52px;
-  --row-padding-y: 14px;
-  --cell-font-size: var(--text-base);
+  --row-padding-y: 15px;
+  --cell-font-size: var(--text-base);  /* 14px → ~21px text height → 21+30+1 ≈ 52px */
 }
 
 /* ── UX Tokens — consistent interactive elements across all pages ── */
@@ -339,10 +340,6 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 /* Density: compact table rows */
 .density-compact .table-container [style*="padding"] {
   /* Applied via density vars below */
-}
-.density-compact .task-grid-row {
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
 }
 /* ── Shared column header base (used by ColumnHeader component) ── */
 .col-header {

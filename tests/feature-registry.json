@@ -3178,6 +3178,150 @@
       "test_file": null,
       "test_name": null,
       "covered": false
+    },
+    {
+      "id": "column-resize-handles",
+      "component": "src/components/tasks/TaskGridView.tsx",
+      "type": "interaction",
+      "description": "Column resize handles on task grid (.resize-handle)",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: Column resize handles exist on /my-tasks",
+      "covered": true
+    },
+    {
+      "id": "cell-focus-class",
+      "component": "src/components/tasks/TaskGridView.tsx",
+      "type": "css",
+      "description": "Cell focus CSS class (.cell-focused) for keyboard nav",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: Cell focus class (.cell-focused) exists in CSS",
+      "covered": true
+    },
+    {
+      "id": "pin-to-focus-button",
+      "component": "src/components/tasks/TaskGridView.tsx",
+      "type": "interaction",
+      "description": "Pin to Focus Next button on task row hover",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: Pin to Focus Next button on task row hover",
+      "covered": true
+    },
+    {
+      "id": "project-column-mytasks",
+      "component": "src/components/tasks/TaskGridView.tsx",
+      "type": "ui",
+      "description": "PROJECT column header on MyTasks and Deadlines",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: PROJECT column header on /my-tasks",
+      "covered": true
+    },
+    {
+      "id": "project-column-deadlines",
+      "component": "src/components/tasks/TaskGridView.tsx",
+      "type": "ui",
+      "description": "PROJECT column header on Deadlines page",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: PROJECT column header on /deadlines",
+      "covered": true
+    },
+    {
+      "id": "multi-column-sort-indicators",
+      "component": "src/components/table/ColumnHeader.tsx",
+      "type": "interaction",
+      "description": "Sort indicators (ChevronUp/Down + rank number) on column headers",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: Sort indicators appear on column headers",
+      "covered": true
+    },
+    {
+      "id": "column-drag-handles",
+      "component": "src/components/tasks/TaskGridView.tsx",
+      "type": "interaction",
+      "description": "Column drag handles (.col-drag-handle) for reordering columns",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: Column drag handles (.col-drag-handle) on grid headers",
+      "covered": true
+    },
+    {
+      "id": "waiting-on-filter-pill",
+      "component": "src/pages/portal/MyTasks.tsx",
+      "type": "interaction",
+      "description": "Waiting On quick filter pill on MyTasks",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: Waiting On filter pill on /my-tasks",
+      "covered": true
+    },
+    {
+      "id": "waiting-external-status",
+      "component": "src/lib/taskConstants.ts",
+      "type": "ui",
+      "description": "waiting_external status option in task status dropdown",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: waiting_external status appears in dropdown options",
+      "covered": true
+    },
+    {
+      "id": "project-key-documents",
+      "component": "src/pages/project/ProjectDocuments.tsx",
+      "type": "ui",
+      "description": "Key Documents section on project detail page",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: Key Documents section on project detail page",
+      "covered": true
+    },
+    {
+      "id": "analytics-time-range-buttons",
+      "component": "src/pages/portal/AnalyticsPage.tsx",
+      "type": "interaction",
+      "description": "7d/4w/3m/All time-range filter pills on Analytics",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: Analytics time-range buttons (7d/4w/3m/All)",
+      "covered": true
+    },
+    {
+      "id": "recharts-svg-analytics",
+      "component": "src/pages/portal/AnalyticsPage.tsx",
+      "type": "ui",
+      "description": "Recharts SVG chart elements (BarChart, ResponsiveContainer) on Analytics",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: Recharts SVG chart elements on /analytics",
+      "covered": true
+    },
+    {
+      "id": "metriccard-sparklines",
+      "component": "src/components/MetricCard.tsx",
+      "type": "ui",
+      "description": "MetricCard sparkline polyline SVG elements",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: MetricCard sparkline polyline elements on /analytics",
+      "covered": true
+    },
+    {
+      "id": "api-get-digest-preview",
+      "component": "api/routes/digest-email.ts",
+      "type": "api",
+      "description": "GET /api/digest-preview?member= — email digest HTML preview",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "API: Digest preview endpoint returns 200",
+      "covered": true
+    },
+    {
+      "id": "shared-column-header",
+      "component": "src/components/table/ColumnHeader.tsx",
+      "type": "ui",
+      "description": "Shared ColumnHeader component with uppercase, letter-spacing styling",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: Shared ColumnHeader styling consistent across tables",
+      "covered": true
+    },
+    {
+      "id": "dashboard-card-drag-handles",
+      "component": "src/pages/Dashboard.tsx",
+      "type": "interaction",
+      "description": "GripVertical drag handles on dashboard bento cards",
+      "test_file": "tests/inspection.spec.ts",
+      "test_name": "FEATURE: Dashboard card drag handles (GripVertical)",
+      "covered": true
     }
   ],
   "uncovered": [
@@ -3234,9 +3378,9 @@
     "form-publication-search"
   ],
   "summary": {
-    "total": 353,
-    "covered": 302,
+    "total": 369,
+    "covered": 318,
     "uncovered": 51,
-    "coverage_pct": 85.6
+    "coverage_pct": 86.2
   }
 }

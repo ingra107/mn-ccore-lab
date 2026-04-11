@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import type { Publication } from '../data/types'
 
@@ -28,98 +29,52 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
       else counts[p.year].prep++
     })
 
-    return Object.entries(counts)
+    const entries = Object.entries(counts)
       .map(([year, data]) => ({
-        year: Number(year),
+        yearFull: Number(year),
         ...data,
         total: data.published + data.review + data.prep,
       }))
-      .sort((a, b) => a.year - b.year)
-  }, [publications])
+      .sort((a, b) => a.yearFull - b.yearFull)
 
-  const maxTotal = Math.max(...yearData.map((d) => d.total), 1)
+    return entries.map(e => ({
+      ...e,
+      year: entries.length > 8 ? `'${String(e.yearFull).toString().slice(2)}` : String(e.yearFull),
+    }))
+  }, [publications])
 
   return (
     <div ref={ref} className="fade-in-up">
-      <div className="flex items-end gap-2 sm:gap-3" style={{ height: '160px' }}>
-        {yearData.map((d) => {
-          const publishedHeight = (d.published / maxTotal) * 100
-          const reviewHeight = (d.review / maxTotal) * 100
-          const prepHeight = (d.prep / maxTotal) * 100
-
-          return (
-            <div
-              key={d.year}
-              className="flex-1 flex flex-col items-center gap-1 group"
-            >
-              {/* Bar */}
-              <div
-                className="w-full relative flex flex-col justify-end rounded-t-sm overflow-hidden transition-all duration-300"
-                style={{ height: '120px' }}
-              >
-                {/* Published */}
-                <div
-                  className="w-full transition-all duration-500 ease-out"
-                  style={{
-                    height: `${publishedHeight}%`,
-                    background: 'var(--gold)',
-                    opacity: 0.9,
-                  }}
-                />
-                {/* In Review */}
-                {reviewHeight > 0 && (
-                  <div
-                    className="w-full"
-                    style={{
-                      height: `${reviewHeight}%`,
-                      background: 'var(--gold)',
-                      opacity: 'var(--ink-label)',
-                    }}
-                  />
-                )}
-                {/* In Prep */}
-                {prepHeight > 0 && (
-                  <div
-                    className="w-full"
-                    style={{
-                      height: `${prepHeight}%`,
-                      background: 'var(--gold)',
-                      opacity: 0.25,
-                    }}
-                  />
-                )}
-
-                {/* Count label on hover */}
-                {d.total > 0 && (
-                  <div
-                    className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    style={{
-                      fontSize: 'var(--label-size)',
-                      color: 'var(--gold)',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {d.total}
-                  </div>
-                )}
-              </div>
-
-              {/* Year label */}
-              <span
-                className="text-center"
-                style={{
-                  fontSize: '10px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  writingMode: yearData.length > 8 ? 'vertical-rl' : undefined,
-                  transform: yearData.length > 8 ? 'rotate(180deg)' : undefined,
-                }}
-              >
-                {yearData.length > 8 ? `'${String(d.year).slice(2)}` : d.year}
-              </span>
-            </div>
-          )
-        })}
-      </div>
+      <ResponsiveContainer width="100%" height={160}>
+        <BarChart data={yearData} barCategoryGap="20%">
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+          <XAxis
+            dataKey="year"
+            tick={{ fill: 'rgba(255, 255, 255, 0.6)', fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fill: 'rgba(255, 255, 255, 0.6)', fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+            allowDecimals={false}
+          />
+          <Tooltip
+            contentStyle={{
+              background: 'var(--cream)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 12,
+              color: 'var(--ink)',
+            }}
+            labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
+          />
+          <Bar dataKey="published" stackId="pubs" fill="var(--gold)" fillOpacity={0.9} radius={[0, 0, 0, 0]} name="Published" />
+          <Bar dataKey="review" stackId="pubs" fill="var(--gold)" fillOpacity={0.45} name="In Review" />
+          <Bar dataKey="prep" stackId="pubs" fill="var(--gold)" fillOpacity={0.25} radius={[3, 3, 0, 0]} name="In Prep" />
+        </BarChart>
+      </ResponsiveContainer>
 
       {/* Legend */}
       <div className="flex items-center gap-4 mt-3 justify-center">
@@ -130,7 +85,7 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 'var(--ink-hint)' }} />
+          <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 0.4 }} />
           <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
             In Review / Prep
           </span>

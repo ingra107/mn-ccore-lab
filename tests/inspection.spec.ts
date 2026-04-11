@@ -1300,6 +1300,204 @@ test.describe('JOURNEY — Empty states', () => {
 })
 
 // ═══════════════════════════════════════════════════════════════════
+// PART 13: Phase 30 — Visual QA + Enhancement Sprint
+// ═══════════════════════════════════════════════════════════════════
+
+test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
+
+  // ── Column resize handles on MyTasks ──────────────────────────────
+  test('FEATURE: Column resize handles exist on /my-tasks', async ({ page }) => {
+    await loadPage(page, '/my-tasks')
+    const handles = page.locator('.resize-handle')
+    const count = await handles.count()
+    expect(count, 'resize-handle elements should exist on MyTasks grid').toBeGreaterThan(0)
+    await page.screenshot({ path: 'review/phase30-resize-handles.png' })
+  })
+
+  // ── Cell focus CSS class ──────────────────────────────────────────
+  test('FEATURE: Cell focus class (.cell-focused) exists in CSS', async ({ page }) => {
+    await loadPage(page, '/my-tasks')
+    // Verify the class is defined in loaded stylesheets
+    const hasCellFocused = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule instanceof CSSStyleRule && rule.selectorText?.includes('cell-focused')) {
+              return true
+            }
+          }
+        } catch { /* cross-origin sheets */ }
+      }
+      return false
+    })
+    expect(hasCellFocused, '.cell-focused CSS class should be defined').toBe(true)
+  })
+
+  // ── Pin to Focus Next button ──────────────────────────────────────
+  test('FEATURE: Pin to Focus Next button on task row hover', async ({ page }) => {
+    await loadPage(page, '/my-tasks')
+    // Hover over a task row to reveal hover actions
+    const row = page.locator('[class*="row"], [class*="Row"], tr').filter({ hasText: /.+/ }).first()
+    if (await row.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await row.hover()
+      await page.waitForTimeout(500)
+      const pinBtn = page.locator('button:has-text("Pin to Focus"), [title*="Pin to Focus"], [aria-label*="Pin to Focus"]').first()
+      const visible = await pinBtn.isVisible({ timeout: 2000 }).catch(() => false)
+      expect(visible, 'Pin to Focus Next button should appear on hover').toBe(true)
+      await page.screenshot({ path: 'review/phase30-pin-focus-button.png' })
+    }
+  })
+
+  // ── PROJECT column header on MyTasks ──────────────────────────────
+  test('FEATURE: PROJECT column header on /my-tasks', async ({ page }) => {
+    await loadPage(page, '/my-tasks')
+    const projectHeader = page.locator('text=PROJECT').first()
+    const visible = await projectHeader.isVisible({ timeout: 3000 }).catch(() => false)
+    expect(visible, 'PROJECT column header should exist on MyTasks').toBe(true)
+    await page.screenshot({ path: 'review/phase30-project-col-mytasks.png' })
+  })
+
+  test('FEATURE: PROJECT column header on /deadlines', async ({ page }) => {
+    await loadPage(page, '/deadlines')
+    const projectHeader = page.locator('text=PROJECT').first()
+    const visible = await projectHeader.isVisible({ timeout: 3000 }).catch(() => false)
+    expect(visible, 'PROJECT column header should exist on Deadlines').toBe(true)
+    await page.screenshot({ path: 'review/phase30-project-col-deadlines.png' })
+  })
+
+  // ── Multi-column sort indicators ──────────────────────────────────
+  test('FEATURE: Sort indicators appear on column headers', async ({ page }) => {
+    await loadPage(page, '/my-tasks')
+    // Click a column header to activate sort
+    const header = page.locator('button:has-text("DUE"), button:has-text("PRIORITY"), button:has-text("STATUS")').first()
+    if (await header.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await header.click()
+      await page.waitForTimeout(300)
+      // Check for sort indicator (ChevronUp or ChevronDown from ColumnHeader component)
+      const nearHeader = await header.locator('svg').count()
+      expect(nearHeader, 'Sort indicator SVG should appear after clicking column').toBeGreaterThan(0)
+      await page.screenshot({ path: 'review/phase30-sort-indicators.png' })
+    }
+  })
+
+  // ── Column drag handles ───────────────────────────────────────────
+  test('FEATURE: Column drag handles (.col-drag-handle) on grid headers', async ({ page }) => {
+    await loadPage(page, '/my-tasks')
+    const dragHandles = page.locator('.col-drag-handle')
+    const count = await dragHandles.count()
+    expect(count, 'col-drag-handle elements should exist on column headers').toBeGreaterThan(0)
+    await page.screenshot({ path: 'review/phase30-col-drag-handles.png' })
+  })
+
+  // ── Waiting On filter pill ────────────────────────────────────────
+  test('FEATURE: Waiting On filter pill on /my-tasks', async ({ page }) => {
+    await loadPage(page, '/my-tasks')
+    const waitingPill = page.locator('button:has-text("Waiting On")')
+    await expect(waitingPill, 'Waiting On filter pill should be visible').toBeVisible({ timeout: 3000 })
+    await page.screenshot({ path: 'review/phase30-waiting-on-filter.png' })
+  })
+
+  // ── waiting_external status in dropdown ───────────────────────────
+  test('FEATURE: waiting_external status appears in dropdown options', async ({ page }) => {
+    await loadPage(page, '/tasks')
+    // Open a status dropdown
+    const statusBtn = page.locator('button:has-text("To Do"), button:has-text("In Progress")').first()
+    if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await statusBtn.click()
+      await page.waitForTimeout(300)
+      // Look for Waiting External or similar label
+      const waitingOpt = page.locator('text=Waiting External, text=Waiting').last()
+      const visible = await waitingOpt.isVisible({ timeout: 1500 }).catch(() => false)
+      expect(visible, 'waiting_external status option should appear in dropdown').toBe(true)
+      await page.screenshot({ path: 'review/phase30-waiting-external-status.png' })
+      await page.keyboard.press('Escape')
+    }
+  })
+
+  // ── Project documents section (Key Documents) ─────────────────────
+  test('FEATURE: Key Documents section on project detail page', async ({ page, request }) => {
+    const projects = await (await request.get(`${BASE}/api/projects`)).json()
+    const slug = projects.data?.find((p: any) => p.slug && /^[a-z0-9-]+$/.test(p.slug))?.slug
+    if (!slug) { test.skip(); return }
+    await loadPage(page, `/projects/${slug}`)
+    const keyDocs = page.locator('text=Key Documents')
+    const visible = await keyDocs.isVisible({ timeout: 5000 }).catch(() => false)
+    expect(visible, 'Key Documents section should exist on project detail').toBe(true)
+    await page.screenshot({ path: 'review/phase30-project-key-docs.png' })
+  })
+
+  // ── Analytics time-range buttons ──────────────────────────────────
+  test('FEATURE: Analytics time-range buttons (7d/4w/3m/All)', async ({ page }) => {
+    await loadPage(page, '/analytics')
+    for (const range of ['7D', '4W', '3M', 'All']) {
+      const btn = page.locator(`button:has-text("${range}")`).first()
+      const visible = await btn.isVisible({ timeout: 3000 }).catch(() => false)
+      expect(visible, `Analytics time-range button "${range}" should be visible`).toBe(true)
+    }
+    await page.screenshot({ path: 'review/phase30-analytics-time-range.png' })
+  })
+
+  // ── Recharts SVG elements on analytics ────────────────────────────
+  test('FEATURE: Recharts SVG chart elements on /analytics', async ({ page }) => {
+    await loadPage(page, '/analytics')
+    // Recharts renders inside ResponsiveContainer → <svg> with class "recharts-surface"
+    const rechartsWrapper = page.locator('.recharts-wrapper, .recharts-surface, .recharts-responsive-container')
+    const count = await rechartsWrapper.count()
+    expect(count, 'Recharts wrapper/surface elements should exist').toBeGreaterThan(0)
+    await page.screenshot({ path: 'review/phase30-recharts-svg.png' })
+  })
+
+  // ── MetricCard sparklines ─────────────────────────────────────────
+  test('FEATURE: MetricCard sparkline polyline elements on /analytics', async ({ page }) => {
+    await loadPage(page, '/analytics')
+    // MetricCard sparklines render as <svg> with <polyline>
+    const polylines = page.locator('svg polyline')
+    const count = await polylines.count()
+    expect(count, 'Sparkline polyline elements should exist on analytics MetricCards').toBeGreaterThan(0)
+    await page.screenshot({ path: 'review/phase30-sparklines.png' })
+  })
+
+  // ── Email digest preview API ──────────────────────────────────────
+  test('API: Digest preview endpoint returns 200', async ({ request }) => {
+    const res = await request.get(`${BASE}/api/digest-preview?member=nick`)
+    expect(res.status(), '/api/digest-preview?member=nick should return 200').toBe(200)
+    const body = await res.text()
+    expect(body.length, 'Digest preview should return content').toBeGreaterThan(50)
+  })
+
+  // ── Shared ColumnHeader component ─────────────────────────────────
+  test('FEATURE: Shared ColumnHeader styling consistent across tables', async ({ page }) => {
+    await loadPage(page, '/my-tasks')
+    // ColumnHeader renders uppercase, 11px column headers
+    const headerStyles = await page.evaluate(() => {
+      const headers = document.querySelectorAll('button')
+      const columnHeaders = Array.from(headers).filter(h => {
+        const style = getComputedStyle(h)
+        return style.textTransform === 'uppercase' && style.letterSpacing !== 'normal'
+      })
+      return columnHeaders.length
+    })
+    expect(headerStyles, 'Uppercase column headers should exist (ColumnHeader component)').toBeGreaterThan(0)
+    await page.screenshot({ path: 'review/phase30-column-header-styling.png' })
+  })
+
+  // ── Dashboard card drag handles (GripVertical) ────────────────────
+  test('FEATURE: Dashboard card drag handles (GripVertical)', async ({ page }) => {
+    await loadPage(page, '/dashboard')
+    // GripVertical from lucide-react renders 6 circles in a 2x3 grid pattern
+    const hasGrip = await page.evaluate(() => {
+      const svgs = document.querySelectorAll('svg')
+      return Array.from(svgs).some(svg => {
+        const circles = svg.querySelectorAll('circle')
+        return circles.length === 6
+      })
+    })
+    expect(hasGrip, 'GripVertical drag handle SVGs should exist on dashboard cards').toBe(true)
+    await page.screenshot({ path: 'review/phase30-dashboard-drag-handles.png' })
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════
 // PART 12: VISUAL REGRESSION — Full page screenshots
 // ═══════════════════════════════════════════════════════════════════
 

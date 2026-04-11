@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { Timer } from 'lucide-react'
 import { usePBSessionStats } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
@@ -52,8 +53,6 @@ export default function PomodoroStatsCard() {
     return { weekHours: hours, bars: dayBars, streak: currentStreak, topProject: top }
   }, [stats])
 
-  const maxMinutes = Math.max(...bars.map(b => b.minutes), 1)
-
   return (
     <BentoCard title="Focus Time" icon={Timer} subtitle={isLoading ? 'Loading...' : `${weekHours}h this week`}>
       {isLoading ? (
@@ -65,33 +64,35 @@ export default function PomodoroStatsCard() {
       ) : (
         <>
           {/* 7-day bar chart */}
-          <div className="flex items-end gap-1.5" style={{ height: 56 }}>
-            {bars.map((bar, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div
-                  className="w-full rounded-sm transition-all"
-                  style={{
-                    height: `${Math.max((bar.minutes / maxMinutes) * 40, bar.minutes > 0 ? 4 : 2)}px`,
-                    backgroundColor: bar.isToday
-                      ? 'var(--teal)'
-                      : bar.minutes > 0
-                        ? 'rgba(45,138,138,0.4)'
-                        : 'var(--border-subtle)',
-                    minHeight: 2,
-                  }}
-                />
-                <span
-                  className="text-[8px]"
-                  style={{
-                    color: bar.isToday ? 'var(--teal)' : 'var(--slate)',
-                    opacity: bar.isToday ? 1 : 0.5,
-                  }}
-                >
-                  {bar.label}
-                </span>
-              </div>
-            ))}
-          </div>
+          <ResponsiveContainer width="100%" height={56}>
+            <BarChart data={bars} barCategoryGap="15%">
+              <XAxis
+                dataKey="label"
+                tick={{ fill: 'var(--slate)', fontSize: 8 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: 'var(--cream)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: 11,
+                  color: 'var(--ink)',
+                }}
+                labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
+                formatter={(value) => [value, 'Minutes']}
+              />
+              <Bar dataKey="minutes" radius={[2, 2, 0, 0]} name="Focus">
+                {bars.map((bar, index) => (
+                  <Cell
+                    key={index}
+                    fill={bar.isToday ? 'var(--teal)' : bar.minutes > 0 ? 'rgba(45,138,138,0.4)' : 'var(--border-subtle)'}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
 
           {/* Streak + top project */}
           <div className="flex items-center justify-between mt-2">

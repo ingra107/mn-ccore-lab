@@ -1,6 +1,18 @@
 import { useMemo, useState } from 'react'
 import { useParams, Navigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts'
 import { ArrowLeft, Printer, BookOpen, BarChart3, FolderKanban, Flag, ClipboardList, MessageSquare, GitBranch, Users, FileText, CheckCircle2, Clock, AlertTriangle, TrendingUp } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useTrajectory, useContributions } from '../hooks/useApiData'
@@ -21,16 +33,25 @@ const STAGE_COLORS: Record<string, string> = {
 
 // ── Cumulative Publication Curve ──────────────────────────
 
+// Custom dot that only renders on months with new publications
+function PubDot(props: Record<string, unknown>) {
+  const { cx, cy, payload } = props as { cx: number; cy: number; payload: { count: number } }
+  if (!payload || payload.count === 0) return null
+  return (
+    <circle cx={cx} cy={cy} r={3.5} fill="var(--gold)" stroke="var(--cream, #fff)" strokeWidth={1.5} />
+  )
+}
+
 function PublicationCurve({ publications }: { publications: TrajectoryData['publications'] }) {
-  const { points, months: _months, maxCount } = useMemo(() => {
-    if (publications.length === 0) return { points: [], months: [] as string[], maxCount: 0 }
+  const { chartData, maxCount } = useMemo(() => {
+    if (publications.length === 0) return { chartData: [], maxCount: 0 }
 
     // Sort chronologically
     const sorted = [...publications]
       .filter((p) => p.pub_date)
       .sort((a, b) => a.pub_date.localeCompare(b.pub_date))
 
-    if (sorted.length === 0) return { points: [], months: [] as string[], maxCount: 0 }
+    if (sorted.length === 0) return { chartData: [], maxCount: 0 }
 
     // Build month buckets from first pub to now
     const firstDate = new Date(sorted[0].pub_date + 'T12:00:00')
@@ -44,19 +65,18 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
 
     // Count cumulative pubs per month
     let cumulative = 0
-    const pts = monthList.map((month) => {
-      const count = sorted.filter((p) => {
-        const pm = p.pub_date.slice(0, 7)
-        return pm === month
-      }).length
+    const data = monthList.map((month) => {
+      const count = sorted.filter((p) => p.pub_date.slice(0, 7) === month).length
       cumulative += count
-      return { month, cumulative, count }
+      // Format label: "24/01" style
+      const label = month.slice(2).replace('-', '/')
+      return { month, label, cumulative, count }
     })
 
-    return { points: pts, months: monthList, maxCount: cumulative }
+    return { chartData: data, maxCount: cumulative }
   }, [publications])
 
-  if (points.length === 0) {
+  if (chartData.length === 0) {
     return (
       <div
         className="py-10 text-center rounded-xl"
@@ -70,41 +90,8 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
     )
   }
 
-  const width = 600
-  const height = 200
-  const padding = { top: 20, right: 24, bottom: 30, left: 40 }
-  const chartW = width - padding.left - padding.right
-  const chartH = height - padding.top - padding.bottom
-
-  const xScale = (i: number) => padding.left + (i / (points.length - 1 || 1)) * chartW
-  const yScale = (v: number) => padding.top + chartH - (v / (maxCount || 1)) * chartH
-
-  // Build SVG path
-  const pathD = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i).toFixed(1)} ${yScale(p.cumulative).toFixed(1)}`)
-    .join(' ')
-
-  // Area fill path
-  const areaD = `${pathD} L ${xScale(points.length - 1).toFixed(1)} ${yScale(0).toFixed(1)} L ${xScale(0).toFixed(1)} ${yScale(0).toFixed(1)} Z`
-
-  // Y-axis ticks
-  const yTicks = useMemo(() => {
-    const step = Math.max(1, Math.ceil(maxCount / 4))
-    const ticks: number[] = []
-    for (let v = 0; v <= maxCount; v += step) ticks.push(v)
-    if (ticks[ticks.length - 1] !== maxCount) ticks.push(maxCount)
-    return ticks
-  }, [maxCount])
-
-  // X-axis labels (every ~6 months or less)
-  const xLabels = useMemo(() => {
-    if (points.length <= 6) return points.map((_, i) => i)
-    const step = Math.max(1, Math.floor(points.length / 6))
-    const indices: number[] = []
-    for (let i = 0; i < points.length; i += step) indices.push(i)
-    if (indices[indices.length - 1] !== points.length - 1) indices.push(points.length - 1)
-    return indices
-  }, [points])
+  // Thin the X-axis tick labels when there are many months
+  const tickInterval = chartData.length > 24 ? Math.floor(chartData.length / 6) - 1 : chartData.length > 12 ? 2 : 0
 
   return (
     <div>
@@ -117,61 +104,47 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
         </span>
       </div>
 
-      <div className="overflow-x-auto" style={{ scrollbarWidth: 'thin' }}>
-        <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet" style={{ width: '100%', maxWidth: width, height: 'auto' }}>
-          {/* Grid lines */}
-          {yTicks.map((v) => (
-            <g key={`y-${v}`}>
-              <line
-                x1={padding.left} y1={yScale(v)}
-                x2={width - padding.right} y2={yScale(v)}
-                stroke="var(--border-subtle, #e8eff5)" strokeWidth={1}
-              />
-              <text
-                x={padding.left - 8} y={yScale(v) + 4}
-                textAnchor="end"
-                style={{ fontSize: '10px', fill: 'var(--slate)' }}
-                opacity={0.5}
-              >
-                {v}
-              </text>
-            </g>
-          ))}
-
-          {/* X-axis labels */}
-          {xLabels.map((idx) => (
-            <text
-              key={`x-${idx}`}
-              x={xScale(idx)}
-              y={height - 6}
-              textAnchor="middle"
-              style={{ fontSize: '8px', fill: 'var(--slate)' }}
-              opacity={0.5}
-            >
-              {points[idx]?.month.slice(2).replace('-', '/')}
-            </text>
-          ))}
-
-          {/* Area fill */}
-          <path d={areaD} fill="rgba(45,138,138,0.08)" />
-
-          {/* Line */}
-          <path d={pathD} fill="none" stroke="var(--teal)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-
-          {/* Dot markers on publication dates */}
-          {points.map((p, i) =>
-            p.count > 0 ? (
-              <circle
-                key={`dot-${i}`}
-                cx={xScale(i)} cy={yScale(p.cumulative)}
-                r={3.5} fill="var(--gold)" stroke="var(--cream, #fff)" strokeWidth={1.5}
-              >
-                <title>{p.month}: {p.count} publication{p.count > 1 ? 's' : ''} (total: {p.cumulative})</title>
-              </circle>
-            ) : null
-          )}
-        </svg>
-      </div>
+      <ResponsiveContainer width="100%" height={200}>
+        <AreaChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+          <XAxis
+            dataKey="label"
+            tick={{ fill: 'var(--slate)', fontSize: 9 }}
+            axisLine={false}
+            tickLine={false}
+            interval={tickInterval}
+          />
+          <YAxis
+            tick={{ fill: 'var(--slate)', fontSize: 10 }}
+            axisLine={false}
+            tickLine={false}
+            allowDecimals={false}
+          />
+          <Tooltip
+            contentStyle={{
+              background: 'var(--cream)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 12,
+              color: 'var(--ink)',
+            }}
+            labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
+            formatter={(value, name) => {
+              if (name === 'cumulative') return [value, 'Total']
+              return [value, name]
+            }}
+          />
+          <Area
+            type="monotone"
+            dataKey="cumulative"
+            stroke="var(--teal)"
+            strokeWidth={2}
+            fill="rgba(45,138,138,0.08)"
+            dot={<PubDot />}
+            activeDot={{ r: 4, fill: 'var(--gold)', stroke: 'var(--cream, #fff)', strokeWidth: 1.5 }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   )
 }
@@ -557,28 +530,24 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
 // ── Task Velocity Sparkline ────────────────────────────────
 
 function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] }) {
-  const maxCompleted = useMemo(
-    () => Math.max(...taskStats.map((s) => s.completed), 1),
-    [taskStats]
-  )
-
   // Pad to 12 months if needed
   const months = useMemo(() => {
     const now = new Date()
-    const result: { month: string; completed: number }[] = []
+    const result: { month: string; label: string; completed: number; isCurrent: boolean }[] = []
+    const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       const found = taskStats.find((s) => s.month === key)
-      result.push({ month: key, completed: found?.completed ?? 0 })
+      result.push({
+        month: key,
+        label: key.slice(5), // "01", "02", etc.
+        completed: found?.completed ?? 0,
+        isCurrent: key === currentKey,
+      })
     }
     return result
   }, [taskStats])
-
-  const currentMonth = useMemo(() => {
-    const d = new Date()
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-  }, [])
 
   const totalCompleted = months.reduce((sum, m) => sum + m.completed, 0)
 
@@ -595,9 +564,6 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
       </div>
     )
   }
-
-  const barWidth = 100 / months.length
-  const chartHeight = 120
 
   return (
     <div>
@@ -630,62 +596,33 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
         </span>
       </div>
 
-      <svg
-        viewBox={`0 0 100 ${chartHeight}`}
-        preserveAspectRatio="none"
-        style={{
-          width: '100%',
-          height: `${chartHeight}px`,
-          borderRadius: 'var(--radius-lg)',
-          overflow: 'visible',
-        }}
-      >
-        {months.map((m, i) => {
-          const height = (m.completed / maxCompleted) * (chartHeight - 20)
-          const isCurrent = m.month === currentMonth
-          return (
-            <g key={m.month}>
-              <rect
-                x={i * barWidth + barWidth * 0.15}
-                y={chartHeight - height - 16}
-                width={barWidth * 0.7}
-                height={Math.max(height, 2)}
-                rx={2}
-                fill={isCurrent ? 'var(--teal)' : 'var(--gold)'}
-                opacity={m.completed === 0 ? 0.15 : isCurrent ? 1 : 0.7}
+      <ResponsiveContainer width="100%" height={120}>
+        <BarChart data={months} barCategoryGap="15%">
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+          <XAxis dataKey="label" tick={{ fill: 'var(--slate)', fontSize: 9 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: 'var(--slate)', fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
+          <Tooltip
+            contentStyle={{
+              background: 'var(--cream)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 12,
+              color: 'var(--ink)',
+            }}
+            labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
+            formatter={(value) => [value, 'Completed']}
+          />
+          <Bar dataKey="completed" radius={[3, 3, 0, 0]} name="Completed">
+            {months.map((m, index) => (
+              <Cell
+                key={index}
+                fill={m.isCurrent ? 'var(--teal)' : 'var(--gold)'}
+                fillOpacity={m.completed === 0 ? 0.15 : m.isCurrent ? 1 : 0.7}
               />
-              {/* Month label */}
-              <text
-                x={i * barWidth + barWidth / 2}
-                y={chartHeight - 2}
-                textAnchor="middle"
-                style={{
-                  fontSize: '3.5px',
-                  fill: 'var(--slate)',
-                  opacity: 'var(--ink-label)',
-                }}
-              >
-                {m.month.slice(5)}
-              </text>
-              {/* Count label on non-zero bars */}
-              {m.completed > 0 && (
-                <text
-                  x={i * barWidth + barWidth / 2}
-                  y={chartHeight - height - 20}
-                  textAnchor="middle"
-                  style={{
-                    fontSize: '3.5px',
-                    fill: isCurrent ? 'var(--teal)' : 'var(--gold)',
-                    fontWeight: 600,
-                  }}
-                >
-                  {m.completed}
-                </text>
-              )}
-            </g>
-          )
-        })}
-      </svg>
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   )
 }
