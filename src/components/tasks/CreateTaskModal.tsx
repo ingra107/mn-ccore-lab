@@ -378,12 +378,14 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label
+                htmlFor="task-project"
                 className="block text-xs font-medium mb-1"
                 style={{ color: 'var(--slate)' }}
               >
                 Project <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(optional)</span>
               </label>
               <select
+                id="task-project"
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
                 className="w-full rounded-md border px-2.5 py-2 text-sm"
@@ -397,12 +399,14 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             </div>
             <div>
               <label
+                htmlFor="task-due-date"
                 className="block text-xs font-medium mb-1"
                 style={{ color: 'var(--slate)' }}
               >
                 Due Date
               </label>
               <input
+                id="task-due-date"
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
