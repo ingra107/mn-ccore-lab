@@ -14,7 +14,8 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Testing | Playwright 1.59 (E2E, 214+ inspection tests) + Vitest 4.1 (component, browser mode) |
 | Data | TanStack Query v5 + Cloudflare D1 (58 tables, 190+ endpoints) + Recharts -- ALL LIVE |
-| D1 database | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM) |
+| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB` |
+| D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
 | D1 tables | 58 (added project_documents) |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
@@ -132,7 +133,7 @@ Airtable ←CRDT→ brain.db ←LWW→ D1 (mnccore-lab) ←API→ React + TanSta
 ```
 
 - **Data:** TanStack Query v5 → D1 API (prod), static TS fallback (dev)
-- **API:** Cloudflare Worker, 110+ endpoints, auth-gated writes
+- **API:** Cloudflare Worker, 110+ endpoints, auth-gated writes. Test isolation middleware in `api/index.ts`: if `X-Test-Mode: true` header + `DB_TEST` binding exists, swaps `env.DB` to `env.DB_TEST` so tests never touch production.
 - **Auth:** Open now. Cloudflare Access for April 21 launch (@umn.edu)
 - **Email:** Resend (`api/lib/email.ts`) + daily digest (`api/routes/digest-email.ts`). Needs `RESEND_API_KEY` Cloudflare secret. Preview: `/api/digest-preview?member=nick`
 - **Sync:** `sync_d1_push.py` / `sync_d1_pull.py` in PB, scheduled + /process-triggered
@@ -478,8 +479,21 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 
 **Run:** `bash scripts/run-tests.sh all` (quick/ui/sync/all modes)
 
-**MANDATORY: Clean up after tests.** Tests create prefixed data in both brain.db and D1. Sync pipeline cleanup is built into test_99. For Playwright + accumulated test data, run after every test session (split queries — combined OR clauses fail on wrangler):
+### Test Database Isolation
+
+Tests run against a **separate D1 database** (`mnccore-lab-test`), not production. The production DB is never touched by Playwright tests.
+
+**How it works:**
+1. `playwright.config.ts` sends `X-Test-Mode: true` header on all requests
+2. Middleware in `api/index.ts` detects the header and swaps `env.DB` to `env.DB_TEST`
+3. `DB_TEST` binding configured in both `wrangler.toml` and Cloudflare Dashboard
+4. `api/types.ts` and `functions/api/[[route]].ts` include `DB_TEST` in the `Env` interface
+
+**Canonical test prefix:** `_TEST_DELETE_` -- used in `tests/test-cleanup.ts` for test data identification and cleanup.
+
+**Cleanup:** Test data lives in the isolated test DB and does not pollute production. The `tests/test-cleanup.ts` handles cleanup of `_TEST_DELETE_`-prefixed records. The manual cleanup commands below are for **legacy test data** that was created in production before isolation was implemented, and for sync pipeline tests that operate on brain.db directly:
 ```bash
+# Legacy production cleanup (only needed for pre-isolation test data)
 # Tasks (soft delete)
 npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'SYNCTEST%'"
 npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%' OR title LIKE 'JOURNEY%' OR title LIKE 'DAILYTEST%'"
@@ -489,7 +503,7 @@ npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM ideas WHERE 
 npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM lab_questions WHERE question LIKE 'INSPECTION%' OR question LIKE 'EDGE%'"
 npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM decision_log WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%'"
 npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM notifications WHERE body LIKE 'SYNCTEST%'"
-# brain.db (test tasks get pulled from D1 → brain.db → TODAY.md if not cleaned)
+# brain.db (sync pipeline tests still touch brain.db directly)
 python -c "import sqlite3; conn=sqlite3.connect('C:/Users/ingra107/Peripheral-Brain/data/brain.db'); conn.execute(\"UPDATE tasks SET status='deleted', completed=1, sync_status='synced' WHERE name LIKE 'SYNCTEST%' OR name LIKE 'INSPECTION%' OR name LIKE 'EDGE%' OR name LIKE 'DAILYTEST%' OR name LIKE 'JOURNEY%' OR name LIKE 'SYNC-%' OR name LIKE 'AAAA%' OR name LIKE 'TEST-%'\"); conn.commit(); print(f'Cleaned {conn.total_changes} test tasks from brain.db'); conn.close()"
 ```
 **Scan for gaps:** `python scripts/inspection-scanner.py --commits 5`

@@ -56,9 +56,28 @@ When you add a new feature to the Hub, add tests for:
 - `DATA:` — Real data content verification
 - `test_NN_description` — Python sync pipeline tests
 
+## Test Database Isolation
+
+Playwright tests run against a **separate D1 database** (`mnccore-lab-test`), not production. Production data is never touched by E2E tests.
+
+| Component | What It Does |
+|-----------|-------------|
+| `playwright.config.ts` | Sends `X-Test-Mode: true` header on all requests |
+| `api/index.ts` middleware | Detects header, swaps `env.DB` to `env.DB_TEST` |
+| `wrangler.toml` | Declares `DB_TEST` binding (`a30fe84d-0891-4035-9358-f7813b5f5807`) |
+| `api/types.ts` | `DB_TEST` in `Env` interface |
+| `functions/api/[[route]].ts` | `DB_TEST` in `Env` interface |
+| `tests/test-cleanup.ts` | Cleans up `_TEST_DELETE_`-prefixed records |
+
+**Canonical test prefix:** `_TEST_DELETE_` -- all test-created data should use this prefix for reliable cleanup.
+
+**Note:** Sync pipeline tests (`tests/sync-pipeline.test.py`) still operate on brain.db directly and are not affected by D1 test isolation.
+
 ## Test Infrastructure
 
-- **Playwright config**: `playwright.config.ts` (Chromium, 30s timeout, screenshots on failure)
+- **Playwright config**: `playwright.config.ts` (Chromium, 30s timeout, screenshots on failure, `X-Test-Mode: true` header)
+- **Test database**: `mnccore-lab-test` D1 instance (binding: `DB_TEST`)
+- **Test cleanup**: `tests/test-cleanup.ts` (prefix: `_TEST_DELETE_`)
 - **Test results**: `review/audit-results.json` + `review/test-summary.txt`
 - **Screenshots**: `review/*.png` (200+ screenshots per run)
 - **Runner script**: `scripts/run-tests.sh` (modes: quick, ui, sync, all)
