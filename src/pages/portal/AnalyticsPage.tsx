@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download, Copy } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
@@ -107,6 +108,77 @@ export default function AnalyticsPage() {
     }
     return map
   }, [tasks])
+
+  // 8-week velocity data (used for chart + sparklines)
+  const velocityWeeks = useMemo(() => {
+    const now = new Date()
+    const weeks: { week: string; completed: number; created: number }[] = []
+    for (let i = 7; i >= 0; i--) {
+      const wStart = new Date(now)
+      wStart.setDate(wStart.getDate() - wStart.getDay() - i * 7)
+      wStart.setHours(0, 0, 0, 0)
+      const wEnd = new Date(wStart)
+      wEnd.setDate(wEnd.getDate() + 7)
+      const wStartStr = wStart.toISOString()
+      const wEndStr = wEnd.toISOString()
+      const completed = tasks.filter(t => t.completed_at && t.completed_at >= wStartStr && t.completed_at < wEndStr).length
+      const created = tasks.filter(t => t.created_at >= wStartStr && t.created_at < wEndStr).length
+      const label = wStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      weeks.push({ week: label, completed, created })
+    }
+    return weeks
+  }, [tasks])
+
+  // Task age histogram data for Recharts
+  const taskAgeBuckets = useMemo(() => {
+    const now = new Date()
+    const active = tasks.filter(t => !t.completed && t.created_at)
+    const buckets = [
+      { label: '<1w', max: 7, count: 0, fill: 'var(--teal)' },
+      { label: '1-2w', max: 14, count: 0, fill: 'var(--teal)' },
+      { label: '2-4w', max: 28, count: 0, fill: 'var(--gold)' },
+      { label: '1-2m', max: 60, count: 0, fill: 'var(--maroon)' },
+      { label: '2m+', max: Infinity, count: 0, fill: 'var(--maroon)' },
+    ]
+    for (const t of active) {
+      const age = Math.floor((now.getTime() - new Date(t.created_at).getTime()) / 86400000)
+      const bucket = buckets.find(b => age < b.max) || buckets[buckets.length - 1]
+      bucket.count++
+    }
+    return buckets
+  }, [tasks])
+
+  // Sparkline arrays (trailing 8-week values per metric)
+  const sparkCompleted = useMemo(() => velocityWeeks.map(w => w.completed), [velocityWeeks])
+  const sparkCreated = useMemo(() => velocityWeeks.map(w => w.created), [velocityWeeks])
+  const sparkOverdue = useMemo(() => {
+    const now = new Date()
+    const data: number[] = []
+    for (let i = 7; i >= 0; i--) {
+      const wEnd = new Date(now)
+      wEnd.setDate(wEnd.getDate() - wEnd.getDay() - i * 7 + 7)
+      wEnd.setHours(0, 0, 0, 0)
+      const overdue = tasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < wEnd).length
+      data.push(overdue)
+    }
+    return data
+  }, [tasks])
+  const sparkActivity = useMemo(() => {
+    const now = new Date()
+    const data: number[] = []
+    for (let i = 7; i >= 0; i--) {
+      const wStart = new Date(now)
+      wStart.setDate(wStart.getDate() - wStart.getDay() - i * 7)
+      wStart.setHours(0, 0, 0, 0)
+      const wEnd = new Date(wStart)
+      wEnd.setDate(wEnd.getDate() + 7)
+      const wStartStr = wStart.toISOString()
+      const wEndStr = wEnd.toISOString()
+      const count = activity.filter(a => a.timestamp >= wStartStr && a.timestamp < wEndStr).length
+      data.push(count)
+    }
+    return data
+  }, [activity])
 
   const health = healthData?.summary
   const pendingTasks = tasks.filter((t) => !t.completed).length
@@ -238,10 +310,10 @@ export default function AnalyticsPage() {
 
       {/* Weekly Summary Cards */}
       <motion.div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3" variants={staggerContainer} initial="hidden" animate="visible">
-        <motion.div variants={staggerItem}><MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} color="var(--green)" /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={Plus} label="Created" value={weekStats.created} color="var(--teal)" /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={AlertTriangle} label="Overdue" value={weekStats.overdue} color="var(--maroon)" /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} color="var(--gold)" /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} color="var(--green)" sparklineData={sparkCompleted} /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={Plus} label="Created" value={weekStats.created} color="var(--teal)" sparklineData={sparkCreated} /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={AlertTriangle} label="Overdue" value={weekStats.overdue} color="var(--maroon)" sparklineData={sparkOverdue} /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} color="var(--gold)" sparklineData={sparkActivity} /></motion.div>
       </motion.div>
 
       {/* Lab health summary */}
@@ -297,43 +369,25 @@ export default function AnalyticsPage() {
       {/* Task Velocity — completions per week, last 8 weeks */}
       <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
         <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>Task Velocity</h3>
-        <div className="flex items-end gap-2" style={{ height: 80 }}>
-          {(() => {
-            const now = new Date()
-            const weeks: { label: string; count: number }[] = []
-            for (let i = 7; i >= 0; i--) {
-              const wStart = new Date(now)
-              wStart.setDate(wStart.getDate() - wStart.getDay() - i * 7)
-              wStart.setHours(0, 0, 0, 0)
-              const wEnd = new Date(wStart)
-              wEnd.setDate(wEnd.getDate() + 7)
-              const wStartStr = wStart.toISOString()
-              const wEndStr = wEnd.toISOString()
-              const count = tasks.filter(t => t.completed_at && t.completed_at >= wStartStr && t.completed_at < wEndStr).length
-              const label = wStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-              weeks.push({ label, count })
-            }
-            const max = Math.max(...weeks.map(w => w.count), 1)
-            return weeks.map((w, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-[9px] font-medium" style={{ color: w.count > 0 ? 'var(--teal)' : 'var(--slate)', opacity: w.count > 0 ? 1 : 0.3 }}>
-                  {w.count > 0 ? w.count : ''}
-                </span>
-                <div
-                  className="w-full rounded-sm transition-all"
-                  style={{
-                    height: `${Math.max((w.count / max) * 56, w.count > 0 ? 4 : 2)}px`,
-                    backgroundColor: i === weeks.length - 1 ? 'var(--teal)' : w.count > 0 ? 'rgba(45,138,138,0.4)' : 'var(--border-subtle)',
-                    minHeight: 2,
-                  }}
-                />
-                <span className="text-[8px]" style={{ color: i === weeks.length - 1 ? 'var(--teal)' : 'var(--slate)', opacity: i === weeks.length - 1 ? 1 : 0.4 }}>
-                  {w.label}
-                </span>
-              </div>
-            ))
-          })()}
-        </div>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={velocityWeeks} barCategoryGap="20%">
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+            <XAxis dataKey="week" tick={{ fill: 'var(--slate)', fontSize: 10 }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: 'var(--slate)', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <Tooltip
+              contentStyle={{
+                background: 'var(--cream)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: 12,
+                color: 'var(--ink)',
+              }}
+              labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
+            />
+            <Bar dataKey="completed" fill="var(--teal)" radius={[4, 4, 0, 0]} name="Completed" />
+            <Bar dataKey="created" fill="var(--gold)" radius={[4, 4, 0, 0]} name="Created" opacity={0.6} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       {/* Team Performance */}
@@ -458,43 +512,29 @@ export default function AnalyticsPage() {
         {/* Task age histogram */}
         <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
           <h3 className="text-sm font-normal mb-4" style={{ color: 'var(--ink)' }}>Task Age Distribution</h3>
-          {(() => {
-            const now = new Date()
-            const active = tasks.filter(t => !t.completed && t.created_at)
-            const buckets = [
-              { label: '<1w', max: 7, count: 0 },
-              { label: '1-2w', max: 14, count: 0 },
-              { label: '2-4w', max: 28, count: 0 },
-              { label: '1-2m', max: 60, count: 0 },
-              { label: '2m+', max: Infinity, count: 0 },
-            ]
-            for (const t of active) {
-              const age = Math.floor((now.getTime() - new Date(t.created_at).getTime()) / 86400000)
-              const bucket = buckets.find(b => age < b.max) || buckets[buckets.length - 1]
-              bucket.count++
-            }
-            const max = Math.max(...buckets.map(b => b.count), 1)
-            return (
-              <div className="flex items-end gap-3" style={{ height: 72 }}>
-                {buckets.map((b, i) => (
-                  <div key={b.label} className="flex-1 flex flex-col items-center gap-1">
-                    {b.count > 0 && (
-                      <span className="text-[9px] font-medium" style={{ color: 'var(--teal)' }}>{b.count}</span>
-                    )}
-                    <div
-                      className="w-full rounded-sm"
-                      style={{
-                        height: `${Math.max((b.count / max) * 52, b.count > 0 ? 4 : 2)}px`,
-                        backgroundColor: i < 2 ? 'var(--teal)' : i < 3 ? 'var(--gold)' : 'var(--maroon)',
-                        opacity: b.count > 0 ? (i < 2 ? 0.6 : 0.8) : 0.15,
-                      }}
-                    />
-                    <span className="text-[8px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{b.label}</span>
-                  </div>
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={taskAgeBuckets} barCategoryGap="20%">
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+              <XAxis dataKey="label" tick={{ fill: 'var(--slate)', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: 'var(--slate)', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip
+                contentStyle={{
+                  background: 'var(--cream)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: 12,
+                  color: 'var(--ink)',
+                }}
+                labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
+                formatter={(value) => [value, 'Tasks']}
+              />
+              <Bar dataKey="count" radius={[4, 4, 0, 0]} name="Tasks">
+                {taskAgeBuckets.map((entry, index) => (
+                  <Cell key={index} fill={entry.fill} />
                 ))}
-              </div>
-            )
-          })()}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
           <p className="text-[10px] mt-3" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
             {tasks.filter(t => !t.completed && t.created_at && (new Date().getTime() - new Date(t.created_at).getTime()) > 28 * 86400000).length} tasks older than 4 weeks
           </p>

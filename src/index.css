@@ -92,7 +92,7 @@
   --green: oklch(0.78 0.18 145);         /* #4ade80 */
   --green-light: oklch(0.78 0.18 145);   /* #4ade80 */
 
-  --muted: rgba(148, 163, 184, 0.76);
+  --muted: color-mix(in oklch, var(--ink) 70%, transparent);
 
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(255, 255, 255, 0.05);

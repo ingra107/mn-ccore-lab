@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check, GripVertical, Pin } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check, GripVertical, Pin, RotateCcw } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
@@ -15,7 +15,54 @@ import { useContextMenu } from '../../hooks/useContextMenu'
 import { useSubtasks, useProjects } from '../../hooks/useApiData'
 import { useCreateSubtask, useToggleSubtask, useReorderSubtasks } from '../../hooks/useMutations'
 import { STATUS_OPTIONS, STATUS_BG, PRIORITY_OPTIONS, PRIORITY_CONFIG, PRIORITY_ORDER, STATUS_ORDER } from '../../lib/taskConstants'
+import { useTableConfig } from '../../hooks/useTableConfig'
 import type { TaskRow } from '../../lib/api'
+
+// ── Column definitions for resize + tab nav ─────────────────
+const COLUMNS = ['checkbox', 'title', 'assignee', 'project', 'due_date', 'status', 'priority', 'actions'] as const
+
+const DEFAULT_WIDTHS: Record<string, number> = {
+  checkbox: 32,
+  title: 0, // flex (minmax)
+  assignee: 110,
+  project: 130,
+  due_date: 100,
+  status: 120,
+  priority: 80,
+  actions: 50,
+}
+
+const MIN_WIDTHS: Record<string, number> = {
+  checkbox: 32,
+  title: 150,
+  assignee: 60,
+  project: 60,
+  due_date: 60,
+  status: 60,
+  priority: 60,
+  actions: 50,
+}
+
+// Editable columns for Tab navigation (indices into COLUMNS)
+const EDITABLE_COL_INDICES = [1, 2, 3, 4, 5, 6] // title, assignee, project, due_date, status, priority
+
+const DEFAULT_TABLE_CONFIG = {
+  sortKey: 'due_date',
+  sortAsc: true,
+  columnWidths: { ...DEFAULT_WIDTHS },
+  filters: {},
+}
+
+function buildGridTemplate(widths: Record<string, number>): string {
+  return COLUMNS.map(col => {
+    if (col === 'title') {
+      const w = widths.title && widths.title > 0 ? widths.title : 0
+      return w > 0 ? `${w}px` : 'minmax(200px, 3fr)'
+    }
+    const w = widths[col] ?? DEFAULT_WIDTHS[col]
+    return `${w}px`
+  }).join(' ')
+}
 
 interface TaskGridViewProps {
   tasks: TaskRow[]
@@ -44,8 +91,65 @@ type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title' | 'proj
 
 export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand, onPinToFocus, pinnedIds }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
-  const [sortKey, setSortKey] = useState<SortKey>('due_date')
-  const [sortAsc, setSortAsc] = useState(true)
+
+  // ── Table config (persisted sort + column widths) ──
+  const { config: tableConfig, setSortKey: handleSortKey, setColumnWidth, reset: resetTableConfig } = useTableConfig('task-grid', DEFAULT_TABLE_CONFIG)
+  const sortKey = tableConfig.sortKey as SortKey
+  const sortAsc = tableConfig.sortAsc
+  const colWidths = tableConfig.columnWidths
+
+  // ── Column resize state ──
+  const [resizingCol, setResizingCol] = useState<string | null>(null)
+  const resizeStartX = useRef(0)
+  const resizeStartWidth = useRef(0)
+
+  const handleResizeStart = useCallback((col: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setResizingCol(col)
+    resizeStartX.current = e.clientX
+    resizeStartWidth.current = colWidths[col] ?? DEFAULT_WIDTHS[col]
+  }, [colWidths])
+
+  useEffect(() => {
+    if (!resizingCol) return
+    const onMouseMove = (e: MouseEvent) => {
+      const delta = e.clientX - resizeStartX.current
+      const minW = MIN_WIDTHS[resizingCol] ?? 60
+      const newWidth = Math.max(minW, resizeStartWidth.current + delta)
+      setColumnWidth(resizingCol, newWidth)
+    }
+    const onMouseUp = () => setResizingCol(null)
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+    return () => { document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp) }
+  }, [resizingCol, setColumnWidth])
+
+  const handleResizeDoubleClick = useCallback((col: string) => {
+    setColumnWidth(col, DEFAULT_WIDTHS[col])
+  }, [setColumnWidth])
+
+  // ── Cell focus for Tab navigation ──
+  const [focusedCell, setFocusedCell] = useState<[number, number] | null>(null) // [rowIndex, colIndex]
+
+  const handleCellTab = useCallback((rowIndex: number, colIndex: number, shift: boolean) => {
+    const currentEditableIdx = EDITABLE_COL_INDICES.indexOf(colIndex)
+    if (currentEditableIdx === -1) return
+    if (shift) {
+      if (currentEditableIdx > 0) {
+        setFocusedCell([rowIndex, EDITABLE_COL_INDICES[currentEditableIdx - 1]])
+      } else if (rowIndex > 0) {
+        setFocusedCell([rowIndex - 1, EDITABLE_COL_INDICES[EDITABLE_COL_INDICES.length - 1]])
+      }
+    } else {
+      if (currentEditableIdx < EDITABLE_COL_INDICES.length - 1) {
+        setFocusedCell([rowIndex, EDITABLE_COL_INDICES[currentEditableIdx + 1]])
+      } else {
+        setFocusedCell([rowIndex + 1, EDITABLE_COL_INDICES[0]])
+      }
+    }
+  }, [])
+
   const [internalExpanded, setInternalExpanded] = useState<Set<string>>(new Set())
 
   // Project data for the PROJECT column
@@ -98,11 +202,16 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
   }, [tasks, sortKey, sortAsc, projectMap])
 
   const handleSort = (key: SortKey) => {
-    if (sortKey === key) setSortAsc(!sortAsc)
-    else { setSortKey(key); setSortAsc(true) }
+    handleSortKey(key)
   }
 
-  const colStyle = { display: 'grid', gridTemplateColumns: '32px minmax(200px, 3fr) 110px 130px 100px 120px 80px 50px', alignItems: 'center', gap: '0 4px' } as const
+  const gridTemplate = useMemo(() => buildGridTemplate(colWidths), [colWidths])
+  const colStyle = useMemo(() => ({
+    display: 'grid' as const,
+    gridTemplateColumns: gridTemplate,
+    alignItems: 'center' as const,
+    gap: '0 4px',
+  }), [gridTemplate])
 
   const ROW_HEIGHT = 44
   const parentRef = useRef<HTMLDivElement>(null)
@@ -138,19 +247,52 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     }
   }, [focusedIndex, sorted.length, virtualizer])
 
+  // Check if config differs from defaults (for Reset view button)
+  const configDiffers = sortKey !== DEFAULT_TABLE_CONFIG.sortKey ||
+    sortAsc !== DEFAULT_TABLE_CONFIG.sortAsc ||
+    Object.keys(colWidths).some(k => colWidths[k] !== DEFAULT_WIDTHS[k])
+
   return (
     <div className="table-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Reset view button — only show when config differs from defaults */}
+      {configDiffers && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px 16px 0', flexShrink: 0 }}>
+          <button
+            onClick={resetTableConfig}
+            title="Reset view to defaults"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+              fontSize: '11px', color: 'var(--slate)', opacity: 0.5,
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '2px 6px', borderRadius: 'var(--radius-sm)',
+              transition: 'opacity 150ms ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5' }}
+          >
+            <RotateCcw size={11} />
+            Reset view
+          </button>
+        </div>
+      )}
+
       {/* Column headers — clickable for sort, hidden on mobile */}
       <div className="task-grid-header" style={{ ...colStyle, padding: '8px 16px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
         <div />
-        <SortableColumnHeader label="TITLE" field="title" active={sortKey} asc={sortAsc} onSort={handleSort} />
-        <SortableColumnHeader label="ASSIGNEE" field="assignee" active={sortKey} asc={sortAsc} onSort={handleSort} />
-        <SortableColumnHeader label="PROJECT" field="project" active={sortKey} asc={sortAsc} onSort={handleSort} />
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <ResizableColumnHeader label="TITLE" field="title" active={sortKey} asc={sortAsc} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'title'} />
+        <ResizableColumnHeader label="ASSIGNEE" field="assignee" active={sortKey} asc={sortAsc} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'assignee'} />
+        <ResizableColumnHeader label="PROJECT" field="project" active={sortKey} asc={sortAsc} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'project'} />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative' }}>
           <SortableColumnHeader label="DUE DATE" field="due_date" active={sortKey} asc={sortAsc} onSort={handleSort} />
+          <div
+            style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '4px', cursor: 'col-resize', zIndex: 2 }}
+            onMouseDown={(e) => handleResizeStart('due_date', e)}
+            onDoubleClick={() => handleResizeDoubleClick('due_date')}
+            className={resizingCol === 'due_date' ? 'resize-handle-active' : 'resize-handle'}
+          />
         </div>
-        <SortableColumnHeader label="STATUS" field="status" active={sortKey} asc={sortAsc} onSort={handleSort} />
-        <SortableColumnHeader label="PRIORITY" field="priority" active={sortKey} asc={sortAsc} onSort={handleSort} />
+        <ResizableColumnHeader label="STATUS" field="status" active={sortKey} asc={sortAsc} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'status'} />
+        <ResizableColumnHeader label="PRIORITY" field="priority" active={sortKey} asc={sortAsc} onSort={handleSort} onResizeStart={handleResizeStart} onResizeDoubleClick={handleResizeDoubleClick} isResizing={resizingCol === 'priority'} />
         <div /> {/* Actions column spacer */}
       </div>
 
@@ -207,6 +349,9 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                     projectOptions={projectOptions}
                     onPinToFocus={onPinToFocus}
                     isPinnedToFocus={pinnedIds?.has(task.id)}
+                    focusedCell={focusedCell}
+                    onCellTab={handleCellTab}
+                    onCellFocus={setFocusedCell}
                   />
                   <AnimatePresence>
                     {isExpanded && (
@@ -259,6 +404,25 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           text-transform: uppercase;
           letter-spacing: 0.06em;
         }
+        /* Resize handles */
+        .resize-handle {
+          background: transparent;
+          transition: background 150ms ease;
+        }
+        .resize-handle:hover {
+          background: var(--teal);
+          opacity: 0.4;
+        }
+        .resize-handle-active {
+          background: var(--teal);
+          opacity: 0.6;
+        }
+        /* Cell focus ring for Tab navigation */
+        .cell-focused {
+          outline: 2px solid var(--teal);
+          outline-offset: -2px;
+          border-radius: var(--radius-sm);
+        }
         .task-grid-row:hover .subtask-expand-btn {
           opacity: 0.5 !important;
         }
@@ -271,6 +435,33 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         }
         .task-grid-row:hover .hover-badge {
           opacity: 1;
+        }
+        /* Frozen first columns on narrow viewports */
+        @media (max-width: 1024px) {
+          .task-grid-row > :nth-child(1) {
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            background: inherit;
+          }
+          .task-grid-row > :nth-child(2) {
+            position: sticky;
+            left: 32px;
+            z-index: 1;
+            background: inherit;
+          }
+          .task-grid-header > :nth-child(1) {
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            background: inherit;
+          }
+          .task-grid-header > :nth-child(2) {
+            position: sticky;
+            left: 32px;
+            z-index: 1;
+            background: inherit;
+          }
         }
         @media (max-width: 768px) {
           .task-grid-header {
@@ -335,10 +526,37 @@ function SortableColumnHeader({ label, field, active, asc, onSort }: { label: st
   )
 }
 
+// ── Resizable Column Header (wraps SortableColumnHeader + resize handle) ──
+
+function ResizableColumnHeader({
+  label, field, active, asc, onSort, onResizeStart, onResizeDoubleClick, isResizing,
+}: {
+  label: string
+  field: SortKey
+  active: SortKey
+  asc: boolean
+  onSort: (k: SortKey) => void
+  onResizeStart: (col: string, e: React.MouseEvent) => void
+  onResizeDoubleClick: (col: string) => void
+  isResizing: boolean
+}) {
+  return (
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      <SortableColumnHeader label={label} field={field} active={active} asc={asc} onSort={onSort} />
+      <div
+        style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '4px', cursor: 'col-resize', zIndex: 2 }}
+        onMouseDown={(e) => onResizeStart(field, e)}
+        onDoubleClick={() => onResizeDoubleClick(field)}
+        className={isResizing ? 'resize-handle-active' : 'resize-handle'}
+      />
+    </div>
+  )
+}
+
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions, onPinToFocus, isPinnedToFocus,
+  task, allTasks, index, colStyle, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions, onPinToFocus, isPinnedToFocus, focusedCell, onCellTab, onCellFocus,
 }: {
   task: TaskRow
   allTasks: TaskRow[]
@@ -360,11 +578,13 @@ function TaskGridRow({
   projectOptions: { value: string; label: string }[]
   onPinToFocus?: (id: string) => void
   isPinnedToFocus?: boolean
+  focusedCell?: [number, number] | null
+  onCellTab?: (rowIndex: number, colIndex: number, shift: boolean) => void
+  onCellFocus?: (cell: [number, number] | null) => void
 }) {
   const isDone = task.status === 'done'
   const blockerIds = useMemo(() => parseBlockedByIds(task.blocked_by), [task.blocked_by])
   const hasBlockers = blockerIds.length > 0
-  // isOverdue computed by InlineDatePicker now
   const rowRef = useRef<HTMLDivElement>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
   const [editingTitle, setEditingTitle] = useState(false)
@@ -374,8 +594,6 @@ function TaskGridRow({
   const [completingAnim, setCompletingAnim] = useState(false)
   const [rowFadeAnim, setRowFadeAnim] = useState(false)
   const prevStatusRef = useRef(task.status)
-
-  // Scroll-into-view is handled by the virtualizer at the parent level
 
   // Detect status change to 'done' for completion animation
   useEffect(() => {
@@ -388,6 +606,31 @@ function TaskGridRow({
     }
     prevStatusRef.current = task.status
   }, [task.status])
+
+  // Cell focus props for Tab navigation
+  const cellProps = useCallback((colIndex: number) => {
+    const isCellFocused = focusedCell?.[0] === index && focusedCell?.[1] === colIndex
+    return {
+      tabIndex: EDITABLE_COL_INDICES.includes(colIndex) ? 0 : -1,
+      className: isCellFocused ? 'cell-focused' : '',
+      onFocus: () => onCellFocus?.([index, colIndex]),
+      onKeyDown: (e: React.KeyboardEvent) => {
+        if (e.key === 'Tab') {
+          e.preventDefault()
+          onCellTab?.(index, colIndex, e.shiftKey)
+        }
+      },
+    }
+  }, [focusedCell, index, onCellFocus, onCellTab])
+
+  // Auto-focus cell when focusedCell matches this row
+  const cellRefs = useRef<Record<number, HTMLDivElement | null>>({})
+  useEffect(() => {
+    if (focusedCell?.[0] === index && focusedCell?.[1] != null) {
+      const el = cellRefs.current[focusedCell[1]]
+      if (el && document.activeElement !== el) el.focus()
+    }
+  }, [focusedCell, index])
 
   return (
     <div
@@ -435,7 +678,17 @@ function TaskGridRow({
       </div>
 
       {/* Title */}
-      <div className="task-row-title" style={{ minWidth: 0, paddingRight: '12px' }}>
+      <div
+        className={`task-row-title ${cellProps(1).className}`}
+        ref={el => { cellRefs.current[1] = el }}
+        tabIndex={cellProps(1).tabIndex}
+        onFocus={cellProps(1).onFocus}
+        onKeyDown={(e) => {
+          cellProps(1).onKeyDown(e)
+          if (e.key === 'Enter') { e.preventDefault(); onOpenDetail?.(task) }
+        }}
+        style={{ minWidth: 0, paddingRight: '12px' }}
+      >
         <div className="flex items-center gap-1">
           <button
             onClick={(e) => { e.stopPropagation(); onToggleExpand?.() }}
@@ -599,14 +852,21 @@ function TaskGridRow({
         </div>
       </div>
 
-      {/* Metadata row — wraps on mobile */}
-      <div className="task-row-meta flex items-center gap-1.5" data-testid={`task-assignee-${task.id}`} onClick={(e) => e.stopPropagation()}>
+      {/* Assignee */}
+      <div
+        className={`task-row-meta flex items-center gap-1.5 ${cellProps(2).className}`}
+        ref={el => { cellRefs.current[2] = el }}
+        tabIndex={cellProps(2).tabIndex}
+        onFocus={cellProps(2).onFocus}
+        onKeyDown={cellProps(2).onKeyDown}
+        data-testid={`task-assignee-${task.id}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <InlineAssigneePicker
           value={task.assignee}
           onChange={(slug) => onFieldChange(task.id, 'assignee', slug)}
           compact
         />
-        {/* Unacknowledged indicator — gold dot when assigned but not acknowledged */}
         {task.assignee && !task.acknowledged_at && !isDone && (
           <span
             title="Not yet acknowledged"
@@ -623,7 +883,15 @@ function TaskGridRow({
       </div>
 
       {/* Project — inline select */}
-      <div className="task-row-meta" data-testid={`task-project-${task.id}`} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`task-row-meta ${cellProps(3).className}`}
+        ref={el => { cellRefs.current[3] = el }}
+        tabIndex={cellProps(3).tabIndex}
+        onFocus={cellProps(3).onFocus}
+        onKeyDown={cellProps(3).onKeyDown}
+        data-testid={`task-project-${task.id}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <InlineCellSelect
           value={task.project_id || ''}
           options={projectOptions}
@@ -652,25 +920,40 @@ function TaskGridRow({
       </div>
 
       {/* Due date — inline date picker */}
-      <div className="task-row-meta col-numeric" data-testid={`task-due-${task.id}`} onClick={(e) => e.stopPropagation()} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div
+        className={`task-row-meta col-numeric ${cellProps(4).className}`}
+        ref={el => { cellRefs.current[4] = el }}
+        tabIndex={cellProps(4).tabIndex}
+        onFocus={cellProps(4).onFocus}
+        onKeyDown={cellProps(4).onKeyDown}
+        data-testid={`task-due-${task.id}`}
+        onClick={(e) => e.stopPropagation()}
+        style={{ display: 'flex', justifyContent: 'flex-end' }}
+      >
         <InlineDatePicker
           value={task.due_date}
           onChange={(date) => onFieldChange(task.id, 'due_date', date)}
         />
       </div>
 
-      {/* Status — inline dropdown (show Blocked label for tasks with blockers) */}
-      <div className="task-row-status" data-testid={`task-status-${task.id}`}>
+      {/* Status — inline dropdown */}
+      <div
+        className={`task-row-status ${cellProps(5).className}`}
+        ref={el => { cellRefs.current[5] = el }}
+        tabIndex={cellProps(5).tabIndex}
+        onFocus={cellProps(5).onFocus}
+        onKeyDown={cellProps(5).onKeyDown}
+        data-testid={`task-status-${task.id}`}
+      >
       <InlineCellSelect
         value={task.status}
         options={STATUS_OPTIONS}
         onChange={(val) => {
           const prev = task.status
           onStatusChange(task.id, val)
-          showUndo(`Status → ${STATUS_OPTIONS.find(o => o.value === val)?.label}`, () => onStatusChange(task.id, prev))
+          showUndo(`Status \u2192 ${STATUS_OPTIONS.find(o => o.value === val)?.label}`, () => onStatusChange(task.id, prev))
         }}
         renderValue={(opt) => {
-          // If task has blockers and is in blocked status, emphasize it
           const effectiveStatus = (hasBlockers && opt !== 'done') ? 'blocked' : opt
           const Icon = (STATUS_OPTIONS.find(o => o.value === effectiveStatus) || STATUS_OPTIONS[0])
           const IconComp = Icon.icon
@@ -695,17 +978,24 @@ function TaskGridRow({
         if (days < 7) return null
         return (
           <span
-            title={`In progress for ${days} days — consider updating`}
+            title={`In progress for ${days} days \u2014 consider updating`}
             style={{ fontSize: '8px', color: 'var(--orange)', opacity: 0.7, marginTop: '1px' }}
           >
-            ⚠ {days}d
+            \u26A0 {days}d
           </span>
         )
       })()}
       </div>
 
       {/* Priority — inline dropdown */}
-      <div className="task-row-priority" data-testid={`task-priority-${task.id}`}>
+      <div
+        className={`task-row-priority ${cellProps(6).className}`}
+        ref={el => { cellRefs.current[6] = el }}
+        tabIndex={cellProps(6).tabIndex}
+        onFocus={cellProps(6).onFocus}
+        onKeyDown={cellProps(6).onKeyDown}
+        data-testid={`task-priority-${task.id}`}
+      >
       <InlineCellSelect
         value={task.priority}
         options={PRIORITY_OPTIONS}
@@ -905,7 +1195,6 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
       className="flex items-center gap-2 py-1 group"
       {...attributes}
     >
-      {/* Compact drag handle */}
       <button
         {...listeners}
         className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
@@ -951,13 +1240,11 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
-  // Auto-focus input when row appears
   useEffect(() => {
     const timer = setTimeout(() => inputRef.current?.focus(), 200)
     return () => clearTimeout(timer)
   }, [])
 
-  // Re-measure parent when subtask count changes (adding/removing subtasks changes height)
   useEffect(() => {
     if (subtasks.length !== prevSubtaskCount.current) {
       prevSubtaskCount.current = subtasks.length
@@ -1003,7 +1290,6 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
           background: 'rgba(45, 138, 138, 0.02)',
         }}
       >
-        {/* Progress indicator */}
         {total > 0 && (
           <div className="flex items-center gap-2 mb-1.5">
             <div style={{ flex: 1, height: 2, borderRadius: 1, background: 'rgba(201,168,76,0.12)', overflow: 'hidden' }}>
@@ -1013,7 +1299,6 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
           </div>
         )}
 
-        {/* Subtask list — sortable */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={subtasks.map((s) => s.id)} strategy={verticalListSortingStrategy}>
             {subtasks.map((s) => (
@@ -1026,7 +1311,6 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
           </SortableContext>
         </DndContext>
 
-        {/* Add subtask input */}
         <form onSubmit={handleAdd} className="flex items-center gap-2 mt-0.5" onClick={(e) => e.stopPropagation()}>
           <Plus size={12} style={{ color: 'var(--slate)', opacity: 0.25, flexShrink: 0 }} />
           <input

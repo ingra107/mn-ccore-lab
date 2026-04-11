@@ -54,6 +54,7 @@ import { handleGetConferences, handleGetUpcomingConferences, handleCreateConfere
 import { handleGetEmailDrafts, handleGetPendingDrafts, handleSyncEmailDrafts } from './routes/email-drafts';
 import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
+import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail } from './routes/digest-email';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -454,6 +455,11 @@ export default {
         // Proactive brief
         if (url.pathname === '/api/proactive-brief') {
           return await handleProactiveBrief(request, env);
+        }
+
+        // Daily digest email preview (returns HTML page for testing)
+        if (url.pathname === '/api/digest-preview') {
+          return await handleDigestPreview(url, env);
         }
 
         // File activity heatmap
@@ -1071,6 +1077,18 @@ export default {
         const deadlineDepDeleteMatch = path.match(/^\/api\/deadline-dependencies\/([^/]+)\/delete$/);
         if (request.method === 'POST' && deadlineDepDeleteMatch) {
           return await handleDeleteDeadlineDependency(deadlineDepDeleteMatch[1], env);
+        }
+
+        // ── Daily digest email ──
+
+        // POST /api/digest-email — generate digest for a member (returns HTML + data)
+        if (request.method === 'POST' && path === '/api/digest-email') {
+          return await handleGenerateDigestEmail(request, env);
+        }
+
+        // POST /api/digest-email/send — generate and send via Resend
+        if (request.method === 'POST' && path === '/api/digest-email/send') {
+          return await handleSendDigestEmail(request, env);
         }
 
         // ── Email drafts sync ──
