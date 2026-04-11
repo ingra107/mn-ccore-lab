@@ -8,7 +8,7 @@ interface SkeletonProps {
 export default function Skeleton({ variant = 'text', width, height, className }: SkeletonProps) {
   const baseStyle = {
     backgroundColor: 'var(--border-subtle)',
-    borderRadius: variant === 'circle' ? '50%' : variant === 'card' ? '12px' : '4px',
+    borderRadius: variant === 'circle' ? 'var(--radius-circle)' : variant === 'card' ? 'var(--radius-xl)' : 'var(--radius-sm)',
     animation: 'skeleton-pulse 1.5s ease-in-out infinite',
     width: width || (variant === 'card' ? '100%' : variant === 'circle' ? '40px' : '100%'),
     height: height || (variant === 'card' ? '120px' : variant === 'circle' ? '40px' : '14px'),

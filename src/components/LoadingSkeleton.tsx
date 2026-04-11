@@ -1,7 +1,7 @@
 const skeletonStyle: React.CSSProperties = {
   backgroundColor: 'var(--ink)',
   opacity: 0.06,
-  borderRadius: 4,
+  borderRadius: 'var(--radius-sm)',
   animation: 'skeleton-pulse 1.5s ease-in-out infinite',
 }
 
@@ -28,7 +28,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
     <div
       style={{
         border: '1px solid var(--border-subtle)',
-        borderRadius: 8,
+        borderRadius: 'var(--radius-lg)',
         overflow: 'hidden',
       }}
     >
@@ -92,7 +92,7 @@ export function CardSkeleton({ count = 3 }: { count?: number }) {
           key={i}
           style={{
             border: '1px solid var(--border-subtle)',
-            borderRadius: 12,
+            borderRadius: 'var(--radius-xl)',
             padding: 20,
             display: 'flex',
             flexDirection: 'column',

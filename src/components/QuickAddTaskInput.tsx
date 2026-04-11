@@ -175,7 +175,7 @@ export default function QuickAddTaskInput({
                     color: s.color,
                     fontWeight: s.fontWeight,
                     background: s.bg,
-                    borderRadius: s.bg ? '3px' : undefined,
+                    borderRadius: s.bg ? 'var(--radius-sm)' : undefined,
                     padding: s.bg ? '1px 3px' : undefined,
                     marginLeft: s.bg ? '-3px' : undefined,
                   }}

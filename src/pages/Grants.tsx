@@ -766,7 +766,7 @@ export default function Grants() {
           {/* Legend */}
           <div className="flex items-center gap-6 mt-4 flex-wrap">
             <div className="flex items-center gap-2">
-              <div style={{ width: 24, height: 8, borderRadius: 4, background: 'var(--teal)', opacity: 0.85 }} />
+              <div style={{ width: 24, height: 8, borderRadius: 'var(--radius-sm)', background: 'var(--teal)', opacity: 0.85 }} />
               <span
                 style={{ fontSize: '10px', color: 'var(--slate)' }}
               >
@@ -778,7 +778,7 @@ export default function Grants() {
                 style={{
                   width: 24,
                   height: 8,
-                  borderRadius: 4,
+                  borderRadius: 'var(--radius-sm)',
                   border: '1.5px dashed var(--gold)',
                   background: 'rgba(201, 168, 76, 0.08)',
                   opacity: 0.7,

@@ -219,7 +219,7 @@ function TaskCheckbox({ checked, onChange }: { checked: boolean; onChange: () =>
       style={{
         width: 18,
         height: 18,
-        borderRadius: 4,
+        borderRadius: 'var(--radius-sm)',
         border: checked ? '2px solid var(--teal)' : '2px solid var(--slate)',
         background: checked ? 'var(--teal)' : 'transparent',
         display: 'flex',

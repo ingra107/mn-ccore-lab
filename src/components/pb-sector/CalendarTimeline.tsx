@@ -104,7 +104,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
                 left: 44, right: 4, top: top + 2, height: height - 4,
                 background: 'color-mix(in srgb, var(--teal) 12%, transparent)',
                 borderLeft: '3px solid var(--teal)',
-                borderRadius: 4,
+                borderRadius: 'var(--radius-sm)',
                 textDecoration: 'none',
                 padding: '3px 6px',
                 overflow: 'hidden',

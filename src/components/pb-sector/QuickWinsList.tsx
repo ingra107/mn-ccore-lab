@@ -51,7 +51,7 @@ function SortableQuickWin({ task, onComplete, onClickTitle }: {
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           <div style={{
-            width: 14, height: 14, borderRadius: 3,
+            width: 14, height: 14, borderRadius: 'var(--radius-sm)',
             border: '1.5px solid var(--slate)', opacity: 0.3,
           }} />
         </button>

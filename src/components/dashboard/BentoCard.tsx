@@ -95,7 +95,7 @@ export default function BentoCard({
               style={{
                 width: 28,
                 height: 28,
-                borderRadius: 8,
+                borderRadius: 'var(--radius-lg)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

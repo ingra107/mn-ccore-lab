@@ -333,7 +333,7 @@ export default function Meetings() {
         {/* Page Header */}
         <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '2rem', paddingTop: '1.5rem' }}>
           <div className="flex items-center gap-3">
-            <div style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.1)', flexShrink: 0 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.1)', flexShrink: 0 }}>
               <Users size={19} style={{ color: 'var(--teal)' }} />
             </div>
             <h1

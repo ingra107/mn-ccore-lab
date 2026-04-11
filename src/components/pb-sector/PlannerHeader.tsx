@@ -138,7 +138,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
                   textTransform: 'uppercase', letterSpacing: '0.5px',
                   color: isToday ? 'var(--cream)' : 'var(--slate)',
                   background: isToday ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
-                  border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer',
+                  border: 'none', borderRadius: 'var(--radius-sm)', padding: '2px 8px', cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -151,7 +151,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
                   textTransform: 'uppercase', letterSpacing: '0.5px',
                   color: isTomorrow ? 'var(--cream)' : 'var(--slate)',
                   background: isTomorrow ? 'var(--gold)' : 'rgba(201,168,76,0.08)',
-                  border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer',
+                  border: 'none', borderRadius: 'var(--radius-sm)', padding: '2px 8px', cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -178,7 +178,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
               fontSize: '10px', fontWeight: 700,
               textTransform: 'uppercase', letterSpacing: '1px',
               color: mc.color, background: mc.bg,
-              padding: '3px 10px', borderRadius: 9999,
+              padding: '3px 10px', borderRadius: 'var(--radius-full)',
             }}
           >
             {mc.label}

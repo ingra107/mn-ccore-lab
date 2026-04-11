@@ -199,7 +199,7 @@ export default function Pulse() {
             style={{
               width: i === activeCard ? 24 : 8,
               height: 8,
-              borderRadius: 4,
+              borderRadius: 'var(--radius-sm)',
               backgroundColor: i === activeCard ? 'var(--gold)' : 'rgba(201,168,76,0.2)',
               border: 'none',
               cursor: 'pointer',

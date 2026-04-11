@@ -65,7 +65,7 @@ export default function PageHeader({
                 color: 'var(--slate)',
                 opacity: 0.6,
                 backgroundColor: 'var(--border-subtle)',
-                borderRadius: 9999,
+                borderRadius: 'var(--radius-full)',
                 padding: '2px 8px',
                 lineHeight: 1.4,
                 flexShrink: 0,

@@ -74,7 +74,7 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
             gap: 6,
             marginTop: 16,
             padding: '8px 16px',
-            borderRadius: 8,
+            borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
             background: 'none',
             fontSize: 13,

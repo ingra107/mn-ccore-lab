@@ -213,7 +213,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           style={{
             background: 'transparent',
             border: 'none',
-            borderRadius: 6,
+            borderRadius: 'var(--radius-md)',
             padding: '6px',
             cursor: 'pointer',
             color: 'var(--slate)',
@@ -234,7 +234,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           style={{
             background: 'transparent',
             border: 'none',
-            borderRadius: 6,
+            borderRadius: 'var(--radius-md)',
             padding: '6px',
             cursor: 'pointer',
             color: 'var(--slate)',
@@ -255,7 +255,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           style={{
             background: 'transparent',
             border: 'none',
-            borderRadius: 6,
+            borderRadius: 'var(--radius-md)',
             padding: '6px',
             cursor: 'pointer',
             color: 'var(--slate)',

@@ -492,7 +492,7 @@ export default function MeetingDetail() {
                 onClick={() => setShowDecisionForm(!showDecisionForm)}
                 style={{
                   marginLeft: 'auto', background: 'none', border: '1px solid var(--border-subtle)',
-                  borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
+                  borderRadius: 'var(--radius-md)', padding: '4px 10px', cursor: 'pointer',
                   fontSize: 'var(--label-size)', color: 'var(--gold)',
                   display: 'flex', alignItems: 'center', gap: '4px',
                 }}
@@ -537,7 +537,7 @@ export default function MeetingDetail() {
                     autoFocus
                     style={{
                       width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
-                      background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8,
+                      background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 'var(--radius-lg)',
                       padding: '8px 12px', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
                     }}
                     onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
@@ -550,21 +550,21 @@ export default function MeetingDetail() {
                     placeholder="Why? (optional rationale)"
                     style={{
                       width: '100%', fontSize: '12px', color: 'var(--ink)',
-                      background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.1)', borderRadius: 8,
+                      background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.1)', borderRadius: 'var(--radius-lg)',
                       padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
                     }}
                   />
                   <div className="flex gap-2">
                     <button
                       type="submit"
-                      style={{ background: 'var(--gold)', color: '#0f1923', border: 'none', borderRadius: 6, padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                      style={{ background: 'var(--gold)', color: '#0f1923', border: 'none', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                     >
                       Save
                     </button>
                     <button
                       type="button"
                       onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale('') }}
-                      style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 6, padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}
+                      style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}
                     >
                       Cancel
                     </button>
@@ -610,7 +610,7 @@ export default function MeetingDetail() {
                     color: 'var(--ink)',
                     background: 'var(--cream)',
                     border: '1px solid rgba(201,168,76,0.2)',
-                    borderRadius: 8,
+                    borderRadius: 'var(--radius-lg)',
                     padding: '12px 16px',
                     resize: 'vertical',
                     boxSizing: 'border-box',
@@ -630,13 +630,13 @@ export default function MeetingDetail() {
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     onClick={() => { updateNotes.mutate(notesDraft); setEditingNotes(false) }}
-                    style={{ background: 'var(--gold)', color: 'var(--ink)', border: 'none', borderRadius: 6, padding: '6px 16px', fontSize: 'var(--value-size)', fontWeight: 600, cursor: 'pointer' }}
+                    style={{ background: 'var(--gold)', color: 'var(--ink)', border: 'none', borderRadius: 'var(--radius-md)', padding: '6px 16px', fontSize: 'var(--value-size)', fontWeight: 600, cursor: 'pointer' }}
                   >
                     Save Notes
                   </button>
                   <button
                     onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(false) }}
-                    style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 6, padding: '6px 16px', fontSize: 'var(--value-size)', cursor: 'pointer', color: 'var(--slate)' }}
+                    style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '6px 16px', fontSize: 'var(--value-size)', cursor: 'pointer', color: 'var(--slate)' }}
                   >
                     Cancel
                   </button>
@@ -660,7 +660,7 @@ export default function MeetingDetail() {
                 <button
                   onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
                   className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: 'var(--gold)', fontSize: 'var(--label-size)' }}
+                  style={{ background: 'rgba(201,168,76,0.1)', border: 'none', borderRadius: 'var(--radius-md)', padding: '4px 8px', cursor: 'pointer', color: 'var(--gold)', fontSize: 'var(--label-size)' }}
                 >
                   Edit
                 </button>
@@ -910,7 +910,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
           disabled={!isAuthenticated && import.meta.env.PROD}
           style={{
             flex: 1, fontSize: 'var(--value-size)', color: 'var(--ink)',
-            background: 'var(--cream)', border: '1px solid color-mix(in srgb, var(--teal) 12%, transparent)', borderRadius: 8,
+            background: 'var(--cream)', border: '1px solid color-mix(in srgb, var(--teal) 12%, transparent)', borderRadius: 'var(--radius-lg)',
             padding: '8px 12px', outline: 'none', transition: 'border-color 0.15s',
           }}
           onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
@@ -944,22 +944,22 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
           className="flex flex-wrap items-center gap-1.5 mt-1.5 ml-6"
         >
           {parsed.assigneeName && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 4, background: 'rgba(201,168,76,0.12)', color: 'var(--gold)' }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'rgba(201,168,76,0.12)', color: 'var(--gold)' }}>
               @{parsed.assigneeName}
             </span>
           )}
           {parsed.priority && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 4, background: 'rgba(122,0,25,0.1)', color: PRIORITY_COLORS[parsed.priority] }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'rgba(122,0,25,0.1)', color: PRIORITY_COLORS[parsed.priority] }}>
               P{parsed.priority} {PRIORITY_LABELS[parsed.priority]}
             </span>
           )}
           {parsed.dueDate && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 4, background: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}>
               Due {parsed.dueDate}
             </span>
           )}
           {parsed.projectTitle && (
-            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 4, background: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}>
+            <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'rgba(45,138,138,0.1)', color: 'var(--teal)' }}>
               #{parsed.projectTitle}
             </span>
           )}

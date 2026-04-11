@@ -68,7 +68,7 @@ export default function RelayCard() {
             fontWeight: 700,
             color: 'var(--cream)',
             background: 'var(--teal)',
-            borderRadius: 8,
+            borderRadius: 'var(--radius-lg)',
             padding: '1px 6px',
             marginLeft: 2,
           }}>
@@ -176,7 +176,7 @@ export default function RelayCard() {
                         value={from}
                         onChange={(e) => setFrom(e.target.value)}
                         style={{
-                          fontSize: '10px', padding: '3px 4px', borderRadius: 4,
+                          fontSize: '10px', padding: '3px 4px', borderRadius: 'var(--radius-sm)',
                           border: '1px solid var(--border-subtle)', background: 'var(--cream)',
                           color: 'var(--ink)', flex: 1,
                         }}
@@ -189,7 +189,7 @@ export default function RelayCard() {
                         value={to}
                         onChange={(e) => setTo(e.target.value)}
                         style={{
-                          fontSize: '10px', padding: '3px 4px', borderRadius: 4,
+                          fontSize: '10px', padding: '3px 4px', borderRadius: 'var(--radius-sm)',
                           border: '1px solid var(--border-subtle)', background: 'var(--cream)',
                           color: 'var(--ink)', flex: 1,
                         }}
@@ -204,7 +204,7 @@ export default function RelayCard() {
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
                       style={{
-                        fontSize: '10px', padding: '4px 6px', borderRadius: 4,
+                        fontSize: '10px', padding: '4px 6px', borderRadius: 'var(--radius-sm)',
                         border: '1px solid var(--border-subtle)', background: 'var(--cream)',
                         color: 'var(--ink)', outline: 'none', width: '100%',
                       }}
@@ -215,7 +215,7 @@ export default function RelayCard() {
                       onChange={(e) => setPrompt(e.target.value)}
                       rows={2}
                       style={{
-                        fontSize: '10px', padding: '4px 6px', borderRadius: 4,
+                        fontSize: '10px', padding: '4px 6px', borderRadius: 'var(--radius-sm)',
                         border: '1px solid var(--border-subtle)', background: 'var(--cream)',
                         color: 'var(--ink)', outline: 'none', resize: 'vertical', width: '100%',
                         fontFamily: 'inherit',

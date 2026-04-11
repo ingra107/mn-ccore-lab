@@ -172,7 +172,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                           style={{
                             background: 'rgba(201,168,76,0.04)',
                             border: '1px solid rgba(201,168,76,0.15)',
-                            borderRadius: 8,
+                            borderRadius: 'var(--radius-lg)',
                             padding: '8px 12px',
                           }}
                         >

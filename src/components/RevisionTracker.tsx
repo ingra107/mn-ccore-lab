@@ -382,7 +382,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
                 style={{
                   width: '100%',
                   height: 4,
-                  borderRadius: 2,
+                  borderRadius: 'var(--radius-sm)',
                   background: 'rgba(148, 163, 184, 0.15)',
                   overflow: 'hidden',
                 }}
@@ -391,7 +391,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
                   style={{
                     width: `${progress}%`,
                     height: '100%',
-                    borderRadius: 2,
+                    borderRadius: 'var(--radius-sm)',
                     background: progress === 100 ? 'var(--green)' : 'var(--teal)',
                     transition: 'width 250ms ease-out',
                   }}
@@ -971,7 +971,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
                         flex: 1,
                         maxWidth: 48,
                         height: 4,
-                        borderRadius: 2,
+                        borderRadius: 'var(--radius-sm)',
                         background: 'rgba(148, 163, 184, 0.15)',
                         overflow: 'hidden',
                       }}
@@ -980,7 +980,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
                         style={{
                           width: `${progress}%`,
                           height: '100%',
-                          borderRadius: 2,
+                          borderRadius: 'var(--radius-sm)',
                           background: progress === 100 ? 'var(--green)' : 'var(--teal)',
                           transition: 'width 250ms ease-out',
                         }}

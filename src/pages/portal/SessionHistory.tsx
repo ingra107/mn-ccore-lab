@@ -140,7 +140,7 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
               background: 'var(--ink)',
               color: 'var(--bg)',
               padding: '4px 8px',
-              borderRadius: 6,
+              borderRadius: 'var(--radius-md)',
               fontSize: 11,
               fontWeight: 500,
               whiteSpace: 'nowrap',
@@ -164,7 +164,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
       style={{
         flex: '1 1 140px',
         padding: '14px 16px',
-        borderRadius: 10,
+        borderRadius: 'var(--radius-xl)',
         backgroundColor: 'var(--surface)',
         border: '1px solid var(--border-subtle)',
       }}
@@ -283,7 +283,7 @@ export default function SessionHistory() {
               style={{
                 fontSize: 12,
                 padding: '5px 10px 5px 26px',
-                borderRadius: 6,
+                borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-subtle)',
                 backgroundColor: 'var(--surface)',
                 color: 'var(--ink)',
@@ -300,7 +300,7 @@ export default function SessionHistory() {
             style={{
               fontSize: 12,
               padding: '5px 10px',
-              borderRadius: 6,
+              borderRadius: 'var(--radius-md)',
               border: '1px solid var(--border-subtle)',
               backgroundColor: 'var(--surface)',
               color: 'var(--ink)',
@@ -323,7 +323,7 @@ export default function SessionHistory() {
                 fontSize: 11,
                 fontWeight: 500,
                 padding: '4px 10px',
-                borderRadius: 6,
+                borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-subtle)',
                 backgroundColor: (preset === 'all' && !sinceFilter) || (sinceFilter && preset !== 'all')
                   ? (() => {
@@ -384,7 +384,7 @@ export default function SessionHistory() {
       {isLoading ? (
         <div style={{ padding: 24 }}>
           {[...Array(5)].map((_, i) => (
-            <div key={i} style={{ height: 36, marginBottom: 4, borderRadius: 6, backgroundColor: 'var(--border-subtle)', opacity: 0.3, animation: 'pulse 1.5s ease-in-out infinite' }} />
+            <div key={i} style={{ height: 36, marginBottom: 4, borderRadius: 'var(--radius-md)', backgroundColor: 'var(--border-subtle)', opacity: 0.3, animation: 'pulse 1.5s ease-in-out infinite' }} />
           ))}
         </div>
       ) : sessions.length === 0 ? (
@@ -469,7 +469,7 @@ export default function SessionHistory() {
                         backgroundColor: isFocused ? 'rgba(0,200,180,0.06)' : 'transparent',
                         outline: isFocused ? '1px solid rgba(0,200,180,0.3)' : 'none',
                         outlineOffset: -1,
-                        borderRadius: 2,
+                        borderRadius: 'var(--radius-sm)',
                         minHeight: 36,
                         alignItems: 'center',
                         transition: 'background-color 0.15s',
@@ -557,7 +557,7 @@ export default function SessionHistory() {
 
       {/* Machine legend */}
       {sessions.length > 0 && (
-        <div style={{ marginTop: 20, padding: '12px 16px', borderRadius: 8, backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', display: 'flex', gap: 16, alignItems: 'center', fontSize: 11, color: 'var(--slate)', opacity: 0.6 }}>
+        <div style={{ marginTop: 20, padding: '12px 16px', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', display: 'flex', gap: 16, alignItems: 'center', fontSize: 11, color: 'var(--slate)', opacity: 0.6 }}>
           <Monitor size={12} />
           <span>
             Machines: {[...new Set(sessions.filter(s => s.machine).map(s => s.machine))].join(', ') || 'none recorded'}

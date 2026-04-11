@@ -150,7 +150,7 @@ export default function MeetingPrep() {
           {/* Left: Previous Action Items */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <SectionHeader icon={<CheckCircle2 size={14} />} title="Previous Action Items" subtitle={previousMeeting ? `From ${formatShortDate(previousMeeting.date)}` : undefined} />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 12, padding: '12px 16px' }}>
+            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '12px 16px' }}>
               {pendingPrev.length > 0 && (
                 <div className="mb-3">
                   <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--orange)', opacity: 0.8, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -182,7 +182,7 @@ export default function MeetingPrep() {
           {/* Center: Suggested Agenda */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
             <SectionHeader icon={<ListChecks size={14} />} title="Suggested Agenda" />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 12, padding: '12px 16px' }}>
+            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '12px 16px' }}>
               {/* Overdue items first */}
               {overdueTasks.length > 0 && (
                 <div className="mb-3">
@@ -251,7 +251,7 @@ export default function MeetingPrep() {
           {/* Right: Upcoming Deadlines + Activity */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <SectionHeader icon={<Calendar size={14} />} title="Upcoming Deadlines" subtitle="Next 14 days" />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
+            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '12px 16px', marginBottom: 16 }}>
               {upcomingDeadlines.length > 0 ? (
                 upcomingDeadlines.slice(0, 8).map(task => {
                   const person = getPersonInfo(task.assignee)
@@ -274,7 +274,7 @@ export default function MeetingPrep() {
             </div>
 
             <SectionHeader icon={<Activity size={14} />} title="Recent Activity" subtitle="Last 14 days" />
-            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 12, padding: '12px 16px' }}>
+            <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '12px 16px' }}>
               {recentActivity.length > 0 ? (
                 recentActivity.slice(0, 10).map((act, i) => {
                   const person = getPersonInfo(act.actor?.split('@')[0] || '')
@@ -321,7 +321,7 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
     <motion.div
       variants={staggerItem}
       className="detail-card"
-      style={{ background: 'var(--ice)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}
+      style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}
     >
       <div style={{ color, opacity: 0.7 }}>{icon}</div>
       <div>

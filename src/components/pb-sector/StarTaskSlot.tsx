@@ -31,7 +31,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
         ref={setNodeRef}
         style={{
           minHeight: 64,
-          borderRadius: 12,
+          borderRadius: 'var(--radius-xl)',
           border: task
             ? '2px solid var(--gold)'
             : `2px dashed ${isOver ? 'var(--gold)' : 'rgba(201,168,76,0.25)'}`,

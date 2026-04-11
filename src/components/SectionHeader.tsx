@@ -42,7 +42,7 @@ export default function SectionHeader({
           style={{
             width: iconConfig.box,
             height: iconConfig.box,
-            borderRadius: 8,
+            borderRadius: 'var(--radius-lg)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

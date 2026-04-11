@@ -189,7 +189,7 @@ function SortableCardWrapper({ id, children }: { id: string; children: React.Rea
         style={{
           background: 'rgba(15,25,35,0.06)',
           border: 'none',
-          borderRadius: 6,
+          borderRadius: 'var(--radius-md)',
           padding: '4px',
           color: 'var(--slate)',
           zIndex: 'var(--z-sticky)',
@@ -656,7 +656,7 @@ export default function Dashboard() {
                             style={{
                               background: 'rgba(201,168,76,0.15)',
                               border: 'none',
-                              borderRadius: 6,
+                              borderRadius: 'var(--radius-md)',
                               padding: '4px',
                               cursor: 'pointer',
                               color: 'var(--gold)',
@@ -691,7 +691,7 @@ export default function Dashboard() {
                           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
                           style={{
                             border: 'none',
-                            borderRadius: 6,
+                            borderRadius: 'var(--radius-md)',
                             padding: '4px',
                             cursor: 'pointer',
                             color: 'var(--slate)',
@@ -746,7 +746,7 @@ export default function Dashboard() {
                                 className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
                                 style={{
                                   border: 'none',
-                                  borderRadius: 6,
+                                  borderRadius: 'var(--radius-md)',
                                   padding: '4px',
                                   cursor: 'pointer',
                                   color: 'var(--slate)',

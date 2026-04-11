@@ -211,7 +211,7 @@ export default function Projects() {
         {/* Page Header */}
         <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1rem', paddingTop: '1rem' }}>
           <div className="flex items-center gap-2.5">
-            <div style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)', flexShrink: 0 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.08)', flexShrink: 0 }}>
               <FolderKanban size={16} style={{ color: 'var(--teal)' }} />
             </div>
             <h1
@@ -524,7 +524,7 @@ export default function Projects() {
                                   <span style={{
                                     width: 24,
                                     height: 4,
-                                    borderRadius: 2,
+                                    borderRadius: 'var(--radius-sm)',
                                     background: 'var(--border-subtle)',
                                     overflow: 'hidden',
                                     display: 'inline-block',
@@ -533,7 +533,7 @@ export default function Projects() {
                                       display: 'block',
                                       width: `${Math.min(projectHealth.score, 100)}%`,
                                       height: '100%',
-                                      borderRadius: 2,
+                                      borderRadius: 'var(--radius-sm)',
                                       background: HEALTH_STATUS_COLOR[projectHealth.status] ?? 'var(--slate)',
                                       transition: 'width 300ms ease',
                                     }} />

@@ -22,7 +22,7 @@ export default class PageErrorBoundary extends Component<Props, State> {
           <h2 style={{ color: 'var(--ink)', fontWeight: 500 }}>Something went wrong</h2>
           <p style={{ color: 'var(--slate)', marginTop: 8 }}>{this.state.error?.message}</p>
           <button onClick={() => this.setState({ hasError: false, error: null })}
-            style={{ marginTop: 16, padding: '8px 16px', background: 'var(--teal)', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
+            style={{ marginTop: 16, padding: '8px 16px', background: 'var(--teal)', color: 'white', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>
             Try Again
           </button>
         </div>

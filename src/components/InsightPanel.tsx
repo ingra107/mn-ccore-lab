@@ -69,7 +69,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
                 style={{
                   width: 3,
                   height: 28,
-                  borderRadius: 2,
+                  borderRadius: 'var(--radius-sm)',
                   background: `rgba(45,138,138,${Math.max(0.2, s.strength)})`,
                   flexShrink: 0,
                 }}

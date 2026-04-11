@@ -53,7 +53,7 @@ export default function NarrativesPage() {
             style={{
               fontSize: 12,
               padding: '5px 10px 5px 26px',
-              borderRadius: 6,
+              borderRadius: 'var(--radius-md)',
               border: '1px solid var(--border-subtle)',
               backgroundColor: 'var(--surface)',
               color: 'var(--ink)',

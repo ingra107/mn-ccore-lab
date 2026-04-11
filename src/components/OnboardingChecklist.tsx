@@ -49,7 +49,7 @@ export default function OnboardingChecklist() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-5"
         style={{
-          borderRadius: 16,
+          borderRadius: 'var(--radius-2xl)',
           padding: '1.5rem',
           background: 'linear-gradient(135deg, rgba(45,138,138,0.06) 0%, rgba(201,168,76,0.06) 100%)',
           border: '1px solid rgba(45,138,138,0.15)',
@@ -60,7 +60,7 @@ export default function OnboardingChecklist() {
             style={{
               width: 40,
               height: 40,
-              borderRadius: 10,
+              borderRadius: 'var(--radius-xl)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -106,7 +106,7 @@ export default function OnboardingChecklist() {
         layout
         className="mb-5"
         style={{
-          borderRadius: 16,
+          borderRadius: 'var(--radius-2xl)',
           padding: '1rem 1.25rem',
           background: 'var(--cream)',
           border: '1px solid rgba(201,168,76,0.12)',
@@ -139,7 +139,7 @@ export default function OnboardingChecklist() {
             {/* Progress bar */}
             <div style={{
               height: 4,
-              borderRadius: 2,
+              borderRadius: 'var(--radius-sm)',
               background: 'rgba(45,138,138,0.1)',
               overflow: 'hidden',
             }}>
@@ -149,7 +149,7 @@ export default function OnboardingChecklist() {
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 style={{
                   height: '100%',
-                  borderRadius: 2,
+                  borderRadius: 'var(--radius-sm)',
                   background: 'var(--teal)',
                 }}
               />
@@ -183,7 +183,7 @@ export default function OnboardingChecklist() {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       style={{
-        borderRadius: 16,
+        borderRadius: 'var(--radius-2xl)',
         padding: '1.5rem',
         background: 'var(--cream)',
         border: '1px solid rgba(201,168,76,0.12)',
@@ -196,7 +196,7 @@ export default function OnboardingChecklist() {
           style={{
             width: 32,
             height: 32,
-            borderRadius: 8,
+            borderRadius: 'var(--radius-lg)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -265,7 +265,7 @@ export default function OnboardingChecklist() {
         </div>
         <div style={{
           height: 6,
-          borderRadius: 3,
+          borderRadius: 'var(--radius-sm)',
           background: 'rgba(45,138,138,0.08)',
           overflow: 'hidden',
         }}>
@@ -275,7 +275,7 @@ export default function OnboardingChecklist() {
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             style={{
               height: '100%',
-              borderRadius: 3,
+              borderRadius: 'var(--radius-sm)',
               background: progress === 100
                 ? 'linear-gradient(90deg, var(--teal), var(--gold))'
                 : 'var(--teal)',
@@ -345,7 +345,7 @@ export default function OnboardingChecklist() {
                           style={{
                             width: 18,
                             height: 18,
-                            borderRadius: 5,
+                            borderRadius: 'var(--radius-md)',
                             border: done
                               ? '2px solid var(--teal)'
                               : '2px solid rgba(45,138,138,0.25)',

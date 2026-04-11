@@ -21,7 +21,7 @@ function MiniStat({ icon: Icon, value, label, suffix = '', delay }: StatItem & {
         style={{
           width: 32,
           height: 32,
-          borderRadius: 8,
+          borderRadius: 'var(--radius-lg)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

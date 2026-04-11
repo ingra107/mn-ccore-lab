@@ -46,13 +46,13 @@ class ErrorBoundary extends Component<
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <button
               onClick={() => { this.setState({ hasError: false, error: null, showDetail: false }); window.location.reload() }}
-              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 8, border: 'none', backgroundColor: 'var(--teal)', color: 'white', cursor: 'pointer' }}
+              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 'var(--radius-lg)', border: 'none', backgroundColor: 'var(--teal)', color: 'white', cursor: 'pointer' }}
             >
               Try again
             </button>
             <button
               onClick={() => { window.location.href = '/dashboard' }}
-              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border-subtle)', backgroundColor: 'transparent', color: 'var(--slate)', cursor: 'pointer' }}
+              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', backgroundColor: 'transparent', color: 'var(--slate)', cursor: 'pointer' }}
             >
               Go to Dashboard
             </button>
@@ -64,7 +64,7 @@ class ErrorBoundary extends Component<
             {this.state.showDetail ? 'Hide details' : 'Show error details'}
           </button>
           {this.state.showDetail && (
-            <pre style={{ marginTop: 12, padding: '12px 16px', borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.03)', fontSize: '11px', color: 'var(--slate)', textAlign: 'left', maxWidth: 500, overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            <pre style={{ marginTop: 12, padding: '12px 16px', borderRadius: 'var(--radius-lg)', backgroundColor: 'rgba(0,0,0,0.03)', fontSize: '11px', color: 'var(--slate)', textAlign: 'left', maxWidth: 500, overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {errorMsg}
             </pre>
           )}

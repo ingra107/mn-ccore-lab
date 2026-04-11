@@ -99,7 +99,7 @@ export default function FileActivityCard() {
                     style={{
                       width: '100%',
                       aspectRatio: '1',
-                      borderRadius: 2,
+                      borderRadius: 'var(--radius-sm)',
                       backgroundColor: getCellColor(cell.events, cell.isToday),
                       transition: 'background-color 150ms ease',
                       gridColumn: weekIdx + 1,
@@ -120,7 +120,7 @@ export default function FileActivityCard() {
                 style={{
                   width: 8,
                   height: 8,
-                  borderRadius: 1,
+                  borderRadius: 'var(--radius-sm)',
                   backgroundColor: getCellColor(v, false),
                 }}
               />

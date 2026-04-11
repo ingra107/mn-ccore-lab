@@ -146,7 +146,7 @@ function CascadeRow({
           padding: '8px 12px',
           paddingLeft: `${12 + node.depth * 24}px`,
           cursor: 'pointer',
-          borderRadius: 6,
+          borderRadius: 'var(--radius-md)',
           border: isSelected ? `1px solid ${color}` : '1px solid transparent',
           background: isImpacted
             ? 'rgba(201,168,76,0.08)'
@@ -190,7 +190,7 @@ function CascadeRow({
             opacity: 'var(--ink-label)',
             background: 'rgba(148,163,184,0.08)',
             padding: '1px 5px',
-            borderRadius: 3,
+            borderRadius: 'var(--radius-sm)',
             flexShrink: 0,
           }}>
             +{node.lagDays}d
@@ -233,7 +233,7 @@ function CascadeRow({
               color: impactItem.shift_days > 0 ? 'var(--gold)' : 'var(--teal)',
               background: impactItem.shift_days > 0 ? 'rgba(201,168,76,0.12)' : 'color-mix(in srgb, var(--teal) 12%, transparent)',
               padding: '2px 6px',
-              borderRadius: 4,
+              borderRadius: 'var(--radius-sm)',
               flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
@@ -279,7 +279,7 @@ function CascadeRow({
             opacity: 0.4,
             background: 'rgba(148,163,184,0.06)',
             padding: '1px 5px',
-            borderRadius: 3,
+            borderRadius: 'var(--radius-sm)',
             flexShrink: 0,
           }}>
             {node.downstreamCount} downstream
@@ -350,7 +350,7 @@ function WhatIfPanel({
       style={{
         marginTop: 12,
         padding: 16,
-        borderRadius: 8,
+        borderRadius: 'var(--radius-lg)',
         border: '1px solid rgba(201,168,76,0.2)',
         background: 'rgba(201,168,76,0.03)',
       }}
@@ -389,7 +389,7 @@ function WhatIfPanel({
           style={{
             fontSize: '12px',
             padding: '4px 8px',
-            borderRadius: 4,
+            borderRadius: 'var(--radius-sm)',
             border: '1px solid rgba(201,168,76,0.3)',
             background: 'var(--cream)',
             color: 'var(--ink)',
@@ -403,7 +403,7 @@ function WhatIfPanel({
             fontSize: 'var(--label-size)',
             fontWeight: 'var(--label-weight)',
             padding: '4px 12px',
-            borderRadius: 4,
+            borderRadius: 'var(--radius-sm)',
             border: '1px solid rgba(201,168,76,0.3)',
             background: 'rgba(201,168,76,0.1)',
             color: 'var(--gold)',
@@ -431,7 +431,7 @@ function WhatIfPanel({
                 alignItems: 'center',
                 gap: 8,
                 padding: '6px 10px',
-                borderRadius: 4,
+                borderRadius: 'var(--radius-sm)',
                 background: item.shift_days > 0 ? 'rgba(201,168,76,0.06)' : 'rgba(45,138,138,0.06)',
               }}>
                 <span style={{ fontSize: '12px', color: 'var(--ink)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>

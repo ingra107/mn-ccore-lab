@@ -43,7 +43,7 @@ export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps
           className="flex items-center gap-2"
           style={{
             padding: '6px 12px',
-            borderRadius: 8,
+            borderRadius: 'var(--radius-lg)',
             background: 'var(--ink)',
             color: 'var(--cream)',
             fontSize: 11,

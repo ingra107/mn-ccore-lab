@@ -85,7 +85,7 @@ export default function SavedViewsBar({
 
   const pillBase: React.CSSProperties = {
     height: 32,
-    borderRadius: 20,
+    borderRadius: 'var(--radius-2xl)',
     fontSize: '12px',
     whiteSpace: 'nowrap',
     display: 'inline-flex',

@@ -800,7 +800,7 @@ function TaskGridRow({
       <div className="task-row-checkbox" onClick={(e) => { e.stopPropagation(); onToggleSelect?.(task.id) }} style={{ cursor: 'pointer' }}>
         {onToggleSelect ? (
           <div style={{
-            width: 16, height: 16, borderRadius: 4,
+            width: 16, height: 16, borderRadius: 'var(--radius-sm)',
             border: selected ? 'none' : '1.5px solid var(--border-subtle)',
             background: selected ? 'var(--teal)' : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1450,8 +1450,8 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
       >
         {total > 0 && (
           <div className="flex items-center gap-2 mb-1.5">
-            <div style={{ flex: 1, height: 2, borderRadius: 1, background: 'rgba(201,168,76,0.12)', overflow: 'hidden' }}>
-              <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: completed === total ? 'var(--teal)' : 'var(--gold)', borderRadius: 1, transition: 'width 0.3s ease' }} />
+            <div style={{ flex: 1, height: 2, borderRadius: 'var(--radius-sm)', background: 'rgba(201,168,76,0.12)', overflow: 'hidden' }}>
+              <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: completed === total ? 'var(--teal)' : 'var(--gold)', borderRadius: 'var(--radius-sm)', transition: 'width 0.3s ease' }} />
             </div>
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{completed}/{total}</span>
           </div>

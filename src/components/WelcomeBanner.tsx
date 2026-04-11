@@ -18,7 +18,7 @@ export default function WelcomeBanner() {
         transition={spring.default}
         className="mb-5 relative overflow-hidden"
         style={{
-          borderRadius: 12,
+          borderRadius: 'var(--radius-xl)',
           padding: '16px 20px',
           background: 'linear-gradient(135deg, rgba(45,138,138,0.08) 0%, rgba(45,138,138,0.03) 100%)',
           border: '1px solid rgba(45,138,138,0.15)',

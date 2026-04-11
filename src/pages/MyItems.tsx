@@ -155,7 +155,7 @@ function StatCard({
         style={{
           width: 40,
           height: 40,
-          borderRadius: 10,
+          borderRadius: 'var(--radius-xl)',
           background: `${accentColor}18`,
           display: 'flex',
           alignItems: 'center',
@@ -398,7 +398,7 @@ function NotificationCard({
           style={{
             width: 32,
             height: 32,
-            borderRadius: 8,
+            borderRadius: 'var(--radius-lg)',
             background: isUnread ? 'rgba(201, 168, 76, 0.15)' : 'var(--ice)',
             display: 'flex',
             alignItems: 'center',

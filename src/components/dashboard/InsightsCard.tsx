@@ -83,7 +83,7 @@ function InsightsCard() {
                   style={{
                     width: 4,
                     height: 24,
-                    borderRadius: 2,
+                    borderRadius: 'var(--radius-sm)',
                     background: `rgba(45,138,138,${Math.max(0.15, edge.strength)})`,
                     flexShrink: 0,
                   }}

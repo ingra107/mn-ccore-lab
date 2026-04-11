@@ -120,11 +120,11 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
                 style={{ width: 20, height: 20 }}
               >
                 {selectedIds?.has(task.id) ? (
-                  <div style={{ width: 18, height: 18, borderRadius: 4, background: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: 'var(--radius-sm)', background: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <CheckCircle2 size={12} style={{ color: 'white' }} />
                   </div>
                 ) : (
-                  <div style={{ width: 18, height: 18, borderRadius: 4, border: '2px solid var(--border-subtle)' }} />
+                  <div style={{ width: 18, height: 18, borderRadius: 'var(--radius-sm)', border: '2px solid var(--border-subtle)' }} />
                 )}
               </div>
             )}
@@ -143,7 +143,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
           <div className="text-center py-16">
             <div
               className="mx-auto mb-3"
-              style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.06)' }}
+              style={{ width: 48, height: 48, borderRadius: 'var(--radius-xl)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(45,138,138,0.06)' }}
             >
               <CheckCircle2 size={24} style={{ color: 'var(--teal)', opacity: 0.5 }} />
             </div>

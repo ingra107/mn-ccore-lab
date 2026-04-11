@@ -391,7 +391,7 @@ export default function Grants() {
             style={{
               flex: 1,
               padding: '8px 12px',
-              borderRadius: 8,
+              borderRadius: 'var(--radius-lg)',
               border: '1px solid var(--border-subtle)',
               fontSize: 'var(--value-size)',
               background: 'var(--cream)',
@@ -404,7 +404,7 @@ export default function Grants() {
               background: 'var(--gold)',
               color: 'var(--ink)',
               border: 'none',
-              borderRadius: 8,
+              borderRadius: 'var(--radius-lg)',
               padding: '8px 16px',
               fontSize: 'var(--value-size)',
               fontWeight: 600,
