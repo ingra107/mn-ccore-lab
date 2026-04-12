@@ -70,12 +70,15 @@ export function useKeyboardShortcuts() {
 
         case 'c':
           e.preventDefault()
-          navigate('/tasks?create=true')
+          navigate('/my-tasks?create=true')
           break
 
         case 'n':
-          e.preventDefault()
-          navigate('/tasks?create=true')
+          // Only fire globally on /my-tasks — Ideas/Decisions pages have their own local n handlers
+          if (window.location.pathname.startsWith('/my-tasks')) {
+            e.preventDefault()
+            navigate('/my-tasks?create=true')
+          }
           break
 
         case 'f':

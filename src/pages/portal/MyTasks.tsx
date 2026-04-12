@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame, X, Pin, GripVertical, Hourglass } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -53,11 +54,20 @@ const sortByOptions: { key: SortBy; label: string }[] = [
 import { PRIORITY_ORDER } from '../../lib/taskConstants'
 
 export default function MyTasks() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [view, setView] = useState<ViewMode>('list')
-  const [showCreate, setShowCreate] = useState(false)
+  const [showCreate, setShowCreate] = useState(() => searchParams.get('create') === 'true')
   const [groupBy, setGroupBy] = useState<GroupBy>('due_date')
   const [sortBy, setSortBy] = useState<SortBy>('due_date')
   const [density, setDensity] = useDensity()
+
+  // Open create modal if ?create=true param is present, then clear it
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') {
+      setShowCreate(true)
+      setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('create'); return next }, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   // For now, show all tasks (no auth = no current user detection)
   // When Cloudflare Access is enabled, this will filter to the authenticated user's slug
@@ -170,12 +180,12 @@ export default function MyTasks() {
 
   const isListView = view === 'list'
 
-  // Focused task derived from index (only in flat grid mode)
+  // Focused task derived from index — works in all groupBy modes using flat displayTasks order
   const focusedTask = useMemo(() => {
-    if (!isListView || groupBy !== 'none') return null
+    if (!isListView) return null
     if (focusedTaskIndex < 0 || focusedTaskIndex >= displayTasks.length) return null
     return displayTasks[focusedTaskIndex]
-  }, [isListView, groupBy, focusedTaskIndex, displayTasks])
+  }, [isListView, focusedTaskIndex, displayTasks])
 
   // Cycle status for focused task: todo → in_progress → done
   const STATUS_CYCLE: Record<string, string> = { todo: 'in_progress', in_progress: 'done', done: 'todo', blocked: 'todo', waiting_external: 'todo' }
@@ -220,8 +230,14 @@ export default function MyTasks() {
     if (row) (row as HTMLButtonElement).click()
   }, [])
 
+  // Helper: set focused index by task ID (used by grouped view when user clicks a row)
+  const handleFocusById = useCallback((id: string) => {
+    const idx = displayTasks.findIndex(t => t.id === id)
+    if (idx >= 0) setFocusedTaskIndex(idx)
+  }, [displayTasks])
+
   useTaskKeyboardShortcuts({
-    taskCount: isListView && groupBy === 'none' ? displayTasks.length : 0,
+    taskCount: isListView ? displayTasks.length : 0,
     focusedIndex: focusedTaskIndex,
     setFocusedIndex: setFocusedTaskIndex,
     peekOpen: false,
@@ -734,7 +750,7 @@ export default function MyTasks() {
         ) : groupBy === 'none' ? (
           <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} focusedIndex={focusedTaskIndex} onFocusIndex={setFocusedTaskIndex} />
         ) : (
-          <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} />
+          <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} focusedTaskId={focusedTask?.id ?? null} onFocusId={handleFocusById} />
         )}
       </div>
 
@@ -850,7 +866,7 @@ function sortTasks(tasks: any[], sortBy: SortBy) {
 }
 
 // ── Grouped Task List ──────────────────────────────────────────
-function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange, onOpenDetail, selectedIds, onToggleSelect, onPinToFocus, pinnedIds }: {
+function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange, onOpenDetail, selectedIds, onToggleSelect, onPinToFocus, pinnedIds, focusedTaskId, onFocusId }: {
   tasks: any[]
   groupBy: GroupBy
   sortBy: SortBy
@@ -861,6 +877,8 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
   onToggleSelect?: (id: string) => void
   onPinToFocus?: (id: string) => void
   pinnedIds?: Set<string>
+  focusedTaskId?: string | null
+  onFocusId?: (id: string) => void
 }) {
   const groups = useMemo(() => {
     const map = new Map<string, any[]>()
@@ -942,7 +960,18 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
               )
             })()}
           </div>
-          <TaskGridView tasks={items} onStatusChange={onStatusChange} onFieldChange={onFieldChange} onOpenDetail={onOpenDetail} selectedIds={selectedIds} onToggleSelect={onToggleSelect} onPinToFocus={onPinToFocus} pinnedIds={pinnedIds} />
+          <TaskGridView
+            tasks={items}
+            onStatusChange={onStatusChange}
+            onFieldChange={onFieldChange}
+            onOpenDetail={onOpenDetail}
+            selectedIds={selectedIds}
+            onToggleSelect={onToggleSelect}
+            onPinToFocus={onPinToFocus}
+            pinnedIds={pinnedIds}
+            focusedIndex={focusedTaskId != null ? items.findIndex(t => t.id === focusedTaskId) : undefined}
+            onFocusIndex={onFocusId ? (idx) => { if (idx >= 0 && idx < items.length) onFocusId(items[idx].id) } : undefined}
+          />
         </div>
       ))}
     </div>
