@@ -120,6 +120,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
     const diffDays = Math.round((nextDate.getTime() - today.getTime()) / 86400000)
     if (diffDays === 0) return 'Today'
     if (diffDays === 1) return 'Tomorrow'
+    if (diffDays > 90) return null
     return `in ${diffDays}d`
   }, [nextMeeting])
 
