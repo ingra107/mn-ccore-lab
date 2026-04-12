@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
 import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame, X, Pin, GripVertical, Hourglass } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -12,7 +12,7 @@ import TaskGridView from '../../components/tasks/TaskGridView'
 import TaskBoardView from '../../components/tasks/TaskBoardView'
 import TaskStandUpView from '../../components/tasks/TaskStandUpView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
-import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
+const TaskDetailPanel = lazy(() => import('../../components/tasks/TaskDetailPanel'))
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import { useUndoToast } from '../../components/UndoToast'
 import { useTasks } from '../../hooks/useApiData'
@@ -22,6 +22,7 @@ import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks }
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import { getPersonInfo } from '../../data/team'
 import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
+import { useTaskKeyboardShortcuts } from '../../hooks/useTaskKeyboardShortcuts'
 
 type ViewMode = 'list' | 'board' | 'standup' | 'timeline'
 type QuickFilter = 'all' | 'today' | 'this_week' | 'overdue' | 'no_date' | 'waiting_on'
@@ -163,6 +164,77 @@ export default function MyTasks() {
     }
   }, [tasks, allTasks, showCompleted, quickFilter, piSlug])
   const displayTasks = quickFiltered
+
+  // ── Keyboard shortcut state ──────────────────────────────────
+  const [focusedTaskIndex, setFocusedTaskIndex] = useState(-1)
+
+  const isListView = view === 'list'
+
+  // Focused task derived from index (only in flat grid mode)
+  const focusedTask = useMemo(() => {
+    if (!isListView || groupBy !== 'none') return null
+    if (focusedTaskIndex < 0 || focusedTaskIndex >= displayTasks.length) return null
+    return displayTasks[focusedTaskIndex]
+  }, [isListView, groupBy, focusedTaskIndex, displayTasks])
+
+  // Cycle status for focused task: todo → in_progress → done
+  const STATUS_CYCLE: Record<string, string> = { todo: 'in_progress', in_progress: 'done', done: 'todo', blocked: 'todo', waiting_external: 'todo' }
+  const cycleStatus = useCallback(() => {
+    if (!focusedTask) return
+    const next = STATUS_CYCLE[focusedTask.status] ?? 'in_progress'
+    handleStatusChange(focusedTask.id, next)
+  }, [focusedTask]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleSelectFocused = useCallback(() => {
+    if (!focusedTask) return
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(focusedTask.id)) next.delete(focusedTask.id)
+      else next.add(focusedTask.id)
+      return next
+    })
+  }, [focusedTask])
+
+  const openDetailForFocused = useCallback(() => {
+    if (focusedTask) setSelectedTask(focusedTask)
+  }, [focusedTask])
+
+  const closeOverlay = useCallback(() => {
+    if (selectedTask) setSelectedTask(null)
+    else if (showCreate) setShowCreate(false)
+  }, [selectedTask, showCreate])
+
+  const createTaskShortcut = useCallback(() => setShowCreate(true), [])
+
+  const snoozeFocused = useCallback(() => {
+    if (!focusedTask || !focusedTask.due_date) return
+    const d = new Date(focusedTask.due_date + 'T12:00:00')
+    d.setDate(d.getDate() + 1)
+    const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    handleFieldChange(focusedTask.id, 'due_date', newDate)
+    showUndo(`Snoozed to ${newDate}`, () => handleFieldChange(focusedTask.id, 'due_date', focusedTask.due_date))
+  }, [focusedTask]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const assignFocused = useCallback(() => {
+    const row = document.querySelector('.task-row-focused .inline-assignee-btn')
+    if (row) (row as HTMLButtonElement).click()
+  }, [])
+
+  useTaskKeyboardShortcuts({
+    taskCount: isListView && groupBy === 'none' ? displayTasks.length : 0,
+    focusedIndex: focusedTaskIndex,
+    setFocusedIndex: setFocusedTaskIndex,
+    peekOpen: false,
+    togglePeek: openDetailForFocused,
+    openDetail: openDetailForFocused,
+    cycleStatus,
+    toggleSelect: toggleSelectFocused,
+    isBlocked: !!selectedTask || showCreate,
+    closeOverlay,
+    createTask: createTaskShortcut,
+    snoozeFocused,
+    assignFocused,
+  })
 
   // Quick filter counts for pills
   const filterCounts = useMemo(() => {
@@ -636,8 +708,8 @@ export default function MyTasks() {
         </div>
       )}
 
-      {/* Content */}
-      <div className={`mt-5 ${densityClass(density)}`}>
+      {/* Content — minHeight prevents CLS during virtualizer mount (M-27) */}
+      <div className={`mt-5 ${densityClass(density)}`} style={{ minHeight: 600 }}>
         {isLoading ? (
           <TableSkeleton rows={6} cols={5} />
         ) : displayTasks.length === 0 && quickFilter !== 'waiting_on' ? (
@@ -660,7 +732,7 @@ export default function MyTasks() {
             {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} />}
           </>
         ) : groupBy === 'none' ? (
-          <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} />
+          <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} focusedIndex={focusedTaskIndex} onFocusIndex={setFocusedTaskIndex} />
         ) : (
           <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} />
         )}
@@ -673,20 +745,22 @@ export default function MyTasks() {
         onCreate={handleCreate}
       />
 
-      {/* Detail panel */}
+      {/* Detail panel — lazy loaded (M-30) */}
       {selectedTask && (
-        <TaskDetailPanel
-          task={selectedTask}
-          onClose={() => setSelectedTask(null)}
-          onPrev={(() => {
-            const idx = displayTasks.findIndex(t => t.id === selectedTask.id)
-            return idx > 0 ? () => setSelectedTask(displayTasks[idx - 1]) : undefined
-          })()}
-          onNext={(() => {
-            const idx = displayTasks.findIndex(t => t.id === selectedTask.id)
-            return idx >= 0 && idx < displayTasks.length - 1 ? () => setSelectedTask(displayTasks[idx + 1]) : undefined
-          })()}
-        />
+        <Suspense fallback={null}>
+          <TaskDetailPanel
+            task={selectedTask}
+            onClose={() => setSelectedTask(null)}
+            onPrev={(() => {
+              const idx = displayTasks.findIndex(t => t.id === selectedTask.id)
+              return idx > 0 ? () => setSelectedTask(displayTasks[idx - 1]) : undefined
+            })()}
+            onNext={(() => {
+              const idx = displayTasks.findIndex(t => t.id === selectedTask.id)
+              return idx >= 0 && idx < displayTasks.length - 1 ? () => setSelectedTask(displayTasks[idx + 1]) : undefined
+            })()}
+          />
+        </Suspense>
       )}
 
       <BulkActionToolbar
