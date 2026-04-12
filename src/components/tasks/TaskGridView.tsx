@@ -923,8 +923,8 @@ function TaskGridRow({
                       onDoubleClick={(e) => { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) }}
                       onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOpenDetail?.(task) } if (e.key === 'F2') { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) } }}
                       style={{
-                        fontSize: 'var(--value-size)',
-                        fontWeight: 400,
+                        fontSize: 'var(--text-base)',
+                        fontWeight: 'var(--weight-heading)',
                         color: 'var(--ink)',
                         textDecoration: isDone ? 'line-through' : 'none',
                         lineHeight: 1.35,
@@ -1699,7 +1699,7 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
         gap: 'var(--sp-xl)',
         padding: 'var(--sp-sm) var(--sp-lg)',
         borderTop: '1px solid var(--border-subtle)',
-        background: 'var(--teal-hover)',
+        background: 'var(--surface-1)',
       }}
     >
       {stats.map(s => (
