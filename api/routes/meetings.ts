@@ -1,6 +1,15 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity } from '../helpers';
 
+// GET /api/meetings/next — next upcoming meeting (lightweight, for sidebar badge)
+export async function handleNextMeeting(env: Env): Promise<Response> {
+  const today = new Date().toISOString().split('T')[0]
+  const result = await env.DB.prepare(
+    'SELECT id, title, date FROM meetings WHERE date >= ? ORDER BY date ASC LIMIT 1'
+  ).bind(today).first()
+  return json({ data: result || null })
+}
+
 // GET /api/meetings — list all meetings
 export async function handleMeetings(env: Env): Promise<Response> {
   const result = await env.DB.prepare(

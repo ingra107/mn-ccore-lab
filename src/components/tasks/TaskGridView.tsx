@@ -638,10 +638,10 @@ function SortableColumnHeader({
   return (
     <div
       ref={setNodeRef}
-      role="columnheader"
-      aria-sort={isActive ? (currentAsc ? 'ascending' : 'descending') : 'none'}
       style={dragStyle}
       {...attributes}
+      role="columnheader"
+      aria-sort={isActive ? (currentAsc ? 'ascending' : 'descending') : 'none'}
       onClick={(e) => {
         // Only sort on click if not dragging
         if (!isDragging) onSort(field, e.shiftKey)
