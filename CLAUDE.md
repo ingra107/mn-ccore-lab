@@ -9,7 +9,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (555+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (590+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Testing | Playwright 1.59 (E2E, 214+ inspection tests) + Vitest 4.1 (component, browser mode) |
@@ -630,30 +630,72 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 - Welcome banner + persistent tooltip: confirmed already localStorage-gated
 - project_id restoration: 520 D1 tasks restored via targeted UPDATE SQL (sync bug fixed in push script)
 
+## Phase 31.5: COMPLETE (22 commits, 4 deploys, 2026-04-11). Expert-Driven Polish + Performance:
+
+*Expert panel re-scored: 7.2 → 8.4/10 (PI: 8.1, Designer: 8.4)*
+
+*Visual Polish (Designer's 12 recommendations — all implemented):*
+- Dashboard compressed: 5 vertical layers → 2, cards move up ~200px. Overdue count inlined into greeting.
+- Typography recession: metadata columns (assignee/project/due_date) recede with smaller size + lower opacity. Titles dominate.
+- Personal page rebuilt: two-column command center (My Tasks grouped by urgency left, Upcoming + Activity + Quick Stats right)
+- Meetings split-panel: 280px meeting list left, detail right. Auto-selects first meeting.
+- Shared TableControls component: standardized filter/sort/view bar across Tasks, Projects, Deadlines, Manuscripts
+- Sidebar consolidated: 6 sections → 3 (unlabeled nav, Research, Lab). Fewer dividers = more rhythm.
+- Breadcrumbs on ProjectDetail, MeetingDetail, MemberPage
+- Status bar (24px): "Last synced: Ns ago" left, "? for shortcuts" right. Anchors the viewport.
+- Grants page aligned: centered metrics → left-aligned PageHeader + columnar table + timeline as view toggle
+- Light mode sidebar surface: `--sidebar-bg: #ebebeb` distinct from page bg
+
+*Accessibility (14 of 17 items fixed):*
+- MotionConfig `reducedMotion="user"` — all Framer Motion animations respect OS setting (1 line)
+- ARIA combobox/listbox on CommandPalette (role="combobox", role="listbox", role="option", aria-activedescendant)
+- ARIA listbox on InlineSelect (aria-expanded, aria-haspopup, role="listbox", role="option")
+- ARIA grid on TaskGridView (role="grid", role="row", role="columnheader" with aria-sort, role="gridcell")
+- aria-label="Close" on 12 modal close buttons
+- htmlFor/id linked on CreateTaskModal form fields
+- aria-required on 5 create modals + aria-describedby on disabled submit buttons
+- Light mode WCAG contrast: --muted → #6b7280 (5.0:1), --ink-label 0.55→0.70, --ink-hint 0.40→0.62
+- Focus ring: teal in light mode (4.5:1), gold in dark mode
+- Keyboard support on 4 interactive div elements (Dashboard cards, NotificationBell)
+- Mobile hamburger menu: sidebar was completely inaccessible on mobile — added overlay menu with Escape close
+
+*Performance (7 of 7 items fixed):*
+- CommandPalette data hooks gated with `enabled: open` — 4 fewer API calls per page load
+- Tiptap lazy-loaded in TaskDetailPanel — 116KB gzip deferred until Notes tab opens
+- Static data fallbacks excluded from prod bundle — useApiData chunk -51% (69KB → 34KB)
+- Dashboard recharts → SVG sparklines — 89KB recharts no longer loaded on Dashboard
+- Deadlines list virtualized (@tanstack/react-virtual)
+- Lightweight /api/meetings/next endpoint replaces full meetings fetch in Sidebar
+- Font loading split: DM Sans critical, Fraunces + JetBrains Mono deferred
+- **Cold start fix: modulePreload disabled (0 tags, was 226KB), dashboard queries deferred until after first paint**
+- **Result: warm start 473ms first content (was 10+ seconds). Cold start 4.2s (CF Worker spin-up).**
+
+*Bug Fixes:*
+- Hover actions column widened 50→90px (no longer overlaps priority pill)
+- "n" key shortcut: Ideas → Tasks
+- Sign-in banner dismissible via localStorage
+- Meeting countdown capped at 90 days (was showing "in 26928d" from test data)
+- 24 test meetings + test tags purged from D1
+- project_id `|| null` fix already in upstream code (confirmed)
+
 ## Pending Sync
+- STATUS: Active
+- NEXT_ACTION: Activate Cloudflare Access + SendGrid for April 21 launch
+- NOTE: Expert panel scored 8.4/10. Remaining gap is data population (empty pages), auth activation, and email notifications — not code.
+- LEARNING: Design token migration (1,062 replacements) had zero visual regressions. Mechanical find-replace with clear mapping rules is safe at scale.
+- LEARNING: Cold start bottleneck was modulePreload (226KB) + eager API calls, NOT three.js chunk (which was correctly lazy-loaded).
 
 ## Next Session Playbook
 
-**READ `SESSION-HANDOFF.md` FIRST** — full context from 2026-04-10/11 session (14 commits, 9 deploys).
+**Before April 21 meeting (Nick must do):**
+1. Cloudflare Access: configure @umn.edu policy on dashboard
+2. SendGrid/Resend API key: add as CF Pages secret → activates email digest
+3. Populate real data: 5-10 decisions, 10 ideas, expertise tags on 5 members, reassign 15 tasks to team
 
-**Deploy command:**
-```bash
-cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab
-```
-
-**Step 2: Run full test suite**
-```bash
-npx playwright test tests/inspection.spec.ts --reporter=list
-npx playwright test tests/inspection-workflows.spec.ts --reporter=list
-npx playwright test tests/daily-superuser.spec.ts --reporter=list
-python tests/sync-pipeline.test.py
-```
-
-**Step 3: Remaining items (by user choice)**
-- Table row height decrease (line-height 1.6→1.35 in tables)
-- Automated progress report generator (NIH/annual reports from Hub data)
-- Activate email digest: configure RESEND_API_KEY as Cloudflare Pages secret
-- Cloudflare Access: configure @umn.edu policy on Cloudflare dashboard (April 21 target)
+**Technical items remaining:**
+- Automated progress report generator (deferred by Nick)
+- WebSocket 400 console spam (Durable Object not configured — cosmetic)
+- Project slugs with parentheses break routing (low priority)
 
 **Step 4: Clean up D1 test data** (MANDATORY after every test run)
 ```bash
@@ -662,16 +704,14 @@ python tests/sync-pipeline.test.py
 
 ## Test Results (2026-04-09, verified)
 
-**494 Playwright passed, 0 failed, 2 skipped | 58/58 sync pipeline passed**
+**231 Playwright passed, 0 failed, 5 skipped (post-Phase 31.5, 2026-04-11)**
 
 | Suite | Passed | Failed | Skipped |
 |-------|--------|--------|---------|
-| inspection.spec.ts | 198 | 0 | 0 |
-| inspection-workflows.spec.ts | 165 | 0 | 2 |
-| daily-superuser.spec.ts | 131 | 0 | 0 |
-| sync-pipeline.test.py | 58 | 0 | 0 |
+| smoke.spec.ts | 26 | 0 | 1 (network timeout — known three.js) |
+| inspection.spec.ts | 205 | 0 | 4 |
 
-2 skips: Publication Detail (no pub data in D1), Subtask Reorder (no subtask data).
+Full workflow + sync pipeline suites not re-run this session (Phase 30 baseline: 494 passed, 58/58 sync).
 
 ### Remaining Known Issues (not test failures)
 | # | Issue | Severity | Notes |
