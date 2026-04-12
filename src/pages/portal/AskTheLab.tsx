@@ -480,16 +480,18 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
 
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-3.5">
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            <label htmlFor="question-text" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Question *
             </label>
             <textarea
+              id="question-text"
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
               placeholder="What do you want to know?"
               rows={3}
               className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
               style={{ borderColor: 'var(--border-subtle)' }}
+              aria-required="true"
               autoFocus
             />
           </div>
@@ -525,6 +527,11 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             </select>
           </div>
 
+          {!questionText.trim() && (
+            <p id="question-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+              Question is required.
+            </p>
+          )}
           <div className="flex justify-end gap-2 mt-2">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
               Cancel
@@ -532,6 +539,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             <button
               type="submit"
               disabled={!questionText.trim()}
+              aria-describedby={!questionText.trim() ? 'question-submit-hint' : undefined}
               className="px-4 py-2 rounded-md text-sm font-medium"
               style={{
                 backgroundColor: !questionText.trim() ? 'var(--border-subtle)' : 'var(--teal)',

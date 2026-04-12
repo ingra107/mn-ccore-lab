@@ -2,10 +2,9 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FileText, Plus, List, GitBranch } from 'lucide-react'
-import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
+import { useDensity, densityClass } from '../../components/DensityToggle'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
-import ToggleButton from '../../components/ToggleButton'
 import CreateProjectModal from '../../components/CreateProjectModal'
 import { useProjects, useTasks, useActiveRevisions } from '../../hooks/useApiData'
 import { useCreateProject } from '../../hooks/useMutations'
@@ -18,7 +17,7 @@ import { getPersonInfo } from '../../data/team'
 import type { Project } from '../../data/types'
 import PageHeader from '../../components/PageHeader'
 import { ActiveRevisionsDashboard } from '../../components/RevisionTracker'
-import { ColumnHeader, TableContainer } from '../../components/table'
+import { ColumnHeader, TableContainer, TableControls } from '../../components/table'
 // EmptyState available if needed
 
 import { usePageMeta } from '../../hooks/usePageMeta'
@@ -174,55 +173,56 @@ export default function Manuscripts() {
             </button>
           }
         >
-          <div className="flex items-center gap-4 flex-wrap">
-            {/* View toggle */}
-            <div className="flex items-center gap-1.5">
-              <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
-                <List size={14} />
-                List
-              </ToggleButton>
-              <ToggleButton active={view === 'pipeline'} onClick={() => setView('pipeline')}>
-                <GitBranch size={14} />
-                Pipeline
-              </ToggleButton>
-            </div>
-
-            <select
-              value={filterPI}
-              onChange={(e) => setFilterPI(e.target.value)}
-              className="rounded-md border px-3 py-1.5 text-xs"
-              style={{
-                fontSize: '12px',
-                color: filterPI ? 'var(--teal)' : 'var(--slate)',
-                backgroundColor: 'transparent',
-                borderColor: 'var(--border-subtle)',
-                cursor: 'pointer',
-              }}
-            >
-              <option value="">All PIs</option>
-              <option value="nick">Nick Ingraham</option>
-              <option value="nate">Nate Mesfin</option>
-            </select>
-
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="rounded-md border px-3 py-1.5 text-xs"
-              style={{
-                fontSize: '12px',
-                color: filterCategory ? 'var(--gold)' : 'var(--slate)',
-                backgroundColor: 'transparent',
-                borderColor: 'var(--border-subtle)',
-                cursor: 'pointer',
-              }}
-            >
-              <option value="">All Groups</option>
-              {Object.entries(CATEGORY_LABEL).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
-            </select>
-            <DensityToggle value={density} onChange={setDensity} />
-          </div>
+          <TableControls
+            views={[
+              { key: 'list', icon: <List size={14} />, label: 'List' },
+              { key: 'pipeline', icon: <GitBranch size={14} />, label: 'Pipeline' },
+            ]}
+            activeView={view}
+            onViewChange={(v) => setView(v as 'list' | 'pipeline')}
+            filters={
+              <>
+                <select
+                  value={filterPI}
+                  onChange={(e) => setFilterPI(e.target.value)}
+                  className="rounded-md border px-3 py-1.5 text-xs"
+                  style={{
+                    fontSize: '12px',
+                    color: filterPI ? 'var(--teal)' : 'var(--slate)',
+                    backgroundColor: 'transparent',
+                    borderColor: 'var(--border-subtle)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="">All PIs</option>
+                  <option value="nick">Nick Ingraham</option>
+                  <option value="nate">Nate Mesfin</option>
+                </select>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="rounded-md border px-3 py-1.5 text-xs"
+                  style={{
+                    fontSize: '12px',
+                    color: filterCategory ? 'var(--gold)' : 'var(--slate)',
+                    backgroundColor: 'transparent',
+                    borderColor: 'var(--border-subtle)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="">All Groups</option>
+                  {Object.entries(CATEGORY_LABEL).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
+                  ))}
+                </select>
+              </>
+            }
+            showDensity
+            density={density}
+            onDensityChange={setDensity}
+            count={activeCount}
+            countLabel="manuscripts"
+          />
         </PageHeader>
 
         {/* Active Revisions section */}

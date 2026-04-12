@@ -1,16 +1,106 @@
-import { useMemo } from 'react'
-import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { useMemo, useState } from 'react'
 import { Timer } from 'lucide-react'
 import { usePBSessionStats } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+interface FocusBarDatum { label: string; minutes: number; isToday: boolean }
+
+function FocusBarChart({ bars }: { bars: FocusBarDatum[] }) {
+  const [hovered, setHovered] = useState<number | null>(null)
+  const max = Math.max(...bars.map(b => b.minutes), 1)
+  const chartH = 44
+  const labelH = 14
+  const totalH = chartH + labelH
+  const barW = 10
+  const gap = 4
+  const totalW = bars.length * (barW + gap) - gap
+
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      <svg
+        viewBox={`0 0 ${totalW} ${totalH}`}
+        width="100%"
+        height={totalH}
+        style={{ display: 'block', overflow: 'visible' }}
+      >
+        {bars.map((bar, i) => {
+          const barH = Math.max((bar.minutes / max) * chartH, bar.minutes > 0 ? 3 : 1)
+          const x = i * (barW + gap)
+          const y = chartH - barH
+          const fill = bar.isToday
+            ? 'var(--teal)'
+            : bar.minutes > 0
+              ? 'rgba(45,138,138,0.4)'
+              : 'var(--border-subtle)'
+          return (
+            <g key={i}>
+              <rect
+                x={x}
+                y={0}
+                width={barW}
+                height={chartH}
+                fill="transparent"
+                onMouseEnter={() => setHovered(i)}
+                onMouseLeave={() => setHovered(null)}
+                style={{ cursor: 'default' }}
+              />
+              <rect
+                x={x}
+                y={y}
+                width={barW}
+                height={barH}
+                rx={2}
+                ry={2}
+                fill={fill}
+              />
+              <text
+                x={x + barW / 2}
+                y={totalH - 1}
+                textAnchor="middle"
+                fontSize={7}
+                fill="var(--slate)"
+                opacity={0.7}
+              >
+                {bar.label}
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+      {hovered !== null && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: labelH + 4,
+            left: `${(hovered / (bars.length - 1)) * 80 + 5}%`,
+            transform: 'translateX(-50%)',
+            background: 'var(--cream, #1a2330)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md, 6px)',
+            fontSize: 10,
+            color: 'var(--ink)',
+            padding: '2px 6px',
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            zIndex: 10,
+          }}
+        >
+          <span style={{ fontWeight: 500 }}>{bars[hovered].label}</span>
+          {': '}
+          {bars[hovered].minutes} min
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function PomodoroStatsCard() {
   const { data: stats, isLoading } = usePBSessionStats()
 
   const { weekHours, bars, streak, topProject } = useMemo(() => {
-    if (!stats) return { weekHours: 0, bars: [], streak: 0, topProject: null }
+    if (!stats) return { weekHours: 0, bars: [] as FocusBarDatum[], streak: 0, topProject: null }
 
     // Focus hours this week
     const hours = Math.round((stats.per_day
@@ -25,7 +115,7 @@ export default function PomodoroStatsCard() {
     // 7-day bar data
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const dayBars: { label: string; minutes: number; isToday: boolean }[] = []
+    const dayBars: FocusBarDatum[] = []
 
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today.getTime() - i * 86400000)
@@ -63,36 +153,8 @@ export default function PomodoroStatsCard() {
         </div>
       ) : (
         <>
-          {/* 7-day bar chart */}
-          <ResponsiveContainer width="100%" height={56}>
-            <BarChart data={bars} barCategoryGap="15%">
-              <XAxis
-                dataKey="label"
-                tick={{ fill: 'var(--slate)', fontSize: 8 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: 'var(--cream)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: 11,
-                  color: 'var(--ink)',
-                }}
-                labelStyle={{ color: 'var(--ink)', fontWeight: 500 }}
-                formatter={(value) => [value, 'Minutes']}
-              />
-              <Bar dataKey="minutes" radius={[2, 2, 0, 0]} name="Focus">
-                {bars.map((bar, index) => (
-                  <Cell
-                    key={index}
-                    fill={bar.isToday ? 'var(--teal)' : bar.minutes > 0 ? 'rgba(45,138,138,0.4)' : 'var(--border-subtle)'}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          {/* 7-day bar chart — lightweight SVG, no recharts */}
+          <FocusBarChart bars={bars} />
 
           {/* Streak + top project */}
           <div className="flex items-center justify-between mt-2">

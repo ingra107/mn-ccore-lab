@@ -17,8 +17,8 @@ import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import TaskPeekOverlay from '../../components/tasks/TaskPeekOverlay'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
-import ToggleButton from '../../components/ToggleButton'
 import PageTooltip from '../../components/PageTooltip'
+import { TableControls } from '../../components/table'
 import { useUndoToast } from '../../components/UndoToast'
 import { useTasks } from '../../hooks/useApiData'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
@@ -326,78 +326,75 @@ export default function Tasks() {
         }
       >
         {/* View selector + filter toggle (always visible) */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
-            <List size={14} />
-            List
-          </ToggleButton>
-          {alternateViews.map((v) => {
-            const Icon = v.icon
-            return (
-              <ToggleButton key={v.key} active={view === v.key} onClick={() => setView(v.key)}>
-                <Icon size={14} />
-                {v.label}
-              </ToggleButton>
-            )
-          })}
-
-          {userSlug && (
-            <button
-              onClick={() => setMyTasksOnly(!myTasksOnly)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
-              style={{
-                backgroundColor: myTasksOnly ? 'var(--teal-active)' : 'transparent',
-                color: myTasksOnly ? 'var(--teal)' : 'var(--slate)',
-                border: `1px solid ${myTasksOnly ? 'rgba(45,138,138,0.3)' : 'var(--border-light)'}`,
-                cursor: 'pointer',
-                opacity: myTasksOnly ? 1 : 0.55,
-              }}
-            >
-              <Users size={10} />
-              My Tasks
-            </button>
-          )}
-
-          <div className="flex-1" />
-
-          {completedCount > 0 && (
-            <button
-              onClick={() => setShowCompleted(!showCompleted)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
-              style={{
-                backgroundColor: showCompleted ? 'rgba(34,197,94,0.1)' : 'transparent',
-                color: showCompleted ? 'var(--green)' : 'var(--slate)',
-                border: `1px solid ${showCompleted ? 'rgba(34,197,94,0.3)' : 'var(--border-light)'}`,
-                cursor: 'pointer',
-                opacity: showCompleted ? 1 : 0.5,
-              }}
-            >
-              <CheckCircle2 size={10} />
-              {showCompleted ? `Hide ${completedCount} done` : `Show ${completedCount} done`}
-            </button>
-          )}
-
-          {/* Filter toggle button */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
-            style={{
-              backgroundColor: showFilters || activeFilterCount > 0 ? 'var(--teal-active)' : 'transparent',
-              color: showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--slate)',
-              border: `1px solid ${showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--border-light)'}`,
-              cursor: 'pointer',
-              opacity: showFilters || activeFilterCount > 0 ? 1 : 0.5,
-            }}
-            title="Toggle filters (F)"
-          >
-            {activeFilterCount > 0 && (
-              <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--teal)', flexShrink: 0 }} />
-            )}
-            <Filter size={10} />
-            Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-          </button>
-          <PageTooltip id="tasks-filter" text="Press F to toggle filters" />
-        </div>
+        <TableControls
+          views={[
+            { key: 'list', icon: <List size={14} />, label: 'List' },
+            ...alternateViews.map((v) => ({ key: v.key, icon: <v.icon size={14} />, label: v.label })),
+          ]}
+          activeView={view}
+          onViewChange={(v) => setView(v as ViewMode)}
+          filters={
+            <>
+              {userSlug && (
+                <button
+                  onClick={() => setMyTasksOnly(!myTasksOnly)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+                  style={{
+                    backgroundColor: myTasksOnly ? 'var(--teal-active)' : 'transparent',
+                    color: myTasksOnly ? 'var(--teal)' : 'var(--slate)',
+                    border: `1px solid ${myTasksOnly ? 'rgba(45,138,138,0.3)' : 'var(--border-light)'}`,
+                    cursor: 'pointer',
+                    opacity: myTasksOnly ? 1 : 0.55,
+                  }}
+                >
+                  <Users size={10} />
+                  My Tasks
+                </button>
+              )}
+            </>
+          }
+          rightExtra={
+            <>
+              {completedCount > 0 && (
+                <button
+                  onClick={() => setShowCompleted(!showCompleted)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+                  style={{
+                    backgroundColor: showCompleted ? 'rgba(34,197,94,0.1)' : 'transparent',
+                    color: showCompleted ? 'var(--green)' : 'var(--slate)',
+                    border: `1px solid ${showCompleted ? 'rgba(34,197,94,0.3)' : 'var(--border-light)'}`,
+                    cursor: 'pointer',
+                    opacity: showCompleted ? 1 : 0.5,
+                  }}
+                >
+                  <CheckCircle2 size={10} />
+                  {showCompleted ? `Hide ${completedCount} done` : `Show ${completedCount} done`}
+                </button>
+              )}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+                style={{
+                  backgroundColor: showFilters || activeFilterCount > 0 ? 'var(--teal-active)' : 'transparent',
+                  color: showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--slate)',
+                  border: `1px solid ${showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--border-light)'}`,
+                  cursor: 'pointer',
+                  opacity: showFilters || activeFilterCount > 0 ? 1 : 0.5,
+                }}
+                title="Toggle filters (F)"
+              >
+                {activeFilterCount > 0 && (
+                  <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--teal)', flexShrink: 0 }} />
+                )}
+                <Filter size={10} />
+                Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+              </button>
+              <PageTooltip id="tasks-filter" text="Press F to toggle filters" />
+            </>
+          }
+          count={pendingCount}
+          countLabel="active"
+        />
 
         {/* Collapsible filter panel (F key or button toggle) */}
         <AnimatePresence>

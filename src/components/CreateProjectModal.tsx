@@ -140,12 +140,14 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
           {/* Title */}
           <div>
             <label
+              htmlFor="project-title"
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--slate)' }}
             >
               Title *
             </label>
             <input
+              id="project-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -155,6 +157,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
                 ...selectStyle,
                 borderColor: 'var(--border-subtle)',
               }}
+              aria-required="true"
               autoFocus
             />
           </div>
@@ -239,6 +242,11 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
           </div>
 
           {/* Submit */}
+          {!title.trim() && (
+            <p id="project-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+              Title is required.
+            </p>
+          )}
           <div className="flex justify-end gap-2 mt-1">
             <button
               type="button"
@@ -256,6 +264,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
             <button
               type="submit"
               disabled={!title.trim()}
+              aria-describedby={!title.trim() ? 'project-submit-hint' : undefined}
               className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
               style={{
                 backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--gold)',

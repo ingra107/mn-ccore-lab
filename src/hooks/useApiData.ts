@@ -86,13 +86,16 @@ import type {
 // Re-export row types for components that need them
 export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow, CascadeGraph, ImpactResult, SubmissionEventRow, ActiveSubmissionRow, RegulatoryItemRow, ExpiringRegulatoryRow, GrantMilestoneRow, UpcomingGrantMilestoneRow, ConferenceSubmissionRow, UpcomingConferenceRow, PBSessionRow, PBSessionStats }
 
-// Static data imports (fallback for local dev)
-import { publications as staticPublications } from '../data/publications'
-import { getAllMembers } from '../data/team'
-import { projects as staticProjects } from '../data/projects'
-import { grants as staticGrants } from '../data/grants'
-
 import type { Publication, TeamMember, Project, Grant } from '../data/types'
+
+// Static data fallbacks — dev only.
+// import.meta.env.DEV is replaced with a boolean constant at build time, so Vite/Rolldown
+// dead-code-eliminates the false branch and tree-shakes these modules out of the production
+// bundle entirely (publications ~43 KB, projects ~9 KB, team ~7 KB, grants ~1 KB = ~60 KB saved).
+import { publications as _devPublications } from '../data/publications'
+import { getAllMembers as _devGetAllMembers } from '../data/team'
+import { projects as _devProjects } from '../data/projects'
+import { grants as _devGrants } from '../data/grants'
 
 // ── Transform D1 rows → frontend types ──────────────────────
 
@@ -175,7 +178,7 @@ export function usePublications(params?: {
       const res = await fetchPublications(params)
       return res.data.map(rowToPublication)
     },
-    initialData: params ? undefined : () => staticPublications,
+    initialData: (import.meta.env.DEV && !params) ? () => _devPublications : undefined,
     staleTime: STALE_TIME,
     retry: false,
   })
@@ -188,7 +191,7 @@ export function useTeam(options?: { enabled?: boolean }) {
       const res = await fetchTeam()
       return res.data.map(rowToTeamMember)
     },
-    initialData: () => getAllMembers(),
+    initialData: import.meta.env.DEV ? () => _devGetAllMembers() : undefined,
     staleTime: STALE_TIME,
     retry: false,
     enabled: options?.enabled ?? true,
@@ -202,7 +205,7 @@ export function useProjects(params?: { status?: string; category?: string }, opt
       const res = await fetchProjects(params)
       return res.data.map(rowToProject)
     },
-    initialData: params ? undefined : () => staticProjects,
+    initialData: (import.meta.env.DEV && !params) ? () => _devProjects : undefined,
     staleTime: STALE_TIME,
     retry: false,
     enabled: options?.enabled ?? true,
@@ -216,7 +219,7 @@ export function useGrants() {
       const res = await fetchGrants()
       return res.data.map(rowToGrant)
     },
-    initialData: () => staticGrants,
+    initialData: import.meta.env.DEV ? () => _devGrants : undefined,
     staleTime: STALE_TIME,
     retry: false,
   })

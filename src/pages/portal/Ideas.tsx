@@ -547,16 +547,18 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
 
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-3.5">
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            <label htmlFor="idea-title" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Title *
             </label>
             <input
+              id="idea-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What's the idea?"
               className="w-full rounded-md border px-3 py-2 text-sm outline-none"
               style={{ borderColor: 'var(--border-subtle)' }}
+              aria-required="true"
               autoFocus
             />
           </div>
@@ -592,11 +594,22 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
             </select>
           </div>
 
+          {!title.trim() && (
+            <p id="idea-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+              Title is required.
+            </p>
+          )}
           <div className="flex justify-end gap-2 mt-2">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
               Cancel
             </button>
-            <button type="submit" disabled={!title.trim()} className="px-4 py-2 rounded-md text-sm font-medium" style={{ backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--teal)', color: !title.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)', cursor: !title.trim() ? 'not-allowed' : 'pointer', border: 'none' }}>
+            <button
+              type="submit"
+              disabled={!title.trim()}
+              aria-describedby={!title.trim() ? 'idea-submit-hint' : undefined}
+              className="px-4 py-2 rounded-md text-sm font-medium"
+              style={{ backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--teal)', color: !title.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)', cursor: !title.trim() ? 'not-allowed' : 'pointer', border: 'none' }}
+            >
               Submit Idea
             </button>
           </div>

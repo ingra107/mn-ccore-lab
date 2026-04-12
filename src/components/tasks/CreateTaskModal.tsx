@@ -271,6 +271,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                 ...selectStyle,
                 borderColor: 'var(--border-subtle)',
               }}
+              aria-required="true"
               autoFocus
             />
             {/* Autofill suggestion chips */}
@@ -344,6 +345,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                 onChange={(e) => setAssignee(e.target.value)}
                 className="w-full rounded-md border px-2.5 py-2 text-sm"
                 style={selectStyle}
+                aria-required="true"
               >
                 <option value="">Select owner...</option>
                 {memberOptions.map((m) => (
@@ -422,6 +424,15 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               Tasks can also be created from meetings and project pages
             </p>
           </div>
+          {(!title.trim() || !assignee) && (
+            <p id="task-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+              {!title.trim() && !assignee
+                ? 'Title and owner are required.'
+                : !title.trim()
+                  ? 'Title is required.'
+                  : 'Owner is required.'}
+            </p>
+          )}
           <div className="flex justify-end gap-2">
             <button
               type="button"
@@ -440,6 +451,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               type="submit"
               data-testid="task-submit"
               disabled={!title.trim() || !assignee}
+              aria-describedby={!title.trim() || !assignee ? 'task-submit-hint' : undefined}
               className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
               style={{
                 backgroundColor: !title.trim() || !assignee ? 'var(--border-subtle)' : 'var(--teal)',

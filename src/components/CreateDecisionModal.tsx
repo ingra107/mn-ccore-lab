@@ -175,13 +175,15 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
         {/* Form */}
         <div className="px-6 py-5 flex flex-col gap-4">
           <div>
-            <label style={labelStyle}>Decision Title</label>
+            <label htmlFor="decision-title" style={labelStyle}>Decision Title</label>
             <input
+              id="decision-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What was decided?"
               style={inputStyle}
+              aria-required="true"
               autoFocus
             />
             {similarDecisions.length > 0 && (
@@ -359,7 +361,12 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 flex justify-end gap-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="px-6 py-4 flex items-center justify-end gap-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+          {!title.trim() && (
+            <p id="decision-submit-hint" className="text-[11px] mr-auto" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+              Decision title is required.
+            </p>
+          )}
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg text-sm"
@@ -371,6 +378,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
             type="button"
             onClick={handleSubmit}
             disabled={!title.trim()}
+            aria-describedby={!title.trim() ? 'decision-submit-hint' : undefined}
             className="cursor-pointer px-4 py-2 rounded-lg text-sm font-medium"
             style={{
               background: title.trim() ? 'var(--teal)' : 'var(--ice)',
