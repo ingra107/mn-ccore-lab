@@ -108,38 +108,29 @@ export default function SearchPage() {
       {/* Centered hero when no query */}
       {showCentered ? (
         <div className="flex flex-col items-center justify-center" style={{ minHeight: '50vh', paddingTop: '8vh' }}>
-          <h1
-            style={{
-              fontWeight: 600,
-              fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-              color: 'var(--ink)',
-              margin: '0 0 var(--sp-sm)',
-              textAlign: 'center',
-            }}
-          >
-            Search Everything
-          </h1>
-          <p className="text-sm mb-6" style={{ color: 'var(--slate)', opacity: 0.6 }}>
-            Full-text search across tasks, projects, meetings, ideas, and more
-          </p>
-          <div className="w-full max-w-lg relative">
+          {/* H-02: replaced inline 36px h1 with shared PageHeader component */}
+          <PageHeader icon={<Search size={20} />} title="Search Everything" subtitle="Full-text search across tasks, projects, meetings, ideas, and more" />
+          <div className="w-full max-w-lg relative mt-4">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            {/* M-05: focus ring using --focus-ring token, WCAG-compliant teal */}
             <input
               ref={inputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search tasks, projects, meetings, ideas..."
-              className="w-full rounded-xl border px-4 py-3.5 pl-11 text-sm outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--ice)', boxShadow: 'var(--shadow-card)' }}
+              className="w-full rounded-xl border px-4 py-3.5 pl-11 text-sm"
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--ice)', boxShadow: 'var(--shadow-card)', outline: 'none' }}
+              onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px var(--focus-ring), var(--shadow-card)' }}
+              onBlur={e => { e.currentTarget.style.boxShadow = 'var(--shadow-card)' }}
             />
           </div>
           <div className="flex items-center justify-center gap-3 mt-5 flex-wrap">
-            {['tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity'].map((t) => (
-              <span key={t} className="text-[10px] px-2.5 py-1 rounded-full border capitalize" style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', opacity: 0.4 }}>
-                {t}
-              </span>
-            ))}
+          {['tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity'].map((t) => (
+            <span key={t} className="text-[10px] px-2.5 py-1 rounded-full border capitalize" style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', opacity: 0.4 }}>
+              {t}
+            </span>
+          ))}
           </div>
           <p className="text-[10px] mt-4" style={{ color: 'var(--slate)', opacity: 0.3 }}>
             Powered by D1 full-text search
@@ -175,10 +166,12 @@ export default function SearchPage() {
               </div>
             </div>
           )}
+          </div>
         </div>
       ) : (
         <>
           <PageHeader icon={<Search size={20} />} title="Search" subtitle="Find anything across the lab" />
+            {/* M-05: focus ring using --focus-ring token */}
           <div className="mt-5 relative">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
             <input
@@ -187,8 +180,10 @@ export default function SearchPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search tasks, projects, meetings, ideas..."
-              className="w-full rounded-xl border px-4 py-3 pl-11 text-sm outline-none"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--ice)' }}
+              className="w-full rounded-xl border px-4 py-3 pl-11 text-sm"
+              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--ice)', outline: 'none' }}
+              onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px var(--focus-ring)' }}
+              onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
             />
             {query && (
               <button

@@ -20,8 +20,9 @@ export default function WelcomeBanner() {
         style={{
           borderRadius: 'var(--radius-xl)',
           padding: '16px 20px',
-          background: 'linear-gradient(135deg, rgba(45,138,138,0.08) 0%, rgba(45,138,138,0.03) 100%)',
-          border: '1px solid rgba(45,138,138,0.15)',
+          background: 'var(--surface-card)',
+          border: '1px solid var(--border-subtle)',
+          borderLeft: '3px solid var(--teal-subtle)',
         }}
       >
         <div className="flex items-center gap-4">
@@ -55,8 +56,9 @@ export default function WelcomeBanner() {
               <Rocket size={14} style={{ color: 'var(--teal)' }} />
               <span style={{
                 fontSize: 14, fontWeight: 500, color: 'var(--ink)',
+                wordBreak: 'keep-all', overflowWrap: 'normal',
               }}>
-                Welcome to MN-CCORE Hub
+                Welcome to MN&#8209;CCORE Hub
               </span>
             </div>
             {nextStep && (

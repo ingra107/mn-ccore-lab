@@ -94,7 +94,7 @@ export default function Avatar({
       style={{
         background: styles.background,
         border: styles.border,
-        transition: 'all 0.2s ease',
+        transition: 'transform var(--duration-normal, 150ms) var(--ease-out)',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'scale(1.03)'
@@ -108,6 +108,9 @@ export default function Avatar({
           src={photoUrl}
           alt={name}
           loading="lazy"
+          decoding="async"
+          width={96}
+          height={96}
           className="w-full h-full rounded-full object-cover"
         />
       ) : (

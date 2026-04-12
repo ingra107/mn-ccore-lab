@@ -133,7 +133,7 @@ export default function ActivityPage() {
         }
       />
 
-      {/* Activity feed */}
+      {/* H-05: compressed activity feed — single row per entry (avatar + text + badge + timestamp) */}
       <div className="mt-5 flex flex-col gap-6">
         {isLoading && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-xl)' }}>
@@ -160,34 +160,36 @@ export default function ActivityPage() {
                 <h3 className="text-sm font-normal mb-2" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
                   {label}
                 </h3>
-                <motion.div className="flex flex-col gap-1 pl-4 border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)' }} variants={staggerContainer} initial="hidden" animate="visible">
+                <motion.div className="flex flex-col border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)', paddingLeft: 'var(--sp-md)' }} variants={staggerContainer} initial="hidden" animate="visible">
                   {items.map((item) => {
                     const person = item.actor ? getPersonInfo(item.actor) : null
                     const isFocused = focusedIndex === flatIndex
                     flatIndex++
                     return (
-                      <motion.div key={item.id} variants={staggerItem} className={`flex items-start gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors${isFocused ? ' task-row-focused' : ''}`}>
+                      /* Single-row layout: 24px avatar + action text + type badge + relative time */
+                      <motion.div
+                        key={item.id}
+                        variants={staggerItem}
+                        className={`flex items-center gap-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors${isFocused ? ' task-row-focused' : ''}`}
+                        style={{ minHeight: 36, paddingTop: 'var(--sp-xs)', paddingBottom: 'var(--sp-xs)' }}
+                      >
                         {person ? (
                           <ActivityAvatar slug={item.actor!} />
                         ) : (
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--ice)' }}>
-                            <span className="text-[10px]" style={{ color: 'var(--slate)' }}>SYS</span>
+                          <div className="rounded-full flex items-center justify-center flex-shrink-0" style={{ width: 24, height: 24, backgroundColor: 'var(--ice)' }}>
+                            <span style={{ fontSize: 9, color: 'var(--slate)' }}>SYS</span>
                           </div>
                         )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm" style={{ color: 'var(--ink)' }}>
-                            {person && <span className="font-medium">{person.name} </span>}
-                            {item.description}
-                          </p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}>
-                              {item.type}
-                            </span>
-                            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                              {formatRelativeTime(item.timestamp)}
-                            </span>
-                          </div>
-                        </div>
+                        <p className="text-xs flex-1 min-w-0 truncate" style={{ color: 'var(--ink)', lineHeight: 1.35 }}>
+                          {person && <span style={{ fontWeight: 500 }}>{person.name} </span>}
+                          {item.description}
+                        </p>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize flex-shrink-0" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}>
+                          {item.type.replace('_', ' ')}
+                        </span>
+                        <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.55, minWidth: 48, textAlign: 'right' }}>
+                          {formatRelativeTime(item.timestamp)}
+                        </span>
                       </motion.div>
                     )
                   })}
@@ -220,11 +222,11 @@ function ActivityAvatar({ slug }: { slug: string }) {
   return (
     <div
       ref={hoverCard.triggerRef as React.RefObject<HTMLDivElement>}
-      style={{ width: 28, height: 28, flexShrink: 0 }}
+      style={{ width: 24, height: 24, flexShrink: 0, position: 'relative' }}
       onMouseEnter={hoverCard.handlers.onMouseEnter}
       onMouseLeave={hoverCard.handlers.onMouseLeave}
     >
-      <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="base-sm" variant="ice" />
+      <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="tight" variant="ice" />
       <HoverCard data={data} isVisible={hoverCard.isVisible} position={hoverCard.position} cardRef={hoverCard.cardRef} cardHandlers={hoverCard.cardHandlers} />
     </div>
   )

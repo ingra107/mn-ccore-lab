@@ -509,9 +509,9 @@ function ProjectDetailInner({ project }: InnerProps) {
           )}
         </AnimatePresence>
 
-      {/* Tab navigation */}
+      {/* Tab navigation — M-31: flex-nowrap + overflow-x-auto ensures tabs scroll on mobile instead of clipping */}
       <div
-        className="flex items-center gap-1 mb-6 pb-2 overflow-x-auto"
+        className="flex flex-nowrap items-center gap-1 mb-6 pb-2 overflow-x-auto project-tab-strip"
         style={{ borderBottom: '1px solid var(--border-subtle)' }}
       >
         {([
@@ -1235,6 +1235,14 @@ function ProjectDetailInner({ project }: InnerProps) {
           background-color: var(--cream) !important;
           background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
           border: 1px solid var(--border-subtle);
+        }
+        /* M-31: hide scrollbar on tab strip while keeping horizontal scroll */
+        .project-tab-strip {
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+        .project-tab-strip::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </>

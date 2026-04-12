@@ -285,8 +285,8 @@ export default function Projects() {
             </div>
             <PageTooltip id="projects-pipeline-hint" text="Try Pipeline view for a visual overview" />
 
-            {/* Category filter pills */}
-            <div className="flex flex-wrap items-center gap-1.5">
+            {/* Category filter pills — H-18: flex-nowrap + overflow-x-auto prevents vertical stacking on mobile */}
+            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
               {CATEGORY_FILTERS.map((f) => (
                 <button
                   key={f.key}
@@ -366,7 +366,7 @@ export default function Projects() {
             <div
               className="hidden md:grid"
               style={{
-                gridTemplateColumns: 'minmax(280px, 3fr) 100px 110px 100px 80px',
+                gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px',
                 padding: 'var(--sp-sm) var(--sp-xl)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -445,8 +445,8 @@ export default function Projects() {
                           <div
                             className={`project-list-row${isFocused ? ' project-row-focused' : ''} hidden md:grid`}
                             style={{
-                              gridTemplateColumns: 'minmax(280px, 3fr) 100px 110px 100px 80px',
-                              padding: `var(--row-padding-y, 14px) 24px`,
+                              gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px',
+                              padding: `var(--row-padding-y) 24px`,
                               borderBottom: '1px solid var(--border-subtle)',
                               alignItems: 'center',
                               cursor: 'pointer',
@@ -621,7 +621,7 @@ export default function Projects() {
                           <div
                             className={`project-list-row${isFocused ? ' project-row-focused' : ''} md:hidden`}
                             style={{
-                              padding: `var(--row-padding-y, 12px) 16px`,
+                              padding: `var(--row-padding-y) 16px`,
                               borderBottom: '1px solid var(--border-subtle)',
                               cursor: 'pointer',
                               transition: 'background 0.12s ease-out',

@@ -53,7 +53,7 @@ export default function BentoCard({
           position: 'relative',
           background: glass
             ? 'rgba(255, 255, 255, 0.7)'
-            : 'var(--cream)',
+            : 'var(--surface-card)',
           backdropFilter: glass ? 'blur(12px)' : undefined,
           WebkitBackdropFilter: glass ? 'blur(12px)' : undefined,
           border: 'none',
@@ -99,10 +99,10 @@ export default function BentoCard({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'var(--gold-active)',
+                background: 'var(--surface-2)',
               }}
             >
-              <Icon size={15} style={{ color: 'var(--gold)' }} />
+              <Icon size={15} style={{ color: 'var(--slate)', opacity: 0.7 }} />
             </div>
           )}
           <div className="min-w-0 flex-1">

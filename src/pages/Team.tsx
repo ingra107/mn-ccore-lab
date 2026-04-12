@@ -134,13 +134,14 @@ export default function Team() {
               <button
                 key={tag}
                 onClick={() => setSearchParams({ expertise: tag })}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] transition-all hover:opacity-80"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] hover:opacity-80"
                 style={{
                   fontWeight: 400,
                   background: 'var(--teal-active)',
                   color: 'var(--teal)',
                   border: '1px solid rgba(45,138,138,0.2)',
                   cursor: 'pointer',
+                  transition: 'opacity var(--duration-normal, 150ms) var(--ease-out)',
                 }}
               >
                 {tag}
@@ -374,8 +375,13 @@ export default function Team() {
               <Link
                 key={member.name}
                 to={member.slug ? `/team/${member.slug}` : '#'}
-                className="fade-in-up text-center p-4 rounded-lg transition-all duration-200 cursor-pointer group"
-                style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)', textDecoration: 'none' }}
+                className="fade-in-up text-center p-4 rounded-lg cursor-pointer group"
+                style={{
+                  background: 'var(--ice)',
+                  border: '1px solid rgba(201, 168, 76, 0.08)',
+                  textDecoration: 'none',
+                  transition: 'background-color var(--duration-normal, 150ms) var(--ease-out)',
+                }}
               >
                 <div className="flex justify-center mb-2">
                   <Avatar
@@ -443,8 +449,13 @@ export default function Team() {
               <Link
                 key={member.name}
                 to={member.slug ? `/team/${member.slug}` : '#'}
-                className="fade-in-up text-center p-4 rounded-lg transition-all duration-200 cursor-pointer group"
-                style={{ background: 'var(--ice)', border: '1px solid rgba(201, 168, 76, 0.08)', textDecoration: 'none' }}
+                className="fade-in-up text-center p-4 rounded-lg cursor-pointer group"
+                style={{
+                  background: 'var(--ice)',
+                  border: '1px solid rgba(201, 168, 76, 0.08)',
+                  textDecoration: 'none',
+                  transition: 'background-color var(--duration-normal, 150ms) var(--ease-out)',
+                }}
               >
                 <div className="flex justify-center mb-2">
                   <Avatar

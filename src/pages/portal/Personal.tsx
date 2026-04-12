@@ -8,10 +8,9 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
-import EmptyState from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import OnboardingChecklist from '../../components/OnboardingChecklist'
-import { useTasks, useActivity } from '../../hooks/useApiData'
+import { useTasks, useActivity, useExpiringRegulatory } from '../../hooks/useApiData'
 import { useProjects } from '../../hooks/useApiData'
 import { useUpdateTaskStatus, useCreateIdea } from '../../hooks/useMutations'
 import { useAuth } from '../../hooks/useAuth'
@@ -624,6 +623,8 @@ export default function Personal() {
   const { data: allTasks = [], isLoading: tasksLoading } = useTasks()
   const { data: activity = [] } = useActivity(10)
   const { data: projects = [] } = useProjects()
+  // M-25: Regulatory alerts -- visible at top of Personal, not buried
+  const { data: expiringRegulatory = [] } = useExpiringRegulatory(60)
 
   const updateStatus = useUpdateTaskStatus()
   const { showUndo } = useUndoToast()
@@ -723,25 +724,55 @@ export default function Personal() {
         )}
       </div>
 
-      {/* Unauthenticated: simple sign-in prompt */}
+      {/* Unauthenticated: compact sign-in banner (H-04 -- replaced EmptyState that took 280px+) */}
       {!currentUser && (
-        <div className="mt-3">
-          <EmptyState
-            icon={<User size={32} />}
-            title="Your hub is ready"
-            subtitle={
-              <>
-                <a
-                  href="/api/auth/login"
-                  style={{ color: 'var(--teal)', fontWeight: 500, textDecoration: 'underline' }}
-                >
-                  Sign in
-                </a>{' '}
-                with @umn.edu to see your tasks, notifications, and watchlist.
-              </>
-            }
-          />
+        <div
+          className="flex items-center gap-3 mt-3 px-4 rounded-lg"
+          style={{
+            height: 44,
+            background: 'var(--teal-hover)',
+            border: '1px solid color-mix(in srgb, var(--teal) 20%, transparent)',
+          }}
+        >
+          <User size={13} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+          <span style={{ fontSize: 'var(--text-label)', color: 'var(--ink)', flex: 1 }}>
+            Sign in with @umn.edu to see your tasks, notifications, and watchlist.
+          </span>
+          <a
+            href="/api/auth/login"
+            style={{
+              fontSize: 'var(--text-label)',
+              fontWeight: 500,
+              color: 'var(--teal)',
+              textDecoration: 'none',
+              flexShrink: 0,
+            }}
+          >
+            Sign in &rarr;
+          </a>
         </div>
+      )}
+
+      {/* Regulatory Alert Strip -- M-25: visible near top of Personal, not buried */}
+      {expiringRegulatory.length > 0 && (
+        <Link
+          to="/projects"
+          className="flex items-center gap-3 mt-3 px-4 py-2.5 rounded-xl"
+          style={{
+            background: 'var(--maroon-hover)',
+            border: '1px solid color-mix(in srgb, var(--maroon) 20%, transparent)',
+            textDecoration: 'none',
+            transition: 'background-color var(--duration-normal) ease, border-color var(--duration-normal) ease',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'color-mix(in srgb, var(--maroon) 12%, transparent)' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--maroon-hover)' }}
+        >
+          <AlertTriangle size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+          <span style={{ fontSize: 'var(--text-label)', fontWeight: 500, color: 'var(--maroon)', flex: 1 }}>
+            {expiringRegulatory.length} regulatory item{expiringRegulatory.length > 1 ? 's' : ''} expiring within 60 days
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>View details &rarr;</span>
+        </Link>
       )}
 
       {/* Quick Actions + Recently Viewed */}
@@ -801,15 +832,16 @@ export default function Personal() {
         <QuickCapture />
       </div>
 
-      {/* Two-column layout */}
+      {/* Two-column command center -- C-08: .personal-grid from index.css stacks on mobile <=768px */}
+      {/* TODO C-02: wire useTaskKeyboardShortcuts(sortedPendingTasks, setSelectedTask) once hook lands in Round 3 */}
       <motion.div
-        className="personal-two-col mt-6"
+        className="personal-grid mt-6"
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
       >
         {/* Left: My Tasks */}
-        <motion.div variants={staggerItem} className="personal-left">
+        <motion.div variants={staggerItem}>
           <MyTasksColumn
             tasks={sortedPendingTasks}
             overdueTasks={overdueTasks}
@@ -819,7 +851,7 @@ export default function Personal() {
         </motion.div>
 
         {/* Right: 3 compact cards */}
-        <motion.div variants={staggerItem} className="personal-right">
+        <motion.div variants={staggerItem}>
           <div className="flex flex-col gap-4">
             <UpcomingCard deadlines={upcomingDeadlines} overdue={overdueTasks} />
             <RecentActivityCard activity={activity} />
@@ -884,19 +916,7 @@ export default function Personal() {
         <TaskDetailPanel task={selectedTask} onClose={() => setSelectedTask(null)} />
       )}
 
-      <style>{`
-        .personal-two-col {
-          display: grid;
-          grid-template-columns: 3fr 2fr;
-          gap: 1rem;
-          align-items: start;
-        }
-        @media (max-width: 768px) {
-          .personal-two-col {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
+
     </div>
   )
 }

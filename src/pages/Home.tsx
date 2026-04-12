@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, lazy, Suspense } from 'react'
 // Link removed — hero cards use <a> for reliable full-page navigation
 import {
   Stethoscope,
@@ -13,13 +13,15 @@ import { useCountUp } from '../hooks/useCountUp'
 import { usePublications, useProjects, useTeam, useGrants } from '../hooks/useApiData'
 import NetworkBackground from '../components/NetworkBackground'
 import FeaturedResearch from '../components/FeaturedResearch'
-import ResearchImpact from '../components/ResearchImpact'
 import CollaborationNetwork from '../components/CollaborationNetwork'
 import RecentActivity from '../components/RecentActivity'
 import CLIFMap from '../components/CLIFMap'
 import UpcomingMeetingBanner from '../components/UpcomingMeetingBanner'
 import LatestDigest from '../components/LatestDigest'
 import { usePageMeta } from '../hooks/usePageMeta'
+
+// Lazy-loaded: pulls recharts (PublicationTimeline) — deferred until scrolled into view
+const ResearchImpact = lazy(() => import('../components/ResearchImpact'))
 
 const pillars = [
   {
@@ -178,7 +180,7 @@ export default function Home() {
         <div className="relative z-10 content-container" style={{ paddingBottom: 'clamp(40px, 5vw, 64px)' }}>
           {/* Eyebrow */}
           <p
-            className="mb-3 transition-all duration-700"
+            className="mb-3"
             style={{
               fontSize: 'var(--text-small, 12px)',
               color: 'var(--gold)',
@@ -187,6 +189,7 @@ export default function Home() {
               fontWeight: 'var(--weight-ui, 500)',
               opacity: heroVisible ? 0.9 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(16px)',
+              transition: 'opacity var(--duration-slow, 300ms) var(--ease-out), transform var(--duration-slow, 300ms) var(--ease-out)',
             }}
           >
             University of Minnesota
@@ -194,7 +197,7 @@ export default function Home() {
 
           {/* Title */}
           <h1
-            className="transition-all duration-700 inline-flex items-baseline gap-1"
+            className="inline-flex items-baseline gap-1"
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 800,
@@ -204,6 +207,7 @@ export default function Home() {
               color: 'var(--ink-bright, #fff)',
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(24px)',
+              transition: 'opacity var(--duration-slow, 300ms) var(--ease-out), transform var(--duration-slow, 300ms) var(--ease-out)',
               transitionDelay: '100ms',
             }}
           >
@@ -223,7 +227,7 @@ export default function Home() {
 
           {/* Tagline — the single value proposition */}
           <p
-            className="mt-3 mb-6 transition-all duration-700"
+            className="mt-3 mb-6"
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 300,
@@ -234,6 +238,7 @@ export default function Home() {
               maxWidth: '600px',
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
+              transition: 'opacity var(--duration-slow, 300ms) var(--ease-out), transform var(--duration-slow, 300ms) var(--ease-out)',
               transitionDelay: '200ms',
             }}
           >
@@ -242,56 +247,60 @@ export default function Home() {
 
           {/* CTA buttons */}
           <div
-            className="flex flex-wrap gap-3 mb-0 transition-all duration-700"
+            className="flex flex-wrap gap-3 mb-0"
             style={{
               opacity: heroVisible ? 1 : 0,
               transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
+              transition: 'opacity var(--duration-slow, 300ms) var(--ease-out), transform var(--duration-slow, 300ms) var(--ease-out)',
               transitionDelay: '300ms',
             }}
           >
             <a
-              href="/publications"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm transition-all duration-200"
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm"
               style={{
                 background: 'var(--gold)',
                 color: '#0b1017',
                 fontWeight: 500,
                 textDecoration: 'none',
                 letterSpacing: '0.01em',
+                transition: 'opacity var(--duration-normal, 150ms) var(--ease-out), transform var(--duration-normal, 150ms) var(--ease-out)',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)' }}
               onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
-              Explore Research
+              Open Hub
               <ArrowRight size={15} aria-hidden="true" />
             </a>
             <a
-              href="/team"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm transition-all duration-200"
+              href="/publications"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm"
               style={{
                 background: 'var(--hover-light)',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
                 color: 'rgba(255, 255, 255, 0.85)',
                 fontWeight: 400,
                 textDecoration: 'none',
+                transition: 'background-color var(--duration-normal, 150ms) var(--ease-out), border-color var(--duration-normal, 150ms) var(--ease-out)',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-medium)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)' }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-light)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)' }}
             >
-              Meet the Team
+              Our Research
             </a>
           </div>
         </div>
 
         {/* ─── Impact Strip ─── */}
         <div
-          className="relative z-10 transition-all duration-700"
+          className="relative z-10"
           style={{
             borderTop: '1px solid rgba(201, 168, 76, 0.25)',
             background: 'rgba(0, 0, 0, 0.2)',
             backdropFilter: 'blur(12px)',
             opacity: heroVisible ? 1 : 0,
             transform: heroVisible ? 'translateY(0)' : 'translateY(12px)',
+            transition: 'opacity var(--duration-slow, 300ms) var(--ease-out), transform var(--duration-slow, 300ms) var(--ease-out)',
             transitionDelay: '400ms',
           }}
         >
@@ -492,7 +501,9 @@ export default function Home() {
       </div>
       <CLIFMap />
 
-      <ResearchImpact />
+      <Suspense fallback={<div style={{ height: '16rem' }} aria-hidden="true" />}>
+        <ResearchImpact />
+      </Suspense>
 
       <CollaborationNetwork />
 
@@ -541,8 +552,11 @@ export default function Home() {
                   href={agency.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group text-center transition-all duration-200 hover:scale-105"
-                  style={{ textDecoration: 'none' }}
+                  className="group text-center hover:scale-105"
+                  style={{
+                    textDecoration: 'none',
+                    transition: 'transform var(--duration-normal, 150ms) var(--ease-out)',
+                  }}
                 >
                   <div
                     className={`text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 ${agency.colorClass}`}
