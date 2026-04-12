@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, useId } from 'react'
+import { createPortal } from 'react-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, ChevronDown, ChevronRight, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check, GripVertical, Pin, RotateCcw } from 'lucide-react'
@@ -1522,6 +1523,11 @@ function InlineCellSelect({
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const [focusedIdx, setFocusedIdx] = useState(-1)
+  const [pos, setPos] = useState<{ top: number; left: number; minWidth: number }>({ top: 0, left: 0, minWidth: 130 })
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const listboxIdBase = useId()
+  const listboxId = useRef(listboxIdBase)
   const filterRef = useRef<HTMLInputElement>(null)
 
   const filtered = useMemo(() => {
