@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -12,7 +12,8 @@ import { CardSkeleton } from '../../components/LoadingSkeleton'
 import OnboardingChecklist from '../../components/OnboardingChecklist'
 import { useTasks, useActivity, useExpiringRegulatory } from '../../hooks/useApiData'
 import { useProjects } from '../../hooks/useApiData'
-import { useUpdateTaskStatus, useCreateIdea } from '../../hooks/useMutations'
+import { useUpdateTaskStatus, useUpdateTask, useCreateIdea } from '../../hooks/useMutations'
+import { useTaskKeyboardShortcuts } from '../../hooks/useTaskKeyboardShortcuts'
 import { useAuth } from '../../hooks/useAuth'
 import { useUserRole } from '../../hooks/useUserRole'
 import { getPersonInfo } from '../../data/team'
@@ -627,6 +628,7 @@ export default function Personal() {
   const { data: expiringRegulatory = [] } = useExpiringRegulatory(60)
 
   const updateStatus = useUpdateTaskStatus()
+  const updateTask = useUpdateTask()
   const { showUndo } = useUndoToast()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
 
@@ -695,6 +697,65 @@ export default function Personal() {
     const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done' }
     showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id, status: prev }))
   }
+
+  // ── Keyboard shortcut state (C-02) ────────────────────────────
+  const [focusedTaskIndex, setFocusedTaskIndex] = useState(-1)
+
+  // Focused task derived from index into sortedPendingTasks (flat list)
+  const focusedTask = useMemo(() => {
+    if (focusedTaskIndex < 0 || focusedTaskIndex >= sortedPendingTasks.length) return null
+    return sortedPendingTasks[focusedTaskIndex]
+  }, [focusedTaskIndex, sortedPendingTasks])
+
+  const STATUS_CYCLE: Record<string, string> = { todo: 'in_progress', in_progress: 'done', done: 'todo', blocked: 'todo', waiting_external: 'todo' }
+
+  const cycleStatus = useCallback(() => {
+    if (!focusedTask) return
+    const next = STATUS_CYCLE[focusedTask.status] ?? 'in_progress'
+    handleStatusChange(focusedTask.id, next)
+  }, [focusedTask]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleSelectFocused = useCallback(() => {
+    // Personal page has no bulk selection UI — no-op to satisfy hook interface
+  }, [])
+
+  const openDetailForFocused = useCallback(() => {
+    if (focusedTask) setSelectedTask(focusedTask)
+  }, [focusedTask])
+
+  const closeOverlay = useCallback(() => {
+    setSelectedTask(null)
+  }, [])
+
+  const snoozeFocused = useCallback(() => {
+    if (!focusedTask || !focusedTask.due_date) return
+    const d = new Date(focusedTask.due_date + 'T12:00:00')
+    d.setDate(d.getDate() + 1)
+    const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    updateTask.mutate({ id: focusedTask.id, fields: { due_date: newDate } })
+    showUndo(`Snoozed to ${newDate}`, () => updateTask.mutate({ id: focusedTask.id, fields: { due_date: focusedTask.due_date } }))
+  }, [focusedTask]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const assignFocused = useCallback(() => {
+    const row = document.querySelector('.task-row-focused .inline-assignee-btn')
+    if (row) (row as HTMLButtonElement).click()
+  }, [])
+
+  // Only activate shortcuts when tasks are visible (currentUser set, list non-empty)
+  useTaskKeyboardShortcuts({
+    taskCount: currentUser ? sortedPendingTasks.length : 0,
+    focusedIndex: focusedTaskIndex,
+    setFocusedIndex: setFocusedTaskIndex,
+    peekOpen: false,
+    togglePeek: openDetailForFocused,
+    openDetail: openDetailForFocused,
+    cycleStatus,
+    toggleSelect: toggleSelectFocused,
+    isBlocked: !!selectedTask,
+    closeOverlay,
+    snoozeFocused,
+    assignFocused,
+  })
 
   if (tasksLoading) return <CardSkeleton count={4} />
 
@@ -833,7 +894,6 @@ export default function Personal() {
       </div>
 
       {/* Two-column command center -- C-08: .personal-grid from index.css stacks on mobile <=768px */}
-      {/* TODO C-02: wire useTaskKeyboardShortcuts(sortedPendingTasks, setSelectedTask) once hook lands in Round 3 */}
       <motion.div
         className="personal-grid mt-6"
         variants={staggerContainer}
