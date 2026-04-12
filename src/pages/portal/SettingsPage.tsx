@@ -81,7 +81,7 @@ export default function SettingsPage() {
     <div>
       <PageHeader icon={<Settings size={20} />} title="Settings" subtitle="Changes are saved automatically" />
 
-      <div className="mt-6 flex flex-col max-w-2xl">
+      <div className="flex flex-col max-w-2xl" style={{ marginTop: 'var(--sp-xl)' }}>
         {/* Basic Information */}
         <SettingsSection title="Basic Information" subtitle="These appear in the sidebar header and dashboard" icon={Type}>
           <SettingsField label="Lab Name" hint="Shown in the sidebar and page titles">
@@ -220,7 +220,7 @@ export default function SettingsPage() {
         {/* Appearance */}
         <SettingsSection title="Appearance" subtitle="Theme and layout preferences" icon={Palette}>
           <div className="flex gap-4">
-            {/* Light theme preview */}
+            {/* Light theme preview — hardcoded hex intentional (showing what themes look like) */}
             <button
               onClick={() => {
                 document.documentElement.setAttribute('data-theme', 'light')
@@ -242,7 +242,7 @@ export default function SettingsPage() {
                 <div className="h-1.5 rounded-full" style={{ width: '70%', background: '#2d8a8a', opacity: 0.3 }} />
               </div>
             </button>
-            {/* Dark theme preview */}
+            {/* Dark theme preview — hardcoded hex intentional (showing what themes look like) */}
             <button
               onClick={() => {
                 document.documentElement.setAttribute('data-theme', 'dark')
@@ -330,17 +330,31 @@ export default function SettingsPage() {
 }
 
 // ── Settings Section ─────────────────────────────────────────
+// All 4 layout zones (Basic Info / Workflow Templates / AI Meeting Context / Appearance + Reset)
+// share this single container for consistent rhythm:
+//   - marginBottom: var(--sp-2xl) (32px inter-zone gap)
+//   - border: var(--border-subtle) + radius: var(--radius-lg)
+//   - padding: var(--sp-xl) (24px)
+//   - backgroundColor: var(--surface-1)
+//   - h3: var(--text-md) / var(--weight-ui) (16px / 500)
+//   - subtitle: var(--text-small) (12px)
 
 function SettingsSection({ title, subtitle, icon: Icon, children }: { title: string; subtitle: string; icon: typeof Settings; children: React.ReactNode }) {
   return (
-    <div className="mb-6" style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-xl, 24px)' }}>
+    <div style={{
+      marginBottom: 'var(--sp-2xl)',
+      border: '1px solid var(--border-subtle)',
+      borderRadius: 'var(--radius-lg)',
+      padding: 'var(--sp-xl)',
+      backgroundColor: 'var(--surface-1)',
+    }}>
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--teal-active)' }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--teal-active)' }}>
           <Icon size={16} style={{ color: 'var(--teal)' }} />
         </div>
         <div>
-          <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>{title}</h3>
-          <p className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>{subtitle}</p>
+          <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--weight-ui)', color: 'var(--ink)', margin: 0 }}>{title}</h3>
+          <p style={{ fontSize: 'var(--text-small)', color: 'var(--slate)', opacity: 0.6, margin: 0 }}>{subtitle}</p>
         </div>
       </div>
       <div className="flex flex-col gap-4">
