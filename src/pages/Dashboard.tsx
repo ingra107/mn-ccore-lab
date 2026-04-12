@@ -455,7 +455,9 @@ export default function Dashboard() {
                     <Settings2 size={12} />
                     Customize
                   </button>
-                  <PageTooltip id="dashboard-filter-hint" text="Press F to toggle filters on any page" />
+                  <span className="hidden md:block">
+                    <PageTooltip id="dashboard-filter-hint" text="Press F to toggle filters on any page" />
+                  </span>
                 </div>
               </div>
             </div>

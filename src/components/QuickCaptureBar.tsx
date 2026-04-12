@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Check } from 'lucide-react'
+import { Send, Check, Plus } from 'lucide-react'
 import { usePBCapture } from '../hooks/useMutations'
 
 export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
@@ -61,11 +61,13 @@ export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
           height: 40,
           padding: '0 var(--sp-md)',
           borderRadius: 'var(--radius-xl)',
-          border: '1px solid var(--border-subtle)',
+          border: '1px solid var(--border-default)',
           background: 'var(--cream)',
+          boxShadow: '0 0 0 1px var(--border-subtle)',
           transition: 'border-color 150ms ease, box-shadow 150ms ease',
         }}
       >
+        <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.7, flexShrink: 0 }} />
         <input
           ref={inputRef}
           type="text"

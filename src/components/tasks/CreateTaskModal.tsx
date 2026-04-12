@@ -217,8 +217,16 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           </button>
         </div>
 
-        {/* Template strip */}
-        <div className="flex gap-1.5 px-5 pt-3 pb-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        {/* Template strip — horizontally scrollable on mobile */}
+        <div
+          className="flex gap-1.5 px-5 pt-3 pb-1.5 overflow-x-auto"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+            flexWrap: 'nowrap',
+          }}
+        >
           {TASK_TEMPLATES.map(t => {
             const Icon = t.icon
             return (
