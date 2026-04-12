@@ -413,6 +413,22 @@ export function useMeetingsApi(options?: { enabled?: boolean }) {
   })
 }
 
+// ── Next Meeting (lightweight) ───────────────────────────────
+
+export function useNextMeeting() {
+  return useQuery({
+    queryKey: ['meetings', 'next'],
+    queryFn: async () => {
+      const res = await fetch('/api/meetings/next')
+      if (!res.ok) throw new Error('Failed')
+      const data = await res.json() as { data: { id: string; title: string; date: string } | null }
+      return data.data
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
+  })
+}
+
 // ── Meeting Cadence ──────────────────────────────────────────
 
 export interface CadenceData {

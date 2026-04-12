@@ -638,6 +638,8 @@ function SortableColumnHeader({
   return (
     <div
       ref={setNodeRef}
+      role="columnheader"
+      aria-sort={isActive ? (currentAsc ? 'ascending' : 'descending') : 'none'}
       style={dragStyle}
       {...attributes}
       onClick={(e) => {
@@ -768,6 +770,9 @@ function TaskGridRow({
     <div
       ref={rowRef}
       data-testid={`task-row-${task.id}`}
+      role="row"
+      aria-rowindex={index + 2}
+      aria-selected={selected ?? false}
       style={{
         ...colStyle,
         padding: '0 var(--sp-lg)',
@@ -797,7 +802,7 @@ function TaskGridRow({
       onContextMenu={(e) => onContextMenu?.(e, task.id)}
     >
       {/* Checkbox */}
-      <div className="task-row-checkbox" onClick={(e) => { e.stopPropagation(); onToggleSelect?.(task.id) }} style={{ cursor: 'pointer' }}>
+      <div role="gridcell" className="task-row-checkbox" onClick={(e) => { e.stopPropagation(); onToggleSelect?.(task.id) }} style={{ cursor: 'pointer' }}>
         {onToggleSelect ? (
           <div style={{
             width: 16, height: 16, borderRadius: 'var(--radius-sm)',
@@ -820,6 +825,7 @@ function TaskGridRow({
             return (
               <div
                 key="title"
+                role="gridcell"
                 className={`task-row-title ${cp.className}`}
                 ref={el => { cellRefs.current[gridPos] = el }}
                 tabIndex={cp.tabIndex}
@@ -1004,6 +1010,7 @@ function TaskGridRow({
             return (
               <div
                 key="assignee"
+                role="gridcell"
                 className={`task-row-meta flex items-center gap-1.5 ${cp.className}`}
                 ref={el => { cellRefs.current[gridPos] = el }}
                 tabIndex={cp.tabIndex}
@@ -1036,6 +1043,7 @@ function TaskGridRow({
             return (
               <div
                 key="project"
+                role="gridcell"
                 className={`task-row-meta ${cp.className}`}
                 ref={el => { cellRefs.current[gridPos] = el }}
                 tabIndex={cp.tabIndex}
@@ -1075,6 +1083,7 @@ function TaskGridRow({
             return (
               <div
                 key="due_date"
+                role="gridcell"
                 className={`task-row-meta col-numeric ${cp.className}`}
                 ref={el => { cellRefs.current[gridPos] = el }}
                 tabIndex={cp.tabIndex}

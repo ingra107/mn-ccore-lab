@@ -28,7 +28,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { useUnreadCount } from '../hooks/useNotifications'
-import { useMeetingsApi } from '../hooks/useApiData'
+import { useNextMeeting } from '../hooks/useApiData'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
 
@@ -109,22 +109,19 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   })
   const myOverdue = overdueData?.count ?? 0
 
-  // Next meeting countdown
-  const { data: meetings = [] } = useMeetingsApi()
+  // Next meeting countdown — uses lightweight /api/meetings/next (not full meetings list)
+  const { data: nextMeeting } = useNextMeeting()
   const nextMeetingLabel = useMemo(() => {
+    if (!nextMeeting?.date) return null
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const upcoming = meetings
-      .filter(m => m.date && new Date(m.date + 'T12:00:00') >= today)
-      .sort((a, b) => a.date.localeCompare(b.date))
-    if (upcoming.length === 0) return null
-    const next = upcoming[0]
-    const nextDate = new Date(next.date + 'T12:00:00')
+    const nextDate = new Date(nextMeeting.date + 'T12:00:00')
+    if (nextDate < today) return null
     const diffDays = Math.round((nextDate.getTime() - today.getTime()) / 86400000)
     if (diffDays === 0) return 'Today'
     if (diffDays === 1) return 'Tomorrow'
     return `in ${diffDays}d`
-  }, [meetings])
+  }, [nextMeeting])
 
   // Conditionally include PI Tools section
   const allGroups: NavGroup[] = isPi
