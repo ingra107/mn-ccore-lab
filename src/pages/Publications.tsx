@@ -172,8 +172,8 @@ export default function Publications() {
 
   return (
     <PageLayout>
-      {/* Header */}
-      <section className="pt-4 pb-6 sm:pb-8 content-container">
+      {/* Header — min-height reserves space to prevent CLS (H-15) */}
+      <section className="pt-4 pb-6 sm:pb-8 content-container" style={{ minHeight: '140px', contain: 'layout' }}>
         <h1
           className="text-3xl sm:text-4xl lg:text-5xl mb-3 sm:mb-4"
           style={{
@@ -186,43 +186,45 @@ export default function Publications() {
         </h1>
         <p
           className="text-base sm:text-lg max-w-2xl"
-          style={{ color: 'var(--slate)' }}
+          style={{ color: 'var(--slate)', minHeight: '1.5em' }}
         >
           {publications.filter((p) => p.status === 'Published').length} published
           papers from MN-CCORE lab members. Click any paper to view its abstract
           and links.
         </p>
 
-        {/* Year distribution mini-chart */}
-        {years.length > 1 && (
-          <div className="flex items-end gap-1 mt-3" style={{ height: 32 }}>
-            {years.slice(0, 8).reverse().map(year => {
-              const count = filtered.filter(p => p.year === year).length
-              const max = Math.max(...years.map(y => filtered.filter(p => p.year === y).length), 1)
-              return (
-                <button
-                  key={year}
-                  onClick={() => handleYearToggle(year)}
-                  className="flex flex-col items-center gap-0.5"
-                  style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-                  title={`${year}: ${count} publications`}
-                >
-                  <div
-                    className="rounded-sm transition-all"
-                    style={{
-                      width: 20,
-                      height: `${Math.max((count / max) * 24, 2)}px`,
-                      backgroundColor: activeYears.includes(year) ? 'var(--gold)' : 'rgba(201,168,76,0.3)',
-                    }}
-                  />
-                  <span className="text-[7px]" style={{ color: activeYears.includes(year) ? 'var(--gold)' : 'var(--slate)', opacity: activeYears.includes(year) ? 1 : 0.4 }}>
-                    {String(year).slice(2)}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        )}
+        {/* Year distribution mini-chart — fixed-height slot prevents CLS when chart appears (H-15) */}
+        <div style={{ height: 48, display: 'flex', alignItems: 'flex-end' }}>
+          {years.length > 1 && (
+            <div className="flex items-end gap-1" style={{ height: 32 }}>
+              {years.slice(0, 8).reverse().map(year => {
+                const count = filtered.filter(p => p.year === year).length
+                const max = Math.max(...years.map(y => filtered.filter(p => p.year === y).length), 1)
+                return (
+                  <button
+                    key={year}
+                    onClick={() => handleYearToggle(year)}
+                    className="flex flex-col items-center gap-0.5"
+                    style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                    title={`${year}: ${count} publications`}
+                  >
+                    <div
+                      className="rounded-sm transition-all"
+                      style={{
+                        width: 20,
+                        height: `${Math.max((count / max) * 24, 2)}px`,
+                        backgroundColor: activeYears.includes(year) ? 'var(--gold)' : 'rgba(201,168,76,0.3)',
+                      }}
+                    />
+                    <span className="text-[7px]" style={{ color: activeYears.includes(year) ? 'var(--gold)' : 'var(--slate)', opacity: activeYears.includes(year) ? 1 : 0.4 }}>
+                      {String(year).slice(2)}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Export bibliography */}
         {filtered.length > 0 && (
@@ -240,9 +242,9 @@ export default function Publications() {
         )}
       </section>
 
-      {/* Key Publications */}
+      {/* Key Publications — theme-aware surface tokens, not hardcoded dark (C-13) */}
       {keyPubs.length > 0 && (
-        <div className="section-ink">
+        <div style={{ background: 'var(--surface-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
           <section className="py-6 sm:py-8 content-container">
             <div className="flex items-center gap-2 mb-4">
               <Award size={16} style={{ color: 'var(--gold)' }} aria-hidden="true" />
@@ -278,13 +280,13 @@ export default function Publications() {
                   <div className="min-w-0">
                     <p
                       className="text-sm font-medium leading-snug"
-                      style={{ color: 'var(--ink-bright, #fff)' }}
+                      style={{ color: 'var(--ink)' }}
                     >
                       {pub.title}
                     </p>
                     <p
                       className="text-xs mt-0.5"
-                      style={{ color: 'rgba(255, 255, 255, 0.5)', fontStyle: 'italic' }}
+                      style={{ color: 'var(--slate)', fontStyle: 'italic' }}
                     >
                       {pub.journal}
                     </p>
@@ -385,26 +387,33 @@ export default function Publications() {
             ))}
           </div>
         ) : (
-          /* Grouped by year (default) */
+          /* Grouped by year (default) — quiet label style, not display heading (M-10) */
           years.map((year) => (
             <div key={year} className="mb-8 sm:mb-12">
-              <h2
-                className="fade-in-up text-lg sm:text-xl mb-4 sm:mb-6 flex items-center gap-3"
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 500,
-                  color: 'var(--ink)',
-                }}
-              >
-                <span>{year}</span>
+              <div className="fade-in-up flex items-center gap-3 mb-4 sm:mb-6">
+                <span
+                  style={{
+                    fontSize: 'var(--text-label)',
+                    fontWeight: 'var(--weight-ui)',
+                    color: 'var(--ink)',
+                    opacity: 'var(--ink-label)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  {year}
+                </span>
                 <span
                   className="flex-1 h-px"
-                  style={{ background: 'rgba(201, 168, 76, 0.3)' }}
+                  style={{ background: 'var(--border-subtle)' }}
                 />
                 <span
-                  className="text-xs font-normal"
                   style={{
+                    fontSize: 'var(--text-label)',
+                    fontWeight: 'var(--weight-ui)',
                     color: 'var(--slate)',
+                    opacity: 'var(--ink-label)',
+                    letterSpacing: '0.03em',
                   }}
                 >
                   {filtered.filter((p) => p.year === year).length} paper
@@ -412,7 +421,7 @@ export default function Publications() {
                     ? 's'
                     : ''}
                 </span>
-              </h2>
+              </div>
               <div className="space-y-3 sm:space-y-4">
                 {filtered
                   .filter((p) => p.year === year)
