@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Outlet } from 'react-router-dom'
-import { Menu, Sun, Moon, Monitor, Search, Plus, AlignJustify, AlignLeft } from 'lucide-react'
+import { Outlet, useLocation } from 'react-router-dom'
+import { Menu, X, Sun, Moon, Monitor, Search, Plus, AlignJustify, AlignLeft } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import Sidebar from './Sidebar'
@@ -31,7 +31,23 @@ export default function PortalLayout() {
     return localStorage.getItem('mn-ccore-sidebar-collapsed') === 'true'
   })
   const [mobileOpen, setMobileOpen] = useState(false)
+  const location = useLocation()
   const [focusMode, setFocusMode] = useState(false)
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [location.pathname])
+
+  // Close mobile menu on Escape key
+  useEffect(() => {
+    if (!mobileOpen) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [mobileOpen])
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed((prev) => {
@@ -110,10 +126,12 @@ export default function PortalLayout() {
           {/* Mobile hamburger */}
           <button
             className="lg:hidden p-2 mr-2 rounded-md"
-            onClick={() => setMobileOpen(true)}
+            onClick={() => setMobileOpen((prev) => !prev)}
+            aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
+            aria-expanded={mobileOpen}
             style={{ color: 'var(--ink)' }}
           >
-            <Menu size={20} />
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
           {/* Search trigger */}
