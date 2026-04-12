@@ -35,7 +35,7 @@ export async function handleGetExpiringItems(url: URL, env: Env): Promise<Respon
     SELECT r.*, p.title as project_title, p.slug as project_slug
     FROM regulatory_items r
     LEFT JOIN projects p ON r.project_id = p.slug OR r.project_id = p.id
-    WHERE r.status = 'active'
+    WHERE r.status IN ('active','action_needed','expiring_soon','pending')
       AND r.expiration_date IS NOT NULL
       AND r.expiration_date <= ?
     ORDER BY r.expiration_date ASC
