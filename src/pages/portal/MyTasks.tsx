@@ -71,6 +71,9 @@ export default function MyTasks() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showAllTasks, setShowAllTasks] = useState(false)
   const bulkUpdate = useBulkUpdateTasks()
+  const [bannerDismissed, setBannerDismissed] = useState(() =>
+    localStorage.getItem('hub-signin-banner-dismissed') === 'true'
+  )
 
   const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze' | 'status', value?: string) => {
     if (action === 'snooze') {
@@ -421,16 +424,45 @@ export default function MyTasks() {
         </div>
       </PageHeader>
 
-      {!currentUser && !showAllTasks && (
+      {!currentUser && !showAllTasks && !bannerDismissed && (
         <div
           className="mt-4 px-4 py-3 rounded-lg border text-sm"
           style={{
             borderColor: 'var(--gold)',
             backgroundColor: 'var(--gold-hover)',
             color: 'var(--ink)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
           }}
         >
-          Showing all lab tasks. <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> with your @umn.edu account to see only your tasks.
+          <span>
+            Showing all lab tasks. <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> with your @umn.edu account to see only your tasks.
+          </span>
+          <button
+            onClick={() => {
+              localStorage.setItem('hub-signin-banner-dismissed', 'true')
+              setBannerDismissed(true)
+            }}
+            title="Dismiss"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--slate)',
+              padding: '2px',
+              display: 'flex',
+              alignItems: 'center',
+              flexShrink: 0,
+              opacity: 0.6,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6' }}
+            aria-label="Dismiss sign-in banner"
+          >
+            <X size={14} />
+          </button>
         </div>
       )}
 

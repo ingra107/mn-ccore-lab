@@ -30,7 +30,7 @@ const shortcuts = [
     category: 'Actions',
     items: [
       { keys: 'C', action: 'Create new task' },
-      { keys: 'N', action: 'New idea / decision (on those pages)' },
+      { keys: 'N', action: 'New task (navigates to Tasks + opens create modal)' },
     ],
   },
   {

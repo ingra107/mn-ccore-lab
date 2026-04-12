@@ -345,7 +345,13 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     Object.keys(colWidths).some(k => colWidths[k] !== DEFAULT_WIDTHS[k])
 
   return (
-    <div className="table-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div
+      className="table-container"
+      role="grid"
+      aria-label="Tasks"
+      aria-rowcount={sorted.length + 1}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+    >
       {/* Reset view button — only show when config differs from defaults */}
       {configDiffers && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', padding: 'var(--sp-xs) var(--sp-lg) 0', flexShrink: 0 }}>
@@ -376,7 +382,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         onDragEnd={handleColumnDragEnd}
       >
         <SortableContext items={orderedDataCols} strategy={horizontalListSortingStrategy}>
-          <div className="task-grid-header" style={{ ...colStyle, padding: 'var(--sp-sm) var(--sp-lg)', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+          <div className="task-grid-header" role="row" aria-rowindex={1} style={{ ...colStyle, padding: 'var(--sp-sm) var(--sp-lg)', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
             <div /> {/* Checkbox spacer — not sortable */}
             {orderedDataCols.map(col => (
               <SortableColumnHeader

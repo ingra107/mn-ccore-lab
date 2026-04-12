@@ -75,7 +75,7 @@ export function useKeyboardShortcuts() {
 
         case 'n':
           e.preventDefault()
-          navigate('/ideas?create=true')
+          navigate('/tasks?create=true')
           break
 
         case 'f':
