@@ -631,6 +631,8 @@ export default function Personal() {
 
   // Onboarding dismissed state (re-check on mount)
   const [onboardingDismissed, setOnboardingDismissed] = useState(() => isOnboardingDismissed())
+  // Onboarding section collapsed by default — expanded only on explicit user action
+  const [onboardingExpanded, setOnboardingExpanded] = useState(false)
 
   useEffect(() => {
     // Re-check after mount in case localStorage wasn't ready
@@ -742,13 +744,6 @@ export default function Personal() {
         </div>
       )}
 
-      {/* Onboarding Checklist — only if not dismissed */}
-      {!onboardingDismissed && (
-        <div className="mt-5">
-          <OnboardingChecklist />
-        </div>
-      )}
-
       {/* Quick Actions + Recently Viewed */}
       <div className="flex items-center gap-3 mt-4 flex-wrap">
         {([
@@ -837,6 +832,52 @@ export default function Personal() {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Onboarding Checklist — collapsed by default, below the command center */}
+      {!onboardingDismissed && (
+        <div className="mt-6">
+          <button
+            onClick={() => setOnboardingExpanded((v) => !v)}
+            className="flex items-center gap-2 w-full text-left px-0 py-0 mb-0"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
+            aria-expanded={onboardingExpanded}
+          >
+            <ChevronDown
+              size={14}
+              style={{
+                color: 'var(--slate)',
+                opacity: 0.6,
+                transform: onboardingExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
+                transition: 'transform 150ms ease',
+              }}
+            />
+            <span style={{ fontSize: 'var(--text-label)', fontWeight: 500, opacity: 0.7 }}>
+              30-Day Onboarding
+            </span>
+            {!onboardingExpanded && (
+              <span style={{ fontSize: '11px', opacity: 0.4, marginLeft: 4 }}>
+                Show checklist
+              </span>
+            )}
+          </button>
+          <AnimatePresence initial={false}>
+            {onboardingExpanded && (
+              <motion.div
+                key="onboarding"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                style={{ overflow: 'hidden' }}
+              >
+                <div className="mt-3">
+                  <OnboardingChecklist />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Task Detail Panel */}
       {selectedTask && (

@@ -115,7 +115,6 @@ const MeetingPrep = lazy(() => import('./pages/MeetingPrep'))
 const Digest = lazy(() => import('./pages/Digest'))
 
 const TrajectoryPage = lazy(() => import('./pages/TrajectoryPage'))
-const GrantsPage = lazy(() => import('./pages/Grants'))
 const MyItems = lazy(() => import('./pages/MyItems'))
 
 // New portal pages (Phase H1 — placeholders, built out in later phases)
@@ -139,8 +138,7 @@ const SessionHistory = lazy(() => import('./pages/portal/SessionHistory'))
 const MenteeMilestones = lazy(() => import('./pages/portal/MenteeMilestones'))
 const DeadlineCascadePage = lazy(() => import('./pages/portal/DeadlineCascadePage'))
 const Pulse = lazy(() => import('./pages/Pulse'))
-// GrantsPortal placeholder available when existing Grants page is fully migrated
-// const GrantsPortal = lazy(() => import('./pages/portal/Grants'))
+const GrantsPortal = lazy(() => import('./pages/portal/Grants'))
 
 function PageLoader() {
   return (
@@ -208,8 +206,9 @@ export default function App() {
                   <Route path="/decisions" element={<ErrorBoundary><PageErrorBoundary pageName="DecisionsPage"><DecisionsPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/narratives" element={<ErrorBoundary><NarrativesPage /></ErrorBoundary>} />
                   <Route path="/digest" element={<ErrorBoundary><Digest /></ErrorBoundary>} />
+                  <Route path="/research-digest" element={<Navigate to="/digest" replace />} />
                   <Route path="/search" element={<ErrorBoundary><SearchPage /></ErrorBoundary>} />
-                  <Route path="/grants" element={<ErrorBoundary><PageErrorBoundary pageName="Grants"><GrantsPage /></PageErrorBoundary></ErrorBoundary>} />
+                  <Route path="/grants" element={<ErrorBoundary><PageErrorBoundary pageName="Grants"><GrantsPortal /></PageErrorBoundary></ErrorBoundary>} />
 
                   {/* Meetings */}
                   <Route path="/meetings" element={<ErrorBoundary><Meetings /></ErrorBoundary>} />
@@ -226,6 +225,9 @@ export default function App() {
                   <Route path="/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
                   <Route path="/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
                 </Route>
+
+                {/* Catch-all: redirect unknown paths to dashboard */}
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </Suspense>
           </ViewTransitionWrapper>

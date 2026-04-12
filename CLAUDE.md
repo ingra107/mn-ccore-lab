@@ -679,11 +679,8 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 - project_id `|| null` fix already in upstream code (confirmed)
 
 ## Pending Sync
-- STATUS: Active
-- NEXT_ACTION: Activate Cloudflare Access + SendGrid for April 21 launch
-- NOTE: Expert panel scored 8.4/10. Remaining gap is data population (empty pages), auth activation, and email notifications — not code.
-- LEARNING: Design token migration (1,062 replacements) had zero visual regressions. Mechanical find-replace with clear mapping rules is safe at scale.
-- LEARNING: Cold start bottleneck was modulePreload (226KB) + eager API calls, NOT three.js chunk (which was correctly lazy-loaded).
+<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
+
 
 ## Next Session Playbook
 
