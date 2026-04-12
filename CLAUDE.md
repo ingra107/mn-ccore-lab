@@ -63,10 +63,20 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 - Table config persistence: `useTableConfig(id)` hook saves sort/widths/order to localStorage, Reset View button
 - Stage group headers: quiet uppercase labels with extending rule line
 - Row hover: neutral `rgba(255,255,255,0.02)` (dark), barely-there luminance shift
-- Row separators: `rgba(255,255,255,0.03)` (dark) — structure felt not seen
+- Row separators: use `var(--row-separator)` token (dark: `rgba(255,255,255,0.03)`, light: `rgba(0,0,0,0.04)`) — structure felt not seen
 - Inline controls: status/priority dropdowns editable in-row
 - Hover-only badges: age/project badges hidden until row hover (`.hover-badge` CSS class)
 - Ghost-style action buttons (outline, not filled) + Pin-to-Focus button on MyTasks
+
+### Data-Pages vs Dashboard-Pages Taxonomy (GC-6)
+
+**Data pages — columnar table rules apply (ColumnHeader + TableContainer, inline editing, density toggle, row separators):**
+- Tasks, MyTasks, Projects, Manuscripts, Deadlines, Grants, Ideas, Decisions, Settings team directory
+
+**Dashboard pages — exempt from columnar table rules (charts + metric cards + panels, no forced table layout):**
+- Dashboard, Analytics, PI Analytics, Personal, Meetings (split-panel), Calendar, Home (public)
+
+This taxonomy closes ambiguity: a page is a "data page" if its primary content is a scrollable record list. Dashboard pages may contain embedded tables but are not required to follow the full table pattern.
 
 ### Animation Timing (5 durations + 2 easings)
 - `--duration-instant: 0ms` — state toggles, checkbox
@@ -79,7 +89,7 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 - Card hover: -1px lift. Respects `prefers-reduced-motion` (all durations → 0ms).
 
 ### Sidebar
-- **3-plane depth**: sidebar darker than content via `color-mix(in oklch, var(--cream), black 12%)` + `--surface-2` overlay
+- **3-plane depth**: sidebar DARKER than content via `--sidebar-bg: color-mix(in oklch, var(--cream), black 12%)` in both light and dark mode. The sidebar must always recede behind content, matching Linear. Phase 31.5 briefly tried an elevated (lighter) sidebar (`#ebebeb` light / `white 10%` dark); reverted 2026-04-12 — darker-than-content is the canonical pattern.
 - Font-weight 400 for nav items, 500 for active only
 - Active: `--teal-subtle` bg fill (desaturated), full teal on text/icon. No left border.
 - Inactive: --slate color, icon opacity 0.7.
@@ -644,7 +654,7 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 - Breadcrumbs on ProjectDetail, MeetingDetail, MemberPage
 - Status bar (24px): "Last synced: Ns ago" left, "? for shortcuts" right. Anchors the viewport.
 - Grants page aligned: centered metrics → left-aligned PageHeader + columnar table + timeline as view toggle
-- Light mode sidebar surface: `--sidebar-bg: #ebebeb` distinct from page bg
+- Light mode sidebar surface: `--sidebar-bg: #ebebeb` distinct from page bg *(reverted 2026-04-12 — see GC-1; darker-than-content is canonical)*
 
 *Accessibility (14 of 17 items fixed):*
 - MotionConfig `reducedMotion="user"` — all Framer Motion animations respect OS setting (1 line)

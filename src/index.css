@@ -229,8 +229,23 @@
   --field-bg: rgba(0, 0, 0, 0.02);
   --field-bg-hover: rgba(0, 0, 0, 0.04);
 
-  /* Sidebar surface — distinct from page background for visual separation */
-  --sidebar-bg: #ebebeb; /* ~7% darker than white; distinct from --page-bg #f5f5f5 */
+  /* Sidebar surface — DARKER than content (3-plane depth, matches Linear) */
+  --sidebar-bg: color-mix(in oklch, var(--cream), black 12%);
+
+  /* Surface elevation — card bg above page bg */
+  --surface-card: #ffffff;
+
+  /* Focus ring — WCAG AA teal (gold fails in light mode) */
+  --focus-ring: oklch(0.55 0.12 190 / 0.5);
+
+  /* Alert background — quiet in light mode */
+  --alert-bg: oklch(0.92 0.04 25);
+
+  /* Row separator — structure felt not seen */
+  --row-separator: rgba(0, 0, 0, 0.04);
+
+  /* Personal page two-column grid */
+  --personal-grid-cols: 1fr 1fr;
 }
 
 .dark {
@@ -239,8 +254,20 @@
   /* Dark mode: restore original visual receding hierarchy (dark bg has contrast headroom) */
   --ink-label: 0.55;
   --ink-hint: 0.40;
-  /* Sidebar: slightly elevated surface in dark mode */
-  --sidebar-bg: color-mix(in oklch, var(--cream), white 10%);
+  /* Sidebar: DARKER than content (3-plane depth — reverted Phase 31.5 elevated attempt) */
+  --sidebar-bg: color-mix(in oklch, var(--cream), black 12%);
+
+  /* Surface elevation — card bg above page bg */
+  --surface-card: rgba(255, 255, 255, 0.03);
+
+  /* Focus ring — teal for dark mode */
+  --focus-ring: oklch(0.65 0.07 190 / 0.5);
+
+  /* Alert background — quiet in dark mode */
+  --alert-bg: oklch(0.55 0.15 25 / 0.10);
+
+  /* Row separator — softened from 0.06 per M-01 */
+  --row-separator: rgba(255, 255, 255, 0.03);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -380,11 +407,11 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 
 /* Softer task grid row separators — barely-there luminance shifts (Linear pattern) */
 .task-grid-row {
-  border-bottom-color: rgba(0, 0, 0, 0.04) !important;
+  border-bottom-color: var(--row-separator) !important;
   line-height: 1.35;
 }
 .dark .task-grid-row {
-  border-bottom-color: rgba(255, 255, 255, 0.03) !important;
+  border-bottom-color: var(--row-separator) !important;
 }
 .dark .task-grid-row:hover {
   background: rgba(255, 255, 255, 0.02) !important;
@@ -971,7 +998,7 @@ a:hover {
 .task-grid-row-actions {
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--transition-fast) ease;
+  transition: opacity var(--transition-fast) var(--ease-out);
 }
 
 .task-grid-row:hover .task-grid-row-actions,
@@ -994,7 +1021,7 @@ a:hover {
   font-weight: 400;
   color: var(--teal);
   white-space: nowrap;
-  transition: background var(--transition-fast) ease, border-color var(--transition-fast) ease;
+  transition: background var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
 }
 
 .task-grid-row-action-btn:hover {
@@ -1035,14 +1062,27 @@ a:hover {
     padding: 12px !important;
   }
 
-  /* New project / action buttons — larger touch targets */
+  /* New project / action buttons — WCAG 2.5.5 44px touch target floor */
   .new-project-btn {
-    min-height: 36px;
+    min-height: 44px;
     padding: 8px 12px;
   }
 
   /* Cards — reduce bottom gap on mobile */
   .card {
     margin-bottom: 0.75rem;
+  }
+}
+
+/* Personal page — two-column grid, stacks on mobile (C-08) */
+.personal-grid {
+  display: grid;
+  grid-template-columns: var(--personal-grid-cols, 1fr 1fr);
+  gap: var(--sp-lg);
+}
+
+@media (max-width: 768px) {
+  .personal-grid {
+    grid-template-columns: 1fr;
   }
 }
