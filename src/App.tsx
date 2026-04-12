@@ -214,12 +214,14 @@ export default function App() {
                   <Route path="/meetings" element={<ErrorBoundary><Meetings /></ErrorBoundary>} />
                   <Route path="/meetings/:id" element={<ErrorBoundary><MeetingDetail /></ErrorBoundary>} />
                   <Route path="/meetings/:id/prep" element={<ErrorBoundary><MeetingPrep /></ErrorBoundary>} />
+                  <Route path="/meeting-prep" element={<Navigate to="/meetings" replace />} />
                   <Route path="/meeting-notes" element={<ErrorBoundary><MeetingNotesPage /></ErrorBoundary>} />
 
                   {/* Lab */}
                   <Route path="/activity" element={<ErrorBoundary><ActivityPage /></ErrorBoundary>} />
                   <Route path="/analytics" element={<ErrorBoundary><AnalyticsPage /></ErrorBoundary>} />
                   <Route path="/pi/analytics" element={<ErrorBoundary><PageErrorBoundary pageName="PIAnalytics"><PIAnalytics /></PageErrorBoundary></ErrorBoundary>} />
+                  <Route path="/pi-analytics" element={<ErrorBoundary><PageErrorBoundary pageName="PIAnalytics"><PIAnalytics /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/mentee-milestones" element={<ErrorBoundary><MenteeMilestones /></ErrorBoundary>} />
                   <Route path="/pb" element={<ErrorBoundary><PBSector /></ErrorBoundary>} />
                   <Route path="/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />

@@ -23,6 +23,10 @@ import {
   Shield,
   Terminal,
   History,
+  TrendingUp,
+  GraduationCap,
+  GitBranch,
+  ClipboardList,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
@@ -126,7 +130,26 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
 
   // Conditionally include PI Tools section
   const allGroups: NavGroup[] = isPi
-    ? [...navGroups, { title: 'PI Tools', items: [{ to: '/pb', label: 'Daily Plan', icon: Terminal }, { to: '/sessions', label: 'Session History', icon: History }, { to: '/pi/analytics', label: 'PI Dashboard', icon: Shield }] }]
+    ? [
+        ...navGroups,
+        {
+          title: 'PI View',
+          items: [
+            { to: '/pi-analytics', label: 'PI Analytics', icon: TrendingUp },
+            { to: '/mentee-milestones', label: 'Mentee Milestones', icon: GraduationCap },
+            { to: '/deadline-cascade', label: 'Deadline Cascade', icon: GitBranch },
+            { to: '/meeting-prep', label: 'Meeting Prep', icon: ClipboardList },
+          ],
+        },
+        {
+          title: 'PI Tools',
+          items: [
+            { to: '/pb', label: 'Daily Plan', icon: Terminal },
+            { to: '/sessions', label: 'Session History', icon: History },
+            { to: '/pi/analytics', label: 'PI Dashboard', icon: Shield },
+          ],
+        },
+      ]
     : navGroups
 
   // Inject badge counts into nav items
@@ -205,7 +228,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   key={item.to}
                   to={item.to}
                   onClick={onNavigate}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] transition-colors mb-0.5"
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] transition-colors duration-[150ms] mb-0.5"
                   style={{
                     backgroundColor: active ? 'color-mix(in srgb, var(--teal-subtle) 12%, transparent)' : 'transparent',
                     color: active ? 'var(--teal)' : 'var(--slate)',

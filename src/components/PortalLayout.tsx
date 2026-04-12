@@ -125,7 +125,7 @@ export default function PortalLayout() {
         >
           {/* Mobile hamburger */}
           <button
-            className="lg:hidden p-2 mr-2 rounded-md"
+            className="lg:hidden flex items-center justify-center min-w-[44px] min-h-[44px] mr-2 rounded-md"
             onClick={() => setMobileOpen((prev) => !prev)}
             aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
             aria-expanded={mobileOpen}
@@ -153,7 +153,7 @@ export default function PortalLayout() {
           {/* Density toggle */}
           <button
             onClick={toggleDensity}
-            className="p-2 rounded-md transition-colors"
+            className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md transition-colors"
             style={{ color: 'var(--slate)' }}
             aria-label={`Switch to ${density === 'comfortable' ? 'compact' : 'comfortable'} view`}
             title={`${density === 'comfortable' ? 'Compact' : 'Comfortable'} view`}
@@ -165,7 +165,7 @@ export default function PortalLayout() {
           <div className="relative">
             <button
               onClick={() => setShowThemeMenu(!showThemeMenu)}
-              className="p-2 rounded-md transition-colors flex items-center gap-1"
+              className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md transition-colors"
               style={{ color: 'var(--slate)' }}
               aria-label="Change theme"
             >
