@@ -25,56 +25,69 @@ export default function WelcomeBanner() {
           borderLeft: '3px solid var(--teal-subtle)',
         }}
       >
-        <div className="flex items-center gap-4">
-          {/* Progress ring */}
-          <div style={{ width: 44, height: 44, position: 'relative', flexShrink: 0 }}>
-            <svg width="44" height="44" viewBox="0 0 44 44" style={{ transform: 'rotate(-90deg)' }}>
-              <circle cx="22" cy="22" r="18" fill="none" stroke="color-mix(in srgb, var(--teal) 12%, transparent)" strokeWidth="3" />
-              <motion.circle
-                cx="22" cy="22" r="18" fill="none"
-                stroke="var(--teal)" strokeWidth="3" strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 18}`}
-                initial={{ strokeDashoffset: 2 * Math.PI * 18 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 18 * (1 - progress / 100) }}
-                transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-              />
-            </svg>
-            <div style={{
-              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{
-                fontSize: 11, fontWeight: 600, color: 'var(--teal)',
+        {/* Dismiss — absolute top-right so it never consumes row space */}
+        <button
+          onClick={dismiss}
+          className="p-1 rounded transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
+          style={{
+            position: 'absolute', top: 8, right: 8,
+            border: 'none', background: 'none', cursor: 'pointer',
+            color: 'var(--slate)', opacity: 0.3,
+          }}
+          title="Dismiss"
+        >
+          <X size={14} />
+        </button>
+
+        {/* Row 1 (mobile: stacked) / single row (md+) */}
+        <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4" style={{ paddingRight: 24 }}>
+          {/* Row 1a: progress ring + title */}
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {/* Progress ring */}
+            <div style={{ width: 40, height: 40, position: 'relative', flexShrink: 0 }}>
+              <svg width="40" height="40" viewBox="0 0 44 44" style={{ transform: 'rotate(-90deg)' }}>
+                <circle cx="22" cy="22" r="18" fill="none" stroke="color-mix(in srgb, var(--teal) 12%, transparent)" strokeWidth="3" />
+                <motion.circle
+                  cx="22" cy="22" r="18" fill="none"
+                  stroke="var(--teal)" strokeWidth="3" strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 18}`}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 18 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 18 * (1 - progress / 100) }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                />
+              </svg>
+              <div style={{
+                position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                {completedCount}/{totalSteps}
-              </span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--teal)' }}>
+                  {completedCount}/{totalSteps}
+                </span>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Rocket size={14} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)' }}>
+                  Welcome to MN&#8209;CCORE Hub
+                </span>
+              </div>
+              {nextStep && (
+                <p style={{
+                  fontSize: 12, color: 'var(--slate)',
+                  margin: 'var(--sp-xs) 0 0 0', opacity: 0.7,
+                }}>
+                  Next: {nextStep.title}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <Rocket size={14} style={{ color: 'var(--teal)' }} />
-              <span style={{
-                fontSize: 14, fontWeight: 500, color: 'var(--ink)',
-                wordBreak: 'keep-all', overflowWrap: 'normal',
-              }}>
-                Welcome to MN&#8209;CCORE Hub
-              </span>
-            </div>
-            {nextStep && (
-              <p style={{
-                fontSize: 12, color: 'var(--slate)',
-                margin: 'var(--sp-xs) 0 0 0', opacity: 0.7,
-              }}>
-                Next: {nextStep.title}
-              </p>
-            )}
-          </div>
-
-          {/* CTA */}
+          {/* Row 1b (mobile: second row) / inline (md+): CTA */}
           <Link
             to="/personal"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors self-start md:self-auto flex-shrink-0"
             style={{
               color: 'var(--teal)',
               border: '1px solid rgba(45,138,138,0.2)',
@@ -84,16 +97,6 @@ export default function WelcomeBanner() {
           >
             Get Started <ArrowRight size={12} />
           </Link>
-
-          {/* Dismiss */}
-          <button
-            onClick={dismiss}
-            className="p-1 rounded transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04] flex-shrink-0"
-            style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.3 }}
-            title="Dismiss"
-          >
-            <X size={14} />
-          </button>
         </div>
       </motion.div>
     </AnimatePresence>
