@@ -21,6 +21,7 @@ import { useUpdateDigestStatus, useLinkPaper } from '../hooks/useMutations'
 import { getPersonInfo } from '../data/team'
 import { formatMediumDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
+import PageHeader from '../components/PageHeader'
 
 type StatusFilter = 'all' | 'new' | 'saved'
 
@@ -106,7 +107,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
       className="card p-4 sm:p-5"
       style={{
         opacity: isDismissed ? 0.5 : 1,
-        transition: 'opacity 0.2s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease',
+        transition: 'opacity var(--duration-normal) var(--ease-out), transform var(--duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--duration-slow) var(--ease-out), background-color var(--duration-normal) var(--ease-out)',
       }}
     >
       <div className="flex items-start gap-3 sm:gap-4">
@@ -575,48 +576,38 @@ export default function Digest() {
 
   const isEmpty = dates.length === 0 && !isLoading
 
+  // Reading progress bar — rendered as PageHeader child
+  const progressBar = statusCounts.all > 0 ? (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 max-w-xs h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
+        <div
+          style={{
+            width: `${((statusCounts.saved + (statusCounts.all - statusCounts.new - statusCounts.saved)) / statusCounts.all) * 100}%`,
+            height: '100%',
+            borderRadius: 'var(--radius-full)',
+            background: 'var(--gold)',
+            transition: 'width var(--duration-slow) var(--ease-out)',
+          }}
+        />
+      </div>
+      <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+        {statusCounts.saved} saved · {statusCounts.new} unread · {statusCounts.all} total
+      </span>
+    </div>
+  ) : null
+
   return (
     <>
-      {/* Header */}
-      <section className="pt-4 pb-6 sm:pb-8 content-container">
-        <div className="flex items-center gap-3 mb-3">
-          <Newspaper size={24} style={{ color: 'var(--gold)' }} />
-          <h1
-            className="text-3xl sm:text-4xl lg:text-5xl"
-            style={{
-              fontWeight: 600,
-              color: 'var(--ink)',
-            }}
-          >
-            Research Digest
-          </h1>
-        </div>
-        <p
-          className="text-base sm:text-lg max-w-2xl"
-          style={{ color: 'var(--slate)' }}
+      {/* Header — compact PageHeader replaces oversized hero (H-02, H-03) */}
+      <section className="content-container">
+        <PageHeader
+          icon={<Newspaper size={20} />}
+          title="Research Digest"
+          subtitle="Daily PubMed papers relevant to MNCCORE research"
+          count={statusCounts.all || undefined}
         >
-          Daily PubMed papers relevant to MNCCORE research
-        </p>
-
-        {/* Reading progress bar */}
-        {statusCounts.all > 0 && (
-          <div className="mt-3 flex items-center gap-3">
-            <div className="flex-1 max-w-xs h-2 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
-              <div
-                style={{
-                  width: `${((statusCounts.saved + (statusCounts.all - statusCounts.new - statusCounts.saved)) / statusCounts.all) * 100}%`,
-                  height: '100%',
-                  borderRadius: 'var(--radius-full)',
-                  background: 'var(--gold)',
-                  transition: 'width 300ms ease',
-                }}
-              />
-            </div>
-            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
-              {statusCounts.saved} saved · {statusCounts.new} unread · {statusCounts.all} total
-            </span>
-          </div>
-        )}
+          {progressBar}
+        </PageHeader>
       </section>
 
       {isEmpty ? (
@@ -650,7 +641,7 @@ export default function Digest() {
                         setSelectedDate(d.date)
                         setTopicFilter(null)
                       }}
-                      className="cursor-pointer rounded-full px-3 py-1.5 text-sm transition-all duration-200"
+                      className="cursor-pointer rounded-full px-3 py-1.5 text-sm"
                       style={{
                         fontWeight: isActive ? 600 : 400,
                         background: isActive ? 'var(--gold)' : 'var(--gold-active)',
@@ -658,6 +649,7 @@ export default function Digest() {
                         border: isActive
                           ? '1px solid var(--gold)'
                           : '1px solid rgba(201, 168, 76, 0.2)',
+                        transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
                       }}
                     >
                       {formatDate(d.date)}
@@ -705,13 +697,14 @@ export default function Digest() {
                   <button
                     key={tab.key}
                     onClick={() => setStatusFilter(tab.key)}
-                    className="cursor-pointer rounded-md px-3 py-1.5 text-sm transition-all duration-200"
+                    className="cursor-pointer rounded-md px-3 py-1.5 text-sm"
                     style={{
                       fontWeight: isActive ? 600 : 400,
                       background: isActive ? 'var(--cream)' : 'transparent',
                       color: isActive ? 'var(--ink)' : 'var(--slate)',
                       border: 'none',
                       boxShadow: isActive ? 'var(--shadow-card)' : 'none',
+                      transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
                     }}
                   >
                     {tab.label}
@@ -735,7 +728,7 @@ export default function Digest() {
             {userSlug && forYouCount > 0 && (
               <button
                 onClick={() => setForYouFilter(!forYouFilter)}
-                className="cursor-pointer rounded-full px-3 py-1.5 text-sm transition-all duration-200 flex items-center gap-1.5"
+                className="cursor-pointer rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5"
                 style={{
                   fontWeight: forYouFilter ? 600 : 400,
                   background: forYouFilter ? 'var(--teal)' : 'rgba(0, 128, 128, 0.06)',
@@ -743,6 +736,7 @@ export default function Digest() {
                   border: forYouFilter
                     ? '1px solid var(--teal)'
                     : '1px solid rgba(0, 128, 128, 0.2)',
+                  transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
                 }}
               >
                 <User size={12} />
@@ -797,12 +791,13 @@ export default function Digest() {
               {topicFilter && (
                 <button
                   onClick={() => setTopicFilter(null)}
-                  className="cursor-pointer rounded-full px-2.5 py-1 text-xs transition-all duration-200"
+                  className="cursor-pointer rounded-full px-2.5 py-1 text-xs"
                   style={{
                     fontSize: '10px',
                     background: 'var(--maroon-hover)',
                     color: 'var(--maroon)',
                     border: '1px solid rgba(122, 0, 25, 0.2)',
+                    transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
                   }}
                 >
                   Clear filter
@@ -814,7 +809,7 @@ export default function Digest() {
                   <button
                     key={topic}
                     onClick={() => setTopicFilter(isActive ? null : topic)}
-                    className="cursor-pointer rounded-full px-2.5 py-1 text-xs transition-all duration-200"
+                    className="cursor-pointer rounded-full px-2.5 py-1 text-xs"
                     style={{
                       fontSize: '10px',
                       background: isActive
@@ -824,6 +819,7 @@ export default function Digest() {
                       border: isActive
                         ? '1px solid var(--gold)'
                         : '1px solid var(--gold-emphasis)',
+                      transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
                     }}
                   >
                     {topic}
