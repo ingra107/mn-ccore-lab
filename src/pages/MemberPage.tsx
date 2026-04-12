@@ -275,12 +275,13 @@ export default function MemberPage() {
         <div className="mb-6 flex flex-wrap gap-2">
           <Link
             to={`/team/${slug}/trajectory`}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium"
             style={{
               background: 'var(--ice)',
               color: 'var(--slate)',
               border: '1px solid transparent',
               textDecoration: 'none',
+              transition: 'border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = 'var(--teal)'
@@ -484,12 +485,13 @@ export default function MemberPage() {
               {isAuthenticated && !showAddTag && (
                 <button
                   onClick={() => setShowAddTag(true)}
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all duration-200"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium"
                   style={{
                     background: 'transparent',
                     color: 'var(--slate)',
                     border: '1px dashed rgba(100,116,139,0.3)',
                     cursor: 'pointer',
+                    transition: 'border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = 'var(--gold)'
@@ -553,13 +555,14 @@ export default function MemberPage() {
                     }
                   }}
                   disabled={!newTag.trim() || addExpertiseMut.isPending}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
+                  className="px-3 py-1.5 rounded-md text-xs font-medium"
                   style={{
                     background: newTag.trim() ? 'var(--gold)' : 'var(--ice)',
                     color: newTag.trim() ? 'var(--ink)' : 'var(--slate)',
                     border: 'none',
                     cursor: newTag.trim() ? 'pointer' : 'default',
                     opacity: newTag.trim() ? 1 : 0.5,
+                    transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), opacity var(--duration-normal) var(--ease-out)',
                   }}
                 >
                   {addExpertiseMut.isPending ? 'Adding...' : 'Add'}

@@ -345,10 +345,11 @@ function ProjectCardItem({ project }: { project: ProjectCard }) {
 
   return (
     <div
-      className="card p-5 sm:p-6 pl-6 sm:pl-8 cursor-pointer transition-all duration-200 relative"
+      className="card p-5 sm:p-6 pl-6 sm:pl-8 cursor-pointer relative"
       style={{
         borderLeft: hovered ? '5px solid var(--gold)' : '3px solid var(--gold)',
         outline: 'none',
+        transition: 'border-left-width var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
       }}
       tabIndex={0}
       onMouseEnter={() => setHovered(true)}
@@ -463,10 +464,11 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
   return (
     <a
       href={mentee.slug ? `/team/${mentee.slug}` : undefined}
-      className="card p-0 overflow-hidden cursor-pointer block transition-all duration-300"
+      className="card p-0 overflow-hidden cursor-pointer block"
       style={{
         textDecoration: 'none',
         borderLeft: hovered ? '4px solid var(--gold)' : '4px solid transparent',
+        transition: 'border-color var(--duration-slow) var(--ease-out)',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
