@@ -1,53 +1,81 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Scale, Plus, AlertTriangle, FolderKanban, Tag, List, GitCommitVertical } from 'lucide-react'
+import {
+  Scale,
+  Plus,
+  AlertTriangle,
+  FolderKanban,
+  Tag,
+  List,
+  GitCommitVertical,
+  ChevronDown,
+  ChevronRight,
+} from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import Avatar from '../../components/Avatar'
+import InlineSelect from '../../components/InlineSelect'
+import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { useDecisions, useDecisionsForReview, useDecisionTags } from '../../hooks/useApiData'
 import { useCreateDecision, useUpdateDecisionOutcome } from '../../hooks/useMutations'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useUndoToast } from '../../components/UndoToast'
 import { useProjects } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate } from '../../lib/dateUtils'
+import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
 import { SENTIMENT_CONFIG } from '../../components/SentimentBadge'
 import SentimentBadge from '../../components/SentimentBadge'
-import DecisionCard from '../../components/DecisionCard'
 import SimilarDecisionsPanel from '../../components/SimilarDecisionsPanel'
 import CreateDecisionModal from '../../components/CreateDecisionModal'
+import { ColumnHeader, TableContainer } from '../../components/table'
 import type { DecisionRow } from '../../hooks/useApiData'
+
+// ── Constants ────────────────────────────────────────────────
+
+const GRID_TEMPLATE =
+  'minmax(200px, 3fr) 120px 160px 120px 140px 100px 80px'
+
+const OUTCOME_OPTIONS = [
+  { value: 'pending', label: 'Pending', color: 'var(--gold)' },
+  { value: 'recorded', label: 'Recorded', color: 'var(--teal)' },
+  { value: 'revisited', label: 'Revisited', color: 'var(--slate)' },
+]
+
+type DecisionSortKey =
+  | 'title'
+  | 'outcome_status'
+  | 'decided_by'
+  | 'project'
+  | 'created_at'
 
 // ── Decision Timeline ────────────────────────────────────────
 
-function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; projects: { slug: string; title: string }[] }) {
+function DecisionTimeline({
+  decisions,
+  projects,
+}: {
+  decisions: DecisionRow[]
+  projects: { slug: string; title: string }[]
+}) {
   return (
     <div className="relative pl-8" style={{ paddingTop: '4px' }}>
-      {/* Vertical line */}
       <div
         className="absolute left-3 top-0 bottom-0"
-        style={{ width: '2px', backgroundColor: 'rgba(201,168,76,0.2)' }}
+        style={{ width: '2px', backgroundColor: 'var(--gold-hover)' }}
       />
-
-      {decisions.map((decision, i) => {
+      {decisions.map((decision) => {
         const sentiment = decision.outcome_sentiment || 'pending'
         const config = SENTIMENT_CONFIG[sentiment] || SENTIMENT_CONFIG.pending
-        const tags = decision.tags ? decision.tags.split(',').map((t) => t.trim()).filter(Boolean) : []
+        const tags = decision.tags
+          ? decision.tags.split(',').map((t) => t.trim()).filter(Boolean)
+          : []
         const projTitle = decision.project_slug
           ? projects.find((p) => p.slug === decision.project_slug)?.title
           : null
-
         return (
-          <motion.div
-            key={decision.id}
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.03 }}
-            className="relative mb-6"
-          >
-            {/* Node dot */}
+          <div key={decision.id} className="relative mb-6">
             <div
               className="absolute rounded-full"
               style={{
@@ -60,68 +88,90 @@ function DecisionTimeline({ decisions, projects }: { decisions: DecisionRow[]; p
                 boxShadow: `0 0 0 2px ${config.bg}`,
               }}
             />
-
-            {/* Date label */}
             <div
               className="absolute text-right"
               style={{
                 left: '-110px',
                 top: '2px',
                 width: '75px',
-                fontSize: '10px',
+                fontSize: 'var(--text-micro)',
                 color: 'var(--slate)',
                 opacity: 'var(--ink-label)',
               }}
             >
               {formatShortDate(decision.created_at)}
             </div>
-
-            {/* Content */}
             <div
-              className="p-3 rounded-lg"
-              style={{ background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.1)' }}
+              className="p-3"
+              style={{
+                background: 'var(--surface-1)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-lg)',
+              }}
             >
               <div className="flex items-center gap-2 flex-wrap">
-                <span style={{ fontWeight: 500, fontSize: '14px', color: 'var(--ink)' }}>
+                <span
+                  style={{
+                    fontWeight: 'var(--weight-heading)',
+                    fontSize: 'var(--text-base)',
+                    color: 'var(--ink)',
+                  }}
+                >
                   {decision.title}
                 </span>
                 <SentimentBadge sentiment={sentiment} />
                 {tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-[10px] px-1.5 py-0.5 rounded-full"
-                    style={{ fontWeight: 400, color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}
+                    className="px-1.5 py-0.5"
+                    style={{
+                      fontSize: 'var(--text-micro)',
+                      fontWeight: 400,
+                      color: 'var(--teal)',
+                      backgroundColor: 'var(--teal-hover)',
+                      borderRadius: 'var(--radius-full)',
+                    }}
                   >
                     {tag}
                   </span>
                 ))}
               </div>
-
               {decision.outcome && (
-                <p style={{ fontSize: '12px', color: 'var(--teal)', marginTop: '4px', marginBottom: 0 }}>
+                <p
+                  style={{
+                    fontSize: 'var(--text-small)',
+                    color: 'var(--teal)',
+                    marginTop: '4px',
+                    marginBottom: 0,
+                  }}
+                >
                   Outcome: {decision.outcome}
                 </p>
               )}
-
               {projTitle && (
                 <Link
                   to={`/projects/${decision.project_slug}`}
                   className="flex items-center gap-1 mt-1"
-                  style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', textDecoration: 'none', opacity: 0.7 }}
+                  style={{
+                    fontSize: 'var(--text-label)',
+                    color: 'var(--teal)',
+                    textDecoration: 'none',
+                    opacity: 0.7,
+                  }}
                 >
                   <FolderKanban size={10} />
                   {projTitle}
                 </Link>
               )}
             </div>
-          </motion.div>
+          </div>
         )
       })}
     </div>
   )
 }
 
-// ── Review Card ───────────────────────────────────────────────
+// ── Review Card ──────────────────────────────────────────────
 
 function ReviewCard({
   decision,
@@ -138,7 +188,10 @@ function ReviewCard({
   const projectTitle = decision.project_slug
     ? projects.find((p) => p.slug === decision.project_slug)?.title
     : null
-  const days = Math.floor((new Date().getTime() - new Date(decision.created_at).getTime()) / (1000 * 60 * 60 * 24))
+  const days = Math.floor(
+    (new Date().getTime() - new Date(decision.created_at).getTime()) /
+      (1000 * 60 * 60 * 24)
+  )
 
   function handleSave() {
     if (!outcome.trim()) return
@@ -153,27 +206,48 @@ function ReviewCard({
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
-      style={{ border: '1px solid rgba(201,168,76,0.15)' }}
+      style={{
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius-xl)',
+        overflow: 'hidden',
+      }}
     >
-      {/* Decision info */}
-      <div className="p-4" style={{ background: 'var(--cream)' }}>
+      <div className="p-4" style={{ background: 'var(--surface-1)' }}>
         <div className="flex items-center gap-2 mb-2">
           <Scale size={14} style={{ color: 'var(--gold)' }} />
-          <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--ink)' }}>
+          <span
+            style={{
+              fontWeight: 'var(--weight-heading)',
+              fontSize: 'var(--text-md)',
+              color: 'var(--ink)',
+            }}
+          >
             {decision.title}
           </span>
         </div>
         {decision.rationale && (
-          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', lineHeight: 1.5, margin: 0 }}>
+          <p
+            style={{
+              fontSize: 'var(--text-small)',
+              color: 'var(--slate)',
+              lineHeight: 1.5,
+              margin: 0,
+            }}
+          >
             {decision.rationale}
           </p>
         )}
         <div className="flex items-center gap-3 mt-2">
           {person && (
             <span className="flex items-center gap-1.5">
-              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="gold" />
-              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>
+              <Avatar
+                name={person.name}
+                initials={person.initials}
+                photoUrl={person.photoUrl}
+                size="xs"
+                variant="gold"
+              />
+              <span style={{ fontSize: 'var(--text-label)', color: 'var(--slate)' }}>
                 {person.name.split(' ')[0]}
               </span>
             </span>
@@ -182,7 +256,11 @@ function ReviewCard({
             <Link
               to={`/projects/${decision.project_slug}`}
               className="flex items-center gap-1"
-              style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', textDecoration: 'none' }}
+              style={{
+                fontSize: 'var(--text-label)',
+                color: 'var(--teal)',
+                textDecoration: 'none',
+              }}
             >
               <FolderKanban size={11} />
               {projectTitle}
@@ -190,19 +268,17 @@ function ReviewCard({
           )}
         </div>
       </div>
-
-      {/* Outcome input */}
       <div
         className="p-4"
         style={{
           background: 'var(--gold-hover)',
-          borderTop: '1px solid rgba(201,168,76,0.15)',
+          borderTop: '1px solid var(--border-subtle)',
           borderLeft: '3px solid var(--gold)',
         }}
       >
         <p
           style={{
-            fontSize: 'var(--value-size)',
+            fontSize: 'var(--text-small)',
             color: 'var(--ink)',
             marginBottom: '10px',
             fontWeight: 500,
@@ -217,10 +293,10 @@ function ReviewCard({
           rows={3}
           style={{
             width: '100%',
-            fontSize: 'var(--value-size)',
+            fontSize: 'var(--text-small)',
             color: 'var(--ink)',
             background: 'var(--cream)',
-            border: '1px solid rgba(201,168,76,0.15)',
+            border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-lg)',
             padding: 'var(--sp-sm) var(--sp-md)',
             outline: 'none',
@@ -233,10 +309,10 @@ function ReviewCard({
             value={sentiment}
             onChange={(e) => setSentiment(e.target.value)}
             style={{
-              fontSize: '12px',
+              fontSize: 'var(--text-small)',
               color: 'var(--ink)',
               background: 'var(--cream)',
-              border: '1px solid rgba(201,168,76,0.15)',
+              border: '1px solid var(--border-subtle)',
               borderRadius: 'var(--radius-md)',
               padding: '6px 10px',
               outline: 'none',
@@ -246,23 +322,378 @@ function ReviewCard({
             <option value="neutral">Neutral outcome</option>
             <option value="negative">Negative outcome</option>
           </select>
-          <motion.button
+          <button
             type="button"
             onClick={handleSave}
             disabled={!outcome.trim()}
-            className="cursor-pointer px-4 py-1.5 rounded-md text-xs font-medium"
+            className="cursor-pointer px-4 py-1.5"
             style={{
-              background: outcome.trim() ? 'var(--gold)' : 'rgba(201,168,76,0.2)',
+              background: outcome.trim() ? 'var(--gold)' : 'var(--gold-hover)',
               color: outcome.trim() ? 'var(--ink)' : 'var(--slate)',
               border: 'none',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 'var(--text-small)',
+              fontWeight: 500,
               opacity: outcome.trim() ? 1 : 0.5,
             }}
-            whileTap={{ scale: 0.95 }}
           >
             Save Outcome
-          </motion.button>
+          </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── Decision Row (columnar) ──────────────────────────────────
+
+function DecisionRowItem({
+  decision,
+  projects,
+  projectMap,
+  isExpanded,
+  onToggleExpand,
+  onStatusChange,
+  focused,
+}: {
+  decision: DecisionRow
+  projects: { slug: string; title: string }[]
+  projectMap: Map<string, string>
+  isExpanded: boolean
+  onToggleExpand: () => void
+  onStatusChange: (decision: DecisionRow, newStatus: string) => void
+  focused: boolean
+}) {
+  const person = decision.decided_by ? getPersonInfo(decision.decided_by) : null
+  const projectTitle = decision.project_slug
+    ? projectMap.get(decision.project_slug) || null
+    : null
+  const tags = decision.tags
+    ? decision.tags.split(',').map((t) => t.trim()).filter(Boolean)
+    : []
+  const visibleTags = tags.slice(0, 2)
+  const extraTags = tags.length - visibleTags.length
+
+  return (
+    <div
+      role="row"
+      style={{
+        borderBottom: '1px solid var(--row-separator, var(--border-subtle))',
+        background: focused ? 'var(--hover-subtle)' : 'transparent',
+      }}
+    >
+      <div
+        className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: GRID_TEMPLATE,
+          padding: `var(--row-padding-y, 8px) var(--sp-lg)`,
+          alignItems: 'center',
+          minHeight: 'var(--row-height, 44px)',
+          gap: 'var(--sp-sm)',
+        }}
+      >
+        <div
+          role="gridcell"
+          onClick={onToggleExpand}
+          className="task-title-clickable"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            minWidth: 0,
+            borderRadius: 'var(--radius-sm)',
+            padding: '2px 4px',
+            margin: '-2px -4px',
+            transition: 'background var(--transition-fast) ease',
+          }}
+          title={decision.rationale || decision.title}
+        >
+          <span
+            style={{
+              color: 'var(--slate)',
+              opacity: 'var(--ink-label)',
+              flexShrink: 0,
+              display: 'inline-flex',
+            }}
+          >
+            {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          </span>
+          <span
+            style={{
+              fontSize: 'var(--text-base)',
+              fontWeight: 'var(--weight-heading)',
+              color: 'var(--ink)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              minWidth: 0,
+            }}
+          >
+            {decision.title}
+          </span>
+          {decision.outcome_sentiment &&
+            decision.outcome_sentiment !== 'pending' && (
+              <span style={{ flexShrink: 0 }}>
+                <SentimentBadge sentiment={decision.outcome_sentiment} />
+              </span>
+            )}
+        </div>
+        <div role="gridcell" onClick={(e) => e.stopPropagation()}>
+          <InlineSelect
+            value={decision.outcome_status || 'pending'}
+            options={OUTCOME_OPTIONS}
+            onChange={(val) => onStatusChange(decision, val)}
+          />
+        </div>
+        <div
+          role="gridcell"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            flexWrap: 'nowrap',
+            overflow: 'hidden',
+            minWidth: 0,
+          }}
+        >
+          {visibleTags.map((tag) => (
+            <span
+              key={tag}
+              style={{
+                fontSize: 'var(--text-micro)',
+                fontWeight: 400,
+                color: 'var(--slate)',
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '1px 6px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: 70,
+              }}
+            >
+              {tag}
+            </span>
+          ))}
+          {extraTags > 0 && (
+            <span
+              style={{
+                fontSize: 'var(--text-micro)',
+                color: 'var(--slate)',
+                opacity: 'var(--ink-label)',
+              }}
+            >
+              +{extraTags}
+            </span>
+          )}
+        </div>
+        <div
+          role="gridcell"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            minWidth: 0,
+          }}
+        >
+          {person ? (
+            <>
+              <Avatar
+                name={person.name}
+                initials={person.initials}
+                photoUrl={person.photoUrl}
+                size="xs"
+                variant="gold"
+              />
+              <span
+                style={{
+                  fontSize: 'var(--text-small)',
+                  color: 'var(--slate)',
+                  opacity: 'var(--ink-label)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {person.name.split(' ')[0]}
+              </span>
+            </>
+          ) : (
+            <span
+              style={{
+                fontSize: 'var(--text-small)',
+                color: 'var(--slate)',
+                opacity: 'var(--ink-hint)',
+              }}
+            >
+              —
+            </span>
+          )}
+        </div>
+        <div
+          role="gridcell"
+          style={{
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {projectTitle ? (
+            <Link
+              to={`/projects/${decision.project_slug}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 hover:underline"
+              style={{
+                fontSize: 'var(--text-small)',
+                color: 'var(--teal)',
+                opacity: 'var(--ink-label)',
+                textDecoration: 'none',
+              }}
+            >
+              <FolderKanban size={11} style={{ flexShrink: 0 }} />
+              <span
+                style={{
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {projectTitle}
+              </span>
+            </Link>
+          ) : (
+            <span
+              style={{
+                fontSize: 'var(--text-small)',
+                color: 'var(--slate)',
+                opacity: 'var(--ink-hint)',
+              }}
+            >
+              —
+            </span>
+          )}
+        </div>
+        <div
+          role="gridcell"
+          style={{
+            fontSize: 'var(--text-small)',
+            color: 'var(--slate)',
+            opacity: 'var(--ink-label)',
+            textAlign: 'right',
+            fontVariantNumeric: 'tabular-nums',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {formatRelativeTime(decision.created_at)}
+        </div>
+        <div role="gridcell" />
+      </div>
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div
+              style={{
+                padding:
+                  'var(--sp-md) var(--sp-lg) var(--sp-lg) calc(var(--sp-lg) + 20px)',
+                background: 'var(--surface-1)',
+                borderTop: '1px solid var(--border-subtle)',
+              }}
+            >
+              {decision.rationale && (
+                <p
+                  style={{
+                    fontSize: 'var(--text-small)',
+                    color: 'var(--slate)',
+                    lineHeight: 1.5,
+                    marginTop: 0,
+                    marginBottom: 'var(--sp-sm)',
+                  }}
+                >
+                  <span style={{ fontWeight: 500, color: 'var(--ink)' }}>
+                    Rationale:{' '}
+                  </span>
+                  {decision.rationale}
+                </p>
+              )}
+              {decision.context && (
+                <p
+                  style={{
+                    fontSize: 'var(--text-small)',
+                    color: 'var(--slate)',
+                    lineHeight: 1.5,
+                    marginTop: 0,
+                    marginBottom: 'var(--sp-sm)',
+                  }}
+                >
+                  <span style={{ fontWeight: 500, color: 'var(--ink)' }}>
+                    Context:{' '}
+                  </span>
+                  {decision.context}
+                </p>
+              )}
+              {decision.outcome && (
+                <div
+                  className="px-3 py-2"
+                  style={{
+                    background: 'var(--teal-hover)',
+                    borderLeft: '3px solid var(--teal)',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: 'var(--sp-sm)',
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: 'var(--text-small)',
+                      color: 'var(--ink)',
+                      lineHeight: 1.5,
+                      margin: 0,
+                    }}
+                  >
+                    <span style={{ fontWeight: 500 }}>Outcome:</span>{' '}
+                    {decision.outcome}
+                  </p>
+                </div>
+              )}
+              {tags.length > 2 && (
+                <div
+                  className="flex items-center gap-1.5 flex-wrap"
+                  style={{ marginBottom: 'var(--sp-sm)' }}
+                >
+                  <Tag
+                    size={11}
+                    style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
+                  />
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      style={{
+                        fontSize: 'var(--text-micro)',
+                        color: 'var(--slate)',
+                        background: 'var(--surface-2)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '1px 6px',
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <SimilarDecisionsPanel decisionId={decision.id} projects={projects} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -276,8 +707,15 @@ export default function DecisionsPage() {
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list')
   const [showCreate, setShowCreate] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [density, setDensity] = useDensity()
+  const [sortKey, setSortKey] = useState<DecisionSortKey>('created_at')
+  const [sortAsc, setSortAsc] = useState(false)
 
-  const { data: allDecisions = [], isLoading } = useDecisions(undefined, filterTag || undefined)
+  const { data: allDecisions = [], isLoading } = useDecisions(
+    undefined,
+    filterTag || undefined
+  )
   const { data: reviewDecisions = [] } = useDecisionsForReview()
   const { data: projects = [] } = useProjects()
   const { data: tagCounts = [] } = useDecisionTags()
@@ -285,28 +723,103 @@ export default function DecisionsPage() {
   const updateOutcome = useUpdateDecisionOutcome()
   const { showUndo } = useUndoToast()
 
+  const projectMap = useMemo(() => {
+    const map = new Map<string, string>()
+    projects.forEach((p) => map.set(p.slug, p.title))
+    return map
+  }, [projects])
+
   const handleStatusChange = (decision: DecisionRow, newStatus: string) => {
     const prevStatus = decision.outcome_status || 'pending'
-    const statusLabels: Record<string, string> = { pending: 'Pending', recorded: 'Recorded', revisited: 'Revisited' }
-    updateOutcome.mutate({ id: decision.id, outcome: decision.outcome || '', outcome_status: newStatus })
+    if (prevStatus === newStatus) return
+    const statusLabels: Record<string, string> = {
+      pending: 'Pending',
+      recorded: 'Recorded',
+      revisited: 'Revisited',
+    }
+    updateOutcome.mutate({
+      id: decision.id,
+      outcome: decision.outcome || '',
+      outcome_status: newStatus,
+    })
     showUndo(`Status → ${statusLabels[newStatus] || newStatus}`, () =>
-      updateOutcome.mutate({ id: decision.id, outcome: decision.outcome || '', outcome_status: prevStatus })
+      updateOutcome.mutate({
+        id: decision.id,
+        outcome: decision.outcome || '',
+        outcome_status: prevStatus,
+      })
     )
   }
 
-  // Filter decisions by status + search
-  const filteredDecisions = allDecisions.filter((d) => {
-    if (filterStatus && d.outcome_status !== filterStatus) return false
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      const text = `${d.title} ${d.rationale || ''} ${d.outcome || ''} ${d.tags || ''}`.toLowerCase()
-      if (!text.includes(q)) return false
+  const handleSort = (key: string) => {
+    const k = key as DecisionSortKey
+    if (sortKey === k) {
+      setSortAsc((v) => !v)
+    } else {
+      setSortKey(k)
+      setSortAsc(
+        k === 'title' || k === 'decided_by' || k === 'project' ? true : false
+      )
     }
-    return true
-  })
+  }
 
-  const pendingCount = allDecisions.filter((d) => d.outcome_status === 'pending').length
-  const recordedCount = allDecisions.filter((d) => d.outcome_status !== 'pending').length
+  const filteredDecisions = useMemo(() => {
+    const base = allDecisions.filter((d) => {
+      if (filterStatus && d.outcome_status !== filterStatus) return false
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase()
+        const text = `${d.title} ${d.rationale || ''} ${d.outcome || ''} ${
+          d.tags || ''
+        } ${d.context || ''}`.toLowerCase()
+        if (!text.includes(q)) return false
+      }
+      return true
+    })
+
+    const sorted = [...base].sort((a, b) => {
+      let av: string | number = ''
+      let bv: string | number = ''
+      switch (sortKey) {
+        case 'title':
+          av = a.title.toLowerCase()
+          bv = b.title.toLowerCase()
+          break
+        case 'outcome_status':
+          av = a.outcome_status || 'pending'
+          bv = b.outcome_status || 'pending'
+          break
+        case 'decided_by':
+          av = (a.decided_by || '').toLowerCase()
+          bv = (b.decided_by || '').toLowerCase()
+          break
+        case 'project':
+          av = (
+            a.project_slug ? projectMap.get(a.project_slug) || '' : ''
+          ).toLowerCase()
+          bv = (
+            b.project_slug ? projectMap.get(b.project_slug) || '' : ''
+          ).toLowerCase()
+          break
+        case 'created_at':
+        default:
+          av = new Date(a.created_at).getTime()
+          bv = new Date(b.created_at).getTime()
+          break
+      }
+      if (av < bv) return sortAsc ? -1 : 1
+      if (av > bv) return sortAsc ? 1 : -1
+      return 0
+    })
+
+    return sorted
+  }, [allDecisions, filterStatus, searchQuery, sortKey, sortAsc, projectMap])
+
+  const pendingCount = allDecisions.filter(
+    (d) => d.outcome_status === 'pending'
+  ).length
+  const recordedCount = allDecisions.filter(
+    (d) => d.outcome_status !== 'pending'
+  ).length
 
   useListKeyboardNav({
     itemCount: viewMode === 'list' ? filteredDecisions.length : 0,
@@ -315,7 +828,6 @@ export default function DecisionsPage() {
     disabled: showCreate,
   })
 
-  // N key opens create modal
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey && !showCreate) {
@@ -329,10 +841,14 @@ export default function DecisionsPage() {
     return () => window.removeEventListener('keydown', handler)
   }, [showCreate])
 
-  // Dynamic page title
   useEffect(() => {
-    document.title = pendingCount > 0 ? `Decisions (${pendingCount} pending) | MN-CCORE` : 'Decisions | MN-CCORE'
-    return () => { document.title = 'MN-CCORE Lab Hub' }
+    document.title =
+      pendingCount > 0
+        ? `Decisions (${pendingCount} pending) | MN-CCORE`
+        : 'Decisions | MN-CCORE'
+    return () => {
+      document.title = 'MN-CCORE Lab Hub'
+    }
   }, [pendingCount])
 
   return (
@@ -344,41 +860,73 @@ export default function DecisionsPage() {
         count={allDecisions.length}
         actions={
           <div className="flex items-center gap-2">
-            {/* View mode toggle */}
-            <div className="flex items-center rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+            <div
+              className="flex items-center overflow-hidden"
+              style={{
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-lg)',
+              }}
+            >
               <button
                 onClick={() => setViewMode('list')}
-                className="px-3 py-1.5 text-xs"
+                className="px-3 py-1.5"
                 style={{
+                  fontSize: 'var(--text-small)',
                   fontWeight: 500,
                   color: viewMode === 'list' ? 'var(--teal)' : 'var(--slate)',
-                  backgroundColor: viewMode === 'list' ? 'var(--teal-active)' : 'transparent',
+                  backgroundColor:
+                    viewMode === 'list' ? 'var(--teal-active)' : 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                 }}
               >
-                <List size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: '4px' }} />
+                <List
+                  size={14}
+                  style={{
+                    display: 'inline',
+                    verticalAlign: '-2px',
+                    marginRight: '4px',
+                  }}
+                />
                 List
               </button>
               <button
                 onClick={() => setViewMode('timeline')}
-                className="px-3 py-1.5 text-xs"
+                className="px-3 py-1.5"
                 style={{
+                  fontSize: 'var(--text-small)',
                   fontWeight: 500,
                   color: viewMode === 'timeline' ? 'var(--teal)' : 'var(--slate)',
-                  backgroundColor: viewMode === 'timeline' ? 'var(--teal-active)' : 'transparent',
+                  backgroundColor:
+                    viewMode === 'timeline' ? 'var(--teal-active)' : 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                 }}
               >
-                <GitCommitVertical size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: '4px' }} />
+                <GitCommitVertical
+                  size={14}
+                  style={{
+                    display: 'inline',
+                    verticalAlign: '-2px',
+                    marginRight: '4px',
+                  }}
+                />
                 Timeline
               </button>
             </div>
+            <DensityToggle value={density} onChange={setDensity} />
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
+              className="flex items-center gap-2 px-4 py-2"
+              style={{
+                backgroundColor: 'var(--teal)',
+                color: 'var(--ink-bright, #fff)',
+                border: 'none',
+                borderRadius: 'var(--radius-lg)',
+                fontSize: 'var(--text-small)',
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
             >
               <Plus size={16} />
               Log Decision
@@ -386,54 +934,71 @@ export default function DecisionsPage() {
           </div>
         }
       >
-        {/* Status filters */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {[
-            { key: '', label: 'All' },
-            { key: 'pending', label: 'Pending' },
-            { key: 'recorded', label: 'Recorded' },
-            { key: 'revisited', label: 'Revisited' },
-          ].map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilterStatus(f.key)}
-              className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
-              style={{
-                color: filterStatus === f.key ? 'var(--teal)' : 'var(--slate)',
-                backgroundColor: filterStatus === f.key ? 'var(--teal-active)' : 'transparent',
-                border: `1px solid ${filterStatus === f.key ? 'rgba(45,138,138,0.25)' : 'var(--border-subtle)'}`,
-                cursor: 'pointer',
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Search */}
-        <div className="mt-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            {[
+              { key: '', label: 'All' },
+              { key: 'pending', label: 'Pending' },
+              { key: 'recorded', label: 'Recorded' },
+              { key: 'revisited', label: 'Revisited' },
+            ].map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFilterStatus(f.key)}
+                className="px-3 py-1.5"
+                style={{
+                  fontSize: 'var(--text-small)',
+                  fontWeight: 500,
+                  color: filterStatus === f.key ? 'var(--teal)' : 'var(--slate)',
+                  backgroundColor:
+                    filterStatus === f.key ? 'var(--teal-active)' : 'transparent',
+                  border: `1px solid ${
+                    filterStatus === f.key
+                      ? 'var(--teal-emphasis)'
+                      : 'var(--border-subtle)'
+                  }`,
+                  borderRadius: 'var(--radius-full)',
+                  cursor: 'pointer',
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search decisions..."
-            className="w-full max-w-xs rounded-lg border px-3 py-1.5 text-xs outline-none"
-            style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', background: 'var(--cream)' }}
+            className="px-3 py-1.5 outline-none"
+            style={{
+              fontSize: 'var(--text-small)',
+              color: 'var(--ink)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--surface-1)',
+              minWidth: 220,
+              flex: '0 1 260px',
+            }}
           />
         </div>
-
-        {/* Tag filters */}
         {tagCounts.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap mt-2">
-            <Tag size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+            <Tag
+              size={12}
+              style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
+            />
             {filterTag && (
               <button
                 onClick={() => setFilterTag('')}
-                className="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                className="px-2 py-0.5"
                 style={{
+                  fontSize: 'var(--text-micro)',
+                  fontWeight: 500,
                   color: 'var(--maroon)',
-                  backgroundColor: 'rgba(128,0,0,0.06)',
-                  border: '1px solid rgba(128,0,0,0.15)',
+                  backgroundColor: 'var(--maroon-hover)',
+                  border: '1px solid var(--maroon-emphasis)',
+                  borderRadius: 'var(--radius-full)',
                   cursor: 'pointer',
                 }}
               >
@@ -444,11 +1009,18 @@ export default function DecisionsPage() {
               <button
                 key={tc.tag}
                 onClick={() => setFilterTag(filterTag === tc.tag ? '' : tc.tag)}
-                className="px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors"
+                className="px-2 py-0.5"
                 style={{
-                  color: filterTag === tc.tag ? 'var(--ink-bright, #fff)' : 'var(--teal)',
-                  backgroundColor: filterTag === tc.tag ? 'var(--teal)' : 'var(--teal-hover)',
-                  border: `1px solid ${filterTag === tc.tag ? 'var(--teal)' : 'rgba(45,138,138,0.15)'}`,
+                  fontSize: 'var(--text-micro)',
+                  fontWeight: 500,
+                  color:
+                    filterTag === tc.tag ? 'var(--ink-bright, #fff)' : 'var(--teal)',
+                  backgroundColor:
+                    filterTag === tc.tag ? 'var(--teal)' : 'var(--teal-hover)',
+                  border: `1px solid ${
+                    filterTag === tc.tag ? 'var(--teal)' : 'var(--teal-emphasis)'
+                  }`,
+                  borderRadius: 'var(--radius-full)',
                   cursor: 'pointer',
                 }}
               >
@@ -459,7 +1031,6 @@ export default function DecisionsPage() {
         )}
       </PageHeader>
 
-      {/* Decisions Awaiting Review (nudge for 30+ day old decisions) */}
       {reviewDecisions.length > 0 && !filterStatus && !filterTag && (
         <div className="mt-8">
           <div className="flex items-center gap-2 mb-4">
@@ -467,7 +1038,7 @@ export default function DecisionsPage() {
             <h2
               style={{
                 fontWeight: 500,
-                fontSize: '16px',
+                fontSize: 'var(--text-md)',
                 color: 'var(--ink)',
                 margin: 0,
               }}
@@ -475,35 +1046,48 @@ export default function DecisionsPage() {
               Record outcome?
             </h2>
             <span
-              className="text-xs px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: 'var(--gold-emphasis)', color: 'var(--gold)' }}
+              className="px-2 py-0.5"
+              style={{
+                fontSize: 'var(--text-small)',
+                backgroundColor: 'var(--gold-emphasis)',
+                color: 'var(--gold)',
+                borderRadius: 'var(--radius-full)',
+              }}
             >
               {reviewDecisions.length}
             </span>
           </div>
           <div className="flex flex-col gap-3">
             {reviewDecisions.map((decision) => (
-              <ReviewCard key={decision.id} decision={decision} projects={projects} updateOutcome={updateOutcome} />
+              <ReviewCard
+                key={decision.id}
+                decision={decision}
+                projects={projects}
+                updateOutcome={updateOutcome}
+              />
             ))}
           </div>
         </div>
       )}
 
-      {/* Main content area */}
       <div className="mt-8">
         <h2
           style={{
             fontWeight: 500,
-            fontSize: '16px',
+            fontSize: 'var(--text-md)',
             color: 'var(--ink)',
-            marginBottom: '16px',
+            marginBottom: 'var(--sp-md)',
           }}
         >
-          {filterTag ? `Tagged: ${filterTag}` : filterStatus ? `${filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)} Decisions` : 'All Decisions'}
+          {filterTag
+            ? `Tagged: ${filterTag}`
+            : filterStatus
+            ? `${filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)} Decisions`
+            : 'All Decisions'}
         </h2>
 
         {isLoading ? (
-          <TableSkeleton rows={5} cols={4} />
+          <TableSkeleton rows={5} cols={6} />
         ) : filteredDecisions.length === 0 ? (
           <EmptyState
             icon={<Scale size={40} />}
@@ -514,23 +1098,129 @@ export default function DecisionsPage() {
         ) : viewMode === 'timeline' ? (
           <DecisionTimeline decisions={filteredDecisions} projects={projects} />
         ) : (
-          <motion.div
-            className="table-container flex flex-col gap-3"
-            style={{ padding: '16px 20px' }}
-            initial="hidden"
-            animate="visible"
-            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}
-          >
-            {filteredDecisions.map((decision) => (
-              <motion.div key={decision.id} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
-                <DecisionCard decision={decision} projects={projects} onUpdateOutcome={updateOutcome} onStatusChange={handleStatusChange} />
-              </motion.div>
-            ))}
-          </motion.div>
+          <TableContainer className={densityClass(density)}>
+            <div
+              role="row"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: GRID_TEMPLATE,
+                padding: 'var(--sp-sm) var(--sp-lg)',
+                borderBottom: '1px solid var(--border-subtle)',
+                gap: 'var(--sp-sm)',
+              }}
+            >
+              {(
+                [
+                  { label: 'Title', key: 'title', align: 'left' },
+                  { label: 'Outcome', key: 'outcome_status', align: 'left' },
+                  { label: 'Tags', key: 'title', align: 'left', noSort: true },
+                  { label: 'Decided By', key: 'decided_by', align: 'left' },
+                  { label: 'Project', key: 'project', align: 'left' },
+                  { label: 'Date', key: 'created_at', align: 'right' },
+                ] as Array<{
+                  label: string
+                  key: DecisionSortKey
+                  align: 'left' | 'right'
+                  noSort?: boolean
+                }>
+              ).map((col, i) =>
+                col.noSort ? (
+                  <div
+                    key={`${col.label}-${i}`}
+                    role="columnheader"
+                    className="col-header"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {col.label}
+                  </div>
+                ) : (
+                  <div
+                    key={`${col.label}-${i}`}
+                    role="columnheader"
+                    aria-sort={
+                      sortKey === col.key
+                        ? sortAsc
+                          ? 'ascending'
+                          : 'descending'
+                        : 'none'
+                    }
+                  >
+                    <ColumnHeader
+                      label={col.label}
+                      sortKey={col.key}
+                      currentSort={sortKey}
+                      sortAsc={sortAsc}
+                      onSort={handleSort}
+                      align={col.align}
+                    />
+                  </div>
+                )
+              )}
+              <div />
+            </div>
+
+            <div role="grid" aria-label="Decisions">
+              {filteredDecisions.map((decision, i) => (
+                <DecisionRowItem
+                  key={decision.id}
+                  decision={decision}
+                  projects={projects}
+                  projectMap={projectMap}
+                  isExpanded={expandedId === decision.id}
+                  onToggleExpand={() =>
+                    setExpandedId(expandedId === decision.id ? null : decision.id)
+                  }
+                  onStatusChange={handleStatusChange}
+                  focused={focusedIndex === i}
+                />
+              ))}
+            </div>
+
+            {filteredDecisions.length > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 'var(--sp-xl)',
+                  padding: 'var(--sp-sm) var(--sp-lg)',
+                  borderTop: '1px solid var(--border-subtle)',
+                  background: 'var(--surface-1)',
+                }}
+              >
+                {[
+                  { label: 'Total', value: filteredDecisions.length },
+                  { label: 'Pending', value: pendingCount, color: 'var(--gold)' },
+                  { label: 'Recorded', value: recordedCount, color: 'var(--teal)' },
+                ].map((s) => (
+                  <span
+                    key={s.label}
+                    style={{
+                      fontSize: 'var(--text-label)',
+                      color: 'var(--slate)',
+                      opacity: 'var(--ink-label)',
+                    }}
+                  >
+                    {s.label}{' '}
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        color: (s as { color?: string }).color || 'var(--slate)',
+                        opacity: 1,
+                      }}
+                    >
+                      {s.value}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            )}
+          </TableContainer>
         )}
       </div>
 
-      {/* Create Decision Modal */}
       <AnimatePresence>
         {showCreate && (
           <CreateDecisionModal
@@ -544,5 +1234,4 @@ export default function DecisionsPage() {
   )
 }
 
-// Re-export sub-components for any consumers that may import them directly
 export { SimilarDecisionsPanel }
