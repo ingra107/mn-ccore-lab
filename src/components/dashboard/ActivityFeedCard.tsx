@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Activity, BookOpen, FlaskConical, Users, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { usePublications, useProjects } from '../../hooks/useApiData'
+import { useDashboardMounted } from '../../pages/Dashboard'
 import type { LucideIcon } from 'lucide-react'
 
 interface FeedItem {
@@ -23,8 +24,9 @@ function relativeTime(monthsAgo: number): string {
 }
 
 function ActivityFeedCard() {
-  const { data: publications = [] } = usePublications()
-  const { data: projects = [] } = useProjects()
+  const mounted = useDashboardMounted()
+  const { data: publications = [] } = usePublications(undefined, { enabled: mounted })
+  const { data: projects = [] } = useProjects(undefined, { enabled: mounted })
 
   const items = useMemo<FeedItem[]>(() => {
     const now = new Date()

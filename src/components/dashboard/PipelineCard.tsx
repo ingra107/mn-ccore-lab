@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { GitBranch } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
+import { useDashboardMounted } from '../../pages/Dashboard'
 
 interface Stage {
   label: string
@@ -13,7 +14,8 @@ interface Stage {
 }
 
 function PipelineCard() {
-  const { data: publications = [] } = usePublications()
+  const mounted = useDashboardMounted()
+  const { data: publications = [] } = usePublications(undefined, { enabled: mounted })
   const [animated, setAnimated] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 

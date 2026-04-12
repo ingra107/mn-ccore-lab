@@ -3,6 +3,7 @@ import { Users, FlaskConical, FileText, Award } from 'lucide-react'
 import { useCountUp } from '../../hooks/useCountUp'
 import BentoCard from './BentoCard'
 import { usePublications, useProjects, useTeam } from '../../hooks/useApiData'
+import { useDashboardMounted } from '../../pages/Dashboard'
 import type { LucideIcon } from 'lucide-react'
 
 interface StatItem {
@@ -57,9 +58,10 @@ function MiniStat({ icon: Icon, value, label, suffix = '', delay }: StatItem & {
 }
 
 function StatsCard() {
-  const { data: publications = [] } = usePublications()
-  const { data: projects = [] } = useProjects()
-  const { data: team = [] } = useTeam()
+  const mounted = useDashboardMounted()
+  const { data: publications = [] } = usePublications(undefined, { enabled: mounted })
+  const { data: projects = [] } = useProjects(undefined, { enabled: mounted })
+  const { data: team = [] } = useTeam({ enabled: mounted })
 
   const teamSize = team.length
   const activeProjects = projects.filter((p) => p.status === 'Active').length

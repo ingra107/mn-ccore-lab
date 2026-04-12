@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, createContext, useContext } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, GripVertical } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
@@ -34,6 +34,10 @@ import ProactiveBriefCard from '../components/dashboard/ProactiveBriefCard'
 import SystemHealthMiniCard from '../components/dashboard/SystemHealthMiniCard'
 import FileActivityCard from '../components/dashboard/FileActivityCard'
 import QuickCaptureBar from '../components/QuickCaptureBar'
+
+// Context to defer non-critical queries until after first paint
+export const DashboardMountedContext = createContext(false)
+export function useDashboardMounted() { return useContext(DashboardMountedContext) }
 
 // Tab categories for card filtering
 type DashboardTab = 'overview' | 'projects' | 'people' | 'deadlines'
@@ -211,8 +215,14 @@ export default function Dashboard() {
   const { user } = useAuth()
   const role = getUserRole(user?.email)
   const roleCards = useMemo(() => ROLE_DEFAULTS[role].dashboardCards, [role])
-  const { data: meetings = [] } = useMeetingsApi()
-  const { data: allTasks = [] } = useTasks()
+
+  // Defer non-critical queries until after first paint — lets the
+  // shell/skeletons render immediately, then populate with data.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  const { data: meetings = [] } = useMeetingsApi({ enabled: mounted })
+  const { data: allTasks = [] } = useTasks(undefined, { enabled: mounted })
 
   // Today's progress summary
   const todayProgress = useMemo(() => {
@@ -343,6 +353,7 @@ export default function Dashboard() {
   }, [user])
 
   return (
+    <DashboardMountedContext.Provider value={mounted}>
     <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
       <div className="content-container" style={{ paddingBottom: '4rem', maxWidth: '100%' }}>
         {/* Page Header — compact single row */}
@@ -879,5 +890,6 @@ export default function Dashboard() {
         }
       `}</style>
     </div>
+    </DashboardMountedContext.Provider>
   )
 }

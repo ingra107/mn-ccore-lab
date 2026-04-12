@@ -171,7 +171,7 @@ export function usePublications(params?: {
   year?: number
   status?: string
   topic?: string
-}) {
+}, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['publications', params],
     queryFn: async () => {
@@ -181,6 +181,7 @@ export function usePublications(params?: {
     initialData: (import.meta.env.DEV && !params) ? () => _devPublications : undefined,
     staleTime: STALE_TIME,
     retry: false,
+    enabled: options?.enabled ?? true,
   })
 }
 

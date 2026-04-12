@@ -2,6 +2,7 @@ import { memo, useMemo, useState, useEffect, useRef } from 'react'
 import { Tags } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
+import { useDashboardMounted } from '../../pages/Dashboard'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -98,7 +99,8 @@ function packBubbles(data: BubbleData[], width: number, height: number): BubbleD
 }
 
 function TopicBubblesCard() {
-  const { data: publications = [] } = usePublications()
+  const mounted = useDashboardMounted()
+  const { data: publications = [] } = usePublications(undefined, { enabled: mounted })
   const [hovered, setHovered] = useState<string | null>(null)
   const [animated, setAnimated] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
