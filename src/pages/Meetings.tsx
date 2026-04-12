@@ -1,18 +1,20 @@
 import { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
-import { Activity, Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Activity, Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useListKeyboardNav } from '../hooks/useListKeyboardNav'
 import { useMeetingsApi, useActionItems, useMeetingCadence } from '../hooks/useApiData'
 import type { MeetingRow, ActionItemRow } from '../hooks/useApiData'
-import { useToggleActionItem, useCreateActionItem } from '../hooks/useMutations'
+import { useToggleActionItem, useCreateActionItem, useCreateDecision } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
+import { useToast } from '../hooks/useToast'
 import { directors, getAllMembers, getPersonInfo } from '../data/team'
 import { projects as projectOptions } from '../data/projects'
 import QuickAddForm from '../components/QuickAddForm'
 import Avatar from '../components/Avatar'
+import PageHeader from '../components/PageHeader'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { parseCarriedForward } from '../lib/textUtils'
 import { formatFullDate, formatShortDate } from '../lib/dateUtils'
@@ -102,6 +104,7 @@ interface ActionItemWithContext extends ActionItem {
   meetingDate: string
   meetingTitle: string
   meetingId: string
+  carryCount?: number
 }
 
 // ── Meeting Detail Panel ────────────────────────────────────
@@ -116,6 +119,40 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
   const totalActions = meeting.actionItems?.length ?? 0
   const fSlug = getMeetingFacilitator(meeting.date)
   const fInfo = fSlug ? getPersonInfo(fSlug) : null
+
+  // M-26: Log Decision inline form
+  const [showDecisionForm, setShowDecisionForm] = useState(false)
+  const [decisionTitle, setDecisionTitle] = useState('')
+  const [decisionRationale, setDecisionRationale] = useState('')
+  const createDecision = useCreateDecision()
+  const { showSuccess } = useToast()
+
+  function handleLogDecision(e: React.FormEvent) {
+    e.preventDefault()
+    if (!decisionTitle.trim()) return
+    createDecision.mutate({
+      title: decisionTitle.trim(),
+      rationale: decisionRationale.trim() || undefined,
+      context: `From meeting: ${meeting.title} (${meeting.date})`,
+      meeting_id: meeting.id,
+    }, {
+      onSuccess: () => {
+        showSuccess('Decision logged')
+        setDecisionTitle('')
+        setDecisionRationale('')
+        setShowDecisionForm(false)
+      },
+    })
+  }
+
+  // M-07: Show carried-forward items with cleaned descriptions
+  const actionItemsWithCarried = useMemo(() => {
+    if (!meeting.actionItems) return []
+    return meeting.actionItems.map((item) => {
+      const { isCarried, clean } = parseCarriedForward(item.description)
+      return { ...item, isCarried, cleanDescription: clean }
+    })
+  }, [meeting.actionItems])
 
   return (
     <div>
@@ -223,11 +260,12 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
         </div>
       )}
 
-      {meeting.actionItems && meeting.actionItems.length > 0 && (
+      {/* M-07: action items with carried-forward badges */}
+      {actionItemsWithCarried.length > 0 && (
         <div className="mb-6">
           <h4 className="mtg-section-label mb-2">Action Items</h4>
           <div className="space-y-2">
-            {meeting.actionItems.map((item, i) => {
+            {actionItemsWithCarried.map((item, i) => {
               const info = getPersonInfo(item.assignee)
               return (
                 <div key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--ink)' }}>
@@ -247,7 +285,8 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
                   </button>
                   <div className="flex-1 min-w-0">
                     <span style={{ textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.6 : 1 }}>
-                      {item.description}
+                      {item.isCarried && <span className="carried-badge">&#x21bb; carried</span>}
+                      {item.cleanDescription}
                     </span>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex items-center gap-1">
@@ -277,6 +316,72 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
         </div>
       )}
 
+      {/* M-26: Log Decision section */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <h4 className="mtg-section-label mtg-section-label--gold" style={{ margin: 0 }}>Log Decision</h4>
+          <button
+            type="button"
+            onClick={() => setShowDecisionForm(!showDecisionForm)}
+            style={{
+              background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)',
+              padding: '2px 8px', cursor: 'pointer', fontSize: '10px', color: 'var(--gold)',
+              display: 'inline-flex', alignItems: 'center', gap: '3px',
+            }}
+          >
+            <Scale size={10} /> {showDecisionForm ? 'Cancel' : 'Add'}
+          </button>
+        </div>
+        <AnimatePresence>
+          {showDecisionForm && (
+            <motion.form
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+              onSubmit={handleLogDecision}
+              style={{ marginBottom: '8px' }}
+            >
+              <input
+                type="text"
+                value={decisionTitle}
+                onChange={(e) => setDecisionTitle(e.target.value)}
+                placeholder="What was decided?"
+                autoFocus
+                style={{
+                  width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
+                  background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 'var(--radius-lg)',
+                  padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
+                onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)')}
+              />
+              <input
+                type="text"
+                value={decisionRationale}
+                onChange={(e) => setDecisionRationale(e.target.value)}
+                placeholder="Why? (optional rationale)"
+                style={{
+                  width: '100%', fontSize: '12px', color: 'var(--ink)',
+                  background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.1)', borderRadius: 'var(--radius-lg)',
+                  padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
+                }}
+              />
+              <div className="flex gap-2">
+                <button type="submit"
+                  style={{ background: 'var(--gold)', color: '#0f1923', border: 'none', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                  Save
+                </button>
+                <button type="button" onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale('') }}
+                  style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}>
+                  Cancel
+                </button>
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
+      </div>
+
       <Link
         to={`/meetings/${meeting.id}`}
         className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md text-xs font-medium"
@@ -298,6 +403,8 @@ export default function Meetings() {
   const [searchQuery, setSearchQuery] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null)
+  // M-34: mobile view — false = show list, true = show detail
+  const [mobileShowDetail, setMobileShowDetail] = useState(false)
 
   const { data: meetingRows = [] } = useMeetingsApi()
   const { data: actionItemRows = [] } = useActionItems()
@@ -341,12 +448,21 @@ export default function Meetings() {
         }
       }
     }
+    // M-07: dedup carried-forward items — keep most recent, attach carryCount for badge
+    const counts = new Map<string, number>()
+    for (const item of items) {
+      const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
+      const key = `${normalized}::${item.assignee}`
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
     const seen = new Map<string, ActionItemWithContext>()
     for (const item of items) {
       const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
       const key = `${normalized}::${item.assignee}`
       const existing = seen.get(key)
-      if (!existing || item.meetingDate > existing.meetingDate) seen.set(key, item)
+      if (!existing || item.meetingDate > existing.meetingDate) {
+        seen.set(key, { ...item, carryCount: (counts.get(key) ?? 1) > 1 ? counts.get(key) : undefined })
+      }
     }
     return [...seen.values()]
   }, [meetings])
@@ -454,125 +570,117 @@ export default function Meetings() {
     return d >= today && meeting.date === nextMeetingDateStr
   }
 
+  // H-02: subtitle for PageHeader
+  const pageSubtitle = [
+    allActionItems.length > 0
+      ? `${Math.round((completedActions.length / allActionItems.length) * 100)}% complete`
+      : null,
+    pendingActions.length > 0 ? `${pendingActions.length} pending` : null,
+  ].filter(Boolean).join(' · ')
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── Compact header ─────────────────────────────────── */}
+      {/* H-02: PageHeader replaces inline H1 */}
       <div className="content-container" style={{ paddingTop: '1.5rem', paddingBottom: '1rem', flexShrink: 0 }}>
         <div ref={headerRef} className="fade-in-up">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div style={{ width: 34, height: 34, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--teal-active)', flexShrink: 0 }}>
-                <Users size={17} style={{ color: 'var(--teal)' }} />
-              </div>
-              <div>
-                <h1 style={{ fontWeight: 600, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--ink)', margin: 0, lineHeight: 1.2 }}>
-                  Meeting Hub
-                </h1>
-                <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
-                  {meetings.length} meetings
-                  {allActionItems.length > 0 && (
-                    <> &middot; <span style={{ color: completedActions.length === allActionItems.length ? 'var(--green)' : 'var(--teal)' }}>
-                      {Math.round((completedActions.length / allActionItems.length) * 100)}% complete
-                    </span></>
-                  )}
-                  {pendingActions.length > 0 && (
-                    <> &middot; <span style={{ color: 'var(--gold)' }}>{pendingActions.length} pending</span></>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Next meeting pill */}
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                style={{ background: 'var(--gold-light)', border: '1px solid rgba(201,168,76,0.25)' }}>
-                <Calendar size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-                <div>
-                  <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>
-                    {nextMeeting.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </span>
-                  <span className="text-xs ml-1.5" style={{ color: 'var(--muted)' }}>
-                    {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil}d`}
-                  </span>
-                  {(() => {
-                    const fSlug = getMeetingFacilitator(nextMeetingDateStr)
-                    const fInfo = fSlug ? getPersonInfo(fSlug) : null
-                    return fInfo ? (
-                      <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--teal)', marginTop: 2 }}>
-                        <UserCheck size={10} />
-                        {fInfo.name.split(' ')[0]}
-                      </span>
-                    ) : null
-                  })()}
+          <PageHeader
+            icon={<Users size={18} />}
+            title="Meeting Hub"
+            subtitle={pageSubtitle || undefined}
+            count={meetings.length}
+            actions={
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Next meeting pill */}
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                  style={{ background: 'var(--gold-light)', border: '1px solid rgba(201,168,76,0.25)' }}>
+                  <Calendar size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                  <div>
+                    <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>
+                      {nextMeeting.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                    <span className="text-xs ml-1.5" style={{ color: 'var(--muted)' }}>
+                      {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil}d`}
+                    </span>
+                    {(() => {
+                      const fSlug = getMeetingFacilitator(nextMeetingDateStr)
+                      const fInfo = fSlug ? getPersonInfo(fSlug) : null
+                      return fInfo ? (
+                        <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--teal)', marginTop: 2 }}>
+                          <UserCheck size={10} />
+                          {fInfo.name.split(' ')[0]}
+                        </span>
+                      ) : null
+                    })()}
+                  </div>
+                  <Clock size={12} style={{ color: 'var(--gold)', marginLeft: 4 }} />
                 </div>
-                <Clock size={12} style={{ color: 'var(--gold)', marginLeft: 4 }} />
-              </div>
 
-              {/* Record Meeting */}
-              <QuickAddForm
-                isOpen={showAddMeeting}
-                onToggle={() => setShowAddMeeting(true)}
-                onSubmit={handleAddMeeting}
-                onCancel={() => { setShowAddMeeting(false); setNewMeetingDate(''); setNewMeetingTitle(''); setNewMeetingAttendees(['nick', 'nate']); setNewMeetingAgenda(['']) }}
-                triggerLabel="Record Meeting"
-                submitLabel="Save Meeting"
-              >
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label style={labelStyle}>Date</label>
-                      <input type="date" value={newMeetingDate} onChange={(e) => setNewMeetingDate(e.target.value)} style={inputStyle} />
+                {/* Record Meeting */}
+                <QuickAddForm
+                  isOpen={showAddMeeting}
+                  onToggle={() => setShowAddMeeting(true)}
+                  onSubmit={handleAddMeeting}
+                  onCancel={() => { setShowAddMeeting(false); setNewMeetingDate(''); setNewMeetingTitle(''); setNewMeetingAttendees(['nick', 'nate']); setNewMeetingAgenda(['']) }}
+                  triggerLabel="Record Meeting"
+                  submitLabel="Save Meeting"
+                >
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label style={labelStyle}>Date</label>
+                        <input type="date" value={newMeetingDate} onChange={(e) => setNewMeetingDate(e.target.value)} style={inputStyle} />
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Title</label>
+                        <input type="text" value={newMeetingTitle} onChange={(e) => setNewMeetingTitle(e.target.value)} placeholder="Meeting title" style={inputStyle}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }} />
+                      </div>
                     </div>
                     <div>
-                      <label style={labelStyle}>Title</label>
-                      <input type="text" value={newMeetingTitle} onChange={(e) => setNewMeetingTitle(e.target.value)} placeholder="Meeting title" style={inputStyle}
-                        onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }} />
+                      <label style={labelStyle}><Users size={10} className="inline mr-1" />Attendees</label>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {TEAM_OPTIONS.slice(0, 10).map((m) => {
+                          const selected = newMeetingAttendees.includes(m.slug)
+                          return (
+                            <button key={m.slug} type="button" onClick={() => toggleAttendee(m.slug)}
+                              className="cursor-pointer inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
+                              style={{ fontSize: 'var(--label-size)', background: selected ? 'rgba(201,168,76,0.2)' : 'var(--ice)', color: selected ? 'var(--ink)' : 'var(--slate)', border: selected ? '1px solid var(--gold)' : '1px solid rgba(201,168,76,0.1)', transition: 'all 0.15s ease' }}>
+                              <div style={{ width: 16, height: 16 }}><Avatar name={m.name} initials={m.initials} photoUrl={m.photoUrl} variant="ice" size="2xs" /></div>
+                              {m.name.split(' ')[0]}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Agenda</label>
+                      <div className="space-y-2">
+                        {newMeetingAgenda.map((item, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className="shrink-0 text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', width: '18px' }}>{i + 1}.</span>
+                            <input type="text" value={item} onChange={(e) => updateAgendaItem(i, e.target.value)} placeholder="Agenda item"
+                              style={{ ...inputStyle, flex: 1 }}
+                              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
+                              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }} />
+                            {newMeetingAgenda.length > 1 && (
+                              <button type="button" onClick={() => removeAgendaItem(i)} className="cursor-pointer shrink-0 text-xs"
+                                style={{ background: 'none', border: 'none', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: 'var(--sp-xs)' }}>x</button>
+                            )}
+                          </div>
+                        ))}
+                        <button type="button" onClick={addAgendaItem} className="cursor-pointer inline-flex items-center gap-1 text-xs"
+                          style={{ background: 'none', border: 'none', color: 'var(--gold)', padding: 'var(--sp-xs) 0' }}>
+                          <Plus size={12} />Add agenda item
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <label style={labelStyle}><Users size={10} className="inline mr-1" />Attendees</label>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {TEAM_OPTIONS.slice(0, 10).map((m) => {
-                        const selected = newMeetingAttendees.includes(m.slug)
-                        return (
-                          <button key={m.slug} type="button" onClick={() => toggleAttendee(m.slug)}
-                            className="cursor-pointer inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
-                            style={{ fontSize: 'var(--label-size)', background: selected ? 'rgba(201,168,76,0.2)' : 'var(--ice)', color: selected ? 'var(--ink)' : 'var(--slate)', border: selected ? '1px solid var(--gold)' : '1px solid rgba(201,168,76,0.1)', transition: 'all 0.15s ease' }}>
-                            <div style={{ width: 16, height: 16 }}><Avatar name={m.name} initials={m.initials} photoUrl={m.photoUrl} variant="ice" size="2xs" /></div>
-                            {m.name.split(' ')[0]}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Agenda</label>
-                    <div className="space-y-2">
-                      {newMeetingAgenda.map((item, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <span className="shrink-0 text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', width: '18px' }}>{i + 1}.</span>
-                          <input type="text" value={item} onChange={(e) => updateAgendaItem(i, e.target.value)} placeholder="Agenda item"
-                            style={{ ...inputStyle, flex: 1 }}
-                            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--gold-emphasis)' }} />
-                          {newMeetingAgenda.length > 1 && (
-                            <button type="button" onClick={() => removeAgendaItem(i)} className="cursor-pointer shrink-0 text-xs"
-                              style={{ background: 'none', border: 'none', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: 'var(--sp-xs)' }}>x</button>
-                          )}
-                        </div>
-                      ))}
-                      <button type="button" onClick={addAgendaItem} className="cursor-pointer inline-flex items-center gap-1 text-xs"
-                        style={{ background: 'none', border: 'none', color: 'var(--gold)', padding: 'var(--sp-xs) 0' }}>
-                        <Plus size={12} />Add agenda item
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </QuickAddForm>
-            </div>
-          </div>
+                </QuickAddForm>
+              </div>
+            }
+          />
 
           {cadence && cadence.recommendation !== 'no_upcoming' && (
             <div className="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg"
@@ -582,17 +690,15 @@ export default function Meetings() {
               <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{cadence.reasons.join(' · ')}</span>
             </div>
           )}
-
-          <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.3, marginTop: '1rem' }} />
         </div>
       </div>
 
-      {/* ── Split panel ────────────────────────────────────── */}
-      <div className="meetings-split-panel"
-        style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 0, height: 'calc(100vh - 130px)', overflow: 'hidden' }}>
+      {/* M-03: 240px list, M-28: minHeight 400px, M-34: mobile-detail class */}
+      <div className={`meetings-split-panel${mobileShowDetail ? ' mobile-detail' : ''}`}
+        style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 0, height: 'calc(100vh - 130px)', overflow: 'hidden' }}>
 
-        {/* Left panel: meeting list */}
-        <div style={{ overflowY: 'auto', borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column' }}>
+        {/* Left panel — M-28: minHeight, M-34: hidden when mobile-detail active */}
+        <div className="meetings-list-panel" style={{ overflowY: 'auto', borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
           <div style={{ padding: '12px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div className="flex items-center gap-1.5">
               {FILTER_OPTIONS.map((f) => (
@@ -626,7 +732,7 @@ export default function Meetings() {
                     style={{ display: 'block', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', background: isSelected ? 'rgba(45,138,138,0.08)' : 'transparent', borderLeft: isNext ? '3px solid var(--teal)' : isSelected ? '3px solid rgba(45,138,138,0.4)' : '3px solid transparent', transition: 'background 150ms ease', outline: 'none' }}
                     onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(201,168,76,0.04)' }}
                     onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
-                    onClick={() => { setSelectedMeetingId(meeting.id); setFocusedIndex(idx) }}>
+                    onClick={() => { setSelectedMeetingId(meeting.id); setFocusedIndex(idx); setMobileShowDetail(true) }}>
                     <div className="flex items-center justify-between gap-2">
                       <span style={{ fontSize: '11px', color: isNext ? 'var(--teal)' : 'var(--slate)', opacity: isNext ? 1 : 0.6, flexShrink: 0, fontWeight: isNext ? 600 : 400, minWidth: '46px' }}>
                         {formatListDate(meeting.date)}
@@ -666,7 +772,16 @@ export default function Meetings() {
         </div>
 
         {/* Right panel: meeting detail */}
-        <div style={{ overflowY: 'auto', padding: 'var(--sp-xl)' }}>
+        <div className="meetings-detail-panel" style={{ overflowY: 'auto', padding: 'var(--sp-xl)' }}>
+          {/* M-34: mobile back button */}
+          <button
+            type="button"
+            className="meetings-back-btn"
+            onClick={() => setMobileShowDetail(false)}
+            style={{ display: 'none', alignItems: 'center', gap: '6px', marginBottom: '12px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', fontSize: '13px', padding: '4px 0' }}
+          >
+            <ChevronLeft size={16} /> Back to meetings
+          </button>
           {selectedMeeting ? (
             <motion.div key={selectedMeeting.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
               <MeetingDetail meeting={selectedMeeting} onToggleAction={handleToggleAction} />
@@ -678,6 +793,7 @@ export default function Meetings() {
                   <div className="space-y-2 mb-4">
                     {pendingActions.map((item) => {
                       const info = getPersonInfo(item.assignee)
+                      const { isCarried: itemIsCarried, clean: itemClean } = parseCarriedForward(item.description)
                       return (
                         <div key={item.id || item.description} className="flex items-start gap-3 p-3 rounded-lg action-item-card"
                           style={{ background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', boxShadow: 'var(--shadow-card)' }}>
@@ -691,7 +807,11 @@ export default function Meetings() {
                           </button>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm leading-snug" style={{ color: 'var(--ink)' }}>
-                              {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">&#x21bb; carried</span>}{clean}</>) })()}
+                              {itemIsCarried && <span className="carried-badge">&#x21bb; carried</span>}
+                              {item.carryCount && item.carryCount > 1 && (
+                                <span className="carried-count-badge">&times;{item.carryCount}</span>
+                              )}
+                              {itemClean}
                             </p>
                             <div className="flex flex-wrap items-center gap-3 mt-1.5">
                               <div className="flex items-center gap-1.5">
@@ -756,6 +876,7 @@ export default function Meetings() {
                     <div className="space-y-1.5">
                       {completedActions.map((item) => {
                         const info = getPersonInfo(item.assignee)
+                        const { isCarried: cIsCarried, clean: cClean } = parseCarriedForward(item.description)
                         return (
                           <div key={item.id || item.description} className="flex items-start gap-3 p-2.5 rounded-lg action-item-card" style={{ background: 'var(--cream)', opacity: 0.7 }}>
                             <button type="button" className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
@@ -768,7 +889,8 @@ export default function Meetings() {
                             </button>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm leading-snug" style={{ color: 'var(--ink)', textDecoration: 'line-through', opacity: 0.6 }}>
-                                {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">&#x21bb; carried</span>}{clean}</>) })()}
+                                {cIsCarried && <span className="carried-badge">&#x21bb; carried</span>}
+                                {cClean}
                               </p>
                               <div className="flex flex-wrap items-center gap-3 mt-1">
                                 <div className="flex items-center gap-1.5">
@@ -817,17 +939,25 @@ export default function Meetings() {
           letter-spacing: 0.06em; color: var(--slate); opacity: 0.6;
         }
         .mtg-section-label--gold { color: var(--gold) !important; opacity: 1 !important; }
-        @media (max-width: 768px) {
+        .carried-count-badge {
+          display: inline-flex; align-items: center; justify-content: center;
+          font-size: 9px; font-weight: 600; padding: 0px 4px; border-radius: 9999px;
+          background: rgba(201,168,76,0.15); color: var(--gold);
+          margin-right: 4px; vertical-align: middle;
+        }
+        /* M-34: Mobile — show only list OR detail, not both stacked */
+        @media (max-width: 767px) {
           .meetings-split-panel {
             grid-template-columns: 1fr !important;
-            height: auto !important;
-            overflow: visible !important;
+            height: calc(100vh - 200px) !important;
+            overflow: hidden !important;
           }
-          .meetings-split-panel > div:first-child {
-            border-right: none !important;
-            border-bottom: 1px solid var(--border-subtle);
-            max-height: 320px;
-          }
+          .meetings-list-panel { display: flex !important; }
+          .meetings-detail-panel { display: none !important; }
+          .meetings-split-panel.mobile-detail .meetings-list-panel { display: none !important; }
+          .meetings-split-panel.mobile-detail .meetings-detail-panel { display: block !important; overflow-y: auto; }
+          .meetings-back-btn { display: flex !important; }
+          .meetings-list-panel { border-right: none !important; }
         }
       `}</style>
     </div>
