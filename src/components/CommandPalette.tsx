@@ -552,15 +552,15 @@ export default function CommandPalette() {
         </div>
 
         {/* Footer hint */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-          <span>↑↓ navigate</span>
-          <span>↵ select</span>
-          <span>esc close</span>
-          {!isProjectMode && <span>/ projects</span>}
-          <span style={{ opacity: 0.4 }}>
+        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)' }}>
+          <span style={{ opacity: 'var(--ink-label)' }}>↑↓ navigate</span>
+          <span style={{ opacity: 'var(--ink-label)' }}>↵ select</span>
+          <span style={{ opacity: 'var(--ink-label)' }}>esc close</span>
+          {!isProjectMode && <span style={{ opacity: 'var(--ink-label)' }}>/ projects</span>}
+          <span style={{ opacity: 'var(--ink-hint)' }}>
             {tasks.filter(t => !t.completed).length} tasks · {projects.length} projects
           </span>
-          <span className="ml-auto flex items-center gap-1">
+          <span className="ml-auto flex items-center gap-1" style={{ opacity: 'var(--ink-label)' }}>
             <Command size={9} />K to toggle
           </span>
         </div>
