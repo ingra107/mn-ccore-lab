@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests',
-  globalSetup: require.resolve('./tests/test-seed.ts'),
+  globalSetup: './tests/test-seed.ts',
   timeout: 30_000,
   retries: 0,
   use: {
