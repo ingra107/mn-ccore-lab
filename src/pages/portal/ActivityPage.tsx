@@ -96,7 +96,7 @@ export default function ActivityPage() {
               fontSize: '12px',
               color: filterPerson ? 'var(--gold)' : 'var(--slate)',
               backgroundColor: filterPerson ? 'var(--gold-hover)' : 'transparent',
-              borderColor: filterPerson ? 'var(--gold)' : 'var(--border-light)',
+              borderColor: filterPerson ? 'var(--gold)' : 'var(--border-subtle)',
               cursor: 'pointer',
               appearance: 'none' as const,
               WebkitAppearance: 'none' as const,
@@ -117,7 +117,7 @@ export default function ActivityPage() {
               fontSize: '12px',
               color: filterType ? 'var(--teal)' : 'var(--slate)',
               backgroundColor: filterType ? 'var(--teal-hover)' : 'transparent',
-              borderColor: filterType ? 'var(--teal)' : 'var(--border-light)',
+              borderColor: filterType ? 'var(--teal)' : 'var(--border-subtle)',
               cursor: 'pointer',
               appearance: 'none' as const,
               WebkitAppearance: 'none' as const,
@@ -171,7 +171,7 @@ export default function ActivityPage() {
                           <ActivityAvatar slug={item.actor!} />
                         ) : (
                           <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--ice)' }}>
-                            <span className="text-[8px]" style={{ color: 'var(--slate)' }}>SYS</span>
+                            <span className="text-[10px]" style={{ color: 'var(--slate)' }}>SYS</span>
                           </div>
                         )}
                         <div className="flex-1 min-w-0">

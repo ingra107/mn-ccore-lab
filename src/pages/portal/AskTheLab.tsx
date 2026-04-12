@@ -145,7 +145,7 @@ function QuestionCard({
     <div
       className="rounded-xl border overflow-hidden transition-shadow"
       style={{
-        borderColor: expanded ? 'var(--teal)' : 'var(--border-light)',
+        borderColor: expanded ? 'var(--teal)' : 'var(--border-subtle)',
         backgroundColor: 'var(--cream)',
         boxShadow: expanded ? '0 0 0 1px var(--teal)' : 'none',
       }}

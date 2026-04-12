@@ -61,7 +61,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
       className="group relative rounded-lg border hover:shadow-md"
       // CSS handles the hover lift — no JS onMouse handlers needed for transform
       style={{
-        borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-light)',
+        borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-subtle)',
         borderLeft: `3px solid ${effectiveBorderColor}`,
         backgroundColor: isDone ? 'var(--hover-subtle)' : 'var(--cream)',
         opacity: isDone ? 0.7 : 1,

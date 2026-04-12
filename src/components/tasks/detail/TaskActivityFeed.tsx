@@ -112,7 +112,7 @@ function UpdateItem({ update }: { update: TaskUpdateRow }) {
           <div className="flex items-center gap-1.5 flex-wrap">
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 600, color: 'var(--ink)' }}>{person.name}</span>
             <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded"
-              style={{ fontSize: '8px', background: `color-mix(in srgb, ${config.color} 10%, transparent)`, color: config.color }}>
+              style={{ fontSize: 'var(--text-micro)', background: `color-mix(in srgb, ${config.color} 10%, transparent)`, color: config.color }}>
               <Icon size={8} /> {config.label}
             </span>
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)', marginLeft: 'auto' }}>
@@ -147,7 +147,7 @@ function CommentItem({ comment }: { comment: TaskComment }) {
           <div className="flex items-center gap-1.5 flex-wrap">
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 600, color: 'var(--ink)' }}>{person.name}</span>
             <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded"
-              style={{ fontSize: '8px', background: 'var(--gold-active)', color: 'var(--gold)' }}>
+              style={{ fontSize: 'var(--text-micro)', background: 'var(--gold-active)', color: 'var(--gold)' }}>
               <MessageSquare size={8} /> Comment
             </span>
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)', marginLeft: 'auto' }}>

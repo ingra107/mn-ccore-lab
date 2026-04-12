@@ -262,7 +262,7 @@ export default function Deadlines() {
               fontSize: '12px',
               color: filterType ? 'var(--teal)' : 'var(--slate)',
               backgroundColor: filterType ? 'var(--teal-hover)' : 'transparent',
-              borderColor: filterType ? 'var(--teal)' : 'var(--border-light)',
+              borderColor: filterType ? 'var(--teal)' : 'var(--border-subtle)',
               cursor: 'pointer',
               appearance: 'none' as const,
               WebkitAppearance: 'none' as const,

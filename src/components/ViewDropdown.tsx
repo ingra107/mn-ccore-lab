@@ -37,7 +37,7 @@ export default function ViewDropdown({ currentView, onSelect, views }: ViewDropd
         style={{
           color: currentOption ? 'var(--teal)' : 'var(--slate)',
           backgroundColor: currentOption ? 'var(--teal-active)' : 'transparent',
-          borderColor: currentOption ? 'var(--teal)' : 'var(--border-light)',
+          borderColor: currentOption ? 'var(--teal)' : 'var(--border-subtle)',
           cursor: 'pointer',
         }}
       >

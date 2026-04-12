@@ -366,7 +366,7 @@ export default function MyTasks() {
                 fontSize: '12px',
                 color: groupBy !== 'none' ? 'var(--teal)' : 'var(--slate)',
                 backgroundColor: groupBy !== 'none' ? 'var(--teal-hover)' : 'transparent',
-                borderColor: groupBy !== 'none' ? 'var(--teal)' : 'var(--border-light)',
+                borderColor: groupBy !== 'none' ? 'var(--teal)' : 'var(--border-subtle)',
                 cursor: 'pointer',
                 appearance: 'none' as const,
                 WebkitAppearance: 'none' as const,
@@ -410,7 +410,7 @@ export default function MyTasks() {
               style={{
                 backgroundColor: showCompleted ? 'rgba(34,197,94,0.1)' : 'transparent',
                 color: showCompleted ? 'var(--green)' : 'var(--slate)',
-                border: `1px solid ${showCompleted ? 'rgba(34,197,94,0.3)' : 'var(--border-light)'}`,
+                border: `1px solid ${showCompleted ? 'rgba(34,197,94,0.3)' : 'var(--border-subtle)'}`,
                 cursor: 'pointer',
                 opacity: showCompleted ? 1 : 0.5,
               }}
@@ -521,7 +521,7 @@ export default function MyTasks() {
             style={{
               backgroundColor: quickFilter === f.key ? pillColor.bg : 'transparent',
               color: quickFilter === f.key ? pillColor.fg : 'var(--slate)',
-              border: `1px solid ${quickFilter === f.key ? pillColor.border : 'var(--border-light)'}`,
+              border: `1px solid ${quickFilter === f.key ? pillColor.border : 'var(--border-subtle)'}`,
               cursor: 'pointer',
               opacity: quickFilter === f.key ? 1 : 0.6,
             }}
@@ -899,7 +899,7 @@ function ViewDropdown({ view, setView, views }: { view: ViewMode; setView: (v: V
         style={{
           color: currentView ? 'var(--teal)' : 'var(--slate)',
           backgroundColor: currentView ? 'var(--teal-active)' : 'transparent',
-          borderColor: currentView ? 'var(--teal)' : 'var(--border-light)',
+          borderColor: currentView ? 'var(--teal)' : 'var(--border-subtle)',
           cursor: 'pointer',
         }}
       >

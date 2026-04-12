@@ -243,7 +243,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               onClick={() => setMode('transcript')}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border"
               style={{
-                borderColor: mode === 'transcript' ? 'var(--teal)' : 'var(--border-light)',
+                borderColor: mode === 'transcript' ? 'var(--teal)' : 'var(--border-subtle)',
                 backgroundColor: mode === 'transcript' ? 'var(--teal-active)' : 'transparent',
                 color: mode === 'transcript' ? 'var(--teal)' : 'var(--slate)',
                 cursor: 'pointer',
@@ -256,7 +256,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               onClick={() => setMode('audio')}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border"
               style={{
-                borderColor: mode === 'audio' ? 'var(--teal)' : 'var(--border-light)',
+                borderColor: mode === 'audio' ? 'var(--teal)' : 'var(--border-subtle)',
                 backgroundColor: mode === 'audio' ? 'var(--teal-active)' : 'transparent',
                 color: mode === 'audio' ? 'var(--teal)' : 'var(--slate)',
                 cursor: 'pointer',

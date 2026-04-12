@@ -127,7 +127,7 @@ export function StatusSelect({ value, onChange }: { value: string; onChange: (v:
             style={{
               fontWeight: active ? 600 : 400,
               color: active ? s.color : 'var(--slate)',
-              borderColor: active ? s.color : 'var(--border-light)',
+              borderColor: active ? s.color : 'var(--border-subtle)',
               backgroundColor: active ? `color-mix(in srgb, ${s.color} 8%, transparent)` : 'transparent',
               cursor: 'pointer',
               opacity: active ? 1 : 0.7,
@@ -157,7 +157,7 @@ export function PrioritySelect({ value, onChange }: { value: string; onChange: (
             style={{
               fontWeight: active ? 600 : 400,
               color: active ? p.color : 'var(--slate)',
-              borderColor: active ? p.color : 'var(--border-light)',
+              borderColor: active ? p.color : 'var(--border-subtle)',
               backgroundColor: active ? `color-mix(in srgb, ${p.color} 8%, transparent)` : 'transparent',
               cursor: 'pointer',
               opacity: active ? 1 : 0.7,

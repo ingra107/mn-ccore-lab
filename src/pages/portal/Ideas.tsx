@@ -140,7 +140,7 @@ export default function Ideas() {
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: cfg.color, backgroundColor: cfg.bg }}>
                   {cfg.label}
                 </span>
-                {i < 3 && <span className="text-[8px]" style={{ color: 'var(--slate)', opacity: 0.3 }}>&#8594;</span>}
+                {i < 3 && <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.3 }}>&#8594;</span>}
               </span>
             )
           })}
@@ -173,7 +173,7 @@ export default function Ideas() {
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-colors border"
             style={{
               color: sortMode !== 'newest' ? 'var(--teal)' : 'var(--slate)',
-              borderColor: sortMode !== 'newest' ? 'var(--teal)' : 'var(--border-light)',
+              borderColor: sortMode !== 'newest' ? 'var(--teal)' : 'var(--border-subtle)',
               backgroundColor: sortMode !== 'newest' ? 'var(--teal-hover)' : 'transparent',
               cursor: 'pointer',
             }}
@@ -190,7 +190,7 @@ export default function Ideas() {
               fontSize: '12px',
               color: filterStatus ? 'var(--teal)' : 'var(--slate)',
               backgroundColor: filterStatus ? 'var(--teal-hover)' : 'transparent',
-              borderColor: filterStatus ? 'var(--teal)' : 'var(--border-light)',
+              borderColor: filterStatus ? 'var(--teal)' : 'var(--border-subtle)',
               cursor: 'pointer', appearance: 'none' as const, WebkitAppearance: 'none' as const,
               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center', paddingRight: '24px',

@@ -319,7 +319,7 @@ export default function Publications() {
               style={{
                 backgroundColor: viewMode === 'list' ? 'var(--teal-active)' : 'transparent',
                 color: viewMode === 'list' ? 'var(--teal)' : 'var(--slate)',
-                border: `1px solid ${viewMode === 'list' ? 'var(--teal)' : 'var(--border-light)'}`,
+                border: `1px solid ${viewMode === 'list' ? 'var(--teal)' : 'var(--border-subtle)'}`,
                 cursor: 'pointer',
                 opacity: viewMode === 'list' ? 1 : 0.55,
               }}
@@ -333,7 +333,7 @@ export default function Publications() {
               style={{
                 backgroundColor: viewMode === 'library' ? 'var(--teal-active)' : 'transparent',
                 color: viewMode === 'library' ? 'var(--teal)' : 'var(--slate)',
-                border: `1px solid ${viewMode === 'library' ? 'var(--teal)' : 'var(--border-light)'}`,
+                border: `1px solid ${viewMode === 'library' ? 'var(--teal)' : 'var(--border-subtle)'}`,
                 cursor: 'pointer',
                 opacity: viewMode === 'library' ? 1 : 0.55,
               }}

@@ -401,7 +401,7 @@ export default function DecisionsPage() {
               style={{
                 color: filterStatus === f.key ? 'var(--teal)' : 'var(--slate)',
                 backgroundColor: filterStatus === f.key ? 'var(--teal-active)' : 'transparent',
-                border: `1px solid ${filterStatus === f.key ? 'rgba(45,138,138,0.25)' : 'var(--border-light)'}`,
+                border: `1px solid ${filterStatus === f.key ? 'rgba(45,138,138,0.25)' : 'var(--border-subtle)'}`,
                 cursor: 'pointer',
               }}
             >

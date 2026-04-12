@@ -706,7 +706,7 @@ function FilterSelect({
         fontSize: '12px',
         color: value ? 'var(--teal)' : 'var(--slate)',
         backgroundColor: value ? 'var(--teal-hover)' : 'transparent',
-        borderColor: value ? 'var(--teal)' : 'var(--border-light)',
+        borderColor: value ? 'var(--teal)' : 'var(--border-subtle)',
         cursor: 'pointer',
         appearance: 'none' as const,
         WebkitAppearance: 'none' as const,

@@ -228,7 +228,7 @@ export default function SettingsPage() {
               }}
               className="flex-1 rounded-lg border-2 p-3 transition-all cursor-pointer"
               style={{
-                borderColor: document.documentElement.getAttribute('data-theme') !== 'dark' ? 'var(--teal)' : 'var(--border-light)',
+                borderColor: document.documentElement.getAttribute('data-theme') !== 'dark' ? 'var(--teal)' : 'var(--border-subtle)',
                 background: '#ffffff',
               }}
             >
@@ -250,7 +250,7 @@ export default function SettingsPage() {
               }}
               className="flex-1 rounded-lg border-2 p-3 transition-all cursor-pointer"
               style={{
-                borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? 'var(--teal)' : 'var(--border-light)',
+                borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? 'var(--teal)' : 'var(--border-subtle)',
                 background: '#0b1017',
               }}
             >

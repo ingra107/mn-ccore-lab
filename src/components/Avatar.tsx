@@ -27,11 +27,11 @@ const sizeConfig = {
   },
   'tight': {
     container: 'w-6 h-6 min-w-0 min-h-0',
-    text: 'text-[8px]',
+    text: 'text-[10px]',
   },
   'base-sm': {
     container: 'w-7 h-7 min-w-0 min-h-0',
-    text: 'text-[8px]',
+    text: 'text-[10px]',
   },
   'base': {
     container: 'w-8 h-8 min-w-0 min-h-0',

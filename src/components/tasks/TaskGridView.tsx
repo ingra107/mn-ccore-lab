@@ -1150,7 +1150,7 @@ function TaskGridRow({
                   return (
                     <span
                       title={`In progress for ${days} days \u2014 consider updating`}
-                      style={{ fontSize: '8px', color: 'var(--orange)', opacity: 0.7, marginTop: '1px' }}
+                      style={{ fontSize: 'var(--text-micro)', color: 'var(--orange)', opacity: 0.7, marginTop: '1px' }}
                     >
                       {'\u26A0'} {days}d
                     </span>

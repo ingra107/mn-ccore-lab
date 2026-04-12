@@ -264,13 +264,13 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
                   const Wrapper = e.type === 'meeting' ? Link : 'div' as any
                   const wrapperProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
                   return (
-                    <Wrapper key={e.id} {...wrapperProps} className="text-[8px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
+                    <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
                       {(() => { const t = formatBrandName(e.title); return t.length > 20 ? t.slice(0, 20) + '...' : t })()}
                     </Wrapper>
                   )
                 })}
                 {dayEvents.length > 3 && (
-                  <span className="text-[8px] px-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>+{dayEvents.length - 3} more</span>
+                  <span className="text-[10px] px-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>+{dayEvents.length - 3} more</span>
                 )}
               </div>
             </div>
