@@ -1,15 +1,14 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Plus, LayoutGrid, List, ThumbsUp, X, Lightbulb, ArrowUpDown } from 'lucide-react'
+import { Plus, ThumbsUp, X, Lightbulb, Pencil, Archive } from 'lucide-react'
 import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
-import { CardSkeleton, TableSkeleton } from '../../components/LoadingSkeleton'
+import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
-import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
+import { ColumnHeader, TableContainer } from '../../components/table'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useIdeas } from '../../hooks/useApiData'
 import { useCreateIdea, useVoteIdea, useUpdateIdea } from '../../hooks/useMutations'
@@ -19,15 +18,14 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import type { IdeaRow } from '../../lib/api'
 import PageLayout from '../../components/PageLayout'
 
-type ViewMode = 'grid' | 'list'
-type SortMode = 'newest' | 'votes' | 'title'
+type SortKey = 'title' | 'submitter' | 'status' | 'votes' | 'created_at'
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   new: { label: 'New', color: 'var(--teal)', bg: 'var(--teal-active)' },
   under_review: { label: 'Under Review', color: 'var(--gold)', bg: 'var(--gold-active)' },
   approved: { label: 'Approved', color: 'var(--green)', bg: 'var(--green-hover)' },
-  parked: { label: 'Parked', color: 'var(--slate)', bg: 'rgba(100,116,139,0.08)' },
-  archived: { label: 'Archived', color: 'var(--slate)', bg: 'rgba(100,116,139,0.05)' },
+  parked: { label: 'Parked', color: 'var(--slate)', bg: 'var(--hover-subtle)' },
+  archived: { label: 'Archived', color: 'var(--slate)', bg: 'var(--hover-subtle)' },
 }
 
 const researchAreas = [
@@ -42,13 +40,15 @@ const researchAreas = [
   'Other',
 ]
 
+const GRID_COLS = 'minmax(200px, 3fr) 120px 100px 80px 80px 80px'
+
 export default function Ideas() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [density, setDensity] = useDensity()
-  const [view, setView] = useState<ViewMode>('grid')
   const [showCreate, setShowCreate] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('')
-  const [sortMode, setSortMode] = useState<SortMode>('newest')
+  const [sortKey, setSortKey] = useState<SortKey>('created_at')
+  const [sortAsc, setSortAsc] = useState(false)
 
   // Auto-open create modal from URL params (keyboard shortcut N)
   useEffect(() => {
@@ -64,15 +64,49 @@ export default function Ideas() {
   const { showUndo } = useUndoToast()
   const [focusedIndex, setFocusedIndex] = useState(-1)
 
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortAsc(!sortAsc)
+    } else {
+      setSortKey(key as SortKey)
+      // sensible defaults: dates/votes desc, text asc
+      setSortAsc(key === 'title' || key === 'submitter' || key === 'status')
+    }
+  }
+
+  const sortedIdeas = useMemo(() => {
+    const sorted = [...ideas]
+    const dir = sortAsc ? 1 : -1
+    sorted.sort((a, b) => {
+      switch (sortKey) {
+        case 'title':
+          return a.title.localeCompare(b.title) * dir
+        case 'submitter': {
+          const an = getPersonInfo(a.submitted_by).name || ''
+          const bn = getPersonInfo(b.submitted_by).name || ''
+          return an.localeCompare(bn) * dir
+        }
+        case 'status':
+          return (a.status || '').localeCompare(b.status || '') * dir
+        case 'votes':
+          return ((a.votes || 0) - (b.votes || 0)) * dir
+        case 'created_at':
+        default:
+          return (a.created_at || '').localeCompare(b.created_at || '') * dir
+      }
+    })
+    return sorted
+  }, [ideas, sortKey, sortAsc])
+
   useListKeyboardNav({
-    itemCount: view === 'list' ? ideas.length : 0,
+    itemCount: sortedIdeas.length,
     focusedIndex,
     setFocusedIndex,
     disabled: showCreate,
   })
 
   // Reset focus when filters change
-  useEffect(() => { setFocusedIndex(-1) }, [filterStatus, view])
+  useEffect(() => { setFocusedIndex(-1) }, [filterStatus])
 
   // N key opens create modal
   useEffect(() => {
@@ -97,21 +131,20 @@ export default function Ideas() {
 
   const handleIdeaStatusChange = (id: string, status: string, prevStatus: string) => {
     updateIdea.mutate({ id, fields: { status } })
-    showUndo(`Idea → ${status.replace('_', ' ')}`, () => updateIdea.mutate({ id, fields: { status: prevStatus } }))
+    showUndo(`Idea \u2192 ${status.replace('_', ' ')}`, () => updateIdea.mutate({ id, fields: { status: prevStatus } }))
   }
 
-  const sortedIdeas = useMemo(() => {
-    const sorted = [...ideas]
-    switch (sortMode) {
-      case 'votes': sorted.sort((a, b) => (b.votes || 0) - (a.votes || 0)); break
-      case 'title': sorted.sort((a, b) => a.title.localeCompare(b.title)); break
-      case 'newest':
-      default: sorted.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')); break
-    }
-    return sorted
-  }, [ideas, sortMode])
+  const handleVote = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
+    e.stopPropagation()
+    vote.mutate(id)
+    // Bounce animation (CSS transform, no Framer Motion)
+    const btn = e.currentTarget
+    btn.style.transform = 'scale(1.3)'
+    window.setTimeout(() => { btn.style.transform = 'scale(1)' }, 150)
+  }
 
   const activeCount = ideas.filter((i) => i.status !== 'archived' && i.status !== 'parked').length
+  const isEmpty = !isLoading && sortedIdeas.length === 0
 
   return (
     <PageLayout>
@@ -123,121 +156,191 @@ export default function Ideas() {
         actions={
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
+            className="flex items-center gap-2 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: 'var(--teal)',
+              color: 'var(--ink-bright)',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 'var(--sp-sm) var(--sp-lg)',
+            }}
           >
             <Plus size={16} />
             New Idea
           </button>
         }
       >
-        {/* Status flow legend */}
-        <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-          {['new', 'under_review', 'approved', 'parked'].map((s, i) => {
-            const cfg = statusConfig[s]
-            return (
-              <span key={s} className="flex items-center gap-1">
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: cfg.color, backgroundColor: cfg.bg }}>
-                  {cfg.label}
-                </span>
-                {i < 3 && <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.3 }}>&#8594;</span>}
-              </span>
-            )
-          })}
-        </div>
+        {/* Controls - hidden when empty per M-04 */}
+        {!isEmpty && (
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Status flow legend */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {['new', 'under_review', 'approved', 'parked'].map((s, i) => {
+                const cfg = statusConfig[s]
+                return (
+                  <span key={s} className="flex items-center gap-1">
+                    <span
+                      className="rounded-full"
+                      style={{
+                        color: cfg.color,
+                        backgroundColor: cfg.bg,
+                        fontSize: 'var(--text-micro)',
+                        padding: '2px var(--sp-sm)',
+                      }}
+                    >
+                      {cfg.label}
+                    </span>
+                    {i < 3 && (
+                      <span
+                        style={{
+                          fontSize: 'var(--text-micro)',
+                          color: 'var(--slate)',
+                          opacity: 0.3,
+                        }}
+                      >
+                        &#8594;
+                      </span>
+                    )}
+                  </span>
+                )
+              })}
+            </div>
 
-        {/* Controls */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            {([
-              { key: 'grid' as ViewMode, label: 'Grid', icon: LayoutGrid },
-              { key: 'list' as ViewMode, label: 'List', icon: List },
-            ]).map((v) => {
-              const Icon = v.icon
-              const active = view === v.key
-              return (
-                <ToggleButton
-                  key={v.key}
-                  active={active}
-                  onClick={() => setView(v.key)}
-                >
-                  <Icon size={14} />
-                  {v.label}
-                </ToggleButton>
-              )
-            })}
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="rounded-full border"
+              style={{
+                fontSize: 'var(--text-small)',
+                padding: '6px var(--sp-md)',
+                paddingRight: 'var(--sp-xl)',
+                color: filterStatus ? 'var(--teal)' : 'var(--slate)',
+                backgroundColor: filterStatus ? 'var(--teal-hover)' : 'transparent',
+                borderColor: filterStatus ? 'var(--teal)' : 'var(--border-subtle)',
+                cursor: 'pointer',
+                appearance: 'none' as const,
+                WebkitAppearance: 'none' as const,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 8px center',
+              }}
+            >
+              <option value="">All Statuses</option>
+              <option value="new">New</option>
+              <option value="under_review">Under Review</option>
+              <option value="approved">Approved</option>
+              <option value="parked">Parked</option>
+              <option value="archived">Archived</option>
+            </select>
+
+            <DensityToggle value={density} onChange={setDensity} />
           </div>
-
-          <button
-            onClick={() => setSortMode(s => s === 'newest' ? 'votes' : s === 'votes' ? 'title' : 'newest')}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-colors border"
-            style={{
-              color: sortMode !== 'newest' ? 'var(--teal)' : 'var(--slate)',
-              borderColor: sortMode !== 'newest' ? 'var(--teal)' : 'var(--border-subtle)',
-              backgroundColor: sortMode !== 'newest' ? 'var(--teal-hover)' : 'transparent',
-              cursor: 'pointer',
-            }}
-          >
-            <ArrowUpDown size={10} />
-            {sortMode === 'newest' ? 'Newest' : sortMode === 'votes' ? 'Most Voted' : 'A-Z'}
-          </button>
-
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded-full border px-3 py-1.5 text-xs"
-            style={{
-              fontSize: '12px',
-              color: filterStatus ? 'var(--teal)' : 'var(--slate)',
-              backgroundColor: filterStatus ? 'var(--teal-hover)' : 'transparent',
-              borderColor: filterStatus ? 'var(--teal)' : 'var(--border-subtle)',
-              cursor: 'pointer', appearance: 'none' as const, WebkitAppearance: 'none' as const,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center', paddingRight: '24px',
-            }}
-          >
-            <option value="">All Statuses</option>
-            <option value="new">New</option>
-            <option value="under_review">Under Review</option>
-            <option value="approved">Approved</option>
-            <option value="parked">Parked</option>
-          </select>
-          <DensityToggle value={density} onChange={setDensity} />
-        </div>
+        )}
       </PageHeader>
 
       {/* Content */}
       <div className={`mt-5 ${densityClass(density)}`}>
         {isLoading ? (
-          view === 'grid' ? <CardSkeleton count={6} /> : <TableSkeleton rows={6} cols={5} />
-        ) : view === 'grid' ? (
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            initial="hidden"
-            animate="visible"
-            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}
-          >
-            {sortedIdeas.map((idea) => (
-              <motion.div key={idea.id} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
-                <IdeaCard idea={idea} onVote={() => vote.mutate(idea.id)} onStatusChange={(status) => handleIdeaStatusChange(idea.id, status, idea.status)} />
-              </motion.div>
-            ))}
-            {sortedIdeas.length === 0 && (
-              <div className="col-span-3">
-                <EmptyState
-                  icon={<Lightbulb size={40} />}
-                  title="The board is open"
-                  subtitle="Research ideas, clinical questions, side projects — anything worth exploring. Drop one here and let the team weigh in."
-                  action={{ label: 'Submit an idea', onClick: () => setShowCreate(true) }}
-                />
-              </div>
-            )}
-          </motion.div>
+          <TableSkeleton rows={6} cols={6} />
+        ) : isEmpty ? (
+          <EmptyState
+            icon={<Lightbulb size={40} />}
+            title="The board is open"
+            subtitle="Research ideas, clinical questions, side projects - anything worth exploring. Drop one here and let the team weigh in."
+            action={{ label: 'Submit an idea', onClick: () => setShowCreate(true) }}
+          />
         ) : (
-          <IdeaListView ideas={sortedIdeas} onVote={(id) => vote.mutate(id)} onStatusChange={(id, status) => {
-            const prev = sortedIdeas.find(i => i.id === id)?.status || 'new'
-            handleIdeaStatusChange(id, status, prev)
-          }} focusedIndex={focusedIndex} />
+          <TableContainer>
+            {/* Column headers - hidden on mobile */}
+            <div
+              className="hidden sm:grid"
+              role="row"
+              style={{
+                gridTemplateColumns: GRID_COLS,
+                padding: 'var(--sp-sm) var(--sp-lg)',
+                borderBottom: '1px solid var(--border-subtle)',
+                alignItems: 'center',
+                gap: 'var(--sp-md)',
+              }}
+            >
+              <div role="columnheader">
+                <ColumnHeader label="Title" sortKey="title" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+              </div>
+              <div role="columnheader">
+                <ColumnHeader label="Submitter" sortKey="submitter" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+              </div>
+              <div role="columnheader">
+                <ColumnHeader label="Status" sortKey="status" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+              </div>
+              <div role="columnheader" style={{ textAlign: 'right' }}>
+                <ColumnHeader label="Votes" sortKey="votes" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} align="right" />
+              </div>
+              <div role="columnheader">
+                <ColumnHeader label="Age" sortKey="created_at" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+              </div>
+              <div role="columnheader" aria-label="Actions" />
+            </div>
+
+            {/* Rows */}
+            <div role="grid" aria-label="Ideas table">
+              {sortedIdeas.map((idea, idx) => (
+                <IdeaRowView
+                  key={idea.id}
+                  idea={idea}
+                  isFocused={focusedIndex === idx}
+                  onVote={(e) => handleVote(e, idea.id)}
+                  onStatusChange={(status) => handleIdeaStatusChange(idea.id, status, idea.status)}
+                />
+              ))}
+            </div>
+
+            {/* Calculations row */}
+            {(() => {
+              const statusCounts = sortedIdeas.reduce<Record<string, number>>((acc, i) => {
+                acc[i.status] = (acc[i.status] || 0) + 1
+                return acc
+              }, {})
+              const voted = sortedIdeas.filter(i => i.votes > 0).length
+              const statusLabels: Record<string, string> = { new: 'New', under_review: 'Under Review', approved: 'Approved', parked: 'Parked', archived: 'Archived' }
+              const statusColors: Record<string, string> = { new: 'var(--teal)', under_review: 'var(--gold)', approved: 'var(--green)', parked: 'var(--slate)', archived: 'var(--slate)' }
+              const stats: { label: string; value: number; color?: string }[] = [
+                { label: 'Count', value: sortedIdeas.length },
+                ...Object.entries(statusCounts).map(([key, count]) => ({
+                  label: statusLabels[key] || key,
+                  value: count,
+                  color: statusColors[key],
+                })),
+                ...(voted > 0 ? [{ label: 'Voted', value: voted, color: 'var(--teal)' }] : []),
+              ]
+              return (
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 'var(--sp-xl)',
+                    padding: 'var(--sp-sm) var(--sp-lg)',
+                    borderTop: '1px solid var(--border-subtle)',
+                    background: 'var(--hover-subtle)',
+                  }}
+                >
+                  {stats.map(s => (
+                    <span
+                      key={s.label}
+                      style={{
+                        fontSize: 'var(--text-label)',
+                        color: 'var(--slate)',
+                        opacity: 'var(--ink-label)',
+                      }}
+                    >
+                      {s.label}{' '}
+                      <span style={{ fontWeight: 600, color: s.color || 'var(--slate)', opacity: 1 }}>
+                        {s.value}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              )
+            })()}
+          </TableContainer>
         )}
       </div>
 
@@ -247,237 +350,275 @@ export default function Ideas() {
   )
 }
 
-// ── Idea Card ────────────────────────────────────────────────
-
-function IdeaCard({ idea, onVote, onStatusChange }: { idea: IdeaRow; onVote: () => void; onStatusChange: (status: string) => void }) {
+// IdeaRowView
+function IdeaRowView({
+  idea,
+  isFocused,
+  onVote,
+  onStatusChange,
+}: {
+  idea: IdeaRow
+  isFocused: boolean
+  onVote: (e: React.MouseEvent<HTMLButtonElement>) => void
+  onStatusChange: (status: string) => void
+}) {
   const person = getPersonInfo(idea.submitted_by)
-  const status = statusConfig[idea.status] || statusConfig.new
 
   return (
-    <div className="rounded-xl border p-4 flex flex-col" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}>
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ color: status.color, backgroundColor: status.bg }}>
-          {status.label}
-        </span>
-        {idea.research_area && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--gold)', backgroundColor: 'var(--gold-hover)' }}>
-            {idea.research_area}
+    <div
+      role="row"
+      className={`idea-row group${isFocused ? ' task-row-focused' : ''}`}
+      style={{
+        borderBottom: '1px solid var(--row-separator)',
+      }}
+    >
+      {/* Desktop row */}
+      <div
+        className="hidden sm:grid"
+        style={{
+          gridTemplateColumns: GRID_COLS,
+          padding: 'var(--row-padding-y, 10px) var(--sp-lg)',
+          alignItems: 'center',
+          gap: 'var(--sp-md)',
+          height: 'var(--row-height, 44px)',
+          boxSizing: 'border-box' as const,
+          transition: 'background-color var(--duration-fast)',
+        }}
+      >
+        {/* Title (dominant) */}
+        <div role="gridcell" style={{ minWidth: 0 }}>
+          <span
+            style={{
+              fontSize: 'var(--text-base)',
+              fontWeight: 'var(--weight-heading)',
+              color: 'var(--ink)',
+              display: 'block',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap' as const,
+            }}
+            title={idea.title}
+          >
+            {idea.title}
           </span>
-        )}
-      </div>
+          {idea.research_area && (
+            <span
+              style={{
+                fontSize: 'var(--text-label)',
+                color: 'var(--gold)',
+                opacity: 0.7,
+              }}
+            >
+              {idea.research_area}
+            </span>
+          )}
+        </div>
 
-      {/* Title */}
-      <h4 className="text-sm font-semibold mb-1" style={{ color: 'var(--ink)' }}>
-        {idea.title}
-      </h4>
-
-      {/* Description */}
-      {idea.description && (
-        <p className="text-xs leading-relaxed mb-3 flex-1" style={{ color: 'var(--slate)', opacity: 0.7 }}>
-          {idea.description.length > 120 ? idea.description.slice(0, 120) + '...' : idea.description}
-        </p>
-      )}
-
-      {/* Footer */}
-      <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-        <div className="flex items-center gap-2">
-          <div style={{ width: 20, height: 20 }}>
+        {/* Submitter (recedes) */}
+        <div role="gridcell" className="flex items-center gap-2" style={{ minWidth: 0 }}>
+          <div style={{ width: 20, height: 20, flexShrink: 0 }}>
             <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
           </div>
-          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+          <span
+            style={{
+              fontSize: 'var(--text-small)',
+              fontWeight: 400,
+              color: 'var(--slate)',
+              opacity: 'var(--ink-label)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap' as const,
+            }}
+          >
+            {person.name || idea.submitted_by}
+          </span>
+        </div>
+
+        {/* Status (inline editable) */}
+        <div role="gridcell">
+          <InlineSelect
+            value={idea.status}
+            options={[
+              { value: 'new', label: 'New', color: 'var(--teal)' },
+              { value: 'under_review', label: 'Review', color: 'var(--gold)' },
+              { value: 'approved', label: 'Approved', color: 'var(--green)' },
+              { value: 'parked', label: 'Parked', color: 'var(--slate)' },
+              { value: 'archived', label: 'Archived', color: 'var(--slate)' },
+            ]}
+            onChange={onStatusChange}
+          />
+        </div>
+
+        {/* Votes (right-aligned numeric with bounce) */}
+        <div role="gridcell" style={{ textAlign: 'right' as const }}>
+          <button
+            onClick={onVote}
+            className="inline-flex items-center gap-1 rounded-md"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)',
+              transition: 'transform var(--duration-normal) var(--ease-out), color var(--duration-normal)',
+              padding: '2px var(--sp-sm)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+            aria-label={`Vote (${idea.votes})`}
+          >
+            <ThumbsUp size={13} />
+            <span
+              style={{
+                fontSize: 'var(--text-small)',
+                fontWeight: 600,
+              }}
+            >
+              {idea.votes}
+            </span>
+          </button>
+        </div>
+
+        {/* Age (recedes) */}
+        <div role="gridcell">
+          <span
+            style={{
+              fontSize: 'var(--text-small)',
+              fontWeight: 400,
+              color: 'var(--slate)',
+              opacity: 'var(--ink-label)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
             {formatRelativeTime(idea.created_at)}
           </span>
         </div>
 
-        <button
-          onClick={(e) => {
-            onVote()
-            // Scale bounce animation
-            const btn = e.currentTarget
-            btn.style.transform = 'scale(1.3)'
-            setTimeout(() => { btn.style.transform = 'scale(1)' }, 150)
-          }}
-          className="flex items-center gap-1 px-2 py-1 rounded-md transition-all hover:bg-black/5"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)', transition: 'transform 150ms ease, color 150ms' }}
+        {/* Actions (hover-only ghost buttons) */}
+        <div
+          role="gridcell"
+          className="idea-actions flex items-center justify-end gap-1"
         >
-          <ThumbsUp size={13} />
-          <span className="text-xs font-medium">
-            {idea.votes}
-          </span>
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ── Idea List View ───────────────────────────────────────────
-
-function IdeaListView({ ideas, onVote, onStatusChange, focusedIndex = -1 }: { ideas: IdeaRow[]; onVote: (id: string) => void; onStatusChange: (id: string, status: string) => void; focusedIndex?: number }) {
-  const gridCols = '40px minmax(200px, 1fr) 100px 90px 80px'
-  return (
-    <div className="table-container">
-      {/* Column headers — hidden on mobile */}
-      <div className="hidden sm:grid" style={{ gridTemplateColumns: gridCols, padding: 'var(--sp-sm) var(--sp-lg)', borderBottom: '1px solid var(--border-subtle)', alignItems: 'center' }}>
-        <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', textAlign: 'center' as const }}>
-          VOTES
-        </span>
-        {['TITLE', 'AREA', 'STATUS', 'BY'].map((col) => (
-          <span key={col} style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
-            {col}
-          </span>
-        ))}
-      </div>
-
-      {/* Rows */}
-      {ideas.map((idea, idx) => {
-        const person = getPersonInfo(idea.submitted_by)
-        const status = statusConfig[idea.status] || statusConfig.new
-        const isFocused = focusedIndex === idx
-        return (
-          <div key={idea.id} className={isFocused ? 'task-row-focused' : ''} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-            {/* Desktop row — hidden on mobile */}
-            <div
-              className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
-              style={{ gridTemplateColumns: gridCols, padding: `var(--row-padding-y, 10px) 16px`, alignItems: 'center' }}
-            >
-              {/* Votes */}
-              <button
-                onClick={() => onVote(idea.id)}
-                className="flex flex-col items-center gap-0.5"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}
-              >
-                <ThumbsUp size={13} />
-                <span style={{ fontSize: 'var(--label-size)', fontWeight: 600 }}>{idea.votes}</span>
-              </button>
-
-              {/* Title + description */}
-              <div style={{ minWidth: 0, paddingRight: '12px' }}>
-                <span style={{ fontSize: 'var(--value-size)', fontWeight: 400, color: 'var(--ink)', display: 'block' }}>
-                  {idea.title}
-                </span>
-                {idea.description && (
-                  <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, display: 'block' }}>
-                    {idea.description}
-                  </span>
-                )}
-              </div>
-
-              {/* Research area */}
-              <span style={{ fontSize: '11px', color: 'var(--gold)', opacity: idea.research_area ? 0.7 : 0.3 }}>
-                {idea.research_area || '—'}
-              </span>
-
-              {/* Status (inline editable) */}
-              <InlineSelect
-                value={idea.status}
-                options={[
-                  { value: 'new', label: 'New', color: 'var(--teal)' },
-                  { value: 'under_review', label: 'Review', color: 'var(--gold)' },
-                  { value: 'approved', label: 'Approved', color: 'var(--green)' },
-                  { value: 'parked', label: 'Parked', color: 'var(--slate)' },
-                ]}
-                onChange={(val) => onStatusChange(idea.id, val)}
-              />
-
-              {/* Submitted by */}
-              <div className="flex items-center gap-1.5">
-                <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-                  <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile row — shown only on mobile */}
-            <div
-              className="sm:hidden hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
-              style={{ padding: `var(--row-padding-y, 12px) 16px` }}
-            >
-              {/* Title */}
-              <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
-                {idea.title}
-              </span>
-              {/* Metadata row */}
-              <div className="flex items-center gap-3 flex-wrap">
-                <button
-                  onClick={() => onVote(idea.id)}
-                  className="flex items-center gap-1"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)', padding: 0 }}
-                >
-                  <ThumbsUp size={11} />
-                  <span style={{ fontSize: 'var(--label-size)', fontWeight: 600 }}>{idea.votes}</span>
-                </button>
-                <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: status.color }}>
-                  {status.label}
-                </span>
-                {idea.research_area && (
-                  <span style={{ fontSize: '11px', color: 'var(--gold)', opacity: 0.7 }}>
-                    {idea.research_area}
-                  </span>
-                )}
-                <div style={{ width: 18, height: 18, flexShrink: 0 }}>
-                  <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-icon" variant="ice" />
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      })}
-
-      {ideas.length === 0 && (
-        <div className="text-center py-16">
-          <Lightbulb size={24} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto var(--sp-sm)' }} />
-          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.4 }}>
-            No ideas yet
-          </p>
-        </div>
-      )}
-
-      {/* Calculations row */}
-      {ideas.length > 0 && (() => {
-        const statusCounts = ideas.reduce<Record<string, number>>((acc, i) => {
-          acc[i.status] = (acc[i.status] || 0) + 1
-          return acc
-        }, {})
-        const voted = ideas.filter(i => i.votes > 0).length
-        const statusLabels: Record<string, string> = { new: 'New', under_review: 'Under Review', approved: 'Approved', parked: 'Parked', archived: 'Archived' }
-        const statusColors: Record<string, string> = { new: 'var(--teal)', under_review: 'var(--gold)', approved: 'var(--green)', parked: 'var(--slate)', archived: 'var(--slate)' }
-        const stats = [
-          { label: 'Count', value: ideas.length },
-          ...Object.entries(statusCounts).map(([key, count]) => ({
-            label: statusLabels[key] || key,
-            value: count,
-            color: statusColors[key],
-          })),
-          ...(voted > 0 ? [{ label: 'Voted', value: voted, color: 'var(--teal)' }] : []),
-        ]
-        return (
-          <div
+          <button
+            className="rounded-md"
             style={{
+              background: 'none',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--slate)',
+              cursor: 'pointer',
+              padding: '4px',
               display: 'flex',
-              gap: 20,
-              padding: 'var(--sp-sm) var(--sp-lg)',
-              borderTop: '1px solid var(--border-subtle)',
-              background: 'var(--teal-hover)',
+              alignItems: 'center',
+            }}
+            aria-label="Edit idea"
+            title="Edit"
+          >
+            <Pencil size={12} />
+          </button>
+          <button
+            className="rounded-md"
+            onClick={(e) => {
+              e.stopPropagation()
+              onStatusChange('archived')
+            }}
+            style={{
+              background: 'none',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--slate)',
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            aria-label="Archive idea"
+            title="Archive"
+          >
+            <Archive size={12} />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile stacked row */}
+      <div
+        className="sm:hidden"
+        style={{
+          padding: 'var(--row-padding-y, 12px) var(--sp-lg)',
+        }}
+      >
+        <span
+          style={{
+            fontSize: 'var(--text-base)',
+            fontWeight: 'var(--weight-heading)',
+            color: 'var(--ink)',
+            display: 'block',
+            marginBottom: 'var(--sp-xs)',
+          }}
+        >
+          {idea.title}
+        </span>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={onVote}
+            className="flex items-center gap-1"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)',
+              padding: 0,
+              transition: 'transform var(--duration-normal) var(--ease-out)',
             }}
           >
-            {stats.map(s => (
-              <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
-                {s.label}{' '}
-                <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)', opacity: 1 }}>
-                  {s.value}
-                </span>
-              </span>
-            ))}
+            <ThumbsUp size={11} />
+            <span style={{ fontSize: 'var(--text-label)', fontWeight: 600 }}>{idea.votes}</span>
+          </button>
+          <span
+            style={{
+              fontSize: 'var(--text-label)',
+              fontWeight: 500,
+              color: (statusConfig[idea.status] || statusConfig.new).color,
+            }}
+          >
+            {(statusConfig[idea.status] || statusConfig.new).label}
+          </span>
+          {idea.research_area && (
+            <span style={{ fontSize: 'var(--text-label)', color: 'var(--gold)', opacity: 0.7 }}>
+              {idea.research_area}
+            </span>
+          )}
+          <span
+            style={{
+              fontSize: 'var(--text-label)',
+              color: 'var(--slate)',
+              opacity: 'var(--ink-label)',
+            }}
+          >
+            {formatRelativeTime(idea.created_at)}
+          </span>
+          <div style={{ width: 18, height: 18, flexShrink: 0, marginLeft: 'auto' }}>
+            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
           </div>
-        )
-      })()}
+        </div>
+      </div>
+
+      {/* Scoped CSS for hover actions + row hover */}
+      <style>{`
+        .idea-row:hover > div:first-child {
+          background-color: var(--hover-subtle);
+        }
+        .idea-row .idea-actions {
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity var(--duration-normal);
+        }
+        .idea-row:hover .idea-actions {
+          opacity: 1;
+          pointer-events: auto;
+        }
+      `}</style>
     </div>
   )
 }
 
-// ── Create Idea Modal ────────────────────────────────────────
-
+// CreateIdeaModal
 function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -523,8 +664,8 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(15,25,35,0.5)' }}
+      className="fixed inset-0 flex items-center justify-center"
+      style={{ backgroundColor: 'var(--overlay-medium)', zIndex: 'var(--z-modal)' }}
       onClick={onClose}
     >
       <div
@@ -536,18 +677,47 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
         style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-lg" style={{ fontWeight: 500, color: 'var(--ink)' }}>
+        <div
+          className="flex items-center justify-between border-b"
+          style={{
+            borderColor: 'var(--border-subtle)',
+            padding: 'var(--sp-md) var(--sp-xl)',
+          }}
+        >
+          <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 500, color: 'var(--ink)' }}>
             New Idea
           </h3>
-          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--slate)',
+              padding: 'var(--sp-xs)',
+            }}
+          >
             <X size={18} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-3.5">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col"
+          style={{ padding: 'var(--sp-xl)', gap: 'var(--sp-md)' }}
+        >
           <div>
-            <label htmlFor="idea-title" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            <label
+              htmlFor="idea-title"
+              className="block"
+              style={{
+                fontSize: 'var(--text-label)',
+                fontWeight: 500,
+                color: 'var(--slate)',
+                marginBottom: 'var(--sp-xs)',
+              }}
+            >
               Title *
             </label>
             <input
@@ -556,36 +726,69 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What's the idea?"
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none"
-              style={{ borderColor: 'var(--border-subtle)' }}
+              className="w-full rounded-md border outline-none"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                padding: 'var(--sp-sm) var(--sp-md)',
+                fontSize: 'var(--text-small)',
+              }}
               aria-required="true"
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            <label
+              htmlFor="idea-description"
+              className="block"
+              style={{
+                fontSize: 'var(--text-label)',
+                fontWeight: 500,
+                color: 'var(--slate)',
+                marginBottom: 'var(--sp-xs)',
+              }}
+            >
               Description
             </label>
             <textarea
+              id="idea-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Why is this interesting? What would it involve?"
               rows={3}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-              style={{ borderColor: 'var(--border-subtle)' }}
+              className="w-full rounded-md border outline-none resize-none"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                padding: 'var(--sp-sm) var(--sp-md)',
+                fontSize: 'var(--text-small)',
+              }}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            <label
+              htmlFor="idea-area"
+              className="block"
+              style={{
+                fontSize: 'var(--text-label)',
+                fontWeight: 500,
+                color: 'var(--slate)',
+                marginBottom: 'var(--sp-xs)',
+              }}
+            >
               Research Area
             </label>
             <select
+              id="idea-area"
               value={researchArea}
               onChange={(e) => setResearchArea(e.target.value)}
-              className="w-full rounded-md border px-2.5 py-2 text-sm"
-              style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer' }}
+              className="w-full rounded-md border"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                cursor: 'pointer',
+                padding: 'var(--sp-sm) var(--sp-md)',
+                fontSize: 'var(--text-small)',
+              }}
             >
               <option value="">Select area (optional)</option>
               {researchAreas.map((a) => (
@@ -595,20 +798,50 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
           </div>
 
           {!title.trim() && (
-            <p id="idea-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+            <p
+              id="idea-submit-hint"
+              style={{
+                fontSize: 'var(--text-label)',
+                color: 'var(--slate)',
+                opacity: 0.7,
+              }}
+            >
               Title is required.
             </p>
           )}
-          <div className="flex justify-end gap-2 mt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
+          <div
+            className="flex justify-end"
+            style={{ gap: 'var(--sp-sm)', marginTop: 'var(--sp-sm)' }}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md"
+              style={{
+                color: 'var(--slate)',
+                cursor: 'pointer',
+                background: 'none',
+                border: '1px solid var(--border-subtle)',
+                padding: 'var(--sp-sm) var(--sp-lg)',
+                fontSize: 'var(--text-small)',
+              }}
+            >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!title.trim()}
               aria-describedby={!title.trim() ? 'idea-submit-hint' : undefined}
-              className="px-4 py-2 rounded-md text-sm font-medium"
-              style={{ backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--teal)', color: !title.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)', cursor: !title.trim() ? 'not-allowed' : 'pointer', border: 'none' }}
+              className="rounded-md"
+              style={{
+                backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--teal)',
+                color: !title.trim() ? 'var(--slate)' : 'var(--ink-bright)',
+                cursor: !title.trim() ? 'not-allowed' : 'pointer',
+                border: 'none',
+                padding: 'var(--sp-sm) var(--sp-lg)',
+                fontSize: 'var(--text-small)',
+                fontWeight: 500,
+              }}
             >
               Submit Idea
             </button>
