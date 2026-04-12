@@ -52,16 +52,44 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [copied, setCopied] = useState(false)
 
-  // Close on Escape, navigate on Alt+Up/Down
+  // Focus trap + Escape + Alt+Up/Down navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-      if (e.altKey && e.key === 'ArrowUp' && onPrev) { e.preventDefault(); onPrev() }
-      if (e.altKey && e.key === 'ArrowDown' && onNext) { e.preventDefault(); onNext() }
+      if (e.key === 'Escape') {
+        // Guard: don't close when typing in a text input / textarea / contenteditable / Tiptap editor
+        const target = e.target as HTMLElement
+        if (target.closest('input, textarea, [contenteditable="true"], .ProseMirror')) return
+        onClose()
+        return
+      }
+      if (e.altKey && e.key === 'ArrowUp' && onPrev) { e.preventDefault(); onPrev(); return }
+      if (e.altKey && e.key === 'ArrowDown' && onNext) { e.preventDefault(); onNext(); return }
+
+      // Focus trap: cycle Tab / Shift+Tab within panel
+      if (e.key !== 'Tab' || !panelRef.current) return
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        'input, select, textarea, button, a[href], [tabindex]:not([tabindex="-1"]), [contenteditable="true"]'
+      )
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [onClose, onPrev, onNext])
+
+  // Focus close button on mount (or when task changes)
+  useEffect(() => {
+    const closeBtn = panelRef.current?.querySelector<HTMLElement>('[data-testid="close-detail-panel"]')
+    closeBtn?.focus()
+  }, [task?.id])
 
   // Close on click outside
   useEffect(() => {
@@ -105,6 +133,9 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
       <div
         ref={panelRef}
         data-testid="task-detail-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="task-detail-title"
         className="fixed right-0 top-0 h-full z-50 overflow-y-auto shadow-2xl task-detail-panel card-elevated"
         style={{
           width: 'min(480px, 90vw)',
@@ -162,10 +193,12 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
 
         {/* Always visible: Title + Status */}
         <div className="px-5 pt-5 pb-3 flex flex-col gap-4">
-          <EditableTitle
-            value={task.title || task.description}
-            onSave={(v) => handleFieldUpdate('title', v)}
-          />
+          <div id="task-detail-title">
+            <EditableTitle
+              value={task.title || task.description}
+              onSave={(v) => handleFieldUpdate('title', v)}
+            />
+          </div>
 
           <StatusSelect value={task.status} onChange={handleStatusChange} />
 

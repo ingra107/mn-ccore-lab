@@ -531,7 +531,7 @@ export default function Grants() {
               {/* Column headers */}
               <div
                 className="hidden sm:grid col-header-row"
-                style={{ gridTemplateColumns: 'minmax(200px, 2fr) 80px 100px 80px minmax(160px, 1fr) 100px' }}
+                style={{ gridTemplateColumns: 'minmax(200px, 2fr) 120px 100px 80px minmax(120px, 1fr) 100px' }}
               >
                 <ColumnHeader label="TITLE" sortKey="title" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
                 <ColumnHeader label="PI" sortKey="pi" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
@@ -559,12 +559,27 @@ export default function Grants() {
                 return (
                   <div
                     key={grant.id}
-                    className="table-row sm:grid items-center"
-                    style={{ gridTemplateColumns: 'minmax(200px, 2fr) 80px 100px 80px minmax(160px, 1fr) 100px' }}
+                    className="sm:grid items-center hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+                    style={{
+                      gridTemplateColumns: 'minmax(200px, 2fr) 120px 100px 80px minmax(120px, 1fr) 100px',
+                      minHeight: 'var(--row-height)',
+                      padding: `var(--row-padding-y, 10px) 16px`,
+                      borderBottom: '1px solid var(--border-subtle)',
+                    }}
                   >
                     {/* Title */}
                     <div className="min-w-0">
-                      <span className="text-sm truncate block" style={{ color: 'var(--ink)', fontWeight: 500 }}>
+                      <span
+                        className="text-sm block"
+                        style={{
+                          color: 'var(--ink)',
+                          fontWeight: 500,
+                          overflow: 'hidden',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
                         {grant.title}
                       </span>
                       {/* Progress bar for active grants */}
@@ -572,10 +587,11 @@ export default function Grants() {
                         <div className="mt-1 flex items-center gap-2">
                           <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)', maxWidth: 160 }}>
                             <div
-                              className="h-full rounded-full transition-all"
+                              className="h-full rounded-full"
                               style={{
                                 width: `${progress}%`,
                                 backgroundColor: progress > 80 ? 'var(--maroon)' : 'var(--teal)',
+                                transition: 'width 150ms var(--ease-out), background-color 150ms var(--ease-out)',
                               }}
                             />
                           </div>
