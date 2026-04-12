@@ -376,7 +376,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
 
 type ViewMode = 'list' | 'timeline'
 type FilterMode = 'all' | 'active' | 'proposed'
-type SortKey = 'title' | 'pi' | 'mechanism' | 'start_date' | 'end_date' | 'agency'
+type SortKey = 'title' | 'pi' | 'mechanism' | 'status' | 'start_date' | 'end_date' | 'agency'
 
 export default function Grants() {
   const { data: grants = [], isLoading } = useGrantTimeline()
@@ -453,6 +453,7 @@ export default function Grants() {
         case 'title': cmp = a.title.localeCompare(b.title); break
         case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
         case 'mechanism': cmp = (a.mechanism || '').localeCompare(b.mechanism || ''); break
+        case 'status': cmp = (a.status || '').localeCompare(b.status || ''); break
         case 'start_date': cmp = (a.start_date || '').localeCompare(b.start_date || ''); break
         case 'end_date': cmp = (a.end_date || '').localeCompare(b.end_date || ''); break
         case 'agency': cmp = (a.agency || '').localeCompare(b.agency || ''); break
@@ -535,7 +536,7 @@ export default function Grants() {
               >
                 <ColumnHeader label="TITLE" sortKey="title" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
                 <ColumnHeader label="PI" sortKey="pi" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
-                <ColumnHeader label="STATUS" sortKey="mechanism" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <ColumnHeader label="STATUS" sortKey="status" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
                 <ColumnHeader label="MECHANISM" sortKey="mechanism" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
                 <ColumnHeader label="PERIOD" sortKey="start_date" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
                 <ColumnHeader label="AGENCY" sortKey="agency" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
@@ -576,7 +577,7 @@ export default function Grants() {
                           fontWeight: 500,
                           overflow: 'hidden',
                           display: '-webkit-box',
-                          WebkitLineClamp: 2,
+                          WebkitLineClamp: 1,
                           WebkitBoxOrient: 'vertical',
                         }}
                       >
@@ -585,7 +586,7 @@ export default function Grants() {
                       {/* Progress bar for active grants */}
                       {!isProposed && progress > 0 && (
                         <div className="mt-1 flex items-center gap-2">
-                          <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)', maxWidth: 160 }}>
+                          <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)', maxWidth: 160, width: '100%' }}>
                             <div
                               className="h-full rounded-full"
                               style={{
