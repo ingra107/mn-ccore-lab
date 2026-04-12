@@ -602,6 +602,15 @@ a:hover {
   border-color: var(--border-subtle);
 }
 
+/* ── Global row height enforcement (density toggle) ── */
+/* Covers all data table rows: task grid, ideas, decisions, projects, manuscripts, deadlines */
+.table-container [role="row"]:not([aria-rowindex="1"]),
+.project-list-row,
+.manuscript-list-row {
+  height: var(--row-height);
+  box-sizing: border-box;
+}
+
 /* ── Card base ── */
 .card {
   background: var(--cream);
@@ -1080,6 +1089,11 @@ a:hover {
   grid-template-columns: var(--personal-grid-cols, 3fr 2fr);
   gap: var(--sp-lg);
   align-items: start;
+}
+
+/* Prevent grid children from overflowing viewport (min-width:auto gotcha — C-08) */
+.personal-grid > * {
+  min-width: 0;
 }
 
 @media (max-width: 768px) {

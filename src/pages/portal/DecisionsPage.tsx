@@ -389,7 +389,8 @@ function DecisionRowItem({
           gridTemplateColumns: GRID_TEMPLATE,
           padding: `var(--row-padding-y, 8px) var(--sp-lg)`,
           alignItems: 'center',
-          minHeight: 'var(--row-height, 44px)',
+          height: 'var(--row-height, 44px)',
+          boxSizing: 'border-box' as const,
           gap: 'var(--sp-sm)',
         }}
       >
