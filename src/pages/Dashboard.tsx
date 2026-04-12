@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, createContext, useContext } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, GripVertical } from 'lucide-react'
+import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, GripVertical, AlertTriangle } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
@@ -8,7 +8,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
-import { useMeetingsApi, useTasks } from '../hooks/useApiData'
+import { useMeetingsApi, useTasks, useExpiringRegulatory } from '../hooks/useApiData'
 import { formatMediumDate } from '../lib/dateUtils'
 import { getUserRole, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
@@ -240,6 +240,9 @@ export default function Dashboard() {
     return meetings.find(m => m.date === today || m.date === tomorrow)
   }, [meetings])
 
+  // Expiring regulatory items — drives RegulatoryAlertStrip
+  const { data: expiringRegulatory = [] } = useExpiringRegulatory(60)
+
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [showMore, setShowMore] = useState(false)
   const [showCustomize, setShowCustomize] = useState(false)
@@ -383,7 +386,7 @@ export default function Dashboard() {
                       flexShrink: 0,
                     }}
                   />
-                  <span
+                  <h1
                     style={{
                       fontWeight: 600,
                       fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
@@ -391,10 +394,11 @@ export default function Dashboard() {
                       lineHeight: 1.2,
                       letterSpacing: 'var(--tracking-display)',
                       whiteSpace: 'nowrap',
+                      margin: 0,
                     }}
                   >
                     {greeting}
-                  </span>
+                  </h1>
                   <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
                   <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.65, whiteSpace: 'nowrap' }}>
                     {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
@@ -443,7 +447,7 @@ export default function Dashboard() {
                       color: showCustomize ? 'var(--teal)' : 'var(--slate)',
                       backgroundColor: showCustomize ? 'var(--teal-active)' : 'transparent',
                       border: '1px solid',
-                      borderColor: showCustomize ? 'var(--teal)' : 'var(--border-light)',
+                      borderColor: showCustomize ? 'var(--teal)' : 'var(--border-subtle)',
                       cursor: 'pointer',
                       opacity: showCustomize ? 1 : 0.6,
                     }}
@@ -475,7 +479,7 @@ export default function Dashboard() {
                   backgroundColor: activeTab === tab.id ? 'var(--gold)' : 'transparent',
                   opacity: activeTab === tab.id ? 1 : 0.6,
                   cursor: 'pointer',
-                  transition: 'all 150ms ease',
+                  transition: 'color 150ms ease, background-color 150ms ease, opacity 150ms ease',
                 }}
               >
                 {tab.label}
@@ -531,7 +535,7 @@ export default function Dashboard() {
                     style={{
                       color: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--slate)',
                       backgroundColor: visibleCards.has(card.id) ? 'var(--teal-active)' : 'transparent',
-                      borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-light)',
+                      borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-subtle)',
                       cursor: 'pointer',
                       opacity: visibleCards.has(card.id) ? 1 : 0.5,
                     }}
@@ -590,6 +594,30 @@ export default function Dashboard() {
           </Link>
         )}
 
+        {/* Regulatory Alert Strip — only shows when items expiring within 60 days */}
+        {expiringRegulatory.length > 0 && (
+          <Link
+            to="/personal"
+            className="flex items-center gap-3 mb-3 px-4 py-2.5 rounded-xl"
+            style={{
+              background: 'var(--maroon-hover)',
+              border: '1px solid var(--border-subtle)',
+              borderLeft: '3px solid var(--maroon)',
+              textDecoration: 'none',
+              color: 'var(--ink)',
+              transition: 'background-color 150ms ease',
+            }}
+          >
+            <AlertTriangle size={15} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+            <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--maroon)' }}>
+              {expiringRegulatory.length} regulatory item{expiringRegulatory.length > 1 ? 's' : ''} expiring within 60 days
+            </span>
+            <span style={{ fontSize: '11px', color: 'var(--muted)', marginLeft: 'auto', flexShrink: 0 }}>
+              View details →
+            </span>
+          </Link>
+        )}
+
         {/* Quick Capture + Actions — merged into one row */}
         <div className="flex items-center gap-2 mb-4" style={{ flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 200 }}>
@@ -628,16 +656,18 @@ export default function Dashboard() {
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <Pin size={14} style={{ color: 'var(--gold)' }} />
-              <span
+              <h2
                 style={{
                   fontSize: '10px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                   color: 'var(--gold)',
+                  margin: 0,
+                  fontWeight: 500,
                 }}
               >
                 Pinned
-              </span>
+              </h2>
             </div>
             <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => handleCardDragEnd(pinnedVisibleCards, e)}>
               <SortableContext items={pinnedVisibleCards.map(c => c.id)} strategy={rectSortingStrategy}>
@@ -675,37 +705,40 @@ export default function Dashboard() {
 
         {/* Primary Cards — always visible (unpinned) */}
         {unpinnedPrimaryCards.length > 0 && (
-          <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => handleCardDragEnd(unpinnedPrimaryCards, e)}>
-            <SortableContext items={unpinnedPrimaryCards.map(c => c.id)} strategy={rectSortingStrategy}>
-              <div className="bento-grid">
-                {unpinnedPrimaryCards.map(card => {
-                  const Card = card.component
-                  return (
-                    <SortableCardWrapper key={card.id} id={card.id}>
-                      <div data-testid={`card-${card.id}`} className="relative group" role="button" tabIndex={0} onClick={() => handleCardInteraction(card.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardInteraction(card.id) } }}>
-                        <Card />
-                        <button
-                          onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
-                          style={{
-                            border: 'none',
-                            borderRadius: 'var(--radius-md)',
-                            padding: 'var(--sp-xs)',
-                            cursor: 'pointer',
-                            color: 'var(--slate)',
-                            opacity: 0.5,
-                          }}
-                          title="Pin to top"
-                        >
-                          <Pin size={12} />
-                        </button>
-                      </div>
-                    </SortableCardWrapper>
-                  )
-                })}
-              </div>
-            </SortableContext>
-          </DndContext>
+          <div>
+            <h2 className="sr-only">Dashboard cards</h2>
+            <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => handleCardDragEnd(unpinnedPrimaryCards, e)}>
+              <SortableContext items={unpinnedPrimaryCards.map(c => c.id)} strategy={rectSortingStrategy}>
+                <div className="bento-grid">
+                  {unpinnedPrimaryCards.map(card => {
+                    const Card = card.component
+                    return (
+                      <SortableCardWrapper key={card.id} id={card.id}>
+                        <div data-testid={`card-${card.id}`} className="relative group" role="button" tabIndex={0} onClick={() => handleCardInteraction(card.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardInteraction(card.id) } }}>
+                          <Card />
+                          <button
+                            onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
+                            style={{
+                              border: 'none',
+                              borderRadius: 'var(--radius-md)',
+                              padding: 'var(--sp-xs)',
+                              cursor: 'pointer',
+                              color: 'var(--slate)',
+                              opacity: 0.5,
+                            }}
+                            title="Pin to top"
+                          >
+                            <Pin size={12} />
+                          </button>
+                        </div>
+                      </SortableCardWrapper>
+                    )
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
         )}
 
         {/* Secondary Cards — behind "Show more" (unpinned) */}
@@ -859,8 +892,7 @@ export default function Dashboard() {
 
         /* Dark mode card overrides */
         .dark .bento-card {
-          background-color: var(--cream) !important;
-          background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+          background-color: var(--surface-card) !important;
           border-color: var(--border-subtle) !important;
         }
 
