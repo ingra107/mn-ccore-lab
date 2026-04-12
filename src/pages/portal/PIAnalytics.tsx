@@ -35,11 +35,8 @@ import MetricCard from '../../components/MetricCard'
 import EmptyState from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import { staggerContainer, staggerItem } from '../../lib/animations'
-import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
-
-const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -258,8 +255,6 @@ export function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' | string }
 // Widgets: commitment scorecard, response time, team engagement, mentee pub velocity, grant pipeline.
 
 export default function PIAnalytics() {
-  const { user } = useAuth()
-  const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
   const { data, isLoading } = usePIDashboard()
   const [copied, setCopied] = useState(false)
 
@@ -315,29 +310,6 @@ export default function PIAnalytics() {
 
     return items
   }, [data])
-
-  // Not a PI
-  if (!isPi) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div
-          className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-          style={{ backgroundColor: 'var(--maroon-hover)' }}
-        >
-          <Shield size={24} style={{ color: 'var(--maroon)' }} />
-        </div>
-        <h2
-          className="text-xl font-medium mb-2"
-          style={{ color: 'var(--ink)' }}
-        >
-          PI Access Only
-        </h2>
-        <p className="text-sm max-w-md" style={{ color: 'var(--slate)' }}>
-          This dashboard contains leadership analytics and is restricted to principal investigators.
-        </p>
-      </div>
-    )
-  }
 
   if (isLoading) return <CardSkeleton count={6} />
 
