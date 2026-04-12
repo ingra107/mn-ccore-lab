@@ -166,7 +166,6 @@ export default function SearchPage() {
               </div>
             </div>
           )}
-          </div>
         </div>
       ) : (
         <>
