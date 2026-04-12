@@ -12,7 +12,7 @@ import { useMenteeMilestones, useMenteeOverview } from '../../hooks/useApiData'
 import type { MenteeMilestoneRow } from '../../hooks/useApiData'
 import { useCreateMenteeMilestone, useUpdateMenteeMilestone } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate, isOverdue } from '../../lib/dateUtils'
+import { formatShortDate, isOverdue, getDaysAgo } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 // ── Constants ──────────────────────────────────────────────
@@ -488,6 +488,7 @@ function MilestoneRow({
   const person = getPersonInfo(item.mentee_slug)
   const isDone = item.status === 'completed'
   const dueStr = item.due_date ? formatShortDate(item.due_date) : '--'
+  const daysLate = (item._isOverdue && item.due_date) ? getDaysAgo(item.due_date) : 0
 
   return (
     <div
@@ -563,15 +564,25 @@ function MilestoneRow({
         </span>
 
         {/* Due date */}
-        <span
-          style={{
-            fontSize: '12px',
-            color: item._isOverdue ? 'var(--maroon)' : 'var(--slate)',
-            fontWeight: item._isOverdue ? 500 : 400,
-          }}
-        >
-          {item._isOverdue ? 'Overdue' : dueStr}
-        </span>
+        {item._isOverdue ? (
+          <span
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full"
+            style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              color: 'var(--maroon)',
+              background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
+              whiteSpace: 'nowrap' as const,
+            }}
+          >
+            <AlertTriangle size={10} />
+            {daysLate > 0 ? `${daysLate}d overdue` : 'Overdue'}
+          </span>
+        ) : (
+          <span style={{ fontSize: '12px', color: 'var(--slate)', fontWeight: 400 }}>
+            {dueStr}
+          </span>
+        )}
 
         {/* Status */}
         <div onClick={(e) => e.stopPropagation()}>
@@ -594,15 +605,24 @@ function MilestoneRow({
           {item.title}
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <span
-            style={{
-              fontSize: 'var(--label-size)',
-              color: item._isOverdue ? 'var(--maroon)' : 'var(--slate)',
-              fontWeight: item._isOverdue ? 500 : 400,
-            }}
-          >
-            {item._isOverdue ? 'Overdue' : dueStr}
-          </span>
+          {item._isOverdue ? (
+            <span
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full"
+              style={{
+                fontSize: '10px',
+                fontWeight: 600,
+                color: 'var(--maroon)',
+                background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
+              }}
+            >
+              <AlertTriangle size={9} />
+              {daysLate > 0 ? `${daysLate}d overdue` : 'Overdue'}
+            </span>
+          ) : (
+            <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 400 }}>
+              {dueStr}
+            </span>
+          )}
           <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--gold)', opacity: 0.7 }}>
             {getTypeLabel(item.milestone_type)}
           </span>
