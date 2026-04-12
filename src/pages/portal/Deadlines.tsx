@@ -322,7 +322,7 @@ export default function Deadlines() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: '32px minmax(200px, 1fr) 140px 120px 100px 100px 80px',
+                gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px',
                 padding: 'var(--sp-sm) var(--sp-lg)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -453,7 +453,7 @@ function DeadlineItemRow({ item, onStatusChange, onOpenDetail, projectMap, selec
       <div
         className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
         style={{
-          gridTemplateColumns: '32px minmax(200px, 1fr) 140px 120px 100px 100px 80px',
+          gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px',
           padding: `var(--row-padding-y, 8px) 16px`,
           alignItems: 'center',
         }}
@@ -484,7 +484,8 @@ function DeadlineItemRow({ item, onStatusChange, onOpenDetail, projectMap, selec
           style={{
             fontSize: 'var(--value-size)', fontWeight: 400,
             color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
-            paddingRight: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+            minWidth: 0,
             cursor: item.type === 'task' && onOpenDetail ? 'pointer' : 'default',
             borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px -4px',
             transition: 'background var(--transition-fast) ease',
@@ -609,18 +610,21 @@ function DeadlineItemRow({ item, onStatusChange, onOpenDetail, projectMap, selec
 // ── Deadline Table Section (columnar, virtual scrolling for large groups) ────────────
 
 const VIRTUAL_THRESHOLD = 20  // sections exceeding this row count get virtualized
-const ROW_HEIGHT = 44         // estimated px per row (8px padding x2 + ~28px content)
+// Row heights match CSS density values: compact=36, default=44, relaxed=52
+const DENSITY_ROW_HEIGHT: Record<string, number> = { compact: 36, default: 44, relaxed: 52 }
 
 function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
   const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
   const useVirtual = expanded && items.length > VIRTUAL_THRESHOLD
   const parentRef = useRef<HTMLDivElement>(null)
+  const [density] = useDensity()
+  const rowHeight = DENSITY_ROW_HEIGHT[density] ?? 44
 
   const virtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => ROW_HEIGHT,
-    overscan: 10,
+    estimateSize: () => rowHeight,
+    overscan: 5,
     enabled: useVirtual,
   })
 
@@ -659,7 +663,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
       {expanded && useVirtual && (
         <div
           ref={parentRef}
-          style={{ height: Math.min(items.length * ROW_HEIGHT, 440), overflow: 'auto' }}
+          style={{ height: Math.min(items.length * rowHeight, 440), minHeight: Math.min(items.length * rowHeight, 440), overflow: 'auto' }}
         >
           <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {
