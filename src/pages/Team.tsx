@@ -185,13 +185,16 @@ export default function Team() {
                 }}
               >
                 <div className="flex items-start gap-4 sm:gap-5">
-                  <Avatar
-                    name={director.name}
-                    initials={director.initials}
-                    photoUrl={director.photoUrl}
-                    size="md"
-                    variant="gold"
-                  />
+                  {/* Fixed-size wrapper reserves space before image loads — prevents avatar CLS */}
+                  <div style={{ width: '80px', height: '80px', flexShrink: 0 }}>
+                    <Avatar
+                      name={director.name}
+                      initials={director.initials}
+                      photoUrl={director.photoUrl}
+                      size="md"
+                      variant="gold"
+                    />
+                  </div>
 
                   <div className="flex-1 min-w-0">
                     <h3
@@ -307,13 +310,16 @@ export default function Team() {
             return (
               <div key={member.name} className="fade-in-up card p-4 sm:p-6">
                 <div className="flex items-center gap-4">
-                  <Avatar
-                    name={member.name}
-                    initials={member.initials}
-                    photoUrl={member.photoUrl}
-                    size="sm"
-                    variant="gold"
-                  />
+                  {/* Fixed-size wrapper prevents avatar CLS */}
+                  <div style={{ width: '56px', height: '56px', flexShrink: 0 }}>
+                    <Avatar
+                      name={member.name}
+                      initials={member.initials}
+                      photoUrl={member.photoUrl}
+                      size="sm"
+                      variant="gold"
+                    />
+                  </div>
                   <div>
                     <h3
                       className="text-base sm:text-lg"
@@ -383,7 +389,8 @@ export default function Team() {
                   transition: 'background-color var(--duration-normal, 150ms) var(--ease-out)',
                 }}
               >
-                <div className="flex justify-center mb-2">
+                {/* Fixed-size wrapper prevents avatar CLS */}
+                <div style={{ width: '56px', height: '56px', margin: '0 auto var(--sp-sm)' }}>
                   <Avatar
                     name={member.name}
                     initials={member.initials}
@@ -457,7 +464,8 @@ export default function Team() {
                   transition: 'background-color var(--duration-normal, 150ms) var(--ease-out)',
                 }}
               >
-                <div className="flex justify-center mb-2">
+                {/* Fixed-size wrapper prevents avatar CLS */}
+                <div style={{ width: '56px', height: '56px', margin: '0 auto var(--sp-sm)' }}>
                   <Avatar
                     name={member.name}
                     initials={member.initials}

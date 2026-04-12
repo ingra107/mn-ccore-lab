@@ -453,7 +453,7 @@ export default function Grants() {
         case 'title': cmp = a.title.localeCompare(b.title); break
         case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
         case 'mechanism': cmp = (a.mechanism || '').localeCompare(b.mechanism || ''); break
-        case 'status': cmp = (a.status || '').localeCompare(b.status || ''); break
+        case 'status': cmp = (a.proposed ? 'Proposed' : 'Active').localeCompare(b.proposed ? 'Proposed' : 'Active'); break
         case 'start_date': cmp = (a.start_date || '').localeCompare(b.start_date || ''); break
         case 'end_date': cmp = (a.end_date || '').localeCompare(b.end_date || ''); break
         case 'agency': cmp = (a.agency || '').localeCompare(b.agency || ''); break

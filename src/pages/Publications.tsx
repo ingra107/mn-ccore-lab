@@ -300,10 +300,11 @@ export default function Publications() {
 
       <SectionDivider />
 
-      {/* Search + Filters + List */}
+      {/* Search + Filters + List — minHeight reserves space for full list during cold load (CLS fix) */}
       <section
         className="py-8 sm:py-12 lg:py-16 content-container"
         ref={pubsRef}
+        style={{ minHeight: '800px' }}
       >
         {/* Search + View Toggle */}
         <div className="flex items-center gap-3 mb-4">
@@ -362,7 +363,7 @@ export default function Publications() {
           />
         </div>
 
-        {/* Publication list / library */}
+        {/* Publication list / library — minHeight prevents page collapse to 0 during cold load (CLS fix) */}
         {viewMode === 'library' ? (
           <PublicationLibrary publications={filtered} />
         ) : filtered.length === 0 ? (

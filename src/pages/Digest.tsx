@@ -107,6 +107,7 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
       className="card p-4 sm:p-5"
       style={{
         opacity: isDismissed ? 0.5 : 1,
+        minHeight: '120px',
         transition: 'opacity var(--duration-normal) var(--ease-out), transform var(--duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--duration-slow) var(--ease-out), background-color var(--duration-normal) var(--ease-out)',
       }}
     >
@@ -856,7 +857,8 @@ export default function Digest() {
               <EmptyState />
             )
           ) : (
-            <div className="space-y-3 sm:space-y-4">
+            /* minHeight reserves space for paper list during cold load — prevents CLS */
+            <div className="space-y-3 sm:space-y-4" style={{ minHeight: '600px' }}>
               {searchQuery && (
                 <p className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   {filteredPapers.length} of {papers.length} papers matching "{searchQuery}"
