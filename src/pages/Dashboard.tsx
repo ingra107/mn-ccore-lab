@@ -359,11 +359,12 @@ export default function Dashboard() {
     <DashboardMountedContext.Provider value={mounted}>
     <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
       <div className="content-container" style={{ paddingBottom: '4rem', maxWidth: '100%' }}>
-        {/* Page Header — compact single row */}
+        {/* ── STRATUM 1: Greeting + Tabs + Customize (single row) ── */}
         {(() => {
           const overdue = allTasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date())
           return (
-            <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '0.75rem', paddingTop: '0.25rem' }}>
+            <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '0.625rem', paddingTop: '0.25rem' }}>
+              {/* Row A: greeting stats + tabs + customize */}
               <div
                 style={{
                   display: 'flex',
@@ -371,6 +372,7 @@ export default function Dashboard() {
                   justifyContent: 'space-between',
                   minHeight: '40px',
                   gap: '0.75rem',
+                  flexWrap: 'wrap',
                 }}
               >
                 {/* Left: live dot + greeting + inline stats */}
@@ -437,8 +439,55 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                {/* Right: customize button */}
+                {/* Center: tabs */}
+                <div style={{ display: 'flex', gap: '2px', padding: '2px', borderRadius: 'var(--radius-lg)', background: 'rgba(15,25,35,0.03)', flexShrink: 0 }}>
+                  {TAB_CONFIG.map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: 'var(--radius-lg)',
+                        border: 'none',
+                        fontSize: '12px',
+                        fontWeight: activeTab === tab.id ? 600 : 400,
+                        color: activeTab === tab.id ? 'var(--ink)' : 'var(--slate)',
+                        backgroundColor: activeTab === tab.id ? 'var(--gold)' : 'transparent',
+                        opacity: activeTab === tab.id ? 1 : 0.6,
+                        cursor: 'pointer',
+                        transition: 'color 150ms ease, background-color 150ms ease, opacity 150ms ease',
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Right: adaptive indicator + customize + tooltip */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                  {adaptive && activeTab === 'overview' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55 }}>
+                        Organized by your usage
+                      </span>
+                      <button
+                        onClick={resetAdaptive}
+                        title="Reset to default order"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--slate)',
+                          opacity: 0.3,
+                          padding: '2px',
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <RotateCcw size={10} />
+                      </button>
+                    </div>
+                  )}
                   <button
                     data-testid="dashboard-customize"
                     onClick={() => setShowCustomize(!showCustomize)}
@@ -464,65 +513,14 @@ export default function Dashboard() {
           )
         })()}
 
-        {/* Notion-style tab bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '2px', padding: '2px', borderRadius: 'var(--radius-lg)', background: 'rgba(15,25,35,0.03)' }}>
-            {TAB_CONFIG.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: 'var(--radius-lg)',
-                  border: 'none',
-                  fontSize: '12px',
-                  fontWeight: activeTab === tab.id ? 600 : 400,
-                  color: activeTab === tab.id ? 'var(--ink)' : 'var(--slate)',
-                  backgroundColor: activeTab === tab.id ? 'var(--gold)' : 'transparent',
-                  opacity: activeTab === tab.id ? 1 : 0.6,
-                  cursor: 'pointer',
-                  transition: 'color 150ms ease, background-color 150ms ease, opacity 150ms ease',
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Adaptive sorting indicator */}
-          {adaptive && activeTab === 'overview' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}>
-              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55 }}>
-                Organized by your usage
-              </span>
-              <button
-                onClick={resetAdaptive}
-                title="Reset to default order"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--slate)',
-                  opacity: 0.3,
-                  padding: '2px',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                <RotateCcw size={10} />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Welcome banner (first-visit onboarding) */}
+        {/* Welcome banner (first-visit onboarding — conditional, rarely shown) */}
         <WelcomeBanner />
 
         {/* Customize panel */}
         {showCustomize && (
           <div
             data-testid="customize-panel"
-            className="rounded-xl border p-4 mb-4 customize-panel"
+            className="rounded-xl border p-4 mb-3 customize-panel"
             style={{ borderColor: 'var(--border-subtle)' }}
           >
             <p className="text-xs font-medium mb-3" style={{ color: 'var(--ink)' }}>
@@ -566,62 +564,9 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Meeting Prep Banner */}
-        {upcomingMeeting && (
-          <Link
-            to={`/meetings/${upcomingMeeting.id}/prep`}
-            className="flex items-center gap-3 mb-4 px-4 py-3 rounded-xl transition-all"
-            style={{
-              background: 'linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(45,138,138,0.06) 100%)',
-              border: '1px solid rgba(201,168,76,0.2)',
-              textDecoration: 'none',
-              color: 'var(--ink)',
-            }}
-          >
-            <Clock size={18} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-            <div className="flex-1">
-              <div style={{ fontSize: '13px', fontWeight: 500 }}>
-                {upcomingMeeting.date === new Date().toISOString().split('T')[0] ? 'Meeting today' : 'Meeting tomorrow'}: {upcomingMeeting.title}
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                {formatMediumDate(upcomingMeeting.date)}
-              </div>
-            </div>
-            <span
-              className="px-3 py-1 rounded-lg text-[11px] font-medium"
-              style={{ backgroundColor: 'var(--gold)', color: '#0f1923' }}
-            >
-              Prepare
-            </span>
-          </Link>
-        )}
-
-        {/* Regulatory Alert Strip — only shows when items expiring within 60 days */}
-        {expiringRegulatory.length > 0 && (
-          <Link
-            to="/personal"
-            className="flex items-center gap-3 mb-3 px-4 py-2.5 rounded-xl"
-            style={{
-              background: 'var(--maroon-hover)',
-              border: '1px solid var(--border-subtle)',
-              borderLeft: '3px solid var(--maroon)',
-              textDecoration: 'none',
-              color: 'var(--ink)',
-              transition: 'background-color 150ms ease',
-            }}
-          >
-            <AlertTriangle size={15} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
-            <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--maroon)' }}>
-              {expiringRegulatory.length} regulatory item{expiringRegulatory.length > 1 ? 's' : ''} expiring within 60 days
-            </span>
-            <span style={{ fontSize: '11px', color: 'var(--muted)', marginLeft: 'auto', flexShrink: 0 }}>
-              View details →
-            </span>
-          </Link>
-        )}
-
-        {/* Quick Capture + Actions — merged into one row */}
-        <div className="flex items-center gap-2 mb-4" style={{ flexWrap: 'wrap' }}>
+        {/* ── STRATUM 2: QuickCapture + contextual alerts + cards ── */}
+        {/* Quick Capture + Actions */}
+        <div className="flex items-center gap-2 mb-3" style={{ flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 200 }}>
             <QuickCaptureBar noMargin />
           </div>
@@ -652,6 +597,59 @@ export default function Dashboard() {
             </Link>
           </div>
         </div>
+
+        {/* Contextual alerts (conditional — quiet by default) */}
+        {upcomingMeeting && (
+          <Link
+            to={`/meetings/${upcomingMeeting.id}/prep`}
+            className="flex items-center gap-3 mb-2 px-4 py-3 rounded-xl transition-all"
+            style={{
+              background: 'linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(45,138,138,0.06) 100%)',
+              border: '1px solid rgba(201,168,76,0.2)',
+              textDecoration: 'none',
+              color: 'var(--ink)',
+            }}
+          >
+            <Clock size={18} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+            <div className="flex-1">
+              <div style={{ fontSize: '13px', fontWeight: 500 }}>
+                {upcomingMeeting.date === new Date().toISOString().split('T')[0] ? 'Meeting today' : 'Meeting tomorrow'}: {upcomingMeeting.title}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                {formatMediumDate(upcomingMeeting.date)}
+              </div>
+            </div>
+            <span
+              className="px-3 py-1 rounded-lg text-[11px] font-medium"
+              style={{ backgroundColor: 'var(--gold)', color: '#0f1923' }}
+            >
+              Prepare
+            </span>
+          </Link>
+        )}
+
+        {expiringRegulatory.length > 0 && (
+          <Link
+            to="/personal"
+            className="flex items-center gap-3 mb-2 px-4 py-2.5 rounded-xl"
+            style={{
+              background: 'var(--maroon-hover)',
+              border: '1px solid var(--border-subtle)',
+              borderLeft: '3px solid var(--maroon)',
+              textDecoration: 'none',
+              color: 'var(--ink)',
+              transition: 'background-color 150ms ease',
+            }}
+          >
+            <AlertTriangle size={15} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+            <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--maroon)' }}>
+              {expiringRegulatory.length} regulatory item{expiringRegulatory.length > 1 ? 's' : ''} expiring within 60 days
+            </span>
+            <span style={{ fontSize: '11px', color: 'var(--muted)', marginLeft: 'auto', flexShrink: 0 }}>
+              View details →
+            </span>
+          </Link>
+        )}
 
         {/* Pinned Cards — always at the top */}
         {pinnedVisibleCards.length > 0 && (

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info, Palette, RotateCcw, Sun, Moon } from 'lucide-react'
+import { Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info, Palette, RotateCcw, Sun, Moon, Users, ArrowRight } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
@@ -80,6 +81,27 @@ export default function SettingsPage() {
   return (
     <div>
       <PageHeader icon={<Settings size={20} />} title="Settings" subtitle="Changes are saved automatically" />
+
+      {/* Team Directory shortcut */}
+      <Link
+        to="/team"
+        className="inline-flex items-center gap-2 mb-4 px-4 py-2.5 rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+        style={{
+          borderColor: 'var(--border-subtle)',
+          textDecoration: 'none',
+          color: 'var(--ink)',
+          backgroundColor: 'var(--surface-1)',
+        }}
+      >
+        <div className="flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0" style={{ backgroundColor: 'var(--teal-active)' }}>
+          <Users size={14} style={{ color: 'var(--teal)' }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Team Directory</span>
+          <span className="ml-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>Manage members, roles, and expertise tags</span>
+        </div>
+        <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+      </Link>
 
       <div className="flex flex-col max-w-2xl" style={{ marginTop: 'var(--sp-xl)' }}>
         {/* Basic Information */}
