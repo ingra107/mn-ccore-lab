@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation, Download } from 'lucide-react'
@@ -434,8 +435,194 @@ const STATUS_OPTIONS = [
   { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
 ]
 
+// ── Reusable deadline item row ───────────────────────────────────────────────
+
+function DeadlineItemRow({ item, onStatusChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: {
+  item: DeadlineItem
+  onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void
+  onOpenDetail?: (item: DeadlineItem) => void
+  projectMap: Map<string, string>
+  selectedIds?: Set<string>
+  onToggleSelect?: (id: string) => void
+}) {
+  const person = item.assignee ? getPersonInfo(item.assignee) : null
+  const isDone = item.status === 'done' || item.status === 'completed'
+  return (
+    <div style={{ borderBottom: '1px solid var(--border-subtle)', opacity: isDone ? 0.45 : 1 }}>
+      {/* Desktop row — hidden on mobile */}
+      <div
+        className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+        style={{
+          gridTemplateColumns: '32px minmax(200px, 1fr) 140px 120px 100px 100px 80px',
+          padding: `var(--row-padding-y, 8px) 16px`,
+          alignItems: 'center',
+        }}
+      >
+        {/* Checkbox */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {item.type === 'task' && onToggleSelect ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id) }}
+              style={{
+                width: 18, height: 18, borderRadius: 'var(--radius-sm)',
+                border: `1.5px solid ${selectedIds?.has(item.id) ? 'var(--teal)' : 'var(--border-default)'}`,
+                background: selectedIds?.has(item.id) ? 'var(--teal)' : 'transparent',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: 0, transition: 'all 150ms ease', flexShrink: 0,
+              }}
+              aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
+            >
+              {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
+            </button>
+          ) : <div style={{ width: 18 }} />}
+        </div>
+
+        {/* Title — clickable for tasks */}
+        <span
+          onClick={item.type === 'task' && onOpenDetail ? () => onOpenDetail(item) : undefined}
+          className={item.type === 'task' ? 'task-title-clickable' : ''}
+          style={{
+            fontSize: 'var(--value-size)', fontWeight: 400,
+            color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
+            paddingRight: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+            cursor: item.type === 'task' && onOpenDetail ? 'pointer' : 'default',
+            borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px -4px',
+            transition: 'background var(--transition-fast) ease',
+          }}
+        >
+          {item.title}
+        </span>
+
+        {/* Project */}
+        <span style={{
+          fontSize: 'var(--text-small)',
+          color: 'var(--teal)',
+          opacity: 0.55,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+        }}>
+          {item.project ? (projectMap.get(item.project) || item.project) : ''}
+        </span>
+
+        {/* Due date */}
+        <span style={{
+          fontSize: 'var(--text-label)',
+          color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
+          fontWeight: item.isOverdue ? 500 : 400,
+          opacity: item.isOverdue ? 1 : 0.5,
+          fontVariantNumeric: 'tabular-nums',
+        }}>
+          {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
+        </span>
+
+        {/* Assignee */}
+        <div className="flex items-center gap-1.5">
+          {person ? (
+            <div style={{ width: 20, height: 20, flexShrink: 0 }}>
+              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
+            </div>
+          ) : (
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
+          )}
+        </div>
+
+        {/* Status — InlineSelect for tasks */}
+        <div onClick={(e) => e.stopPropagation()}>
+          {item.type === 'task' && onStatusChange ? (
+            <InlineSelect
+              value={item.status}
+              options={STATUS_OPTIONS}
+              onChange={(val) => onStatusChange(item.id, val, item.status)}
+              size="sm"
+            />
+          ) : (
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
+          )}
+        </div>
+
+        {/* Type badge */}
+        <span style={{
+          fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
+          color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
+          opacity: 0.7,
+        }}>
+          {item.type === 'milestone' ? 'Milestone' : 'Task'}
+        </span>
+      </div>
+
+      {/* Mobile row — shown only on mobile */}
+      <div
+        className="sm:hidden hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors flex items-start gap-2"
+        style={{ padding: `var(--row-padding-y, 12px) 16px` }}
+      >
+        {item.type === 'task' && onToggleSelect && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id) }}
+            style={{
+              width: 18, height: 18, borderRadius: 'var(--radius-sm)',
+              border: `1.5px solid ${selectedIds?.has(item.id) ? 'var(--teal)' : 'var(--border-default)'}`,
+              background: selectedIds?.has(item.id) ? 'var(--teal)' : 'transparent',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 0, transition: 'all 150ms ease', flexShrink: 0, marginTop: 2,
+            }}
+            aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
+          >
+            {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
+          </button>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Title */}
+          <span style={{
+            fontSize: '14px', fontWeight: 500,
+            color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
+            display: 'block', marginBottom: '4px',
+          }}>
+            {item.title}
+          </span>
+          {/* Metadata row */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <span style={{
+              fontSize: 'var(--label-size)',
+              color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
+              fontWeight: item.isOverdue ? 500 : 400,
+            }}>
+              {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
+            </span>
+            <span style={{
+              fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
+              color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
+              opacity: 0.7,
+            }}>
+              {item.type === 'milestone' ? 'Milestone' : 'Task'}
+            </span>
+            {person && (
+              <div style={{ width: 18, height: 18, flexShrink: 0 }}>
+                <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-icon" variant="ice" />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Deadline Table Section (columnar, virtual scrolling for large groups) ────────────
+
+const VIRTUAL_THRESHOLD = 20  // sections exceeding this row count get virtualized
+const ROW_HEIGHT = 44         // estimated px per row (8px padding x2 + ~28px content)
+
 function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
   const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
+  const useVirtual = expanded && items.length > VIRTUAL_THRESHOLD
+  const parentRef = useRef<HTMLDivElement>(null)
+
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 10,
+    enabled: useVirtual,
+  })
 
   return (
     <div>
@@ -455,167 +642,52 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
         <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
       </button>
 
-      {expanded && items.map((item) => {
-        const person = item.assignee ? getPersonInfo(item.assignee) : null
-        const isDone = item.status === 'done' || item.status === 'completed'
-        return (
-          <div key={item.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: isDone ? 0.45 : 1 }}>
-            {/* Desktop row — hidden on mobile */}
-            <div
-              className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
-              style={{
-                gridTemplateColumns: '32px minmax(200px, 1fr) 140px 120px 100px 100px 80px',
-                padding: `var(--row-padding-y, 8px) 16px`,
-                alignItems: 'center',
-              }}
-            >
-              {/* Checkbox */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {item.type === 'task' && onToggleSelect ? (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id) }}
-                    style={{
-                      width: 18, height: 18, borderRadius: 'var(--radius-sm)',
-                      border: `1.5px solid ${selectedIds?.has(item.id) ? 'var(--teal)' : 'var(--border-default)'}`,
-                      background: selectedIds?.has(item.id) ? 'var(--teal)' : 'transparent',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      padding: 0, transition: 'all 150ms ease', flexShrink: 0,
-                    }}
-                    aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
-                  >
-                    {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
-                  </button>
-                ) : <div style={{ width: 18 }} />}
-              </div>
+      {/* Small sections: plain map render */}
+      {expanded && !useVirtual && items.map((item) => (
+        <DeadlineItemRow
+          key={item.id}
+          item={item}
+          onStatusChange={onStatusChange}
+          onOpenDetail={onOpenDetail}
+          projectMap={projectMap}
+          selectedIds={selectedIds}
+          onToggleSelect={onToggleSelect}
+        />
+      ))}
 
-              {/* Title — clickable for tasks */}
-              <span
-                onClick={item.type === 'task' && onOpenDetail ? () => onOpenDetail(item) : undefined}
-                className={item.type === 'task' ? 'task-title-clickable' : ''}
-                style={{
-                  fontSize: 'var(--value-size)', fontWeight: 400,
-                  color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
-                  paddingRight: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
-                  cursor: item.type === 'task' && onOpenDetail ? 'pointer' : 'default',
-                  borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px -4px',
-                  transition: 'background var(--transition-fast) ease',
-                }}
-              >
-                {item.title}
-              </span>
-
-              {/* Project */}
-              <span style={{
-                fontSize: 'var(--text-small)',
-                color: 'var(--teal)',
-                opacity: 0.55,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
-              }}>
-                {item.project ? (projectMap.get(item.project) || item.project) : ''}
-              </span>
-
-              {/* Due date */}
-              <span style={{
-                fontSize: 'var(--text-label)',
-                color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
-                fontWeight: item.isOverdue ? 500 : 400,
-                opacity: item.isOverdue ? 1 : 0.5,
-                fontVariantNumeric: 'tabular-nums',
-              }}>
-                {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
-              </span>
-
-              {/* Assignee */}
-              <div className="flex items-center gap-1.5">
-                {person ? (
-                  <div style={{ width: 20, height: 20, flexShrink: 0 }}>
-                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
-                  </div>
-                ) : (
-                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
-                )}
-              </div>
-
-              {/* Status — InlineSelect for tasks */}
-              <div onClick={(e) => e.stopPropagation()}>
-                {item.type === 'task' && onStatusChange ? (
-                  <InlineSelect
-                    value={item.status}
-                    options={STATUS_OPTIONS}
-                    onChange={(val) => onStatusChange(item.id, val, item.status)}
-                    size="sm"
-                  />
-                ) : (
-                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
-                )}
-              </div>
-
-              {/* Type badge */}
-              <span style={{
-                fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
-                color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
-                opacity: 0.7,
-              }}>
-                {item.type === 'milestone' ? 'Milestone' : 'Task'}
-              </span>
-            </div>
-
-            {/* Mobile row — shown only on mobile */}
-            <div
-              className="sm:hidden hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors flex items-start gap-2"
-              style={{ padding: `var(--row-padding-y, 12px) 16px` }}
-            >
-              {item.type === 'task' && onToggleSelect && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id) }}
+      {/* Large sections: virtualized scrollable window */}
+      {expanded && useVirtual && (
+        <div
+          ref={parentRef}
+          style={{ height: Math.min(items.length * ROW_HEIGHT, 440), overflow: 'auto' }}
+        >
+          <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const item = items[virtualRow.index]
+              return (
+                <div
+                  key={item.id}
                   style={{
-                    width: 18, height: 18, borderRadius: 'var(--radius-sm)',
-                    border: `1.5px solid ${selectedIds?.has(item.id) ? 'var(--teal)' : 'var(--border-default)'}`,
-                    background: selectedIds?.has(item.id) ? 'var(--teal)' : 'transparent',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: 0, transition: 'all 150ms ease', flexShrink: 0, marginTop: 2,
+                    position: 'absolute',
+                    top: virtualRow.start,
+                    width: '100%',
+                    height: virtualRow.size,
                   }}
-                  aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
                 >
-                  {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
-                </button>
-              )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                {/* Title */}
-                <span style={{
-                  fontSize: '14px', fontWeight: 500,
-                  color: 'var(--ink)', textDecoration: isDone ? 'line-through' : 'none',
-                  display: 'block', marginBottom: '4px',
-                }}>
-                  {item.title}
-                </span>
-                {/* Metadata row */}
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span style={{
-                    fontSize: 'var(--label-size)',
-                    color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
-                    fontWeight: item.isOverdue ? 500 : 400,
-                  }}>
-                    {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
-                  </span>
-                  <span style={{
-                    fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
-                    color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
-                    opacity: 0.7,
-                  }}>
-                    {item.type === 'milestone' ? 'Milestone' : 'Task'}
-                  </span>
-                  {person && (
-                    <div style={{ width: 18, height: 18, flexShrink: 0 }}>
-                      <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-icon" variant="ice" />
-                    </div>
-                  )}
+                  <DeadlineItemRow
+                    item={item}
+                    onStatusChange={onStatusChange}
+                    onOpenDetail={onOpenDetail}
+                    projectMap={projectMap}
+                    selectedIds={selectedIds}
+                    onToggleSelect={onToggleSelect}
+                  />
                 </div>
-              </div>
-            </div>
+              )
+            })}
           </div>
-        )
-      })}
+        </div>
+      )}
     </div>
   )
 }
