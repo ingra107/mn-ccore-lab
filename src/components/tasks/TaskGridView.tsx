@@ -363,7 +363,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
               fontSize: '11px', color: 'var(--slate)', opacity: 0.5,
               background: 'none', border: 'none', cursor: 'pointer',
               padding: '2px 6px', borderRadius: 'var(--radius-sm)',
-              transition: 'opacity 150ms ease',
+              transition: 'opacity var(--duration-normal) var(--ease-out)',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5' }}
@@ -506,7 +506,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         /* Resize handles */
         .resize-handle {
           background: transparent;
-          transition: background 150ms ease;
+          transition: background var(--duration-normal) var(--ease-out);
         }
         .resize-handle:hover {
           background: var(--teal);
@@ -519,7 +519,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         /* Column drag handles — subtle on hover */
         .col-drag-handle {
           opacity: 0;
-          transition: opacity var(--transition-fast) ease;
+          transition: opacity var(--transition-fast) var(--ease-out);
         }
         .task-grid-header > div:hover .col-drag-handle {
           opacity: 0.35;
@@ -541,7 +541,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         }
         .task-grid-row .hover-badge {
           opacity: 0;
-          transition: opacity var(--transition-fast) ease;
+          transition: opacity var(--transition-fast) var(--ease-out);
         }
         .task-grid-row:hover .hover-badge {
           opacity: 1;
@@ -665,7 +665,7 @@ function SortableColumnHeader({
           color: 'var(--slate)',
           opacity: 0.25,
           flexShrink: 0,
-          transition: 'opacity var(--transition-fast) ease',
+          transition: 'opacity var(--transition-fast) var(--ease-out)',
         }}
         className="col-drag-handle"
         onClick={(e) => e.stopPropagation()}
@@ -793,7 +793,7 @@ function TaskGridRow({
         }`,
         cursor: onSelect ? 'pointer' : 'default',
         opacity: isDone ? 0.5 : 1,
-        transition: 'background 150ms ease, opacity 150ms ease',
+        transition: 'background var(--duration-normal) var(--ease-out), opacity var(--duration-normal) var(--ease-out)',
         position: 'relative',
       }}
       className={`task-grid-row hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${isFocused ? 'task-row-focused' : ''} ${rowFadeAnim ? 'task-row-complete-fade' : ''}`}
@@ -850,11 +850,11 @@ function TaskGridRow({
                       background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
                       display: 'flex', alignItems: 'center', flexShrink: 0,
                       color: 'var(--slate)', opacity: expanded ? 0.7 : 0.25,
-                      transition: 'opacity var(--transition-fast) ease',
+                      transition: 'opacity var(--transition-fast) var(--ease-out)',
                     }}
                     title={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
                   >
-                    <ChevronRight size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform var(--transition-fast) ease' }} />
+                    <ChevronRight size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform var(--transition-fast) var(--ease-out)' }} />
                   </button>
                   {hasBlockers && (
                     <span className="relative group" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
@@ -933,7 +933,7 @@ function TaskGridRow({
                         borderRadius: 'var(--radius-sm)',
                         padding: '1px 4px',
                         margin: '-1px -4px',
-                        transition: 'background var(--transition-fast) ease',
+                        transition: 'background var(--transition-fast) var(--ease-out)',
                       }}
                       className="task-title-clickable"
                     >
@@ -1305,7 +1305,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
         style={{
           color: 'var(--teal)',
           opacity: 0.5,
-          transition: 'opacity var(--transition-fast) ease',
+          transition: 'opacity var(--transition-fast) var(--ease-out)',
           display: 'inline-flex',
           alignItems: 'center',
           padding: '1px',
@@ -1324,7 +1324,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
           cursor: 'pointer',
           color: copied ? 'var(--green)' : 'var(--slate)',
           opacity: copied ? 1 : 0.35,
-          transition: 'opacity var(--transition-fast) ease, color var(--transition-fast) ease',
+          transition: 'opacity var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out)',
           display: 'inline-flex',
           alignItems: 'center',
           padding: '1px',
@@ -1370,7 +1370,7 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
   return (
     <div
       ref={setNodeRef}
-      style={{ ...style, transition: `opacity 150ms ease, ${transition || ''}` }}
+      style={{ ...style, transition: `opacity var(--duration-normal) var(--ease-out), ${transition || ''}` }}
       className="flex items-center gap-2 py-1 group"
       {...attributes}
     >
@@ -1472,7 +1472,7 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
         {total > 0 && (
           <div className="flex items-center gap-2 mb-1.5">
             <div style={{ flex: 1, height: 2, borderRadius: 'var(--radius-sm)', background: 'var(--gold-emphasis)', overflow: 'hidden' }}>
-              <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: completed === total ? 'var(--teal)' : 'var(--gold)', borderRadius: 'var(--radius-sm)', transition: 'width 0.3s ease' }} />
+              <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: completed === total ? 'var(--teal)' : 'var(--gold)', borderRadius: 'var(--radius-sm)', transition: 'width var(--duration-slow) var(--ease-out)' }} />
             </div>
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{completed}/{total}</span>
           </div>
@@ -1530,9 +1530,34 @@ function InlineCellSelect({
     return options.filter(o => o.label.toLowerCase().includes(lower))
   }, [options, filter])
 
+  const updatePosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 4, left: rect.left, minWidth: Math.max(130, rect.width) })
+    }
+  }, [])
+
   useEffect(() => {
-    if (open) { setFilter(''); setFocusedIdx(-1); setTimeout(() => filterRef.current?.focus(), 0) }
-  }, [open])
+    if (!open) return
+    updatePosition()
+    setFilter('')
+    setFocusedIdx(-1)
+    setTimeout(() => filterRef.current?.focus(), 0)
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (
+        buttonRef.current && !buttonRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) { setOpen(false) }
+    }
+    const onScroll = () => setOpen(false)
+    document.addEventListener('mousedown', handler)
+    window.addEventListener('scroll', onScroll, true)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      window.removeEventListener('scroll', onScroll, true)
+    }
+  }, [open, updatePosition])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); setFocusedIdx(i => Math.min(i + 1, filtered.length - 1)) }
@@ -1541,9 +1566,19 @@ function InlineCellSelect({
     else if (e.key === 'Escape') { setOpen(false) }
   }
 
+  const activeDescendant = open && focusedIdx >= 0 && filtered[focusedIdx]
+    ? `${listboxId.current}-opt-${focusedIdx}`
+    : undefined
+
   return (
     <div style={{ position: 'relative' }}>
       <button
+        ref={buttonRef}
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={open ? listboxId.current : undefined}
+        aria-activedescendant={activeDescendant}
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
         className="inline-flex items-center gap-1 rounded-md transition-colors"
         style={{
@@ -1561,16 +1596,30 @@ function InlineCellSelect({
         <ChevronDown size={10} style={{ opacity: 0.3, marginLeft: '2px' }} />
       </button>
 
-      {open && (
+      {open && createPortal(
         <>
-          <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpen(false) }} />
           <div
-            className="absolute z-50 mt-1 rounded-lg overflow-hidden"
+            className="fixed inset-0"
+            style={{ zIndex: 'var(--z-dropdown)' }}
+            onClick={(e) => { e.stopPropagation(); setOpen(false) }}
+          />
+          <div
+            ref={dropdownRef}
+            id={listboxId.current}
+            role="listbox"
+            aria-label="Select option"
+            onKeyDown={handleKeyDown}
             style={{
-              top: '100%', left: 0, minWidth: '130px',
+              position: 'fixed',
+              top: pos.top,
+              left: pos.left,
+              minWidth: pos.minWidth,
+              zIndex: 'var(--z-modal)',
               background: 'var(--cream)',
               border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
               boxShadow: 'var(--shadow-menu)',
+              overflow: 'hidden',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1594,6 +1643,9 @@ function InlineCellSelect({
             {filtered.map((opt, idx) => (
               <button
                 key={opt.value}
+                id={`${listboxId.current}-opt-${idx}`}
+                role="option"
+                aria-selected={opt.value === value}
                 onClick={(e) => { e.stopPropagation(); onChange(opt.value); setOpen(false) }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
@@ -1603,16 +1655,17 @@ function InlineCellSelect({
                     : opt.value === value ? 'var(--teal-hover)' : 'none',
                   fontSize: '12px', fontWeight: opt.value === value ? 500 : 400,
                   color: opt.color || 'var(--ink)', textAlign: 'left',
-                  transition: 'background 0.1s',
+                  transition: 'background var(--duration-fast) var(--ease-out)',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--teal-active)' }}
+                onMouseEnter={(e) => { setFocusedIdx(idx); e.currentTarget.style.background = 'var(--teal-active)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = idx === focusedIdx ? 'var(--teal-active)' : opt.value === value ? 'var(--teal-hover)' : 'none' }}
               >
                 {opt.label}
               </button>
             ))}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   )
