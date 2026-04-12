@@ -5,8 +5,16 @@ export async function bumpVersion(db: D1Database) {
 }
 
 export async function handleVersion(env: { DB: D1Database }): Promise<Response> {
-  const row = await env.DB.prepare("SELECT value FROM _meta WHERE key = 'version'").first<{ value: string }>();
-  return new Response(JSON.stringify({ version: row?.value || '0' }), {
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
-  });
+  try {
+    const row = await env.DB.prepare("SELECT value FROM _meta WHERE key = 'version'").first<{ value: string }>();
+    return new Response(JSON.stringify({ version: row?.value || '0', env: 'production' }), {
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+    });
+  } catch {
+    // DB_TEST may not have _meta table — return safe fallback rather than 500
+    return new Response(JSON.stringify({ version: 'unknown', env: 'test' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+    });
+  }
 }
