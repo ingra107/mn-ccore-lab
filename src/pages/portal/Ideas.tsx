@@ -214,6 +214,7 @@ export default function Ideas() {
                 fontSize: 'var(--text-small)',
                 padding: '6px var(--sp-md)',
                 paddingRight: 'var(--sp-xl)',
+                minHeight: '44px',
                 color: filterStatus ? 'var(--teal)' : 'var(--slate)',
                 backgroundColor: filterStatus ? 'var(--teal-hover)' : 'transparent',
                 borderColor: filterStatus ? 'var(--teal)' : 'var(--border-subtle)',
@@ -461,6 +462,8 @@ function IdeaRowView({
               color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)',
               transition: 'transform var(--duration-normal) var(--ease-out), color var(--duration-normal)',
               padding: '2px var(--sp-sm)',
+              minHeight: '44px',
+              minWidth: '44px',
               fontVariantNumeric: 'tabular-nums',
             }}
             aria-label={`Vote (${idea.votes})`}
@@ -505,8 +508,11 @@ function IdeaRowView({
               color: 'var(--slate)',
               cursor: 'pointer',
               padding: '4px',
+              minHeight: '44px',
+              minWidth: '44px',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
             }}
             aria-label="Edit idea"
             title="Edit"
@@ -525,8 +531,11 @@ function IdeaRowView({
               color: 'var(--slate)',
               cursor: 'pointer',
               padding: '4px',
+              minHeight: '44px',
+              minWidth: '44px',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
             }}
             aria-label="Archive idea"
             title="Archive"
@@ -563,7 +572,8 @@ function IdeaRowView({
               border: 'none',
               cursor: 'pointer',
               color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)',
-              padding: 0,
+              padding: '0 var(--sp-sm)',
+              minHeight: '44px',
               transition: 'transform var(--duration-normal) var(--ease-out)',
             }}
           >

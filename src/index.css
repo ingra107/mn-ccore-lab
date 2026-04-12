@@ -1083,6 +1083,24 @@ a:hover {
   }
 }
 
+/* ── Touch target utility (WCAG 2.5.5 — 44×44px minimum) ── */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Global mobile touch-target floor — filter chips, selects, inline links */
+@media (max-width: 768px) {
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]),
+  a.inline-link,
+  select,
+  .filter-chip {
+    min-height: 44px;
+  }
+}
+
 /* Personal page — two-column grid, stacks on mobile (C-08) */
 .personal-grid {
   display: grid;
