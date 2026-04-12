@@ -254,6 +254,8 @@ export function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' | string }
 }
 
 // ── Main Component ─────────────────────────────────────────
+// Route: /pi-analytics (also /pi/analytics) — C-07 audit: route verified renders real content.
+// Widgets: commitment scorecard, response time, team engagement, mentee pub velocity, grant pipeline.
 
 export default function PIAnalytics() {
   const { user } = useAuth()
