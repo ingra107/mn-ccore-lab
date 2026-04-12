@@ -8,6 +8,9 @@ interface AvatarProps {
 }
 
 const sizeConfig = {
+  // GUARDRAIL EXCEPTION: text below 10px floor is grandfathered for avatar tier initials
+  // where the container is ≤24px. Initials are glyph-scale, not readable content.
+  // See CLAUDE.md "10px typography floor" guardrail. (C-15 escalation, 2026-04-12)
   // Micro sizes for inline/compact contexts — min-w-0 min-h-0 prevents flex inflation
   '2xs': {
     container: 'w-4 h-4 min-w-0 min-h-0',
