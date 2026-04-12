@@ -74,6 +74,7 @@ export interface Project {
   googleDocUrl?: string
   startDate?: string
   lastActivity?: string
+  updated_at?: string
   notes?: ProjectNote[]
   pi_context?: string
   strategic_context?: string

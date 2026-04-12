@@ -26,6 +26,15 @@ import { useScrollReveal } from '../../hooks/useScrollReveal'
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
+const STALLED_THRESHOLD_DAYS = 30
+
+function daysInStage(project: Project): number {
+  const dateStr = project.updated_at || project.lastActivity
+  if (!dateStr) return 0
+  const ms = Date.now() - new Date(dateStr).getTime()
+  return Math.floor(ms / (1000 * 60 * 60 * 24))
+}
+
 const CATEGORY_DOT: Record<string, string> = {
   clif: 'var(--maroon)',
   lab: 'var(--teal)',
@@ -50,8 +59,9 @@ export default function Manuscripts() {
   const [view, setView] = useState<'list' | 'pipeline'>('list')
   const [filterPI, setFilterPI] = useState<string>('')
   const [filterCategory, setFilterCategory] = useState<string>('')
+  const [filterStalled, setFilterStalled] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
-  const [sortKey, setSortKey] = useState<'stage' | 'title' | 'status' | 'pi' | 'category'>('stage')
+  const [sortKey, setSortKey] = useState<'stage' | 'title' | 'status' | 'pi' | 'category' | 'days_in_stage'>('stage')
   const [sortAsc, setSortAsc] = useState(true)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   useScrollReveal<HTMLDivElement>()
@@ -91,6 +101,7 @@ export default function Manuscripts() {
     let filtered = projects.filter((p) => p.status !== 'Published' || p.stage === 'Published')
     if (filterPI) filtered = filtered.filter((p) => p.pi === filterPI)
     if (filterCategory) filtered = filtered.filter((p) => p.category === filterCategory)
+    if (filterStalled) filtered = filtered.filter((p) => p.stage !== 'Published' && daysInStage(p) > STALLED_THRESHOLD_DAYS)
     return [...filtered].sort((a, b) => {
       let cmp = 0
       switch (sortKey) {
@@ -99,11 +110,12 @@ export default function Manuscripts() {
         case 'status': cmp = (a.status || '').localeCompare(b.status || ''); break
         case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
         case 'category': cmp = (a.category || '').localeCompare(b.category || ''); break
+        case 'days_in_stage': cmp = daysInStage(b) - daysInStage(a); break
       }
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [projects, filterPI, filterCategory, sortKey, sortAsc])
+  }, [projects, filterPI, filterCategory, filterStalled, sortKey, sortAsc])
 
   useListKeyboardNav({
     itemCount: view === 'list' ? manuscripts.length : 0,
@@ -113,7 +125,7 @@ export default function Manuscripts() {
   })
 
   // Reset focus when filters or view change
-  useEffect(() => { setFocusedIndex(-1) }, [filterPI, filterCategory, view])
+  useEffect(() => { setFocusedIndex(-1) }, [filterPI, filterCategory, filterStalled, view])
 
   const taskCounts = useMemo(() => {
     const map = new Map<string, number>()
@@ -138,6 +150,10 @@ export default function Manuscripts() {
 
   const activeCount = manuscripts.filter((p) => p.stage !== 'Published').length
   const writingCount = manuscripts.filter((p) => p.stage === 'Writing').length
+
+  const stalledCount = useMemo(() =>
+    projects.filter(p => p.stage !== 'Published' && daysInStage(p) > STALLED_THRESHOLD_DAYS).length
+  , [projects])
 
   // Dynamic page title
   useEffect(() => {
@@ -215,6 +231,47 @@ export default function Manuscripts() {
                     <option key={key} value={key}>{label}</option>
                   ))}
                 </select>
+                {/* Stalled filter pill */}
+                <button
+                  onClick={() => setFilterStalled(!filterStalled)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '4px 10px',
+                    borderRadius: 'var(--radius-full)',
+                    border: filterStalled ? '1px solid var(--orange)' : '1px solid var(--border-subtle)',
+                    background: filterStalled ? 'var(--orange-hover)' : 'transparent',
+                    color: filterStalled ? 'var(--orange)' : 'var(--slate)',
+                    fontSize: '12px',
+                    fontWeight: filterStalled ? 600 : 400,
+                    cursor: 'pointer',
+                    transition: 'all 0.12s ease-out',
+                    opacity: filterStalled ? 1 : 0.7,
+                  }}
+                  title={`Manuscripts stalled in stage for more than ${STALLED_THRESHOLD_DAYS} days`}
+                >
+                  Stalled
+                  {stalledCount > 0 && (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: '16px',
+                        height: '16px',
+                        borderRadius: 'var(--radius-full)',
+                        background: 'var(--orange)',
+                        color: 'white',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        padding: '0 4px',
+                      }}
+                    >
+                      {stalledCount}
+                    </span>
+                  )}
+                </button>
               </>
             }
             showDensity
@@ -240,7 +297,7 @@ export default function Manuscripts() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: 'minmax(200px, 1fr) 100px 100px 100px 72px',
+                gridTemplateColumns: 'minmax(200px, 3fr) 90px 100px 90px 60px 68px',
                 padding: 'var(--sp-sm) var(--sp-xl)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -251,6 +308,7 @@ export default function Manuscripts() {
                 { label: 'Stage', key: 'stage' as const },
                 { label: 'PI', key: 'pi' as const },
                 { label: 'Group', key: 'category' as const },
+                { label: 'Days', key: 'days_in_stage' as const },
               ]).map((col) => (
                 <ColumnHeader
                   key={col.key}
@@ -279,6 +337,8 @@ export default function Manuscripts() {
                   const tc = taskCounts.get(project.slug) || 0
                   const isFocused = focusedIndex === flatIndex
                   flatIndex++
+                  const days = daysInStage(project)
+                  const isStalled = project.stage !== 'Published' && days > STALLED_THRESHOLD_DAYS
 
                   return (
                     <div key={project.slug}>
@@ -305,11 +365,11 @@ export default function Manuscripts() {
                       )}
 
                       <Link to={`/projects/${project.slug}`} className={isFocused ? 'task-row-focused' : ''} style={{ textDecoration: 'none', display: 'block' }}>
-                        {/* Desktop: 5-column grid */}
+                        {/* Desktop: 6-column grid */}
                         <div
                           className="manuscript-list-row hidden sm:grid"
                           style={{
-                            gridTemplateColumns: 'minmax(200px, 1fr) 100px 100px 100px 72px',
+                            gridTemplateColumns: 'minmax(200px, 3fr) 90px 100px 90px 60px 68px',
                             padding: `var(--row-padding-y, 14px) 24px`,
                             borderBottom: '1px solid var(--border-subtle)',
                             alignItems: 'center',
@@ -333,7 +393,7 @@ export default function Manuscripts() {
                                 {tc}
                               </span>
                             )}
-                            {/* Stage progress dots */}
+                            {/* Stage progress dots: completed=gray filled, current=teal, pending=faint outlined */}
                             <div className="flex items-center gap-0.5 ml-1 flex-shrink-0">
                               {STAGES.map((s, i) => {
                                 const currentIdx = STAGES.indexOf((project.stage as typeof STAGES[number]) || 'Idea')
@@ -342,8 +402,15 @@ export default function Manuscripts() {
                                     key={s}
                                     style={{
                                       width: 5, height: 5, borderRadius: 'var(--radius-circle)',
-                                      background: i <= currentIdx ? 'var(--teal)' : 'var(--border-subtle)',
+                                      background: i < currentIdx
+                                        ? 'var(--ink-muted)'
+                                        : i === currentIdx
+                                          ? 'var(--teal)'
+                                          : 'transparent',
+                                      border: i > currentIdx ? '1px solid var(--border-subtle)' : 'none',
+                                      opacity: i > currentIdx ? 0.4 : 1,
                                       transition: 'background 200ms',
+                                      boxSizing: 'border-box',
                                     }}
                                     title={s}
                                   />
@@ -381,6 +448,20 @@ export default function Manuscripts() {
 
                           <span style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', opacity: 0.4 }}>
                             {catLabel}
+                          </span>
+
+                          {/* Days in stage */}
+                          <span
+                            style={{
+                              fontSize: 'var(--text-label)',
+                              fontWeight: isStalled ? 600 : 400,
+                              color: isStalled ? 'var(--orange)' : 'var(--slate)',
+                              opacity: isStalled ? 0.9 : 0.45,
+                              fontVariantNumeric: 'tabular-nums',
+                            }}
+                            title={isStalled ? `Stalled: ${days}d in this stage` : `${days}d in stage`}
+                          >
+                            {days > 0 ? `${days}d` : '—'}
                           </span>
                         </div>
 
@@ -460,12 +541,14 @@ export default function Manuscripts() {
                 acc[stage] = (acc[stage] || 0) + 1
                 return acc
               }, {})
+              const publishedCount = stageCounts['Published'] || 0
               const stats = [
-                { label: 'Count', value: manuscripts.length },
-                ...STAGES.filter(s => stageCounts[s]).map(s => ({
+                { label: 'Total', value: manuscripts.length },
+                ...STAGES.filter(s => s !== 'Published' && stageCounts[s]).map(s => ({
                   label: s,
                   value: stageCounts[s],
                 })),
+                ...(publishedCount > 0 ? [{ label: 'Published', value: publishedCount }] : []),
               ]
               return (
                 <div
@@ -480,11 +563,16 @@ export default function Manuscripts() {
                   {stats.map(s => (
                     <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
                       {s.label}{' '}
-                      <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)', opacity: 1 }}>
+                      <span style={{ fontWeight: 600, color: 'var(--slate)', opacity: 1 }}>
                         {s.value}
                       </span>
                     </span>
                   ))}
+                  {stalledCount > 0 && (
+                    <span style={{ fontSize: '11px', color: 'var(--orange)', opacity: 0.8, marginLeft: 'auto' }}>
+                      {stalledCount} stalled
+                    </span>
+                  )}
                 </div>
               )
             })()}

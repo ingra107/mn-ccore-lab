@@ -144,6 +144,7 @@ function rowToProject(row: ProjectRow): Project {
     slug: row.slug || '',
     stage: row.stage as Project['stage'],
     strategic_context: row.strategic_context || undefined,
+    updated_at: row.updated_at || undefined,
   }
 }
 
