@@ -244,8 +244,8 @@
   /* Row separator — structure felt not seen */
   --row-separator: rgba(0, 0, 0, 0.04);
 
-  /* Personal page two-column grid */
-  --personal-grid-cols: 1fr 1fr;
+  /* Personal page two-column grid -- 3:2 ratio for Phase 31.5 command center */
+  --personal-grid-cols: 3fr 2fr;
 }
 
 .dark {
@@ -1077,8 +1077,9 @@ a:hover {
 /* Personal page — two-column grid, stacks on mobile (C-08) */
 .personal-grid {
   display: grid;
-  grid-template-columns: var(--personal-grid-cols, 1fr 1fr);
+  grid-template-columns: var(--personal-grid-cols, 3fr 2fr);
   gap: var(--sp-lg);
+  align-items: start;
 }
 
 @media (max-width: 768px) {
