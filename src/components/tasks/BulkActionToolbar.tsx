@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, Circle, UserCheck, Flag, Trash2, X, AlertTriangle, AlarmClock, ListChecks } from 'lucide-react'
 import { getAllMembers, directors } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
@@ -61,32 +60,29 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
   })
 
   return (
-    <AnimatePresence>
-      {count >= 2 && (
-        <motion.div
-          initial={{ y: 80, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 80, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            maxWidth: 'calc(100vw - 2rem)',
-            zIndex: 'var(--z-dropdown)',
-            background: 'var(--ink)',
-            borderRadius: 'var(--radius-xl)',
-            border: '1px solid var(--gold)',
-            padding: 'var(--sp-sm) var(--sp-lg)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--sp-md)',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            boxShadow: 'var(--shadow-elevated)',
-          }}
-        >
+    <div
+      style={{
+        position: 'fixed',
+        bottom: 24,
+        left: '50%',
+        transform: count >= 1 ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(10px)',
+        maxWidth: 'calc(100vw - 2rem)',
+        zIndex: 'var(--z-dropdown)',
+        background: 'var(--ink)',
+        borderRadius: 'var(--radius-xl)',
+        border: '1px solid var(--gold)',
+        padding: 'var(--sp-sm) var(--sp-lg)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'var(--sp-md)',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        boxShadow: 'var(--shadow-elevated)',
+        opacity: count >= 1 ? 1 : 0,
+        pointerEvents: count >= 1 ? 'auto' : 'none',
+        transition: 'opacity 150ms var(--ease-out), transform 150ms var(--ease-out)',
+      }}
+    >
           {/* Count + clear */}
           <span
             style={{
@@ -400,8 +396,6 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
             {deleteConfirm ? <AlertTriangle size={14} /> : <Trash2 size={14} />}
             {deleteConfirm ? 'Confirm?' : 'Delete'}
           </button>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    </div>
   )
 }

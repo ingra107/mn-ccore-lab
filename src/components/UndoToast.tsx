@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect, createContext, useContext } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Undo2, X, Check } from 'lucide-react'
 
 interface UndoToast {
@@ -30,6 +29,7 @@ export function useUndoToast() {
 
 export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set())
   const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   // Clear all timeouts on unmount
@@ -75,7 +75,11 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
 
   const dismiss = useCallback((id: string) => {
     clearTimer(id)
-    setToasts((prev) => prev.filter((t) => t.id !== id))
+    setDismissingIds((prev) => { const s = new Set(prev); s.add(id); return s })
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+      setDismissingIds((prev) => { const s = new Set(prev); s.delete(id); return s })
+    }, 160)
   }, [clearTimer])
 
   const handleUndo = useCallback((toast: UndoToast) => {
@@ -88,6 +92,16 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
       {children}
 
       {/* Toast container — fixed bottom-center */}
+      <style>{`
+        @keyframes toast-in {
+          from { opacity: 0; transform: translateY(16px) scale(0.95); }
+          to   { opacity: 1; transform: translateY(0)    scale(1); }
+        }
+        @keyframes toast-out {
+          from { opacity: 1; transform: translateY(0)   scale(1); }
+          to   { opacity: 0; transform: translateY(8px) scale(0.95); }
+        }
+      `}</style>
       <div
         data-testid="toast-container"
         role="status"
@@ -106,73 +120,70 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
           pointerEvents: 'none',
         }}
       >
-        <AnimatePresence>
-          {toasts.map((toast) => (
-            <motion.div
-              key={toast.id}
-              data-testid={toast.type === 'undo' ? 'undo-toast' : 'success-toast'}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 15, mass: 0.6 }}
-              style={{
-                pointerEvents: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: 'var(--sp-md) var(--sp-lg)',
-                borderRadius: 'var(--radius-lg)',
-                background: 'var(--ink)',
-                color: 'var(--cream)',
-                fontSize: '13px',
-                fontWeight: toast.type === 'success' ? 400 : 500,
-                boxShadow: 'var(--shadow-card-hover)',
-                minWidth: '240px',
-                borderLeft: toast.type === 'success' ? '3px solid var(--teal)' : 'none',
-              }}
-            >
-              {toast.type === 'success' && (
-                <Check size={14} style={{ color: 'var(--teal)', flexShrink: 0 }} />
-              )}
-              <span style={{ flex: 1 }}>{toast.message}</span>
-              {toast.type === 'undo' && (
-                <button
-                  data-testid="undo-button"
-                  onClick={() => handleUndo(toast)}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: 'var(--sp-xs) var(--sp-sm)',
-                    borderRadius: 'var(--radius-md)',
-                    border: 'none',
-                    background: 'rgba(255,255,255,0.15)',
-                    color: 'var(--gold)',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Undo2 size={12} />
-                  Undo
-                </button>
-              )}
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            data-testid={toast.type === 'undo' ? 'undo-toast' : 'success-toast'}
+            style={{
+              animation: dismissingIds.has(toast.id)
+                ? 'toast-out 150ms var(--ease-out) forwards'
+                : 'toast-in 200ms var(--ease-out) both',
+              pointerEvents: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: 'var(--sp-md) var(--sp-lg)',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--ink)',
+              color: 'var(--cream)',
+              fontSize: '13px',
+              fontWeight: toast.type === 'success' ? 400 : 500,
+              boxShadow: 'var(--shadow-card-hover)',
+              minWidth: '240px',
+              borderLeft: toast.type === 'success' ? '3px solid var(--teal)' : 'none',
+            }}
+          >
+            {toast.type === 'success' && (
+              <Check size={14} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+            )}
+            <span style={{ flex: 1 }}>{toast.message}</span>
+            {toast.type === 'undo' && (
               <button
-                onClick={() => dismiss(toast.id)}
+                data-testid="undo-button"
+                onClick={() => handleUndo(toast)}
                 style={{
-                  background: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: 'var(--sp-xs) var(--sp-sm)',
+                  borderRadius: 'var(--radius-md)',
                   border: 'none',
-                  color: 'rgba(255,255,255,0.4)',
+                  background: 'rgba(255,255,255,0.15)',
+                  color: 'var(--gold)',
+                  fontSize: '12px',
+                  fontWeight: 600,
                   cursor: 'pointer',
-                  padding: '2px',
                 }}
               >
-                <X size={14} />
+                <Undo2 size={12} />
+                Undo
               </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+            )}
+            <button
+              onClick={() => dismiss(toast.id)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'rgba(255,255,255,0.4)',
+                cursor: 'pointer',
+                padding: '2px',
+              }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ))}
       </div>
-    </ToastContext.Provider>
+      </ToastContext.Provider>
   )
 }

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { CheckCircle2, ChevronDown, ChevronRight, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check, GripVertical, Pin, RotateCcw } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -462,15 +462,13 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                     onCellTab={handleCellTab}
                     onCellFocus={setFocusedCell}
                   />
-                  <AnimatePresence>
-                    {isExpanded && (
+                                    {isExpanded && (
                       <InlineSubtaskRow
                         key={`sub-${task.id}`}
                         taskId={task.id}
                         onHeightChange={() => virtualizer.measure()}
                       />
                     )}
-                  </AnimatePresence>
                 </div>
               )
             })}
@@ -1456,13 +1454,10 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
     onHeightChange?.()
   }
 
+  const [subtaskListRef] = useAutoAnimate<HTMLDivElement>()
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.15, ease: 'easeOut' }}
-    >
+    <div>
       <div
         style={{
           padding: '6px 16px 10px 48px',
@@ -1481,13 +1476,15 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={subtasks.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-            {subtasks.map((s) => (
+            <div ref={subtaskListRef}>
+              {subtasks.map((s) => (
               <InlineSortableSubtask
                 key={s.id}
                 subtask={s}
                 onToggle={(id) => toggleSubtask.mutate(id)}
               />
-            ))}
+              ))}
+            </div>
           </SortableContext>
         </DndContext>
 
@@ -1506,7 +1503,7 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
           />
         </form>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
