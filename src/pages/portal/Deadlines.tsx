@@ -296,8 +296,8 @@ export default function Deadlines() {
             }}
           >
             <AlertTriangle size={16} style={{ color: isOver ? 'var(--maroon)' : 'var(--gold)', flexShrink: 0 }} />
-            <div className="min-w-0 flex-1">
-              <span className="text-sm truncate" style={{ color: 'var(--ink)' }}>{nextUrgent.title}</span>
+            <div className="min-w-0 flex-1 truncate text-sm" style={{ color: 'var(--ink)' }}>
+              {nextUrgent.title}
             </div>
             <span
               className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
