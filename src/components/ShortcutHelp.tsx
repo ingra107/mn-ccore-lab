@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { spring } from '../lib/animations'
 
@@ -85,35 +86,92 @@ const shortcuts = [
 ]
 
 export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
+  // Save previously focused element; focus close button on open; restore on close
+  useEffect(() => {
+    if (open) {
+      previousFocusRef.current = document.activeElement as HTMLElement
+      const id = setTimeout(() => closeButtonRef.current?.focus(), 50)
+      return () => clearTimeout(id)
+    } else {
+      previousFocusRef.current?.focus()
+    }
+  }, [open])
+
+  // Escape key + focus trap
+  useEffect(() => {
+    if (!open) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        onClose()
+        return
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusableSelectors =
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(focusableSelectors)
+        ).filter((el) => !el.hasAttribute('disabled'))
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault()
+            last.focus()
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault()
+            first.focus()
+          }
+        }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [open, onClose])
+
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(15, 25, 35, 0.5)', zIndex: 'var(--z-modal-backdrop)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.1 }}
-          style={{ backgroundColor: 'rgba(15, 25, 35, 0.5)' }}
           onClick={onClose}
         >
           <motion.div
+            ref={dialogRef}
             role="dialog"
-            aria-label="Keyboard shortcuts"
             aria-modal="true"
+            aria-labelledby="shortcut-help-title"
             className="w-full max-w-md rounded-xl shadow-2xl border overflow-hidden mx-4"
             initial={{ opacity: 0, scale: 0.95, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: -4 }}
             transition={spring.snappy}
-            style={{ backgroundColor: 'var(--card-bg, #fff)', borderColor: 'var(--border-subtle)' }}
+            style={{ backgroundColor: 'var(--card-bg, #fff)', borderColor: 'var(--border-subtle)', zIndex: 'var(--z-modal)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-              <h3 className="text-sm font-normal" style={{ color: 'var(--ink)' }}>
+              <h3 id="shortcut-help-title" className="text-sm font-normal" style={{ color: 'var(--ink)' }}>
                 Keyboard Shortcuts
               </h3>
-              <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
+              <button
+                ref={closeButtonRef}
+                onClick={onClose}
+                aria-label="Close"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}
+              >
                 <X size={16} />
               </button>
             </div>

@@ -102,7 +102,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
           fontSize,
           fontWeight: 500,
           color: current?.color || 'var(--slate)',
-          transition: 'all 0.12s ease',
+          transition: 'background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--teal-hover)'
@@ -191,7 +191,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
                 fontWeight: opt.value === value ? 600 : 400,
                 color: opt.color || 'var(--ink)',
                 textAlign: 'left',
-                transition: 'background 0.1s',
+                transition: 'background-color var(--duration-fast) var(--ease-out)',
               }}
             >
               {opt.label}

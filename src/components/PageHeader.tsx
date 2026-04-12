@@ -1,3 +1,5 @@
+import React from 'react'
+
 interface PageHeaderProps {
   icon?: React.ReactNode
   title: string
@@ -27,7 +29,7 @@ export default function PageHeader({
           flexWrap: 'wrap',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexWrap: 'wrap' }}>
           {icon && (
             <span
               style={{
@@ -41,53 +43,57 @@ export default function PageHeader({
               {icon}
             </span>
           )}
-          <h1
-            style={{
-              fontSize: 20,
-              fontWeight: 500,
-              color: 'var(--ink)',
-              margin: 0,
-              lineHeight: 1.3,
-            }}
-          >
-            {title}
-          </h1>
-          {count !== undefined && (
-            <span
-              aria-live="polite"
-              aria-atomic="true"
+          {/* Title + inline badges — wraps naturally at <420px so subtitle drops below */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
+            <h1
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 11,
-                fontWeight: 600,
-                color: 'var(--slate)',
-                opacity: 0.6,
-                backgroundColor: 'var(--border-subtle)',
-                borderRadius: 'var(--radius-full)',
-                padding: '2px 8px',
-                lineHeight: 1.4,
-                flexShrink: 0,
+                fontSize: 20,
+                fontWeight: 500,
+                color: 'var(--ink)',
+                margin: 0,
+                lineHeight: 1.3,
               }}
             >
-              {count}
-            </span>
-          )}
-          {subtitle && (
-            <span
-              aria-live="polite"
-              style={{
-                fontSize: 13,
-                fontWeight: 400,
-                color: 'var(--slate)',
-                opacity: 0.7,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {subtitle}
-            </span>
-          )}
+              {title}
+            </h1>
+            {count !== undefined && (
+              <span
+                aria-live="polite"
+                aria-atomic="true"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: 'var(--slate)',
+                  opacity: 0.6,
+                  backgroundColor: 'var(--border-subtle)',
+                  borderRadius: 'var(--radius-full)',
+                  padding: '2px 8px',
+                  lineHeight: 1.4,
+                  flexShrink: 0,
+                }}
+              >
+                {count}
+              </span>
+            )}
+            {subtitle && (
+              <span
+                aria-live="polite"
+                style={{
+                  fontSize: 13,
+                  fontWeight: 400,
+                  color: 'var(--slate)',
+                  opacity: 0.7,
+                  flexShrink: 1,
+                  minWidth: 0,
+                }}
+              >
+                {subtitle}
+              </span>
+            )}
+          </div>
         </div>
 
         {actions && (
