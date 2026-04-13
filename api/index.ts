@@ -761,7 +761,7 @@ export default {
           const id = crypto.randomUUID().slice(0, 8);
           await env.DB.prepare(
             'INSERT INTO task_files (id, task_id, filename, url, file_type, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)'
-          ).bind(id, taskFileAddMatch[1], body.filename, body.url, body.file_type || 'link', user).run();
+          ).bind(id, taskFileAddMatch[1], body.filename, body.url, body.file_type || 'link', user.email).run();
           return json({ data: { id, task_id: taskFileAddMatch[1], filename: body.filename, url: body.url } });
         }
 
