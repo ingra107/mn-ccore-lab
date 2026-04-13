@@ -269,12 +269,59 @@ export default function PortalLayout() {
       {/* Mobile bottom tab bar (md:hidden internally) */}
       {!focusMode && <MobileTabBar />}
 
-      {/* G-key pending indicator */}
+      {/* Chord leader indicator — shows when G is armed */}
       {gPending && (
-        <div className="fixed left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-full shadow-lg border" style={{ bottom: 'calc(24px + 12px)', backgroundColor: 'var(--cream)', borderColor: 'var(--teal)' }}>
-          <span className="text-xs" style={{ color: 'var(--teal)' }}>
-            G → press a key to navigate...
-          </span>
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label="Chord leader armed — press a navigation key"
+          style={{
+            position: 'fixed',
+            bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+            right: '24px',
+            zIndex: 'var(--z-toast)',
+            padding: '6px 12px',
+            backgroundColor: 'var(--surface-2)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            fontSize: 'var(--text-small)',
+            fontWeight: 'var(--weight-ui)',
+            color: 'var(--ink-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: 'var(--shadow-menu)',
+            animation: 'chord-pulse 1s ease-in-out infinite',
+            userSelect: 'none',
+            pointerEvents: 'none',
+          }}
+        >
+          <kbd style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1px 5px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--border-default)',
+            backgroundColor: 'var(--surface-3)',
+            fontSize: 'var(--text-label)',
+            fontFamily: 'var(--font-sans)',
+            lineHeight: 1.4,
+            color: 'var(--ink-primary)',
+            fontWeight: 'var(--weight-ui)',
+          }}>g</kbd>
+          <span style={{ color: 'var(--ink-label)' }}>…</span>
+          <span
+            aria-hidden="true"
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--teal)',
+              animation: 'chord-dot-pulse 1s ease-in-out infinite',
+              flexShrink: 0,
+            }}
+          />
         </div>
       )}
     </div>
