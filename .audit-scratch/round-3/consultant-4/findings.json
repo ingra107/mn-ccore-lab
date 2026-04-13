@@ -1,0 +1,177 @@
+{
+  "pass": 28,
+  "fail": 1,
+  "warn": 3,
+  "skip": 3,
+  "total": 35,
+  "results": [
+    {
+      "name": "Page transition wrapper mounted",
+      "status": "PASS"
+    },
+    {
+      "name": "Page nav completes <3s (flicker/slowness sniff)",
+      "status": "PASS",
+      "detail": "2923ms"
+    },
+    {
+      "name": "Body opacity stays 1 during transition",
+      "status": "PASS",
+      "detail": "opacity=1"
+    },
+    {
+      "name": "g→d navigates to /dashboard",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/dashboard"
+    },
+    {
+      "name": "g→t navigates to /my-tasks",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/my-tasks"
+    },
+    {
+      "name": "g→p navigates to /projects",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/projects"
+    },
+    {
+      "name": "g→m navigates to /meetings",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/meetings"
+    },
+    {
+      "name": "g→e navigates to /deadlines",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/deadlines"
+    },
+    {
+      "name": "g→i navigates to /ideas",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/ideas"
+    },
+    {
+      "name": "g→s navigates to /settings",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/settings"
+    },
+    {
+      "name": "g→c navigates to /calendar",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/calendar"
+    },
+    {
+      "name": "g→h navigates to /",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/"
+    },
+    {
+      "name": "g→r navigates to /digest",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/digest"
+    },
+    {
+      "name": "Escape cancels pending g leader",
+      "status": "PASS",
+      "detail": "/projects → /projects"
+    },
+    {
+      "name": "g→unknown key is no-op",
+      "status": "PASS"
+    },
+    {
+      "name": "After g+unknown, state is cleared (lone d does nothing)",
+      "status": "PASS"
+    },
+    {
+      "name": "g chord times out after 1s",
+      "status": "FAIL",
+      "detail": "https://mn-ccore-lab.pages.dev/dashboard"
+    },
+    {
+      "name": "Chord suppressed while typing in input",
+      "status": "SKIP",
+      "detail": "no input found"
+    },
+    {
+      "name": "J/K keyboard nav focus indicator present",
+      "status": "WARN",
+      "detail": "before=false after=false"
+    },
+    {
+      "name": "C key triggers task creation flow",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/my-tasks?create=true"
+    },
+    {
+      "name": "Escape closes create modal",
+      "status": "SKIP",
+      "detail": "modal did not appear"
+    },
+    {
+      "name": "N key on /ideas opens create modal",
+      "status": "PASS",
+      "detail": "dialogs 0→1"
+    },
+    {
+      "name": "InlineCellSelect opens with listbox role",
+      "status": "SKIP",
+      "detail": "no status cell found"
+    },
+    {
+      "name": "BulkActionToolbar hidden when no selection",
+      "status": "PASS",
+      "detail": "count=0"
+    },
+    {
+      "name": "TaskDetailPanel opens on click",
+      "status": "WARN"
+    },
+    {
+      "name": "waiting_external option present in status dropdown",
+      "status": "WARN"
+    },
+    {
+      "name": "MobileTabBar visible on mobile",
+      "status": "PASS"
+    },
+    {
+      "name": "MobileTabBar has 4 tabs",
+      "status": "PASS",
+      "detail": "count=4"
+    },
+    {
+      "name": "MobileTabBar respects safe-area-inset-bottom",
+      "status": "PASS",
+      "detail": "z-index: var(--z-sidebar); background-color: var(--surface-1); border-color: var"
+    },
+    {
+      "name": "MobileTabBar tab 1 (/dashboard) navigates",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/dashboard"
+    },
+    {
+      "name": "MobileTabBar tab 2 (/my-tasks) navigates",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/my-tasks"
+    },
+    {
+      "name": "MobileTabBar tab 3 (/projects) navigates",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/projects"
+    },
+    {
+      "name": "MobileTabBar tab 4 (/search) navigates",
+      "status": "PASS",
+      "detail": "https://mn-ccore-lab.pages.dev/search"
+    },
+    {
+      "name": "MobileTabBar tabs ≥44px tall",
+      "status": "PASS",
+      "detail": "[{\"w\":98,\"h\":56},{\"w\":98,\"h\":56},{\"w\":98,\"h\":56},{\"w\":98,\"h\":56}]"
+    },
+    {
+      "name": "Desktop sidebar hidden on mobile",
+      "status": "PASS"
+    }
+  ]
+}

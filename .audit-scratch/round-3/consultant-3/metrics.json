@@ -1,0 +1,1235 @@
+{
+  "generated": "2026-04-13T01:15:36.155Z",
+  "pages": {
+    "tasks": {
+      "modes": {
+        "compact": {
+          "expected": 36,
+          "count": 25,
+          "heights": [
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36
+          ],
+          "uniform": true,
+          "onTarget": true
+        },
+        "default": {
+          "expected": 44,
+          "count": 25,
+          "heights": [
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44
+          ],
+          "uniform": true,
+          "onTarget": true
+        },
+        "relaxed": {
+          "expected": 52,
+          "count": 25,
+          "heights": [
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52
+          ],
+          "uniform": true,
+          "onTarget": true
+        }
+      },
+      "ariaSort": [
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "columnheader"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "columnheader"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "columnheader"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "columnheader"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "button"
+        }
+      ]
+    },
+    "my-tasks": {
+      "modes": {
+        "compact": {
+          "expected": 36,
+          "count": 25,
+          "heights": [
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36
+          ],
+          "uniform": true,
+          "onTarget": true
+        },
+        "default": {
+          "expected": 44,
+          "count": 25,
+          "heights": [
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44
+          ],
+          "uniform": true,
+          "onTarget": true
+        },
+        "relaxed": {
+          "expected": 52,
+          "count": 25,
+          "heights": [
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52
+          ],
+          "uniform": true,
+          "onTarget": true
+        }
+      },
+      "ariaSort": [
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "columnheader"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "columnheader"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "columnheader"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "ASSIGNEE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PROJECT",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "columnheader"
+        },
+        {
+          "label": "DUE DATE",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "PRIORITY",
+          "ariaSort": "none",
+          "role": "button"
+        }
+      ]
+    },
+    "projects": {
+      "modes": {
+        "compact": {
+          "expected": 36,
+          "count": 128,
+          "heights": [
+            36,
+            0,
+            36,
+            0,
+            36,
+            0,
+            36,
+            0,
+            36,
+            0,
+            36,
+            0,
+            36,
+            0,
+            36
+          ],
+          "uniform": false,
+          "onTarget": false
+        },
+        "default": {
+          "expected": 44,
+          "count": 128,
+          "heights": [
+            44,
+            0,
+            44,
+            0,
+            44,
+            0,
+            44,
+            0,
+            44,
+            0,
+            44,
+            0,
+            44,
+            0,
+            44
+          ],
+          "uniform": false,
+          "onTarget": false
+        },
+        "relaxed": {
+          "expected": 52,
+          "count": 128,
+          "heights": [
+            52,
+            0,
+            52,
+            0,
+            52,
+            0,
+            52,
+            0,
+            52,
+            0,
+            52,
+            0,
+            52,
+            0,
+            52
+          ],
+          "uniform": false,
+          "onTarget": false
+        }
+      },
+      "ariaSort": [
+        {
+          "label": "Title",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Status",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Stage",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "PI",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Group",
+          "ariaSort": "none",
+          "role": "button"
+        }
+      ]
+    },
+    "manuscripts": {
+      "modes": {
+        "compact": {
+          "expected": 36,
+          "count": 128,
+          "heights": [
+            36,
+            0,
+            36,
+            0,
+            36,
+            0,
+            36,
+            0,
+            36,
+            0,
+            36,
+            0,
+            36,
+            0,
+            36
+          ],
+          "uniform": false,
+          "onTarget": false
+        },
+        "default": {
+          "expected": 44,
+          "count": 128,
+          "heights": [
+            44,
+            0,
+            44,
+            0,
+            44,
+            0,
+            44,
+            0,
+            44,
+            0,
+            44,
+            0,
+            44,
+            0,
+            44
+          ],
+          "uniform": false,
+          "onTarget": false
+        },
+        "relaxed": {
+          "expected": 52,
+          "count": 128,
+          "heights": [
+            52,
+            0,
+            52,
+            0,
+            52,
+            0,
+            52,
+            0,
+            52,
+            0,
+            52,
+            0,
+            52,
+            0,
+            52
+          ],
+          "uniform": false,
+          "onTarget": false
+        }
+      },
+      "ariaSort": [
+        {
+          "label": "Title",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Status",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Stage",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "PI",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Group",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Days",
+          "ariaSort": "none",
+          "role": "button"
+        }
+      ]
+    },
+    "deadlines": {
+      "modes": {
+        "compact": {
+          "expected": 36,
+          "count": 25,
+          "heights": [
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36
+          ],
+          "uniform": true,
+          "onTarget": true
+        },
+        "default": {
+          "expected": 44,
+          "count": 25,
+          "heights": [
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44
+          ],
+          "uniform": true,
+          "onTarget": true
+        },
+        "relaxed": {
+          "expected": 52,
+          "count": 25,
+          "heights": [
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52
+          ],
+          "uniform": true,
+          "onTarget": true
+        }
+      },
+      "ariaSort": [
+        {
+          "label": "Title",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Project",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Due Date",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "Assignee",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Status",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Type",
+          "ariaSort": "none",
+          "role": "button"
+        }
+      ]
+    },
+    "ideas": {
+      "modes": {
+        "compact": {
+          "expected": 36,
+          "count": 11,
+          "heights": [
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36
+          ],
+          "uniform": true,
+          "onTarget": true
+        },
+        "default": {
+          "expected": 44,
+          "count": 11,
+          "heights": [
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44
+          ],
+          "uniform": true,
+          "onTarget": true
+        },
+        "relaxed": {
+          "expected": 52,
+          "count": 11,
+          "heights": [
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52
+          ],
+          "uniform": true,
+          "onTarget": true
+        }
+      },
+      "ariaSort": [
+        {
+          "label": "Title",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "Title",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Submitter",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "Submitter",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Status",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "Status",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Votes",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "Votes",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Age",
+          "ariaSort": "descending",
+          "role": "columnheader"
+        },
+        {
+          "label": "Age",
+          "ariaSort": "descending",
+          "role": "button"
+        },
+        {
+          "label": "",
+          "ariaSort": "MISSING",
+          "role": "columnheader"
+        }
+      ]
+    },
+    "decisions": {
+      "modes": {
+        "compact": {
+          "expected": 36,
+          "count": 10,
+          "heights": [
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36
+          ],
+          "uniform": true,
+          "onTarget": true
+        },
+        "default": {
+          "expected": 44,
+          "count": 10,
+          "heights": [
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44,
+            44
+          ],
+          "uniform": true,
+          "onTarget": true
+        },
+        "relaxed": {
+          "expected": 52,
+          "count": 10,
+          "heights": [
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52,
+            52
+          ],
+          "uniform": true,
+          "onTarget": true
+        }
+      },
+      "ariaSort": [
+        {
+          "label": "Title",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "Title",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Outcome",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "Outcome",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Tags",
+          "ariaSort": "MISSING",
+          "role": "columnheader"
+        },
+        {
+          "label": "Decided By",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "Decided By",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Project",
+          "ariaSort": "none",
+          "role": "columnheader"
+        },
+        {
+          "label": "Project",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "Date",
+          "ariaSort": "descending",
+          "role": "columnheader"
+        },
+        {
+          "label": "Date",
+          "ariaSort": "descending",
+          "role": "button"
+        }
+      ]
+    },
+    "grants": {
+      "modes": {
+        "compact": {
+          "expected": 36,
+          "count": 0,
+          "heights": [],
+          "uniform": null,
+          "onTarget": null
+        },
+        "default": {
+          "expected": 44,
+          "count": 0,
+          "heights": [],
+          "uniform": null,
+          "onTarget": null
+        },
+        "relaxed": {
+          "expected": 52,
+          "count": 0,
+          "heights": [],
+          "uniform": null,
+          "onTarget": null
+        }
+      },
+      "ariaSort": [
+        {
+          "label": "TITLE",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PI",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "STATUS",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "MECHANISM",
+          "ariaSort": "none",
+          "role": "button"
+        },
+        {
+          "label": "PERIOD",
+          "ariaSort": "ascending",
+          "role": "button"
+        },
+        {
+          "label": "AGENCY",
+          "ariaSort": "none",
+          "role": "button"
+        }
+      ]
+    }
+  }
+}

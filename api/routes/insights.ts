@@ -49,8 +49,10 @@ function findMatchingKeywords(text: string): string[] {
 // GET /api/insights/connections — full cross-project analysis
 export async function handleInsightConnections(env: Env): Promise<Response> {
   // Fetch all active projects with their details
+  // Note: team_members column does not exist in projects table; team membership
+  // is inferred from `pi` field and from shared task assignees.
   const projects = await env.DB.prepare(
-    `SELECT slug, title, description, category, pi, stage, team_members
+    `SELECT slug, title, description, category, pi, stage
      FROM projects
      WHERE status != 'Archived'
      ORDER BY title ASC`
@@ -61,7 +63,6 @@ export async function handleInsightConnections(env: Env): Promise<Response> {
     category: string | null
     pi: string | null
     stage: string | null
-    team_members: string | null
   }>()
 
   const rows = projects.results || []
@@ -75,19 +76,10 @@ export async function handleInsightConnections(env: Env): Promise<Response> {
     edges.push({ from, to, fromTitle, toTitle, reason, strength })
   }
 
-  // 1. Shared team members
+  // 1. Shared team members — fall back to PI only since projects table has no team_members column
   const teamMap = new Map<string, { slug: string; title: string; members: string[] }>()
   for (const p of rows) {
     const members: string[] = []
-    if (p.team_members) {
-      try {
-        const parsed = JSON.parse(p.team_members)
-        if (Array.isArray(parsed)) members.push(...parsed)
-      } catch {
-        // comma-separated fallback
-        members.push(...p.team_members.split(',').map((s: string) => s.trim()).filter(Boolean))
-      }
-    }
     if (p.pi) members.push(p.pi)
     teamMap.set(p.slug, { slug: p.slug, title: p.title, members: [...new Set(members)] })
   }

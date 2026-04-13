@@ -1,0 +1,274 @@
+[test-seed] Seed data already present — skipping.
+
+Running 8 tests using 1 worker
+
+[1A[2K[1/8] [chromium] › tests\inspection.spec.ts:229:5 › PAGE — Portal pages render without errors › PAGE: My Tasks (/my-tasks) renders
+[1A[2K  1) [chromium] › tests\inspection.spec.ts:229:5 › PAGE — Portal pages render without errors › PAGE: My Tasks (/my-tasks) renders 
+
+    Error: /my-tasks missing: "My Tasks"
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+      244 |           expect(anyFound.some(Boolean), `${route} missing: ${text}`).toBe(true)
+      245 |         } else {
+    > 246 |           expect(found, `${route} missing: "${text}"`).toBe(true)
+          |                                                        ^
+      247 |         }
+      248 |       }
+      249 |
+        at C:\Users\ingra\mn-ccore-lab\tests\inspection.spec.ts:246:56
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\inspection-PAGE-—-Portal-p-a8b5b-E-My-Tasks-my-tasks-renders-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\inspection-PAGE-—-Portal-p-a8b5b-E-My-Tasks-my-tasks-renders-chromium\error-context.md
+
+    Error Context: test-results\inspection-PAGE-—-Portal-p-a8b5b-E-My-Tasks-my-tasks-renders-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\inspection-PAGE-—-Portal-p-a8b5b-E-My-Tasks-my-tasks-renders-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\inspection-PAGE-—-Portal-p-a8b5b-E-My-Tasks-my-tasks-renders-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[2/8] [chromium] › tests\inspection.spec.ts:229:5 › PAGE — Portal pages render without errors › PAGE: All Tasks (/tasks) renders
+[1A[2K  2) [chromium] › tests\inspection.spec.ts:229:5 › PAGE — Portal pages render without errors › PAGE: All Tasks (/tasks) renders 
+
+    Error: /tasks missing: "All Tasks"
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+      244 |           expect(anyFound.some(Boolean), `${route} missing: ${text}`).toBe(true)
+      245 |         } else {
+    > 246 |           expect(found, `${route} missing: "${text}"`).toBe(true)
+          |                                                        ^
+      247 |         }
+      248 |       }
+      249 |
+        at C:\Users\ingra\mn-ccore-lab\tests\inspection.spec.ts:246:56
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\inspection-PAGE-—-Portal-p-4db2e-AGE-All-Tasks-tasks-renders-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\inspection-PAGE-—-Portal-p-4db2e-AGE-All-Tasks-tasks-renders-chromium\error-context.md
+
+    Error Context: test-results\inspection-PAGE-—-Portal-p-4db2e-AGE-All-Tasks-tasks-renders-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\inspection-PAGE-—-Portal-p-4db2e-AGE-All-Tasks-tasks-renders-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\inspection-PAGE-—-Portal-p-4db2e-AGE-All-Tasks-tasks-renders-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[3/8] [chromium] › tests\inspection.spec.ts:285:3 › PAGE — Detail pages render with real data › PAGE: Meeting Detail renders without crash
+[1A[2K  3) [chromium] › tests\inspection.spec.ts:285:3 › PAGE — Detail pages render with real data › PAGE: Meeting Detail renders without crash 
+
+    Error: MeetingDetail shows error boundary
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m0[39m
+    Received: [31m1[39m
+
+      290 |     expect(errors, 'MeetingDetail crashed').toEqual([])
+      291 |     const crashed = await page.locator('text=Something went wrong').count()
+    > 292 |     expect(crashed, 'MeetingDetail shows error boundary').toBe(0)
+          |                                                           ^
+      293 |     await page.screenshot({ path: 'review/page-meeting-detail.png' })
+      294 |   })
+      295 |
+        at C:\Users\ingra\mn-ccore-lab\tests\inspection.spec.ts:292:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\inspection-PAGE-—-Detail-p-aae48-etail-renders-without-crash-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\inspection-PAGE-—-Detail-p-aae48-etail-renders-without-crash-chromium\error-context.md
+
+    Error Context: test-results\inspection-PAGE-—-Detail-p-aae48-etail-renders-without-crash-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\inspection-PAGE-—-Detail-p-aae48-etail-renders-without-crash-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\inspection-PAGE-—-Detail-p-aae48-etail-renders-without-crash-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[4/8] [chromium] › tests\inspection.spec.ts:564:3 › UX — Copy/Export buttons › UX: Copy Bibliography button exists on Publications
+[1A[2K  4) [chromium] › tests\inspection.spec.ts:564:3 › UX — Copy/Export buttons › UX: Copy Bibliography button exists on Publications 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('button:has-text("Copy bibliography")')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('button:has-text("Copy bibliography")')[22m
+
+
+      565 |     await loadPage(page, '/publications')
+      566 |     const btn = page.locator('button:has-text("Copy bibliography")')
+    > 567 |     await expect(btn).toBeVisible()
+          |                       ^
+      568 |   })
+      569 |
+      570 |   test('UX: Export .ics button exists on Deadlines', async ({ page }) => {
+        at C:\Users\ingra\mn-ccore-lab\tests\inspection.spec.ts:567:23
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\inspection-UX-—-Copy-Expor-e2e01-tton-exists-on-Publications-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\inspection-UX-—-Copy-Expor-e2e01-tton-exists-on-Publications-chromium\error-context.md
+
+    Error Context: test-results\inspection-UX-—-Copy-Expor-e2e01-tton-exists-on-Publications-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\inspection-UX-—-Copy-Expor-e2e01-tton-exists-on-Publications-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\inspection-UX-—-Copy-Expor-e2e01-tton-exists-on-Publications-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[5/8] [chromium] › tests\inspection.spec.ts:635:3 › UX — Sidebar navigation › UX: All sidebar nav items are clickable
+[1A[2K  5) [chromium] › tests\inspection.spec.ts:635:3 › UX — Sidebar navigation › UX: All sidebar nav items are clickable 
+
+    Error: Sidebar "My Tasks" should be visible
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+      639 |       const link = page.locator(`nav >> text=${item}`).first()
+      640 |       const visible = await link.isVisible().catch(() => false)
+    > 641 |       expect(visible, `Sidebar "${item}" should be visible`).toBe(true)
+          |                                                              ^
+      642 |     }
+      643 |   })
+      644 |
+        at C:\Users\ingra\mn-ccore-lab\tests\inspection.spec.ts:641:62
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\inspection-UX-—-Sidebar-na-abd9f-bar-nav-items-are-clickable-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\inspection-UX-—-Sidebar-na-abd9f-bar-nav-items-are-clickable-chromium\error-context.md
+
+    Error Context: test-results\inspection-UX-—-Sidebar-na-abd9f-bar-nav-items-are-clickable-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\inspection-UX-—-Sidebar-na-abd9f-bar-nav-items-are-clickable-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\inspection-UX-—-Sidebar-na-abd9f-bar-nav-items-are-clickable-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[6/8] [chromium] › tests\inspection.spec.ts:645:3 › UX — Sidebar navigation › UX: Sidebar overdue badge on My Tasks
+[1A[2K[chromium] › tests\inspection.spec.ts:645:3 › UX — Sidebar navigation › UX: Sidebar overdue badge on My Tasks
+Overdue badge visible: true
+
+[1A[2K[7/8] [chromium] › tests\inspection.spec.ts:1369:3 › Phase 30: Visual QA + Enhancement Sprint › FEATURE: Sort indicators appear on column headers
+[1A[2K  6) [chromium] › tests\inspection.spec.ts:1369:3 › Phase 30: Visual QA + Enhancement Sprint › FEATURE: Sort indicators appear on column headers 
+
+    Error: Sort indicator SVG should appear after clicking column
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: > [32m0[39m
+    Received:   [31m0[39m
+
+      1376 |       // Check for sort indicator (ChevronUp or ChevronDown from ColumnHeader component)
+      1377 |       const nearHeader = await header.locator('svg').count()
+    > 1378 |       expect(nearHeader, 'Sort indicator SVG should appear after clicking column').toBeGreaterThan(0)
+           |                                                                                    ^
+      1379 |       await page.screenshot({ path: 'review/phase30-sort-indicators.png' })
+      1380 |     }
+      1381 |   })
+        at C:\Users\ingra\mn-ccore-lab\tests\inspection.spec.ts:1378:84
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\inspection-Phase-30-Visual-8aaba-rs-appear-on-column-headers-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\inspection-Phase-30-Visual-8aaba-rs-appear-on-column-headers-chromium\error-context.md
+
+    Error Context: test-results\inspection-Phase-30-Visual-8aaba-rs-appear-on-column-headers-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\inspection-Phase-30-Visual-8aaba-rs-appear-on-column-headers-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\inspection-Phase-30-Visual-8aaba-rs-appear-on-column-headers-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[8/8] [chromium] › tests\inspection.spec.ts:1401:3 › Phase 30: Visual QA + Enhancement Sprint › FEATURE: waiting_external status appears in dropdown options
+[1A[2K  7) [chromium] › tests\inspection.spec.ts:1401:3 › Phase 30: Visual QA + Enhancement Sprint › FEATURE: waiting_external status appears in dropdown options 
+
+    Error: waiting_external status option should appear in dropdown
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+      1409 |       const waitingOpt = page.locator('text=Waiting External, text=Waiting').last()
+      1410 |       const visible = await waitingOpt.isVisible({ timeout: 1500 }).catch(() => false)
+    > 1411 |       expect(visible, 'waiting_external status option should appear in dropdown').toBe(true)
+           |                                                                                   ^
+      1412 |       await page.screenshot({ path: 'review/phase30-waiting-external-status.png' })
+      1413 |       await page.keyboard.press('Escape')
+      1414 |     }
+        at C:\Users\ingra\mn-ccore-lab\tests\inspection.spec.ts:1411:83
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\inspection-Phase-30-Visual-d2597-appears-in-dropdown-options-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\inspection-Phase-30-Visual-d2597-appears-in-dropdown-options-chromium\error-context.md
+
+    Error Context: test-results\inspection-Phase-30-Visual-d2597-appears-in-dropdown-options-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\inspection-Phase-30-Visual-d2597-appears-in-dropdown-options-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\inspection-Phase-30-Visual-d2597-appears-in-dropdown-options-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  7 failed
+    [chromium] › tests\inspection.spec.ts:229:5 › PAGE — Portal pages render without errors › PAGE: My Tasks (/my-tasks) renders 
+    [chromium] › tests\inspection.spec.ts:229:5 › PAGE — Portal pages render without errors › PAGE: All Tasks (/tasks) renders 
+    [chromium] › tests\inspection.spec.ts:285:3 › PAGE — Detail pages render with real data › PAGE: Meeting Detail renders without crash 
+    [chromium] › tests\inspection.spec.ts:564:3 › UX — Copy/Export buttons › UX: Copy Bibliography button exists on Publications 
+    [chromium] › tests\inspection.spec.ts:635:3 › UX — Sidebar navigation › UX: All sidebar nav items are clickable 
+    [chromium] › tests\inspection.spec.ts:1369:3 › Phase 30: Visual QA + Enhancement Sprint › FEATURE: Sort indicators appear on column headers 
+    [chromium] › tests\inspection.spec.ts:1401:3 › Phase 30: Visual QA + Enhancement Sprint › FEATURE: waiting_external status appears in dropdown options 
+  1 passed (2.5m)

@@ -1,0 +1,1522 @@
+{
+  "/": {
+    "cold": {
+      "dclMs": 439,
+      "ttfb": 111,
+      "dcl": 435,
+      "fcp": 464,
+      "lcp": 1336,
+      "cls": 0,
+      "jsKB": 927,
+      "cssKB": 87,
+      "imgKB": 2,
+      "fontKB": 141,
+      "totalKB": 1856,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "BarChart-bxy4asGC.js",
+          "kb": 319
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "Home-ON21M7Kl.js",
+          "kb": 38
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        }
+      ],
+      "apiCallCount": 8,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 201,
+      "ttfb": 44,
+      "dcl": 196,
+      "fcp": 252,
+      "lcp": 732,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 141,
+      "totalKB": 854,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 8,
+      "err": null
+    }
+  },
+  "/dashboard": {
+    "cold": {
+      "dclMs": 483,
+      "ttfb": 133,
+      "dcl": 481,
+      "fcp": 532,
+      "lcp": 1388,
+      "cls": 0.345,
+      "jsKB": 704,
+      "cssKB": 87,
+      "imgKB": 125,
+      "fontKB": 171,
+      "totalKB": 1787,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "Dashboard-C2pgxzEW.js",
+          "kb": 92
+        },
+        {
+          "name": "sortable.esm-a8BmtPfU.js",
+          "kb": 47
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        }
+      ],
+      "apiCallCount": 13,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 343,
+      "ttfb": 38,
+      "dcl": 315,
+      "fcp": 376,
+      "lcp": 1012,
+      "cls": 0.536,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 123,
+      "fontKB": 171,
+      "totalKB": 1008,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 13,
+      "err": null
+    }
+  },
+  "/my-tasks": {
+    "cold": {
+      "dclMs": 418,
+      "ttfb": 63,
+      "dcl": 406,
+      "fcp": 436,
+      "lcp": 1768,
+      "cls": 0.323,
+      "jsKB": 764,
+      "cssKB": 87,
+      "imgKB": 125,
+      "fontKB": 132,
+      "totalKB": 1749,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "MyTasks-DV8InW2W.js",
+          "kb": 105
+        },
+        {
+          "name": "sortable.esm-a8BmtPfU.js",
+          "kb": 47
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        }
+      ],
+      "apiCallCount": 7,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 331,
+      "ttfb": 63,
+      "dcl": 272,
+      "fcp": 344,
+      "lcp": 1220,
+      "cls": 0.387,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 123,
+      "fontKB": 132,
+      "totalKB": 910,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 7,
+      "err": null
+    }
+  },
+  "/personal": {
+    "cold": {
+      "dclMs": 1119,
+      "ttfb": 54,
+      "dcl": 1109,
+      "fcp": 1136,
+      "lcp": 1744,
+      "cls": 0.043,
+      "jsKB": 726,
+      "cssKB": 87,
+      "imgKB": 2,
+      "fontKB": 67,
+      "totalKB": 1519,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "TaskDetailPanel-mz26PnNM.js",
+          "kb": 71
+        },
+        {
+          "name": "sortable.esm-a8BmtPfU.js",
+          "kb": 47
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        }
+      ],
+      "apiCallCount": 8,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 230,
+      "ttfb": 57,
+      "dcl": 206,
+      "fcp": 276,
+      "lcp": 808,
+      "cls": 0.049,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 67,
+      "totalKB": 718,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 8,
+      "err": null
+    }
+  },
+  "/projects": {
+    "cold": {
+      "dclMs": 392,
+      "ttfb": 46,
+      "dcl": 389,
+      "fcp": 428,
+      "lcp": 832,
+      "cls": 0.795,
+      "jsKB": 589,
+      "cssKB": 87,
+      "imgKB": 2,
+      "fontKB": 67,
+      "totalKB": 1380,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "Projects-D2ppO-Yo.js",
+          "kb": 29
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        }
+      ],
+      "apiCallCount": 7,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 385,
+      "ttfb": 56,
+      "dcl": 363,
+      "fcp": 428,
+      "lcp": 824,
+      "cls": 0.883,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 67,
+      "totalKB": 716,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 7,
+      "err": null
+    }
+  },
+  "/manuscripts": {
+    "cold": {
+      "dclMs": 1183,
+      "ttfb": 133,
+      "dcl": 1175,
+      "fcp": 1216,
+      "lcp": 2044,
+      "cls": 0,
+      "jsKB": 608,
+      "cssKB": 87,
+      "imgKB": 446,
+      "fontKB": 67,
+      "totalKB": 1841,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "RevisionTracker-DQ2XQiXP.js",
+          "kb": 17
+        }
+      ],
+      "apiCallCount": 7,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 510,
+      "ttfb": 64,
+      "dcl": 484,
+      "fcp": 572,
+      "lcp": 1664,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 444,
+      "fontKB": 67,
+      "totalKB": 1158,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 7,
+      "err": null
+    }
+  },
+  "/grants": {
+    "cold": {
+      "dclMs": 987,
+      "ttfb": 62,
+      "dcl": 983,
+      "fcp": 1024,
+      "lcp": 1632,
+      "cls": 0.547,
+      "jsKB": 590,
+      "cssKB": 87,
+      "imgKB": 446,
+      "fontKB": 132,
+      "totalKB": 1263,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "Grants-C18K52Vu.js",
+          "kb": 27
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        }
+      ],
+      "apiCallCount": 6,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 388,
+      "ttfb": 48,
+      "dcl": 280,
+      "fcp": 340,
+      "lcp": 1088,
+      "cls": 0.645,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 444,
+      "fontKB": 132,
+      "totalKB": 597,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "createLucideIcon-TY2x5oVi.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 6,
+      "err": null
+    }
+  },
+  "/deadlines": {
+    "cold": {
+      "dclMs": 1932,
+      "ttfb": 96,
+      "dcl": 1929,
+      "fcp": 1956,
+      "lcp": 2832,
+      "cls": 0.471,
+      "jsKB": 749,
+      "cssKB": 87,
+      "imgKB": 125,
+      "fontKB": 132,
+      "totalKB": 1729,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "TaskDetailPanel-mz26PnNM.js",
+          "kb": 71
+        },
+        {
+          "name": "sortable.esm-a8BmtPfU.js",
+          "kb": 47
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        }
+      ],
+      "apiCallCount": 8,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 553,
+      "ttfb": 75,
+      "dcl": 453,
+      "fcp": 516,
+      "lcp": 1348,
+      "cls": 5.463,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 123,
+      "fontKB": 132,
+      "totalKB": 905,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 8,
+      "err": null
+    }
+  },
+  "/meetings": {
+    "cold": {
+      "dclMs": 1844,
+      "ttfb": 130,
+      "dcl": 1841,
+      "fcp": 1900,
+      "lcp": 2408,
+      "cls": 1.652,
+      "jsKB": 581,
+      "cssKB": 87,
+      "imgKB": 463,
+      "fontKB": 132,
+      "totalKB": 1279,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "Meetings-BPHPW49D.js",
+          "kb": 32
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        }
+      ],
+      "apiCallCount": 6,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 624,
+      "ttfb": 116,
+      "dcl": 434,
+      "fcp": 528,
+      "lcp": 1132,
+      "cls": 1.749,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 461,
+      "fontKB": 132,
+      "totalKB": 623,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 6,
+      "err": null
+    }
+  },
+  "/team": {
+    "cold": {
+      "dclMs": 422,
+      "ttfb": 118,
+      "dcl": 419,
+      "fcp": 448,
+      "lcp": 1168,
+      "cls": 0.002,
+      "jsKB": 554,
+      "cssKB": 87,
+      "imgKB": 2477,
+      "fontKB": 102,
+      "totalKB": 3851,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "Team-m1_LtUFZ.js",
+          "kb": 10
+        }
+      ],
+      "apiCallCount": 5,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 1040,
+      "ttfb": 159,
+      "dcl": 840,
+      "fcp": 972,
+      "lcp": 1752,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 2464,
+      "fontKB": 102,
+      "totalKB": 3211,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 5,
+      "err": null
+    }
+  },
+  "/ideas": {
+    "cold": {
+      "dclMs": 1824,
+      "ttfb": 285,
+      "dcl": 1816,
+      "fcp": 1900,
+      "lcp": 2896,
+      "cls": 0,
+      "jsKB": 572,
+      "cssKB": 87,
+      "imgKB": 505,
+      "fontKB": 132,
+      "totalKB": 1305,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "Ideas-BcGb41LZ.js",
+          "kb": 17
+        }
+      ],
+      "apiCallCount": 5,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 1457,
+      "ttfb": 499,
+      "dcl": 1259,
+      "fcp": 1464,
+      "lcp": 3348,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 132,
+      "totalKB": 151,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 1,
+      "err": null
+    }
+  },
+  "/decisions": {
+    "cold": {
+      "dclMs": 1304,
+      "ttfb": 141,
+      "dcl": 623,
+      "fcp": 660,
+      "lcp": 2272,
+      "cls": 0.227,
+      "jsKB": 587,
+      "cssKB": 87,
+      "imgKB": 83,
+      "fontKB": 132,
+      "totalKB": 958,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "DecisionsPage-BW2XYvGl.js",
+          "kb": 33
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        }
+      ],
+      "apiCallCount": 12,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 1503,
+      "ttfb": 100,
+      "dcl": 1215,
+      "fcp": 1328,
+      "lcp": 1824,
+      "cls": 0.236,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 81,
+      "fontKB": 132,
+      "totalKB": 296,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 8,
+      "err": null
+    }
+  },
+  "/research-digest": {
+    "cold": {
+      "dclMs": 369,
+      "ttfb": 56,
+      "dcl": 366,
+      "fcp": 456,
+      "lcp": 1280,
+      "cls": 0.922,
+      "jsKB": 573,
+      "cssKB": 87,
+      "imgKB": 2,
+      "fontKB": 106,
+      "totalKB": 1011,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "Digest-Cj7O4vts.js",
+          "kb": 18
+        }
+      ],
+      "apiCallCount": 8,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 413,
+      "ttfb": 62,
+      "dcl": 272,
+      "fcp": 400,
+      "lcp": 912,
+      "cls": 0.932,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 106,
+      "totalKB": 363,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 8,
+      "err": null
+    }
+  },
+  "/calendar": {
+    "cold": {
+      "dclMs": 286,
+      "ttfb": 45,
+      "dcl": 281,
+      "fcp": 324,
+      "lcp": 780,
+      "cls": 0.364,
+      "jsKB": 559,
+      "cssKB": 87,
+      "imgKB": 2,
+      "fontKB": 67,
+      "totalKB": 726,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "CalendarPage-BnGNR1Ha.js",
+          "kb": 13
+        }
+      ],
+      "apiCallCount": 5,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 211,
+      "ttfb": 57,
+      "dcl": 207,
+      "fcp": 284,
+      "lcp": 632,
+      "cls": 0.377,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 67,
+      "totalKB": 92,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 5,
+      "err": null
+    }
+  },
+  "/analytics": {
+    "cold": {
+      "dclMs": 293,
+      "ttfb": 47,
+      "dcl": 286,
+      "fcp": 316,
+      "lcp": 948,
+      "cls": 0.401,
+      "jsKB": 914,
+      "cssKB": 87,
+      "imgKB": 125,
+      "fontKB": 132,
+      "totalKB": 1921,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "BarChart-bxy4asGC.js",
+          "kb": 319
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "AnalyticsPage-BgQNnlrv.js",
+          "kb": 23
+        }
+      ],
+      "apiCallCount": 9,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 449,
+      "ttfb": 148,
+      "dcl": 434,
+      "fcp": 508,
+      "lcp": 1116,
+      "cls": 0.415,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 123,
+      "fontKB": 132,
+      "totalKB": 932,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 9,
+      "err": null
+    }
+  },
+  "/pi-analytics": {
+    "cold": {
+      "dclMs": 798,
+      "ttfb": 45,
+      "dcl": 783,
+      "fcp": 812,
+      "lcp": 1488,
+      "cls": 0.275,
+      "jsKB": 906,
+      "cssKB": 87,
+      "imgKB": 521,
+      "fontKB": 132,
+      "totalKB": 1652,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "BarChart-bxy4asGC.js",
+          "kb": 319
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        }
+      ],
+      "apiCallCount": 5,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 161,
+      "ttfb": 37,
+      "dcl": 158,
+      "fcp": 212,
+      "lcp": 684,
+      "cls": 0.284,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 519,
+      "fontKB": 132,
+      "totalKB": 671,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 5,
+      "err": null
+    }
+  },
+  "/search": {
+    "cold": {
+      "dclMs": 312,
+      "ttfb": 41,
+      "dcl": 309,
+      "fcp": 344,
+      "lcp": 716,
+      "cls": 0,
+      "jsKB": 552,
+      "cssKB": 87,
+      "imgKB": 2,
+      "fontKB": 67,
+      "totalKB": 712,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 8
+        }
+      ],
+      "apiCallCount": 4,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 211,
+      "ttfb": 49,
+      "dcl": 183,
+      "fcp": 252,
+      "lcp": 592,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 67,
+      "totalKB": 85,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 4,
+      "err": null
+    }
+  },
+  "/settings": {
+    "cold": {
+      "dclMs": 306,
+      "ttfb": 51,
+      "dcl": 298,
+      "fcp": 332,
+      "lcp": 828,
+      "cls": 0.778,
+      "jsKB": 562,
+      "cssKB": 87,
+      "imgKB": 2477,
+      "fontKB": 132,
+      "totalKB": 3271,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "SettingsPage-BzoQWlue.js",
+          "kb": 17
+        }
+      ],
+      "apiCallCount": 7,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 152,
+      "ttfb": 41,
+      "dcl": 148,
+      "fcp": 204,
+      "lcp": 636,
+      "cls": 0.8,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 2475,
+      "fontKB": 132,
+      "totalKB": 2634,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 7,
+      "err": null
+    }
+  },
+  "/activity": {
+    "cold": {
+      "dclMs": 558,
+      "ttfb": 312,
+      "dcl": 555,
+      "fcp": 584,
+      "lcp": 1116,
+      "cls": 1.199,
+      "jsKB": 563,
+      "cssKB": 87,
+      "imgKB": 125,
+      "fontKB": 132,
+      "totalKB": 937,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 8
+        }
+      ],
+      "apiCallCount": 5,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 160,
+      "ttfb": 36,
+      "dcl": 157,
+      "fcp": 220,
+      "lcp": 748,
+      "cls": 1.231,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 123,
+      "fontKB": 132,
+      "totalKB": 299,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 5,
+      "err": null
+    }
+  },
+  "/publications": {
+    "cold": {
+      "dclMs": 233,
+      "ttfb": 38,
+      "dcl": 226,
+      "fcp": 256,
+      "lcp": 1216,
+      "cls": 0,
+      "jsKB": 566,
+      "cssKB": 87,
+      "imgKB": 2,
+      "fontKB": 141,
+      "totalKB": 1413,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 341
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-DTrTVqTd.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "Publications-lCCE6vKn.js",
+          "kb": 15
+        }
+      ],
+      "apiCallCount": 3,
+      "err": null
+    },
+    "warm": {
+      "dclMs": 154,
+      "ttfb": 39,
+      "dcl": 150,
+      "fcp": 212,
+      "lcp": 720,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 141,
+      "totalKB": 772,
+      "topChunks": [
+        {
+          "name": "index-sR8fBF2z.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 3,
+      "err": null
+    }
+  }
+}
