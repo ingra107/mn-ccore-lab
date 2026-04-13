@@ -398,6 +398,35 @@ export async function handleUpdateProject(
   return json({ data: updated });
 }
 
+// POST /api/projects/:id/delete — delete a project row by id or slug
+// Intentionally narrow: used for duplicate cleanup after slug drift. Does not
+// cascade — caller must reparent tasks/milestones/etc before invoking.
+export async function handleDeleteProject(
+  id: string,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const existing = await env.DB.prepare(
+    'SELECT id, title, slug FROM projects WHERE id = ? OR slug = ?'
+  ).bind(id, id).first<{ id: string; title: string; slug: string }>();
+
+  if (!existing) {
+    return error('Project not found', 404);
+  }
+
+  const result = await env.DB.prepare(
+    'DELETE FROM projects WHERE id = ? OR slug = ?'
+  ).bind(id, id).run();
+
+  if (result.meta.changes === 0) {
+    return error('Project not found', 404);
+  }
+
+  await logActivity(env, 'project_delete', `Deleted project: ${existing.title}`, user.email, existing.id, 'project');
+
+  return json({ data: { deleted: existing.id, slug: existing.slug, title: existing.title } });
+}
+
 // POST /api/projects/:id/comments — add comment
 export async function handleAddComment(
   projectId: string,
