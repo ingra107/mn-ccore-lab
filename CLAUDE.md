@@ -691,6 +691,15 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 ## Pending Sync
 <!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
 
+- NOTE: Round 8 audit (9 agents) + R9 (deployed) + R10 (local only, commit 145ed8e) completed 2026-04-13. Full handoff at Projects/mn-ccore-lab-hub/SESSION-HANDOFF-2026-04-13-to-04-15.md
+- NOTE: Cloudflare Workers free-tier 100K req/day cap exhausted 2026-04-13 ~09:45 CT. Hermes polling (8.6K/day baseline) + open tabs + overnight jobs + R8 audit traffic = full budget. STRONGLY recommend Workers Paid $5/mo plan. Until then, no Playwright audits or parallel journey agents against deployed site.
+- DECISION: Grant status taxonomy locked — planning/in_preparation/submitted/funded/resubmission/declined/closed. Only K23 provider practice variation mechanical ventilation is funded.
+- DECISION: Project status reuses task vocabulary — active/waiting_external/blocked/done. 64 projects lowercased to 'active' in D1; per-project classification deferred.
+- DECISION: Dashboard cards are now draggable AND resizable via react-grid-layout v1.5.3. Per-user+section localStorage persistence.
+- LEARNING: CLAUDE.md Component Coverage table is stale. Journey B found at least 2 features listed as covered that are not actually wired (N-key on /decisions, Copy bibliography on /publications). Treat table as hopeful, not authoritative.
+- LEARNING: Playwright X-Test-Mode: true header routes API calls to empty mnccore-lab-test DB. Prior inspection pass counts on data-rich pages may be inflated.
+- LEARNING: react-grid-layout@2.x is a breaking hook-based rewrite. Stay on 1.5.3 unless you want to rewrite DashboardGrid.tsx.
+
 
 ## Next Session Playbook
 
