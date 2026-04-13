@@ -29,6 +29,7 @@ export default function MobileTabBar() {
     >
       {tabs.map((tab) => {
         const Icon = tab.icon
+        // Reactive: pathname from useLocation() updates on every client-side nav (C7 audit)
         const active = pathname === tab.to || pathname.startsWith(tab.to + '/')
         return (
           <Link
