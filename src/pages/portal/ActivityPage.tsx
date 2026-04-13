@@ -177,7 +177,7 @@ export default function ActivityPage() {
                           <ActivityAvatar slug={item.actor!} />
                         ) : (
                           <div className="rounded-full flex items-center justify-center flex-shrink-0" style={{ width: 24, height: 24, backgroundColor: 'var(--ice)' }}>
-                            <span style={{ fontSize: 9, color: 'var(--slate)' }}>SYS</span>
+                            <span style={{ fontSize: 'var(--text-micro)', color: 'var(--slate)' }}>SYS</span>
                           </div>
                         )}
                         <p className="text-xs flex-1 min-w-0 truncate" style={{ color: 'var(--ink)', lineHeight: 1.35 }}>
@@ -201,10 +201,10 @@ export default function ActivityPage() {
         {!isLoading && grouped.length === 0 && (
           <EmptyState
             icon={<ActivityIcon size={40} />}
-            title={filterType ? 'No matching activity' : 'No activity yet'}
+            title={filterType ? 'No matches for that filter' : 'A quiet day in the lab'}
             subtitle={filterType
-              ? `No ${typeOptions.find(o => o.value === filterType)?.label.toLowerCase()} activity found. Try a different filter.`
-              : 'Task completions, status changes, comments, and project updates will stream here as the team works.'}
+              ? `Nothing matches the ${typeOptions.find(o => o.value === filterType)?.label.toLowerCase()} filter right now. Try 'All' or pick a different type.`
+              : 'Task completions, status changes, comments, and project updates will stream in here as the team works.'}
           />
         )}
       </div>

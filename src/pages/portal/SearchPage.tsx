@@ -207,8 +207,8 @@ export default function SearchPage() {
         {!isLoading && debouncedQuery.length >= 2 && results.length === 0 && (
           <EmptyState
             icon={<Search size={40} />}
-            title="Nothing matched"
-            subtitle="Try different keywords, or check if the item exists under a different name."
+            title="Nothing matched that"
+            subtitle="Try a different keyword, a person's name, or a project slug. The index covers tasks, projects, people, and decisions."
           />
         )}
 

@@ -247,7 +247,7 @@ export default function Ideas() {
           <EmptyState
             icon={<Lightbulb size={40} />}
             title="The board is open"
-            subtitle="Research ideas, clinical questions, side projects - anything worth exploring. Drop one here and let the team weigh in."
+            subtitle="Press N or use the form above to capture the first idea. Half-formed thoughts welcome — the team will sharpen them."
             action={{ label: 'Submit an idea', onClick: () => setShowCreate(true) }}
           />
         ) : (

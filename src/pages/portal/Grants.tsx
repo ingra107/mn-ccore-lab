@@ -524,8 +524,8 @@ export default function Grants() {
           {filteredGrants.length === 0 ? (
             <EmptyState
               icon={<Wallet size={40} />}
-              title="No grants"
-              subtitle="Active and pending grants will appear here once added."
+              title="No grants tracked"
+              subtitle="Active awards and proposals in flight show up here with live countdowns to the next deadline."
             />
           ) : (
             <TableContainer className={densityClass(density)}>
@@ -699,8 +699,8 @@ export default function Grants() {
           {grants.length === 0 ? (
             <EmptyState
               icon={<GanttChartSquare size={40} />}
-              title="No grants to display"
-              subtitle="Add grants to see the timeline view."
+              title="Nothing to plot yet"
+              subtitle="Add a grant to see its budget period and submission cycle on the timeline."
             />
           ) : (
             <GanttChart grants={[...active, ...proposed]} />

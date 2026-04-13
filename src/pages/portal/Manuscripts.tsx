@@ -18,7 +18,7 @@ import type { Project } from '../../data/types'
 import PageHeader from '../../components/PageHeader'
 import { ActiveRevisionsDashboard } from '../../components/RevisionTracker'
 import { ColumnHeader, TableContainer, TableControls } from '../../components/table'
-// EmptyState available if needed
+import EmptyState from '../../components/EmptyState'
 
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
@@ -527,11 +527,11 @@ export default function Manuscripts() {
                 })
               })()
             ) : (
-              <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-                <span style={{ fontSize: '14px', color: 'var(--slate)', opacity: 0.4 }}>
-                  No manuscripts found
-                </span>
-              </div>
+              <EmptyState
+                icon={<FileText size={40} />}
+                title="The shelf is empty"
+                subtitle="Manuscripts in the pipeline show up here, grouped by stage — from first draft to published."
+              />
             )}
 
             {/* Calculations row */}

@@ -401,8 +401,8 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
         ) : (
           <EmptyState
             icon={<Calendar size={40} />}
-            title="No events on this day"
-            subtitle="Meetings, task deadlines, and milestones will appear here."
+            title="A quiet day"
+            subtitle="Meetings, task due dates, and milestones land here automatically as they're scheduled."
           />
         )}
       </div>
@@ -467,8 +467,8 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
       {grouped.length === 0 && (
         <EmptyState
           icon={<Calendar size={40} />}
-          title="Nothing scheduled today"
-          subtitle="Meetings, deadlines, and milestones will show up here as they're created."
+          title="The week ahead is open"
+          subtitle="Meetings, deadlines, and milestones stream in here as the team books them."
         />
       )}
     </div>
