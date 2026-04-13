@@ -227,6 +227,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                 <Link
                   key={item.to}
                   to={item.to}
+                  prefetch="intent"
                   onClick={onNavigate}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] transition-colors duration-[150ms] mb-0.5"
                   style={{
@@ -286,6 +287,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         {!collapsed && (
           <Link
             to="/search"
+            prefetch="intent"
             className="flex items-center gap-2.5 px-2.5 py-2 mb-1 rounded-md text-sm transition-colors"
             style={{ color: 'var(--slate)', opacity: 0.6 }}
           >
@@ -303,6 +305,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         {/* Back to website */}
         <Link
           to="/"
+          prefetch="intent"
           className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors"
           style={{ color: 'var(--slate)' }}
           title={collapsed ? 'Back to Website' : undefined}
@@ -315,6 +318,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         {person && !collapsed && (
           <Link
             to={`/team/${userSlug}`}
+            prefetch="intent"
             className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
             style={{ color: 'var(--ink)', textDecoration: 'none' }}
           >
