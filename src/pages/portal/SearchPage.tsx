@@ -100,101 +100,63 @@ export default function SearchPage() {
 
   const typeOrder = ['task', 'project', 'meeting', 'idea', 'comment', 'activity']
 
-  const hasResults = results.length > 0 || (debouncedQuery.length >= 2 && isLoading)
-  const showCentered = !hasResults && debouncedQuery.length < 2
-
   return (
     <div>
-      {/* Centered hero when no query */}
-      {showCentered ? (
-        <div className="flex flex-col items-center justify-center" style={{ minHeight: '50vh', paddingTop: '8vh' }}>
-          {/* H-02: replaced inline 36px h1 with shared PageHeader component */}
-          <PageHeader icon={<Search size={20} />} title="Search Everything" subtitle="Full-text search across tasks, projects, meetings, ideas, and more" />
-          <div className="w-full max-w-lg relative mt-4">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
-            {/* M-05: focus ring using --focus-ring token, WCAG-compliant teal */}
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search tasks, projects, meetings, ideas..."
-              className="w-full rounded-xl border px-4 py-3.5 pl-11 text-sm"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--ice)', boxShadow: 'var(--shadow-card)', outline: 'none' }}
-              onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px var(--focus-ring), var(--shadow-card)' }}
-              onBlur={e => { e.currentTarget.style.boxShadow = 'var(--shadow-card)' }}
-            />
-          </div>
-          <div className="flex items-center justify-center gap-3 mt-5 flex-wrap">
-          {['tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity'].map((t) => (
-            <span key={t} className="text-[10px] px-2.5 py-1 rounded-full border capitalize" style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', opacity: 0.4 }}>
-              {t}
-            </span>
-          ))}
-          </div>
-          <p className="text-[10px] mt-4" style={{ color: 'var(--slate)', opacity: 0.3 }}>
-            Powered by D1 full-text search
-          </p>
+      <PageHeader icon={<Search size={20} />} title="Search" subtitle="Find anything across the lab" />
+      {/* M-05: focus ring using --focus-ring token */}
+      <div className="mt-5 relative">
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search tasks, projects, meetings, ideas..."
+          className="w-full rounded-xl border px-4 py-3 pl-11 text-sm"
+          style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--ice)', outline: 'none' }}
+          onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px var(--focus-ring)' }}
+          onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
+        />
+        {query && (
+          <button
+            onClick={() => { setQuery(''); inputRef.current?.focus() }}
+            className="absolute right-4 top-1/2 -translate-y-1/2"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.4 }}
+          >
+            <X size={16} />
+          </button>
+        )}
+      </div>
 
-          {/* Recent searches */}
-          {recentSearches.length > 0 && (
-            <div className="mt-6 w-full max-w-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--slate)', opacity: 0.4 }}>
-                  Recent Searches
-                </span>
-                <button
-                  onClick={() => { clearRecentSearches(); setRecentSearches([]) }}
-                  className="text-[10px] flex items-center gap-1 transition-colors"
-                  style={{ color: 'var(--slate)', opacity: 0.3, background: 'none', border: 'none', cursor: 'pointer' }}
-                >
-                  <Trash2 size={9} /> Clear
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {recentSearches.map(s => (
-                  <button
-                    key={s}
-                    onClick={() => { setQuery(s); inputRef.current?.focus() }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs transition-colors hover:border-[var(--teal)]"
-                    style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer' }}
-                  >
-                    <Clock size={10} style={{ opacity: 0.4 }} />
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <>
-          <PageHeader icon={<Search size={20} />} title="Search" subtitle="Find anything across the lab" />
-            {/* M-05: focus ring using --focus-ring token */}
-          <div className="mt-5 relative">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search tasks, projects, meetings, ideas..."
-              className="w-full rounded-xl border px-4 py-3 pl-11 text-sm"
-              style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--ice)', outline: 'none' }}
-              onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px var(--focus-ring)' }}
-              onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
-            />
-            {query && (
-              <button
-                onClick={() => { setQuery(''); inputRef.current?.focus() }}
-                className="absolute right-4 top-1/2 -translate-y-1/2"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.4 }}
-              >
-                <X size={16} />
-              </button>
-            )}
+      {/* Recent searches — shown when no active query */}
+      {!query && recentSearches.length > 0 && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+              Recent Searches
+            </span>
+            <button
+              onClick={() => { clearRecentSearches(); setRecentSearches([]) }}
+              className="text-[10px] flex items-center gap-1 transition-colors"
+              style={{ color: 'var(--slate)', opacity: 0.3, background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              <Trash2 size={9} /> Clear
+            </button>
           </div>
-        </>
+          <div className="flex flex-wrap gap-1.5">
+            {recentSearches.map(s => (
+              <button
+                key={s}
+                onClick={() => { setQuery(s); inputRef.current?.focus() }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs transition-colors hover:border-[var(--teal)]"
+                style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer' }}
+              >
+                <Clock size={10} style={{ opacity: 0.4 }} />
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="mt-6">
@@ -264,7 +226,7 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Empty state handled by centered hero above */}
+        {/* Empty state shown above when query returns no results */}
       </div>
     </div>
   )

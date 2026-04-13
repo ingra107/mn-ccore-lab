@@ -150,7 +150,18 @@ async function globalSetup(_config: FullConfig): Promise<void> {
     await post('/api/decisions', decision);
   }
 
-  console.log('[test-seed] DB_TEST seeded: 3 projects, 15 tasks, 2 meetings, 5 ideas, 4 decisions.');
+  // ── Publications (3) ───────────────────────────────────────────────────────
+  const pubSeeds = [
+    { title: 'test_delete_ LTVV sample publication', authors: 'Ingraham et al', journal: 'AJRCCM', year: 2025, pubmed: 'TEST0001', status: 'Published' },
+    { title: 'test_delete_ CLIF infrastructure paper', authors: 'Ingraham et al', journal: 'Critical Care', year: 2025, pubmed: 'TEST0002', status: 'Published' },
+    { title: 'test_delete_ Vasopressor escalation', authors: 'Shyu et al', journal: 'Chest', year: 2024, pubmed: 'TEST0003', status: 'Published' },
+  ];
+
+  for (const pub of pubSeeds) {
+    await post('/api/publications', pub);
+  }
+
+  console.log('[test-seed] DB_TEST seeded: 3 projects, 15 tasks, 2 meetings, 5 ideas, 4 decisions, 3 publications.');
 }
 
 export default globalSetup;

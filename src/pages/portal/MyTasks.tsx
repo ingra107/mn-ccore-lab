@@ -514,15 +514,18 @@ export default function MyTasks() {
 
       {!currentUser && !showAllTasks && !bannerDismissed && (
         <div
-          className="mt-4 px-4 py-3 rounded-lg border text-sm"
+          className="mt-4 px-4 rounded-lg border text-sm"
           style={{
-            borderColor: 'var(--gold)',
-            backgroundColor: 'var(--gold-hover)',
+            borderColor: 'var(--border-subtle)',
+            borderLeftColor: 'var(--teal-subtle)',
+            borderLeftWidth: 3,
+            backgroundColor: 'var(--surface-1)',
             color: 'var(--ink)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '8px',
+            height: 44,
           }}
         >
           <span>
