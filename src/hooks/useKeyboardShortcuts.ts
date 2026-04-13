@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 /**
@@ -31,9 +31,20 @@ export function useKeyboardShortcuts() {
   const [showHelp, setShowHelp] = useState(false)
   const [gPending, setGPending] = useState(false)
 
-  useEffect(() => {
-    let gTimer: ReturnType<typeof setTimeout> | null = null
+  // useRef so the timer handle persists across re-renders triggered by setGPending
+  const gTimerRef = useRef<number | null>(null)
+  // useRef so the handler always sees the latest gPending without re-registering
+  const gPendingRef = useRef(gPending)
+  useEffect(() => { gPendingRef.current = gPending }, [gPending])
 
+  // Unmount-only cleanup — never fires on state changes
+  useEffect(() => {
+    return () => {
+      if (gTimerRef.current !== null) clearTimeout(gTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       // Don't trigger shortcuts when typing in inputs
       const target = e.target as HTMLElement
@@ -44,17 +55,19 @@ export function useKeyboardShortcuts() {
       // Don't trigger with modifier keys (except for Cmd+K which CommandPalette handles)
       if (e.metaKey || e.ctrlKey || e.altKey) return
 
+      const currentGPending = gPendingRef.current
+
       // Escape clears any pending leader chord immediately
-      if (e.key === 'Escape' && gPending) {
+      if (e.key === 'Escape' && currentGPending) {
         setGPending(false)
-        if (gTimer) clearTimeout(gTimer)
+        if (gTimerRef.current !== null) { clearTimeout(gTimerRef.current); gTimerRef.current = null }
         return
       }
 
       // G + key navigation (chord state machine)
-      if (gPending) {
+      if (currentGPending) {
         setGPending(false)
-        if (gTimer) clearTimeout(gTimer)
+        if (gTimerRef.current !== null) { clearTimeout(gTimerRef.current); gTimerRef.current = null }
 
         // Spec chords (F-07) + preserved legacy aliases
         const navMap: Record<string, string> = {
@@ -88,8 +101,13 @@ export function useKeyboardShortcuts() {
       switch (e.key.toLowerCase()) {
         case 'g':
           e.preventDefault()
+          // Cancel any previous timer before arming a new one
+          if (gTimerRef.current !== null) { clearTimeout(gTimerRef.current); gTimerRef.current = null }
           setGPending(true)
-          gTimer = setTimeout(() => setGPending(false), 1000)
+          gTimerRef.current = window.setTimeout(() => {
+            setGPending(false)
+            gTimerRef.current = null
+          }, 1000)
           break
 
         case 'c':
@@ -136,9 +154,8 @@ export function useKeyboardShortcuts() {
     document.addEventListener('keydown', handler)
     return () => {
       document.removeEventListener('keydown', handler)
-      if (gTimer) clearTimeout(gTimer)
     }
-  }, [gPending, navigate])
+  }, [navigate])
 
   return { showHelp, setShowHelp, gPending }
 }
