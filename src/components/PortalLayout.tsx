@@ -254,8 +254,7 @@ export default function PortalLayout() {
         onClick={() => setQuickAddOpen(true)}
         className="fixed right-5 z-40 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{
-          // Mobile: clear 56px MobileTabBar + 16px gap + safe area. Desktop: 24px.
-          bottom: 'max(24px, calc(72px + env(safe-area-inset-bottom, 0px)))',
+          bottom: 'var(--fab-stack-1)',
           background: 'var(--teal)',
           color: 'var(--ink-bright, #fff)',
           border: 'none',

@@ -438,7 +438,8 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
         t.id, t.meeting_id ?? null, t.project_id ?? null,
         t.title, t.description ?? null, t.assignee ?? null,
         t.assigned_by ?? null, t.due_date ?? null,
-        t.priority ?? null, t.status ?? null,
+        // Enforce NOT-NULL on required fields — mirrors the single-task API guard (R9-8, DI-8).
+        t.priority ?? 'medium', t.status ?? 'todo',
         t.source ?? 'sync', t.completed ?? 0,
         t.completed_at ?? null, t.completed_by ?? null,
         t.created_at ?? null,

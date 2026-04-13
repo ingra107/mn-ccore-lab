@@ -74,6 +74,23 @@
   --bg-rgb: 255, 255, 255;
   --page-bg: #f5f5f5;
   color-scheme: light dark;
+
+  /* FAB stack — desktop baseline (no MobileTabBar).
+     Three FABs stacked vertically in the bottom-right corner with 16px gaps.
+     Each FAB is 40-48px tall. Desktop starts at 24px from the bottom. */
+  --fab-base: 24px;
+  --fab-gap: 16px;
+  --fab-height: 40px;
+  --fab-stack-1: var(--fab-base);                                                 /* Quick Add */
+  --fab-stack-2: calc(var(--fab-base) + var(--fab-height) + var(--fab-gap));      /* ScrollToTop */
+  --fab-stack-3: calc(var(--fab-base) + (var(--fab-height) + var(--fab-gap)) * 2);/* Quick Capture Inbox */
+}
+
+/* Mobile: lift the whole stack above MobileTabBar (56px) + safe area. */
+@media (max-width: 767px) {
+  :root {
+    --fab-base: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* ── Dark mode variables ── */

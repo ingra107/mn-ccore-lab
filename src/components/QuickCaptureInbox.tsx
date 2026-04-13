@@ -430,9 +430,7 @@ export default function QuickCaptureInbox() {
         data-testid="fab-quick-capture-inbox"
         className="fixed right-5 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
         style={{
-          // Mobile: above MobileTabBar (56px) + Quick Add FAB (44px) + 16px gap each + safe area
-          // Desktop: above Quick Add FAB at 24px + 44px + 8px gap = 76px, +12px = 88px
-          bottom: 'max(88px, calc(136px + env(safe-area-inset-bottom, 0px)))',
+          bottom: 'var(--fab-stack-3)',
           width: 44,
           height: 44,
           borderRadius: 'var(--radius-full)',

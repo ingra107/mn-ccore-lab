@@ -6,7 +6,7 @@
  *   - A read-only mirror div positioned behind it renders colored token spans
  */
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { parseQuickAddInput, type TokenType } from '../lib/parseQuickAdd'
 import { formatShortDate } from '../lib/dateUtils'
 import type { ParsedQuickAdd } from '../lib/parseQuickAdd'
@@ -116,6 +116,19 @@ export default function QuickAddTaskInput({
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mirrorRef   = useRef<HTMLDivElement>(null)
+
+  // Imperative focus-on-mount. The `autoFocus` attribute is unreliable on
+  // iOS/Android when the textarea mounts inside an AnimatePresence-wrapped
+  // modal — the browser discards the focus request because it's outside
+  // the original touch gesture. Running focus() on the next frame after
+  // mount catches the element as soon as it's in the DOM.
+  useEffect(() => {
+    if (!autoFocus) return
+    const id = window.requestAnimationFrame(() => {
+      textareaRef.current?.focus()
+    })
+    return () => window.cancelAnimationFrame(id)
+  }, [autoFocus])
 
   const parsed = parseQuickAddInput(value)
 

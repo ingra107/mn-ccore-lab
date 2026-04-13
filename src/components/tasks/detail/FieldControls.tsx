@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Circle, Flag, Check, FolderKanban,
@@ -308,7 +309,17 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const ref = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+
+  const updatePosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 4, left: rect.left })
+    }
+  }, [])
   const { data: projectList = [] } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
@@ -337,17 +348,32 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
 
   useEffect(() => {
     if (!open) return
+    updatePosition()
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const target = e.target as Node
+      if (
+        buttonRef.current && !buttonRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
+        setOpen(false)
+      }
     }
+    const onScroll = () => setOpen(false)
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
+    window.addEventListener('scroll', onScroll, true)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      window.removeEventListener('scroll', onScroll, true)
+    }
+  }, [open, updatePosition])
 
   return (
     <div className="relative" ref={ref}>
       <button
-        ref={hoverCard.triggerRef as React.RefObject<HTMLButtonElement>}
+        ref={(el) => {
+          buttonRef.current = el
+          ;(hoverCard.triggerRef as React.MutableRefObject<HTMLButtonElement | null>).current = el
+        }}
         onClick={() => setOpen(!open)}
         onMouseEnter={current && !open ? hoverCard.handlers.onMouseEnter : undefined}
         onMouseLeave={current && !open ? hoverCard.handlers.onMouseLeave : undefined}
@@ -377,8 +403,23 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
       {open && (() => {
         const q = search.toLowerCase()
         const filtered = q ? projectList.filter((p) => p.title.toLowerCase().includes(q)) : projectList
-        return (
-        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border min-w-[260px]" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
+        return createPortal(
+        <div
+          ref={dropdownRef}
+          className="rounded-lg border min-w-[260px]"
+          style={{
+            position: 'fixed',
+            top: pos.top,
+            left: pos.left,
+            backgroundColor: 'var(--cream)',
+            borderColor: 'var(--border-subtle)',
+            boxShadow: 'var(--shadow-menu)',
+            zIndex: 'var(--z-toast)' as unknown as number,
+            maxHeight: '320px',
+            overflow: 'hidden',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="px-2 py-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
             <input
               ref={searchRef}
@@ -421,7 +462,8 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
               <div className="px-3 py-2 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No matches</div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
         )
       })()}
     </div>

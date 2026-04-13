@@ -563,8 +563,7 @@ export default function Grants() {
                     className="sm:grid items-center hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                     style={{
                       gridTemplateColumns: 'minmax(200px, 2fr) 120px 100px 80px minmax(120px, 1fr) 100px',
-                      height: 'var(--row-height)',
-                      overflow: 'hidden',
+                      minHeight: 'var(--row-height)',
                       padding: `var(--row-padding-y, 10px) 16px`,
                       borderBottom: '1px solid var(--border-subtle)',
                     }}
