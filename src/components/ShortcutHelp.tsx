@@ -10,21 +10,20 @@ interface ShortcutHelpProps {
 
 const shortcuts = [
   {
-    category: 'Navigation (G + key)',
+    category: 'Navigation (press G, then key — 1s window)',
     items: [
       { keys: 'G D', action: 'Go to Dashboard' },
-      { keys: 'G H', action: 'Go to My Hub' },
-      { keys: 'G T', action: 'Go to Tasks' },
+      { keys: 'G T', action: 'Go to My Tasks' },
       { keys: 'G P', action: 'Go to Projects' },
       { keys: 'G M', action: 'Go to Meetings' },
-      { keys: 'G C', action: 'Go to Calendar' },
+      { keys: 'G E', action: 'Go to Deadlines' },
       { keys: 'G I', action: 'Go to Ideas' },
-      { keys: 'G L', action: 'Go to Research Digest' },
+      { keys: 'G S', action: 'Go to Settings' },
+      { keys: 'G C', action: 'Go to Calendar' },
+      { keys: 'G H', action: 'Go to Home' },
+      { keys: 'G R', action: 'Go to Research Digest' },
       { keys: 'G G', action: 'Go to Grants' },
-      { keys: 'G K', action: 'Go to Deadlines' },
-      { keys: 'G Y', action: 'Go to My Tasks' },
       { keys: 'G A', action: 'Go to Activity' },
-      { keys: 'G S', action: 'Go to Search' },
     ],
   },
   {

@@ -4,14 +4,26 @@ import { useNavigate } from 'react-router-dom'
 /**
  * Global keyboard shortcuts for the portal.
  *
- * Navigation (G + key):
- *   G D = Dashboard, G H = My Hub, G T = Tasks, G P = Projects
- *   G M = Meetings, G C = Calendar, G I = Ideas, G L = Research Digest
+ * Navigation chords (Linear-style, 1s window):
+ *   G D = Dashboard      G T = My Tasks       G P = Projects
+ *   G M = Meetings       G E = Deadlines      G I = Ideas
+ *   G S = Settings       G C = Calendar       G H = Home
+ *   G R = Research Digest
+ *
+ * Legacy chord aliases (preserved for muscle memory):
+ *   G Y = My Tasks       G L = Digest         G K = Deadlines
+ *   G A = Activity       G G = Grants
  *
  * Actions:
- *   C = Create task (on tasks page)
+ *   C = Create task
  *   ? = Show shortcut help
  *   / = Focus search (Cmd+K)
+ *   F = Toggle filters / focus mode
+ *   [ = Toggle sidebar
+ *
+ * Implementation: leader-key state machine. Press G, then the follow-up
+ * key within 1000ms. Escape, unknown key, or timeout clears the pending
+ * leader. Ignored while typing in inputs/textarea/contenteditable.
  */
 
 export function useKeyboardShortcuts() {
@@ -32,25 +44,37 @@ export function useKeyboardShortcuts() {
       // Don't trigger with modifier keys (except for Cmd+K which CommandPalette handles)
       if (e.metaKey || e.ctrlKey || e.altKey) return
 
-      // G + key navigation
+      // Escape clears any pending leader chord immediately
+      if (e.key === 'Escape' && gPending) {
+        setGPending(false)
+        if (gTimer) clearTimeout(gTimer)
+        return
+      }
+
+      // G + key navigation (chord state machine)
       if (gPending) {
         setGPending(false)
         if (gTimer) clearTimeout(gTimer)
 
+        // Spec chords (F-07) + preserved legacy aliases
         const navMap: Record<string, string> = {
+          // F-07 spec
           d: '/dashboard',
-          h: '/personal',
-          t: '/tasks',
-          y: '/my-tasks',
+          t: '/my-tasks',
           p: '/projects',
           m: '/meetings',
-          c: '/calendar',
+          e: '/deadlines',
           i: '/ideas',
+          s: '/settings',
+          c: '/calendar',
+          h: '/',
+          r: '/digest',
+          // Legacy aliases (backward compat)
+          y: '/my-tasks',
           l: '/digest',
           g: '/grants',
           k: '/deadlines',
           a: '/activity',
-          s: '/search',
         }
 
         const path = navMap[e.key.toLowerCase()]
