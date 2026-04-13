@@ -602,7 +602,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Contextual alerts (conditional — quiet by default) */}
+        {/* Contextual alerts (conditional — quiet by default)
+            CLS fix R7: reserve 56px slot so async mount of meeting/regulatory alerts
+            doesn't shift the bento grid below. Covers max-one-alert common case. */}
+        <div style={{ minHeight: '56px', contain: 'layout' }}>
         {upcomingMeeting && (
           <Link
             to={`/meetings/${upcomingMeeting.id}/prep`}
@@ -654,6 +657,7 @@ export default function Dashboard() {
             </span>
           </Link>
         )}
+        </div>
 
         {/* Pinned Cards — always at the top */}
         {pinnedVisibleCards.length > 0 && (
@@ -834,11 +838,12 @@ export default function Dashboard() {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
           /* CLS fix (C8): fixed row min prevents cards from growing as data arrives */
-          grid-auto-rows: minmax(240px, auto);
+          grid-auto-rows: 260px;
           gap: 1.25rem;
           max-width: 100%;
           overflow: hidden;
-          min-height: 240px;
+          min-height: 260px;
+          contain: layout;
         }
 
         .bento-grid > * {
@@ -863,7 +868,7 @@ export default function Dashboard() {
         @media (max-width: 1024px) {
           .bento-grid {
             grid-template-columns: repeat(2, 1fr);
-            grid-auto-rows: minmax(180px, auto);
+            grid-auto-rows: 200px;
           }
           .bento-span-2x2 {
             grid-column: span 2;
@@ -881,7 +886,7 @@ export default function Dashboard() {
         @media (max-width: 640px) {
           .bento-grid {
             grid-template-columns: 1fr;
-            grid-auto-rows: minmax(160px, auto);
+            grid-auto-rows: 180px;
             gap: 0.75rem;
           }
           .bento-span-2,

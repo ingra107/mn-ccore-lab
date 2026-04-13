@@ -792,7 +792,7 @@ export default function Meetings() {
         </div>
 
         {/* Right panel: meeting detail */}
-        <div className="meetings-detail-panel" style={{ overflowY: 'auto', padding: 'var(--sp-xl)', minHeight: 600 }}>
+        <div className="meetings-detail-panel" style={{ overflowY: 'auto', padding: 'var(--sp-xl)', minHeight: 'calc(100vh - 240px)', contain: 'layout' }}>
           {/* M-34: mobile back button */}
           <button
             type="button"
@@ -803,7 +803,7 @@ export default function Meetings() {
             <ChevronLeft size={16} /> Back to meetings
           </button>
           {selectedMeeting ? (
-            <motion.div key={selectedMeeting.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+            <motion.div key={selectedMeeting.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
               <MeetingDetail meeting={selectedMeeting} onToggleAction={handleToggleAction} />
 
               <div style={{ marginTop: '2.5rem', paddingTop: '2rem', borderTop: '1px solid var(--border-subtle)' }}>

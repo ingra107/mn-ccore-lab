@@ -242,9 +242,10 @@ export default function Publications() {
         )}
       </section>
 
-      {/* Key Publications — theme-aware surface tokens, not hardcoded dark (C-13) */}
+      {/* Key Publications — theme-aware surface tokens. CLS R7: always rendered w/ minHeight slot */}
+      <div style={{ minHeight: '200px' }}>
       {keyPubs.length > 0 && (
-        <div style={{ background: 'var(--surface-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div style={{ background: 'var(--surface-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', minHeight: '200px', contain: 'layout' }}>
           <section className="py-6 sm:py-8 content-container">
             <div className="flex items-center gap-2 mb-4">
               <Award size={16} style={{ color: 'var(--gold)' }} aria-hidden="true" />
@@ -297,6 +298,7 @@ export default function Publications() {
           </section>
         </div>
       )}
+      </div>
 
       <SectionDivider />
 

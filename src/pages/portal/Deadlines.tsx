@@ -278,7 +278,8 @@ export default function Deadlines() {
         </div>
       </PageHeader>
 
-      {/* Urgent deadline banner */}
+      {/* Urgent deadline banner — CLS fix R7: reserve 72px slot */}
+      <div style={{ minHeight: '72px', marginTop: 'var(--sp-md)', contain: 'layout' }}>
       {(() => {
         const nextUrgent = [...overdue, ...thisWeek].filter(d => d.status !== 'done' && d.status !== 'completed')[0]
         if (!nextUrgent) return null
@@ -288,7 +289,7 @@ export default function Deadlines() {
           : nextUrgent.daysUntil === 0 ? 'Due today' : nextUrgent.daysUntil === 1 ? 'Due tomorrow' : `${nextUrgent.daysUntil}d away`
         return (
           <div
-            className="mt-3 flex items-center gap-3 px-4 py-3 rounded-lg border"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg border"
             style={{
               background: isOver ? 'var(--maroon-hover)' : 'var(--teal-hover)',
               borderColor: isOver ? 'rgba(122,0,25,0.2)' : 'rgba(45,138,138,0.2)',
@@ -310,6 +311,7 @@ export default function Deadlines() {
           </div>
         )
       })()}
+      </div>
 
       {/* Content — CLS fix (C8 R6): reserve viewport height AND render a skeleton whose
           structural layout (TableContainer + column header + N rows at row-height) mirrors the
