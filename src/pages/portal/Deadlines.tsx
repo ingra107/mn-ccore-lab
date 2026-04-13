@@ -451,7 +451,7 @@ function DeadlineItemRow({ item, onStatusChange, onOpenDetail, projectMap, selec
     <div style={{ borderBottom: '1px solid var(--border-subtle)', opacity: isDone ? 0.45 : 1 }}>
       {/* Desktop row — hidden on mobile */}
       <div
-        className="hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+        className="deadline-list-row hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
         style={{
           gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px',
           padding: `var(--row-padding-y, 8px) 16px`,
