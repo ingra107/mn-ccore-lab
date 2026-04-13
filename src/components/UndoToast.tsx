@@ -171,12 +171,18 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
             )}
             <button
               onClick={() => dismiss(toast.id)}
+              aria-label="Close"
               style={{
                 background: 'none',
                 border: 'none',
                 color: 'rgba(255,255,255,0.4)',
                 cursor: 'pointer',
-                padding: '2px',
+                padding: 'var(--sp-xs)',
+                minHeight: 44,
+                minWidth: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               <X size={14} />

@@ -230,7 +230,7 @@ export function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onS
           className="flex-1 text-sm outline-none bg-transparent"
           style={{ color: 'var(--ink)', border: 'none' }}
         />
-        <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0 }}>
+        <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)', minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
           <X size={14} />
         </button>
       </div>

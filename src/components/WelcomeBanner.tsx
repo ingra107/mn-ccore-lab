@@ -37,6 +37,7 @@ export default function WelcomeBanner() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)', flexShrink: 0 }}>
           <Link
             to="/personal"
+            className="portal-footer-link"
             style={{
               fontSize: 'var(--text-small)',
               color: 'var(--teal)',

@@ -273,7 +273,7 @@ function MyTasksColumn({
         </div>
         <Link
           to="/tasks"
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 portal-footer-link"
           style={{ fontSize: 'var(--text-label)', color: 'var(--gold)', textDecoration: 'none' }}
         >
           View all <ArrowRight size={11} />
@@ -328,7 +328,7 @@ function MyTasksColumn({
       {tasks.length > MAX_TASKS && (
         <Link
           to="/tasks"
-          className="flex items-center gap-1 pt-2 mt-1"
+          className="flex items-center gap-1 pt-2 mt-1 portal-footer-link"
           style={{
             fontSize: 'var(--text-label)',
             color: 'var(--slate)',
@@ -459,7 +459,7 @@ function CompactCard({
         {viewAllTo && (
           <Link
             to={viewAllTo}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 portal-footer-link"
             style={{ fontSize: 'var(--text-label)', color: 'var(--gold)', textDecoration: 'none' }}
           >
             {viewAllLabel} <ArrowRight size={10} />
@@ -868,6 +868,8 @@ export default function Personal() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    minHeight: 44,
+                    minWidth: 44,
                     padding: '2px 6px',
                     borderRadius: 'var(--radius-sm)',
                     border: '1px solid color-mix(in srgb, var(--maroon) 25%, transparent)',
@@ -900,7 +902,7 @@ export default function Personal() {
             <Link
               key={a.label}
               to={a.to}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border portal-footer-link"
               style={{
                 fontSize: 'var(--text-label)',
                 fontWeight: 500,

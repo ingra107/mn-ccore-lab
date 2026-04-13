@@ -117,7 +117,7 @@ function ActionBoardCard() {
           )}
         </div>
 
-        <Link to="/tasks" className="flex items-center gap-1 mt-3 pt-2"
+        <Link to="/tasks" className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
           style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}>
           View all tasks <ArrowRight size={11} />
         </Link>

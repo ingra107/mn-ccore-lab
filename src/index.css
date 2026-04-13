@@ -1148,6 +1148,41 @@ a:hover {
   }
 }
 
+/* C7 R5 — Dismiss/close buttons + inline links + portal action links (WCAG 2.5.5) */
+@media (max-width: 768px) {
+  /* Close / dismiss icon-only buttons (X buttons excluded from R3 rule) */
+  button[aria-label="Close"],
+  button[aria-label="Dismiss welcome banner"],
+  button[aria-label="Dismiss sign-in banner"],
+  button[aria-label="Close panel"],
+  button[aria-label="Close preview"],
+  button[aria-label="Close quick add"],
+  button[title="Dismiss"] {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Inline text links that need tap area */
+  a[href="/api/auth/login"],
+  a[href^="/api/auth/login"] {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Portal "View all" + "Get started" footer links */
+  a[class*="view-all"],
+  .dashboard-view-all,
+  .portal-footer-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
 /* Personal page — two-column grid, stacks on mobile (C-08) */
 .personal-grid {
   display: grid;

@@ -134,7 +134,7 @@ function MyItemsCard() {
         {/* View all link */}
         <Link
           to="/my-items"
-          className="inline-flex items-center gap-1 mt-auto pt-2"
+          className="inline-flex items-center gap-1 mt-auto pt-2 portal-footer-link"
           style={{
             fontSize: '10px',
             color: 'var(--gold)',

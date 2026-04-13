@@ -182,7 +182,7 @@ function ProjectHealthCard() {
         {/* Footer link */}
         <Link
           to="/projects"
-          className="flex items-center gap-1 mt-3 pt-2"
+          className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
           style={{
             fontSize: 'var(--label-size)',
             color: 'var(--gold)',

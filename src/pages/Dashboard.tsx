@@ -576,7 +576,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <Link
               to="/tasks?create=true"
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors portal-footer-link"
               style={{ color: 'var(--ink-bright, #fff)', backgroundColor: 'var(--teal)', textDecoration: 'none' }}
             >
               <Plus size={12} />
@@ -584,7 +584,7 @@ export default function Dashboard() {
             </Link>
             <Link
               to="/meetings"
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5 portal-footer-link"
               style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
             >
               <CalendarPlus size={12} />
@@ -592,7 +592,7 @@ export default function Dashboard() {
             </Link>
             <Link
               to="/ideas?create=true"
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5 portal-footer-link"
               style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
             >
               <FolderPlus size={12} />
