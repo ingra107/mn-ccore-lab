@@ -128,6 +128,19 @@ export default function SearchPage() {
         )}
       </div>
 
+      {/* Voice hint — always shown when no active query */}
+      {!query && (
+        <div style={{
+          marginTop: 'var(--sp-lg)',
+          textAlign: 'center',
+          color: 'var(--slate)',
+          fontSize: 'var(--text-small)',
+          opacity: 0.5,
+        }}>
+          Search across tasks, projects, people, decisions, and meeting notes.
+        </div>
+      )}
+
       {/* Recent searches — shown when no active query */}
       {!query && recentSearches.length > 0 && (
         <div className="mt-4">
