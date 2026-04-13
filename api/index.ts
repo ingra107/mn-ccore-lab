@@ -8,7 +8,7 @@ import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, hand
 // ── Route modules ──────────────────────────────────────────
 import { handleTasks, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask } from './routes/tasks';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
-import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep } from './routes/meetings';
+import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline } from './routes/publications';
 import { handleTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
 import { handleDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper } from './routes/digest';
@@ -48,14 +48,14 @@ import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleG
 import { handleMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone, handleCompleteMenteeMilestone } from './routes/mentee-milestones';
 import { handleGetCascade, handleGetImpact, handleGetAllCascades, handleCreateDeadlineDependency, handleDeleteDeadlineDependency } from './routes/deadline-cascade';
 import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, handleDeleteSubmission, handleGetActiveSubmissions } from './routes/submissions';
-import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRenewRegulatoryItem } from './routes/regulatory';
+import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRenewRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
 import { handleGrantMilestones, handleUpcomingGrantMilestones, handleCreateGrantMilestone, handleUpdateGrantMilestone, handleCompleteGrantMilestone } from './routes/grant-milestones';
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
 import { handleGetEmailDrafts, handleGetPendingDrafts, handleSyncEmailDrafts } from './routes/email-drafts';
 import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeleteProjectDocument } from './routes/project-documents';
 import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
-import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail } from './routes/digest-email';
+import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail, handleSendDailyDigests } from './routes/digest-email';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -449,6 +449,11 @@ export default {
         if (url.pathname === '/api/regulatory/expiring') {
           return await handleGetExpiringItems(url, env);
         }
+        // GET /api/regulatory/:id/ics — .ics calendar invite for a single item
+        const regulatoryIcsMatch = url.pathname.match(/^\/api\/regulatory\/([^/]+)\/ics$/);
+        if (request.method === 'GET' && regulatoryIcsMatch) {
+          return await handleRegulatoryIcs(regulatoryIcsMatch[1], env);
+        }
         if (url.pathname === '/api/regulatory') {
           return await handleGetRegulatoryItems(url, env);
         }
@@ -616,6 +621,12 @@ export default {
         // POST /api/action-items — backward compat alias
         if (request.method === 'POST' && path === '/api/action-items') {
           return withVersionBump(await handleCreateTask(request, user, env));
+        }
+
+        // GET /api/meetings/:id/generate-agenda — autogenerate agenda from carried-forward + open items
+        const generateAgendaMatch = path.match(/^\/api\/meetings\/([^/]+)\/generate-agenda$/);
+        if (request.method === 'GET' && generateAgendaMatch) {
+          return await handleGenerateAgenda(generateAgendaMatch[1], env);
         }
 
         // GET /api/meetings/:id/prep — facilitator prep view
@@ -1118,6 +1129,11 @@ export default {
         // POST /api/digest-email/send — generate and send via Resend
         if (request.method === 'POST' && path === '/api/digest-email/send') {
           return await handleSendDigestEmail(request, env);
+        }
+
+        // POST /api/digest-email/daily — send coordinator daily brief to all directors + coordinators
+        if (request.method === 'POST' && path === '/api/digest-email/daily') {
+          return await handleSendDailyDigests(env);
         }
 
         // ── Email drafts sync ──
@@ -1637,5 +1653,13 @@ export default {
     }
 
     console.log(`[Pulse] Done — sent ${sent} emails`);
+
+    // ── Daily Coordinator Digest (6 AM CT = 11:00 UTC during DST) ──
+    console.log('[DailyDigest] Triggering coordinator daily brief...');
+    try {
+      await handleSendDailyDigests(env);
+    } catch (e) {
+      console.log(`[DailyDigest] Failed (non-fatal): ${e}`);
+    }
   },
 };

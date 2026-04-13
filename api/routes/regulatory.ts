@@ -1,6 +1,16 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
 
+// ── .ics helpers ─────────────────────────────────────────────────────────────
+
+function formatIcsDate(dateStr: string): string {
+  return dateStr.replace(/[^0-9]/g, '').slice(0, 8);
+}
+
+function escapeIcs(s: string): string {
+  return s.replace(/[\\;,]/g, '\\$&').replace(/\n/g, '\\n');
+}
+
 const VALID_TYPES = ['irb', 'irb_amendment', 'dua', 'dta', 'coi', 'training', 'other'] as const;
 const VALID_STATUSES = ['active', 'expired', 'pending', 'exempt'] as const;
 
@@ -125,6 +135,52 @@ export async function handleUpdateRegulatoryItem(id: string, request: Request, u
   const updated = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first();
   if (!updated) return error('Regulatory item not found', 404);
   return json({ data: updated });
+}
+
+// GET /api/regulatory/:id/ics — generate .ics calendar invite for renewal
+export async function handleRegulatoryIcs(id: string, env: Env): Promise<Response> {
+  const item = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first() as Record<string, any> | null;
+  if (!item) return error('Regulatory item not found', 404);
+
+  const renewalDate = (item.renewal_due || item.expiration_date) as string | null;
+  if (!renewalDate) return error('No renewal date on this item', 400);
+
+  const uid = `regulatory-${id}@mn-ccore-lab.pages.dev`;
+  const dtstart = formatIcsDate(renewalDate);
+  const now = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 15) + 'Z';
+  const summary = `Renew: ${item.title}`;
+  const description = `${item.item_type} renewal for ${item.title}. Protocol: ${item.protocol_number || 'N/A'}. Notes: ${item.notes || 'N/A'}.`;
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//MN-CCORE Lab Hub//Regulatory//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${now}`,
+    `DTSTART;VALUE=DATE:${dtstart}`,
+    `DTEND;VALUE=DATE:${dtstart}`,
+    `SUMMARY:${escapeIcs(summary)}`,
+    `DESCRIPTION:${escapeIcs(description)}`,
+    'STATUS:CONFIRMED',
+    'BEGIN:VALARM',
+    'TRIGGER:-P60D',
+    'ACTION:DISPLAY',
+    `DESCRIPTION:Regulatory renewal approaching: ${escapeIcs(String(item.title))}`,
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  return new Response(ics, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/calendar; charset=utf-8',
+      'Content-Disposition': `attachment; filename="regulatory-${id}.ics"`,
+    },
+  });
 }
 
 // POST /api/regulatory/:id/renew — archive old item, create new with updated dates

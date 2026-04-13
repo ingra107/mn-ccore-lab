@@ -816,24 +816,76 @@ export default function Personal() {
 
       {/* Regulatory Alert Strip -- M-25: visible near top of Personal, not buried */}
       {expiringRegulatory.length > 0 && (
-        <Link
-          to="/projects"
-          className="flex items-center gap-3 mt-3 px-4 py-2.5 rounded-xl"
+        <div
+          className="mt-3 rounded-xl"
           style={{
             background: 'var(--maroon-hover)',
             border: '1px solid color-mix(in srgb, var(--maroon) 20%, transparent)',
-            textDecoration: 'none',
-            transition: 'background-color var(--duration-normal) ease, border-color var(--duration-normal) ease',
           }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'color-mix(in srgb, var(--maroon) 12%, transparent)' }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--maroon-hover)' }}
         >
-          <AlertTriangle size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
-          <span style={{ fontSize: 'var(--text-label)', fontWeight: 500, color: 'var(--maroon)', flex: 1 }}>
-            {expiringRegulatory.length} regulatory item{expiringRegulatory.length > 1 ? 's' : ''} expiring within 60 days
-          </span>
-          <span style={{ fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>View details &rarr;</span>
-        </Link>
+          {/* Summary row */}
+          <Link
+            to="/projects"
+            className="flex items-center gap-3 px-4 py-2.5"
+            style={{ textDecoration: 'none', borderRadius: 'var(--radius-xl)' }}
+          >
+            <AlertTriangle size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+            <span style={{ fontSize: 'var(--text-label)', fontWeight: 500, color: 'var(--maroon)', flex: 1 }}>
+              {expiringRegulatory.length} regulatory item{expiringRegulatory.length > 1 ? 's' : ''} expiring within 60 days
+            </span>
+            <span style={{ fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>View details &rarr;</span>
+          </Link>
+          {/* Per-item rows with .ics download */}
+          <div
+            style={{
+              borderTop: '1px solid color-mix(in srgb, var(--maroon) 12%, transparent)',
+              padding: 'var(--sp-xs) var(--sp-lg) var(--sp-sm)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--sp-xs)',
+            }}
+          >
+            {expiringRegulatory.slice(0, 5).map((reg: any) => (
+              <div
+                key={reg.id}
+                className="flex items-center gap-2"
+                style={{ fontSize: 'var(--text-small)', color: 'var(--muted)' }}
+              >
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {reg.title}
+                  {reg.days_remaining != null && (
+                    <span style={{ marginLeft: 6, color: reg.days_remaining <= 14 ? 'var(--maroon)' : 'var(--muted)', fontWeight: 500 }}>
+                      ({reg.days_remaining}d)
+                    </span>
+                  )}
+                </span>
+                <a
+                  href={`/api/regulatory/${reg.id}/ics`}
+                  download={`regulatory-${reg.id}.ics`}
+                  title="Download calendar reminder (60-day alert)"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '2px 6px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid color-mix(in srgb, var(--maroon) 25%, transparent)',
+                    color: 'var(--maroon)',
+                    opacity: 0.7,
+                    textDecoration: 'none',
+                    flexShrink: 0,
+                    transition: 'opacity var(--duration-fast) ease',
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = '1' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = '0.7' }}
+                >
+                  <Calendar size={12} />
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Quick Actions + Recently Viewed */}
