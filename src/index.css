@@ -634,12 +634,27 @@ a:hover {
 
 /* ── Global row height enforcement (density toggle) ── */
 /* Covers all data table rows: task grid, ideas, decisions, projects, manuscripts, deadlines */
-.table-container [role="row"]:not([aria-rowindex="1"]),
-.project-list-row,
-.manuscript-list-row,
-.deadline-list-row {
-  height: var(--row-height);
-  box-sizing: border-box;
+/* Desktop only — at mobile (<768px) rows switch to stacked card layout that needs to grow */
+@media (min-width: 768px) {
+  .table-container [role="row"]:not([aria-rowindex="1"]),
+  .project-list-row,
+  .manuscript-list-row,
+  .deadline-list-row {
+    height: var(--row-height);
+    box-sizing: border-box;
+  }
+}
+
+/* Mobile: allow rows to grow with their content (stacked cards need ≥72px) */
+@media (max-width: 767px) {
+  .table-container [role="row"]:not([aria-rowindex="1"]),
+  .project-list-row,
+  .manuscript-list-row,
+  .deadline-list-row {
+    height: auto;
+    min-height: var(--row-height);
+    box-sizing: border-box;
+  }
 }
 
 /* ── Card base ── */

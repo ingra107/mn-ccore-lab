@@ -893,6 +893,19 @@ export default function Dashboard() {
             padding: 1rem 1rem !important;
             border-radius: 12px !important;
           }
+          /* R4 hotfix: tab pills stack below greeting + scroll horizontally.
+             Prevents the tab row from crashing into the greeting at 375-640px. */
+          .dashboard-tabs {
+            order: 10;
+            width: 100%;
+            overflow-x: auto;
+            flex-wrap: nowrap !important;
+            scrollbar-width: none;
+          }
+          .dashboard-tabs::-webkit-scrollbar { display: none; }
+          .dashboard-tabs > button {
+            flex-shrink: 0;
+          }
         }
 
         /* Dark mode card overrides */

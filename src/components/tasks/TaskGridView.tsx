@@ -291,6 +291,8 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
 
   // Read row height from CSS variable (density-aware)
   const [rowHeight, setRowHeight] = useState(44)
+  // R4 hotfix: mobile viewport forces flex-wrap rows → tall stacked layout
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
   useEffect(() => {
     const el = parentRef.current
     if (!el) return
@@ -305,17 +307,25 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
     return () => observer.disconnect()
   }, [])
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
-  // Estimate row size: expanded rows are taller to account for subtask section
+  // Estimate row size: expanded rows are taller to account for subtask section.
+  // Mobile rows use flex-wrap and stack ≥96px tall — use that as base.
+  const mobileRowEstimate = 96
   const estimateSize = useCallback(
     (index: number) => {
       const task = sorted[index]
+      const base = isMobile ? mobileRowEstimate : rowHeight
       if (task && expandedTasks.has(task.id)) {
-        return rowHeight + 160 // base row + estimated subtask section
+        return base + 160 // base row + estimated subtask section
       }
-      return rowHeight
+      return base
     },
-    [sorted, expandedTasks, rowHeight],
+    [sorted, expandedTasks, rowHeight, isMobile],
   )
 
   const virtualizer = useVirtualizer({
@@ -814,7 +824,7 @@ function TaskGridRow({
       style={{
         ...colStyle,
         padding: '0 var(--sp-lg)',
-        height: 'var(--row-height)',
+        minHeight: 'var(--row-height)',
         boxSizing: 'border-box' as const,
         fontSize: 'var(--cell-font-size)',
         borderBottom: '1px solid var(--border-subtle)',
