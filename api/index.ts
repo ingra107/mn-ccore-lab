@@ -234,6 +234,18 @@ export default {
           return await handleGetAgendaItems(agendaGet[1], env);
         }
 
+        // GET /api/meetings/:id/generate-agenda — autogenerate agenda from carried-forward + open items
+        const generateAgendaGet = url.pathname.match(/^\/api\/meetings\/([^/]+)\/generate-agenda$/);
+        if (generateAgendaGet) {
+          return await handleGenerateAgenda(generateAgendaGet[1], env);
+        }
+
+        // GET /api/meetings/:id/prep — facilitator prep view
+        const meetingPrepGet = url.pathname.match(/^\/api\/meetings\/([^/]+)\/prep$/);
+        if (meetingPrepGet) {
+          return await handleMeetingPrep(meetingPrepGet[1], env);
+        }
+
         const projectUpdatesGet = url.pathname.match(/^\/api\/projects\/([^/]+)\/updates$/);
         if (projectUpdatesGet) {
           return await handleGetProjectUpdates(projectUpdatesGet[1], env);
@@ -621,18 +633,6 @@ export default {
         // POST /api/action-items — backward compat alias
         if (request.method === 'POST' && path === '/api/action-items') {
           return withVersionBump(await handleCreateTask(request, user, env));
-        }
-
-        // GET /api/meetings/:id/generate-agenda — autogenerate agenda from carried-forward + open items
-        const generateAgendaMatch = path.match(/^\/api\/meetings\/([^/]+)\/generate-agenda$/);
-        if (request.method === 'GET' && generateAgendaMatch) {
-          return await handleGenerateAgenda(generateAgendaMatch[1], env);
-        }
-
-        // GET /api/meetings/:id/prep — facilitator prep view
-        const meetingPrepMatch = path.match(/^\/api\/meetings\/([^/]+)\/prep$/);
-        if (request.method === 'GET' && meetingPrepMatch) {
-          return await handleMeetingPrep(meetingPrepMatch[1], env);
         }
 
         // POST /api/meetings/:id/notes — update meeting notes
