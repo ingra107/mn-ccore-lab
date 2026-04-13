@@ -66,7 +66,7 @@ export default function MenteeMilestones() {
     type: filterType || undefined,
   })
   const { data: overview = [], isLoading: overviewLoading } = useMenteeOverview()
-  const { data: activityLog = [] } = useActivity(100)
+  const { data: activityLog = [] } = useActivity(500)
   const updateMilestone = useUpdateMenteeMilestone()
   const { showUndo } = useUndoToast()
 
