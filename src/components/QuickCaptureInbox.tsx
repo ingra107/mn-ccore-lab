@@ -271,6 +271,7 @@ export default function QuickCaptureInbox() {
                 onClick={() => setTag(t.value)}
                 style={{
                   padding: '4px 10px',
+                  minHeight: 44,
                   borderRadius: 'var(--radius-full)',
                   border: '1px solid',
                   borderColor: active ? 'var(--teal)' : 'var(--border-subtle)',
@@ -429,11 +430,11 @@ export default function QuickCaptureInbox() {
         data-testid="fab-quick-capture-inbox"
         className="fixed right-5 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
         style={{
-          // Sits above MobileTabBar (56px) + StatusBar (24px) + existing FAB (~10px tall stack)
-          // Stacks on top of the task FAB which is at bottom: calc(24px + 12px)
-          bottom: 'calc(24px + 12px + 48px + env(safe-area-inset-bottom, 0px))',
-          width: 40,
-          height: 40,
+          // Mobile: above MobileTabBar (56px) + Quick Add FAB (44px) + 16px gap each + safe area
+          // Desktop: above Quick Add FAB at 24px + 44px + 8px gap = 76px, +12px = 88px
+          bottom: 'max(88px, calc(136px + env(safe-area-inset-bottom, 0px)))',
+          width: 44,
+          height: 44,
           borderRadius: 'var(--radius-full)',
           background: 'var(--cream)',
           color: 'var(--teal)',

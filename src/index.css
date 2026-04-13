@@ -5,7 +5,7 @@
 :root {
   /* Colors — OKLCH for perceptual uniformity + dark mode via lightness math */
   --ink: oklch(0.15 0.02 250);           /* #0f1923 */
-  --ink-bright: oklch(0 0 0);            /* #000000 — stronger than --ink for emphasis in light mode */
+  --ink-bright: oklch(1 0 0);            /* #ffffff — white fill on dark surfaces (hero, badges, CTAs) */
   --slate: oklch(0.35 0.03 230);         /* #2c3e50 */
   --gold: oklch(0.73 0.12 85);           /* #c9a84c */
   --gold-light: oklch(0.95 0.01 85);     /* #f0efe8 */
