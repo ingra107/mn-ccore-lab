@@ -29,3 +29,10 @@ playwright-report/
 
 # Generated SQL (contains brain.db data, regenerated on demand)
 scripts/sync-tasks.sql
+
+# Audit scratch — never track
+.audit-scratch/
+test_create_task.txt
+test_run*.txt
+test_sidebar.txt
+test_views.txt
