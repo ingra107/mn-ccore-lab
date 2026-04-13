@@ -1,0 +1,54 @@
+{
+  "manuscripts": {
+    "hasStageColumn": true,
+    "hasAgeInStage": false,
+    "hasLastActivity": false,
+    "visibleColumns": []
+  },
+  "meetingDetail": {
+    "hasCarriedForward": true,
+    "hasPrepView": false,
+    "hasActionItems": true,
+    "hasAttendees": true,
+    "hasLinkedProjects": false,
+    "hasDecisions": true,
+    "bodyLen": 3371
+  },
+  "personal": {
+    "headings": [
+      {
+        "tag": "H1",
+        "text": "My Hub",
+        "y": 88
+      }
+    ]
+  },
+  "regulatory": {
+    "irbMentioned": false,
+    "regulatoryMentioned": false,
+    "expirationWarning": false
+  },
+  "piAnalytics": {
+    "hasCopyReport": false,
+    "hasPrint": false,
+    "hasExport": false,
+    "topButtons": [
+      "Collapse",
+      "Search...\n⌘K",
+      "Customize",
+      "Overview",
+      "Projects",
+      "People",
+      "Deadlines",
+      "Show 24 healthy projects",
+      "? for shortcuts"
+    ],
+    "renders": true
+  },
+  "manuscriptDetail": {
+    "url": "/projects/mesfin-k23-ihca-survivability-calculator",
+    "tabs": [],
+    "hasRevisionTracker": true,
+    "hasTimeline": true
+  }
+}

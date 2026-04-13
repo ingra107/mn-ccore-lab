@@ -1,0 +1,4438 @@
+{
+  "375": [
+    {
+      "url": "/dashboard",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 130,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "a",
+              "text": "14 overdue",
+              "w": 71,
+              "h": 19
+            },
+            {
+              "tag": "button",
+              "text": "Customize",
+              "w": 96,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 10,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Overview",
+              "w": 79,
+              "h": 27
+            },
+            {
+              "tag": "button",
+              "text": "Projects",
+              "w": 71,
+              "h": 27
+            },
+            {
+              "tag": "button",
+              "text": "People",
+              "w": 63,
+              "h": 27
+            },
+            {
+              "tag": "button",
+              "text": "Deadlines",
+              "w": 80,
+              "h": 27
+            },
+            {
+              "tag": "a",
+              "text": "Get Started",
+              "w": 112,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Dismiss",
+              "w": 22,
+              "h": 22
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 278,
+              "h": 21
+            },
+            {
+              "tag": "a",
+              "text": "Task",
+              "w": 64,
+              "h": 30
+            },
+            {
+              "tag": "a",
+              "text": "Meeting",
+              "w": 85,
+              "h": 32
+            }
+          ],
+          "smallCount": 52
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/my-tasks",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 426,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "New Task",
+              "w": 119,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 69,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "More views",
+              "w": 109,
+              "h": 30
+            },
+            {
+              "tag": "select",
+              "text": "No Grouping\nDue Date\nPriority\nProject\nSt",
+              "w": 104,
+              "h": 26
+            },
+            {
+              "tag": "select",
+              "text": "Priority\nDue Date\nTitle",
+              "w": 85,
+              "h": 26
+            },
+            {
+              "tag": "button",
+              "text": "Show 533 done",
+              "w": 118,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Relaxed",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "a",
+              "text": "Sign in",
+              "w": 44,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "Dismiss sign-in banner",
+              "w": 18,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "Mine",
+              "w": 52,
+              "h": 27
+            }
+          ],
+          "smallCount": 125
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/personal",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 630,
+          "winW": 630,
+          "bodyW": 629
+        },
+        "touch": {
+          "total": 55,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 70,
+              "h": 28
+            },
+            {
+              "tag": "a",
+              "text": "Sign in",
+              "w": 41,
+              "h": 17
+            },
+            {
+              "tag": "a",
+              "text": "New Task",
+              "w": 93,
+              "h": 32
+            },
+            {
+              "tag": "a",
+              "text": "Submit Idea",
+              "w": 107,
+              "h": 32
+            },
+            {
+              "tag": "a",
+              "text": "Ask a Question",
+              "w": 123,
+              "h": 32
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 344,
+              "h": 29
+            },
+            {
+              "tag": "a",
+              "text": "View all",
+              "w": 55,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "Cycle status",
+              "w": 13,
+              "h": 13
+            },
+            {
+              "tag": "button",
+              "text": "Cycle status",
+              "w": 13,
+              "h": 13
+            },
+            {
+              "tag": "button",
+              "text": "Cycle status",
+              "w": 13,
+              "h": 13
+            },
+            {
+              "tag": "button",
+              "text": "Cycle status",
+              "w": 13,
+              "h": 13
+            },
+            {
+              "tag": "button",
+              "text": "Cycle status",
+              "w": 13,
+              "h": 13
+            }
+          ],
+          "smallCount": 33
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/projects",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 621,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "New Project",
+              "w": 123,
+              "h": 39
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 65,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Pipeline",
+              "w": 90,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 10,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "All",
+              "w": 40,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "CLIF",
+              "w": 50,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Lab",
+              "w": 46,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Mentees",
+              "w": 73,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Relaxed",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Active",
+              "w": 66,
+              "h": 24
+            }
+          ],
+          "smallCount": 65
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/manuscripts",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 360,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "New Manuscript",
+              "w": 150,
+              "h": 39
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 65,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Pipeline",
+              "w": 90,
+              "h": 28
+            },
+            {
+              "tag": "select",
+              "text": "All PIs\nNick Ingraham\nNate Mesfin",
+              "w": 127,
+              "h": 32
+            },
+            {
+              "tag": "select",
+              "text": "All Groups\nCLIF\nLab\nMesfin\nMentee",
+              "w": 105,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Relaxed",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Active",
+              "w": 66,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Idea",
+              "w": 55,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Active",
+              "w": 66,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Idea",
+              "w": 55,
+              "h": 24
+            }
+          ],
+          "smallCount": 75
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/grants",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 44,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 65,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Timeline",
+              "w": 93,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "All",
+              "w": 40,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Active",
+              "w": 62,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Proposed",
+              "w": 81,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Relaxed",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Add Milestone",
+              "w": 119,
+              "h": 24
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 281,
+              "h": 39
+            },
+            {
+              "tag": "button",
+              "text": "Search",
+              "w": 77,
+              "h": 39
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            }
+          ],
+          "smallCount": 16
+        },
+        "overflowing": [
+          {
+            "tag": "div",
+            "cls": "table-row sm:grid items-center",
+            "right": 519,
+            "w": 506
+          },
+          {
+            "tag": "div",
+            "cls": "min-w-0",
+            "right": 519,
+            "w": 506
+          },
+          {
+            "tag": "span",
+            "cls": "text-sm truncate block",
+            "right": 519,
+            "w": 506
+          },
+          {
+            "tag": "div",
+            "cls": "mt-1 flex items-center gap-2",
+            "right": 519,
+            "w": 506
+          },
+          {
+            "tag": "div",
+            "cls": "flex items-center gap-1.5 sm:block",
+            "right": 519,
+            "w": 506
+          },
+          {
+            "tag": "div",
+            "cls": "",
+            "right": 519,
+            "w": 506
+          }
+        ]
+      }
+    },
+    {
+      "url": "/deadlines",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 102,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 69,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "Timeline",
+              "w": 98,
+              "h": 35
+            },
+            {
+              "tag": "a",
+              "text": "Cascade View",
+              "w": 125,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Export",
+              "w": 75,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Relaxed",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "select",
+              "text": "All Types\nTasks\nGrant Milestones",
+              "w": 136,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "OVERDUE\n14",
+              "w": 364,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Select task",
+              "w": 18,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "Select task",
+              "w": 18,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "Select task",
+              "w": 18,
+              "h": 18
+            }
+          ],
+          "smallCount": 36
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/meetings",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 63,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Record Meeting",
+              "w": 137,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "All",
+              "w": 34,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Decisions",
+              "w": 75,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Actions",
+              "w": 63,
+              "h": 24
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 342,
+              "h": 30
+            },
+            {
+              "tag": "a",
+              "text": "View Full Meeting",
+              "w": 134,
+              "h": 27
+            },
+            {
+              "tag": "button",
+              "text": "Add Action Item",
+              "w": 140,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 12
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/team",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 68,
+          "small": [
+            {
+              "tag": "a",
+              "text": "Skip to content",
+              "w": 1,
+              "h": 1
+            },
+            {
+              "tag": "a",
+              "text": "",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Notifications",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Switch to light mode",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Open menu",
+              "w": 40,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard\n19",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "My Hub",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Grants",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Network",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Meetings",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Research Digest",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "button",
+              "text": "test\n1",
+              "w": 50,
+              "h": 28
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard",
+              "w": 72,
+              "h": 18
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 54,
+              "h": 18
+            }
+          ],
+          "smallCount": 32
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/ideas",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 36,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "New Idea",
+              "w": 118,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Grid",
+              "w": 73,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 68,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "Newest",
+              "w": 75,
+              "h": 32
+            },
+            {
+              "tag": "select",
+              "text": "All Statuses\nNew\nUnder Review\nApproved\nP",
+              "w": 115,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Relaxed",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Submit an idea",
+              "w": 128,
+              "h": 39
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 14
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/decisions",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 37,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 63,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Timeline",
+              "w": 91,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Log Decision",
+              "w": 142,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "All",
+              "w": 40,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Pending",
+              "w": 72,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Recorded",
+              "w": 82,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Revisited",
+              "w": 79,
+              "h": 30
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 320,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Recorded",
+              "w": 83,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 18,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 15
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/research-digest",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 60,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Sun, Apr 12(4)",
+              "w": 121,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Sat, Apr 11(13)",
+              "w": 115,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Fri, Apr 10(13)",
+              "w": 114,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Thu, Apr 9(28)",
+              "w": 119,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Wed, Apr 8(306)",
+              "w": 132,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Thu, Apr 2(3)",
+              "w": 113,
+              "h": 34
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 342,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "All4",
+              "w": 52,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "New4",
+              "w": 63,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "Saved",
+              "w": 64,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "ARDS and Hypoxic Respiratory Failure",
+              "w": 202,
+              "h": 23
+            },
+            {
+              "tag": "button",
+              "text": "ICU Quality and Provider Variation",
+              "w": 184,
+              "h": 23
+            }
+          ],
+          "smallCount": 34
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/calendar",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 37,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Export",
+              "w": 90,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Month",
+              "w": 66,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "Week",
+              "w": 60,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "Day",
+              "w": 50,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "Agenda",
+              "w": 73,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 30,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "April 2026",
+              "w": 180,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 30,
+              "h": 30
+            },
+            {
+              "tag": "a",
+              "text": "MN-CCORE Biweekly Me...",
+              "w": 39,
+              "h": 17
+            },
+            {
+              "tag": "a",
+              "text": "MN-CCORE: MN-CCORE B...",
+              "w": 39,
+              "h": 17
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 15
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/analytics",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 35,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 32,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 32,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "7D",
+              "w": 34,
+              "h": 26
+            },
+            {
+              "tag": "button",
+              "text": "4W",
+              "w": 38,
+              "h": 26
+            },
+            {
+              "tag": "button",
+              "text": "3M",
+              "w": 36,
+              "h": 26
+            },
+            {
+              "tag": "button",
+              "text": "All",
+              "w": 33,
+              "h": 26
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 11
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/search",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 28,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 5
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/settings",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 55,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 316,
+              "h": 38
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 316,
+              "h": 38
+            },
+            {
+              "tag": "select",
+              "text": "Clinical Research\nBasic Science\nTranslat",
+              "w": 316,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Create Custom Template",
+              "w": 316,
+              "h": 38
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            }
+          ],
+          "smallCount": 30
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/activity",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 439,
+          "winW": 439,
+          "bodyW": 439
+        },
+        "touch": {
+          "total": 29,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "select",
+              "text": "All People\nanonymous",
+              "w": 105,
+              "h": 30
+            },
+            {
+              "tag": "select",
+              "text": "All Types\nTasks\nComments\nUpdates\nProject",
+              "w": 101,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 7
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 70,
+          "small": [
+            {
+              "tag": "a",
+              "text": "Skip to content",
+              "w": 1,
+              "h": 1
+            },
+            {
+              "tag": "a",
+              "text": "",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Notifications",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Switch to light mode",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Open menu",
+              "w": 40,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard\n19",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "My Hub",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Grants",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Network",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Meetings",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Research Digest",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Explore Research",
+              "w": 179,
+              "h": 42
+            },
+            {
+              "tag": "a",
+              "text": "Meet the Team",
+              "w": 141,
+              "h": 42
+            },
+            {
+              "tag": "a",
+              "text": "Read more",
+              "w": 92,
+              "h": 20
+            }
+          ],
+          "smallCount": 42
+        },
+        "overflowing": [
+          {
+            "tag": "line",
+            "cls": "[object SVGAnimatedString]",
+            "right": 415,
+            "w": 53
+          }
+        ]
+      }
+    },
+    {
+      "url": "/team",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 68,
+          "small": [
+            {
+              "tag": "a",
+              "text": "Skip to content",
+              "w": 1,
+              "h": 1
+            },
+            {
+              "tag": "a",
+              "text": "",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Notifications",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Switch to light mode",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Open menu",
+              "w": 40,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard\n19",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "My Hub",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Grants",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Network",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Meetings",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Research Digest",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "button",
+              "text": "test\n1",
+              "w": 50,
+              "h": 28
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard",
+              "w": 72,
+              "h": 18
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 54,
+              "h": 18
+            }
+          ],
+          "smallCount": 32
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/publications",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 144,
+          "small": [
+            {
+              "tag": "a",
+              "text": "Skip to content",
+              "w": 1,
+              "h": 1
+            },
+            {
+              "tag": "a",
+              "text": "",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Notifications",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Switch to light mode",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Open menu",
+              "w": 40,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard\n19",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "My Hub",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Grants",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Network",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Meetings",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Research Digest",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "button",
+              "text": "19",
+              "w": 20,
+              "h": 15
+            },
+            {
+              "tag": "button",
+              "text": "20",
+              "w": 20,
+              "h": 29
+            },
+            {
+              "tag": "button",
+              "text": "21",
+              "w": 20,
+              "h": 37
+            }
+          ],
+          "smallCount": 61
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/contact",
+      "label": "375",
+      "width": 375,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 390,
+          "winW": 390,
+          "bodyW": 390
+        },
+        "touch": {
+          "total": 56,
+          "small": [
+            {
+              "tag": "a",
+              "text": "Skip to content",
+              "w": 1,
+              "h": 1
+            },
+            {
+              "tag": "a",
+              "text": "",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Notifications",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Switch to light mode",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Open menu",
+              "w": 40,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard\n19",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "My Hub",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Grants",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Network",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Meetings",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Research Digest",
+              "w": 342,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "mnccore@umn.edu",
+              "w": 130,
+              "h": 18
+            },
+            {
+              "tag": "a",
+              "text": "mnccore@umn.edu",
+              "w": 124,
+              "h": 17
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard",
+              "w": 72,
+              "h": 18
+            }
+          ],
+          "smallCount": 33
+        },
+        "overflowing": []
+      }
+    }
+  ],
+  "768": [
+    {
+      "url": "/dashboard",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 89,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "a",
+              "text": "14 overdue",
+              "w": 71,
+              "h": 19
+            },
+            {
+              "tag": "button",
+              "text": "Customize",
+              "w": 96,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 10,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Overview",
+              "w": 79,
+              "h": 27
+            },
+            {
+              "tag": "button",
+              "text": "Projects",
+              "w": 71,
+              "h": 27
+            },
+            {
+              "tag": "button",
+              "text": "People",
+              "w": 63,
+              "h": 27
+            },
+            {
+              "tag": "button",
+              "text": "Deadlines",
+              "w": 80,
+              "h": 27
+            },
+            {
+              "tag": "a",
+              "text": "Get Started",
+              "w": 112,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Dismiss",
+              "w": 22,
+              "h": 22
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 357,
+              "h": 21
+            },
+            {
+              "tag": "a",
+              "text": "Task",
+              "w": 64,
+              "h": 30
+            }
+          ],
+          "smallCount": 53
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/my-tasks",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 426,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "New Task",
+              "w": 119,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 69,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "More views",
+              "w": 109,
+              "h": 30
+            },
+            {
+              "tag": "select",
+              "text": "No Grouping\nDue Date\nPriority\nProject\nSt",
+              "w": 104,
+              "h": 26
+            },
+            {
+              "tag": "select",
+              "text": "Priority\nDue Date\nTitle",
+              "w": 85,
+              "h": 26
+            },
+            {
+              "tag": "button",
+              "text": "Show 533 done",
+              "w": 118,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Relaxed",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "a",
+              "text": "Sign in",
+              "w": 44,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "Dismiss sign-in banner",
+              "w": 18,
+              "h": 18
+            }
+          ],
+          "smallCount": 136
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/personal",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 55,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 70,
+              "h": 28
+            },
+            {
+              "tag": "a",
+              "text": "Sign in",
+              "w": 41,
+              "h": 17
+            },
+            {
+              "tag": "a",
+              "text": "New Task",
+              "w": 93,
+              "h": 32
+            },
+            {
+              "tag": "a",
+              "text": "Submit Idea",
+              "w": 107,
+              "h": 32
+            },
+            {
+              "tag": "a",
+              "text": "Ask a Question",
+              "w": 123,
+              "h": 32
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 698,
+              "h": 29
+            },
+            {
+              "tag": "a",
+              "text": "View all",
+              "w": 55,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "Cycle status",
+              "w": 13,
+              "h": 13
+            },
+            {
+              "tag": "button",
+              "text": "Cycle status",
+              "w": 13,
+              "h": 13
+            },
+            {
+              "tag": "button",
+              "text": "Cycle status",
+              "w": 13,
+              "h": 13
+            },
+            {
+              "tag": "button",
+              "text": "Cycle status",
+              "w": 13,
+              "h": 13
+            }
+          ],
+          "smallCount": 34
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/projects",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 621,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "New Project",
+              "w": 123,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 65,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Pipeline",
+              "w": 90,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 10,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "All",
+              "w": 36,
+              "h": 25
+            },
+            {
+              "tag": "button",
+              "text": "CLIF",
+              "w": 46,
+              "h": 25
+            },
+            {
+              "tag": "button",
+              "text": "Lab",
+              "w": 42,
+              "h": 25
+            },
+            {
+              "tag": "button",
+              "text": "Mesfin Lab",
+              "w": 81,
+              "h": 25
+            },
+            {
+              "tag": "button",
+              "text": "Mentees",
+              "w": 69,
+              "h": 25
+            },
+            {
+              "tag": "button",
+              "text": "Needs Attention",
+              "w": 111,
+              "h": 25
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            }
+          ],
+          "smallCount": 110
+        },
+        "overflowing": [
+          {
+            "tag": "div",
+            "cls": "flex items-center gap-3",
+            "right": 889,
+            "w": 321
+          },
+          {
+            "tag": "span",
+            "cls": "text-xs",
+            "right": 889,
+            "w": 223
+          }
+        ]
+      }
+    },
+    {
+      "url": "/manuscripts",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 360,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "New Manuscript",
+              "w": 150,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 65,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Pipeline",
+              "w": 90,
+              "h": 28
+            },
+            {
+              "tag": "select",
+              "text": "All PIs\nNick Ingraham\nNate Mesfin",
+              "w": 127,
+              "h": 32
+            },
+            {
+              "tag": "select",
+              "text": "All Groups\nCLIF\nLab\nMesfin\nMentee",
+              "w": 105,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Relaxed",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "TITLE",
+              "w": 234,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "STATUS",
+              "w": 100,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "STAGE",
+              "w": 100,
+              "h": 18
+            }
+          ],
+          "smallCount": 82
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/grants",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 44,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 65,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Timeline",
+              "w": 93,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "All",
+              "w": 40,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Active",
+              "w": 62,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Proposed",
+              "w": 81,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Relaxed",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "TITLE",
+              "w": 200,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "PI",
+              "w": 80,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "STATUS",
+              "w": 100,
+              "h": 18
+            }
+          ],
+          "smallCount": 23
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/deadlines",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 102,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 69,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "Timeline",
+              "w": 98,
+              "h": 35
+            },
+            {
+              "tag": "a",
+              "text": "Cascade View",
+              "w": 125,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Export",
+              "w": 75,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Relaxed",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "select",
+              "text": "All Types\nTasks\nGrant Milestones",
+              "w": 136,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "TITLE",
+              "w": 200,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "PROJECT",
+              "w": 140,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "DUE DATE",
+              "w": 120,
+              "h": 18
+            }
+          ],
+          "smallCount": 62
+        },
+        "overflowing": [
+          {
+            "tag": "button",
+            "cls": "col-header",
+            "right": 813,
+            "w": 80
+          },
+          {
+            "tag": "span",
+            "cls": "",
+            "right": 813,
+            "w": 80
+          },
+          {
+            "tag": "span",
+            "cls": "",
+            "right": 813,
+            "w": 80
+          },
+          {
+            "tag": "span",
+            "cls": "",
+            "right": 813,
+            "w": 80
+          },
+          {
+            "tag": "span",
+            "cls": "",
+            "right": 813,
+            "w": 80
+          },
+          {
+            "tag": "span",
+            "cls": "",
+            "right": 813,
+            "w": 80
+          }
+        ]
+      }
+    },
+    {
+      "url": "/meetings",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 63,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Record Meeting",
+              "w": 137,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "All",
+              "w": 34,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Decisions",
+              "w": 75,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Actions",
+              "w": 63,
+              "h": 24
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 696,
+              "h": 30
+            },
+            {
+              "tag": "a",
+              "text": "View Full Meeting",
+              "w": 134,
+              "h": 27
+            },
+            {
+              "tag": "button",
+              "text": "Add Action Item",
+              "w": 140,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 13
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/team",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 68,
+          "small": [
+            {
+              "tag": "a",
+              "text": "Skip to content",
+              "w": 1,
+              "h": 1
+            },
+            {
+              "tag": "a",
+              "text": "",
+              "w": 190,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Notifications",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Switch to light mode",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Open menu",
+              "w": 40,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard\n19",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "My Hub",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Grants",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Network",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Meetings",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Research Digest",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "button",
+              "text": "test\n1",
+              "w": 50,
+              "h": 28
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard",
+              "w": 72,
+              "h": 18
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 54,
+              "h": 18
+            }
+          ],
+          "smallCount": 32
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/ideas",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 36,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "New Idea",
+              "w": 118,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Grid",
+              "w": 73,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 68,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "Newest",
+              "w": 75,
+              "h": 32
+            },
+            {
+              "tag": "select",
+              "text": "All Statuses\nNew\nUnder Review\nApproved\nP",
+              "w": 115,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Compact",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Default",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Relaxed",
+              "w": 28,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "Submit an idea",
+              "w": 128,
+              "h": 39
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 15
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/decisions",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 37,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "List",
+              "w": 63,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Timeline",
+              "w": 91,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "Log Decision",
+              "w": 142,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "All",
+              "w": 40,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Pending",
+              "w": 72,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Recorded",
+              "w": 82,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Revisited",
+              "w": 79,
+              "h": 30
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 320,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "Recorded",
+              "w": 83,
+              "h": 24
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 18,
+              "h": 18
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            }
+          ],
+          "smallCount": 16
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/research-digest",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 60,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Sun, Apr 12(4)",
+              "w": 121,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Sat, Apr 11(13)",
+              "w": 115,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Fri, Apr 10(13)",
+              "w": 114,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Thu, Apr 9(28)",
+              "w": 119,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Wed, Apr 8(306)",
+              "w": 132,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Thu, Apr 2(3)",
+              "w": 113,
+              "h": 34
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 448,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "All4",
+              "w": 52,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "New4",
+              "w": 63,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "Saved",
+              "w": 64,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "ARDS and Hypoxic Respiratory Failure",
+              "w": 202,
+              "h": 23
+            }
+          ],
+          "smallCount": 38
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/calendar",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 37,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Export",
+              "w": 90,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Month",
+              "w": 66,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "Week",
+              "w": 60,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "Day",
+              "w": 50,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "Agenda",
+              "w": 73,
+              "h": 35
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 30,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "April 2026",
+              "w": 180,
+              "h": 28
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 30,
+              "h": 30
+            },
+            {
+              "tag": "a",
+              "text": "MN-CCORE Biweekly Me...",
+              "w": 90,
+              "h": 17
+            },
+            {
+              "tag": "a",
+              "text": "MN-CCORE: MN-CCORE B...",
+              "w": 90,
+              "h": 17
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            }
+          ],
+          "smallCount": 16
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/analytics",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 35,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 32,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "",
+              "w": 32,
+              "h": 32
+            },
+            {
+              "tag": "button",
+              "text": "7D",
+              "w": 34,
+              "h": 26
+            },
+            {
+              "tag": "button",
+              "text": "4W",
+              "w": 38,
+              "h": 26
+            },
+            {
+              "tag": "button",
+              "text": "3M",
+              "w": 36,
+              "h": 26
+            },
+            {
+              "tag": "button",
+              "text": "All",
+              "w": 33,
+              "h": 26
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 12
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/search",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 28,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 6
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/settings",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 55,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 622,
+              "h": 38
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 622,
+              "h": 38
+            },
+            {
+              "tag": "select",
+              "text": "Clinical Research\nBasic Science\nTranslat",
+              "w": 622,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Create Custom Template",
+              "w": 622,
+              "h": 38
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            },
+            {
+              "tag": "input",
+              "text": "",
+              "w": 192,
+              "h": 25
+            }
+          ],
+          "smallCount": 31
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/activity",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 29,
+          "small": [
+            {
+              "tag": "button",
+              "text": "Open navigation",
+              "w": 36,
+              "h": 36
+            },
+            {
+              "tag": "button",
+              "text": "Search...\n⌘K",
+              "w": 220,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Switch to compact view",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Change theme",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "select",
+              "text": "All People\nanonymous",
+              "w": 105,
+              "h": 30
+            },
+            {
+              "tag": "select",
+              "text": "All Types\nTasks\nComments\nUpdates\nProject",
+              "w": 101,
+              "h": 30
+            },
+            {
+              "tag": "button",
+              "text": "? for shortcuts",
+              "w": 71,
+              "h": 10
+            },
+            {
+              "tag": "button",
+              "text": "Quick add task (Ctrl+N)",
+              "w": 40,
+              "h": 40
+            }
+          ],
+          "smallCount": 8
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 70,
+          "small": [
+            {
+              "tag": "a",
+              "text": "Skip to content",
+              "w": 1,
+              "h": 1
+            },
+            {
+              "tag": "a",
+              "text": "",
+              "w": 190,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Notifications",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Switch to light mode",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Open menu",
+              "w": 40,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard\n19",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "My Hub",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Grants",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Network",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Meetings",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Research Digest",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Explore Research",
+              "w": 179,
+              "h": 42
+            },
+            {
+              "tag": "a",
+              "text": "Meet the Team",
+              "w": 141,
+              "h": 42
+            },
+            {
+              "tag": "a",
+              "text": "Read more",
+              "w": 92,
+              "h": 20
+            }
+          ],
+          "smallCount": 42
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/team",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 68,
+          "small": [
+            {
+              "tag": "a",
+              "text": "Skip to content",
+              "w": 1,
+              "h": 1
+            },
+            {
+              "tag": "a",
+              "text": "",
+              "w": 190,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Notifications",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Switch to light mode",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Open menu",
+              "w": 40,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard\n19",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "My Hub",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Grants",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Network",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Meetings",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Research Digest",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "button",
+              "text": "test\n1",
+              "w": 50,
+              "h": 28
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard",
+              "w": 72,
+              "h": 18
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 54,
+              "h": 18
+            }
+          ],
+          "smallCount": 32
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/publications",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 144,
+          "small": [
+            {
+              "tag": "a",
+              "text": "Skip to content",
+              "w": 1,
+              "h": 1
+            },
+            {
+              "tag": "a",
+              "text": "",
+              "w": 190,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Notifications",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Switch to light mode",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Open menu",
+              "w": 40,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard\n19",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "My Hub",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Grants",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Network",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Meetings",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Research Digest",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "button",
+              "text": "19",
+              "w": 20,
+              "h": 15
+            },
+            {
+              "tag": "button",
+              "text": "20",
+              "w": 20,
+              "h": 29
+            },
+            {
+              "tag": "button",
+              "text": "21",
+              "w": 20,
+              "h": 37
+            }
+          ],
+          "smallCount": 61
+        },
+        "overflowing": []
+      }
+    },
+    {
+      "url": "/contact",
+      "label": "768",
+      "width": 768,
+      "checks": {
+        "horizontalScroll": false,
+        "scroll": {
+          "docW": 768,
+          "winW": 768,
+          "bodyW": 768
+        },
+        "touch": {
+          "total": 56,
+          "small": [
+            {
+              "tag": "a",
+              "text": "Skip to content",
+              "w": 1,
+              "h": 1
+            },
+            {
+              "tag": "a",
+              "text": "",
+              "w": 190,
+              "h": 38
+            },
+            {
+              "tag": "button",
+              "text": "Notifications",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Switch to light mode",
+              "w": 34,
+              "h": 34
+            },
+            {
+              "tag": "button",
+              "text": "Open menu",
+              "w": 40,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard\n19",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "My Hub",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Projects",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Grants",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Network",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Meetings",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "Research Digest",
+              "w": 720,
+              "h": 40
+            },
+            {
+              "tag": "a",
+              "text": "mnccore@umn.edu",
+              "w": 130,
+              "h": 18
+            },
+            {
+              "tag": "a",
+              "text": "mnccore@umn.edu",
+              "w": 124,
+              "h": 17
+            },
+            {
+              "tag": "a",
+              "text": "Dashboard",
+              "w": 72,
+              "h": 18
+            }
+          ],
+          "smallCount": 33
+        },
+        "overflowing": []
+      }
+    }
+  ]
+}

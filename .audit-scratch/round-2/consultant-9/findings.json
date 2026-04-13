@@ -1,0 +1,307 @@
+{
+  "surprises": {
+    "deadlines": [],
+    "welcomeBanner": {
+      "present": true,
+      "bannerHeight": 122,
+      "bannerWidth": 342,
+      "bannerFlexDir": "row",
+      "innerFlexDir": "column",
+      "h1Height": null,
+      "h1LineCount": null,
+      "text": "0/13\nWelcome to MN‑CCORE Hub\n\nNext: Complete your profile\n\nGet Started"
+    },
+    "projectTabs": {
+      "found": true,
+      "parentTag": "DIV",
+      "clientW": 342,
+      "scrollW": 378,
+      "overflowX": "auto",
+      "scrolls": true,
+      "tabText": "Overview"
+    }
+  },
+  "touch": {
+    "myTasks": {
+      "total": 208,
+      "smallCount": 46,
+      "samples": [
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "",
+          "w": 28,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "",
+          "w": 28,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "",
+          "w": 28,
+          "h": 44
+        },
+        {
+          "tag": "a",
+          "text": "Sign in",
+          "cls": "",
+          "w": 44,
+          "h": 18
+        },
+        {
+          "tag": "button",
+          "text": "Dismiss sign-in banner",
+          "cls": "",
+          "w": 18,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "cursor-grab active:cursor-grabbing opacity-0 group",
+          "w": 18,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "opacity-0 group-hover:opacity-60 hover:!opacity-10",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "cursor-grab active:cursor-grabbing opacity-0 group",
+          "w": 18,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "opacity-0 group-hover:opacity-60 hover:!opacity-10",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "cursor-grab active:cursor-grabbing opacity-0 group",
+          "w": 18,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "opacity-0 group-hover:opacity-60 hover:!opacity-10",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "subtask-expand-btn",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "span",
+          "text": "CQODE: Review mCIDE update (CL",
+          "cls": "task-title-clickable",
+          "w": 171,
+          "h": 40
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "subtask-expand-btn",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "subtask-expand-btn",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "subtask-expand-btn",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "subtask-expand-btn",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "subtask-expand-btn",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "span",
+          "text": "Review vasopressor escalation ",
+          "cls": "task-title-clickable",
+          "w": 171,
+          "h": 40
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "subtask-expand-btn",
+          "w": 16,
+          "h": 44
+        }
+      ]
+    },
+    "tasks": {
+      "total": 208,
+      "smallCount": 46,
+      "samples": [
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "",
+          "w": 28,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "",
+          "w": 28,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "",
+          "w": 28,
+          "h": 44
+        },
+        {
+          "tag": "a",
+          "text": "Sign in",
+          "cls": "",
+          "w": 44,
+          "h": 18
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "",
+          "w": 18,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "cursor-grab active:cursor-grabbing opacity-0 group",
+          "w": 18,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "opacity-0 group-hover:opacity-60 hover:!opacity-10",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "cursor-grab active:cursor-grabbing opacity-0 group",
+          "w": 18,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "opacity-0 group-hover:opacity-60 hover:!opacity-10",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "cursor-grab active:cursor-grabbing opacity-0 group",
+          "w": 18,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "opacity-0 group-hover:opacity-60 hover:!opacity-10",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "subtask-expand-btn",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "span",
+          "text": "CQODE: Review mCIDE update (CL",
+          "cls": "task-title-clickable",
+          "w": 171,
+          "h": 40
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "subtask-expand-btn",
+          "w": 16,
+          "h": 44
+        },
+        {
+          "tag": "button",
+          "text": "",
+          "cls": "subtask-expand-btn",
+          "w": 16,
+          "h": 44
+        }
+      ]
+    }
+  },
+  "frontier": {
+    "meta": {
+      "viewport": "width=device-width, initial-scale=1.0",
+      "themeColor": null,
+      "appleMobileCapable": null,
+      "appleMobileStatusBar": null,
+      "appleTouchIcon": null,
+      "manifest": null,
+      "colorScheme": null
+    },
+    "safeArea": {
+      "count": 0,
+      "samples": []
+    },
+    "nav": {
+      "fixedBottomNav": false
+    }
+  },
+  "pages": {
+    "768-dashboard": {
+      "docW": 768,
+      "winW": 768
+    }
+  }
+}

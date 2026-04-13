@@ -1,0 +1,72 @@
+{
+  "light": {
+    "calcRow": {
+      "background": "rgba(0, 0, 0, 0.02)",
+      "borderTop": "rgba(15, 25, 35, 0.06)",
+      "text": "Count 5To Do 2In Progress 1"
+    },
+    "vars": {
+      "surface-1": "#00000005",
+      "surface-2": "#0000000a",
+      "teal-hover": "#2d8a8a0f",
+      "border-subtle": "#0f19230f"
+    },
+    "rowHeights": [
+      "44px",
+      "44px",
+      "44px"
+    ]
+  },
+  "dark": {
+    "calcRow": {
+      "background": "rgba(255, 255, 255, 0.03)",
+      "borderTop": "rgba(255, 255, 255, 0.05)",
+      "text": "Count 5To Do 2In Progress 1"
+    },
+    "vars": {
+      "surface-1": "#ffffff08",
+      "surface-2": "#ffffff0f",
+      "teal-hover": "#2d8a8a0f",
+      "border-subtle": "#ffffff0d"
+    },
+    "rowHeights": [
+      "44px",
+      "44px",
+      "44px"
+    ]
+  },
+  "personal-light": {
+    "found": true,
+    "kids": [
+      {
+        "minWidth": "0px",
+        "scrollWidth": 672,
+        "clientWidth": 672,
+        "overflows": false
+      },
+      {
+        "minWidth": "0px",
+        "scrollWidth": 448,
+        "clientWidth": 448,
+        "overflows": false
+      }
+    ]
+  },
+  "personal-dark": {
+    "found": true,
+    "kids": [
+      {
+        "minWidth": "0px",
+        "scrollWidth": 672,
+        "clientWidth": 672,
+        "overflows": false
+      },
+      {
+        "minWidth": "0px",
+        "scrollWidth": 448,
+        "clientWidth": 448,
+        "overflows": false
+      }
+    ]
+  }
+}

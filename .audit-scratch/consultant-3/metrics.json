@@ -1,0 +1,202 @@
+[
+  {
+    "page": "my-tasks",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "32px 412px 110px 130px 100px 120px 80px 90px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 15
+    }
+  },
+  {
+    "page": "projects",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "600px 100px 110px 100px 80px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 65
+    }
+  },
+  {
+    "page": "manuscripts",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "618px 100px 100px 100px 72px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 65
+    }
+  },
+  {
+    "page": "deadlines",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "32px 530px 140px 120px 100px 100px 80px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 20
+    }
+  },
+  {
+    "page": "grants",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "516px 80px 100px 80px 258px 100px",
+      "rowHeight": 17.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 6
+    }
+  },
+  {
+    "page": "meetings",
+    "density": "default",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "analytics",
+    "density": "default",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "settings",
+    "density": "default",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "ideas",
+    "density": "default",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "decisions",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": null,
+      "rowHeight": null,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 0
+    }
+  },
+  {
+    "page": "my-tasks",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "32px 412px 110px 130px 100px 120px 80px 90px",
+      "rowHeight": 33,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 15
+    }
+  },
+  {
+    "page": "projects",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "600px 100px 110px 100px 80px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 65
+    }
+  },
+  {
+    "page": "manuscripts",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "618px 100px 100px 100px 72px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 65
+    }
+  },
+  {
+    "page": "deadlines",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "32px 530px 140px 120px 100px 100px 80px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 20
+    }
+  },
+  {
+    "page": "grants",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "516px 80px 100px 80px 258px 100px",
+      "rowHeight": 17.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 6
+    }
+  },
+  {
+    "page": "meetings",
+    "density": "compact",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "analytics",
+    "density": "compact",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "settings",
+    "density": "compact",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "ideas",
+    "density": "compact",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "decisions",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": null,
+      "rowHeight": null,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 0
+    }
+  }
+]

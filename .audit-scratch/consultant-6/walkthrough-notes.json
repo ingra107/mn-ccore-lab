@@ -1,0 +1,217 @@
+{
+  "notes": [
+    {
+      "route": "/dashboard",
+      "loadMs": 10588,
+      "h1": "",
+      "h2s": [],
+      "rowCount": 0,
+      "btnCount": 46,
+      "emptyStates": [],
+      "bodyLen": 1500,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nGood afternoon\n·\nSunday, Apr 12\n·\n2 due\n·\n14 overdue\nCustomize\nPress F to toggle filters on any page\nOverview\nProjects\nPeople\nDeadlines\n0/13\nWelcome to MN-CCORE Hub\n\nNext: Complete your profile\n\nGet Started\nCtrl+N\nTask\nMeeting\nIdea\nTasks\n\n19 pending · 533 done\n\nNick Ingraham\n19\n\nCQODE: Review mCIDE update (CLIF v3.0)\n\nOverdue\n\nFix dx_name delimiter in CQODE backbone (temp fix in place)\n\nOverdue\n\nBring R01 CLIF provider variation aims to Adams for review\n\nOverdue\n\nAdd Adams to regular grant writing club meetings\n\nOverdue\n\nFollow up on UMN data infrastructure gap for clinical trials with Genevieve/Tim Beebe\n\nOverdue\nlow\n\nReview vasopressor escalation protocol v3\n\nOverdue\n\nRe-run summarize_clif.py in data shelter with vectorized loops\n\nOverdue\n\nSign up for Epic Physician Builder class\n\nOverdue\nlow\n\nGet current manuscript from Kendall and review odds ratio concerns\n\nOverdue\nlow\n\nFix Playwright MCP wrapper on home laptop\n\nOverdue\nlow\n\nReview comments: ADHERE-LPV_ Rapid\n\nOverdue\nlow\n\nRespond to Sarah Kesler about interest in TELE-ICU shifts and review job description\n\nOverdue\nlow\n\nReview data pull specifications for Isbaar Project (Pap and HPV results)\n\nOverdue\n\nFollow up on bounced email for ICU survey distribution (husk0012@umn.edu)\n\nOverdue\nlow\n\nFix recurr"
+    },
+    {
+      "route": "/meetings",
+      "loadMs": 10577,
+      "h1": "Meeting Hub",
+      "h2s": [
+        "MNCCORE Biweekly Meeting -- April 07, 2026"
+      ],
+      "rowCount": 0,
+      "btnCount": 42,
+      "emptyStates": [],
+      "bodyLen": 1500,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nMeeting Hub\n\n6 meetings · 73% complete · 4 pending\n\nApr 219d\nDan\nRecord Meeting\nAll\nDecisions\nActions\nApr 7\n8 actions\n\nMNCCORE Biweekly Meeting -- April 07, 2026\n\nMar 25\n3 actions\n\nMNCCORE Biweekly: CLIF Manuscript Updates & GDMS Survey Launch\n\nMar 11\n1 actions\n\nMNCCORE Biweekly: LPV Paper Proofs & IV Fluids Analysis\n\nFeb 25\n✓\n\nMNCCORE Biweekly: P1 Gender Disparities & Quality Metrics\n\nFeb 11\n✓\n\nMNCCORE Biweekly: CLIF Data Pulls & Grant Planning\n\nJan 28\n✓\n\nMNCCORE Biweekly: New Year Planning & WBC/Sepsis Kickoff\n\n6 meetings · 15 actions · 11 decisions\nAPR\n7\nMNCCORE Biweekly Meeting -- April 07, 2026\n\nTue, Apr 7, 2026\n\n6 attendees\n8 pending\nFacilitated by Abbie Begnaud\nCE\nEB\n+1\nATTENDEES\nNick Ingraham\nNathan Mesfin\nCE\nCasey Eddington\nEB\nEmma Bromley\nDan Shyu\nSA\nSteven Arriaza\nACTION ITEMS\n[Carried forward] Address PF-v-SF reviewer comment #3 re: sensitivity analysis\nNick Ingraham\ndue Apr 1\n[Carried forward] Pull updated CCI cohort counts from CLIF tables\nCE\nCasey Eddington\ndue Apr 4\n[Carried forward] Draft Volume vs Pressure Control statistical analysis plan\nNick Ingraham\ndue Mar 25\n[Carried forward] Finalize GDMS survey REDCap instrument and test distribution\nEB\nEmma Bromley\ndue Mar 31\n[Carried forward] Pull updated CCI cohort counts from CLIF tables\nCE"
+    },
+    {
+      "route": "/deadlines",
+      "loadMs": 1398,
+      "h1": "Deadlines & Milestones",
+      "h2s": [],
+      "rowCount": 0,
+      "btnCount": 81,
+      "emptyStates": [],
+      "bodyLen": 1500,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nDeadlines & Milestones\n14 overdue, 5 upcoming\nList\nTimeline\nCascade View\nExport\nSwitch to Timeline for a visual map\nAll Types\nTasks\nGrant Milestones\nCQODE: Review mCIDE update (CLIF v3.0)\n28d overdue\nTITLE\nPROJECT\nDUE DATE\nASSIGNEE\nSTATUS\nTYPE\nOVERDUE\n14\nCQODE: Review mCIDE update (CLIF v3.0)\nCQODE Backbone / UMN CLIF\nOverdue\nTask\nFix dx_name delimiter in CQODE backbone (temp fix in place)\nCQODE Backbone / UMN CLIF\nOverdue\nTask\nBring R01 CLIF provider variation aims to Adams for review\nR01: Provider Variation Across CLIF\nOverdue\nTask\nAdd Adams to regular grant writing club meetings\nMNCCORE (Minnesota Critical Care Outcomes & Research Effort)\nOverdue\nTask\nFollow up on UMN data infrastructure gap for clinical trials with Genevieve/Tim Beebe\nadmin-tasks\nOverdue\nTask\nReview vasopressor escalation protocol v3\nCLIF: Vasopressor Escalation Protocol (Lyons)\nOverdue\nTask\nRe-run summarize_clif.py in data shelter with vectorized loops\nSynthetic CLIF Dataset\nOverdue\nTask\nSign up for Epic Physician Builder class\nepic-physician-builder-certificate\nOverdue\nTask\nGet current manuscript from Kendall and review odds ratio concerns\n(McEachron) Central Line Days Disparities\nOverdue\nTask\nFix Playwright MCP wrapper on home laptop\nperipheral-brain-system\nOverdue\nTask\nReview co"
+    },
+    {
+      "route": "/personal",
+      "loadMs": 1168,
+      "h1": "My Hub",
+      "h2s": [],
+      "rowCount": 0,
+      "btnCount": 27,
+      "emptyStates": [],
+      "bodyLen": 1500,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nMy Hub\n14 overdue · 0 done this week\nDefault\n\nYour hub is ready\n\nSign in with @umn.edu to see your tasks, notifications, and watchlist.\n\nNew Task\nSubmit Idea\nAsk a Question\nMy Tasks\n14 overdue\nView all\nOVERDUE\nCQODE: Review mCIDE update (CLIF v3.0)\nOverdue\nFix dx_name delimiter in CQODE backbone (temp fix in place)\nOverdue\nBring R01 CLIF provider variation aims to Adams for review\nOverdue\nAdd Adams to regular grant writing club meetings\nOverdue\nReview vasopressor escalation protocol v3\nOverdue\nRe-run summarize_clif.py in data shelter with vectorized loops\nOverdue\nReview data pull specifications for Isbaar Project (Pap and HPV results)\nOverdue\nFollow up on UMN data infrastructure gap for clinical trials with Genevieve/Tim Beebe\nOverdue\nSign up for Epic Physician Builder class\nOverdue\nGet current manuscript from Kendall and review odds ratio concerns\nOverdue\nFix Playwright MCP wrapper on home laptop\nOverdue\nReview comments: ADHERE-LPV_ Rapid\nOverdue\nRespond to Sarah Kesler about interest in TELE-ICU shifts and review job description\nOverdue\nFollow up on bounced email for ICU survey distribution (husk0012@umn.edu)\nOverdue\nTODAY\nBlock Gmail send API in Claude Code settings (home laptop)\nApr 12\nFix recurring failure in sync-pull-morning: sync-pull-morning fa"
+    },
+    {
+      "route": "/team",
+      "loadMs": 1478,
+      "h1": "Our Team",
+      "h2s": [
+        "Co-Directors",
+        "Senior Mentors",
+        "Faculty Collaborators",
+        "Research Team"
+      ],
+      "rowCount": 0,
+      "btnCount": 8,
+      "emptyStates": [],
+      "bodyLen": 1500,
+      "bodyPreview": "Skip to content\nHome\nResearch\nDashboard\n19\nMy Hub\nProjects\nGrants\nNetwork\nMeetings\nResearch Digest\nTeam\nPublications\nContact\nOur Team\n\nA collaborative group of physicians, scientists, and research staff dedicated to improving critical care outcomes through rigorous, data-driven research.\n\n25 members · 1 active this week\n\ntest\n1\nCo-Directors\nNick Ingraham, MD\n\nCo-Director, MN-CCORE\n\nAssistant Professor, Pulmonary & Critical Care Medicine\n\nPhysician-scientist focused on provider variation, lung-protective ventilation, and clinical decision-making in the ICU. Founding member of the CLIF Consortium.\n\ntest\n\n2 Grants · 61 Publications · 6 Trainees\n\nNathan Mesfin, MD\n\nCo-Director, MN-CCORE\n\nAssistant Professor, Critical Care Medicine\n\nCritical care physician investigating in-hospital cardiac arrest survivability, DNR order variation, and chronic critical illness outcomes.\n\n0 Grants · 8 Publications · 4 Trainees\n\nSenior Mentors\nAdams Dudley, MD, MBA\n\nSenior Mentor\n\nJeff Chipman, MD\n\nSenior Mentor & Surgical Critical Care\n\nFaculty Collaborators\nKendall McEachron\n\nFaculty Collaborator\n\nSami Safadi\n\nFaculty Collaborator\n\nAbbie Begnaud, MD\n\nFaculty\n\nBen Henkle, MD, MPH\n\nFaculty\n\nDM\nDave MacDonald, MD, MS\n\nFaculty\n\nJosh Trujeque, MD\n\nFaculty\n\nKatie Pendleton, MD\n\nFaculty\n\nMK\nMichael Kalinoski, MD\n\nFaculty\n\nDave Wacker, MD\n\nFaculty\n\nResearch Team\nSA\nSteven Arriaza\n\nResearch Coordinator\n\nEB\nEmma Bromley\n\nResearch Coordinator\n\nCE\nCasey Eddington\n\nData Analyst\n\nDan Shyu, MD\n\nCritical Care Fel"
+    },
+    {
+      "route": "/manuscripts",
+      "loadMs": 1319,
+      "h1": "Manuscripts",
+      "h2s": [],
+      "rowCount": 0,
+      "btnCount": 274,
+      "emptyStates": [],
+      "bodyLen": 1500,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nManuscripts\n64\nNew Manuscript\nList\nPipeline\nAll PIs\nNick Ingraham\nNate Mesfin\nAll Groups\nCLIF\nLab\nMesfin\nMentee\n64 manuscripts\nTITLE\nSTATUS\nSTAGE\nPI\nGROUP\nIDEA\n36\n(Mesfin) K23: IHCA Survivability Calculator\nActive\nIdea\nIngraham\nMesfin\n(Tignanelli) ARPA-H: CIRCLE-ORIGIN Pancreatitis CCI\nActive\nIdea\nIngraham\nMesfin\nADHERE-LPV Trial\n1\nActive\nIdea\nIngraham\nLab\nATS 2026 Oral: Critically Ill Outside the ICU\nActive\nIdea\nIngraham\nLab\nCLIF Fluid Shortage All Comers\nActive\nIdea\nIngraham\nCLIF\nCLIF ICU Readmissions\nActive\nIdea\nIngraham\nCLIF\nCLIF P2: Volume vs Pressure Control Mortality\nActive\nIdea\nIngraham\nCLIF\nCLIF: ARF-NIV Treatment Location (Goldfarb)\n1\nActive\nIdea\nIngraham\nCLIF\nCLIF: Clinical Implications of Sepsis Definitions\n1\nActive\nIdea\nIngraham\nCLIF\nCLIF: EquiSedate\n1\nActive\nIdea\nIngraham\nCLIF\nCLIF: Lung Cancer Trajectories (Graffy)\nActive\nIdea\nIngraham\nCLIF\nCLIF: PF-v-SF Oxygenation Severity\nActive\nIdea\nIngraham\nCLIF\nCLIF: Vasopressor Escalation Protocol (Lyons)\n1\nActive\nIdea\nIngraham\nCLIF\nCLIF: Vasopressor Escalation Protocol (Lyons)\nActive\nIdea\nIngraham\nCLIF\nCLIF: VentMode Waterfall Brief (JAMIA)\nActive\nIdea\nIngraham\nCLIF\nCQODE Backbone / UMN CLIF\n2\nActive\nIdea\nIngraham\nCLIF\nDOM Research Conference April 2026\nActive\nIdea\nIngraham\nLab\nGDMS x LPV Hebbel A"
+    },
+    {
+      "route": "/ideas",
+      "loadMs": 1059,
+      "h1": "Ideas Board",
+      "h2s": [],
+      "rowCount": 0,
+      "btnCount": 15,
+      "emptyStates": [],
+      "bodyLen": 559,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nIdeas Board\n0\n0 active ideas\nNew Idea\nNew\n→\nUnder Review\n→\nApproved\n→\nParked\nGrid\nList\nNewest\nAll Statuses\nNew\nUnder Review\nApproved\nParked\n\nThe board is open\n\nResearch ideas, clinical questions, side projects — anything worth exploring. Drop one here and let the team weigh in.\n\nSubmit an idea\nLast synced: just now\n? for shortcuts"
+    },
+    {
+      "route": "/decisions",
+      "loadMs": 1087,
+      "h1": "Decision Log",
+      "h2s": [
+        "All Decisions"
+      ],
+      "rowCount": 0,
+      "btnCount": 16,
+      "emptyStates": [],
+      "bodyLen": 458,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nDecision Log\n1\n0 pending review, 1 with outcomes\nList\nTimeline\nLog Decision\nAll\nPending\nRecorded\nRevisited\nAll Decisions\ntest decision\nNeutral\nRecorded\n\ntest\n\nOutcome: test\n\n3d ago\nAN\nanonymous\nLast synced: just now\n? for shortcuts"
+    },
+    {
+      "route": "/analytics",
+      "loadMs": 9626,
+      "h1": "Lab Analytics",
+      "h2s": [],
+      "rowCount": 0,
+      "btnCount": 13,
+      "emptyStates": [],
+      "bodyLen": 1500,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nLab Analytics\n64 projects, 19 active tasks\nApr 6 - Apr 12, 2026\n7D\n4W\n3M\nAll\nCompleted\n531\nCreated\n28\nOverdue\n14\nActivity\n100\nLab health:\n24 healthy\n39 need attention\n1 at risk\n·\nNet this week: +503 tasks (531 done, 28 created)\nAttention Required\n14 overdue tasks need attention\nCQODE: Review mCIDE update (CLIF v3.0)\nDue Mar 14\nFix dx_name delimiter in CQODE backbone (temp fix in place)\nDue Mar 28\nBring R01 CLIF provider variation aims to Adams for review\nDue Mar 28\nAdd Adams to regular grant writing club meetings\nDue Apr 7\nFollow up on UMN data infrastructure gap for clinical trials with Genevieve/Tim Beebe\nDue Apr 7\nLab Activity\n11509 contributions in the last 90 days\nLess\nMore\nJan\nFeb\nMar\nApr\nActive Projects\n64\n64 total\nResearch Ideas\n0\n0 total\nPending Tasks\n19\n552 total\nProject Health\n24\n39 attention · 1 at risk\nTask Velocity\nMar 22\nMar 29\nApr 5\nApr 12\n0\n150\n300\n450\n600\nLab Progress This Week\n531\ntasks completed\n\n19 still pending across the lab\n\nIndividual performance metrics are visible to PIs only\n\nProject Pipeline Distribution\nIdea\n36\nAnalysis\n9\nData Collection\n9\nWriting\n6\nReview\n4\nActive Task Priority\nUrgent\n0\nHigh\n2\nMedium\n3\nLow\n8\nTask Age Distribution\n<1w\n1-2w\n2-4w\n1-2m\n2m+\n0\n3\n6\n9\n12\n\n4 tasks older than 4 weeks\n\nWorkload Distribution\nNick\n19\nL"
+    },
+    {
+      "route": "/pi-analytics",
+      "loadMs": 10894,
+      "h1": "",
+      "h2s": [],
+      "rowCount": 0,
+      "btnCount": 46,
+      "emptyStates": [],
+      "bodyLen": 1500,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nGood afternoon\n·\nSunday, Apr 12\n·\n2 due\n·\n14 overdue\nCustomize\nPress F to toggle filters on any page\nOverview\nProjects\nPeople\nDeadlines\n0/13\nWelcome to MN-CCORE Hub\n\nNext: Complete your profile\n\nGet Started\nCtrl+N\nTask\nMeeting\nIdea\nTasks\n\n19 pending · 533 done\n\nNick Ingraham\n19\n\nCQODE: Review mCIDE update (CLIF v3.0)\n\nOverdue\n\nFix dx_name delimiter in CQODE backbone (temp fix in place)\n\nOverdue\n\nBring R01 CLIF provider variation aims to Adams for review\n\nOverdue\n\nAdd Adams to regular grant writing club meetings\n\nOverdue\n\nFollow up on UMN data infrastructure gap for clinical trials with Genevieve/Tim Beebe\n\nOverdue\nlow\n\nReview vasopressor escalation protocol v3\n\nOverdue\n\nRe-run summarize_clif.py in data shelter with vectorized loops\n\nOverdue\n\nSign up for Epic Physician Builder class\n\nOverdue\nlow\n\nGet current manuscript from Kendall and review odds ratio concerns\n\nOverdue\nlow\n\nFix Playwright MCP wrapper on home laptop\n\nOverdue\nlow\n\nReview comments: ADHERE-LPV_ Rapid\n\nOverdue\nlow\n\nRespond to Sarah Kesler about interest in TELE-ICU shifts and review job description\n\nOverdue\nlow\n\nReview data pull specifications for Isbaar Project (Pap and HPV results)\n\nOverdue\n\nFollow up on bounced email for ICU survey distribution (husk0012@umn.edu)\n\nOverdue\nlow\n\nFix recurr"
+    },
+    {
+      "route": "/tasks",
+      "loadMs": 1642,
+      "h1": "Tasks",
+      "h2s": [],
+      "rowCount": 23,
+      "btnCount": 224,
+      "emptyStates": [],
+      "bodyLen": 1500,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nTasks\n19\n19 active tasks\n3d streak\nNew Task\nList\nMore views\nGroup by:\nNo Grouping\nDue Date\nPriority\nProject\nStatus\nSort:\nPriority\nDue Date\nTitle\nShow 533 done\nShowing all lab tasks. Sign in with your @umn.edu account to see only your tasks.\nMine\nAll 19\nAll\n19\nToday\n2\nThis Week\n3\nOverdue\n14\nNo Date\nWaiting On\n0 active\nFOCUS NEXT\n3/5\n1\nCQODE: Review mCIDE update (CLIF v3.0)\n2026-03-14\n2\nFix dx_name delimiter in CQODE backbone (temp fix in place)\n2026-03-28\n3\nBring R01 CLIF provider variation aims to Adams for review\n2026-03-28\nOVERDUE\n14\nTITLE\nASSIGNEE\nPROJECT\nDUE DATE\nSTATUS\nPRIORITY\nCQODE: Review mCIDE update (CLIF v3.0)\nsync\nCqode Backbone Umn C\nCQODE Backbone / UMN CLIF\n29d ago\nTo Do\nMedium\nFix dx_name delimiter in CQODE backbone (temp fix in place)\nsync\nCqode Backbone Umn C\nCQODE Backbone / UMN CLIF\n15d ago\nTo Do\nMedium\nBring R01 CLIF provider variation aims to Adams for review\nsync\nProvider Variation A\nR01: Provider Variation Across CLIF\n15d ago\nTo Do\nMedium\nAdd Adams to regular grant writing club meetings\nsync\nMnccore Minnesota Cr\nMNCCORE (Minnesota Critical Care Outcomes & Research Effort)\n5d ago\nTo Do\nMedium\nFollow up on UMN data infrastructure gap for clinical trials with Genevieve/Tim Beebe\nsync\nAdmin Tasks\nadmin-tasks\n5d ago\nTo Do\nLow\nReview v"
+    },
+    {
+      "route": "/projects",
+      "loadMs": 10364,
+      "h1": "Research Pipeline",
+      "h2s": [],
+      "rowCount": 0,
+      "btnCount": 537,
+      "emptyStates": [],
+      "bodyLen": 1500,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nResearch Pipeline\nNew Project\nList\nPipeline\nTry Pipeline view for a visual overview\nAll\nCLIF\nLab\nMesfin Lab\nMentees\nNeeds Attention\n64 projects · 27 CLIF · 30 Lab · 7 Mesfin\nTITLE\nSTATUS\nSTAGE\nPI\nGROUP\nIDEA\n36\n(Mesfin) K23: IHCA Survivability Calculator\nActive\nIdea\nIngraham\nMesfin\n(Tignanelli) ARPA-H: CIRCLE-ORIGIN Pancreatitis CCI\nActive\nIdea\nIngraham\nMesfin\nADHERE-LPV Trial\n1\nActive\nIdea\nIngraham\nLab\nATS 2026 Oral: Critically Ill Outside the ICU\nActive\nIdea\nIngraham\nLab\nCLIF Fluid Shortage All Comers\nActive\nIdea\nIngraham\nCLIF\nCLIF ICU Readmissions\nActive\nIdea\nIngraham\nCLIF\nCLIF P2: Volume vs Pressure Control Mortality\nActive\nIdea\nIngraham\nCLIF\nCLIF: ARF-NIV Treatment Location (Goldfarb)\n1\nActive\nIdea\nIngraham\nCLIF\nCLIF: Clinical Implications of Sepsis Definitions\n1\nActive\nIdea\nIngraham\nCLIF\nCLIF: EquiSedate\n1\nActive\nIdea\nIngraham\nCLIF\nCLIF: Lung Cancer Trajectories (Graffy)\nActive\nIdea\nIngraham\nCLIF\nCLIF: PF-v-SF Oxygenation Severity\nActive\nIdea\nIngraham\nCLIF\nCLIF: Vasopressor Escalation Protocol (Lyons)\n1\nActive\nIdea\nIngraham\nCLIF\nCLIF: Vasopressor Escalation Protocol (Lyons)\nActive\nIdea\nIngraham\nCLIF\nCLIF: VentMode Waterfall Brief (JAMIA)\nActive\nIdea\nIngraham\nCLIF\nCQODE Backbone / UMN CLIF\n2\nActive\nIdea\nIngraham\nCLIF\nDOM Research Conference April 20"
+    },
+    {
+      "route": "/mentee-milestones",
+      "loadMs": 1215,
+      "h1": "Mentee Milestones",
+      "h2s": [],
+      "rowCount": 0,
+      "btnCount": 15,
+      "emptyStates": [
+        "No milestones yet\n\nAdd milestones for your mentees to track committee meetings, ",
+        "No milestones yet\n\nAdd milestones for your mentees to track committee meetings, ",
+        "No milestones yet"
+      ],
+      "bodyLen": 787,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nMentee Milestones\n0 upcoming milestones\nAll Mentees\nDan Shyu\nBeret Fitzgerald\nClaire Collins\nAll Types\nCommittee Meeting\nScholarly Project\nIRB Submission\nIRB Renewal\nProgram Evaluation\nPresentation\nPublication\nOther\nAll Statuses\nUpcoming\nIn Progress\nCompleted\nOverdue\nAdd Milestone\nDan Shyu\n0 upcoming\n0 done\nBeret Fitzgerald\n0 upcoming\n0 done\nCC\nClaire Collins\n0 upcoming\n0 done\n\nNo milestones yet\n\nAdd milestones for your mentees to track committee meetings, scholarly projects, IRB submissions, and more.\n\nAdd Milestone\nLast synced: just now\n? for shortcuts"
+    },
+    {
+      "route": "/calendar",
+      "loadMs": 1183,
+      "h1": "Lab Calendar",
+      "h2s": [],
+      "rowCount": 0,
+      "btnCount": 15,
+      "emptyStates": [],
+      "bodyLen": 871,
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nLab Calendar\n35\n35 events · 2 today\nExport\nMonth\nWeek\nDay\nAgenda\nApril 2026\nSUN\nMON\nTUE\nWED\nTHU\nFRI\nSAT\n1\n2\n3\n4\n5\n6\n7\nMN-CCORE Biweekly Me...\nMN-CCORE: MN-CCORE B...\nSign up for Epic Phy...\n+4 more\n8\n9\nGet current manuscri...\n10\nRespond to Sarah Kes...\nFix Playwright MCP w...\nReview comments: ADH...\n11\nReview data pull spe...\nFollow up on bounced...\n12\nBlock Gmail send API...\nFix recurring failur...\n13\n14\nRun EquiSedate CLIF ...\n15\n16\n17\n18\n19\n20\nSet up Clinical Impl...\nWORKFLOW-TEST rename...\n21\n22\n23\n24\nRun CLIF ARF-NIV Tre...\n25\nWORKFLOW-TEST brain....\n26\n27\n28\n29\n30\nMeetings\nTask Dues\nMilestones\nLast synced: just now\n? for shortcuts"
+    },
+    {
+      "route": "meeting-detail-click",
+      "url": "/meetings/mtg-2026-04-08-e4359890",
+      "title": "MNCCORE Biweekly Meeting -- April 07, 2026",
+      "tabs": [
+        "Collapse",
+        "Search...\n⌘K",
+        "Watch",
+        "Copy Summary",
+        "+ Edit",
+        "Shuffle",
+        "Customize",
+        "Log Decision",
+        "Edit",
+        "? for shortcuts"
+      ],
+      "bodyPreview": "Dashboard\nMy Hub\nTasks\n15\nCalendar\nRESEARCH\nProjects\nManuscripts\nGrants\nDeadlines\nIdeas\nResearch Digest\nLAB\nMeetings\nTranscripts\nTeam\nActivity\nAnalytics\nSettings\nReport a Bug\nSearch\nCtrl+K\nBack to Website\nCollapse\nSearch...\n⌘K\nMeetings\n/\nMNCCORE Biweekly Meeting -- April 07, 20...\nBack to Meetings\ncompleted\nbiweekly\nWatch\nPrep View\nCopy Summary\nMNCCORE Biweekly Meeting -- April 07, 2026\n\nTuesday, April 7, 2026\n\nFacilitator:\nAbbie Begnaud\nATTENDEES\n6\n+ Edit\nNick\nNathan\nCE\nCasey\nEB\nEmma\nDan\nSA\nSteven\nAgenda\nOPENING ROUND\n· Challenges\n\n“What's something you've been putting off, and why?”\n\nShuffle\nCustomize\nAction Items\n0/0\n@name\n#project\np1-p3\nApr 15\n\nNo action items yet — type above to add one\n\nDecisions\nLog Decision\n\nNo decisions logged yet. Record one during the meeting so nobody forgets.\n\nMeeting Notes\n\nNo notes yet. Click to add.\n\nEdit\nLast synced: just now\n? for shortcuts"
+    },
+    {
+      "route": "personal-deep",
+      "hasRegulatory": false,
+      "hasOnboarding": true,
+      "sections": []
+    }
+  ],
+  "consoleErrors": [
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=fb56247f-e1d2-4605-9d0b-dd8e96c909d7' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=fb56247f-e1d2-4605-9d0b-dd8e96c909d7' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=fb56247f-e1d2-4605-9d0b-dd8e96c909d7' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=565e0392-e210-4306-8b10-8bd7d6321e1e' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=565e0392-e210-4306-8b10-8bd7d6321e1e' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=565e0392-e210-4306-8b10-8bd7d6321e1e' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=565e0392-e210-4306-8b10-8bd7d6321e1e' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=2d090357-46b3-48de-ba4e-498e33093891' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=2d090357-46b3-48de-ba4e-498e33093891' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=97bfc61e-883f-4543-a4f6-250894f9b7c0' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=40643447-f496-4db8-bb6a-dbdf8f914c24' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=1f4f60c8-4380-478b-abd7-053d8777c96e' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=e5ca4ff1-cb8a-4c44-8993-5c8e95b70fdd' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=09910c32-9f71-462f-af67-e8661ff467d2' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=09910c32-9f71-462f-af67-e8661ff467d2' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=f26715a5-79a6-4dd7-be65-fcd38994cd10' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=cd08006b-09ef-4bea-88f0-d3dbc50672ab' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=102e905a-dcd0-4c57-a5e9-93d49bd99bfa' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=102e905a-dcd0-4c57-a5e9-93d49bd99bfa' failed: Error during WebSocket handshake: Unexpected response c",
+    "WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=47ba048d-ec05-4b05-a0af-49965d2464fc' failed: Error during WebSocket handshake: Unexpected response c"
+  ]
+}

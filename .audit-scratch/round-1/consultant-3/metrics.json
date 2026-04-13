@@ -1,0 +1,212 @@
+[
+  {
+    "page": "my-tasks",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "32px 412px 110px 130px 100px 120px 80px 90px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 15
+    }
+  },
+  {
+    "page": "projects",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "570px 110px 110px 120px 80px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 65
+    }
+  },
+  {
+    "page": "manuscripts",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "582px 90px 100px 90px 60px 68px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 65
+    }
+  },
+  {
+    "page": "deadlines",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "32px 530px 140px 120px 100px 100px 80px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 26
+    }
+  },
+  {
+    "page": "grants",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "489.328px 120px 100px 80px 244.672px 100px",
+      "rowHeight": 17.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 8
+    }
+  },
+  {
+    "page": "meetings",
+    "density": "default",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "analytics",
+    "density": "default",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "settings",
+    "density": "default",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "ideas",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "534px 120px 100px 80px 80px 80px",
+      "rowHeight": 42.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 11
+    }
+  },
+  {
+    "page": "decisions",
+    "density": "default",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "334px 120px 160px 120px 140px 100px 80px",
+      "rowHeight": 42.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 10
+    }
+  },
+  {
+    "page": "my-tasks",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "32px 412px 110px 130px 100px 120px 80px 90px",
+      "rowHeight": 33,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 15
+    }
+  },
+  {
+    "page": "projects",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "570px 110px 110px 120px 80px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 65
+    }
+  },
+  {
+    "page": "manuscripts",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "582px 90px 100px 90px 60px 68px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 65
+    }
+  },
+  {
+    "page": "deadlines",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "32px 530px 140px 120px 100px 100px 80px",
+      "rowHeight": 34.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 26
+    }
+  },
+  {
+    "page": "grants",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "489.328px 120px 100px 80px 244.672px 100px",
+      "rowHeight": 17.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 8
+    }
+  },
+  {
+    "page": "meetings",
+    "density": "compact",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "analytics",
+    "density": "compact",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "settings",
+    "density": "compact",
+    "metrics": {
+      "hasTable": false
+    }
+  },
+  {
+    "page": "ideas",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "534px 120px 100px 80px 80px 80px",
+      "rowHeight": 42.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 11
+    }
+  },
+  {
+    "page": "decisions",
+    "density": "compact",
+    "metrics": {
+      "hasTable": true,
+      "gtc": "334px 120px 160px 120px 140px 100px 80px",
+      "rowHeight": 42.59375,
+      "rowVar": "44px",
+      "cellFont": "13px",
+      "rowCount": 10
+    }
+  }
+]

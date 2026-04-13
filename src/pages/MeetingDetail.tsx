@@ -102,6 +102,30 @@ export default function MeetingDetail() {
   const [selectedActionIds, setSelectedActionIds] = useState<Set<string>>(new Set())
   const toggleActionSelect = (id: string) => setSelectedActionIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
 
+  // Local action item order — persists in state during session
+  // IMPORTANT: must be declared BEFORE conditional early returns to satisfy Rules of Hooks
+  const [actionOrder, setActionOrder] = useState<string[]>([])
+  const pendingActions = useMemo(
+    () => (meeting?.action_items || []).filter((a: ActionItemRowType) => !a.completed),
+    [meeting?.action_items]
+  )
+  const completedActions = useMemo(
+    () => (meeting?.action_items || []).filter((a: ActionItemRowType) => a.completed),
+    [meeting?.action_items]
+  )
+  const orderedPendingActions = useMemo(() => {
+    if (actionOrder.length === 0) return pendingActions
+    const orderMap = new Map(actionOrder.map((id, i) => [id, i]))
+    return [...pendingActions].sort((a, b) => {
+      const ai = orderMap.get(a.id)
+      const bi = orderMap.get(b.id)
+      if (ai === undefined && bi === undefined) return 0
+      if (ai === undefined) return 1
+      if (bi === undefined) return -1
+      return ai - bi
+    })
+  }, [pendingActions, actionOrder])
+
   const handleBatchComplete = () => {
     for (const id of selectedActionIds) {
       toggleAction.mutate(id)
@@ -166,24 +190,6 @@ export default function MeetingDetail() {
       body: JSON.stringify({ ids: reordered.map(i => i.id) }),
     })
   }
-
-  const pendingActions = actionItems.filter((a: ActionItemRowType) => !a.completed)
-  const completedActions = actionItems.filter((a: ActionItemRowType) => a.completed)
-
-  // Local action item order — persists in state during session
-  const [actionOrder, setActionOrder] = useState<string[]>([])
-  const orderedPendingActions = useMemo(() => {
-    if (actionOrder.length === 0) return pendingActions
-    const orderMap = new Map(actionOrder.map((id, i) => [id, i]))
-    return [...pendingActions].sort((a, b) => {
-      const ai = orderMap.get(a.id)
-      const bi = orderMap.get(b.id)
-      if (ai === undefined && bi === undefined) return 0
-      if (ai === undefined) return 1
-      if (bi === undefined) return -1
-      return ai - bi
-    })
-  }, [pendingActions, actionOrder])
 
   function handleActionDragEnd(event: DragEndEvent) {
     const { active, over } = event

@@ -1,0 +1,74 @@
+{
+  "pi_analytics": {
+    "finalUrl": "https://mn-ccore-lab.pages.dev/pi-analytics",
+    "redirected": false,
+    "h1": null,
+    "buttonCount": 7,
+    "copyBtn": [],
+    "printBtn": [],
+    "exportBtn": [],
+    "mentionsKeywords": {
+      "grants": true,
+      "mentee": false,
+      "manuscripts": true,
+      "workload": false,
+      "overdue": false
+    }
+  },
+  "personal_regulatory": {
+    "mentionsIRB": false,
+    "mentionsRegulatory": false,
+    "mentionsExpir": false,
+    "hasTestDelete": true,
+    "alertStripText": null
+  },
+  "dashboard_regulatory": {
+    "mentionsIRB": false,
+    "mentionsRegulatory": false,
+    "mentionsExpir": false
+  },
+  "manuscripts": {
+    "headers": [],
+    "daysInStageHeader": [],
+    "stalledFilter": [
+      "Stalled"
+    ],
+    "mentionsDays": true,
+    "mentionsStalled": true
+  },
+  "meetings": {
+    "hasCarryForward": false,
+    "hasLogDecision": false,
+    "countBadge": true,
+    "buttonCount": 44
+  },
+  "decisions": {
+    "headers": [
+      "Title",
+      "Outcome",
+      "Tags",
+      "Decided By",
+      "Project",
+      "Date"
+    ]
+  },
+  "ideas": {
+    "headers": [
+      "Title",
+      "Submitter",
+      "Status",
+      "Votes",
+      "Age",
+      ""
+    ]
+  },
+  "mentee": {
+    "hasStalled": false,
+    "hasRedBadge": false,
+    "hasContent": true,
+    "mentions": {
+      "committee": true,
+      "milestone": true
+    }
+  }
+}

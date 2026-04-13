@@ -1,0 +1,1872 @@
+{
+  "/": {
+    "cold": {
+      "dclMs": 225,
+      "ttfb": 10,
+      "dcl": 222,
+      "fcp": 248,
+      "lcp": 928,
+      "cls": 0,
+      "jsKB": 921,
+      "cssKB": 85,
+      "imgKB": 2,
+      "fontKB": 141,
+      "totalKB": 1842,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "BarChart-CLUcZRz7.js",
+          "kb": 319
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "Home-3wrVc9w4.js",
+          "kb": 42
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        }
+      ],
+      "apiCallCount": 8,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/action-items",
+        "/api/publications",
+        "/api/grants",
+        "/api/digest",
+        "/api/team",
+        "/api/projects",
+        "/api/tasks"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 130,
+      "ttfb": 12,
+      "dcl": 125,
+      "fcp": 172,
+      "lcp": 636,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 141,
+      "totalKB": 848,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 8,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/publications",
+        "/api/action-items",
+        "/api/digest",
+        "/api/team",
+        "/api/grants",
+        "/api/projects",
+        "/api/tasks"
+      ],
+      "err": null
+    }
+  },
+  "/dashboard": {
+    "cold": {
+      "dclMs": 312,
+      "ttfb": 15,
+      "dcl": 308,
+      "fcp": 352,
+      "lcp": 1168,
+      "cls": 0,
+      "jsKB": 695,
+      "cssKB": 85,
+      "imgKB": 66,
+      "fontKB": 106,
+      "totalKB": 1639,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "Dashboard-CFzwJiGb.js",
+          "kb": 86
+        },
+        {
+          "name": "sortable.esm--wo-Zdeq.js",
+          "kb": 47
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        }
+      ],
+      "apiCallCount": 10,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/action-items",
+        "/api/meetings/cadence-check",
+        "/api/publications",
+        "/api/projects",
+        "/api/team",
+        "/api/tasks"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 121,
+      "ttfb": 12,
+      "dcl": 119,
+      "fcp": 168,
+      "lcp": 708,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 64,
+      "fontKB": 106,
+      "totalKB": 872,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 10,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/action-items",
+        "/api/meetings/cadence-check",
+        "/api/tasks",
+        "/api/publications",
+        "/api/team",
+        "/api/projects"
+      ],
+      "err": null
+    }
+  },
+  "/my-tasks": {
+    "cold": {
+      "dclMs": 224,
+      "ttfb": 14,
+      "dcl": 220,
+      "fcp": 248,
+      "lcp": 672,
+      "cls": 1.727,
+      "jsKB": 827,
+      "cssKB": 85,
+      "imgKB": 66,
+      "fontKB": 67,
+      "totalKB": 1680,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "MyTasks-C_K-Cox9.js",
+          "kb": 94
+        },
+        {
+          "name": "TaskDetailPanel-3fjU97ha.js",
+          "kb": 72
+        },
+        {
+          "name": "sortable.esm--wo-Zdeq.js",
+          "kb": 47
+        }
+      ],
+      "apiCallCount": 7,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/team",
+        "/api/projects",
+        "/api/tasks"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 141,
+      "ttfb": 15,
+      "dcl": 139,
+      "fcp": 184,
+      "lcp": 872,
+      "cls": 0.092,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 64,
+      "fontKB": 67,
+      "totalKB": 780,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "createLucideIcon-CLzHHS3M.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 7,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/projects",
+        "/api/team",
+        "/api/tasks"
+      ],
+      "err": null
+    }
+  },
+  "/personal": {
+    "cold": {
+      "dclMs": 246,
+      "ttfb": 14,
+      "dcl": 244,
+      "fcp": 268,
+      "lcp": 816,
+      "cls": 0.053,
+      "jsKB": 718,
+      "cssKB": 85,
+      "imgKB": 2,
+      "fontKB": 67,
+      "totalKB": 1502,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "TaskDetailPanel-3fjU97ha.js",
+          "kb": 72
+        },
+        {
+          "name": "sortable.esm--wo-Zdeq.js",
+          "kb": 47
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        }
+      ],
+      "apiCallCount": 7,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/activity",
+        "/api/projects",
+        "/api/tasks"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 116,
+      "ttfb": 19,
+      "dcl": 114,
+      "fcp": 156,
+      "lcp": 676,
+      "cls": 0.061,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 67,
+      "totalKB": 711,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 7,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/activity",
+        "/api/projects",
+        "/api/tasks"
+      ],
+      "err": null
+    }
+  },
+  "/projects": {
+    "cold": {
+      "dclMs": 195,
+      "ttfb": 15,
+      "dcl": 193,
+      "fcp": 216,
+      "lcp": 608,
+      "cls": 0.001,
+      "jsKB": 584,
+      "cssKB": 85,
+      "imgKB": 2,
+      "fontKB": 67,
+      "totalKB": 1368,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "Projects-C-5bo1pq.js",
+          "kb": 29
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        }
+      ],
+      "apiCallCount": 7,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/dependencies",
+        "/api/projects",
+        "/api/tasks"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 165,
+      "ttfb": 42,
+      "dcl": 162,
+      "fcp": 212,
+      "lcp": 548,
+      "cls": 0.001,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 67,
+      "totalKB": 711,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 7,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/dependencies",
+        "/api/projects",
+        "/api/tasks"
+      ],
+      "err": null
+    }
+  },
+  "/manuscripts": {
+    "cold": {
+      "dclMs": 226,
+      "ttfb": 20,
+      "dcl": 220,
+      "fcp": 244,
+      "lcp": 816,
+      "cls": 0,
+      "jsKB": 601,
+      "cssKB": 85,
+      "imgKB": 446,
+      "fontKB": 67,
+      "totalKB": 1827,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "RevisionTracker-DzegTum9.js",
+          "kb": 17
+        }
+      ],
+      "apiCallCount": 7,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/revisions/active",
+        "/api/version",
+        "/api/projects",
+        "/api/tasks"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 156,
+      "ttfb": 32,
+      "dcl": 151,
+      "fcp": 204,
+      "lcp": 860,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 444,
+      "fontKB": 67,
+      "totalKB": 1153,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 7,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/tasks/overdue-count",
+        "/api/revisions/active",
+        "/api/version",
+        "/api/projects",
+        "/api/tasks"
+      ],
+      "err": null
+    }
+  },
+  "/grants": {
+    "cold": {
+      "dclMs": 179,
+      "ttfb": 14,
+      "dcl": 177,
+      "fcp": 200,
+      "lcp": 668,
+      "cls": 0.241,
+      "jsKB": 585,
+      "cssKB": 85,
+      "imgKB": 446,
+      "fontKB": 67,
+      "totalKB": 1188,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "Grants-CF5s334t.js",
+          "kb": 26
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        }
+      ],
+      "apiCallCount": 6,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/tasks/overdue-count",
+        "/api/grant-milestones/upcoming",
+        "/api/version",
+        "/api/grants/timeline"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 137,
+      "ttfb": 13,
+      "dcl": 135,
+      "fcp": 180,
+      "lcp": 624,
+      "cls": 0.157,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 444,
+      "fontKB": 67,
+      "totalKB": 530,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 6,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/grant-milestones/upcoming",
+        "/api/grants/timeline"
+      ],
+      "err": null
+    }
+  },
+  "/deadlines": {
+    "cold": {
+      "dclMs": 176,
+      "ttfb": 12,
+      "dcl": 174,
+      "fcp": 200,
+      "lcp": 1024,
+      "cls": 3.595,
+      "jsKB": 744,
+      "cssKB": 85,
+      "imgKB": 66,
+      "fontKB": 67,
+      "totalKB": 1591,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "TaskDetailPanel-3fjU97ha.js",
+          "kb": 72
+        },
+        {
+          "name": "sortable.esm--wo-Zdeq.js",
+          "kb": 47
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        }
+      ],
+      "apiCallCount": 8,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/conferences/upcoming",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/grants/timeline",
+        "/api/tasks",
+        "/api/projects"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 106,
+      "ttfb": 12,
+      "dcl": 104,
+      "fcp": 160,
+      "lcp": 940,
+      "cls": 0.139,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 64,
+      "fontKB": 67,
+      "totalKB": 774,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 8,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/conferences/upcoming",
+        "/api/projects",
+        "/api/grants/timeline",
+        "/api/tasks"
+      ],
+      "err": null
+    }
+  },
+  "/meetings": {
+    "cold": {
+      "dclMs": 288,
+      "ttfb": 13,
+      "dcl": 281,
+      "fcp": 304,
+      "lcp": 696,
+      "cls": 1.273,
+      "jsKB": 571,
+      "cssKB": 85,
+      "imgKB": 463,
+      "fontKB": 132,
+      "totalKB": 1266,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "Meetings-DHruMr0g.js",
+          "kb": 29
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        }
+      ],
+      "apiCallCount": 6,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/action-items",
+        "/api/meetings/cadence-check"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 110,
+      "ttfb": 10,
+      "dcl": 108,
+      "fcp": 148,
+      "lcp": 516,
+      "cls": 0.064,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 461,
+      "fontKB": 132,
+      "totalKB": 622,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "AnimatePresence-toRkDgNc.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 6,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/meetings/cadence-check",
+        "/api/meetings/next",
+        "/api/action-items"
+      ],
+      "err": null
+    }
+  },
+  "/team": {
+    "cold": {
+      "dclMs": 238,
+      "ttfb": 11,
+      "dcl": 236,
+      "fcp": 264,
+      "lcp": 696,
+      "cls": 0,
+      "jsKB": 549,
+      "cssKB": 85,
+      "imgKB": 2477,
+      "fontKB": 102,
+      "totalKB": 3836,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "Team-DKLdO_Ju.js",
+          "kb": 10
+        }
+      ],
+      "apiCallCount": 5,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/expertise",
+        "/api/activity",
+        "/api/publications",
+        "/api/tasks"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 100,
+      "ttfb": 33,
+      "dcl": 98,
+      "fcp": 128,
+      "lcp": 676,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 2475,
+      "fontKB": 102,
+      "totalKB": 3214,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 5,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/expertise",
+        "/api/activity",
+        "/api/publications",
+        "/api/tasks"
+      ],
+      "err": null
+    }
+  },
+  "/ideas": {
+    "cold": {
+      "dclMs": 170,
+      "ttfb": 11,
+      "dcl": 168,
+      "fcp": 184,
+      "lcp": 552,
+      "cls": 0,
+      "jsKB": 565,
+      "cssKB": 85,
+      "imgKB": 2,
+      "fontKB": 67,
+      "totalKB": 722,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "Ideas-BxKANvgs.js",
+          "kb": 17
+        }
+      ],
+      "apiCallCount": 5,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/ideas",
+        "/api/version"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 181,
+      "ttfb": 14,
+      "dcl": 179,
+      "fcp": 212,
+      "lcp": 588,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 67,
+      "totalKB": 84,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 5,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/ideas",
+        "/api/meetings/next",
+        "/api/version"
+      ],
+      "err": null
+    }
+  },
+  "/decisions": {
+    "cold": {
+      "dclMs": 175,
+      "ttfb": 12,
+      "dcl": 173,
+      "fcp": 192,
+      "lcp": 532,
+      "cls": 0,
+      "jsKB": 573,
+      "cssKB": 85,
+      "imgKB": 2,
+      "fontKB": 132,
+      "totalKB": 855,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "DecisionsPage-DYX-Ue6O.js",
+          "kb": 29
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        }
+      ],
+      "apiCallCount": 8,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/decisions/tags",
+        "/api/decisions/review",
+        "/api/decisions",
+        "/api/projects"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 115,
+      "ttfb": 11,
+      "dcl": 113,
+      "fcp": 144,
+      "lcp": 476,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 132,
+      "totalKB": 209,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 8,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/projects",
+        "/api/decisions/tags",
+        "/api/decisions/review",
+        "/api/version",
+        "/api/meetings/next",
+        "/api/decisions"
+      ],
+      "err": null
+    }
+  },
+  "/research-digest": {
+    "cold": {
+      "dclMs": 200,
+      "ttfb": 15,
+      "dcl": 198,
+      "fcp": 252,
+      "lcp": 420,
+      "cls": 5.405,
+      "jsKB": 566,
+      "cssKB": 85,
+      "imgKB": 2,
+      "fontKB": 106,
+      "totalKB": 1001,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "Digest-BKhQRbEd.js",
+          "kb": 17
+        }
+      ],
+      "apiCallCount": 8,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/digest/dates",
+        "/api/projects",
+        "/api/digest",
+        "/api/digest"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 121,
+      "ttfb": 12,
+      "dcl": 119,
+      "fcp": 180,
+      "lcp": 284,
+      "cls": 5.623,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 106,
+      "totalKB": 362,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 8,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/digest/dates",
+        "/api/projects",
+        "/api/digest",
+        "/api/digest"
+      ],
+      "err": null
+    }
+  },
+  "/calendar": {
+    "cold": {
+      "dclMs": 174,
+      "ttfb": 36,
+      "dcl": 172,
+      "fcp": 188,
+      "lcp": 568,
+      "cls": 0.331,
+      "jsKB": 554,
+      "cssKB": 85,
+      "imgKB": 2,
+      "fontKB": 67,
+      "totalKB": 717,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "CalendarPage-COgoYh5q.js",
+          "kb": 13
+        }
+      ],
+      "apiCallCount": 5,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/calendar/events"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 110,
+      "ttfb": 12,
+      "dcl": 108,
+      "fcp": 148,
+      "lcp": 484,
+      "cls": 0.343,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 67,
+      "totalKB": 90,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 5,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/version",
+        "/api/tasks/overdue-count",
+        "/api/calendar/events"
+      ],
+      "err": null
+    }
+  },
+  "/analytics": {
+    "cold": {
+      "dclMs": 208,
+      "ttfb": 16,
+      "dcl": 205,
+      "fcp": 228,
+      "lcp": 864,
+      "cls": 0.401,
+      "jsKB": 909,
+      "cssKB": 85,
+      "imgKB": 66,
+      "fontKB": 67,
+      "totalKB": 1781,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "BarChart-CLUcZRz7.js",
+          "kb": 319
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "AnalyticsPage-fB25oPSL.js",
+          "kb": 23
+        }
+      ],
+      "apiCallCount": 9,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/ideas",
+        "/api/version",
+        "/api/activity",
+        "/api/projects",
+        "/api/tasks",
+        "/api/activity/heatmap"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 107,
+      "ttfb": 11,
+      "dcl": 105,
+      "fcp": 140,
+      "lcp": 724,
+      "cls": 0.415,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 64,
+      "fontKB": 67,
+      "totalKB": 799,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 9,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/ideas",
+        "/api/version",
+        "/api/projects",
+        "/api/activity",
+        "/api/tasks",
+        "/api/activity/heatmap"
+      ],
+      "err": null
+    }
+  },
+  "/pi-analytics": {
+    "cold": {
+      "dclMs": 195,
+      "ttfb": 14,
+      "dcl": 193,
+      "fcp": 476,
+      "lcp": 728,
+      "cls": 0.032,
+      "jsKB": 695,
+      "cssKB": 85,
+      "imgKB": 66,
+      "fontKB": 106,
+      "totalKB": 1639,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "Dashboard-CFzwJiGb.js",
+          "kb": 86
+        },
+        {
+          "name": "sortable.esm--wo-Zdeq.js",
+          "kb": 47
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        }
+      ],
+      "apiCallCount": 10,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/meetings/cadence-check",
+        "/api/action-items",
+        "/api/publications",
+        "/api/team",
+        "/api/projects",
+        "/api/tasks"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 149,
+      "ttfb": 12,
+      "dcl": 147,
+      "fcp": 328,
+      "lcp": 612,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 64,
+      "fontKB": 106,
+      "totalKB": 872,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 10,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/meetings/cadence-check",
+        "/api/meetings/next",
+        "/api/team",
+        "/api/projects",
+        "/api/action-items",
+        "/api/publications",
+        "/api/tasks"
+      ],
+      "err": null
+    }
+  },
+  "/search": {
+    "cold": {
+      "dclMs": 194,
+      "ttfb": 18,
+      "dcl": 192,
+      "fcp": 212,
+      "lcp": 576,
+      "cls": 0,
+      "jsKB": 548,
+      "cssKB": 85,
+      "imgKB": 2,
+      "fontKB": 67,
+      "totalKB": 705,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 8
+        }
+      ],
+      "apiCallCount": 4,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/meetings/next",
+        "/api/version"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 101,
+      "ttfb": 12,
+      "dcl": 99,
+      "fcp": 136,
+      "lcp": 476,
+      "cls": 0,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 67,
+      "totalKB": 84,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 4,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/meetings/next"
+      ],
+      "err": null
+    }
+  },
+  "/settings": {
+    "cold": {
+      "dclMs": 227,
+      "ttfb": 20,
+      "dcl": 225,
+      "fcp": 244,
+      "lcp": 680,
+      "cls": 0.778,
+      "jsKB": 556,
+      "cssKB": 85,
+      "imgKB": 2477,
+      "fontKB": 132,
+      "totalKB": 3263,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "SettingsPage-ChR6dTHP.js",
+          "kb": 16
+        }
+      ],
+      "apiCallCount": 7,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/tasks/overdue-count",
+        "/api/team",
+        "/api/settings",
+        "/api/version",
+        "/api/workflow-templates"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 121,
+      "ttfb": 15,
+      "dcl": 118,
+      "fcp": 156,
+      "lcp": 588,
+      "cls": 0.585,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 2475,
+      "fontKB": 132,
+      "totalKB": 2633,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 7,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/workflow-templates",
+        "/api/settings",
+        "/api/team"
+      ],
+      "err": null
+    }
+  },
+  "/activity": {
+    "cold": {
+      "dclMs": 178,
+      "ttfb": 11,
+      "dcl": 177,
+      "fcp": 192,
+      "lcp": 792,
+      "cls": 1.18,
+      "jsKB": 558,
+      "cssKB": 85,
+      "imgKB": 2,
+      "fontKB": 132,
+      "totalKB": 806,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 8
+        }
+      ],
+      "apiCallCount": 5,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/meetings/next",
+        "/api/activity"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 172,
+      "ttfb": 10,
+      "dcl": 170,
+      "fcp": 204,
+      "lcp": 1288,
+      "cls": 1.223,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 132,
+      "totalKB": 175,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "jsx-runtime-C7M7YA1l.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 5,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/meetings/next",
+        "/api/tasks/overdue-count",
+        "/api/version",
+        "/api/activity"
+      ],
+      "err": null
+    }
+  },
+  "/publications": {
+    "cold": {
+      "dclMs": 174,
+      "ttfb": 15,
+      "dcl": 172,
+      "fcp": 192,
+      "lcp": 608,
+      "cls": 12.461,
+      "jsKB": 560,
+      "cssKB": 85,
+      "imgKB": 2,
+      "fontKB": 141,
+      "totalKB": 1400,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 333
+        },
+        {
+          "name": "proxy-DW8O-e9V.js",
+          "kb": 118
+        },
+        {
+          "name": "useApiData-B-W4ekwW.js",
+          "kb": 34
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 22
+        },
+        {
+          "name": "Publications-MBT1HLyt.js",
+          "kb": 15
+        }
+      ],
+      "apiCallCount": 3,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/publications",
+        "/api/tasks"
+      ],
+      "err": null
+    },
+    "warm": {
+      "dclMs": 149,
+      "ttfb": 19,
+      "dcl": 147,
+      "fcp": 180,
+      "lcp": 656,
+      "cls": 12.801,
+      "jsKB": 0,
+      "cssKB": 14,
+      "imgKB": 0,
+      "fontKB": 141,
+      "totalKB": 767,
+      "topChunks": [
+        {
+          "name": "index-CREh1a-g.js",
+          "kb": 0
+        },
+        {
+          "name": "useMutation-DffBRlbM.js",
+          "kb": 0
+        },
+        {
+          "name": "useQuery-Nae3EDYz.js",
+          "kb": 0
+        },
+        {
+          "name": "preload-helper-CbX7KBVD.js",
+          "kb": 0
+        },
+        {
+          "name": "AnimatePresence-toRkDgNc.js",
+          "kb": 0
+        }
+      ],
+      "apiCallCount": 3,
+      "apiCalls": [
+        "/api/auth/me",
+        "/api/publications",
+        "/api/tasks"
+      ],
+      "err": null
+    }
+  }
+}

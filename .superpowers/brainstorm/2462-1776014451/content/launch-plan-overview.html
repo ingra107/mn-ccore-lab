@@ -1,0 +1,85 @@
+<h2>Final Launch Polish — The Plan</h2>
+<p class="subtitle">Three phases to go from 8.4 to perfection. No triage, no shortcuts. Every pixel, every interaction, every page.</p>
+
+<div class="section">
+  <div class="label">THE APPROACH</div>
+  <p>This is structured as three sequential phases. Each phase completes fully before the next begins. Phase 3 loops until zero issues remain.</p>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="phase1" onclick="toggleSelect(this)">
+    <div class="letter">1</div>
+    <div class="content">
+      <h3>Phase 1: Enhancement Sweep</h3>
+      <p><strong>Visual + Interaction + Flow polish</strong> — not new features, but making every existing surface feel world-class.</p>
+      <ul style="margin-top:8px;opacity:0.8;font-size:13px;line-height:1.6">
+        <li><strong>Visual:</strong> Page-by-page pixel audit. Spacing rhythm, color consistency, elevation hierarchy, typography polish, light mode parity</li>
+        <li><strong>Interaction:</strong> Every click, hover, transition, keyboard shortcut. Spring physics tuning. Optimistic UI verification. Undo toast coverage.</li>
+        <li><strong>Flow:</strong> User journey walkthroughs (new team member, PI checking status, coordinator prepping meeting). Find friction, eliminate dead ends.</li>
+        <li><strong>Homepage:</strong> Full public site redesign audit — hero, stats, pillars, footer. Mobile responsive check.</li>
+        <li><strong>Empty states:</strong> Every page with &lt;3 items gets a purposeful, branded empty state that sells the feature.</li>
+        <li><strong>Data quality:</strong> Populate real decisions, archive stale projects, calibrate health algorithm, seed missing data.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="option" data-choice="phase2" onclick="toggleSelect(this)">
+    <div class="letter">2</div>
+    <div class="content">
+      <h3>Phase 2: Rigorous Implementation</h3>
+      <p><strong>Execute every enhancement from Phase 1</strong> — subagent-driven development with spec review + code quality review after each task.</p>
+      <ul style="margin-top:8px;opacity:0.8;font-size:13px;line-height:1.6">
+        <li><strong>Commit discipline:</strong> One concern per commit. Atomic, reversible changes.</li>
+        <li><strong>Build verification:</strong> TypeScript check + Vite build after every change.</li>
+        <li><strong>No deploy until complete:</strong> Everything lands on main, single deploy at the end.</li>
+        <li><strong>Cross-reference:</strong> Every change checked against design system tokens, CLAUDE.md rules, accessibility requirements.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="option" data-choice="phase3" onclick="toggleSelect(this)">
+    <div class="letter">3</div>
+    <div class="content">
+      <h3>Phase 3: Audit &rarr; Fix &rarr; Audit Loop</h3>
+      <p><strong>Deploy, then audit everything. Fix what's found. Redeploy. Audit again. Repeat until zero issues.</strong></p>
+      <ul style="margin-top:8px;opacity:0.8;font-size:13px;line-height:1.6">
+        <li><strong>Round 1:</strong> Full Playwright interaction test (every page, every click, every dropdown, every keyboard shortcut). Screenshot every page both modes. Expert panel re-scores.</li>
+        <li><strong>Round 2:</strong> Fix everything found. Redeploy. Re-run full test suite. Re-screenshot. Compare.</li>
+        <li><strong>Round 3+:</strong> Continue until: 0 test failures, 0 visual regressions, expert score &ge;9.0, every page visually verified by me personally.</li>
+        <li><strong>Final gate:</strong> Playwright records a full user journey video (new member onboarding &rarr; tasks &rarr; meetings &rarr; projects) with zero friction points.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px;padding:20px;border-radius:8px;background:rgba(45,138,138,0.08);border-left:3px solid rgba(45,138,138,0.4)">
+  <div class="label" style="color:rgba(45,138,138,0.9)">SCOPE &mdash; WHAT THIS COVERS</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;font-size:13px;line-height:1.6">
+    <div>
+      <strong>Public Site (5 pages)</strong>
+      <ul style="opacity:0.8">
+        <li>Homepage hero + nav + stats + pillars</li>
+        <li>Team page + member profiles</li>
+        <li>Publications page</li>
+        <li>Contact page</li>
+        <li>Footer across all public pages</li>
+      </ul>
+    </div>
+    <div>
+      <strong>Portal (17+ pages)</strong>
+      <ul style="opacity:0.8">
+        <li>Dashboard, Tasks, Projects, Meetings</li>
+        <li>Personal, Deadlines, Manuscripts, Grants</li>
+        <li>Ideas, Decisions, Calendar, Analytics</li>
+        <li>Search, Settings, Activity, Research Digest</li>
+        <li>All detail pages (Project, Meeting, Member)</li>
+        <li>All modals, dropdowns, panels, toasts</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;padding:16px;border-radius:8px;background:rgba(201,168,76,0.06);border-left:3px solid rgba(201,168,76,0.3)">
+  <div class="label" style="color:rgba(201,168,76,0.9)">WHAT THIS DOES NOT INCLUDE</div>
+  <p style="font-size:13px;opacity:0.8;margin-top:8px">New features, new pages, new API endpoints, new database tables. This is purely about making what exists feel perfect. The only "new" things are empty states, micro-interactions, and transition refinements.</p>
+</div>

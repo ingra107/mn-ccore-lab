@@ -1,0 +1,75 @@
+<h2>What does "done" look like?</h2>
+<p class="subtitle">When we finish, what would make you say "this is ready to show the world"?</p>
+
+<div class="section">
+  <div class="label">PICK THE ONES THAT MATTER MOST TO YOU</div>
+  <p>Click all that apply — these become the exit criteria for Phase 3's audit loop.</p>
+</div>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="score" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Expert score &ge;9.0</h3>
+      <p>The same 5-expert panel re-audits and the aggregate score exceeds 9.0/10. This is the quantitative gate.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="screenshot" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>"Screenshot-worthy" on every page</h3>
+      <p>You could take a screenshot of ANY page — dashboard, tasks, meetings, homepage, grants — and share it with a colleague without explanation. Every page stands on its own as a polished product.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="journey" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Zero-friction user journeys</h3>
+      <p>A new team member can sign in, find their tasks, check the next meeting, and update a project status in under 60 seconds with zero confusion. Tested via Playwright recorded journey with no dead ends.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="mobile" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div name="content">
+      <h3>Mobile feels native</h3>
+      <p>A team member checking status from their phone between experiments has a usable, not-cramped experience. Navigation works, tables collapse to cards, touch targets are generous.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="lightdark" onclick="toggleSelect(this)">
+    <div class="letter">E</div>
+    <div class="content">
+      <h3>Light &amp; dark mode equally polished</h3>
+      <p>Neither mode feels like an afterthought. You could default to either and feel confident. Currently dark mode is stronger — light mode needs to reach parity.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="a11y" onclick="toggleSelect(this)">
+    <div class="letter">F</div>
+    <div class="content">
+      <h3>WCAG 2.2 AA compliant</h3>
+      <p>Every contrast ratio passes, every interactive element is keyboard-reachable, screen readers can navigate the task grid, all modals trap focus. You can confidently say "this is accessible."</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="perf" onclick="toggleSelect(this)">
+    <div class="letter">G</div>
+    <div class="content">
+      <h3>Sub-2s warm load on every page</h3>
+      <p>No page takes more than 2 seconds from click to interactive content (warm cache). Cold start under 5 seconds. No jank, no layout shift, no spinners.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="nick" onclick="toggleSelect(this)">
+    <div class="letter">H</div>
+    <div class="content">
+      <h3>Nick signs off</h3>
+      <p>You personally open the site, click through everything, and say "this is it." The ultimate gate — no algorithm, no expert panel, just your judgment.</p>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:24px;font-style:italic">Click all that should be exit criteria. Anything you don't click, I'll aim for but won't block the launch on.</p>

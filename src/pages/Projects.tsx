@@ -285,8 +285,8 @@ export default function Projects() {
             </div>
             <PageTooltip id="projects-pipeline-hint" text="Try Pipeline view for a visual overview" />
 
-            {/* Category filter pills — H-18: flex-nowrap + overflow-x-auto prevents vertical stacking on mobile */}
-            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+            {/* Category filter pills — wraps onto multiple rows on mobile to prevent horizontal overflow */}
+            <div className="flex flex-wrap items-center gap-2">
               {CATEGORY_FILTERS.map((f) => (
                 <button
                   key={f.key}

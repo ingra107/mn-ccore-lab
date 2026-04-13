@@ -83,6 +83,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
     <>
       <button
         ref={buttonRef}
+        className="inline-select-trigger"
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={(e) => {

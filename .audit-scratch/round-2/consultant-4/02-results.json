@@ -1,0 +1,62 @@
+[
+  {
+    "area": "/my-tasks",
+    "test": "grouped view default",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "area": "/my-tasks",
+    "test": "task rows present",
+    "status": "PASS",
+    "notes": "rows=25"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "R-01: J#1 → focused row 0",
+    "status": "PASS",
+    "notes": "idx=0"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "R-01: J#2 → focused row 1 (advances in grouped)",
+    "status": "PASS",
+    "notes": "idx=1"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "R-01: J#3 → focused row 2",
+    "status": "PASS",
+    "notes": "idx=2"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "R-01: K → focused row 1",
+    "status": "PASS",
+    "notes": "idx=1"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "R-01: Enter opens detail of focused row",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "area": "ShortcutHelp",
+    "test": "? opens help",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "area": "ShortcutHelp",
+    "test": "Escape closes help",
+    "status": "FAIL",
+    "notes": ""
+  },
+  {
+    "area": "mobile",
+    "test": "C-09: tap on title area opens detail",
+    "status": "FAIL",
+    "notes": "rect={\"x\":13,\"y\":900,\"w\":358,\"h\":44}"
+  }
+]

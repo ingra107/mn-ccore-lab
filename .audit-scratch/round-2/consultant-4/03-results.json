@@ -1,0 +1,20 @@
+[
+  {
+    "area": "ShortcutHelp",
+    "test": "? opens help (retry via Shift+Slash)",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "area": "ShortcutHelp",
+    "test": "Escape closes help",
+    "status": "PASS",
+    "notes": "stillOpen=false"
+  },
+  {
+    "area": "mobile",
+    "test": "C-09: tap on title opens detail",
+    "status": "SKIP",
+    "notes": "no in-viewport row"
+  }
+]

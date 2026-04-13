@@ -1,0 +1,146 @@
+[
+  {
+    "area": "/my-tasks",
+    "test": "J focuses first task (groupBy=none) C-02",
+    "status": "PASS",
+    "notes": "focused=1"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "Enter opens TaskDetailPanel",
+    "status": "PASS",
+    "notes": "dialogs=1"
+  },
+  {
+    "area": "TaskDetailPanel",
+    "test": "role=dialog (C-03)",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "area": "TaskDetailPanel",
+    "test": "aria-modal=true (C-03)",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "area": "TaskDetailPanel",
+    "test": "aria-labelledby present",
+    "status": "PASS",
+    "notes": "lbl=task-detail-title"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "Escape closes detail panel",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "area": "/my-tasks",
+    "test": "C opens CreateTaskModal",
+    "status": "FAIL",
+    "notes": "url=https://mn-ccore-lab.pages.dev/my-tasks dlg=0"
+  },
+  {
+    "area": "ShortcutHelp",
+    "test": "pre-key focus is not input",
+    "status": "PASS",
+    "notes": "activeTag=BODY"
+  },
+  {
+    "area": "ShortcutHelp",
+    "test": "? opens (M-18)",
+    "status": "PASS",
+    "notes": "dialogs=1"
+  },
+  {
+    "area": "ShortcutHelp",
+    "test": "Escape closes (M-18)",
+    "status": "FAIL",
+    "notes": ""
+  },
+  {
+    "area": "/ideas",
+    "test": "N opens create on Ideas (not redirect)",
+    "status": "FAIL",
+    "notes": "url=https://mn-ccore-lab.pages.dev/my-tasks overlays=0"
+  },
+  {
+    "area": "/decisions",
+    "test": "N opens create on Decisions (not redirect)",
+    "status": "FAIL",
+    "notes": "url=https://mn-ccore-lab.pages.dev/my-tasks overlays=0"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "checkboxes after groupBy=none",
+    "status": "FAIL",
+    "notes": "count=0"
+  },
+  {
+    "area": "UndoToast",
+    "test": "appears after status change",
+    "status": "PASS",
+    "notes": "el=1"
+  },
+  {
+    "area": "InlineCellSelect",
+    "test": "dropdown portaled (H-14)",
+    "status": "PASS",
+    "notes": "{\"ok\":true,\"depth\":0,\"x\":1211,\"y\":703.765625,\"width\":130,\"height\":134.75,\"inViewport\":true}"
+  },
+  {
+    "area": "InlineCellSelect",
+    "test": "dropdown in viewport (no clip)",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "area": "CommandPalette",
+    "test": "opens with Ctrl+K",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "area": "CommandPalette",
+    "test": "typeahead populates options",
+    "status": "PASS",
+    "notes": "opts=3"
+  },
+  {
+    "area": "/personal",
+    "test": "page renders for anon",
+    "status": "PASS",
+    "notes": "body=3182"
+  },
+  {
+    "area": "/personal",
+    "test": "J focuses task (anon)",
+    "status": "PARTIAL",
+    "notes": "focused=0 (gated on currentUser)"
+  },
+  {
+    "area": "mobile/my-tasks",
+    "test": "tap title opens detail (C-09)",
+    "status": "PASS",
+    "notes": "dlg=1"
+  },
+  {
+    "area": "mobile/my-tasks",
+    "test": "tap row body opens detail",
+    "status": "PASS",
+    "notes": "dlg=1"
+  },
+  {
+    "area": "PageHeader",
+    "test": "subtitle measurable (M-32)",
+    "status": "INFO",
+    "notes": "null"
+  },
+  {
+    "area": "MeetingDetail",
+    "test": "Log Decision button (M-26)",
+    "status": "PARTIAL",
+    "notes": "count=0"
+  }
+]

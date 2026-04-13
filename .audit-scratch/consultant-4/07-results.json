@@ -1,0 +1,72 @@
+[
+  {
+    "name": "/projects rows render",
+    "status": "PASS",
+    "notes": "0 rows"
+  },
+  {
+    "name": "/projects J key focus",
+    "status": "PASS",
+    "notes": "2"
+  },
+  {
+    "name": "/dashboard loads",
+    "status": "PARTIAL",
+    "notes": ""
+  },
+  {
+    "name": "dashboard card hover transform changes",
+    "status": "PARTIAL",
+    "notes": "before=none after=none"
+  },
+  {
+    "name": "/deadlines rows",
+    "status": "FAIL",
+    "notes": "0"
+  },
+  {
+    "name": "/ideas N key opens create modal",
+    "status": "FAIL",
+    "notes": ""
+  },
+  {
+    "name": "/meetings items",
+    "status": "PASS",
+    "notes": "6"
+  },
+  {
+    "name": "/meetings J no crash",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "name": "/personal tasks visible",
+    "status": "PARTIAL",
+    "notes": "0"
+  },
+  {
+    "name": "/decisions N opens modal",
+    "status": "FAIL",
+    "notes": ""
+  },
+  {
+    "name": "/calendar Today button exists",
+    "status": "FAIL",
+    "notes": ""
+  },
+  {
+    "name": "/calendar T key no crash",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "name": "/calendar Arrow keys no crash",
+    "status": "PASS",
+    "notes": ""
+  },
+  {
+    "name": "CommandPalette footer counts",
+    "status": "PARTIAL",
+    "notes": "3 chars"
+  }
+]

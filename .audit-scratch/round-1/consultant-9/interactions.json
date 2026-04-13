@@ -1,0 +1,62 @@
+[
+  {
+    "check": "WelcomeBanner",
+    "result": {
+      "text": "Good evening",
+      "w": 108,
+      "h": 21
+    }
+  },
+  {
+    "check": "sidebar /my-tasks link",
+    "result": {
+      "href": "/my-tasks",
+      "text": "Tasks15"
+    }
+  },
+  {
+    "check": "hamburger-click",
+    "result": true
+  },
+  {
+    "check": "C-09 task row tap",
+    "result": {
+      "found": true,
+      "rowCount": 29,
+      "panelOpen": {
+        "sel": "fixed right-0 top-0 h-full z-50 overflow-y-auto shadow-2xl task-detail-panel car",
+        "w": 351,
+        "h": 664
+      }
+    }
+  },
+  {
+    "check": "Deadlines banner",
+    "result": []
+  },
+  {
+    "check": "Personal scroll",
+    "result": {
+      "docW": 612,
+      "winW": 612
+    }
+  },
+  {
+    "check": "meeting back button",
+    "result": true
+  },
+  {
+    "check": "project tabs scrollable",
+    "result": false
+  },
+  {
+    "check": "create task modal fits",
+    "result": {
+      "w": 390,
+      "h": 550,
+      "winW": 390,
+      "winH": 664,
+      "fits": true
+    }
+  }
+]

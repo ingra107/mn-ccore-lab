@@ -1,0 +1,158 @@
+[
+  {
+    "area": "routing",
+    "test": "/tasks lands somewhere usable",
+    "status": "PASS",
+    "notes": "url=https://mn-ccore-lab.pages.dev/my-tasks"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "rows render",
+    "status": "PASS",
+    "notes": "rows=29"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "J focuses task row",
+    "status": "FAIL",
+    "notes": "focused=0"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "K moves focus",
+    "status": "PARTIAL",
+    "notes": "focused=0"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "Enter opens TaskDetailPanel",
+    "status": "FAIL",
+    "notes": "dialogs=0"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "Escape closes detail panel",
+    "status": "PASS",
+    "notes": "dialogs=0"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "C opens CreateTaskModal",
+    "status": "FAIL",
+    "notes": "modals=0"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "status pill buttons present",
+    "status": "PASS",
+    "notes": "buttons=225"
+  },
+  {
+    "area": "InlineCellSelect",
+    "test": "dropdown ARIA role=listbox (M-17)",
+    "status": "PASS",
+    "notes": "listboxes=1"
+  },
+  {
+    "area": "InlineCellSelect",
+    "test": "portaled to body (H-14)",
+    "status": "PASS",
+    "notes": "body-children=1"
+  },
+  {
+    "area": "InlineCellSelect",
+    "test": "options have role=\"option\"",
+    "status": "PASS",
+    "notes": "options=65"
+  },
+  {
+    "area": "/my-tasks",
+    "test": "checkboxes present",
+    "status": "INFO",
+    "notes": "count=0"
+  },
+  {
+    "area": "CommandPalette",
+    "test": "Ctrl+K opens",
+    "status": "PASS",
+    "notes": "dialogs=2"
+  },
+  {
+    "area": "ShortcutHelp",
+    "test": "? opens (M-18)",
+    "status": "FAIL",
+    "notes": "dialogs=0"
+  },
+  {
+    "area": "ShortcutHelp",
+    "test": "Escape closes (M-18)",
+    "status": "PASS",
+    "notes": "dialogs=0"
+  },
+  {
+    "area": "/personal",
+    "test": "J focuses task (C-02 fix)",
+    "status": "PARTIAL",
+    "notes": "focused=0"
+  },
+  {
+    "area": "/tasks",
+    "test": "J focuses task (C-01 fix)",
+    "status": "FAIL",
+    "notes": "focused=0 rows=29"
+  },
+  {
+    "area": "TaskGridView",
+    "test": "title click opens detail (H-25)",
+    "status": "PASS",
+    "notes": "dialog=1"
+  },
+  {
+    "area": "mobile/my-tasks",
+    "test": "rows render",
+    "status": "PASS",
+    "notes": "rows=29"
+  },
+  {
+    "area": "mobile/my-tasks",
+    "test": "tap row opens detail (C-09)",
+    "status": "FAIL",
+    "notes": "dialog=0"
+  },
+  {
+    "area": "/projects",
+    "test": "J kb nav",
+    "status": "PARTIAL",
+    "notes": "focused=0"
+  },
+  {
+    "area": "/ideas",
+    "test": "J kb nav",
+    "status": "PASS",
+    "notes": "focused=1"
+  },
+  {
+    "area": "/decisions",
+    "test": "J kb nav",
+    "status": "PARTIAL",
+    "notes": "focused=0"
+  },
+  {
+    "area": "/deadlines",
+    "test": "J kb nav",
+    "status": "PARTIAL",
+    "notes": "focused=0"
+  },
+  {
+    "area": "/ideas",
+    "test": "N opens create modal",
+    "status": "FAIL",
+    "notes": "dialogs=0"
+  },
+  {
+    "area": "/decisions",
+    "test": "N opens create modal",
+    "status": "FAIL",
+    "notes": "dialogs=0"
+  }
+]

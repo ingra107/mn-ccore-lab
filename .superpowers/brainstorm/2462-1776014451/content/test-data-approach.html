@@ -1,0 +1,66 @@
+<h2>Test Data Strategy</h2>
+<p class="subtitle">How should we populate the Hub so it looks like a real, active lab?</p>
+
+<div class="section">
+  <div class="label">CONTEXT</div>
+  <p>Right now several pages look empty or have minimal data (Ideas: 0, Decisions: 1 test, Research Digest: few papers, Activity heatmaps: zeros for team members, Mentee Milestones: empty, IRB Tracking: empty). We want to populate realistic data so you can see what the Hub looks like when it's actually being used by a 15-person team.</p>
+  <p style="margin-top:8px">All test data uses the <code>test_delete_</code> prefix so it can be cleaned up in one sweep.</p>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Realistic Simulation (Recommended)</h3>
+      <p>Populate as if your actual team has been using the Hub for 3 months. Use real team member names as assignees, realistic project names with <code>test_delete_</code> prefix, plausible meeting decisions, actual-sounding grant titles, believable mentee milestones.</p>
+      <ul style="margin-top:8px;opacity:0.8;font-size:13px">
+        <li><strong>Ideas:</strong> 8-12 ideas from different team members ("test_delete_Explore ML-based ventilator weaning prediction", "test_delete_Should we add ECMO data to CLIF?")</li>
+        <li><strong>Decisions:</strong> 6-8 real-sounding decisions ("test_delete_Use propensity score matching for LTVV analysis", "test_delete_Target AJRCCM for gender disparities paper")</li>
+        <li><strong>Mentee milestones:</strong> 4-5 per trainee (first presentation, manuscript draft, abstract submission, etc.)</li>
+        <li><strong>IRB items:</strong> 3-4 regulatory items with realistic expiration dates</li>
+        <li><strong>Activity:</strong> Seed activity_log entries so team member heatmaps show realistic patterns</li>
+        <li><strong>Grants:</strong> 2 test grants with milestones ("test_delete_R01 Machine Learning ICU Outcomes")</li>
+      </ul>
+      <div class="pros-cons" style="margin-top:12px">
+        <div class="pros"><h4>Pros</h4><ul><li>See exactly what adoption looks like</li><li>Test every empty page at once</li><li>Screenshots will look real for demos</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>More data to clean up later</li><li>If cleanup fails, fake data sits alongside real</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Test DB Only</h3>
+      <p>Same realistic data, but ONLY in the test D1 database (<code>mnccore-lab-test</code>). Toggle with the <code>X-Test-Mode: true</code> header. Live site stays clean.</p>
+      <ul style="margin-top:8px;opacity:0.8;font-size:13px">
+        <li>All the same data as Option A</li>
+        <li>Only visible when <code>X-Test-Mode: true</code> header is sent</li>
+        <li>Zero risk of fake data appearing on the real site</li>
+        <li>But: harder to casually browse and show people — need a browser extension or Playwright to see it</li>
+      </ul>
+      <div class="pros-cons" style="margin-top:12px">
+        <div class="pros"><h4>Pros</h4><ul><li>Zero risk to production data</li><li>Clean separation</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Can't demo by just opening a browser</li><li>Need header injection to see it</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Live + Cleanup Script</h3>
+      <p>Same as A (realistic data in production D1) but we also build a one-command cleanup script that deletes everything with <code>test_delete_</code> prefix across all tables.</p>
+      <ul style="margin-top:8px;opacity:0.8;font-size:13px">
+        <li>All data in production — browse normally in any browser</li>
+        <li>Cleanup: <code>npx wrangler d1 execute mnccore-lab --remote --file=cleanup-test-data.sql</code></li>
+        <li>Script handles FK constraints (deletes dependents first)</li>
+        <li>Run it once when you're ready to go live with real data</li>
+      </ul>
+      <div class="pros-cons" style="margin-top:12px">
+        <div class="pros"><h4>Pros</h4><ul><li>See it live, demo it live</li><li>One-command cleanup when ready</li><li>Best of both worlds</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>If you forget to clean up, team sees fake data on day 1</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
