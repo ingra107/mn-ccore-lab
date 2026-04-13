@@ -10,6 +10,7 @@ import PageTransition from './PageTransition'
 import GlobalQuickAddModal, { useQuickAddShortcut } from './GlobalQuickAdd'
 import RouteProgressBar from './RouteProgressBar'
 import ScrollToTop from './ScrollToTop'
+import MobileTabBar from './MobileTabBar'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useDensity } from '../hooks/useDensity'
 import { useFavicon } from '../hooks/useFavicon'
@@ -207,9 +208,13 @@ export default function PortalLayout() {
         </header>
 
         {/* Page content */}
-        <main className="portal-content p-4 md:p-6 lg:p-8" style={{ flex: 1 }}>
-          <AnimatePresence mode="wait">
-            <PageTransition>
+        {/* pb-[calc(56px+env(...))] on mobile leaves room for MobileTabBar; md:pb-* resets on tablet+ */}
+        <main
+          className="portal-content p-4 md:p-6 lg:p-8 pb-[calc(1rem+56px+env(safe-area-inset-bottom))] md:pb-6 lg:pb-8"
+          style={{ flex: 1 }}
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <PageTransition key={location.pathname} transitionKey={location.pathname}>
               <Outlet />
             </PageTransition>
           </AnimatePresence>
@@ -260,6 +265,9 @@ export default function PortalLayout() {
       </button>
 
       <ScrollToTop />
+
+      {/* Mobile bottom tab bar (md:hidden internally) */}
+      {!focusMode && <MobileTabBar />}
 
       {/* G-key pending indicator */}
       {gPending && (
