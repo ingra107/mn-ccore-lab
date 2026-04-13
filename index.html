@@ -3,7 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA meta -->
+    <meta name="theme-color" content="#0b1017" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <!-- Synchronous density init: set data-density on <html> before first paint to prevent CLS -->
+    <script>
+      (function() {
+        try {
+          var d = localStorage.getItem('mn-ccore-density') || 'comfortable';
+          document.documentElement.setAttribute('data-density', d);
+        } catch (e) {
+          document.documentElement.setAttribute('data-density', 'comfortable');
+        }
+      })();
+    </script>
     <meta name="description" content="MN-CCORE: Minnesota Critical Care Outcomes & Research Effort at the University of Minnesota. Multi-center ICU research, CLIF Consortium, provider variation, and clinical decision-making." />
 
     <!-- Open Graph -->

@@ -1,0 +1,10 @@
+{
+  "name": "MN-CCORE Lab Hub",
+  "short_name": "MN-CCORE",
+  "description": "Minnesota Critical Care Outcomes Research — Lab Operations Hub",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0b1017",
+  "theme_color": "#0b1017",
+  "icons": []
+}
