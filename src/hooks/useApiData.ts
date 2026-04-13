@@ -297,12 +297,14 @@ export interface ActivityEntry {
   timestamp: string
 }
 
-export function useActivity(limit: number = 20) {
+export function useActivity(limit: number = 20, actor?: string) {
   return useQuery({
-    queryKey: ['activity', limit],
+    queryKey: ['activity', limit, actor],
     queryFn: async () => {
       try {
-        const res = await fetch(`/api/activity?limit=${limit}`)
+        const params = new URLSearchParams({ limit: String(limit) })
+        if (actor) params.set('actor', actor)
+        const res = await fetch(`/api/activity?${params}`)
         if (!res.ok) return []
         const data = await res.json()
         return (data.data || []) as ActivityEntry[]

@@ -66,33 +66,35 @@ export default function MenteeMilestones() {
     type: filterType || undefined,
   })
   const { data: overview = [], isLoading: overviewLoading } = useMenteeOverview()
-  const { data: activityLog = [] } = useActivity(500)
+  // Per-actor last-activity queries (limit=1, actor-filtered) so high activity volume doesn't hide old entries
+  const { data: actShyu = [] }      = useActivity(1, 'shyu')
+  const { data: actFitzgerald = [] } = useActivity(1, 'fitzgerald')
+  const { data: actCollins = [] }   = useActivity(1, 'collins')
+  const { data: actEddington = [] } = useActivity(1, 'eddington')
+  const { data: actMceachron = [] } = useActivity(1, 'mceachron')
   const updateMilestone = useUpdateMenteeMilestone()
   const { showUndo } = useUndoToast()
 
   const isLoading = milestonesLoading || overviewLoading
 
-  // Compute days since last activity per mentee slug
+  // Compute days since last activity per mentee slug (per-actor queries, immune to global feed volume)
   const daysSinceActivity = useMemo<Map<string, number>>(() => {
     const now = Date.now()
     const map = new Map<string, number>()
-    // Find most recent activity timestamp per actor
-    for (const entry of activityLog) {
-      if (!entry.actor || !entry.timestamp) continue
-      const ts = new Date(entry.timestamp).getTime()
-      if (!isNaN(ts)) {
-        const prev = map.get(entry.actor)
-        if (prev === undefined || ts > now - prev * 86400000) {
-          // Store days since this event
-          const days = Math.floor((now - ts) / 86400000)
-          if (prev === undefined || days < prev) {
-            map.set(entry.actor, days)
-          }
+    const perActorEntries: [string, typeof actShyu][] = [
+      ['shyu', actShyu], ['fitzgerald', actFitzgerald], ['collins', actCollins],
+      ['eddington', actEddington], ['mceachron', actMceachron],
+    ]
+    for (const [slug, entries] of perActorEntries) {
+      if (entries.length > 0 && entries[0].timestamp) {
+        const ts = new Date(entries[0].timestamp).getTime()
+        if (!isNaN(ts)) {
+          map.set(slug, Math.floor((now - ts) / 86400000))
         }
       }
     }
     return map
-  }, [activityLog])
+  }, [actShyu, actFitzgerald, actCollins, actEddington, actMceachron])
 
   // Compute overdue status client-side for display
   const enrichedMilestones = useMemo(() => {

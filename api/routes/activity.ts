@@ -1,12 +1,19 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
 
-// GET /api/activity?limit=20
+// GET /api/activity?limit=20&actor=slug
 export async function handleActivity(url: URL, env: Env): Promise<Response> {
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 100);
-  const result = await env.DB.prepare(
-    'SELECT * FROM activity_log ORDER BY timestamp DESC LIMIT ?'
-  ).bind(limit).all();
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
+  const actor = url.searchParams.get('actor');
+  let query = 'SELECT * FROM activity_log';
+  const params: (string | number)[] = [];
+  if (actor) {
+    query += ' WHERE actor = ?';
+    params.push(actor);
+  }
+  query += ' ORDER BY timestamp DESC LIMIT ?';
+  params.push(limit);
+  const result = await env.DB.prepare(query).bind(...params).all();
   return json({ data: result.results, count: result.results.length });
 }
 
