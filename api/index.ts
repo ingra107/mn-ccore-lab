@@ -56,6 +56,7 @@ import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeletePro
 import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail, handleSendDailyDigests } from './routes/digest-email';
+import { handlePostInbox, handleGetInbox, handleMarkSynced } from './routes/inbox';
 
 // GET /api/auth/me — return current user or 401
 function handleAuthMe(request: Request): Response {
@@ -382,6 +383,8 @@ export default {
             return await handleTeamPulse(url, env);
           case '/api/ideas':
             return await handleIdeas(url, env);
+          case '/api/inbox':
+            return await handleGetInbox(url, env);
           case '/api/search':
             return await handleSearch(url, env);
           case '/api/activity/heatmap':
@@ -797,6 +800,16 @@ export default {
         // POST /api/ideas — create idea
         if (request.method === 'POST' && path === '/api/ideas') {
           return withVersionBump(await handleCreateIdea(request, user, env));
+        }
+
+        // POST /api/inbox — freeform capture to Peripheral Brain inbox
+        if (request.method === 'POST' && path === '/api/inbox') {
+          return withVersionBump(await handlePostInbox(request, user, env));
+        }
+
+        // POST /api/inbox/sync — mark inbox rows synced (PB pull script)
+        if (request.method === 'POST' && path === '/api/inbox/sync') {
+          return await handleMarkSynced(request, env);
         }
 
         // POST /api/ideas/:id — update idea

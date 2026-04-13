@@ -423,6 +423,7 @@ export default function Dashboard() {
                       <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
                       <a
                         href="/my-tasks"
+                        className="portal-footer-link"
                         style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', whiteSpace: 'nowrap' }}
                       >
                         <span

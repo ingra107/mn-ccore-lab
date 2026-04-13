@@ -1181,6 +1181,17 @@ a:hover {
     display: inline-flex;
     align-items: center;
   }
+
+  /* Dashboard card overlay controls (pin/drag/unpin — hover-only, still need tap area) */
+  button[title="Pin to top"],
+  button[title="Unpin"],
+  button[title="Drag to reorder"] {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 /* Personal page — two-column grid, stacks on mobile (C-08) */

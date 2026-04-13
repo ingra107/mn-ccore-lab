@@ -38,6 +38,7 @@ const shortcuts = [
     items: [
       { keys: '⌘ K', action: 'Command palette' },
       { keys: '⌘ N', action: 'Quick add task' },
+      { keys: '⌘ I', action: 'Quick capture to Peripheral Brain inbox' },
       { keys: '/', action: 'Search' },
       { keys: 'F', action: 'Focus mode (hide sidebar + header)' },
       { keys: '[', action: 'Toggle sidebar' },

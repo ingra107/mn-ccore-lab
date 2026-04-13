@@ -8,6 +8,7 @@ import CommandPalette from './CommandPalette'
 import ShortcutHelp from './ShortcutHelp'
 import PageTransition from './PageTransition'
 import GlobalQuickAddModal, { useQuickAddShortcut } from './GlobalQuickAdd'
+import QuickCaptureInbox from './QuickCaptureInbox'
 import RouteProgressBar from './RouteProgressBar'
 import ScrollToTop from './ScrollToTop'
 import MobileTabBar from './MobileTabBar'
@@ -243,6 +244,9 @@ export default function PortalLayout() {
 
       {/* Global Quick Add */}
       <GlobalQuickAddModal isOpen={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
+
+      {/* Universal Quick Capture → Peripheral Brain inbox (Ctrl+I) */}
+      <QuickCaptureInbox />
 
       {/* Floating quick-add button */}
       <button
