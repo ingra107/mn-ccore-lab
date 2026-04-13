@@ -563,7 +563,8 @@ export default function Grants() {
                     className="sm:grid items-center hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                     style={{
                       gridTemplateColumns: 'minmax(200px, 2fr) 120px 100px 80px minmax(120px, 1fr) 100px',
-                      minHeight: 'var(--row-height)',
+                      height: 'var(--row-height)',
+                      overflow: 'hidden',
                       padding: `var(--row-padding-y, 10px) 16px`,
                       borderBottom: '1px solid var(--border-subtle)',
                     }}
@@ -592,7 +593,6 @@ export default function Grants() {
                               style={{
                                 width: `${progress}%`,
                                 backgroundColor: progress > 80 ? 'var(--maroon)' : 'var(--teal)',
-                                transition: 'width 150ms var(--ease-out), background-color 150ms var(--ease-out)',
                               }}
                             />
                           </div>
