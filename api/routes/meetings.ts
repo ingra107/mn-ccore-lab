@@ -142,6 +142,131 @@ export async function handleMeetingPrep(meetingId: string, env: Env): Promise<Re
   });
 }
 
+// GET /api/meetings/:id/generate-agenda — autogenerate agenda from carried-forward + open items
+export async function handleGenerateAgenda(meetingId: string, env: Env): Promise<Response> {
+  const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first<{ id: string; title: string; date: string }>();
+  if (!meeting) return error('Meeting not found', 404);
+
+  // Find the previous meeting date for context
+  const prevMeeting = await env.DB.prepare(
+    'SELECT id, date FROM meetings WHERE date < ? ORDER BY date DESC LIMIT 1'
+  ).bind(meeting.date).first<{ id: string; date: string }>();
+
+  const prevDate = prevMeeting?.date ?? '1970-01-01';
+
+  // 1. Carried-forward and open action items from previous meetings
+  const carriedForward = await env.DB.prepare(
+    `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.status
+     FROM tasks t
+     JOIN meetings m ON t.meeting_id = m.id
+     WHERE m.date < ? AND (t.completed = 0 OR t.status NOT IN ('done','completed'))
+     ORDER BY m.date DESC, t.created_at
+     LIMIT 20`
+  ).bind(meeting.date).all<{ id: string; title: string; description: string; assignee: string; due_date: string; status: string }>();
+
+  // 2. Urgent / high-priority open tasks due this week
+  const today = new Date().toISOString().split('T')[0];
+  const weekOut = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const urgentTasks = await env.DB.prepare(
+    `SELECT id, title, assignee, due_date, priority, status
+     FROM tasks
+     WHERE status IN ('todo','in_progress','waiting_external')
+       AND priority IN ('high','urgent')
+       AND due_date BETWEEN ? AND ?
+       AND (deleted_at IS NULL OR deleted_at = '')
+     ORDER BY due_date
+     LIMIT 15`
+  ).bind(today, weekOut).all<{ id: string; title: string; assignee: string; due_date: string; priority: string; status: string }>();
+
+  // 3. Stalled manuscripts / projects (in active status but not updated in 30+ days)
+  const stalledProjects = await env.DB.prepare(
+    `SELECT id, title, stage, category, updated_at
+     FROM projects
+     WHERE status IN ('Active','In Review','In Preparation')
+       AND julianday('now') - julianday(updated_at) > 30
+     ORDER BY updated_at ASC
+     LIMIT 8`
+  ).all<{ id: string; title: string; stage: string; category: string; updated_at: string }>();
+
+  // 4. Regulatory items expiring within 60 days
+  const regulatory = await env.DB.prepare(
+    `SELECT id, title, item_type, expiration_date, status
+     FROM regulatory_items
+     WHERE status IN ('active','action_needed','expiring_soon')
+       AND expiration_date < date('now', '+60 days')
+     ORDER BY expiration_date ASC
+     LIMIT 10`
+  ).all<{ id: string; title: string; item_type: string; expiration_date: string; status: string }>();
+
+  // 5. Recent project updates since previous meeting
+  const recentUpdates = await env.DB.prepare(
+    `SELECT pu.id, pu.content, pu.update_type, pu.author, pu.created_at, p.title as project_title
+     FROM project_updates pu
+     LEFT JOIN projects p ON pu.project_id = p.id OR pu.project_id = p.slug
+     WHERE pu.created_at > ?
+     ORDER BY pu.created_at DESC
+     LIMIT 15`
+  ).bind(prevDate).all<{ id: string; content: string; update_type: string; author: string; created_at: string; project_title: string }>();
+
+  return json({
+    meeting_id: meetingId,
+    title: `Agenda: ${meeting.title}`,
+    generated_at: new Date().toISOString(),
+    sections: [
+      {
+        title: 'Carried-forward action items',
+        items: carriedForward.results.map(r => ({
+          id: r.id,
+          label: r.title || r.description,
+          assignee: r.assignee,
+          due_date: r.due_date,
+          status: r.status,
+        })),
+      },
+      {
+        title: 'Urgent tasks this week',
+        items: urgentTasks.results.map(r => ({
+          id: r.id,
+          label: r.title,
+          assignee: r.assignee,
+          due_date: r.due_date,
+          priority: r.priority,
+        })),
+      },
+      {
+        title: 'Stalled projects (30+ days inactive)',
+        items: stalledProjects.results.map(r => ({
+          id: r.id,
+          label: r.title,
+          stage: r.stage,
+          category: r.category,
+          last_updated: r.updated_at,
+        })),
+      },
+      {
+        title: 'Regulatory items expiring soon',
+        items: regulatory.results.map(r => ({
+          id: r.id,
+          label: r.title,
+          item_type: r.item_type,
+          expiration_date: r.expiration_date,
+          status: r.status,
+        })),
+      },
+      {
+        title: 'Recent project updates',
+        items: recentUpdates.results.map(r => ({
+          id: r.id,
+          label: r.project_title ? `[${r.project_title}] ${r.content}` : r.content,
+          author: r.author,
+          created_at: r.created_at,
+          update_type: r.update_type,
+        })),
+      },
+    ],
+  });
+}
+
 // POST /api/meetings — create meeting (dedup by date+title)
 export async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { date: string; title: string; type?: string; attendees?: string[] };

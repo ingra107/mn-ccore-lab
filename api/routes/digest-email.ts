@@ -423,3 +423,265 @@ function buildSubjectLine(digest: DigestData): string {
   if (parts.length === 0) return 'MN-CCORE Daily Digest: All clear';
   return `MN-CCORE Daily Digest: ${parts.join(', ')}`;
 }
+
+// ── Daily Coordinator Digest ──────────────────────────────────
+
+interface CoordinatorMember {
+  slug: string;
+  name: string;
+  email: string | null;
+}
+
+interface RegulatoryItem {
+  title: string;
+  item_type: string | null;
+  expiration_date: string | null;
+  status: string | null;
+}
+
+interface TodayMeeting {
+  id: string;
+  title: string;
+  date: string;
+}
+
+async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<string> {
+  const today = new Date().toISOString().split('T')[0];
+  const in14Days = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
+  const dateStr = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  });
+  const firstName = member.name.split(' ')[0];
+
+  const [overdueRow, regulatoryResult, stalledRow, meetingsResult, actionsDueResult] = await Promise.all([
+    // Overdue tasks for this member
+    env.DB.prepare(
+      `SELECT COUNT(*) as n FROM tasks
+       WHERE assignee = ? AND status != 'done' AND completed = 0
+         AND due_date < ? AND deleted_at IS NULL`
+    ).bind(member.slug, today).first<{ n: number }>(),
+
+    // Regulatory items expiring in next 14 days
+    env.DB.prepare(
+      `SELECT title, item_type, expiration_date, status FROM regulatory_items
+       WHERE status IN ('active', 'action_needed', 'expiring_soon')
+         AND expiration_date IS NOT NULL
+         AND expiration_date <= ?
+       ORDER BY expiration_date ASC
+       LIMIT 10`
+    ).bind(in14Days).all<RegulatoryItem>(),
+
+    // Stalled manuscripts (projects in manuscript category with stage unchanged > 30 days)
+    env.DB.prepare(
+      `SELECT COUNT(*) as n FROM projects
+       WHERE category = 'manuscript'
+         AND stage_changed_at IS NOT NULL
+         AND julianday(date('now')) - julianday(stage_changed_at) > 30
+         AND status != 'completed' AND status != 'cancelled'`
+    ).first<{ n: number }>(),
+
+    // Today's meetings
+    env.DB.prepare(
+      `SELECT id, title, date FROM meetings
+       WHERE date = ? ORDER BY date ASC LIMIT 5`
+    ).bind(today).all<TodayMeeting>(),
+
+    // Action items (tasks) due today
+    env.DB.prepare(
+      `SELECT COUNT(*) as n FROM tasks
+       WHERE assignee = ? AND due_date = ? AND status != 'done'
+         AND completed = 0 AND deleted_at IS NULL`
+    ).bind(member.slug, today).first<{ n: number }>(),
+  ]);
+
+  const overdueCount = overdueRow?.n ?? 0;
+  const regulatoryItems = regulatoryResult.results ?? [];
+  const stalledCount = stalledRow?.n ?? 0;
+  const todayMeetings = meetingsResult.results ?? [];
+  const actionsDueCount = actionsDueResult?.n ?? 0;
+
+  // Build regulatory items list
+  let regulatoryHtml = '';
+  if (regulatoryItems.length > 0) {
+    regulatoryHtml = '<ul style="padding-left:20px;margin:6px 0;">';
+    for (const item of regulatoryItems) {
+      const expLabel = item.expiration_date
+        ? `<span style="color:#c2410c;font-size:11px;margin-left:6px;">exp. ${item.expiration_date}</span>`
+        : '';
+      const typeLabel = item.item_type
+        ? `<span style="color:#94a3b8;font-size:11px;"> (${item.item_type})</span>`
+        : '';
+      regulatoryHtml += `<li style="font-size:13px;color:#0f1923;margin-bottom:6px;">${item.title}${typeLabel}${expLabel}</li>`;
+    }
+    regulatoryHtml += '</ul>';
+  }
+
+  // Build meetings list
+  let meetingsHtml = '';
+  if (todayMeetings.length > 0) {
+    meetingsHtml = '<ul style="padding-left:20px;margin:6px 0;">';
+    for (const mtg of todayMeetings) {
+      meetingsHtml += `<li style="font-size:13px;color:#0f1923;margin-bottom:4px;">${mtg.title}</li>`;
+    }
+    meetingsHtml += '</ul>';
+  }
+
+  // Summary banner
+  const summaryParts: string[] = [];
+  if (overdueCount > 0) summaryParts.push(`${overdueCount} overdue`);
+  if (actionsDueCount > 0) summaryParts.push(`${actionsDueCount} due today`);
+  if (todayMeetings.length > 0) summaryParts.push(`${todayMeetings.length} meeting${todayMeetings.length > 1 ? 's' : ''}`);
+  const summaryLine = summaryParts.length > 0 ? summaryParts.join(' &middot; ') : 'All clear';
+
+  const allClear = overdueCount === 0 && regulatoryItems.length === 0 && stalledCount === 0 && todayMeetings.length === 0 && actionsDueCount === 0;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MN-CCORE Daily Brief</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:24px 16px;">
+    <!-- Header -->
+    <div style="background:#0b1017;color:#e2e8f0;padding:20px 24px;border-radius:8px 8px 0 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <strong style="color:#c9a84c;font-size:16px;">MN-CCORE Hub</strong>
+        <span style="font-size:11px;color:#64748b;">${dateStr}</span>
+      </div>
+      <p style="margin:8px 0 0;font-size:13px;color:#94a3b8;">${summaryLine}</p>
+    </div>
+    <!-- Body -->
+    <div style="background:#ffffff;padding:24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;">
+      <p style="margin:0 0 4px;font-size:15px;color:#0f1923;">Good morning, ${firstName}.</p>
+      <p style="margin:0 0 20px;font-size:13px;color:#64748b;">Daily Lab Brief — coordinator summary.</p>
+      ${allClear ? `
+      <div style="text-align:center;padding:32px 0;">
+        <div style="font-size:32px;margin-bottom:8px;">&#10003;</div>
+        <p style="font-size:14px;color:#64748b;">All clear! No overdue tasks, no expiring items.</p>
+      </div>` : `
+      <!-- Overdue tasks -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#dc2626;"></div>
+          <span style="font-size:14px;font-weight:600;color:#0f1923;">Overdue Tasks</span>
+          <span style="font-size:12px;color:#94a3b8;">(${overdueCount})</span>
+        </div>
+        <p style="margin:0 0 0 16px;font-size:13px;color:${overdueCount > 0 ? '#0f1923' : '#64748b'};">
+          ${overdueCount > 0
+            ? `<strong style="color:#dc2626;">${overdueCount}</strong> task${overdueCount > 1 ? 's' : ''} past due — <a href="${HUB_URL}/my-tasks" style="color:#2d8a8a;">review now</a>`
+            : 'No overdue tasks'}
+        </p>
+      </div>
+      <!-- Action items due today -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#c9a84c;"></div>
+          <span style="font-size:14px;font-weight:600;color:#0f1923;">Due Today</span>
+          <span style="font-size:12px;color:#94a3b8;">(${actionsDueCount})</span>
+        </div>
+        <p style="margin:0 0 0 16px;font-size:13px;color:${actionsDueCount > 0 ? '#0f1923' : '#64748b'};">
+          ${actionsDueCount > 0
+            ? `<strong>${actionsDueCount}</strong> action item${actionsDueCount > 1 ? 's' : ''} due today`
+            : 'Nothing due today'}
+        </p>
+      </div>
+      <!-- Regulatory items -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#7a0019;"></div>
+          <span style="font-size:14px;font-weight:600;color:#0f1923;">Regulatory — Expiring in 14 Days</span>
+          <span style="font-size:12px;color:#94a3b8;">(${regulatoryItems.length})</span>
+        </div>
+        ${regulatoryItems.length > 0
+          ? regulatoryHtml
+          : '<p style="margin:0 0 0 16px;font-size:13px;color:#64748b;">No items expiring soon</p>'}
+      </div>
+      <!-- Stalled manuscripts -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#c2410c;"></div>
+          <span style="font-size:14px;font-weight:600;color:#0f1923;">Stalled Manuscripts (&gt;30 days)</span>
+          <span style="font-size:12px;color:#94a3b8;">(${stalledCount})</span>
+        </div>
+        <p style="margin:0 0 0 16px;font-size:13px;color:${stalledCount > 0 ? '#0f1923' : '#64748b'};">
+          ${stalledCount > 0
+            ? `<strong style="color:#c2410c;">${stalledCount}</strong> manuscript${stalledCount > 1 ? 's' : ''} stalled — <a href="${HUB_URL}/projects" style="color:#2d8a8a;">review pipeline</a>`
+            : 'All manuscripts moving'}
+        </p>
+      </div>
+      <!-- Today's meetings -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#6366f1;"></div>
+          <span style="font-size:14px;font-weight:600;color:#0f1923;">Today's Meetings</span>
+          <span style="font-size:12px;color:#94a3b8;">(${todayMeetings.length})</span>
+        </div>
+        ${todayMeetings.length > 0
+          ? meetingsHtml
+          : '<p style="margin:0 0 0 16px;font-size:13px;color:#64748b;">No meetings today</p>'}
+      </div>`}
+      <!-- CTA -->
+      <div style="text-align:center;margin-top:24px;">
+        <a href="${HUB_URL}/dashboard" style="display:inline-block;padding:10px 28px;background:#2d8a8a;color:white;text-decoration:none;border-radius:6px;font-size:14px;font-weight:500;">
+          Open Hub
+        </a>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div style="text-align:center;padding:16px 0;font-size:11px;color:#94a3b8;">
+      MN-CCORE Lab Hub &middot; University of Minnesota<br>
+      <a href="${HUB_URL}/settings" style="color:#2d8a8a;text-decoration:none;">Manage notifications</a>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * POST /api/digest-email/daily — send coordinator daily brief to all directors + coordinators.
+ * Can be triggered by cron (via scheduled handler) or manually via POST.
+ * Requires RESEND_API_KEY.
+ */
+export async function handleSendDailyDigests(env: Env): Promise<Response> {
+  if (!env.RESEND_API_KEY) {
+    return error('Daily digest not configured (RESEND_API_KEY missing). Add via Cloudflare Pages secrets.', 503);
+  }
+
+  const membersResult = await env.DB.prepare(
+    `SELECT slug, name, email FROM team_members
+     WHERE member_type IN ('director', 'coordinator') AND email IS NOT NULL AND slug IS NOT NULL`
+  ).all<CoordinatorMember>();
+
+  const members = membersResult.results ?? [];
+  if (members.length === 0) {
+    return json({ data: { sent: 0, skipped: 0, message: 'No coordinators/directors with email found' } });
+  }
+
+  const { sendEmail } = await import('../lib/email');
+  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  let sent = 0;
+  let skipped = 0;
+  const errors: string[] = [];
+
+  for (const member of members) {
+    if (!member.email) { skipped++; continue; }
+    try {
+      const html = await composeDailyDigest(env, member);
+      const ok = await sendEmail(env.RESEND_API_KEY, {
+        to: member.email,
+        subject: `Daily Lab Brief — ${dateStr}`,
+        html,
+      });
+      if (ok) { sent++; } else { skipped++; errors.push(`${member.slug}: send failed`); }
+    } catch (e: unknown) {
+      skipped++;
+      errors.push(`${member.slug}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
+  console.log(`[DailyDigest] Done — sent ${sent}, skipped ${skipped}`);
+  return json({ data: { sent, skipped, total: members.length, errors: errors.length > 0 ? errors : undefined } });
+}

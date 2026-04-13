@@ -16,7 +16,9 @@ database_id = "a30fe84d-0891-4035-9358-f7813b5f5807"
 [triggers]
 # Morning pulse email: weekdays at 7 AM CT (13:00 UTC)
 # To activate: wrangler secret put SENDGRID_API_KEY
-crons = ["0 13 * * 1-5"]
+# Daily coordinator digest: every day at 6 AM CT (11:00 UTC during DST)
+# To activate: wrangler secret put RESEND_API_KEY
+crons = ["0 13 * * 1-5", "0 11 * * *"]
 
 [[r2_buckets]]
 binding = "FILES"

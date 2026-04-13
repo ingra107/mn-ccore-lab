@@ -21,6 +21,7 @@ import {
   Copy,
   Check,
   X,
+  Sparkles,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -82,6 +83,8 @@ export default function MeetingDetail() {
   const { isAuthenticated } = useAuth()
   const { showSuccess } = useToast()
   const [copiedSummary, setCopiedSummary] = useState(false)
+  const [generatingAgenda, setGeneratingAgenda] = useState(false)
+  const [agendaCopied, setAgendaCopied] = useState(false)
   // Hooks must be called unconditionally (before any conditional returns)
   const toggleAction = useToggleActionItem()
   const { showUndo } = useUndoToast()
@@ -201,6 +204,38 @@ export default function MeetingDetail() {
     setActionOrder(reordered.map(i => i.id))
   }
 
+  async function handleGenerateAgenda() {
+    if (!meeting || generatingAgenda) return
+    setGeneratingAgenda(true)
+    try {
+      const res = await fetch(`/api/meetings/${meeting.id}/generate-agenda`)
+      if (!res.ok) throw new Error('Failed to generate agenda')
+      const data = await res.json() as {
+        title: string
+        sections: Array<{ title: string; items: Array<{ label?: string; assignee?: string; due_date?: string }> }>
+      }
+      const lines: string[] = [`# ${data.title}`, '']
+      for (const section of data.sections) {
+        if (section.items.length === 0) continue
+        lines.push(`## ${section.title}`)
+        for (const item of section.items) {
+          const label = item.label || '(untitled)'
+          const meta = [item.assignee ? `@${item.assignee}` : '', item.due_date || ''].filter(Boolean).join(' · ')
+          lines.push(`- ${label}${meta ? `  (${meta})` : ''}`)
+        }
+        lines.push('')
+      }
+      await navigator.clipboard.writeText(lines.join('\n'))
+      setAgendaCopied(true)
+      showSuccess('Agenda copied to clipboard')
+      setTimeout(() => setAgendaCopied(false), 2500)
+    } catch {
+      showSuccess('Could not generate agenda')
+    } finally {
+      setGeneratingAgenda(false)
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh' }}>
       <div className="content-container" style={{ paddingBottom: '4rem' }}>
@@ -271,6 +306,22 @@ export default function MeetingDetail() {
             >
               {copiedSummary ? <Check size={11} /> : <Copy size={11} />}
               {copiedSummary ? 'Copied!' : 'Copy Summary'}
+            </button>
+            <button
+              onClick={handleGenerateAgenda}
+              disabled={generatingAgenda}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors"
+              style={{
+                fontSize: 'var(--label-size)',
+                color: agendaCopied ? 'var(--green)' : 'var(--gold)',
+                border: `1px solid ${agendaCopied ? 'var(--green)' : 'rgba(201,168,76,0.25)'}`,
+                background: agendaCopied ? 'var(--green-hover)' : 'var(--gold-hover)',
+                cursor: generatingAgenda ? 'wait' : 'pointer',
+                opacity: generatingAgenda ? 0.6 : 1,
+              }}
+            >
+              {agendaCopied ? <Check size={11} /> : <Sparkles size={11} />}
+              {agendaCopied ? 'Copied!' : generatingAgenda ? 'Generating…' : 'Generate Agenda'}
             </button>
           </div>
 
