@@ -365,8 +365,8 @@ export default function Deadlines() {
             {deadlines.length === 0 && (
               <EmptyState
                 icon={<Clock size={40} />}
-                title="No deadlines this week"
-                subtitle="A rare and beautiful thing. Deadlines appear as tasks and grant milestones are scheduled."
+                title="The runway is clear"
+                subtitle="Nothing due in the next 90 days. Enjoy the quiet — deadlines surface here as tasks and grant milestones land."
               />
             )}
 
@@ -431,8 +431,9 @@ export default function Deadlines() {
 const STATUS_OPTIONS = [
   { value: 'todo', label: 'To Do', color: 'var(--slate)' },
   { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
-  { value: 'done', label: 'Done', color: 'var(--green)' },
+  { value: 'waiting_external', label: 'Waiting External', color: 'var(--orange)' },
   { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
+  { value: 'done', label: 'Done', color: 'var(--green)' },
 ]
 
 // ── Reusable deadline item row ───────────────────────────────────────────────
@@ -1099,8 +1100,8 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
     return (
       <EmptyState
         icon={<GanttChartSquare size={40} />}
-        title="No upcoming deadlines"
-        subtitle="Deadlines will appear on the timeline as tasks and milestones are scheduled."
+        title="Timeline is clear"
+        subtitle="Task due dates and grant milestones plot onto this timeline as they're scheduled."
       />
     )
   }

@@ -17,6 +17,7 @@ const statusOptions = [
   { value: '', label: 'All Statuses' },
   { value: 'todo', label: 'To Do' },
   { value: 'in_progress', label: 'In Progress' },
+  { value: 'waiting_external', label: 'Waiting External' },
   { value: 'blocked', label: 'Blocked' },
   { value: 'done', label: 'Done' },
 ]
