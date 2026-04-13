@@ -3,7 +3,7 @@
 Detailed tables, API endpoints, key files, and feature inventory.
 Moved from CLAUDE.md to reduce session context load. Read on demand.
 
-## D1 Tables (56 — schema v37)
+## D1 Tables (59 — schema v37 + inbox)
 
 | Table | Rows | Purpose |
 |-------|------|---------|
@@ -34,6 +34,7 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | daily_reflections | dynamic | End-of-day reflections |
 | dispatch_queue | dynamic | Claude action items from Hub |
 | pb_sessions | dynamic | Claude Code session history synced from brain.db |
+| inbox | dynamic | Quick Capture entries (FAB + Ctrl+I); synced nightly to PB Inbox/*.md (Phase 32) |
 
 ## API Endpoints (180+)
 
@@ -97,6 +98,20 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 ### File Activity (Phase 29)
 - GET /api/file-activity/heatmap?days=90 (daily aggregates + per-project)
 - POST /api/file-activity/sync (brain.db push)
+
+### Quick Capture Inbox (Phase 32)
+- POST /api/inbox — insert capture entry (text, tag, project_id, author)
+- GET /api/inbox — list entries (?limit=N&unsynced=1)
+- POST /api/inbox/sync — mark IDs synced (called by PB pull script)
+
+### IRB / Regulatory (Phase 32)
+- GET /api/regulatory/:id/ics — calendar invite (.ics) for IRB renewal deadline
+
+### Meeting Agenda Generation (Phase 32)
+- GET /api/meetings/:id/generate-agenda — auto-composes agenda markdown from carried-forward + urgent + stalled + regulatory items
+
+### Daily Digest Cron (Phase 32)
+- POST /api/digest-email/daily — daily coordinator digest (code ready; awaits Resend API key)
 
 ## Key Files
 
@@ -162,6 +177,14 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | `api/routes/proactive-brief.ts` | Computed intelligence: overdue, stale, focus suggestion (Phase 29) |
 | `api/routes/file-activity.ts` | File activity heatmap + sync API (Phase 29) |
 | `api/schema-v37.sql` | Key link columns + email_drafts + file_activity_daily tables |
+| `src/components/QuickCaptureInbox.tsx` | Universal Quick Capture FAB + slide-up sheet (455 lines, Phase 32) |
+| `src/components/dashboard/LabHealthScore.tsx` | Composite lab health metric card (~205 lines, Phase 32) |
+| `src/hooks/useLabHealthSignals.ts` | Health signal aggregation hook (Phase 32) |
+| `src/components/MobileTabBar.tsx` | Mobile bottom tab bar (md:hidden, safe-area, Phase 32) |
+| `migrations/inbox-table.sql` | inbox table + idx_inbox_synced + idx_inbox_created indices |
+| `scripts/seed-test-data.sql` | 104 rows across 9 tables for DB_TEST seeding |
+| `scripts/cleanup-test-data.sql` | FK-ordered DELETE for test_delete_ prefix |
+| `tests/test-seed.ts` | globalSetup: seeds DB_TEST via API before Playwright runs |
 | `scripts/run-tests.sh` | Test runner (4 modes: quick/ui/sync/all) |
 | `scripts/inspection-scanner.py` | Feature scanner (15 patterns, registry cross-ref) |
 | `scripts/setup-mnccore-protocol.reg` | Windows registry for mnccore:// protocol handler |
@@ -193,7 +216,9 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 
 **Other:** Quick Capture, GlobalQuickAdd (NLP), Grants SVG Gantt (with days remaining), CV Export (with word count), Density Toggle, Meeting Icebreakers, Reactions, @Mentions, Network stats bar, Team activity dots, Publication year chart.
 
-## Phase History (1-28 COMPLETE, 530+ commits)
+**Phase 32 Additions:** Universal Quick Capture Inbox (FAB + slide-up sheet + Ctrl+I, every portal page), Lab Health Score (composite Dashboard metric), Mentee Risk Radar (silence detection badges), Mobile bottom tab bar, Page transitions (AnimatePresence 150ms cross-fade), Keyboard chord navigation (g+key), Generate Agenda (MeetingDetail Sparkles button), IRB .ics download, PWA basics (manifest + theme-color + safe-area), CSS a11y frontier (forced-colors/prefers-contrast/prefers-reduced-transparency).
+
+## Phase History (1-32 COMPLETE, 630+ commits)
 
 Phases 1-8: Public website, D1 backend, team portal, sync, API, digest, migration, notifications.
 Phase 9: LabSync parity — task system, 10+ portal pages, Cmd+K, keyboard shortcuts.
@@ -219,6 +244,11 @@ Phase 26: LabSync UX audit — 14 issues fixed, 4-tab TaskDetailPanel, publicati
 Phase 26b-aq: Feature sprint — 44 commits across all pages. Dashboard cards, MyTasks smart features, snooze, keyboard shortcuts, dynamic titles, search filters, copy/export buttons, theme controls, network stats, calendar nav.
 Phase 27: Task notes/updates + activity tab — schema v36, 5-tab TaskDetailPanel, task_updates table.
 Phase 28: Next-gen upgrade — optimistic mutations, R2 file uploads, Tiptap rich text, WebSocket real-time (DO), smart polling, Resend email (ready), design polish, InlineSelect portal fix.
+Phase 29: Office of Inspection + brain.db features — 546 tests, feature registry, 5 dashboard cards, QuickCaptureBar, key links, 6 sync handlers, schema v37.
+Phase 30: Visual QA marathon — true achromatic dark, 222 border token fixes, column resize/reorder, multi-sort, batch ops, DnD, Recharts charts, email digest, project document links.
+Phase 31: Token compliance — z-index hierarchy, borderRadius 100%, spacing migration, semantic rgba tokens, ~1,062 total replacements. Avatar size tiers.
+Phase 31.5: Expert-driven polish — dashboard compression, typography recession, Personal two-column, Meetings split-panel, TableControls, sidebar 3→3 sections, breadcrumbs, status bar, mobile hamburger, ARIA grid/listbox/combobox, cold start fix (10s→473ms warm).
+Phase 32: Final Launch Polish — 7 fix rounds, 9.44/10 aggregate (+2.26), QA GO for April 21. Quick Capture Inbox, Lab Health Score, Mentee Risk Radar, Mobile Tab Bar, page transitions, keyboard chords, IRB .ics, generate agenda, PWA basics, a11y frontier. CLS master fix across 8+ files.
 
 ## Implementation Notes
 

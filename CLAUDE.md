@@ -9,14 +9,14 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (590+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (630+ commits) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Testing | Playwright 1.59 (E2E, 214+ inspection tests) + Vitest 4.1 (component, browser mode) |
 | Data | TanStack Query v5 + Cloudflare D1 (58 tables, 190+ endpoints) + Recharts -- ALL LIVE |
 | D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB` |
 | D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
-| D1 tables | 58 (added project_documents) |
+| D1 tables | 59 (added inbox in Phase 32) |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
 | Reference | `REFERENCE.md` in this repo -- D1 tables, API endpoints, key files, feature list |
@@ -202,6 +202,10 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 11. **`formatBrandName()`** for any text that might contain "MNCCORE".
 12. **Tailwind v4:** `@import` syntax, not `@tailwind`. No `group-hover:` with arbitrary values -- use CSS rules.
 13. **Build verification after batch edits.** After editing 3+ files or any shared module/type, run `npm run build` and fix all TypeScript errors before continuing. After fixing test failures, re-run the full affected test suite (`npx playwright test tests/<suite>`) to confirm zero regressions. Do not commit code that doesn't build.
+14. **`--ink-bright` is WHITE in BOTH modes.** It is a white-fill-on-dark token, NOT a "stronger than ink" token. Setting it to black in light mode breaks 84 call sites. It exists for white text/icons on dark accent surfaces (teal buttons, maroon pills) regardless of page theme.
+15. **Row height CSS must be `@media (min-width: 768px)` scoped.** Mobile uses `height: auto; min-height`. Unscoped fixed heights break stacked card layout on mobile.
+16. **TaskGridView `parentRef` minHeight must be STABLE.** Use `calc(100vh - 320px)` unconditionally — not conditional on data state. Conditional minHeight causes CLS flip when data arrives.
+17. **Data pages vs dashboard pages taxonomy.** Data pages (Tasks, MyTasks, Deadlines, Projects, Manuscripts, Ideas, Decisions, Grants, Meetings, Publications) use columnar `TableContainer` + `ColumnHeader`. Dashboard pages (Dashboard, Personal, PIAnalytics, Analytics) use card layouts. Never mix.
 
 ## Roadmap
 
@@ -471,6 +475,10 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 | Network chunk 1.3MB | Expected (three.js). Code-split via React.lazy |
 | CF Access blocks all | Restrict to portal paths only |
 | Duplicate action items | Dedup by normalizing "[Carried forward]" |
+| Duplicate project slugs in D1 | Some projects have both `(prefix)-slug` and `prefix-slug` variants from old migration. Fix via D1 merge; track via `scripts/projects-dedupe.sql` when written. |
+| MeetingDetail Rules of Hooks | useState/useMemo must come BEFORE early returns on loading/not-found branches. Phase 31.5 perf pass introduced a variant of this bug; R6 hotfixed. |
+| `team_members.email` column doesn't exist | Derive email from slug: `${slug}@umn.edu`. Do not query email column in team_members — column was never created. |
+| Virtualizer skeleton rows must match actual layout | TableSkeleton component was generic; pages with virtualizers need inline skeletons that match TableContainer + header + rows at `var(--row-height)` pixel-for-pixel to avoid CLS. |
 
 ## Peripheral Brain Connection
 
@@ -688,9 +696,137 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 - 24 test meetings + test tags purged from D1
 - project_id `|| null` fix already in upstream code (confirmed)
 
-## Pending Sync
-<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
+## Phase 32: COMPLETE (60+ commits, 6 deploys, 2026-04-12/13). Final Launch Polish — 7.18 → 9.44 (+2.26):
 
+*Summary: 7 fix rounds (R1-R7) + 6 audit rounds (R0-R5) across 10 Opus consultants. All 6 exit criteria passed (5 clean, 1 CLS partial — launch-acceptable). QA gate: GO for April 21 launch.*
+
+*Round 1 — Infrastructure + Navigation + Mechanical Sweeps:*
+- GC-1: Sidebar restored to darker-than-content 3-plane depth (Phase 31.5 accidentally reversed it during cold-start fix)
+- CSS transition-all sweep (Member/Contact/LabPageLayout)
+- ShortcutHelp focus trap + PageHeader mobile wrap + InlineSelect tokens
+- Personal: wire keyboard shortcuts via useTaskKeyboardShortcuts
+- Decisions: convert card layout to columnar table (GC-3)
+- Ideas: convert card grid to columnar table with TableContainer + ColumnHeader (GC-3)
+- Framer Motion migration: UndoToast/BulkActionToolbar/subtask expand → auto-animate/CSS (GC-2)
+- BulkActionToolbar single-select guard added
+- Settings layout normalization across 4 zones
+- Command palette transition token + footer count
+- CreateTaskModal mobile chip scroll + Press F tooltip
+- MeetingDetail crash fix (Phase 31.5 regression — QA blocker)
+- Column header aria-sort + Grants progress no-transition + row height fix
+- Density rule: add row class/role so `[data-density] .row` applies to Deadlines
+- My Tasks shortcuts wired in all groupBy modes + c/n key routing fixed
+- PIAnalytics opened to all authenticated users (coordinators need access)
+
+*Round 2 — 12 Page Hotspots:*
+- Dashboard: compress to 2 strata + team directory discoverability
+- TaskGridView: H-01 title dominance (real fix) + calculations footer token
+- MyTasks: all QuickFilter modes + banner fix
+- Personal: mobile two-column at ≥768px
+- TaskDetailPanel: a11y frontier items
+- Deadlines: urgent pill overlap fix (real fix)
+- Publications: year chart seed + ScrollSnap fix
+- Manuscripts: category filter + stage sort
+- Grants: STATUS sort key + line-clamp-1 + progress bar stable width
+- Homepage/Team: welcome banner compact strip (44px, mobile-stacked)
+- Meetings: MeetingDetail field-access crash fix (QA-blocker, Phase 31.5 regression)
+- Search/Activity: ActivityPage SYS size + SearchPage hero + MyTasks banner
+- Projects/ProjectDetail: waiting_external status dropdown + sort indicator
+- Digest: CLS + Team warm prefetch
+
+*Round 3 — 18 Items (Frontier + Polish):*
+- GC-2: Framer Motion fully migrated (UndoToast, BulkActionToolbar, subtask expand)
+- GC-3: Ideas + Decisions both converted to columnar tables
+- Lab Health Score composite metric on Dashboard stratum 1 (`LabHealthScore.tsx`, `useLabHealthSignals.ts`)
+- Mentee Risk Radar: silence detection amber/red badges on MenteeMilestones (`per-actor activity queries`)
+- Page transitions: AnimatePresence cross-fade 150ms in PortalLayout (F-01)
+- Mobile bottom tab bar: `MobileTabBar.tsx`, md:hidden, 4 tabs, safe-area-aware (F-01)
+- Keyboard chord navigation: `g d` → dashboard, `g t` → tasks, `g p` → projects, etc. (F-07). `useRef` timer fix prevents re-render cancellation bug.
+- Transient chord leader indicator pill (`ChordIndicator` in PortalLayout)
+- Empty state voice: Linear-grade copy across all data pages (F-03)
+- PWA basics: manifest.webmanifest, theme-color meta, apple-touch-icon, viewport-fit=cover, safe-area CSS
+- IRB .ics calendar invite generator per regulatory item (`GET /api/regulatory/:id/ics`)
+- Daily coordinator digest cron (`POST /api/digest-email/daily` — code ready, Resend key pending)
+- Generate Agenda button on MeetingDetail (Sparkles icon, `GET /api/meetings/:id/generate-agenda`, copies markdown)
+- Schema drift audit: 3 silent bugs caught (`uploaded_by` stored object not string, `team_members.email` column didn't exist, regulatory expiring query missed statuses)
+- Session history sync: brain.db sessions → D1 pb_sessions push handler
+- Mentee milestone stalled detection + mentee grouping
+- font prefetch=intent on sidebar nav links
+- Sign-in banner dismissible (localStorage)
+
+*Round 4 — CLS Master Fix (8 files):*
+- CLS fixes: Team avatars, Publications list minHeight, Digest card heights, Deadlines/Decisions warm
+- Dashboard + Settings strata compression
+- Mobile row overflow + Dashboard tab crash at 375px
+- Reserve container min-height + skeleton rows across 6 pages
+
+*Round 5 — A11y Frontier + Schema Drift + Touch Targets + Quick Capture:*
+- `@media forced-colors`, `prefers-contrast`, `prefers-reduced-transparency` support (C2)
+- Touch target sweep: dismiss buttons + inline links all ≥44px
+- Quick Capture Inbox: `QuickCaptureInbox.tsx` (455 lines), FAB + slide-up sheet, Ctrl+I / Cmd+I shortcut, `idea:` prefix, mounted in PortalLayout — universal on every portal page
+- `POST /api/inbox`, `GET /api/inbox`, `POST /api/inbox/sync` endpoints
+- `inbox` D1 table (schema: `inbox-table.sql`)
+- `sync_d1_pull.py` extended: unsynced inbox rows → `Inbox/*.md` files in PB overnight
+- Playground E2E globalSetup: `tests/test-seed.ts` seeding DB_TEST via API; `playwright.config.ts` globalSetup wired as string path (not require.resolve)
+- Seed script: `scripts/seed-test-data.sql` (104 rows, 9 tables); cleanup: `scripts/cleanup-test-data.sql`
+
+*Round 6 — Regression Hotfixes:*
+- `--ink-bright` regression fix: was set to black in light mode (-0.2 score), reverted to white in both modes
+- FAB stacking fix: Quick Capture FAB z-index above ScrollToTop
+- Virtualizer CLS fix: swap virtualizer for plain skeletons during initial load
+- Meetings generate-agenda route was dead code inside POST block — moved to correct GET handler
+
+*Round 7 — 4-Page CLS Slot Reservation:*
+- Reserve space for banners + split-panel + cards + cover row (Deadlines/Dashboard/Meetings/PersonalPage)
+- Final CLS: Deadlines 5.12 → 0.0015 (launch-acceptable, non-blocker)
+
+*Final Scores (R0 → R5):*
+
+| Consultant | R0 | R1 | R2 | R3 | R4 | R5 |
+|------------|----|----|----|----|----|----|
+| C1 Visual Hierarchy | 7.5 | 8.2 | 8.8 | 9.1 | 9.2 | 9.4 |
+| C2 A11y | 6.8 | 7.6 | 8.1 | 8.7 | 9.0 | 9.3 |
+| C3 Tables | 7.2 | 7.9 | 8.4 | 9.0 | 9.1 | 9.4 |
+| C4 Keyboard UX | 6.9 | 7.8 | 8.3 | 9.0 | 9.1 | 9.5 |
+| C5 Mentee/Trainee | 7.0 | 7.6 | 8.2 | 8.9 | 9.2 | 9.4 |
+| C6 PI/Workflow | 7.1 | 7.8 | 8.5 | 9.1 | 9.2 | 9.5 |
+| C7 Mobile | 6.5 | 7.4 | 8.0 | 8.7 | 9.0 | 9.3 |
+| C8 Performance/CLS | 7.4 | 8.0 | 8.6 | 9.0 | 9.2 | 9.4 |
+| C9 Motion/Polish | 7.8 | 8.3 | 8.8 | 9.2 | 9.3 | 9.6 |
+| C10 QA | 7.3 | 7.9 | 8.4 | 9.0 | 9.1 | 9.4 |
+| **Aggregate** | **7.18** | **7.85** | **8.41** | **8.97** | **9.14** | **9.44** |
+
+*Key Decisions:*
+- GC-1: Sidebar darker-than-content is canonical. 3-plane depth is a NEVER-violate rule, not just a recommendation.
+- GC-2: Framer Motion scope is now limited to page transitions (AnimatePresence in PortalLayout), spring physics on CommandPalette, and ShortcutHelp entrance only. Toast/toolbar/subtask animations → CSS.
+- GC-3: Both Ideas AND Decisions are columnar data tables (not card grids). Consistent with the "data pages use tables" taxonomy.
+- GC-4: TaskGridView title → single click opens detail panel, double-click enters rename mode.
+- GC-5: /search page focus ring is teal (interactive), not gold (brand). Was inadvertently gold.
+- GC-6: Data-pages vs dashboard-pages taxonomy codified in Critical Rules #17.
+
+*New Components:*
+- `src/components/QuickCaptureInbox.tsx` (455 lines) — FAB + slide-up sheet
+- `src/components/dashboard/LabHealthScore.tsx` (~205 lines) — composite lab health metric
+- `src/hooks/useLabHealthSignals.ts` — health signal aggregation hook
+- `src/components/MobileTabBar.tsx` — mobile bottom nav (md:hidden, safe-area)
+- `ChordIndicator` pattern in PortalLayout.tsx
+- `tests/test-seed.ts` — globalSetup for DB_TEST seeding
+
+*New Scripts:*
+- `migrations/inbox-table.sql`
+- `scripts/seed-test-data.sql` (104 rows, 9 tables)
+- `scripts/cleanup-test-data.sql` (FK-ordered DELETE for test_delete_ prefix)
+
+## Pending Sync
+- NEXT_ACTION: Start Nick-Review Polish session via SESSION-KICKOFF-nick-review-polish.md starter prompt
+- STATUS: Active
+- STAGE: Post-launch polish
+- NOTE: Final Launch Polish complete 2026-04-13. Hub at 9.44/10 aggregate, QA GO for April 21. Next session addresses semantic/workflow bugs Nick caught in 10-min review that automated audits missed. See Projects/mn-ccore-lab-hub/SESSION-KICKOFF-nick-review-polish.md.
+- DECISION: K23 provider variation mechanical ventilation = the ONE funded grant; all others are In Preparation. Grant status taxonomy proposal pending final approval: Planning/InPreparation/Submitted/Funded/Resubmission/Declined/Closed.
+- DECISION: Research Digest = Model B — interactive save + comment + link-to-project (not passive feed).
+- LEARNING: Automated 10-consultant audits catch polish/a11y/perf/regression but systematically miss semantic workflow, inline editing verification, cross-page state, data integrity, layout collisions, and feature intent. Next session uses journey-based dispatch instead.
+- LEARNING: --ink-bright token semantics: it's a white-on-dark fill token, NOT a stronger-than-ink token. Setting to black in light mode breaks 84 call sites.
+- RELATIONSHIP: mn-ccore-lab-hub -> peripheral-brain | inbox-sync | Quick Capture FAB posts to /api/inbox; sync_d1_pull.py pulls unsynced rows as Inbox/*.md files overnight
 
 ## Next Session Playbook
 
@@ -709,14 +845,14 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 # See "Office of Inspection" section for full cleanup commands (tasks + ideas + questions + decisions + notifications)
 ```
 
-## Test Results (2026-04-09, verified)
+## Test Results (2026-04-12/13, post-Phase 32)
 
-**231 Playwright passed, 0 failed, 5 skipped (post-Phase 31.5, 2026-04-11)**
+**239 Playwright passed, 0 failed, 2 skipped (post-Phase 32)**
 
 | Suite | Passed | Failed | Skipped |
 |-------|--------|--------|---------|
-| smoke.spec.ts | 26 | 0 | 1 (network timeout — known three.js) |
-| inspection.spec.ts | 205 | 0 | 4 |
+| smoke.spec.ts | 27 | 0 | 0 |
+| inspection.spec.ts | 212 | 0 | 2 (unrelated — known) |
 
 Full workflow + sync pipeline suites not re-run this session (Phase 30 baseline: 494 passed, 58/58 sync).
 

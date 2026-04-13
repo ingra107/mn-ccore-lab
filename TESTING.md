@@ -4,7 +4,7 @@
 
 | Suite | File | Tests | What It Covers | Run Time |
 |-------|------|-------|----------------|----------|
-| Inspection | `tests/inspection.spec.ts` | 198 | API health, page rendering, design system, keyboard shortcuts, performance, accessibility, visual regression | ~9 min |
+| Inspection | `tests/inspection.spec.ts` | 212 | API health, page rendering, design system, keyboard shortcuts, performance, accessibility, visual regression | ~9 min |
 | Workflows | `tests/inspection-workflows.spec.ts` | 169 | Missing routes, API endpoints, keyboard shortcuts, user journeys, edge cases, sync round-trips, filters, mobile, a11y | ~8 min |
 | Daily Super-User | `tests/daily-superuser.spec.ts` | 131 | Every daily interaction: inline edits, detail panel, subtasks, board/timeline views, modals, context menu, undo system, optimistic updates, localStorage, all dashboard cards, key links, quick capture, PB sector | ~6 min |
 | Sync Pipeline | `tests/sync-pipeline.test.py` | 48 | brain.db → D1 push (6 types), D1 → brain.db pull (7 colleague scenarios), full round-trips (7 workflows), timing, idempotency, new feature sync (pomodoro, sessions, email, files, key links, health) | ~5 min |
@@ -68,6 +68,7 @@ Playwright tests run against a **separate D1 database** (`mnccore-lab-test`), no
 | `api/types.ts` | `DB_TEST` in `Env` interface |
 | `functions/api/[[route]].ts` | `DB_TEST` in `Env` interface |
 | `tests/test-cleanup.ts` | Cleans up `_TEST_DELETE_`-prefixed records |
+| `tests/test-seed.ts` | globalSetup: seeds DB_TEST via API before Playwright runs (Phase 32) |
 
 **Canonical test prefix:** `_TEST_DELETE_` -- all test-created data should use this prefix for reliable cleanup.
 
@@ -75,7 +76,7 @@ Playwright tests run against a **separate D1 database** (`mnccore-lab-test`), no
 
 ## Test Infrastructure
 
-- **Playwright config**: `playwright.config.ts` (Chromium, 30s timeout, screenshots on failure, `X-Test-Mode: true` header)
+- **Playwright config**: `playwright.config.ts` (Chromium, 30s timeout, screenshots on failure, `X-Test-Mode: true` header, globalSetup: `tests/test-seed.ts` as string path)
 - **Test database**: `mnccore-lab-test` D1 instance (binding: `DB_TEST`)
 - **Test cleanup**: `tests/test-cleanup.ts` (prefix: `_TEST_DELETE_`)
 - **Test results**: `review/audit-results.json` + `review/test-summary.txt`
