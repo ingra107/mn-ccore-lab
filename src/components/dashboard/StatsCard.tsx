@@ -4,6 +4,7 @@ import { useCountUp } from '../../hooks/useCountUp'
 import BentoCard from './BentoCard'
 import { usePublications, useProjects, useTeam } from '../../hooks/useApiData'
 import { useDashboardMounted } from '../../pages/Dashboard'
+import { isProjectActive } from '../../lib/taskConstants'
 import type { LucideIcon } from 'lucide-react'
 
 interface StatItem {
@@ -64,7 +65,7 @@ function StatsCard() {
   const { data: team = [] } = useTeam({ enabled: mounted })
 
   const teamSize = team.length
-  const activeProjects = projects.filter((p) => p.status === 'Active').length
+  const activeProjects = projects.filter((p) => isProjectActive(p.status)).length
   const inReview = publications.filter((p) => p.status === 'In Review').length
   const totalCitations = 2626
 

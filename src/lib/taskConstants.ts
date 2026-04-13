@@ -49,6 +49,34 @@ export const PRIORITY_COLORS: Record<string, string> = {
   urgent: 'var(--maroon)',
 }
 
+// ── Project Status ──
+// R10: project status reuses the task status vocabulary so the lab speaks one
+// language across data types. Pipeline progression lives on `stage`; this
+// orthogonal axis answers "is the project moving?".
+
+export const PROJECT_STATUS_OPTIONS = [
+  { value: 'active', label: 'Active', color: 'var(--teal)' },
+  { value: 'waiting_external', label: 'Waiting (External)', color: 'var(--orange)' },
+  { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
+  { value: 'done', label: 'Done', color: 'var(--slate)' },
+]
+
+/** Map any legacy project status value to the canonical lowercase token. */
+export function normalizeProjectStatus(value: string | null | undefined): string {
+  if (!value) return 'active'
+  const v = value.toLowerCase().trim()
+  if (v === 'completed' || v === 'complete') return 'done'
+  if (v === 'pending') return 'waiting_external'
+  if (v === 'in review' || v === 'in preparation') return 'active'
+  if (PROJECT_STATUS_OPTIONS.some(o => o.value === v)) return v
+  return 'active'
+}
+
+/** True if the project counts as "in motion" — used for active-count widgets. */
+export function isProjectActive(value: string | null | undefined): boolean {
+  return normalizeProjectStatus(value) === 'active'
+}
+
 // ── Stages ──
 
 export const STAGE_COLORS: Record<string, string> = {

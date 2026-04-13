@@ -14,7 +14,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 export async function handleNarratives(env: Env): Promise<Response> {
   const [projects, deps, pubs] = await Promise.all([
     env.DB.prepare(
-      "SELECT id, title, slug, category, stage, status, description, pi FROM projects WHERE status IN ('active', 'Active') ORDER BY category, title"
+      "SELECT id, title, slug, category, stage, status, description, pi FROM projects WHERE status = 'active' ORDER BY category, title"
     ).all(),
     env.DB.prepare('SELECT from_slug, to_slug, relationship_type FROM project_dependencies').all(),
     env.DB.prepare(

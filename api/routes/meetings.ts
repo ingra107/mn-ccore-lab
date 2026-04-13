@@ -267,15 +267,33 @@ export async function handleGenerateAgenda(meetingId: string, env: Env): Promise
   });
 }
 
-// POST /api/meetings — create meeting (dedup by date+title)
+// R10-5 — normalize title before comparison so "MNCCORE Lab Sync",
+// "mnccore lab sync", and "  MNCCORE Lab  Sync  " all collapse into one
+// meeting on the same date. The prior dedup missed casing and whitespace
+// variants and let a duplicate meeting through on 2026-04-07 (see DI-7).
+function normalizeMeetingTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+}
+
+// POST /api/meetings — create meeting (dedup by date+normalized title)
 export async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { date: string; title: string; type?: string; attendees?: string[] };
   if (!body.date || !body.title) return error('date and title required', 400);
 
-  // Dedup: return existing meeting if same date+title already exists
-  const existing = await env.DB.prepare(
-    'SELECT * FROM meetings WHERE date = ? AND title = ?'
-  ).bind(body.date, body.title).first();
+  const normalizedTitle = normalizeMeetingTitle(body.title);
+
+  // Fetch candidates on the same date and normalize each one's title before
+  // comparing. This beats a naive `WHERE date=? AND title=?` match which would
+  // miss "Lab Meeting" vs "lab  meeting".
+  const sameDate = await env.DB.prepare(
+    'SELECT * FROM meetings WHERE date = ?'
+  ).bind(body.date).all<{ id: string; date: string; title: string }>();
+  const existing = (sameDate.results ?? []).find(
+    (m) => normalizeMeetingTitle(m.title) === normalizedTitle,
+  );
   if (existing) {
     return json({ data: existing }, 200);
   }

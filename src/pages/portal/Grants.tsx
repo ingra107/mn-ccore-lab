@@ -23,10 +23,10 @@ import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
 import { ColumnHeader, TableContainer, TableControls } from '../../components/table'
-import { useGrantTimeline } from '../../hooks/useGrantTimeline'
-import type { GrantTimelineItem, GrantMilestone } from '../../hooks/useGrantTimeline'
+import { useGrantTimeline, GRANT_STATUS_OPTIONS } from '../../hooks/useGrantTimeline'
+import type { GrantTimelineItem, GrantMilestone, GrantStatus } from '../../hooks/useGrantTimeline'
 import { useSimilarGrants, useUpcomingGrantMilestones } from '../../hooks/useApiData'
-import { useCreateGrantMilestone, useUpdateGrantMilestone, useCompleteGrantMilestone } from '../../hooks/useMutations'
+import { useCreateGrantMilestone, useUpdateGrantMilestone, useCompleteGrantMilestone, useUpdateGrant } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { formatMediumDate, isOverdue } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
@@ -395,7 +395,16 @@ export default function Grants() {
   const { data: upcomingMilestonesData = [], isLoading: milestonesLoading } = useUpcomingGrantMilestones(90)
   const updateMilestone = useUpdateGrantMilestone()
   const completeMilestone = useCompleteGrantMilestone()
+  const updateGrant = useUpdateGrant()
   const { showUndo } = useUndoToast()
+
+  const handleGrantStatusChange = useCallback((grantId: string, prevStatus: GrantStatus | null, next: string) => {
+    updateGrant.mutate({ id: grantId, fields: { status: next } })
+    showUndo(
+      `Status → ${GRANT_STATUS_OPTIONS.find(o => o.value === next)?.label ?? next}`,
+      () => { updateGrant.mutate({ id: grantId, fields: { status: prevStatus ?? 'planning' } }) },
+    )
+  }, [updateGrant, showUndo])
 
   const enrichedPostAward = useMemo(() => {
     return upcomingMilestonesData.map((m) => ({
@@ -614,19 +623,13 @@ export default function Grants() {
                       </div>
                     </div>
 
-                    {/* Status pill */}
+                    {/* Status — inline editable (R10) */}
                     <div>
-                      <span
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium"
-                        style={{
-                          color: isProposed ? 'var(--gold)' : 'var(--teal)',
-                          backgroundColor: isProposed
-                            ? 'color-mix(in srgb, var(--gold) 12%, transparent)'
-                            : 'color-mix(in srgb, var(--teal) 12%, transparent)',
-                        }}
-                      >
-                        {isProposed ? 'Proposed' : 'Active'}
-                      </span>
+                      <InlineSelect
+                        value={(grant.status as GrantStatus | null) ?? (isProposed ? 'in_preparation' : 'planning')}
+                        options={GRANT_STATUS_OPTIONS}
+                        onChange={(next) => handleGrantStatusChange(grant.id, (grant.status as GrantStatus | null) ?? null, next)}
+                      />
                     </div>
 
                     {/* Mechanism */}

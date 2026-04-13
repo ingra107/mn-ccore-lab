@@ -658,6 +658,43 @@ export function useUpdateGrantMilestone() {
   })
 }
 
+// R10: partial-update for grants (status, title, dates, agency, etc.)
+export function useUpdateGrant() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, fields }: { id: string; fields: Record<string, unknown> }) => {
+      const res = await fetch(`/api/grants/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fields),
+      })
+      if (!res.ok) throw new Error(`Failed to update grant: ${res.status}`)
+      return res.json()
+    },
+    onMutate: async ({ id, fields }) => {
+      await queryClient.cancelQueries({ queryKey: ['grants-timeline'] })
+      const previous = queryClient.getQueryData<unknown[]>(['grants-timeline'])
+      if (previous) {
+        queryClient.setQueryData<unknown[]>(
+          ['grants-timeline'],
+          previous.map((g) => {
+            const grant = g as { id: string }
+            return grant.id === id ? { ...grant, ...fields } : g
+          }),
+        )
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['grants-timeline'], context.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['grants-timeline'] })
+      queryClient.invalidateQueries({ queryKey: ['grants'] })
+    },
+  })
+}
+
 export function useCompleteGrantMilestone() {
   const queryClient = useQueryClient()
   return useMutation({

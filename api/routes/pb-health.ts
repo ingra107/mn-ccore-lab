@@ -23,7 +23,7 @@ export async function handlePBHealth(env: Env): Promise<Response> {
       // Active projects
       env.DB.prepare(`
         SELECT COUNT(*) as active
-        FROM projects WHERE status IN ('active', 'Active')
+        FROM projects WHERE status = 'active'
       `).first(),
 
       // Recent activity (last 24h)

@@ -9,7 +9,7 @@ import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, hand
 import { handleTasks, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask } from './routes/tasks';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
 import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
-import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline } from './routes/publications';
+import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
 import { handleTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
 import { handleDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper } from './routes/digest';
 import { handleIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
@@ -1085,6 +1085,12 @@ export default {
         // POST /api/grant-milestones — create milestone
         if (request.method === 'POST' && path === '/api/grant-milestones') {
           return await handleCreateGrantMilestone(request, user, env);
+        }
+
+        // PATCH /api/grants/:id — partial grant update (R10 inline editing)
+        const grantUpdateMatch = path.match(/^\/api\/grants\/([^/]+)$/);
+        if (request.method === 'PATCH' && grantUpdateMatch) {
+          return await handleUpdateGrant(grantUpdateMatch[1], request, env);
         }
 
         // ── Regulatory & Compliance ──

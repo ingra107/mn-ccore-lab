@@ -173,7 +173,7 @@ export async function handleGetProjectUpdates(slug: string, env: Env): Promise<R
 export async function handleProjectHealth(env: Env): Promise<Response> {
   // Get all active projects
   const projects = await env.DB.prepare(
-    "SELECT id, slug, title, stage, status, updated_at FROM projects WHERE status IN ('Active', 'In Review', 'In Preparation')"
+    "SELECT id, slug, title, stage, status, updated_at FROM projects WHERE status = 'active'"
   ).all<{ id: string; slug: string; title: string; stage: string; status: string; updated_at: string }>();
 
   const now = new Date();

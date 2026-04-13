@@ -124,7 +124,7 @@ export async function handleStats(env: Env): Promise<Response> {
       env.DB.prepare('SELECT COUNT(*) as c FROM team_members').first<{ c: number }>(),
       env.DB.prepare('SELECT COUNT(*) as c FROM grants').first<{ c: number }>(),
       env.DB.prepare('SELECT COUNT(*) as c FROM projects').first<{ c: number }>(),
-      env.DB.prepare("SELECT COUNT(*) as c FROM projects WHERE status = 'Active'").first<{ c: number }>(),
+      env.DB.prepare("SELECT COUNT(*) as c FROM projects WHERE status = 'active'").first<{ c: number }>(),
       env.DB.prepare('SELECT COUNT(*) as c FROM publications WHERE featured = 1').first<{ c: number }>(),
     ]);
 
@@ -165,4 +165,40 @@ export async function handleGrantsTimeline(env: Env): Promise<Response> {
   }));
 
   return json({ data });
+}
+
+// PATCH /api/grants/:id — partial update (R10: status taxonomy + inline editing)
+const ALLOWED_GRANT_STATUS = new Set([
+  'planning', 'in_preparation', 'submitted', 'funded', 'resubmission', 'declined', 'closed',
+])
+const ALLOWED_GRANT_FIELDS: Record<string, true> = {
+  title: true, mechanism: true, agency: true, pi: true,
+  start_date: true, end_date: true, status: true, total_funding: true,
+}
+
+export async function handleUpdateGrant(id: string, request: Request, env: Env): Promise<Response> {
+  const body = await request.json() as Record<string, unknown>
+  const sets: string[] = []
+  const binds: unknown[] = []
+
+  for (const [key, value] of Object.entries(body)) {
+    if (!ALLOWED_GRANT_FIELDS[key]) continue
+    if (key === 'status' && value != null && !ALLOWED_GRANT_STATUS.has(String(value))) {
+      return json({ error: `Invalid status: ${value}` }, 400)
+    }
+    sets.push(`${key} = ?`)
+    binds.push(value === '' ? null : value)
+  }
+
+  if (sets.length === 0) return json({ error: 'No valid fields to update' }, 400)
+
+  binds.push(id)
+  const result = await env.DB.prepare(
+    `UPDATE grants SET ${sets.join(', ')} WHERE id = ?`
+  ).bind(...binds).run()
+
+  if (!result.meta.changes) return json({ error: 'Grant not found' }, 404)
+
+  const updated = await env.DB.prepare('SELECT * FROM grants WHERE id = ?').bind(id).first()
+  return json({ data: updated })
 }

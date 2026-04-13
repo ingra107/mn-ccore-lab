@@ -10,6 +10,7 @@ import { useCreateProject } from '../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../lib/api'
 import InlineSelect from '../components/InlineSelect'
+import { PROJECT_STATUS_OPTIONS, normalizeProjectStatus, isProjectActive } from '../lib/taskConstants'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
@@ -136,7 +137,7 @@ export default function Projects() {
     else if (activeCategory === 'stale') {
       base = projects.filter(p => {
         const h = healthBySlug.get(p.slug)
-        return p.status === 'Active' && (!h || h.score < 50)
+        return isProjectActive(p.status) && (!h || h.score < 50)
       })
     }
     else base = projects.filter((p) => p.category === activeCategory)
@@ -171,7 +172,7 @@ export default function Projects() {
 
   // Dynamic page title
   useEffect(() => {
-    const active = projects.filter(p => p.status === 'Active').length
+    const active = projects.filter(p => isProjectActive(p.status)).length
     document.title = `Projects (${active} active) | MN-CCORE`
     return () => { document.title = 'MN-CCORE Lab Hub' }
   }, [projects])
@@ -577,12 +578,8 @@ export default function Projects() {
 
                             {/* Status (inline editable) */}
                             <InlineSelect
-                              value={project.status || 'Active'}
-                              options={[
-                                { value: 'Active', label: 'Active', color: 'var(--green)' },
-                                { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
-                                { value: 'Completed', label: 'Done', color: 'var(--slate)' },
-                              ]}
+                              value={normalizeProjectStatus(project.status)}
+                              options={PROJECT_STATUS_OPTIONS}
                               onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
                             />
 
@@ -678,12 +675,8 @@ export default function Projects() {
                             {/* Metadata row */}
                             <div className="flex items-center gap-3" style={{ paddingLeft: '14px' }}>
                               <InlineSelect
-                                value={project.status || 'Active'}
-                                options={[
-                                  { value: 'Active', label: 'Active', color: 'var(--green)' },
-                                  { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
-                                  { value: 'Completed', label: 'Done', color: 'var(--slate)' },
-                                ]}
+                                value={normalizeProjectStatus(project.status)}
+                                options={PROJECT_STATUS_OPTIONS}
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
                               />
                               <InlineSelect
