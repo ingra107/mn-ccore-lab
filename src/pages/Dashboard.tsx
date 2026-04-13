@@ -33,6 +33,7 @@ import EmailDraftsCard from '../components/dashboard/EmailDraftsCard'
 import ProactiveBriefCard from '../components/dashboard/ProactiveBriefCard'
 import SystemHealthMiniCard from '../components/dashboard/SystemHealthMiniCard'
 import FileActivityCard from '../components/dashboard/FileActivityCard'
+import LabHealthScore from '../components/dashboard/LabHealthScore'
 import QuickCaptureBar from '../components/QuickCaptureBar'
 
 // Context to defer non-critical queries until after first paint
@@ -437,6 +438,8 @@ export default function Dashboard() {
                       </a>
                     </>
                   )}
+                  <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
+                  <LabHealthScore />
                 </div>
 
                 {/* Center: tabs */}

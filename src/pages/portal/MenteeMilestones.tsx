@@ -8,7 +8,7 @@ import EmptyState from '../../components/EmptyState'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
-import { useMenteeMilestones, useMenteeOverview } from '../../hooks/useApiData'
+import { useMenteeMilestones, useMenteeOverview, useActivity } from '../../hooks/useApiData'
 import type { MenteeMilestoneRow } from '../../hooks/useApiData'
 import { useCreateMenteeMilestone, useUpdateMenteeMilestone } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
@@ -39,6 +39,10 @@ const STATUS_OPTIONS = [
 // derived from the useMenteeOverview() API response (mentee_slug field).
 const MENTEE_SLUGS = ['shyu', 'fitzgerald', 'collins']
 
+// ── Silence Detection ──────────────────────────────────────
+const SILENCE_AMBER_DAYS = 10  // > 10d → amber "Quiet"
+const SILENCE_RED_DAYS   = 21  // > 21d → red "Silent"
+
 function getTypeLabel(type: string): string {
   return MILESTONE_TYPES.find((t) => t.value === type)?.label || type
 }
@@ -62,10 +66,33 @@ export default function MenteeMilestones() {
     type: filterType || undefined,
   })
   const { data: overview = [], isLoading: overviewLoading } = useMenteeOverview()
+  const { data: activityLog = [] } = useActivity(100)
   const updateMilestone = useUpdateMenteeMilestone()
   const { showUndo } = useUndoToast()
 
   const isLoading = milestonesLoading || overviewLoading
+
+  // Compute days since last activity per mentee slug
+  const daysSinceActivity = useMemo<Map<string, number>>(() => {
+    const now = Date.now()
+    const map = new Map<string, number>()
+    // Find most recent activity timestamp per actor
+    for (const entry of activityLog) {
+      if (!entry.actor || !entry.timestamp) continue
+      const ts = new Date(entry.timestamp).getTime()
+      if (!isNaN(ts)) {
+        const prev = map.get(entry.actor)
+        if (prev === undefined || ts > now - prev * 86400000) {
+          // Store days since this event
+          const days = Math.floor((now - ts) / 86400000)
+          if (prev === undefined || days < prev) {
+            map.set(entry.actor, days)
+          }
+        }
+      }
+    }
+    return map
+  }, [activityLog])
 
   // Compute overdue status client-side for display
   const enrichedMilestones = useMemo(() => {
@@ -183,6 +210,9 @@ export default function MenteeMilestones() {
           {menteeSlugsDerived.map((slug) => {
             const person = getPersonInfo(slug)
             const stats = overview.find((o) => o.mentee_slug === slug)
+            const silenceDays = daysSinceActivity.get(slug) ?? null
+            const isSilent = silenceDays !== null && silenceDays > SILENCE_RED_DAYS
+            const isQuiet  = silenceDays !== null && silenceDays > SILENCE_AMBER_DAYS && !isSilent
             return (
               <motion.button
                 key={slug}
@@ -209,8 +239,27 @@ export default function MenteeMilestones() {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div style={{ fontSize: 'var(--value-size)', fontWeight: 500, color: 'var(--ink)' }}>
-                    {person.name}
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 'var(--value-size)', fontWeight: 500, color: 'var(--ink)' }}>
+                      {person.name}
+                    </span>
+                    {(isSilent || isQuiet) && (
+                      <span
+                        style={{
+                          fontSize: 'var(--text-micro)',
+                          fontWeight: 'var(--weight-ui)',
+                          padding: '2px 6px',
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: isSilent
+                            ? 'color-mix(in oklch, var(--maroon) 15%, transparent)'
+                            : 'color-mix(in oklch, var(--gold) 15%, transparent)',
+                          color: isSilent ? 'var(--maroon)' : 'var(--gold)',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isSilent ? 'Silent' : 'Quiet'} {silenceDays}d
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 mt-1">
                     <span style={{ fontSize: 'var(--label-size)', color: 'var(--teal)' }}>
@@ -269,8 +318,8 @@ export default function MenteeMilestones() {
         ) : flatList.length === 0 ? (
           <EmptyState
             icon={<GraduationCap size={40} />}
-            title="No milestones yet"
-            subtitle="Add milestones for your mentees to track committee meetings, scholarly projects, IRB submissions, and more."
+            title="Nothing scheduled yet"
+            subtitle="Track committee meetings, IRB submissions, scholarly projects, and qualifying exams for each mentee in one place."
             action={{ label: 'Add Milestone', onClick: () => setShowAddModal(true) }}
           />
         ) : (
@@ -317,6 +366,7 @@ export default function MenteeMilestones() {
                   onStatusChange={handleStatusChange}
                   focusedIndex={focusedIndex}
                   flatList={flatList}
+                  silenceDays={daysSinceActivity.get(menteeSlug) ?? null}
                 />
               ))}
             </motion.div>
@@ -381,6 +431,7 @@ function MenteeGroup({
   onStatusChange,
   focusedIndex,
   flatList,
+  silenceDays,
 }: {
   menteeSlug: string
   items: (MenteeMilestoneRow & { _isOverdue: boolean })[]
@@ -389,10 +440,13 @@ function MenteeGroup({
   onStatusChange: (id: string, newStatus: string, prevStatus: string) => void
   focusedIndex: number
   flatList: (MenteeMilestoneRow & { _isOverdue: boolean })[]
+  silenceDays: number | null
 }) {
   const [expanded, setExpanded] = useState(true)
   const person = getPersonInfo(menteeSlug)
   const overdueCount = items.filter((i) => i._isOverdue).length
+  const isSilent = silenceDays !== null && silenceDays > SILENCE_RED_DAYS
+  const isQuiet  = silenceDays !== null && silenceDays > SILENCE_AMBER_DAYS && !isSilent
 
   return (
     <motion.div variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}>
@@ -446,6 +500,23 @@ function MenteeGroup({
             }}
           >
             {overdueCount} overdue
+          </span>
+        )}
+        {(isSilent || isQuiet) && (
+          <span
+            style={{
+              fontSize: 'var(--text-micro)',
+              fontWeight: 'var(--weight-ui)',
+              padding: '2px 6px',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: isSilent
+                ? 'color-mix(in oklch, var(--maroon) 15%, transparent)'
+                : 'color-mix(in oklch, var(--gold) 15%, transparent)',
+              color: isSilent ? 'var(--maroon)' : 'var(--gold)',
+              flexShrink: 0,
+            }}
+          >
+            {isSilent ? 'Silent' : 'Quiet'} {silenceDays}d
           </span>
         )}
         <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
