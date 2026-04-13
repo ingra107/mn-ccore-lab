@@ -1176,3 +1176,103 @@ a:hover {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   OS ACCESSIBILITY ACCOMMODATIONS (C2 Round 2 P3)
+   Three media queries that move parity to 9.6+:
+   1. forced-colors  — Windows High Contrast / macOS Increased Contrast palette swap
+   2. prefers-contrast: more — flatten opacity tiers, strengthen borders
+   3. prefers-reduced-transparency — solidify rgba surface tokens, remove backdrop-blur
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Forced-colors (Windows High Contrast) ─────────────────
+   box-shadow is stripped in forced-colors mode, so box-shadow-as-border
+   (Vercel pattern) leaves cards and containers borderless. Re-add real
+   CSS borders and ensure focus rings use the system Highlight color.    */
+@media (forced-colors: active) {
+  /* Re-add structural borders where box-shadow was doing the work */
+  .bento-card,
+  .table-container,
+  [role="dialog"],
+  [role="alertdialog"] {
+    border: 1px solid CanvasText;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    border: 1px solid ButtonText;
+  }
+
+  /* Focus ring — use system Highlight for maximum visibility */
+  *:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+
+  /* Status & priority pills — opt out of forced-color remapping so color
+     semantics (red=overdue, green=done) survive; render with system contrast */
+  .status-pill,
+  .priority-pill {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+  }
+}
+
+/* ── 2. prefers-contrast: more ────────────────────────────────
+   Flatten opacity tiers so muted/label/hint text matches full ink.
+   Strengthen border tokens. --ink-disabled stays slightly faded so
+   disabled controls remain distinguishable from active ones.           */
+@media (prefers-contrast: more) {
+  :root {
+    --ink-muted: 1.0;
+    --ink-label: 1.0;
+    --ink-hint: 1.0;
+    /* Stronger borders in light mode */
+    --border-subtle: rgba(15, 25, 35, 0.20);
+    --border-default: rgba(15, 25, 35, 0.35);
+  }
+
+  .dark {
+    --ink-muted: 1.0;
+    --ink-label: 1.0;
+    --ink-hint: 1.0;
+    /* Stronger borders in dark mode */
+    --border-subtle: rgba(255, 255, 255, 0.20);
+    --border-default: rgba(255, 255, 255, 0.35);
+  }
+}
+
+/* ── 3. prefers-reduced-transparency ─────────────────────────
+   iOS "Reduce Transparency" and Windows equivalent. Replace semi-
+   transparent surface tokens with opaque equivalents, and remove
+   backdrop-filter blur (replaces with solid surface-1 background). */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --surface-card: #ffffff;
+    --surface-1: #f5f5f5;
+    --surface-2: #eaeaea;
+    --surface-3: #dfdfdf;
+    --hover-subtle: rgba(0, 0, 0, 0.04);
+    --border-subtle: rgba(15, 25, 35, 0.12);
+    --border-default: rgba(15, 25, 35, 0.20);
+  }
+
+  .dark {
+    --surface-card: #181c21;
+    --surface-1: #13171c;
+    --surface-2: #191d23;
+    --surface-3: #20252c;
+    --hover-subtle: rgba(255, 255, 255, 0.06);
+    --border-subtle: rgba(255, 255, 255, 0.12);
+    --border-default: rgba(255, 255, 255, 0.20);
+  }
+
+  /* Replace backdrop-blur with solid surface background */
+  .backdrop-blur,
+  [class*="backdrop-blur"] {
+    backdrop-filter: none !important;
+    background-color: var(--surface-1) !important;
+  }
+}
