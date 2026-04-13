@@ -415,17 +415,18 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         </SortableContext>
       </DndContext>
 
-      {/* Virtualized scrollable area — CLS fix: reserve viewport space before data arrives */}
+      {/* Virtualized scrollable area — CLS fix (C8 R6): minHeight STABLE across loading state.
+          Never flip between calc() and content-derived pixels — CLS measures content position,
+          not just wrapper height. A constant viewport-relative reserve keeps everything below
+          pinned regardless of whether we're rendering skeletons or the virtualizer. */}
       <div
         ref={parentRef}
         style={{
           flex: 1,
           overflow: 'auto',
-          // Reserve a fixed chunk of viewport so late-arriving rows don't push content down
-          minHeight: sorted.length > 0
-            ? Math.min(sorted.length * rowHeight + 4, 600)
-            : 'calc(100vh - 320px)',
+          minHeight: 'calc(100vh - 320px)',
           scrollbarGutter: 'stable',
+          contain: 'layout',
         }}
       >
         {isLoading && sorted.length === 0 ? (

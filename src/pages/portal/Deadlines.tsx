@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation, Download } from 'lucide-react'
 import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
-import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
@@ -312,10 +311,48 @@ export default function Deadlines() {
         )
       })()}
 
-      {/* Content — CLS fix (C8): reserve viewport height so late-arriving tasks don't shift */}
-      <div className="mt-5" style={{ minHeight: 'calc(100vh - 280px)' }}>
+      {/* Content — CLS fix (C8 R6): reserve viewport height AND render a skeleton whose
+          structural layout (TableContainer + column header + N rows at row-height) mirrors the
+          final list layout pixel-for-pixel. Prevents layout thrash when data swaps in. */}
+      <div className="mt-5" style={{ minHeight: 'calc(100vh - 280px)', contain: 'layout' }}>
         {isLoading ? (
-          <TableSkeleton rows={12} cols={4} />
+          <TableContainer className={densityClass(density)}>
+            <div
+              className="hidden sm:grid"
+              style={{
+                gridTemplateColumns: '32px minmax(200px, 3fr) 140px 120px 100px 100px 80px',
+                padding: 'var(--sp-sm) var(--sp-lg)',
+                borderBottom: '1px solid var(--border-subtle)',
+              }}
+              aria-hidden="true"
+            >
+              <div />
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} style={{ height: 10, width: '50%', background: 'var(--surface-2)', opacity: 0.5, borderRadius: 'var(--radius-sm)' }} />
+              ))}
+            </div>
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div
+                key={`skel-${i}`}
+                style={{
+                  height: 'var(--row-height)',
+                  boxSizing: 'border-box',
+                  borderBottom: '1px solid var(--border-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0 var(--sp-lg)',
+                  gap: 'var(--sp-md)',
+                  opacity: 0.5,
+                }}
+                aria-hidden="true"
+              >
+                <div style={{ width: 16, height: 16, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
+                <div style={{ flex: 1, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
+                <div style={{ width: 80, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
+                <div style={{ width: 60, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
+              </div>
+            ))}
+          </TableContainer>
         ) : view === 'list' ? (
           <TableContainer className={densityClass(density)}>
             {/* Column headers — hidden on mobile */}
