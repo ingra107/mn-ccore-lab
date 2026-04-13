@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Calendar, ChevronLeft, ChevronRight, Users, CheckSquare, Diamond, Download } from 'lucide-react'
-import { CardSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
@@ -178,10 +177,19 @@ export default function CalendarPage() {
         </div>
       </PageHeader>
 
-      {/* Content */}
-      <div className="mt-5">
+      {/* Content — CLS fix (C8): reserve calendar grid height before events arrive */}
+      <div className="mt-5" style={{ minHeight: 600 }}>
         {isLoading ? (
-          <CardSkeleton count={4} />
+          <div
+            aria-hidden="true"
+            style={{
+              minHeight: 600,
+              borderRadius: 'var(--radius-xl)',
+              border: '1px solid var(--border-subtle)',
+              background: 'var(--surface-1)',
+              opacity: 0.5,
+            }}
+          />
         ) : (
           <>
             {view === 'month' && <MonthView currentDate={currentDate} events={events} />}

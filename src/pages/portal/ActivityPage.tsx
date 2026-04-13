@@ -133,16 +133,40 @@ export default function ActivityPage() {
         }
       />
 
-      {/* H-05: compressed activity feed — single row per entry (avatar + text + badge + timestamp) */}
-      <div className="mt-5 flex flex-col gap-6">
+      {/* H-05: compressed activity feed — single row per entry. CLS fix (C8): reserve viewport height */}
+      <div className="mt-5 flex flex-col gap-6" style={{ minHeight: 'calc(100vh - 240px)' }}>
         {isLoading && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-xl)' }}>
-            {[1, 2, 3].map((i) => (
-              <div key={i}>
+            {[1, 2, 3].map((groupIdx) => (
+              <div key={groupIdx}>
                 <div style={{ marginBottom: 'var(--sp-sm)' }}>
                   <TextSkeleton lines={1} widths={['120px']} />
                 </div>
-                <TextSkeleton lines={4} widths={['100%', '90%', '85%', '70%']} />
+                {/* Skeleton rows match actual 36px activity row (avatar + text) */}
+                <div style={{ borderLeft: '2px solid var(--border-subtle)', paddingLeft: 'var(--sp-md)' }}>
+                  {Array.from({ length: 8 }).map((_, rowIdx) => (
+                    <div
+                      key={rowIdx}
+                      aria-hidden="true"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--sp-sm)',
+                        minHeight: 36,
+                        paddingTop: 'var(--sp-xs)',
+                        paddingBottom: 'var(--sp-xs)',
+                        paddingLeft: 'var(--sp-md)',
+                        paddingRight: 'var(--sp-md)',
+                        opacity: 0.4,
+                      }}
+                    >
+                      <div style={{ width: 24, height: 24, borderRadius: 'var(--radius-full)', background: 'var(--surface-2)', flexShrink: 0 }} />
+                      <div style={{ flex: 1, height: 10, background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)' }} />
+                      <div style={{ width: 60, height: 10, background: 'var(--surface-2)', borderRadius: 'var(--radius-full)' }} />
+                      <div style={{ width: 40, height: 10, background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)' }} />
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

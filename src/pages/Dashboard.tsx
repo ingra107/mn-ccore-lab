@@ -359,7 +359,7 @@ export default function Dashboard() {
   return (
     <DashboardMountedContext.Provider value={mounted}>
     <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
-      <div className="content-container" style={{ paddingBottom: '4rem', maxWidth: '100%' }}>
+      <div className="content-container" style={{ paddingBottom: '4rem', maxWidth: '100%', minHeight: 'calc(100vh - 120px)' }}>
         {/* ── STRATUM 1: Greeting + Tabs + Customize (single row) ── */}
         {(() => {
           const overdue = allTasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date())
@@ -443,7 +443,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Center: tabs */}
-                <div style={{ display: 'flex', gap: '2px', padding: '2px', borderRadius: 'var(--radius-lg)', background: 'rgba(15,25,35,0.03)', flexShrink: 0 }}>
+                <div className="dashboard-tabs" style={{ display: 'flex', gap: '2px', padding: '2px', borderRadius: 'var(--radius-lg)', background: 'var(--surface-1)', flexShrink: 0 }}>
                   {TAB_CONFIG.map(tab => (
                     <button
                       key={tab.id}
@@ -832,10 +832,12 @@ export default function Dashboard() {
         .bento-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          grid-auto-rows: minmax(200px, auto);
+          /* CLS fix (C8): fixed row min prevents cards from growing as data arrives */
+          grid-auto-rows: minmax(240px, auto);
           gap: 1.25rem;
           max-width: 100%;
           overflow: hidden;
+          min-height: 240px;
         }
 
         .bento-grid > * {

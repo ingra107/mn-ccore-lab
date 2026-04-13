@@ -439,10 +439,10 @@ export default function Tasks() {
         </AnimatePresence>
       </PageHeader>
 
-      {/* Content */}
-      <div className="mt-5">
+      {/* Content — CLS fix: reserve container height so skeleton→grid swap doesn't shift */}
+      <div className="mt-5" style={{ minHeight: 'calc(100vh - 320px)' }}>
         {isLoading ? (
-          <TableSkeleton rows={8} cols={5} />
+          <TableSkeleton rows={12} cols={5} />
         ) : displayTasks.length === 0 ? (
           <EmptyState
             icon={<CheckCircle2 size={40} />}

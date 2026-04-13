@@ -104,6 +104,7 @@ interface TaskGridViewProps {
   onToggleExpand?: (id: string) => void
   onPinToFocus?: (id: string) => void
   pinnedIds?: Set<string>
+  isLoading?: boolean
 }
 
 function parseBlockedByIds(blockedBy: string | null): string[] {
@@ -113,7 +114,7 @@ function parseBlockedByIds(blockedBy: string | null): string[] {
 
 type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title' | 'project'
 
-export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand, onPinToFocus, pinnedIds }: TaskGridViewProps) {
+export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand, onPinToFocus, pinnedIds, isLoading }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
 
   // ── Table config (persisted sort + column widths + column order) ──
@@ -404,12 +405,44 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         </SortableContext>
       </DndContext>
 
-      {/* Virtualized scrollable area */}
+      {/* Virtualized scrollable area — CLS fix: reserve viewport space before data arrives */}
       <div
         ref={parentRef}
-        style={{ flex: 1, overflow: 'auto', minHeight: Math.min(sorted.length * rowHeight + 4, 600), scrollbarGutter: 'stable' }}
+        style={{
+          flex: 1,
+          overflow: 'auto',
+          // Reserve a fixed chunk of viewport so late-arriving rows don't push content down
+          minHeight: sorted.length > 0
+            ? Math.min(sorted.length * rowHeight + 4, 600)
+            : 'calc(100vh - 320px)',
+          scrollbarGutter: 'stable',
+        }}
       >
-        {sorted.length > 0 ? (
+        {isLoading && sorted.length === 0 ? (
+          // Skeleton rows: match expected row height so container reserves vertical space
+          <div style={{ width: '100%' }}>
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div
+                key={`skel-${i}`}
+                style={{
+                  height: rowHeight,
+                  borderBottom: '1px solid var(--border-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0 var(--sp-lg)',
+                  gap: 'var(--sp-md)',
+                  opacity: 0.5,
+                }}
+                aria-hidden="true"
+              >
+                <div style={{ width: 16, height: 16, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
+                <div style={{ flex: 1, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
+                <div style={{ width: 80, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
+                <div style={{ width: 60, height: 12, borderRadius: 'var(--radius-sm)', background: 'var(--surface-2)' }} />
+              </div>
+            ))}
+          </div>
+        ) : sorted.length > 0 ? (
           <div
             style={{
               height: virtualizer.getTotalSize(),
@@ -796,6 +829,7 @@ function TaskGridRow({
         position: 'relative',
       }}
       className={`task-grid-row hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${isFocused ? 'task-row-focused' : ''} ${rowFadeAnim ? 'task-row-complete-fade' : ''}`}
+      data-focused={isFocused ? 'true' : undefined}
       tabIndex={0}
       onClick={() => {
         onFocusIndex?.(index)

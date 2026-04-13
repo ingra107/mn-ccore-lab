@@ -406,7 +406,7 @@ export default function Meetings() {
   // M-34: mobile view — false = show list, true = show detail
   const [mobileShowDetail, setMobileShowDetail] = useState(false)
 
-  const { data: meetingRows = [] } = useMeetingsApi()
+  const { data: meetingRows = [], isLoading: meetingsLoading } = useMeetingsApi()
   const { data: actionItemRows = [] } = useActionItems()
   const { data: cadence } = useMeetingCadence()
   const toggleMutation = useToggleActionItem()
@@ -720,8 +720,28 @@ export default function Meetings() {
             </div>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {filteredMeetings.length > 0 ? (
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 500 }}>
+            {meetingsLoading && filteredMeetings.length === 0 ? (
+              // CLS fix (C8): skeleton meeting rows reserve list height before data arrives
+              Array.from({ length: 10 }).map((_, i) => (
+                <div
+                  key={`mtg-skel-${i}`}
+                  aria-hidden="true"
+                  style={{
+                    display: 'block',
+                    padding: '10px 12px',
+                    borderBottom: '1px solid var(--border-subtle)',
+                    opacity: 0.4,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <div style={{ width: 46, height: 10, background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)' }} />
+                    <div style={{ width: 36, height: 10, background: 'var(--surface-2)', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                  <div style={{ width: '85%', height: 12, background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)' }} />
+                </div>
+              ))
+            ) : filteredMeetings.length > 0 ? (
               filteredMeetings.map((meeting, idx) => {
                 const isSelected = meeting.id === effectiveSelectedId
                 const isNext = isNextMeeting(meeting)
@@ -772,7 +792,7 @@ export default function Meetings() {
         </div>
 
         {/* Right panel: meeting detail */}
-        <div className="meetings-detail-panel" style={{ overflowY: 'auto', padding: 'var(--sp-xl)' }}>
+        <div className="meetings-detail-panel" style={{ overflowY: 'auto', padding: 'var(--sp-xl)', minHeight: 600 }}>
           {/* M-34: mobile back button */}
           <button
             type="button"

@@ -312,10 +312,10 @@ export default function Deadlines() {
         )
       })()}
 
-      {/* Content */}
-      <div className="mt-5">
+      {/* Content — CLS fix (C8): reserve viewport height so late-arriving tasks don't shift */}
+      <div className="mt-5" style={{ minHeight: 'calc(100vh - 280px)' }}>
         {isLoading ? (
-          <TableSkeleton rows={8} cols={4} />
+          <TableSkeleton rows={12} cols={4} />
         ) : view === 'list' ? (
           <TableContainer className={densityClass(density)}>
             {/* Column headers — hidden on mobile */}

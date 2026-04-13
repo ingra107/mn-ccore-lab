@@ -727,10 +727,10 @@ export default function MyTasks() {
         </div>
       )}
 
-      {/* Content — minHeight prevents CLS during virtualizer mount (M-27) */}
-      <div className={`mt-5 ${densityClass(density)}`} style={{ minHeight: 600 }}>
+      {/* Content — minHeight prevents CLS during virtualizer mount (M-27, C8 final) */}
+      <div className={`mt-5 ${densityClass(density)}`} style={{ minHeight: 'calc(100vh - 320px)' }}>
         {isLoading ? (
-          <TableSkeleton rows={6} cols={5} />
+          <TableSkeleton rows={12} cols={5} />
         ) : displayTasks.length === 0 && quickFilter !== 'waiting_on' ? (
           <EmptyState
             icon={<CheckCircle2 size={40} />}
