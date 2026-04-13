@@ -1520,10 +1520,10 @@ export default {
       console.log(`[Pulse] Impact check failed (non-fatal): ${e}`);
     }
 
-    // Get all team members with emails
+    // Get all team members — team_members table has no email column; fall back to slug@umn.edu
     const members = await env.DB.prepare(
-      'SELECT slug, name, email FROM team_members WHERE slug IS NOT NULL'
-    ).all<{ slug: string; name: string; email: string | null }>();
+      'SELECT slug, name FROM team_members WHERE slug IS NOT NULL'
+    ).all<{ slug: string; name: string }>();
 
     if (!members.results?.length) {
       console.log('[Pulse] No team members found');
@@ -1532,7 +1532,7 @@ export default {
 
     let sent = 0;
     for (const member of members.results) {
-      const email = member.email || `${member.slug}@umn.edu`;
+      const email = `${member.slug}@umn.edu`; // team_members has no email column; derive from slug
       const firstName = member.name.split(' ')[0];
 
       // Get their pending action items

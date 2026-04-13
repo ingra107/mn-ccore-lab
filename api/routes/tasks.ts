@@ -95,10 +95,12 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
           nextDue = d.toISOString().split('T')[0];
         }
         const nextId = generateId();
+        // Note: recurrence + recurrence_parent_id columns not yet in D1 schema (pending schema v35).
+        // Insert without those columns until migration is applied.
         await env.DB.prepare(
-          `INSERT INTO tasks (id, title, description, assignee, project_id, due_date, priority, status, source, recurrence, recurrence_parent_id, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'todo', 'recurrence', ?, ?, datetime('now'), datetime('now'))`
-        ).bind(nextId, fullTask?.title, fullTask?.description || '', fullTask?.assignee || '', fullTask?.project_id || null, nextDue, fullTask?.priority || 'medium', recurrence, id).run();
+          `INSERT INTO tasks (id, title, description, assignee, project_id, due_date, priority, status, source, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'todo', 'recurrence', datetime('now'), datetime('now'))`
+        ).bind(nextId, fullTask?.title, fullTask?.description || '', fullTask?.assignee || '', fullTask?.project_id || null, nextDue, fullTask?.priority || 'medium').run();
       }
     } catch (e) { console.error('Failed to create recurring task:', e); }
   }
