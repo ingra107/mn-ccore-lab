@@ -935,7 +935,8 @@ export default function DecisionsPage() {
           </div>
         }
       >
-        <div className="flex items-center gap-3 flex-wrap">
+        {/* Filter bar: stable minHeight prevents reflow as tagCounts load */}
+        <div className="flex items-center gap-3 flex-wrap" style={{ minHeight: '36px' }}>
           <div className="flex items-center gap-2 flex-wrap">
             {[
               { key: '', label: 'All' },
@@ -1071,7 +1072,8 @@ export default function DecisionsPage() {
         </div>
       )}
 
-      <div className="mt-8">
+      {/* minHeight on outer table section prevents CLS when loading→data transition */}
+      <div className="mt-8" style={{ minHeight: '400px' }}>
         <h2
           style={{
             fontWeight: 500,
@@ -1092,8 +1094,8 @@ export default function DecisionsPage() {
         ) : filteredDecisions.length === 0 ? (
           <EmptyState
             icon={<Scale size={40} />}
-            title="No decisions logged"
-            subtitle="When the team makes a call — study design, protocol change, authorship — record it here so nobody has to remember who said what, or when."
+            title="No decisions logged yet"
+            subtitle="The best ones come from messy arguments — record yours with N so nobody has to remember who said what, or when."
             action={{ label: 'Log Decision', onClick: () => setShowCreate(true) }}
           />
         ) : viewMode === 'timeline' ? (

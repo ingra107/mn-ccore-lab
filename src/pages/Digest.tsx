@@ -683,8 +683,8 @@ export default function Digest() {
             />
           </div>
 
-          {/* Status filter tabs */}
-          <div className="flex flex-wrap items-center gap-4 mb-4">
+          {/* Status filter tabs — minHeight prevents reflow as counts load */}
+          <div className="flex flex-wrap items-center gap-4 mb-4" style={{ minHeight: '40px' }}>
             <div className="flex gap-1 rounded-lg p-1" style={{ background: 'var(--gold-hover)' }}>
               {(
                 [
@@ -830,7 +830,8 @@ export default function Digest() {
             </div>
           )}
 
-          {/* Paper list */}
+          {/* Paper list — outer wrapper reserves stable height to prevent CLS during load */}
+          <div style={{ minHeight: '600px' }}>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="flex flex-col items-center gap-3">
@@ -857,8 +858,7 @@ export default function Digest() {
               <EmptyState />
             )
           ) : (
-            /* minHeight reserves space for paper list during cold load — prevents CLS */
-            <div className="space-y-3 sm:space-y-4" style={{ minHeight: '600px' }}>
+            <div className="space-y-3 sm:space-y-4">
               {searchQuery && (
                 <p className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   {filteredPapers.length} of {papers.length} papers matching "{searchQuery}"
@@ -869,6 +869,7 @@ export default function Digest() {
               ))}
             </div>
           )}
+          </div>
         </section>
       )}
     </>

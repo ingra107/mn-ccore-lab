@@ -182,6 +182,7 @@ export default function Team() {
                 style={{
                   borderTop: '3px solid var(--gold)',
                   textDecoration: 'none',
+                  minHeight: '260px',
                 }}
               >
                 <div className="flex items-start gap-4 sm:gap-5">
@@ -308,7 +309,7 @@ export default function Team() {
           {seniorMentors.filter((m) => matchesFilter(m.slug)).map((member) => {
             const tags = member.slug ? expertiseByMember.get(member.slug) || [] : []
             return (
-              <div key={member.name} className="fade-in-up card p-4 sm:p-6">
+              <div key={member.name} className="fade-in-up card p-4 sm:p-6" style={{ minHeight: '100px' }}>
                 <div className="flex items-center gap-4">
                   {/* Fixed-size wrapper prevents avatar CLS */}
                   <div style={{ width: '56px', height: '56px', flexShrink: 0 }}>
@@ -387,6 +388,7 @@ export default function Team() {
                   border: '1px solid rgba(201, 168, 76, 0.08)',
                   textDecoration: 'none',
                   transition: 'background-color var(--duration-normal, 150ms) var(--ease-out)',
+                  minHeight: '130px',
                 }}
               >
                 {/* Fixed-size wrapper prevents avatar CLS */}
@@ -462,6 +464,7 @@ export default function Team() {
                   border: '1px solid rgba(201, 168, 76, 0.08)',
                   textDecoration: 'none',
                   transition: 'background-color var(--duration-normal, 150ms) var(--ease-out)',
+                  minHeight: '130px',
                 }}
               >
                 {/* Fixed-size wrapper prevents avatar CLS */}
