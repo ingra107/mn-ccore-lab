@@ -177,6 +177,29 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 **Implementation:** See plan at `~/.claude/plans/graceful-meandering-thimble.md`
 **Peripheral Brain sync scripts:** `scripts/db/sync_d1_push.py`, `sync_d1_pull.py`
 
+### ⚠️ Cross-repo schema coordination (after R10 incident 2026-04-14)
+
+Hub and brain.db **share vocabulary** for status/stage/type/etc. Any change to a shared field in the Hub repo (schema.sql DEFAULTs, migration SQL against prod D1, taxonomy reshuffles like R10) must be **coordinated with Peripheral Brain** before deploying.
+
+**The R10 incident:** On 2026-04-13 a migration in this repo (`scripts/round9/r10-projects-status-migration.sql`, commit `145ed8e`) lowercased all project statuses in D1. The Peripheral Brain side was never updated. `sync_d1_push.py`'s pull-back path silently wrote the new lowercase values into brain.db, corrupting 38 projects on Nick's home machine. TODAY.md filter stopped showing R01s. Airtable push failed with 422s. 4-hour debug session the next morning. Full postmortem: `/c/Users/ingra107/Peripheral-Brain/Context/Decisions/2026-04-14-r10-taxonomy-cross-repo-cascade.md`
+
+**Process for any shared-field change:**
+1. Write a decision doc in `/c/Users/ingra107/Peripheral-Brain/Context/Decisions/`
+2. Update `/c/Users/ingra107/Peripheral-Brain/scripts/db/enums.py` with the new canonical + legacy alias FIRST
+3. Update `/c/Users/ingra107/Peripheral-Brain/Context/Topics/shared-schema-registry.md` with the new field info
+4. Ship the code changes to BOTH repos in lockstep — never deploy data migration ahead of dependent code
+5. Run `python /c/Users/ingra107/Peripheral-Brain/scripts/db/health.py --check` to verify no drift
+
+**Registered shared fields** (see `shared-schema-registry.md` for full list):
+- `projects.status`: `active / waiting_external / blocked / done`
+- `tasks.status`: `todo / in_progress / done / blocked / waiting_external`
+- `projects.stage`: `Idea / Data Collection / Data Analysis / Writing / Submitted / Accepted / Published` (brain.db granular, Hub R10 used `Analysis`/`Review` — map via `enums.canonicalize_project_stage()`)
+- `projects.category`: `clif / lab / nate / mentee` (Hub-authoritative)
+- `projects.type`: `R01 / R03 / K / CLIF / Nick_Lab / Friends / Mentees / Admin / Personal` (brain.db-only)
+- `tasks.priority`: `low / medium / high / urgent`
+
+**Anti-pattern to avoid:** "we can deploy the frontend next week when Workers cap resets" while the data migration is already live. Data-on-new-schema with code-on-old-schema is how things corrupt.
+
 ## Hermes (AI Research Assistant)
 
 Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comments, or project comments. Responses appear with gold sparkle badge in 20-40 seconds.
@@ -743,15 +766,6 @@ Decisions pending: Workers Paid plan ($5/mo, strongly recommended), Hermes polli
 
 ## Pending Sync
 <!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
-
-- NOTE: Round 8 audit (9 agents) + R9 (deployed) + R10 (local only, commit 145ed8e) completed 2026-04-13. Full handoff at Projects/mn-ccore-lab-hub/SESSION-HANDOFF-2026-04-13-to-04-15.md
-- NOTE: Cloudflare Workers free-tier 100K req/day cap exhausted 2026-04-13 ~09:45 CT. Hermes polling (8.6K/day baseline) + open tabs + overnight jobs + R8 audit traffic = full budget. STRONGLY recommend Workers Paid $5/mo plan. Until then, no Playwright audits or parallel journey agents against deployed site.
-- DECISION: Grant status taxonomy locked — planning/in_preparation/submitted/funded/resubmission/declined/closed. Only K23 provider practice variation mechanical ventilation is funded.
-- DECISION: Project status reuses task vocabulary — active/waiting_external/blocked/done. 64 projects lowercased to 'active' in D1; per-project classification deferred.
-- DECISION: Dashboard cards are now draggable AND resizable via react-grid-layout v1.5.3. Per-user+section localStorage persistence.
-- LEARNING: CLAUDE.md Component Coverage table is stale. Journey B found at least 2 features listed as covered that are not actually wired (N-key on /decisions, Copy bibliography on /publications). Treat table as hopeful, not authoritative.
-- LEARNING: Playwright X-Test-Mode: true header routes API calls to empty mnccore-lab-test DB. Prior inspection pass counts on data-rich pages may be inflated.
-- LEARNING: react-grid-layout@2.x is a breaking hook-based rewrite. Stay on 1.5.3 unless you want to rewrite DashboardGrid.tsx.
 
 
 ## Next Session Playbook
