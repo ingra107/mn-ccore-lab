@@ -236,7 +236,17 @@ After filtering the known hub-realtime WebSocket error, all 14 pages load with *
    - R11-6: build `expandedId` + detail panel for Ideas (AND Decisions — plan's reference was wrong)
    - R11-8: build `expandedId` + detail panel for Grants (decide: replace Link nav or inline expand)
 
-2. **CLAUDE.md line 469/470 edits — NO-OP.** Runtime proved both claims TRUE. Source audit was wrong on filename (`DecisionsPage.tsx` not `Decisions.tsx`). Skip this item.
+2. **CLAUDE.md Component Coverage — ONE small edit only, not the cleanup the plan implied.**
+   - Plan said "delete FALSE-claim footnotes on lines 469-470" — **wrong line numbers** (that's Known Gotchas, unrelated). The real claims are at **lines 448-449** in the Component Coverage table.
+   - **Line 448** (`N-key create | Ideas, Decisions | Tasks uses C key`): **TRUE on both.** Runtime verified at `DecisionsPage.tsx:834` + `Ideas.tsx:112`. No edit.
+   - **Line 449** (`Copy to clipboard | PIAnalytics, CVPage, Publications, Digest, MeetingDetail, AnalyticsPage`): **TRUE on 5 of 6 — CVPage is stale.** CVPage was removed per memory `project_hub-cv-removed.md`. File doesn't exist. The other 5 all have `navigator.clipboard.writeText` calls verified.
+   - **Phase 1 edit:** one token removal on line 449 — delete `CVPage, ` from the list.
+   - Verified copy-to-clipboard file:line for each surviving item:
+     - `src/pages/portal/PIAnalytics.tsx:374` (Copy Report)
+     - `src/pages/portal/AnalyticsPage.tsx:265` (Copy Report)
+     - `src/pages/Publications.tsx:234` (Copy bibliography)
+     - `src/pages/Digest.tsx:777` (Copy reading list)
+     - `src/pages/MeetingDetail.tsx:228` (Copy Summary)
 
 3. **Phase 2 (R12 fixes):**
    - R12-typography: add mobile media query in `src/index.css` raising `--text-micro` + `--text-caption` to 11px at `<768px`
