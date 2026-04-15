@@ -162,6 +162,72 @@ Live D1 has `test_delete_%` rows that pre-date this sprint:
 
 ---
 
+---
+
+## Playwright runtime verification (2026-04-15)
+
+After the source audit, ran a targeted Playwright spec (`tests/dogfood-phase0.spec.ts` + `playwright.config.dogfood.ts`) against prod with Phase 0 seed data. 23 tests, 1.2 min, ~200 requests. Bounded cost, real signal.
+
+### P0 prod bug — hub-realtime WebSocket broken
+
+**Every page load generates this console error:**
+```
+WebSocket connection to 'wss://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore?_pk=<uuid>' failed:
+Error during WebSocket handshake: Unexpected response code: 400
+```
+
+- **Reproducible via curl** (not a Playwright artifact):
+  ```
+  $ curl -H "Upgrade: websocket" -H "Connection: Upgrade" ... https://hub-realtime.nicholas-ingraham.workers.dev/parties/main/mnccore
+  HTTP 400 "Invalid request"
+  ```
+- **Impact:** Realtime sync (multi-user collab, live updates) is dead in prod. Every user of the Hub sees this error. Happens on all 14 portal pages.
+- **Root cause:** unknown — hub-realtime worker source is not in `c:/Users/ingra/mn-ccore-lab` (per `Context/Topics/ingestion-chains.md`, hub-realtime's source is "unknown, not in PB repo"). Worker may have been deployed from a different repo and gone stale, or the PartySocket library version bumped a handshake header the worker doesn't parse.
+- **Scope:** out-of-scope for the sprint-v2 plan, but worth landing a stub or toggle so it doesn't spam the console on every user's session.
+- **Filed severity:** **P0** (broken for all users, visible on all pages, no workaround).
+
+### R11 runtime verification — all 4 gaps confirmed
+
+| Test | Runtime output | Interpretation |
+|---|---|---|
+| R11-4 Deadlines | click date cell → `inputs found: 0` | ✓ gap confirmed (would be ≥1 if inline editor existed) |
+| R11-5 Manuscripts | 14 test_delete_ rows, only 2 comboboxes on page (ratio **0.14**) | ✓ gap confirmed (inline PI+Category would yield ratio ≥2) |
+| R11-6 Ideas | click title → `detail panel elements: 0` | ✓ gap confirmed |
+| R11-8 Grants | click row → `navigatedAway=false` | ✓ **different gap** — click does NOTHING. Not a Link nav as the source audit said. Completely inert. |
+
+### R12 runtime verification
+
+| Test | Runtime output | Interpretation |
+|---|---|---|
+| Calendar prev/next hit target | smallest icon button: **30×44 px** | **horizontal** hit-target gap (width only), not square 28×28 |
+| Dashboard mobile buttons (sampled 50) | `0/50 sub-44px` | **contradicts source audit** — runtime CSS box model pads to ≥44. Grip button p-1.5 source was misread. Dashboard may already be touch-safe. Needs closer look before Phase 2 "sweep" — could be a no-op. |
+| MobileTabBar route count | `20 visible routes` in query | Playwright query selector was too broad, picked up desktop sidebar nav. Source audit's "4 hardcoded tabs" stands. |
+
+### Source audit corrections from runtime
+
+The source audit subagent made 3 wrong calls because it grepped the wrong filename or read the source too quickly:
+
+1. **Decisions N-key (CLAUDE.md claim)**: audit said FALSE; runtime proves TRUE
+   - File is `src/pages/portal/DecisionsPage.tsx` not `src/pages/portal/Decisions.tsx`
+   - Line 834 has the N-key handler: `if (e.key === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey && !showCreate) {...}`
+   - **CLAUDE.md claim is correct. No edit needed.**
+
+2. **Publications Copy bibliography (CLAUDE.md claim)**: audit said TRUE (correct)
+   - `Publications.tsx:229-242` has the feature. Line 240: `Copy bibliography ({filtered.length})`
+   - **CLAUDE.md claim is correct. No edit needed.**
+
+3. **BOTH "false claims" the plan asked to verify are actually TRUE features.** Plan Phase 1 CLAUDE.md-correction work is a no-op for those two items. Only real CLAUDE.md updates are additive (new Miniflare gotchas once Phase 3 ships).
+
+4. **R11-6 DecisionsPage reference**: audit said "Decisions also lacks expandedId pattern, scope bumped." Need to re-check on the correct file. If DecisionsPage has a working detail-panel pattern, R11-6 can model after it as the plan originally intended. If it doesn't, the scope bump stands. **Deferring this to Phase 1 kickoff — read DecisionsPage.tsx in full then.**
+
+5. **R11-8 Grants click behavior**: audit said "rows are `<Link>` tags navigating to detail routes." Runtime says click does NOTHING (no nav, no panel). The rows are NOT Links. Either the audit read a stale code path or Grants.tsx has a click handler that's been disabled/broken. **P1 bug beyond R11-8 scope.** Needs re-investigation in Phase 1.
+
+### Per-page console errors (after de-noising hub-realtime)
+
+After filtering the known hub-realtime WebSocket error, all 14 pages load with **zero additional console errors**. Good baseline health.
+
+---
+
 ## Action items for Phase 1-5 (derived from findings)
 
 1. **Phase 1 (R11 fixes):**
@@ -170,7 +236,7 @@ Live D1 has `test_delete_%` rows that pre-date this sprint:
    - R11-6: build `expandedId` + detail panel for Ideas (AND Decisions — plan's reference was wrong)
    - R11-8: build `expandedId` + detail panel for Grants (decide: replace Link nav or inline expand)
 
-2. **Phase 1 ALSO:** CLAUDE.md line 469 correction — "Ideas N-key" not "Decisions N-key". Line 470 Publications claim is correct, do not delete.
+2. **CLAUDE.md line 469/470 edits — NO-OP.** Runtime proved both claims TRUE. Source audit was wrong on filename (`DecisionsPage.tsx` not `Decisions.tsx`). Skip this item.
 
 3. **Phase 2 (R12 fixes):**
    - R12-typography: add mobile media query in `src/index.css` raising `--text-micro` + `--text-caption` to 11px at `<768px`
