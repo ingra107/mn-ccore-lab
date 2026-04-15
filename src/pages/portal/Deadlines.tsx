@@ -9,6 +9,7 @@ import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
+import InlineDatePicker from '../../components/InlineDatePicker'
 import { useUndoToast } from '../../components/UndoToast'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import { ColumnHeader, TableContainer } from '../../components/table'
@@ -107,6 +108,16 @@ export default function Deadlines() {
     const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked', waiting_external: 'Waiting (External)' }
     showUndo(`Status → ${labels[newStatus] || newStatus}`, () => updateTaskStatus.mutate({ id, status: prevStatus }))
   }, [updateTaskStatus, showUndo])
+
+  const handleDueDateChange = useCallback((id: string, newDate: string | null) => {
+    const task = tasks.find(t => t.id === id)
+    const prevDate = task?.due_date ?? null
+    updateTask.mutate({ id, fields: { due_date: newDate } })
+    showUndo(
+      newDate ? `Due → ${newDate}` : 'Cleared due date',
+      () => updateTask.mutate({ id, fields: { due_date: prevDate } }),
+    )
+  }, [tasks, updateTask, showUndo])
 
   // Aggregate all deadlines
   const deadlines = useMemo(() => {
@@ -396,7 +407,7 @@ export default function Deadlines() {
                 { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
               ].filter(g => g.items.length > 0).map((group) => (
                 <motion.div key={group.title} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}>
-                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
+                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onDueDateChange={handleDueDateChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
                 </motion.div>
               ))}
             </motion.div>
@@ -477,9 +488,10 @@ const STATUS_OPTIONS = [
 
 // ── Reusable deadline item row ───────────────────────────────────────────────
 
-function DeadlineItemRow({ item, onStatusChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: {
+function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: {
   item: DeadlineItem
   onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void
+  onDueDateChange?: (id: string, newDate: string | null) => void
   onOpenDetail?: (item: DeadlineItem) => void
   projectMap: Map<string, string>
   selectedIds?: Set<string>
@@ -544,16 +556,25 @@ function DeadlineItemRow({ item, onStatusChange, onOpenDetail, projectMap, selec
           {item.project ? (projectMap.get(item.project) || item.project) : ''}
         </span>
 
-        {/* Due date */}
-        <span style={{
-          fontSize: 'var(--text-label)',
-          color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
-          fontWeight: item.isOverdue ? 500 : 400,
-          opacity: item.isOverdue ? 1 : 0.5,
-          fontVariantNumeric: 'tabular-nums',
-        }}>
-          {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
-        </span>
+        {/* Due date — inline editable for tasks, read-only for milestones (grant timeline is server-derived) */}
+        {item.type === 'task' && onDueDateChange ? (
+          <div onClick={(e) => e.stopPropagation()}>
+            <InlineDatePicker
+              value={item.due_date}
+              onChange={(newDate) => onDueDateChange(item.id, newDate)}
+            />
+          </div>
+        ) : (
+          <span style={{
+            fontSize: 'var(--text-label)',
+            color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
+            fontWeight: item.isOverdue ? 500 : 400,
+            opacity: item.isOverdue ? 1 : 0.5,
+            fontVariantNumeric: 'tabular-nums',
+          }}>
+            {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
+          </span>
+        )}
 
         {/* Assignee */}
         <div className="flex items-center gap-1.5">
@@ -621,13 +642,22 @@ function DeadlineItemRow({ item, onStatusChange, onOpenDetail, projectMap, selec
           </span>
           {/* Metadata row */}
           <div className="flex items-center gap-3 flex-wrap">
-            <span style={{
-              fontSize: 'var(--label-size)',
-              color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
-              fontWeight: item.isOverdue ? 500 : 400,
-            }}>
-              {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
-            </span>
+            {item.type === 'task' && onDueDateChange ? (
+              <div onClick={(e) => e.stopPropagation()}>
+                <InlineDatePicker
+                  value={item.due_date}
+                  onChange={(newDate) => onDueDateChange(item.id, newDate)}
+                />
+              </div>
+            ) : (
+              <span style={{
+                fontSize: 'var(--label-size)',
+                color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
+                fontWeight: item.isOverdue ? 500 : 400,
+              }}>
+                {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
+              </span>
+            )}
             <span style={{
               fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
               color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
@@ -653,7 +683,7 @@ const VIRTUAL_THRESHOLD = 20  // sections exceeding this row count get virtualiz
 // Row heights match CSS density values: compact=36, default=44, relaxed=52
 const DENSITY_ROW_HEIGHT: Record<string, number> = { compact: 36, default: 44, relaxed: 52 }
 
-function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
+function DeadlineTableSection({ title, items, color, onStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onDueDateChange?: (id: string, newDate: string | null) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
   const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
   const useVirtual = expanded && items.length > VIRTUAL_THRESHOLD
   const parentRef = useRef<HTMLDivElement>(null)
@@ -692,6 +722,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
           key={item.id}
           item={item}
           onStatusChange={onStatusChange}
+          onDueDateChange={onDueDateChange}
           onOpenDetail={onOpenDetail}
           projectMap={projectMap}
           selectedIds={selectedIds}
@@ -721,6 +752,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onOpenDetai
                   <DeadlineItemRow
                     item={item}
                     onStatusChange={onStatusChange}
+                    onDueDateChange={onDueDateChange}
                     onOpenDetail={onOpenDetail}
                     projectMap={projectMap}
                     selectedIds={selectedIds}
