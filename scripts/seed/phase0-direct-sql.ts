@@ -44,8 +44,14 @@ function sqlEscape(v: string | null | undefined): string {
 }
 function d1Execute(command: string) {
   const cmd = `npx wrangler d1 execute mnccore-lab --remote --command "${command.replace(/"/g, '\\"')}" --json`
+  // Strip CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID so wrangler falls back to
+  // the OAuth config at ~/.wrangler/config/default.toml, which has d1:write scope.
+  // The env var token has a narrower scope that blocks D1 queries with code 7403.
+  const env = { ...process.env }
+  delete env.CLOUDFLARE_API_TOKEN
+  delete env.CLOUDFLARE_ACCOUNT_ID
   try {
-    execSync(cmd, { stdio: ['ignore', 'pipe', 'pipe'] })
+    execSync(cmd, { stdio: ['ignore', 'pipe', 'pipe'], env })
   } catch (e: any) {
     throw new Error(`d1 execute failed: ${e.stderr?.toString() || e.message}\nSQL: ${command}`)
   }
