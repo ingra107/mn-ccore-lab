@@ -1,0 +1,11 @@
+[phase0-direct-sql] project map entries: 5
+  grants =test_delete_K99 Fake Exploratory Award (skip)
+  milestones +test_delete_ARDS Biomarker pilot data freeze (buffered)
+  milestones +test_delete_Mentee F31 application due (buffered)
+  manuscript_revisions +r1 test_delete_vent_practice_var (buffered)
+  manuscript_revisions +r1 test_delete_sepsis_outcomes_reg (buffered)
+  research_digest +test_delete_Early corticosteroids in sepsis (RECOVERY trial) (buffered)
+  research_digest +test_delete_Driving pressure vs plateau pressure (buffered)
+  research_digest +test_delete_Mentee mentorship evidence synthesis (buffered)
+[phase0-direct-sql] flushing 7 INSERTs via single wrangler call
+[phase0-direct-sql] complete. manifest has 89 rows total.

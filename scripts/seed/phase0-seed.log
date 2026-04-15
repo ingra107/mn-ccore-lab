@@ -1,0 +1,21 @@
+[phase0-seed] mode=full target=https://mn-ccore-lab.pages.dev
+  projects =test_delete_Sepsis Outcomes Registry (skip, already in manifest)
+  projects =test_delete_ARDS Biomarker Pilot (skip, already in manifest)
+  projects =test_delete_Mentee Grant Prep (skip, already in manifest)
+  projects =test_delete_Ventilator Practice Variation (skip, already in manifest)
+  projects =test_delete_Coordinator Workflow SOP (skip, already in manifest)
+  decisions +test_delete_Adopt R10 grant status taxonomy
+  decisions +test_delete_Deprecate X-Test-Mode header
+  decisions +test_delete_Ship dashboard resizable cards
+  decisions +test_delete_Stub WebSocket in local tests
+  decisions +test_delete_Defer R13 Digest Model B
+  meetings +test_delete_MNCCORE Biweekly dogfood
+  meetings +test_delete_Grant Strategy Session dogfood
+  meetings +test_delete_Lab Ops Standup dogfood
+  publications +test_delete_Long-term cognitive outcomes after ARDS
+  publications +test_delete_Ventilator weaning outcomes in obese patients
+  publications +test_delete_Sepsis-3 vs SOFA trajectories
+  publications +test_delete_Early mobility and delirium prevention
+  publications +test_delete_Outcome prediction using CLIF
+[phase0-seed] complete via API. 81 rows written.
+[phase0-seed] next: run phase0-direct-sql.ts to insert grants/milestones/manuscript_revisions/research_digest

@@ -70,8 +70,23 @@ async function run() {
   const manifest = loadManifest()
   console.log(`[phase0-seed] mode=${mode} target=${API_BASE}`)
 
+  // Idempotency index: skip any row whose (table, label) already landed
+  // in a prior run. Lets us resume after a mid-run failure without dup writes.
+  const seededLabels = new Set(manifest.rows.map(r => `${r.table}:${r.label}`))
+  const wasSeeded = (table: string, label: string) => seededLabels.has(`${table}:${label}`)
+  // Also rebuild id lookup maps for rows already in the manifest so downstream
+  // rows (tasks referencing projects, comments referencing tasks, etc.) resolve.
   const projectIdBySlug = new Map<string, string>()
   const taskIdByDescription = new Map<string, string>()
+  for (const r of manifest.rows) {
+    if (r.table === 'projects') {
+      // label is the title; we need slug → id. Look up slug from plan.
+      const p = plan.projects.find((pp: any) => pp.title === r.label)
+      if (p) projectIdBySlug.set(p.slug, r.id)
+    } else if (r.table === 'tasks' && !r.label.endsWith(' [action]')) {
+      taskIdByDescription.set(r.label, r.id)
+    }
+  }
 
   // ---- projects ----
   const projectRows = mode === 'canary' ? plan.projects.slice(0, 1) : plan.projects
@@ -79,12 +94,14 @@ async function run() {
     assertPrefix('project.title', p.title)
     assertPrefix('project.slug', p.slug)
     if (mode === 'dry') { console.log(`[dry] POST /api/projects ${p.title}`); continue }
+    if (wasSeeded('projects', p.title)) { console.log(`  projects =${p.title} (skip, already in manifest)`); continue }
     const resp = await post('/api/projects', {
       title: p.title, slug: p.slug, category: p.category, stage: p.stage, pi: p.pi, description: p.description,
     })
     const id = idFrom(resp)
     projectIdBySlug.set(p.slug, id)
     manifest.rows.push({ table: 'projects', id, label: p.title })
+    seededLabels.add(`projects:${p.title}`)
     saveManifest(manifest)
     console.log(`  projects +${p.title} (${id})`)
   }
@@ -98,6 +115,10 @@ async function run() {
   // ---- tasks ----
   for (const t of plan.tasks) {
     assertPrefix('task.description', t.description)
+    if (wasSeeded('tasks', t.description)) {
+      // Still need the id for downstream (comments, reactions) — already rebuilt above
+      continue
+    }
     const project_id = projectIdBySlug.get(t.project_slug)
     if (!project_id) { console.warn(`  skip task ${t.description} — unknown project ${t.project_slug}`); continue }
     const resp = await post('/api/tasks', {
@@ -107,15 +128,18 @@ async function run() {
     const id = idFrom(resp)
     taskIdByDescription.set(t.description, id)
     manifest.rows.push({ table: 'tasks', id, label: t.description })
+    seededLabels.add(`tasks:${t.description}`)
     saveManifest(manifest)
     console.log(`  tasks +${t.description.slice(0, 60)} (${id})`)
 
     if (t.subtasks) {
       for (const subTitle of t.subtasks) {
         assertPrefix('subtask.title', subTitle)
+        if (wasSeeded('task_subtasks', subTitle)) continue
         const subResp = await post(`/api/tasks/${id}/subtasks`, { title: subTitle })
         const subId = idFrom(subResp)
         manifest.rows.push({ table: 'task_subtasks', id: subId, label: subTitle })
+        seededLabels.add(`task_subtasks:${subTitle}`)
         saveManifest(manifest)
       }
     }
@@ -124,21 +148,29 @@ async function run() {
   // ---- ideas ----
   for (const i of plan.ideas) {
     assertPrefix('idea.title', i.title)
+    if (wasSeeded('ideas', i.title)) continue
     const resp = await post('/api/ideas', { title: i.title, description: i.description, research_area: i.research_area })
     const id = idFrom(resp)
     manifest.rows.push({ table: 'ideas', id, label: i.title })
+    seededLabels.add(`ideas:${i.title}`)
     saveManifest(manifest)
+    console.log(`  ideas +${i.title}`)
   }
 
   // ---- decisions (decision_log) ----
   for (const d of plan.decisions) {
     assertPrefix('decision.title', d.title)
+    if (wasSeeded('decision_log', d.title)) continue
+    // tags stored as comma-separated string in decision_log.tags (handler splits on ',')
+    const tagsStr = Array.isArray(d.tags) ? d.tags.join(',') : (d.tags ?? null)
     const resp = await post('/api/decisions', {
-      title: d.title, rationale: d.rationale, project_slug: d.project_slug ?? undefined, tags: d.tags,
+      title: d.title, rationale: d.rationale, project_slug: d.project_slug ?? undefined, tags: tagsStr,
     })
     const id = idFrom(resp)
     manifest.rows.push({ table: 'decision_log', id, label: d.title })
+    seededLabels.add(`decision_log:${d.title}`)
     saveManifest(manifest)
+    console.log(`  decisions +${d.title}`)
   }
 
   // ---- meetings ----
@@ -146,22 +178,34 @@ async function run() {
     assertPrefix('meeting.title', m.title)
     const date = daysFromNow(m.date_in_days)
     if (!date) throw new Error(`meeting ${m.title} has null date`)
-    const resp = await post('/api/meetings', {
-      title: m.title, date, type: m.type, attendees: m.attendees,
-    })
-    const id = idFrom(resp)
-    manifest.rows.push({ table: 'meetings', id, label: m.title })
-    saveManifest(manifest)
+    let meetingId: string
+    if (wasSeeded('meetings', m.title)) {
+      // Recover meeting id from manifest for action-item FK below
+      const row = manifest.rows.find(r => r.table === 'meetings' && r.label === m.title)
+      meetingId = row!.id
+    } else {
+      const resp = await post('/api/meetings', {
+        title: m.title, date, type: m.type, attendees: m.attendees,
+      })
+      meetingId = idFrom(resp)
+      manifest.rows.push({ table: 'meetings', id: meetingId, label: m.title })
+      seededLabels.add(`meetings:${m.title}`)
+      saveManifest(manifest)
+      console.log(`  meetings +${m.title}`)
+    }
 
     // Action items = tasks with meeting_id set (no dedicated POST route)
     for (const ai of m.action_items) {
       assertPrefix('action_item.description', ai.description)
+      const aiLabel = `${ai.description} [action]`
+      if (wasSeeded('tasks', aiLabel)) continue
       const aiResp = await post('/api/tasks', {
         description: ai.description, title: ai.description, assignee: ai.assignee,
-        meeting_id: id, due_date: daysFromNow(ai.due_in_days), priority: 'medium', source: 'meeting',
+        meeting_id: meetingId, due_date: daysFromNow(ai.due_in_days), priority: 'medium', source: 'meeting',
       })
       const aiId = idFrom(aiResp)
-      manifest.rows.push({ table: 'tasks', id: aiId, label: `${ai.description} [action]` })
+      manifest.rows.push({ table: 'tasks', id: aiId, label: aiLabel })
+      seededLabels.add(`tasks:${aiLabel}`)
       saveManifest(manifest)
       if (ai.done) await post(`/api/tasks/${aiId}/status`, { status: 'done' })
     }
@@ -170,13 +214,16 @@ async function run() {
   // ---- publications ----
   for (const pub of plan.publications) {
     assertPrefix('publication.title', pub.title)
+    if (wasSeeded('publications', pub.title)) continue
     const resp = await post('/api/publications', {
       title: pub.title, authors: JSON.stringify(pub.authors),
       journal: pub.journal, year: pub.year, status: pub.status,
     })
     const id = idFrom(resp)
     manifest.rows.push({ table: 'publications', id, label: pub.title })
+    seededLabels.add(`publications:${pub.title}`)
     saveManifest(manifest)
+    console.log(`  publications +${pub.title}`)
   }
 
   // ---- task comments ----
@@ -184,9 +231,12 @@ async function run() {
     const taskId = taskIdByDescription.get(c.task_description)
     if (!taskId) { console.warn(`  skip comment — unknown task ${c.task_description}`); continue }
     assertPrefix('comment.content', c.content)
+    const label = c.content.slice(0, 60)
+    if (wasSeeded('task_comments', label)) continue
     const resp = await post(`/api/tasks/${taskId}/comments`, { content: c.content })
     const id = idFrom(resp)
-    manifest.rows.push({ table: 'task_comments', id, label: c.content.slice(0, 60) })
+    manifest.rows.push({ table: 'task_comments', id, label })
+    seededLabels.add(`task_comments:${label}`)
     saveManifest(manifest)
   }
 
@@ -197,9 +247,12 @@ async function run() {
     const taskId = taskIdByDescription.get(r.task_description)
     if (!taskId) { console.warn(`  skip reaction — unknown task ${r.task_description}`); continue }
     const emoji = emojiMap[r.emoji] ?? r.emoji
+    const label = `${taskId}:${r.emoji}`
+    if (wasSeeded('reactions', label)) continue
     const resp = await post('/api/reactions', { target_type: 'task', target_id: taskId, emoji })
     const id = idFrom(resp)
-    manifest.rows.push({ table: 'reactions', id, label: `${taskId}:${r.emoji}` })
+    manifest.rows.push({ table: 'reactions', id, label })
+    seededLabels.add(`reactions:${label}`)
     saveManifest(manifest)
   }
 

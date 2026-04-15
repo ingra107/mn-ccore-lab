@@ -5,6 +5,446 @@
       "table": "projects",
       "id": "0a394efe89303d05d9f1fd6dc944ffad",
       "label": "test_delete_Sepsis Outcomes Registry"
+    },
+    {
+      "table": "projects",
+      "id": "e81c19d94a59b8dfd28927a07d5be5ee",
+      "label": "test_delete_Sepsis Outcomes Registry"
+    },
+    {
+      "table": "projects",
+      "id": "dfe1fda111a12f7ae8ae556081741981",
+      "label": "test_delete_ARDS Biomarker Pilot"
+    },
+    {
+      "table": "projects",
+      "id": "56d12ff59b2927028b4b9b7ee4944e6d",
+      "label": "test_delete_Mentee Grant Prep"
+    },
+    {
+      "table": "projects",
+      "id": "b85a11aedec6f26c0993bc455d777dc8",
+      "label": "test_delete_Ventilator Practice Variation"
+    },
+    {
+      "table": "projects",
+      "id": "d3eff1e1a3d1b6410a503b354b4c73ae",
+      "label": "test_delete_Coordinator Workflow SOP"
+    },
+    {
+      "table": "tasks",
+      "id": "2d23d63c96644bbd50a268c6e4dbc96d",
+      "label": "test_delete_Draft methods section"
+    },
+    {
+      "table": "tasks",
+      "id": "cdd3de94bc3cc6ad72997fccc03131a2",
+      "label": "test_delete_Review CONSORT diagram"
+    },
+    {
+      "table": "tasks",
+      "id": "d8adc10ef83a088d99ce3b181d26fe80",
+      "label": "test_delete_Upload IRB amendment"
+    },
+    {
+      "table": "tasks",
+      "id": "f6665ae61101a627064e7ea22959e763",
+      "label": "test_delete_Run power analysis"
+    },
+    {
+      "table": "tasks",
+      "id": "39c1259fe13a42498ed05eb46a5e8305",
+      "label": "test_delete_Schedule T32 interview"
+    },
+    {
+      "table": "tasks",
+      "id": "d50d753c24eae17a7a236c83efa8783a",
+      "label": "test_delete_Export SOFA analysis"
+    },
+    {
+      "table": "tasks",
+      "id": "cf20215e2109042c338a5c2e12ec75e8",
+      "label": "test_delete_Draft aim 2 specifics"
+    },
+    {
+      "table": "tasks",
+      "id": "923babf5180679d82c1790be7bdeee12",
+      "label": "test_delete_Finalize figure 1"
+    },
+    {
+      "table": "task_subtasks",
+      "id": "c888c7ce7e9b6fd4a9333b43bc88eca1",
+      "label": "test_delete_Subtask: draft base figure"
+    },
+    {
+      "table": "task_subtasks",
+      "id": "576844c95c0c730ab9d61aacaf7ac007",
+      "label": "test_delete_Subtask: add error bars"
+    },
+    {
+      "table": "task_subtasks",
+      "id": "742a5dbef81e17d7e70396e95be6caa7",
+      "label": "test_delete_Subtask: export SVG"
+    },
+    {
+      "table": "tasks",
+      "id": "a74a00fe8b835e26605897ebade24c6c",
+      "label": "test_delete_Update cohort flowchart"
+    },
+    {
+      "table": "task_subtasks",
+      "id": "2a11433e919b36334ff8b24f10a51261",
+      "label": "test_delete_Subtask: pull new N"
+    },
+    {
+      "table": "task_subtasks",
+      "id": "e931cbca5cd8f6e8be04e8214ebee46c",
+      "label": "test_delete_Subtask: revise boxes"
+    },
+    {
+      "table": "tasks",
+      "id": "a1d0cdedfc48e83bdb1c19474f995cf5",
+      "label": "test_delete_Send revision letter draft"
+    },
+    {
+      "table": "tasks",
+      "id": "15f2039f223d48e4efcdb04972272d4d",
+      "label": "test_delete_Reconcile author list"
+    },
+    {
+      "table": "tasks",
+      "id": "ba68901a2d4e104ac11a64cd0e0e1fe9",
+      "label": "test_delete_Draft cover letter"
+    },
+    {
+      "table": "tasks",
+      "id": "eef373c226f77bb01fde2b5ac696dc46",
+      "label": "test_delete_Review resident submissions"
+    },
+    {
+      "table": "tasks",
+      "id": "e6af68ca51c1afdf8327020c172cc569",
+      "label": "test_delete_Annotate meeting transcript"
+    },
+    {
+      "table": "tasks",
+      "id": "1b5d2bf769a381725e5cb3ddbaffa623",
+      "label": "test_delete_Update GitHub README"
+    },
+    {
+      "table": "tasks",
+      "id": "b6b3d926901973c9fbb87c42832f15bc",
+      "label": "test_delete_Meet with statistician"
+    },
+    {
+      "table": "tasks",
+      "id": "86b560279b8b611a70b8c8016bf235d7",
+      "label": "test_delete_Reserve conference room"
+    },
+    {
+      "table": "tasks",
+      "id": "d527fefd92b9b0628a534710e87c3485",
+      "label": "test_delete_Send mentee draft feedback"
+    },
+    {
+      "table": "tasks",
+      "id": "8ba8aef3858574a51f440b845f60ca24",
+      "label": "test_delete_Compile pilot funding report"
+    },
+    {
+      "table": "tasks",
+      "id": "3884d206db22530945258a3c74ca49c2",
+      "label": "test_delete_Clean CITI training records"
+    },
+    {
+      "table": "tasks",
+      "id": "a20b3afea7c244ee5c063c3c9f661536",
+      "label": "test_delete_Refresh Gantt chart"
+    },
+    {
+      "table": "tasks",
+      "id": "59ce349d7ff29df73dba563b3b7447ac",
+      "label": "test_delete_Archive old drafts"
+    },
+    {
+      "table": "tasks",
+      "id": "6eb71bfec3a4733bf88a1b15fd37a04a",
+      "label": "test_delete_Update CV sections"
+    },
+    {
+      "table": "tasks",
+      "id": "cb5f670b225a6c1fd2048a99f55ba999",
+      "label": "test_delete_Schedule biostats consult"
+    },
+    {
+      "table": "tasks",
+      "id": "5ab148ccdd984df962ea568ea656b08d",
+      "label": "test_delete_Draft specific aims v2"
+    },
+    {
+      "table": "tasks",
+      "id": "020274629239441b341c2eb7ed340918",
+      "label": "test_delete_Check data dictionary"
+    },
+    {
+      "table": "tasks",
+      "id": "c930b7ea41b27f8f2bf7c524d1c22677",
+      "label": "test_delete_Upload variables spec"
+    },
+    {
+      "table": "tasks",
+      "id": "f39d1bbbf1dfca8febfd372867363931",
+      "label": "test_delete_Review previous aims"
+    },
+    {
+      "table": "tasks",
+      "id": "1e5c20f8253566cb36214f09840c235c",
+      "label": "test_delete_Run exploratory plots"
+    },
+    {
+      "table": "tasks",
+      "id": "a1ae3ad82711530d23c590d71fb7e7ac",
+      "label": "test_delete_Draft scholarly project outline"
+    },
+    {
+      "table": "ideas",
+      "id": "9340086556c552885c78691600ae76b9",
+      "label": "test_delete_PI mentor match program"
+    },
+    {
+      "table": "ideas",
+      "id": "a091051c9745910c2c21ab6ad22c9e08",
+      "label": "test_delete_Quarterly data review office hours"
+    },
+    {
+      "table": "ideas",
+      "id": "3460033bbd884a01fb7f40d1eb8590c6",
+      "label": "test_delete_Weekly stats huddle"
+    },
+    {
+      "table": "ideas",
+      "id": "04e4b59ebb001329eb57a9d136080a82",
+      "label": "test_delete_Trainee journal club pilot"
+    },
+    {
+      "table": "ideas",
+      "id": "09d5c8c5e91cdec7129b83481e872324",
+      "label": "test_delete_Inline revision tracker for manuscripts"
+    },
+    {
+      "table": "ideas",
+      "id": "f78d3ce494f12cd05686debfa3b9f7cd",
+      "label": "test_delete_Auto-send meeting summary to absent members"
+    },
+    {
+      "table": "ideas",
+      "id": "94c256bea827c88e12132ce2be1f05f7",
+      "label": "test_delete_Shared code review rubric for fellows"
+    },
+    {
+      "table": "ideas",
+      "id": "9f5957f310c90e84ed680ab4204ac86f",
+      "label": "test_delete_Lab podcast experiment"
+    },
+    {
+      "table": "ideas",
+      "id": "652912362d67b9e41697010cd72ab0b2",
+      "label": "test_delete_Grant opportunity bulletin board"
+    },
+    {
+      "table": "ideas",
+      "id": "6e8ed86dd948156dcde27a47ebff9f3c",
+      "label": "test_delete_Open office hours with PI"
+    },
+    {
+      "table": "decision_log",
+      "id": "549c21bc67f447fc001443a4f8ea4622",
+      "label": "test_delete_Adopt R10 grant status taxonomy"
+    },
+    {
+      "table": "decision_log",
+      "id": "bd2a26df0edd9545d71efcbabee21d81",
+      "label": "test_delete_Deprecate X-Test-Mode header"
+    },
+    {
+      "table": "decision_log",
+      "id": "4108497c14e28c0f3707c9acec164575",
+      "label": "test_delete_Ship dashboard resizable cards"
+    },
+    {
+      "table": "decision_log",
+      "id": "1b1243023ac9f00ba736142a8db3af7e",
+      "label": "test_delete_Stub WebSocket in local tests"
+    },
+    {
+      "table": "decision_log",
+      "id": "351eb4f4e87949f00095f497c75d93b5",
+      "label": "test_delete_Defer R13 Digest Model B"
+    },
+    {
+      "table": "meetings",
+      "id": "mtg-2026-04-21-e7154528",
+      "label": "test_delete_MNCCORE Biweekly dogfood"
+    },
+    {
+      "table": "tasks",
+      "id": "2eb95a9212809f732080324ad155a9c4",
+      "label": "test_delete_Circulate agenda [action]"
+    },
+    {
+      "table": "tasks",
+      "id": "35b474f0677a1e856dc1e3aedf118069",
+      "label": "test_delete_Prepare mentee updates [action]"
+    },
+    {
+      "table": "tasks",
+      "id": "47dc7e9c42228f647f131ee1056694d1",
+      "label": "test_delete_Confirm room booking [action]"
+    },
+    {
+      "table": "meetings",
+      "id": "mtg-2026-04-18-b21c5dbd",
+      "label": "test_delete_Grant Strategy Session dogfood"
+    },
+    {
+      "table": "tasks",
+      "id": "5301239199fa9dd23265dfcf5f0ae26f",
+      "label": "test_delete_Draft aim 1 outline [action]"
+    },
+    {
+      "table": "tasks",
+      "id": "d052209c17567800b50e2e6ebde5aabb",
+      "label": "test_delete_Review K99 eligibility [action]"
+    },
+    {
+      "table": "tasks",
+      "id": "8513005c391457c3d5c38d896a609817",
+      "label": "test_delete_Collect pilot data figures [action]"
+    },
+    {
+      "table": "meetings",
+      "id": "mtg-2026-04-13-26f0c25d",
+      "label": "test_delete_Lab Ops Standup dogfood"
+    },
+    {
+      "table": "tasks",
+      "id": "a28677aaaad313d280156ee566a072d1",
+      "label": "test_delete_Update calendar invites [action]"
+    },
+    {
+      "table": "tasks",
+      "id": "f45a33a4969123c3fe9197e5591fd199",
+      "label": "test_delete_Fix pomodoro server timezone [action]"
+    },
+    {
+      "table": "tasks",
+      "id": "cc05278465e59d2eea968243f14b5479",
+      "label": "test_delete_Order new badge holders [action]"
+    },
+    {
+      "table": "tasks",
+      "id": "5bfef6b09da447526a935da10ced29ce",
+      "label": "test_delete_Confirm IRB training renewals [action]"
+    },
+    {
+      "table": "publications",
+      "id": "761661eb",
+      "label": "test_delete_Long-term cognitive outcomes after ARDS"
+    },
+    {
+      "table": "publications",
+      "id": "80328c97",
+      "label": "test_delete_Ventilator weaning outcomes in obese patients"
+    },
+    {
+      "table": "publications",
+      "id": "e942d995",
+      "label": "test_delete_Sepsis-3 vs SOFA trajectories"
+    },
+    {
+      "table": "publications",
+      "id": "c6f57cde",
+      "label": "test_delete_Early mobility and delirium prevention"
+    },
+    {
+      "table": "publications",
+      "id": "c4378c09",
+      "label": "test_delete_Outcome prediction using CLIF"
+    },
+    {
+      "table": "task_comments",
+      "id": "e75bd096896c0c32bc7cffe247a733de",
+      "label": "test_delete_Comment: consider adding sensitivity analysis fo"
+    },
+    {
+      "table": "task_comments",
+      "id": "f040701b73d5b58b3fe5f346c5f822ab",
+      "label": "test_delete_Comment: once N is finalized, re-run the diagram"
+    },
+    {
+      "table": "task_comments",
+      "id": "18862a6937385e764be6060550fcdac5",
+      "label": "test_delete_Comment: error bars should be 95% CI not SEM"
+    },
+    {
+      "table": "task_comments",
+      "id": "1ee171f77430527eea47170168e13f6f",
+      "label": "test_delete_Comment: tighten aim 2a language"
+    },
+    {
+      "table": "reactions",
+      "id": "d2ef7b2d443f253e2fbb394b2e0d1efe",
+      "label": "2d23d63c96644bbd50a268c6e4dbc96d:thumbs-up"
+    },
+    {
+      "table": "reactions",
+      "id": "7a36ccdf9eb4e39ffbed53dfafc0f01b",
+      "label": "f6665ae61101a627064e7ea22959e763:eyes"
+    },
+    {
+      "table": "reactions",
+      "id": "8581dc4e33c315b1915307f1260bdbf7",
+      "label": "923babf5180679d82c1790be7bdeee12:fire"
+    },
+    {
+      "table": "grants",
+      "id": "grant_17e62f72f3434cf4",
+      "label": "test_delete_K99 Fake Exploratory Award"
+    },
+    {
+      "table": "milestones",
+      "id": "ms_565cdbbc014d4d6b",
+      "label": "test_delete_ARDS Biomarker pilot data freeze"
+    },
+    {
+      "table": "milestones",
+      "id": "ms_83308c2084b340ea",
+      "label": "test_delete_Mentee F31 application due"
+    },
+    {
+      "table": "manuscript_revisions",
+      "id": "rev_0e6cd112a5a04434",
+      "label": "test_delete_vent_practice_var r1"
+    },
+    {
+      "table": "manuscript_revisions",
+      "id": "rev_dbc4efd883bc40b7",
+      "label": "test_delete_sepsis_outcomes_reg r1"
+    },
+    {
+      "table": "research_digest",
+      "id": "rd_902bb68e04fe47cd",
+      "label": "test_delete_Early corticosteroids in sepsis (RECOVERY trial)"
+    },
+    {
+      "table": "research_digest",
+      "id": "rd_94439d4ab78d49e6",
+      "label": "test_delete_Driving pressure vs plateau pressure"
+    },
+    {
+      "table": "research_digest",
+      "id": "rd_b6ebc27ba9024d4a",
+      "label": "test_delete_Mentee mentorship evidence synthesis"
     }
   ]
 }
