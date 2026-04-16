@@ -1,0 +1,32 @@
+# Local-only Wrangler config for Miniflare / `wrangler pages dev --local`.
+#
+# This is a fork of wrangler.toml used by `npm run test:local` and related
+# scripts. It deliberately drops every binding that can only be satisfied by
+# prod Cloudflare infrastructure (R2, cron triggers, [site] asset bucket) so
+# that `wrangler pages dev --local` can start without reaching out to the
+# Cloudflare API. The DB binding is pointed at a local-only D1 database which
+# lives under .wrangler/state/v3/d1 once bootstrapped.
+#
+# Do NOT use this file for any `wrangler ... --remote` invocation.
+
+name = "mn-ccore-lab-api"
+main = "api/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Local-only D1 binding. `preview_database_id = "local"` tells wrangler to use
+# the emulated Miniflare D1 instance backed by sqlite in .wrangler/state/v3/d1.
+# The `database_id` is still required by the schema but is never contacted in
+# --local mode; we leave the prod id here as a harmless placeholder so wrangler
+# doesn't yell about a missing field.
+[[d1_databases]]
+binding = "DB"
+database_name = "mnccore-lab"
+database_id = "b8453e9b-7c5f-4029-b07d-dd89c05d00cf"
+preview_database_id = "local"
+
+# Everything below this line is intentionally omitted vs wrangler.toml:
+#   - [triggers] crons       (prod-only scheduled Worker)
+#   - [[r2_buckets]] FILES   (prod R2 bucket; local tests don't exercise it)
+#   - [site] bucket          (prod static asset serving; Vite handles this locally)
+#   - DB_TEST binding        (legacy, replaced by local-first Miniflare)

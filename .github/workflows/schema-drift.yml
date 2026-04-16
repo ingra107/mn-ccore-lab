@@ -1,0 +1,107 @@
+name: D1 Schema Drift Check
+
+# Nightly guard: the prod D1 schema must match what's committed under
+# api/schema.sql + api/schema-v*.sql.  Drift indicates someone ran a
+# migration against prod without landing the corresponding schema file
+# (or vice versa) — the exact failure mode that caused the 2026-04-14
+# R10 cross-repo cascade.
+#
+# On drift: the job fails and GitHub surfaces the diff in the Action log.
+# A human must reconcile before the next deploy.
+#
+# SECRETS REQUIRED (configured once by a repo admin in
+# Settings -> Secrets and variables -> Actions):
+#
+#   CLOUDFLARE_API_TOKEN
+#     Cloudflare API token with the "D1:Read" permission on the
+#     mn-ccore-lab account.  Do NOT reuse the Pages deploy token —
+#     that one is scoped to Pages only and will 7403 on any d1
+#     execute call.  Create a fresh token at
+#     https://dash.cloudflare.com/profile/api-tokens with template
+#     "Read D1" and scope it to the single mnccore-lab database.
+#
+#   CLOUDFLARE_ACCOUNT_ID
+#     Cloudflare account id that owns the mnccore-lab D1.  Found at
+#     https://dash.cloudflare.com/<account-id> in the URL.
+#
+# THIS WORKFLOW IS THE ONLY PLACE IN THE REPO THAT RUNS
+# `wrangler d1 execute --remote`.  All other local/test paths use
+# `--local` against Miniflare.
+
+on:
+  schedule:
+    - cron: '0 9 * * *'    # 09:00 UTC daily (~3am CT)
+  workflow_dispatch: {}     # allow manual trigger
+
+jobs:
+  schema-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install wrangler
+        run: npm install -g wrangler@^4.14.0
+
+      - name: Dump prod D1 schema
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          wrangler d1 execute mnccore-lab \
+            --remote \
+            --command ".schema" \
+            --json > prod-schema.json
+          # Extract the raw statements into one sortable file
+          node -e "const j=require('./prod-schema.json');const rows=(j[0]&&j[0].results)||[];const sql=rows.map(r=>r.sql||Object.values(r)[0]).filter(Boolean).sort().join('\n');require('fs').writeFileSync('prod-schema.sql',sql+'\n')"
+
+      - name: Build committed schema reference
+        run: |
+          # Concatenate api/schema.sql + every schema-v*.sql in version order.
+          # Uses the same ordering rule as scripts/local-db-bootstrap.ts:
+          # base schema.sql first, then vN.sql before any vN-variant.sql.
+          node -e "
+            const fs=require('fs');const path=require('path');
+            const dir='api';
+            const base=fs.readFileSync(path.join(dir,'schema.sql'),'utf8');
+            const mig=fs.readdirSync(dir)
+              .map(f=>{const m=f.match(/^schema-v(\d+)(?:-([^.]+))?\.sql$/);return m?{file:f,version:+m[1],variant:m[2]?1:0}:null})
+              .filter(Boolean)
+              .sort((a,b)=>a.version-b.version||a.variant-b.variant)
+              .map(x=>fs.readFileSync(path.join(dir,x.file),'utf8'))
+              .join('\n');
+            // Strip comments + blanks + normalize whitespace for a coarse diff
+            const norm=(base+'\n'+mig).split('\n')
+              .map(l=>l.trim())
+              .filter(l=>l && !l.startsWith('--'))
+              .join('\n');
+            fs.writeFileSync('committed-schema.sql',norm+'\n');
+          "
+
+      - name: Diff prod vs committed
+        run: |
+          # Coarse whitespace-insensitive comparison.  Exits non-zero on diff.
+          if ! diff -u committed-schema.sql prod-schema.sql > schema-drift.diff; then
+            echo "::error::D1 schema drift detected — prod diverges from committed api/schema*.sql"
+            echo "--- committed-schema.sql vs prod-schema.sql ---"
+            cat schema-drift.diff
+            exit 1
+          fi
+          echo "Schema in sync."
+
+      - name: Upload drift artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-drift-diff
+          path: |
+            committed-schema.sql
+            prod-schema.sql
+            schema-drift.diff
+          retention-days: 30
