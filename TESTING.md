@@ -126,17 +126,27 @@ env token in Nick's shell is Pages-scoped and returns `7403` on any D1 call.
 npm run test:local    # the default `npm test` alias
 ```
 
-This spawns three processes via `concurrently -k -s first`:
+This spawns two processes via `concurrently -k -s first`:
 
-1. `wrangler pages dev --local --d1 DB=local --port 8787` — the Worker
-   API backed by the local D1.
-2. `vite` — the React dev server on port 5173 proxying `/api` to :8787.
-3. `wait-on http://localhost:5173 && playwright test --config=playwright.config.local.ts`
-   — the test run.
+1. `wrangler dev api/index.ts --local --config=wrangler.local.toml --port 8787`
+   — the Worker API backed by the local D1 (Miniflare-hosted SQLite in
+   `.wrangler/state/v3/d1`).
+2. `wait-on http-get://localhost:8787/api/projects && playwright test --config=playwright.config.local.ts`
+   — the test run; waits until the Worker is serving successful responses
+   before launching Playwright.
 
 `-k` kills all other processes when any one exits; `-s first` means the
 whole command exits with the first-to-exit status code.  Playwright
 finishing green brings the whole stack down.
+
+**Why not Vite + pages dev?**  `vite.config.ts` currently has no `/api`
+proxy to the Worker, so Vite returns index.html for every `/api/*`
+request.  Pointing Playwright directly at the Worker's port 8787 sidesteps
+that entirely and keeps the Miniflare infra changes minimal.  When the
+frontend gets its first browser-level spec (React rendering, routing,
+etc.), add a `server.proxy` entry to `vite.config.ts` that forwards
+`/api` to `http://localhost:8787`, set `HUB_TEST_URL=http://localhost:5173`,
+and add `vite` back into the `concurrently` chain.
 
 ### Prod smoke only
 
