@@ -446,7 +446,7 @@ Biweekly Tuesdays 3pm CT. Anchor: Apr 21, May 5. Automation runs Monday mornings
 | Dynamic page title | 7 pages (Tasks, MyTasks, Ideas, Decisions, Deadlines, Manuscripts, Projects) | Other portal pages use static usePageMeta |
 | Search/filter input | 8 pages (Tasks, AskTheLab, SessionHistory, Narratives, MeetingNotes, Decisions, Search, Digest) | -- |
 | N-key create | Ideas, Decisions | Tasks uses C key |
-| Copy to clipboard | PIAnalytics, CVPage, Publications, Digest, MeetingDetail, AnalyticsPage | -- |
+| Copy to clipboard | PIAnalytics, Publications, Digest, MeetingDetail, AnalyticsPage | -- |
 | ScrollToTop | All portal pages (via PortalLayout) | Public pages |
 
 ## Accessibility Requirements
@@ -818,15 +818,8 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 - `scripts/cleanup-test-data.sql` (FK-ordered DELETE for test_delete_ prefix)
 
 ## Pending Sync
-- NEXT_ACTION: Start Nick-Review Polish session via SESSION-KICKOFF-nick-review-polish.md starter prompt
-- STATUS: Active
-- STAGE: Post-launch polish
-- NOTE: Final Launch Polish complete 2026-04-13. Hub at 9.44/10 aggregate, QA GO for April 21. Next session addresses semantic/workflow bugs Nick caught in 10-min review that automated audits missed. See Projects/mn-ccore-lab-hub/SESSION-KICKOFF-nick-review-polish.md.
-- DECISION: K23 provider variation mechanical ventilation = the ONE funded grant; all others are In Preparation. Grant status taxonomy proposal pending final approval: Planning/InPreparation/Submitted/Funded/Resubmission/Declined/Closed.
-- DECISION: Research Digest = Model B — interactive save + comment + link-to-project (not passive feed).
-- LEARNING: Automated 10-consultant audits catch polish/a11y/perf/regression but systematically miss semantic workflow, inline editing verification, cross-page state, data integrity, layout collisions, and feature intent. Next session uses journey-based dispatch instead.
-- LEARNING: --ink-bright token semantics: it's a white-on-dark fill token, NOT a stronger-than-ink token. Setting to black in light mode breaks 84 call sites.
-- RELATIONSHIP: mn-ccore-lab-hub -> peripheral-brain | inbox-sync | Quick Capture FAB posts to /api/inbox; sync_d1_pull.py pulls unsynced rows as Inbox/*.md files overnight
+<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
+
 
 ## Next Session Playbook
 
