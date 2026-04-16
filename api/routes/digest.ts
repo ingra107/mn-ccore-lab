@@ -112,6 +112,63 @@ export async function handleUpdateDigestStatus(
   return json({ data: updated });
 }
 
+// GET /api/digest/:id/comments — list comments for a paper
+export async function handleGetDigestComments(
+  paperId: string,
+  env: Env,
+): Promise<Response> {
+  const result = await env.DB.prepare(
+    'SELECT * FROM digest_comments WHERE paper_id = ? ORDER BY created_at ASC'
+  ).bind(paperId).all();
+  return json({ data: result.results });
+}
+
+// POST /api/digest/:id/comments — add a comment to a paper
+export async function handleCreateDigestComment(
+  paperId: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const body = await request.json() as { content?: string };
+  if (!body.content?.trim()) {
+    return error('content is required', 400);
+  }
+
+  const id = crypto.randomUUID();
+  const authorSlug = user.email?.split('@')[0]?.replace(/\./g, '-') || 'unknown';
+
+  await env.DB.prepare(
+    'INSERT INTO digest_comments (id, paper_id, author_slug, content) VALUES (?, ?, ?, ?)'
+  ).bind(id, paperId, authorSlug, body.content.trim()).run();
+
+  await logActivity(env, 'digest', `Commented on digest paper`, user.email, paperId, 'digest');
+
+  const comment = await env.DB.prepare('SELECT * FROM digest_comments WHERE id = ?').bind(id).first();
+  return json({ data: comment }, 201);
+}
+
+// GET /api/digest/comment-counts — comment counts per paper (for badge display)
+export async function handleDigestCommentCounts(url: URL, env: Env): Promise<Response> {
+  const date = url.searchParams.get('date');
+  let query = `SELECT paper_id, COUNT(*) as count FROM digest_comments`;
+  const params: string[] = [];
+
+  if (date) {
+    query += ` WHERE paper_id IN (SELECT id FROM research_digest WHERE digest_date = ?)`;
+    params.push(date);
+  }
+
+  query += ` GROUP BY paper_id`;
+  const result = await env.DB.prepare(query).bind(...params).all();
+
+  const counts: Record<string, number> = {};
+  for (const row of result.results as { paper_id: string; count: number }[]) {
+    counts[row.paper_id] = row.count;
+  }
+  return json({ data: counts });
+}
+
 // POST /api/digest — create or upsert a digest paper
 export async function handleCreateDigestPaper(request: Request, env: Env): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;

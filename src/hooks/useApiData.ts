@@ -621,6 +621,51 @@ export function useDigestDates() {
   })
 }
 
+export interface DigestComment {
+  id: string
+  paper_id: string
+  author_slug: string
+  content: string
+  created_at: string
+}
+
+export function useDigestComments(paperId: string | null) {
+  return useQuery({
+    queryKey: ['digest-comments', paperId],
+    queryFn: async () => {
+      if (!paperId) return []
+      try {
+        const res = await fetch(`/api/digest/${paperId}/comments`)
+        if (!res.ok) return []
+        const data = await res.json()
+        return (data.data || []) as DigestComment[]
+      } catch {
+        return []
+      }
+    },
+    enabled: !!paperId,
+    staleTime: STALE_TIME,
+  })
+}
+
+export function useDigestCommentCounts(date?: string) {
+  return useQuery({
+    queryKey: ['digest-comment-counts', date],
+    queryFn: async () => {
+      try {
+        const qs = date ? `?date=${date}` : ''
+        const res = await fetch(`/api/digest/comment-counts${qs}`)
+        if (!res.ok) return {}
+        const data = await res.json()
+        return (data.data || {}) as Record<string, number>
+      } catch {
+        return {}
+      }
+    },
+    staleTime: STALE_TIME,
+  })
+}
+
 // ── Project Health ───────────────────────────────────────────
 
 export interface HealthFactors {

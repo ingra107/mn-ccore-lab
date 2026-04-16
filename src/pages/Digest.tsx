@@ -12,12 +12,14 @@ import {
   Check,
   User,
   Copy,
+  MessageCircle,
+  Send,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
-import { useDigest, useDigestDates, useProjects } from '../hooks/useApiData'
-import type { DigestPaper } from '../hooks/useApiData'
-import { useUpdateDigestStatus, useLinkPaper } from '../hooks/useMutations'
+import { useDigest, useDigestDates, useProjects, useDigestComments, useDigestCommentCounts } from '../hooks/useApiData'
+import type { DigestPaper, DigestComment } from '../hooks/useApiData'
+import { useUpdateDigestStatus, useLinkPaper, useCreateDigestComment } from '../hooks/useMutations'
 import { getPersonInfo } from '../data/team'
 import { formatMediumDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
@@ -71,12 +73,16 @@ interface ProjectOption {
   title: string
 }
 
-function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectOption[] }) {
+function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; projects: ProjectOption[]; commentCount?: number }) {
   const [expanded, setExpanded] = useState(false)
   const [showLinkPicker, setShowLinkPicker] = useState(false)
   const [linkSuccess, setLinkSuccess] = useState<string | null>(null)
+  const [showComments, setShowComments] = useState(false)
+  const [commentText, setCommentText] = useState('')
   const updateStatus = useUpdateDigestStatus()
   const linkPaper = useLinkPaper()
+  const createComment = useCreateDigestComment()
+  const { data: comments } = useDigestComments(showComments ? paper.id : null)
   const topics = parseTopics(paper.topics)
   const rel = relevanceColor(paper.relevance_score)
   const relDark = relevanceColorDark(paper.relevance_score)
@@ -360,6 +366,47 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
           >
             <X size={18} />
           </button>
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="cursor-pointer p-2 rounded-md transition-colors duration-200"
+            style={{
+              background: showComments ? 'var(--teal-hover)' : 'transparent',
+              color: showComments ? 'var(--teal)' : 'var(--slate)',
+              border: 'none',
+              minWidth: '36px',
+              minHeight: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+            }}
+            title="Comments"
+            aria-label={`${commentCount || 0} comments`}
+          >
+            <MessageCircle size={18} />
+            {(commentCount ?? 0) > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  color: 'var(--cream)',
+                  background: 'var(--teal)',
+                  borderRadius: '50%',
+                  width: '14px',
+                  height: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
+                }}
+              >
+                {commentCount}
+              </span>
+            )}
+          </button>
           <div style={{ position: 'relative' }}>
             <button
               onClick={(e) => { e.stopPropagation(); setShowLinkPicker(!showLinkPicker) }}
@@ -436,6 +483,96 @@ function PaperCard({ paper, projects }: { paper: DigestPaper; projects: ProjectO
           </div>
         </div>
       </div>
+
+      {/* Inline comments section */}
+      {showComments && (
+        <div
+          className="mt-3 pt-3"
+          style={{ borderTop: '1px solid var(--border-subtle)' }}
+        >
+          {/* Comment list */}
+          {comments && comments.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {comments.map((c: DigestComment) => {
+                const info = getPersonInfo(c.author_slug)
+                return (
+                  <div key={c.id} className="flex items-start gap-2">
+                    <Avatar
+                      name={info.name}
+                      initials={info.initials}
+                      photoUrl={info.photoUrl}
+                      size="2xs"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span
+                          className="text-xs"
+                          style={{ fontWeight: 500, color: 'var(--ink)' }}
+                        >
+                          {info.name}
+                        </span>
+                        <span
+                          className="text-xs"
+                          style={{ color: 'var(--slate)', opacity: 0.5 }}
+                        >
+                          {formatMediumDate(c.created_at)}
+                        </span>
+                      </div>
+                      <p
+                        className="text-xs sm:text-sm"
+                        style={{ color: 'var(--ink)', opacity: 0.85, lineHeight: 1.4 }}
+                      >
+                        {c.content}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Comment input */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (!commentText.trim()) return
+              createComment.mutate(
+                { paperId: paper.id, content: commentText.trim() },
+                { onSuccess: () => setCommentText('') },
+              )
+            }}
+            className="flex items-center gap-2"
+          >
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Add a note..."
+              className="flex-1 text-xs sm:text-sm px-3 py-1.5 rounded-md"
+              style={{
+                background: 'var(--surface-1)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--ink)',
+                outline: 'none',
+              }}
+            />
+            <button
+              type="submit"
+              disabled={!commentText.trim() || createComment.isPending}
+              className="cursor-pointer p-1.5 rounded-md transition-colors"
+              style={{
+                background: commentText.trim() ? 'var(--teal)' : 'transparent',
+                color: commentText.trim() ? 'var(--cream)' : 'var(--slate)',
+                border: 'none',
+                opacity: commentText.trim() ? 1 : 0.3,
+              }}
+              aria-label="Submit comment"
+            >
+              <Send size={14} />
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   )
 }
@@ -506,6 +643,9 @@ export default function Digest() {
   const [topicFilter, setTopicFilter] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [forYouFilter, setForYouFilter] = useState(false)
+
+  // Fetch comment counts for badge display
+  const { data: commentCounts = {} } = useDigestCommentCounts(selectedDate)
 
   // Fetch projects for the "Link to Project" picker
   const { data: allProjects = [] } = useProjects()
@@ -865,7 +1005,7 @@ export default function Digest() {
                 </p>
               )}
               {filteredPapers.map((paper) => (
-                <PaperCard key={paper.id} paper={paper} projects={projectOptions} />
+                <PaperCard key={paper.id} paper={paper} projects={projectOptions} commentCount={commentCounts[paper.id] || 0} />
               ))}
             </div>
           )}

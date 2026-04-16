@@ -11,7 +11,7 @@ import { handleProjects, handleCreateProject, handleGetComments, handleGetProjec
 import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
 import { handleTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
-import { handleDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper } from './routes/digest';
+import { handleDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleDigestCommentCounts } from './routes/digest';
 import { handleIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
 import { handleNotifications, handleNotificationCount, handleMarkNotificationRead, handleMarkAllNotificationsRead, handleCommitments, handleCreateCommitment } from './routes/notifications';
 import { handleSearch } from './routes/search';
@@ -189,8 +189,16 @@ export default {
         if (url.pathname === '/api/digest/dates') {
           return await handleDigestDates(env);
         }
+        if (url.pathname === '/api/digest/comment-counts') {
+          return await handleDigestCommentCounts(url, env);
+        }
         if (url.pathname === '/api/digest') {
           return await handleDigest(url, env);
+        }
+        // GET /api/digest/:id/comments
+        const digestCommentsGetMatch = url.pathname.match(/^\/api\/digest\/([^/]+)\/comments$/);
+        if (digestCommentsGetMatch) {
+          return await handleGetDigestComments(digestCommentsGetMatch[1], env);
         }
 
         // Cross-Project Insight Engine
@@ -833,6 +841,12 @@ export default {
         // POST /api/digest — create/upsert digest paper
         if (request.method === 'POST' && path === '/api/digest') {
           return await handleCreateDigestPaper(request, env);
+        }
+
+        // POST /api/digest/:id/comments — add comment to paper
+        const digestCommentMatch = path.match(/^\/api\/digest\/([^/]+)\/comments$/);
+        if (request.method === 'POST' && digestCommentMatch) {
+          return withVersionBump(await handleCreateDigestComment(digestCommentMatch[1], request, user, env));
         }
 
         // POST /api/digest/:id/status — update paper status

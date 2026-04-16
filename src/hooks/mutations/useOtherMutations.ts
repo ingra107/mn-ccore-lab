@@ -49,6 +49,26 @@ export function useUpdateDigestStatus() {
   })
 }
 
+// ── Digest Comment mutation ─────────────────────────────────
+
+export function useCreateDigestComment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ paperId, content }: { paperId: string; content: string }) =>
+      fetchApi(`/api/digest/${paperId}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      }),
+
+    onSettled: (_data, _err, { paperId }) => {
+      queryClient.invalidateQueries({ queryKey: ['digest-comments', paperId] })
+      queryClient.invalidateQueries({ queryKey: ['digest-comment-counts'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Task Update mutation ────────────────────────────────────
 
 export function usePostTaskUpdate(taskId: string) {
