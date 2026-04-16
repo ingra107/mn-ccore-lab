@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState, lazy, Suspense } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+const BugReportModal = lazy(() => import('./BugReportModal'))
 import {
   LayoutDashboard,
   User,
@@ -96,6 +97,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const { user } = useAuth()
   const { isDark } = useDarkMode()
   const userSlug = user?.email?.split('@')[0]?.toLowerCase()
+  const [showBugReport, setShowBugReport] = useState(false)
   const person = userSlug ? getPersonInfo(userSlug) : null
   const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
 
@@ -273,15 +275,18 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
       <div className="border-t px-2 py-2" style={{ borderColor: 'var(--border-subtle)' }}>
         {/* Report a Bug */}
         {!collapsed && (
-          <a
-            href="mailto:ningraha@umn.edu?subject=MN-CCORE%20Hub%20Bug%20Report"
-            className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-            style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.6 }}
+          <button
+            onClick={() => setShowBugReport(true)}
+            className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5 w-full cursor-pointer"
+            style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.6, background: 'none', border: 'none', textAlign: 'left' }}
           >
             <Bug size={16} />
             <span>Report a Bug</span>
-          </a>
+          </button>
         )}
+        <Suspense fallback={null}>
+          <BugReportModal open={showBugReport} onClose={() => setShowBugReport(false)} />
+        </Suspense>
 
         {/* Search hint */}
         {!collapsed && (

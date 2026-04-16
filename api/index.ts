@@ -13,6 +13,7 @@ import { handlePublications, handleGrants, handleCollaborationGraph, handleStats
 import { handleTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
 import { handleDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleDigestCommentCounts } from './routes/digest';
 import { handleIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
+import { handleBugReport } from './routes/bug-report';
 import { handleNotifications, handleNotificationCount, handleMarkNotificationRead, handleMarkAllNotificationsRead, handleCommitments, handleCreateCommitment } from './routes/notifications';
 import { handleSearch } from './routes/search';
 import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, handleCreateWorkflowTemplate } from './routes/settings';
@@ -836,6 +837,11 @@ export default {
         const ideaVoteMatch = path.match(/^\/api\/ideas\/([^/]+)\/vote$/);
         if (request.method === 'POST' && ideaVoteMatch) {
           return withVersionBump(await handleVoteIdea(ideaVoteMatch[1], env));
+        }
+
+        // POST /api/bug-report — create GitHub Issue
+        if (request.method === 'POST' && path === '/api/bug-report') {
+          return await handleBugReport(request, env);
         }
 
         // POST /api/digest — create/upsert digest paper
