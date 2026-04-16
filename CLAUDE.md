@@ -16,7 +16,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Data | TanStack Query v5 + Cloudflare D1 (58 tables, 190+ endpoints) + Recharts -- ALL LIVE |
 | D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB` |
 | D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
-| D1 tables | 59 (added inbox in Phase 32) |
+| D1 tables | 60 (added digest_comments in R13) |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
 | Reference | `REFERENCE.md` in this repo -- D1 tables, API endpoints, key files, feature list |
@@ -579,10 +579,10 @@ python -c "import sqlite3; conn=sqlite3.connect('C:/Users/ingra107/Peripheral-Br
 > **Key decisions in that history:** sidebar darker-than-content is NEVER-violate (GC-1). Framer Motion scoped to page transitions only (GC-2). Ideas + Decisions are columnar tables not cards (GC-3). Data-pages vs dashboard-pages taxonomy (GC-6). Grant + project status taxonomies locked (R10). Research Digest = Model B. Dashboard cards resizable via RGL (R9-9).
 
 **Still open (from R8/R9/R10 handoff):**
-- R13 Research Digest Model B (~8h)
+- ~~R13 Research Digest Model B~~ DONE (2026-04-16). Save+link already existed; added inline comments (schema-v40, 3 API endpoints, UI with count badges). Actual scope ~2h not ~8h.
 - DI-4 duplicate projects (other session)
 - DI-6 dangling task project_id (330 rows)
-- Hermes polling 10→60s (saves 7,200 req/day)
+- ~~Hermes polling 10→60s~~ DONE (2026-04-16). POLL_INTERVAL 20→60s in hub_ai_listener.py.
 
 ## Everything Sprint v2 (2026-04-15) — R11/R12 + Miniflare
 
@@ -619,14 +619,14 @@ Single-day sprint closing R11 interaction gaps + R12 mobile + replacing X-Test-M
 
 **Living plan:** `Projects/mn-ccore-lab-hub/plans/april-21-launch-readiness.md` (PB repo) — the single checklist for everything remaining. Each session checks off items + adds new todos discovered during work.
 
-**3 sessions remaining:**
-1. **Session 1 (Apr 16-17):** Miniflare interactions audit — 6 user-persona journeys via Playwright on localhost. Find + fix every broken click/form/edit/mobile flow. NO prod writes.
-2. **Session 2 (Apr 18-19):** Prod data population + full pipeline validation — seed real data, watch sync chain flow through brain.db → Airtable → mobile. Verify the whole system works.
+**2 sessions remaining:**
+1. ~~**Session 1 (Apr 16-17):** Miniflare interactions audit~~ DONE (2026-04-16 overnight). 6 journey specs green. R13 Digest comments shipped. Hermes polling reduced 20s->60s. Deployed at `bc51305`.
+2. **Session 2 (Apr 18-19):** Prod data population + full pipeline validation — seed real data, watch sync chain flow through brain.db -> Airtable -> mobile. Verify the whole system works.
 3. **Session 3 (Apr 20 Mon):** MNCCORE agenda prep + final polish + last deploy.
 
 **Nick must do (CF dashboard):** CF Access @umn.edu, RESEND_API_KEY, GitHub secrets. Checklist in the living plan.
 
-**System state (2026-04-15 evening):** Hub deployed at `79cd079`. WebSocket FIXED. Inspection 213+ passing. 0 console errors. Workers Paid. All source in git.
+**System state (2026-04-16):** Hub deployed at `bc51305`. 60 D1 tables (added digest_comments). Inspection 213 passed. Dogfood 14/14. 0 console errors. Workers Paid. 6 journey specs + 5 data-validation on Miniflare. Hermes polling 60s.
 
 ## Test Results (2026-04-15, post-Everything Sprint v2)
 
