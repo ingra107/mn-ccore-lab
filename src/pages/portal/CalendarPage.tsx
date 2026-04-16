@@ -150,18 +150,28 @@ export default function CalendarPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button onClick={goToPrev} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}>
-              <ChevronLeft size={16} style={{ color: 'var(--ink)' }} />
+            <button
+              onClick={goToPrev}
+              aria-label="Previous month"
+              className="rounded-md border transition-colors hover:bg-black/5 flex items-center justify-center"
+              style={{ minHeight: 44, minWidth: 44, borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}
+            >
+              <ChevronLeft size={18} style={{ color: 'var(--ink)' }} />
             </button>
             <button
               onClick={goToToday}
-              className="px-3 py-1 rounded-md text-sm font-medium min-w-[180px] text-center"
-              style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+              className="rounded-md text-sm font-medium min-w-[180px] text-center flex items-center justify-center"
+              style={{ minHeight: 44, padding: '0 12px', color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
             >
               {headerLabel}
             </button>
-            <button onClick={goToNext} className="p-1.5 rounded-md border transition-colors hover:bg-black/5" style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}>
-              <ChevronRight size={16} style={{ color: 'var(--ink)' }} />
+            <button
+              onClick={goToNext}
+              aria-label="Next month"
+              className="rounded-md border transition-colors hover:bg-black/5 flex items-center justify-center"
+              style={{ minHeight: 44, minWidth: 44, borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}
+            >
+              <ChevronRight size={18} style={{ color: 'var(--ink)' }} />
             </button>
 
             {currentDate.toDateString() !== new Date().toDateString() && (
