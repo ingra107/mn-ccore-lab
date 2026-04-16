@@ -194,7 +194,7 @@ function run() {
     if (!taskId) continue
     const id = mintId('cmt')
     d1Execute(
-      `INSERT INTO task_comments (id, task_id, content, author) VALUES (` +
+      `INSERT INTO task_comments (id, task_id, content, author_slug) VALUES (` +
       `${sqlEscape(id)}, ${sqlEscape(taskId)}, ${sqlEscape(stripPrefix(c.content))}, 'nick')`
     )
   }

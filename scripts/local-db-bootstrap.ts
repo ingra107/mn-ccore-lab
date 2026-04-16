@@ -24,7 +24,7 @@
  * so re-running is safe.
  */
 
-import { readdirSync, existsSync } from 'node:fs'
+import { readdirSync, existsSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execSync } from 'node:child_process'
@@ -34,8 +34,25 @@ const REPO_ROOT = join(__dirname, '..')
 const SCHEMA_DIR = join(REPO_ROOT, 'api')
 const WRANGLER_CONFIG = join(REPO_ROOT, 'wrangler.local.toml')
 const DB_NAME = 'mnccore-lab'
+const LOCAL_D1_STATE = join(REPO_ROOT, '.wrangler/state/v3/d1')
 
 type MigrationFile = { path: string; file: string; version: number; suffixRank: number }
+
+/**
+ * Migrations that are incompatible with fresh-schema bootstrap and must be
+ * skipped when applying to a blank local D1.
+ *
+ * `schema-v22-rename-columns.sql` SELECTs legacy columns (`title`, `body`,
+ * `author_slug`) from `lab_questions` and `lab_answers` that only ever
+ * existed in prod-historical state.  `schema-v16.sql` creates those tables
+ * with the FINAL post-rename schema (`question`, `context`, `asked_by`), so
+ * a fresh bootstrap hits "no such column: title" on the SELECT step.  The
+ * final prod schema is already correct after v16 runs — v22-rename is a
+ * no-op for us.
+ */
+const FRESH_BOOTSTRAP_SKIP: ReadonlySet<string> = new Set([
+  'schema-v22-rename-columns.sql',
+])
 
 function parseMigrationFile(file: string): MigrationFile | null {
   // Matches "schema-v22.sql" and "schema-v22-rename-columns.sql".
@@ -93,6 +110,15 @@ function applySqlFile(absPath: string, label: string) {
 function run() {
   console.log('[local-db-bootstrap] applying schema + migrations to local D1')
 
+  // 0. Wipe any existing local D1 state so migrations apply to a clean DB.
+  //    D1 migrations are NOT idempotent — many use `ALTER TABLE ... ADD COLUMN`
+  //    without `IF NOT EXISTS`, so re-running against a partially-migrated DB
+  //    trips "duplicate column" errors.  Always start from scratch.
+  if (existsSync(LOCAL_D1_STATE)) {
+    console.log(`  [reset] wiping ${LOCAL_D1_STATE}`)
+    rmSync(LOCAL_D1_STATE, { recursive: true, force: true })
+  }
+
   // 1. Base schema.sql
   applySqlFile(join(SCHEMA_DIR, 'schema.sql'), 'schema.sql (base)')
 
@@ -100,6 +126,10 @@ function run() {
   const migrations = listMigrations()
   console.log(`[local-db-bootstrap] ${migrations.length} migration files discovered`)
   for (const m of migrations) {
+    if (FRESH_BOOTSTRAP_SKIP.has(m.file)) {
+      console.log(`  [skip]  ${m.file} — incompatible with fresh-schema bootstrap (see TESTING.md)`)
+      continue
+    }
     applySqlFile(m.path, `${m.file} (v${m.version}${m.suffixRank ? ' variant' : ''})`)
   }
 
