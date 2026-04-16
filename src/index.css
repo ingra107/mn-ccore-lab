@@ -662,6 +662,7 @@ a:hover {
   .deadline-list-row {
     height: var(--row-height);
     box-sizing: border-box;
+    scroll-margin-top: 72px;
   }
 }
 
