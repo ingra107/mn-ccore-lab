@@ -177,6 +177,29 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 **Implementation:** See plan at `~/.claude/plans/graceful-meandering-thimble.md`
 **Peripheral Brain sync scripts:** `scripts/db/sync_d1_push.py`, `sync_d1_pull.py`
 
+### ⚠️ Cross-repo schema coordination (after R10 incident 2026-04-14)
+
+Hub and brain.db **share vocabulary** for status/stage/type/etc. Any change to a shared field in the Hub repo (schema.sql DEFAULTs, migration SQL against prod D1, taxonomy reshuffles like R10) must be **coordinated with Peripheral Brain** before deploying.
+
+**The R10 incident:** On 2026-04-13 a migration in this repo (`scripts/round9/r10-projects-status-migration.sql`, commit `145ed8e`) lowercased all project statuses in D1. The Peripheral Brain side was never updated. `sync_d1_push.py`'s pull-back path silently wrote the new lowercase values into brain.db, corrupting 38 projects on Nick's home machine. TODAY.md filter stopped showing R01s. Airtable push failed with 422s. 4-hour debug session the next morning. Full postmortem: `/c/Users/ingra107/Peripheral-Brain/Context/Decisions/2026-04-14-r10-taxonomy-cross-repo-cascade.md`
+
+**Process for any shared-field change:**
+1. Write a decision doc in `/c/Users/ingra107/Peripheral-Brain/Context/Decisions/`
+2. Update `/c/Users/ingra107/Peripheral-Brain/scripts/db/enums.py` with the new canonical + legacy alias FIRST
+3. Update `/c/Users/ingra107/Peripheral-Brain/Context/Topics/shared-schema-registry.md` with the new field info
+4. Ship the code changes to BOTH repos in lockstep — never deploy data migration ahead of dependent code
+5. Run `python /c/Users/ingra107/Peripheral-Brain/scripts/db/health.py --check` to verify no drift
+
+**Registered shared fields** (see `shared-schema-registry.md` for full list):
+- `projects.status`: `active / waiting_external / blocked / done`
+- `tasks.status`: `todo / in_progress / done / blocked / waiting_external`
+- `projects.stage`: `Idea / Data Collection / Data Analysis / Writing / Submitted / Accepted / Published` (brain.db granular, Hub R10 used `Analysis`/`Review` — map via `enums.canonicalize_project_stage()`)
+- `projects.category`: `clif / lab / nate / mentee` (Hub-authoritative)
+- `projects.type`: `R01 / R03 / K / CLIF / Nick_Lab / Friends / Mentees / Admin / Personal` (brain.db-only)
+- `tasks.priority`: `low / medium / high / urgent`
+
+**Anti-pattern to avoid:** "we can deploy the frontend next week when Workers cap resets" while the data migration is already live. Data-on-new-schema with code-on-old-schema is how things corrupt.
+
 ## Hermes (AI Research Assistant)
 
 Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comments, or project comments. Responses appear with gold sparkle badge in 20-40 seconds.
@@ -429,7 +452,9 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 
 Biweekly Tuesdays 3pm CT. Anchor: Apr 21, May 5. Automation runs Monday mornings.
 
-## Component Coverage (Verified 2026-04-08)
+## Component Coverage (last verified 2026-04-08, PARTIALLY STALE — see notes)
+
+**⚠️ Journey B audit on 2026-04-13 found at least 2 rows in this table that are FALSE claims.** Treat the table as best-effort until R11 re-verification. Rows with a ⚠ are confirmed false or unverified. Do not rely on this table as ground truth for new work without running a live check.
 
 | Component | Coverage | NOT Used On |
 |-----------|----------|-------------|
@@ -438,9 +463,9 @@ Biweekly Tuesdays 3pm CT. Anchor: Apr 21, May 5. Automation runs Monday mornings
 | PageHeader | 17 of 19 portal pages (all with aria-live on count/subtitle) | PBSector (custom PlannerHeader) |
 | J/K keyboard nav | 11 pages (Tasks, Projects, Meetings, Ideas, Decisions, Deadlines, Manuscripts, Grants, Search, MeetingNotes, Narratives) | Calendar (arrow keys), Analytics, Settings |
 | HoverCard | 8 surfaces (TaskDetail, TaskPeek, MeetingDetail, AssigneePicker, ProjectHealth, MenteeDashboard, Projects list, Activity) | Team (cards already detailed) |
-| UndoToast | ALL task surfaces (TaskGridView, StandUp, Timeline, Board, Detail, Tasks, MyTasks, Personal, Deadlines, Dashboard ActionBoard, MeetingDetail, ProjectDetail, MyItems, Meetings) + Ideas, Manuscripts, Decisions | Settings (uses saved indicator) |
+| UndoToast | ALL task surfaces (TaskGridView, StandUp, Timeline, Board, Detail, Tasks, MyTasks, Personal, Deadlines, Dashboard ActionBoard, MeetingDetail, ProjectDetail, MyItems, Meetings) + Ideas, Manuscripts, Decisions, Grants (R10) | Settings (uses saved indicator) |
 | Stagger animations | 12 pages (Projects, Personal, Ideas, Decisions, Deadlines, Meetings, MeetingPrep, MeetingNotes, Search, Calendar, Analytics, PIAnalytics, Settings) | -- |
-| InlineSelect | Tasks (grid), Projects (list+detail), Manuscripts, Ideas, Decisions, Deadlines | Grants (no editable status) |
+| InlineSelect | Tasks (grid), Projects (list+detail), Manuscripts, Ideas, Decisions, Deadlines, **Grants (R10 — status only)** | Grants (title / dates / agency / PI still not inline) |
 | Focus trapping | ALL 6 modals (CreateTask, CreateProject, CreateIdea, CreateQuestion, CreateDecision, TranscriptModal) | -- |
 | Escape key close | ALL 6 modals + CommandPalette + GlobalQuickAdd + ShortcutHelp | -- |
 | Dynamic page title | 7 pages (Tasks, MyTasks, Ideas, Decisions, Deadlines, Manuscripts, Projects) | Other portal pages use static usePageMeta |
@@ -448,6 +473,7 @@ Biweekly Tuesdays 3pm CT. Anchor: Apr 21, May 5. Automation runs Monday mornings
 | N-key create | Ideas, Decisions | Tasks uses C key |
 | Copy to clipboard | PIAnalytics, Publications, Digest, MeetingDetail, AnalyticsPage | -- |
 | ScrollToTop | All portal pages (via PortalLayout) | Public pages |
+| Draggable + resizable grid cards | Dashboard (R9-9 via react-grid-layout v1.5.3, drag handle + SE resize, per-user localStorage) | -- |
 
 ## Accessibility Requirements
 
@@ -468,7 +494,7 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 |---------|-----|
 | Hero cards render loop | Use `<a>` tags, not Router Link |
 | initialData flash | Use factory functions: `() => data` |
-| Meeting ID collision | IDs include random suffix. API dedup by date+title prevents duplicates. UNIQUE index enforced. |
+| Meeting ID collision | IDs include random suffix. R10-5 `normalizeMeetingTitle()` lowercases+trims+collapses whitespace before dedup compare. UNIQUE index enforced. |
 | Tailwind v4 group-hover | Use CSS rule in index.css, not arbitrary value |
 | --border-light vs --border-subtle | Gold=semantic, Neutral=structural. Don't mix. |
 | TaskCard status cycling | todo→in_progress→done (skips blocked) |
@@ -479,6 +505,15 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 | MeetingDetail Rules of Hooks | useState/useMemo must come BEFORE early returns on loading/not-found branches. Phase 31.5 perf pass introduced a variant of this bug; R6 hotfixed. |
 | `team_members.email` column doesn't exist | Derive email from slug: `${slug}@umn.edu`. Do not query email column in team_members — column was never created. |
 | Virtualizer skeleton rows must match actual layout | TableSkeleton component was generic; pages with virtualizers need inline skeletons that match TableContainer + header + rows at `var(--row-height)` pixel-for-pixel to avoid CLS. |
+| Cloudflare Workers 100K/day cap | Free tier. Hermes polling at 10s = 8.6K/day baseline. Don't run parallel Playwright audits against deployed site — use `localhost` + dev server instead. $5/mo Paid plan = 10M/day. |
+| FAB positioning | Use `--fab-stack-{1,2,3}` CSS vars in `:root` (R9-1). NEVER `max(24px, 72px)` — that always returns 72. Mobile override is a `<768px` media query in index.css. |
+| react-grid-layout v2.x is a breaking rewrite | Stay on `1.5.3`. DashboardGrid.tsx depends on the `WidthProvider(Responsive)` HOC pattern. RGL measures container width, not window — `DASHBOARD_GRID_BREAKPOINTS` must account for the sidebar. |
+| Dark mode localStorage key | `mn-ccore-theme`, NOT `theme`. Playwright tests must set the right key. |
+| Playwright X-Test-Mode header | DEPRECATED — Miniflare local test harness replaces this. `X-Test-Mode: true` routes API calls to `mnccore-lab-test` (empty DB). Prior inspection passes on data-rich pages may be inflated. Phase 3 Miniflare rework removes the header from prod config. |
+| `@formkit/auto-animate` import drift | Imported in `TaskGridView.tsx` but was missing from `package.json` — blocked the first build 2026-04-13. If you see `Cannot find module 'X'`, grep the imports. |
+| Project status legacy values | `src/data/projects.ts` static fallbacks still use `'Active'`. `normalizeProjectStatus()` in `lib/taskConstants.ts` folds them. Don't delete the helper. |
+| Grant status taxonomy | R10: 7 values in `useGrantTimeline.ts:GRANT_STATUS_OPTIONS`. Only K23 provider practice variation in mechvent is `funded`. Anything else marked `Active` is legacy — see migration SQL in `scripts/round9/r10-grants-status-migration.sql`. |
+| hub-realtime WebSocket HTTP 400 | The `hub-realtime.nicholas-ingraham.workers.dev` worker returns HTTP 400 on the PartySocket handshake — broken for all users on all pages. Source repo unknown (not in this monorepo). Stubbed locally in `tests/setup/websocket-stub.ts`. Non-blocking but spammy console noise. |
 
 ## Peripheral Brain Connection
 
@@ -817,6 +852,75 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 - `scripts/seed-test-data.sql` (104 rows, 9 tables)
 - `scripts/cleanup-test-data.sql` (FK-ordered DELETE for test_delete_ prefix)
 
+## Nick-Review Polish: Round 8 / 9 / 10 (2026-04-13)
+
+After Phase 31.5 hit 9.44/10 aggregate, Nick spent 10 minutes using the site and found 11 bugs automated audits missed — semantic, workflow, interactive, cross-page. Triggered a new audit methodology: journey-based instead of page-based.
+
+**Round 8** — 9-agent audit. 3 discovery agents (data integrity / FAB collision / interactive surface) + 6 user journey agents (PI morning / Coordinator / Grant management / Data entry / Research reader / Mobile PI). Full reports in `review/round8-*.md`; consolidated in `review/round8-AGGREGATED-FINDINGS.md`.
+
+Key findings that reshaped the roadmap:
+- `grants.status` column didn't exist in D1 at all — Nick's taxonomy problem was a schema gap, not a UI bug
+- One line of CSS (`PortalLayout.tsx:258` `max()` misuse) caused 51 FAB collisions on every route at every viewport
+- Playwright `X-Test-Mode: true` header routes to an empty test DB — prior inspection pass counts on data-rich pages may be inflated false positives
+- CLAUDE.md Component Coverage table has at least 2 stale claims (N-key on /decisions, Copy bibliography on /publications) that do not work
+
+**Round 9: COMPLETE** (2 commits, 1 deploy, 2026-04-13). Blockers + one-liners. Closed 6 of Nick's 11 bugs.
+- R9-1 FAB collision: replaced `max()` with `--fab-stack-{1,2,3}` CSS vars in `:root` + <768px media query. Rewires `PortalLayout.tsx`, `ScrollToTop.tsx`, `QuickCaptureInbox.tsx`.
+- R9-2 Date picker flash (Nick #10): removed `showPicker()` + onBlur setTimeout fighting the preset strip.
+- R9-3 Row click anywhere opens detail (Nick #9): TaskGridView row onClick falls through to `onOpenDetail`.
+- R9-4 ProjectSelect panel corruption (Nick #12): ported to `createPortal` pattern matching InlineSelect.
+- R9-5 Grants progress bar clipping (Nick #2): row `height` → `minHeight`, dropped `overflow:hidden`.
+- R9-6 TaskDetailPanel preload (Nick #8): `requestIdleCallback(loadTaskDetailPanel)` on MyTasks mount eliminates Tiptap 400ms first-click delay.
+- R9-7 Mobile QuickAdd focus: imperative `focus()` via `requestAnimationFrame` unblocks iOS autofocus flake inside AnimatePresence.
+- R9-8 D1 cleanup (DI-3, DI-8): 2 test grants deleted, 20 NULL-status tasks repaired, sync-bulk endpoint guards status/priority against null.
+- R9-9 Dashboard resizable+draggable cards: `react-grid-layout@1.5.3` replaces the DndContext-only pattern. Per-user+section localStorage layout persistence, drag handle + SE resize handle with hover-reveal, theme-matched CSS overrides, reduced-motion respected.
+- Post-deploy: `inspection.spec.ts` 212 passed / 0 failed / 2 skipped (6 min).
+
+**Round 10: COMMITTED not deployed** (1 commit, 2026-04-13). Semantic corrections. Commit `145ed8e`.
+- R10-1/R10-2: `grants.status` column added via schema migration. Bulk-classified K23 provider practice variation in mechanical ventilation as `funded`, all 4 others as `in_preparation` (conservative default). SQL already applied to prod D1.
+- R10-3: Grant status taxonomy UI — `GRANT_STATUS_OPTIONS` (7 values: planning/in_preparation/submitted/funded/resubmission/declined/closed) + `useUpdateGrant` optimistic mutation + `PATCH /api/grants/:id` endpoint with field allowlist + status enum validation + InlineSelect wired on Grants row with undo toast. Closes Nick bug #1.
+- R10-4: Project status reuses task vocabulary — `active`/`waiting_external`/`blocked`/`done`. All 64 projects lowercased in D1. `PROJECT_STATUS_OPTIONS` + `normalizeProjectStatus()` + `isProjectActive()` helpers in `src/lib/taskConstants.ts`. 12 frontend files + 4 API routes updated to use helper or lowercase literal.
+- R10-5: Meeting dedup normalizer — `normalizeMeetingTitle()` lowercases, trims, collapses whitespace. Prevents "Lab Meeting" / "lab  meeting" duplicates (DI-7).
+- **Not deployed** — Cloudflare Workers free-tier 100K req/day cap exhausted during R8 audit traffic + baseline polling load. Resume deploy after UTC-midnight reset. See `review/SESSION-HANDOFF-2026-04-13-to-04-15.md` for Wednesday checklist.
+
+**Still open** (handed off to the next session):
+- **R11 Interaction completeness** (~4h): meeting action item inline complete, verify CLAUDE.md Coverage table claims, Deadlines/Manuscripts/Ideas/Decisions/Grants inline + click-to-detail gaps, Nick bugs #3/#6/#7
+- **R12 Mobile pass** (~3h): touch targets (18 on /dashboard, 30 on /my-tasks), 10→11px typography floor, Calendar touch nav, MobileTabBar overflow
+- **R13 Research Digest Model B** (~8h): comments, cross-date saved library, persistent link badge, multi-user save state, private notes, NIH Reporter PI-name search
+- **DI-4 duplicate projects**: handled by another session (confirmed by Nick)
+- **DI-6 dangling task project_id** (330 rows): sync_d1_push.py slug-alignment work, not touched
+- **Test infra**: X-Test-Mode routing audit (C-H1), DB_TEST seeding, inline cell data-field attributes, task_updates logging from grid edits
+
+Decisions locked: grant + project taxonomies approved. Research Digest = Model B. Dashboard cards resizable via RGL.
+Decisions pending: Workers Paid plan ($5/mo, strongly recommended), Hermes polling 10s → 60s, per-grant / per-project classification beyond conservative defaults.
+
+## Everything Sprint v2 (2026-04-15) — R11/R12 + Miniflare
+
+Single-day sprint closing R11 interaction gaps + R12 mobile + replacing X-Test-Mode with Miniflare local test harness + prod dogfood seeding.
+
+**R11 fixes shipped:**
+- R11-4 Deadlines: `InlineDatePicker` on due_date cells (task rows; milestones stay read-only)
+- R11-5 Manuscripts: `InlineSelect` on PI + Category cells (Avatar preserved as sibling for visual parity)
+- R11-6 Ideas: `expandedId` + inline detail panel (DecisionsPage already had the pattern; Ideas now matches)
+- R11-8 Grants: `expandedId` + inline detail panel (rows were inert — no Link nav, no onClick, fixed with role=button + Enter/Space keyboard open)
+
+**R12 mobile fixes shipped:**
+- R12-H3 typography floor 10→11px via `@media (max-width: 767px)` on `--text-micro`/`--text-caption` + utility-class override
+- R12-H4 Calendar prev/next: raised to 44×44 hit target (were 30×44 — width gap caught by Playwright runtime, source audit had missed the existence entirely)
+- R12-H2 Dashboard grip + Customize pin button: raised to 44×44
+- R12-H2 MyTasks focus-row pin button: raised to 44×44
+- R12-H5 MobileTabBar: added "More" overflow drawer exposing 18 portal routes grouped Work/Research/Lab
+
+**Phase 0 prod seed**: ~90 `test_delete_*` rows across 13 tables via `scripts/seed/phase0-seed.ts` (API path) + `scripts/seed/phase0-direct-sql.ts` (grants/milestones/manuscript_revisions/research_digest). Cleanup SQL at `scripts/seed/phase0-cleanup.sql`, verifier at `scripts/seed/phase0-verify.ts` — both gate deploy.
+
+**Phase 3 Miniflare harness**: Replaces `X-Test-Mode` header with local workerd + local D1 + `tests/local/data-validation.spec.ts` + schema-drift CI. Shipped on `miniflare/local-test-infra` branch by a parallel subagent, merged into main for Phase 4. See `TESTING.md` for the local-first flow.
+
+**Plan corrections discovered during audit** (for future reference):
+- R11-6 "model after DecisionsPage" — correct. DecisionsPage.tsx already has the pattern; source audit searched wrong filename (`Decisions.tsx` doesn't exist).
+- R12-H4 Calendar buttons — EXISTED at CalendarPage.tsx:153-165, not missing. Real gap was size, not existence.
+- CLAUDE.md "false claims" — both `N-key on Decisions` and `Copy bibliography on Publications` are actually TRUE features. Only stale item was `CVPage` reference (removed earlier).
+- R11-8 Grants — rows were inert, not `<Link>` navigators. Bug was worse than the plan said.
+
 ## Pending Sync
 <!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
 
@@ -838,16 +942,23 @@ New push handlers: pomodoro, sessions, email, file_activity, key_links, health
 # See "Office of Inspection" section for full cleanup commands (tasks + ideas + questions + decisions + notifications)
 ```
 
-## Test Results (2026-04-12/13, post-Phase 32)
+## Test Results (2026-04-12/13, post-Phase 32 + post-R9)
 
-**239 Playwright passed, 0 failed, 2 skipped (post-Phase 32)**
+**239 Playwright passed, 0 failed, 2 skipped (post-Phase 32 baseline, held stable through R9 deploy)**
 
-| Suite | Passed | Failed | Skipped |
-|-------|--------|--------|---------|
-| smoke.spec.ts | 27 | 0 | 0 |
-| inspection.spec.ts | 212 | 0 | 2 (unrelated — known) |
+| Suite | Passed | Failed | Skipped | When |
+|-------|--------|--------|---------|------|
+| smoke.spec.ts | 27 | 0 | 0 | 2026-04-12 post-Phase 32 |
+| inspection.spec.ts | 212 | 0 | 2 | 2026-04-12 post-Phase 32 + 2026-04-13 post-R9 deploy (same count) |
+| workflows / daily-superuser / sync-pipeline | — | — | — | not re-run after R8 (cap concerns) |
 
-Full workflow + sync pipeline suites not re-run this session (Phase 30 baseline: 494 passed, 58/58 sync).
+**Prior baselines (for reference):**
+- 2026-04-11 post-Phase 31.5: 231 passed (smoke 26 + inspection 205), 5 skipped
+- 2026-04-09 post-Phase 30: 494 passed, 58/58 sync
+
+**⚠️ Caveat:** Journey C (2026-04-13) discovered that `playwright.config.ts` injects `X-Test-Mode: true`, which routes API calls to the empty `mnccore-lab-test` DB. Any test that asserts on data-rich pages (grants, tasks, projects) may have been passing against an empty page. The 212 inspection passes have not been re-verified without this header. See finding C-H1 in `review/round8-AGGREGATED-FINDINGS.md`.
+
+**R10 was NOT regression-tested** — committed locally at `145ed8e` but deferred to Wednesday's session after the Workers cap resets.
 
 ### Remaining Known Issues (not test failures)
 | # | Issue | Severity | Notes |

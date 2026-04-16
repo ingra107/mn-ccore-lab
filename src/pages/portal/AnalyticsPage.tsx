@@ -13,7 +13,7 @@ import { formatShortDate } from '../../lib/dateUtils'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
-import { PRIORITY_COLORS } from '../../lib/taskConstants'
+import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
 
 const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
 
@@ -257,7 +257,7 @@ export default function AnalyticsPage() {
       `- Activity: ${weekStats.activityCount}`,
       '',
       '## Summary',
-      `- ${projects.filter(p => p.status === 'Active').length} active projects`,
+      `- ${projects.filter(p => isProjectActive(p.status)).length} active projects`,
       `- ${pendingTasks} pending tasks`,
       `- ${ideas.filter(i => i.status !== 'archived').length} research ideas`,
       health ? `- Health: ${health.healthy} healthy, ${health.needs_attention || 0} need attention, ${(health.at_risk || 0) + (health.critical || 0)} at risk` : '',
@@ -449,7 +449,7 @@ export default function AnalyticsPage() {
 
       {/* Second row: summary stats */}
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MetricCard icon={FolderKanban} label="Active Projects" value={projects.filter((p) => p.status === 'Active').length} color="var(--teal)" subtitle={`${projects.length} total`} />
+        <MetricCard icon={FolderKanban} label="Active Projects" value={projects.filter((p) => isProjectActive(p.status)).length} color="var(--teal)" subtitle={`${projects.length} total`} />
         <MetricCard icon={Lightbulb} label="Research Ideas" value={activeIdeas} color="var(--gold)" subtitle={`${ideas.length} total`} />
         <MetricCard icon={FileText} label="Pending Tasks" value={pendingTasks} color="var(--ink)" subtitle={`${tasks.length} total`} />
         <MetricCard icon={Users} label="Project Health" value={health?.healthy || 0} color="var(--green)" subtitle={`${health?.needs_attention || 0} attention · ${(health?.at_risk || 0) + (health?.critical || 0)} at risk`} />

@@ -28,11 +28,11 @@ function mechanismColor(mechanism: string): string {
 
 function GrantTimelineCard() {
   const { data: grants = [] } = useGrants()
-  const activeCount = grants.filter((g) => g.status === 'Active').length
-  const pendingCount = grants.filter((g) => g.proposed).length
+  const fundedCount = grants.filter((g) => g.status === 'funded').length
+  const inPrepCount = grants.filter((g) => g.status === 'in_preparation').length
 
   return (
-    <BentoCard title="Grant Portfolio" subtitle={`${activeCount} active, ${pendingCount} pending`} size="span-2" icon={Banknote}>
+    <BentoCard title="Grant Portfolio" subtitle={`${fundedCount} funded, ${inPrepCount} in prep`} size="span-2" icon={Banknote}>
       <div className="flex flex-col h-full justify-between">
         {/* Timeline bars */}
         <div className="flex flex-col gap-2.5 mt-1">

@@ -834,7 +834,7 @@ function TaskGridRow({
           task.priority === 'high' ? 'var(--orange)' :
           'transparent'
         }`,
-        cursor: onSelect ? 'pointer' : 'default',
+        cursor: (onOpenDetail || onSelect) ? 'pointer' : 'default',
         opacity: isDone ? 0.5 : 1,
         transition: 'background var(--duration-normal) var(--ease-out), opacity var(--duration-normal) var(--ease-out)',
         position: 'relative',
@@ -844,7 +844,8 @@ function TaskGridRow({
       tabIndex={0}
       onClick={() => {
         onFocusIndex?.(index)
-        onSelect?.(task)
+        if (onOpenDetail) onOpenDetail(task)
+        else onSelect?.(task)
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') { e.preventDefault(); onOpenDetail?.(task) }

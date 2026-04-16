@@ -4,6 +4,7 @@ import { Activity, BookOpen, FlaskConical, Users, ArrowRight } from 'lucide-reac
 import BentoCard from './BentoCard'
 import { usePublications, useProjects } from '../../hooks/useApiData'
 import { useDashboardMounted } from '../../pages/Dashboard'
+import { isProjectActive } from '../../lib/taskConstants'
 import type { LucideIcon } from 'lucide-react'
 
 interface FeedItem {
@@ -66,7 +67,7 @@ function ActivityFeedCard() {
     }
 
     // Active projects count
-    const activeProjects = projects.filter((p) => p.status === 'Active')
+    const activeProjects = projects.filter((p) => isProjectActive(p.status))
     feed.push({
       icon: FlaskConical,
       dotColor: '#2d8a8a',

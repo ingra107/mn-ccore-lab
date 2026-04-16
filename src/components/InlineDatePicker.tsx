@@ -29,8 +29,6 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
   useEffect(() => {
     if (editing && inputRef.current) {
       inputRef.current.focus()
-      // Try to show the native date picker
-      try { inputRef.current.showPicker() } catch { /* not supported in all browsers */ }
     }
   }, [editing])
 
@@ -94,7 +92,6 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           type="date"
           value={pendingValue || ''}
           onChange={handleChange}
-          onBlur={() => setTimeout(() => commitAndClose(), 200)}
           onKeyDown={handleKeyDown}
           style={{
             fontSize: '12px',

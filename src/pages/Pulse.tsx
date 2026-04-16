@@ -3,6 +3,7 @@ import { useStats, useTasks, useProjects, useActivity, useProjectHealth } from '
 import { useGrantTimeline } from '../hooks/useGrantTimeline'
 import { getPersonInfo } from '../data/team'
 import { formatShortDate } from '../lib/dateUtils'
+import { isProjectActive } from '../lib/taskConstants'
 import { formatBrandName } from '../components/BrandName'
 
 /**
@@ -26,7 +27,7 @@ export default function Pulse() {
 
   const pendingTasks = tasks.filter((t) => !t.completed)
   const overdueTasks = pendingTasks.filter((t) => t.due_date && new Date(t.due_date + 'T23:59:59') < new Date())
-  const activeProjects = projects.filter((p) => p.status === 'Active').length
+  const activeProjects = projects.filter((p) => isProjectActive(p.status)).length
   const health = healthData?.summary
 
   const cards = useMemo(() => {

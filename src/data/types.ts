@@ -40,13 +40,25 @@ export interface Publication {
   visibility?: 'public' | 'internal'
 }
 
+// R10: grant status now follows the funding-lifecycle taxonomy. Legacy
+// 'Active' / 'Pending' / 'Completed' are kept in the union so static
+// fallback data (src/data/grants.ts) still type-checks until it's migrated.
+export type GrantLifecycleStatus =
+  | 'planning'
+  | 'in_preparation'
+  | 'submitted'
+  | 'funded'
+  | 'resubmission'
+  | 'declined'
+  | 'closed'
+
 export interface Grant {
   mechanism: string
   title: string
   agency: string
   pi: string
   proposed?: boolean
-  status?: 'Active' | 'Pending' | 'Completed'
+  status?: GrantLifecycleStatus | 'Active' | 'Pending' | 'Completed'
   visibility?: 'public' | 'internal' // default: 'public'
 }
 

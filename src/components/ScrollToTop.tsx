@@ -18,7 +18,7 @@ export default function ScrollToTop() {
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       className="fixed z-50 rounded-full shadow-lg border transition-all"
       style={{
-        bottom: 72,
+        bottom: 'var(--fab-stack-2)',
         right: 24,
         width: 36,
         height: 36,

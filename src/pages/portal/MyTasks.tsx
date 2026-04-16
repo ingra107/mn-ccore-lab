@@ -13,7 +13,8 @@ import TaskGridView from '../../components/tasks/TaskGridView'
 import TaskBoardView from '../../components/tasks/TaskBoardView'
 import TaskStandUpView from '../../components/tasks/TaskStandUpView'
 import TaskTimelineView from '../../components/tasks/TaskTimelineView'
-const TaskDetailPanel = lazy(() => import('../../components/tasks/TaskDetailPanel'))
+const loadTaskDetailPanel = () => import('../../components/tasks/TaskDetailPanel')
+const TaskDetailPanel = lazy(loadTaskDetailPanel)
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import { useUndoToast } from '../../components/UndoToast'
 import { useTasks } from '../../hooks/useApiData'
@@ -68,6 +69,19 @@ export default function MyTasks() {
       setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('create'); return next }, { replace: true })
     }
   }, [searchParams, setSearchParams])
+
+  // Preload TaskDetailPanel chunk on idle so the first row click doesn't pay
+  // a ~400ms Tiptap lazy-load delay. (R9-6 — Nick's bug #8.)
+  useEffect(() => {
+    const idleId =
+      typeof (window as any).requestIdleCallback === 'function'
+        ? (window as any).requestIdleCallback(() => { void loadTaskDetailPanel() }, { timeout: 2000 })
+        : window.setTimeout(() => { void loadTaskDetailPanel() }, 1500)
+    return () => {
+      if (typeof (window as any).cancelIdleCallback === 'function') (window as any).cancelIdleCallback(idleId)
+      else window.clearTimeout(idleId as number)
+    }
+  }, [])
 
   // For now, show all tasks (no auth = no current user detection)
   // When Cloudflare Access is enabled, this will filter to the authenticated user's slug

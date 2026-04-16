@@ -1,10 +1,8 @@
 import { useState, useCallback, useMemo, useEffect, createContext, useContext } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, GripVertical, AlertTriangle } from 'lucide-react'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import type { DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, AlertTriangle } from 'lucide-react'
+import DashboardGrid from '../components/dashboard/DashboardGrid'
+import { resetLayouts } from '../lib/dashboardLayout'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
@@ -102,7 +100,6 @@ const PINNED_KEY = 'mnccore-dashboard-pinned'
 const DEFAULTS_VERSION_KEY = 'mnccore-dashboard-version'
 const CLICKS_KEY = 'mnccore-dashboard-clicks'
 const TAB_KEY = 'mnccore-dashboard-tab'
-const ORDER_KEY = 'mnccore-dashboard-order'
 const CURRENT_DEFAULTS_VERSION = 4 // bump to reset localStorage to new defaults
 
 // ── Adaptive sorting helpers ──────────────────────────────
@@ -137,27 +134,6 @@ function getPinnedCards(): Set<string> {
   return new Set()
 }
 
-function getCardOrder(): string[] {
-  try {
-    const stored = localStorage.getItem(ORDER_KEY)
-    if (stored) return JSON.parse(stored)
-  } catch { /* use defaults */ }
-  return []
-}
-
-function applyCardOrder<T extends { id: string }>(cards: T[], order: string[]): T[] {
-  if (order.length === 0) return cards
-  const orderMap = new Map(order.map((id, i) => [id, i]))
-  return [...cards].sort((a, b) => {
-    const ai = orderMap.get(a.id)
-    const bi = orderMap.get(b.id)
-    if (ai === undefined && bi === undefined) return 0
-    if (ai === undefined) return 1
-    if (bi === undefined) return -1
-    return ai - bi
-  })
-}
-
 function getVisibleCards(roleCards?: string[]): Set<string> {
   try {
     // Reset localStorage if defaults version changed
@@ -174,40 +150,6 @@ function getVisibleCards(roleCards?: string[]): Set<string> {
   localStorage.setItem(DEFAULTS_VERSION_KEY, String(CURRENT_DEFAULTS_VERSION))
   if (roleCards) return new Set(roleCards)
   return new Set(CARD_REGISTRY.filter(c => c.defaultVisible).map(c => c.id))
-}
-
-function SortableCardWrapper({ id, children }: { id: string; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 'var(--z-dropdown)' : ('auto' as const),
-    position: 'relative' as const,
-  }
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} className="group/drag">
-      <button
-        {...listeners}
-        aria-label="Drag to reorder"
-        className="absolute top-2 left-2 opacity-0 group-hover/drag:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex items-center justify-center"
-        style={{
-          background: 'rgba(15,25,35,0.06)',
-          border: 'none',
-          borderRadius: 'var(--radius-md)',
-          minHeight: 44,
-          minWidth: 44,
-          color: 'var(--slate)',
-          zIndex: 'var(--z-sticky)',
-        }}
-        title="Drag to reorder"
-      >
-        <GripVertical size={16} />
-      </button>
-      {children}
-    </div>
-  )
 }
 
 export default function Dashboard() {
@@ -253,10 +195,7 @@ export default function Dashboard() {
   const [pinnedCards, setPinnedCards] = useState<Set<string>>(getPinnedCards)
   const [activeTab, setActiveTab] = useState<DashboardTab>(getSavedTab)
   const [clickCounts, setClickCounts] = useState<Record<string, number>>(getClickCounts)
-  const [cardOrder, setCardOrder] = useState<string[]>(getCardOrder)
   const adaptive = useMemo(() => Object.values(clickCounts).some(c => c > 2), [clickCounts])
-
-  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   const handleTabChange = useCallback((tab: DashboardTab) => {
     setActiveTab(tab)
@@ -310,32 +249,6 @@ export default function Dashboard() {
     return [...cards].sort((a, b) => (clickCounts[b.id] || 0) - (clickCounts[a.id] || 0))
   }, [adaptive, clickCounts])
 
-  const handleCardDragEnd = useCallback((sectionCards: typeof CARD_REGISTRY[number][], event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const oldIndex = sectionCards.findIndex(c => c.id === active.id)
-    const newIndex = sectionCards.findIndex(c => c.id === over.id)
-    if (oldIndex === -1 || newIndex === -1) return
-
-    // Build full order from current visual arrangement
-    const reordered = arrayMove(sectionCards, oldIndex, newIndex)
-    const newOrder = reordered.map(c => c.id)
-
-    // Merge into existing order: replace positions of this section's cards
-    setCardOrder(_prev => {
-      // Start with all card IDs in current order
-      const allIds = CARD_REGISTRY.map(c => c.id)
-      // Build full order: keep previous positions, override section cards
-      const sectionIds = new Set(sectionCards.map(c => c.id))
-      const nonSection = allIds.filter(id => !sectionIds.has(id))
-      const full = [...nonSection]
-      // Insert reordered section cards at their new positions
-      newOrder.forEach(id => full.push(id))
-      localStorage.setItem(ORDER_KEY, JSON.stringify(full))
-      return full
-    })
-  }, [])
-
   const tabFilteredRegistry = useMemo(
     () => CARD_REGISTRY.filter(c => {
       if (activeTab === 'overview') return true
@@ -345,9 +258,56 @@ export default function Dashboard() {
   )
 
   const allVisibleCards = tabFilteredRegistry.filter(c => visibleCards.has(c.id))
-  const pinnedVisibleCards = applyCardOrder(allVisibleCards.filter(c => pinnedCards.has(c.id)), cardOrder)
-  const unpinnedPrimaryCards = applyCardOrder(sortByUsage(tabFilteredRegistry.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id))), cardOrder)
-  const unpinnedSecondaryCards = applyCardOrder(sortByUsage(tabFilteredRegistry.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id))), cardOrder)
+  const pinnedVisibleCards = allVisibleCards.filter(c => pinnedCards.has(c.id))
+  const unpinnedPrimaryCards = sortByUsage(tabFilteredRegistry.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
+  const unpinnedSecondaryCards = sortByUsage(tabFilteredRegistry.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
+
+  // Stable slug for layout persistence per user
+  const userSlug = user?.email?.split('@')[0] ?? undefined
+
+  // Build GridCard arrays for DashboardGrid — per-section storage
+  const cardLookup = useMemo(() => {
+    const map = new Map<string, typeof CARD_REGISTRY[number]>()
+    CARD_REGISTRY.forEach(c => map.set(c.id, c))
+    return map
+  }, [])
+
+  const renderCard = useCallback((id: string) => {
+    const entry = cardLookup.get(id)
+    if (!entry) return null
+    const Card = entry.component
+    return <Card />
+  }, [cardLookup])
+
+  const renderPinOverlay = useCallback((id: string) => (
+    <button
+      onClick={(e) => { e.stopPropagation(); togglePin(id) }}
+      className="dashboard-pin-btn"
+      title="Unpin"
+      aria-label="Unpin card"
+    >
+      <Pin size={12} />
+    </button>
+  ), [togglePin])
+
+  const renderUnpinOverlay = useCallback((id: string) => (
+    <button
+      onClick={(e) => { e.stopPropagation(); togglePin(id) }}
+      className="dashboard-pin-btn dashboard-pin-btn--inactive"
+      title="Pin to top"
+      aria-label="Pin card"
+    >
+      <Pin size={12} />
+    </button>
+  ), [togglePin])
+
+  const resetLayout = useCallback(() => {
+    resetLayouts('pinned', userSlug)
+    resetLayouts('primary', userSlug)
+    resetLayouts('secondary', userSlug)
+    // Force a remount by toggling a key — cheapest way to reload RGL defaults
+    window.location.reload()
+  }, [userSlug])
 
   // Time-of-day greeting
   const greeting = useMemo(() => {
@@ -681,38 +641,23 @@ export default function Dashboard() {
               >
                 Pinned
               </h2>
+              <button
+                type="button"
+                onClick={resetLayout}
+                className="dashboard-reset-layout"
+                title="Reset all dashboard layouts to defaults"
+              >
+                <RotateCcw size={11} /> Reset layout
+              </button>
             </div>
-            <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => handleCardDragEnd(pinnedVisibleCards, e)}>
-              <SortableContext items={pinnedVisibleCards.map(c => c.id)} strategy={rectSortingStrategy}>
-                <div className="bento-grid">
-                  {pinnedVisibleCards.map(card => {
-                    const Card = card.component
-                    return (
-                      <SortableCardWrapper key={card.id} id={card.id}>
-                        <div data-testid={`card-${card.id}`} className="relative group" role="button" tabIndex={0} onClick={() => handleCardInteraction(card.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardInteraction(card.id) } }}>
-                          <Card />
-                          <button
-                            onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                            style={{
-                              background: 'var(--gold-emphasis)',
-                              border: 'none',
-                              borderRadius: 'var(--radius-md)',
-                              padding: 'var(--sp-xs)',
-                              cursor: 'pointer',
-                              color: 'var(--gold)',
-                            }}
-                            title="Unpin"
-                          >
-                            <Pin size={12} />
-                          </button>
-                        </div>
-                      </SortableCardWrapper>
-                    )
-                  })}
-                </div>
-              </SortableContext>
-            </DndContext>
+            <DashboardGrid
+              section="pinned"
+              userSlug={userSlug}
+              cards={pinnedVisibleCards.map(c => ({ id: c.id }))}
+              onCardClick={handleCardInteraction}
+              renderCard={renderCard}
+              renderOverlay={renderPinOverlay}
+            />
           </div>
         )}
 
@@ -720,37 +665,14 @@ export default function Dashboard() {
         {unpinnedPrimaryCards.length > 0 && (
           <div>
             <h2 className="sr-only">Dashboard cards</h2>
-            <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => handleCardDragEnd(unpinnedPrimaryCards, e)}>
-              <SortableContext items={unpinnedPrimaryCards.map(c => c.id)} strategy={rectSortingStrategy}>
-                <div className="bento-grid">
-                  {unpinnedPrimaryCards.map(card => {
-                    const Card = card.component
-                    return (
-                      <SortableCardWrapper key={card.id} id={card.id}>
-                        <div data-testid={`card-${card.id}`} className="relative group" role="button" tabIndex={0} onClick={() => handleCardInteraction(card.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardInteraction(card.id) } }}>
-                          <Card />
-                          <button
-                            onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
-                            style={{
-                              border: 'none',
-                              borderRadius: 'var(--radius-md)',
-                              padding: 'var(--sp-xs)',
-                              cursor: 'pointer',
-                              color: 'var(--slate)',
-                              opacity: 0.5,
-                            }}
-                            title="Pin to top"
-                          >
-                            <Pin size={12} />
-                          </button>
-                        </div>
-                      </SortableCardWrapper>
-                    )
-                  })}
-                </div>
-              </SortableContext>
-            </DndContext>
+            <DashboardGrid
+              section="primary"
+              userSlug={userSlug}
+              cards={unpinnedPrimaryCards.map(c => ({ id: c.id }))}
+              onCardClick={handleCardInteraction}
+              renderCard={renderCard}
+              renderOverlay={renderUnpinOverlay}
+            />
           </div>
         )}
 
@@ -776,37 +698,16 @@ export default function Dashboard() {
 
             {showMore && (
               <>
-                <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => handleCardDragEnd(unpinnedSecondaryCards, e)}>
-                  <SortableContext items={unpinnedSecondaryCards.map(c => c.id)} strategy={rectSortingStrategy}>
-                    <div className="bento-grid mt-4">
-                      {unpinnedSecondaryCards.map(card => {
-                        const Card = card.component
-                        return (
-                          <SortableCardWrapper key={card.id} id={card.id}>
-                            <div data-testid={`card-${card.id}`} className="relative group" role="button" tabIndex={0} onClick={() => handleCardInteraction(card.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardInteraction(card.id) } }}>
-                              <Card />
-                              <button
-                                onClick={(e) => { e.stopPropagation(); togglePin(card.id) }}
-                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pin-btn"
-                                style={{
-                                  border: 'none',
-                                  borderRadius: 'var(--radius-md)',
-                                  padding: 'var(--sp-xs)',
-                                  cursor: 'pointer',
-                                  color: 'var(--slate)',
-                                  opacity: 0.5,
-                                }}
-                                title="Pin to top"
-                              >
-                                <Pin size={12} />
-                              </button>
-                            </div>
-                          </SortableCardWrapper>
-                        )
-                      })}
-                    </div>
-                  </SortableContext>
-                </DndContext>
+                <div className="mt-4">
+                  <DashboardGrid
+                    section="secondary"
+                    userSlug={userSlug}
+                    cards={unpinnedSecondaryCards.map(c => ({ id: c.id }))}
+                    onCardClick={handleCardInteraction}
+                    renderCard={renderCard}
+                    renderOverlay={renderUnpinOverlay}
+                  />
+                </div>
 
                 <button
                   onClick={() => setShowMore(false)}
@@ -837,75 +738,14 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Inline styles for bento grid + animations */}
+      {/* Inline styles for cards + animations (grid layout is owned by DashboardGrid) */}
       <style>{`
-        .bento-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          /* CLS fix (C8): fixed row min prevents cards from growing as data arrives */
-          grid-auto-rows: 260px;
-          gap: 1.25rem;
-          max-width: 100%;
-          overflow: hidden;
-          min-height: 260px;
-          contain: layout;
-        }
-
-        .bento-grid > * {
-          min-width: 0;
-          overflow: hidden;
-        }
-
-        .bento-span-2 {
-          grid-column: span 2;
-        }
-
-        .bento-span-2x2 {
-          grid-column: span 2;
-          grid-row: span 2;
-        }
-
-        .bento-span-1x2 {
-          grid-row: span 2;
-        }
-
-        /* Tablet: 2 columns */
-        @media (max-width: 1024px) {
-          .bento-grid {
-            grid-template-columns: repeat(2, 1fr);
-            grid-auto-rows: 200px;
-          }
-          .bento-span-2x2 {
-            grid-column: span 2;
-            grid-row: span 2;
-          }
-          .bento-span-2 {
-            grid-column: span 2;
-          }
-          .bento-span-1x2 {
-            grid-row: span 2;
-          }
-        }
-
-        /* Mobile: 1 column */
+        /* Mobile tab row hotfix */
         @media (max-width: 640px) {
-          .bento-grid {
-            grid-template-columns: 1fr;
-            grid-auto-rows: 180px;
-            gap: 0.75rem;
-          }
-          .bento-span-2,
-          .bento-span-2x2,
-          .bento-span-1x2 {
-            grid-column: span 1;
-            grid-row: span 1;
-          }
           .bento-card {
             padding: 1rem 1rem !important;
             border-radius: 12px !important;
           }
-          /* R4 hotfix: tab pills stack below greeting + scroll horizontally.
-             Prevents the tab row from crashing into the greeting at 375-640px. */
           .dashboard-tabs {
             order: 10;
             width: 100%;
@@ -914,9 +754,7 @@ export default function Dashboard() {
             scrollbar-width: none;
           }
           .dashboard-tabs::-webkit-scrollbar { display: none; }
-          .dashboard-tabs > button {
-            flex-shrink: 0;
-          }
+          .dashboard-tabs > button { flex-shrink: 0; }
         }
 
         /* Dark mode card overrides */
@@ -924,27 +762,64 @@ export default function Dashboard() {
           background-color: var(--surface-card) !important;
           border-color: var(--border-subtle) !important;
         }
-
         .dark .bento-card:hover {
           background-image: linear-gradient(var(--surface-3), var(--surface-3)) !important;
         }
 
-        /* Pin button background — light/dark */
-        .pin-btn { background: rgba(15,25,35,0.05); }
-        .dark .pin-btn { background: var(--hover-medium); }
+        /* Pin button (overlay on each DashboardGrid card) */
+        .dashboard-pin-btn {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 22px;
+          height: 22px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          border: none;
+          border-radius: var(--radius-md);
+          background: rgba(15, 25, 35, 0.05);
+          color: var(--gold);
+          cursor: pointer;
+          opacity: 0;
+          transition: opacity 120ms ease, background 120ms ease;
+          z-index: 3;
+        }
+        .dashboard-grid-item:hover .dashboard-pin-btn,
+        .dashboard-grid-item:focus-within .dashboard-pin-btn {
+          opacity: 1;
+        }
+        .dashboard-pin-btn--inactive {
+          color: var(--slate);
+          opacity: 0;
+        }
+        .dark .dashboard-pin-btn { background: rgba(255, 255, 255, 0.08); }
 
-        /* Drag handle — light/dark */
-        .group\\/drag > button:first-child { background: rgba(15,25,35,0.06); }
-        .dark .group\\/drag > button:first-child { background: var(--hover-medium); }
+        /* "Reset layout" link in section header */
+        .dashboard-reset-layout {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          margin-left: auto;
+          padding: 2px 8px;
+          font-size: 10px;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          color: var(--slate);
+          background: transparent;
+          border: 1px solid var(--border-subtle);
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          opacity: 0.6;
+          transition: opacity 120ms ease, color 120ms ease;
+        }
+        .dashboard-reset-layout:hover { opacity: 1; color: var(--ink); }
 
-        /* Customize panel — light/dark */
         .customize-panel { background-color: var(--teal-hover); }
         .dark .customize-panel { background-color: var(--teal-hover); }
-
-        /* Dark mode tab background */
         .dark .dashboard-tabs { background: var(--hover-light) !important; }
 
-        /* Status pulse for header */
         @keyframes status-pulse {
           0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
           50% { opacity: 0.6; box-shadow: 0 0 4px rgba(34, 197, 94, 0.2); }

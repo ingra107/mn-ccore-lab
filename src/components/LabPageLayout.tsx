@@ -5,6 +5,7 @@ import PublicationCard from './PublicationCard'
 import type { Publication, Mentee } from '../data/types'
 import { getMemberBySlug } from '../data/team'
 import { projects } from '../data/projects'
+import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 
 interface ProfileLink {
   label: string
@@ -577,14 +578,14 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
                   </span>
                   <span
                     className={`badge ${
-                      project.status === 'Active' ? 'badge-active'
-                        : project.status === 'In Review' ? 'badge-review'
-                        : project.status === 'Published' ? 'badge-published'
+                      isProjectActive(project.status) ? 'badge-active'
+                        : normalizeProjectStatus(project.status) === 'waiting_external' ? 'badge-review'
+                        : normalizeProjectStatus(project.status) === 'done' ? 'badge-published'
                         : 'badge-preparation'
                     }`}
-                    style={{ fontSize: '10px', padding: '1px 6px' }}
+                    style={{ fontSize: '10px', padding: '1px 6px', textTransform: 'capitalize' }}
                   >
-                    {project.status}
+                    {normalizeProjectStatus(project.status).replace('_', ' ')}
                   </span>
                 </div>
               ))}

@@ -18,6 +18,7 @@ import { getMemberBySlug } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
 import { projects } from '../data/projects'
 import { formatShortDate, isOverdue } from '../lib/dateUtils'
+import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 import WatchButton from '../components/WatchButton'
 
 const TOPIC_DISPLAY: Record<string, string> = {
@@ -386,13 +387,14 @@ export default function MemberPage() {
                     </h3>
                     <span
                       className={`badge ${
-                        project.status === 'Active' ? 'badge-active'
-                          : project.status === 'In Review' ? 'badge-review'
-                          : project.status === 'Published' ? 'badge-published'
+                        isProjectActive(project.status) ? 'badge-active'
+                          : normalizeProjectStatus(project.status) === 'waiting_external' ? 'badge-review'
+                          : normalizeProjectStatus(project.status) === 'done' ? 'badge-published'
                           : 'badge-preparation'
                       }`}
+                      style={{ textTransform: 'capitalize' }}
                     >
-                      {project.status}
+                      {normalizeProjectStatus(project.status).replace('_', ' ')}
                     </span>
                   </div>
                   {project.description && (
