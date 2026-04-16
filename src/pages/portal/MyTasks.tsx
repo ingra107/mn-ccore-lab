@@ -849,11 +849,12 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
       {/* Pin/unpin button */}
       <button
         onClick={(e) => { e.stopPropagation(); isPinned ? onUnpin(task.id) : onPin(task.id) }}
-        className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
-        style={{ background: 'none', border: 'none', cursor: 'pointer', color: isPinned ? 'var(--teal)' : 'var(--slate)', padding: '2px', flexShrink: 0 }}
+        aria-label={isPinned ? 'Unpin from focus' : 'Pin to focus'}
+        className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity flex items-center justify-center"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: isPinned ? 'var(--teal)' : 'var(--slate)', minHeight: 44, minWidth: 44, flexShrink: 0 }}
         title={isPinned ? 'Unpin from focus' : 'Pin to focus'}
       >
-        {isPinned ? <X size={12} /> : <Pin size={12} />}
+        {isPinned ? <X size={14} /> : <Pin size={14} />}
       </button>
     </div>
   )
