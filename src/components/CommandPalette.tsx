@@ -6,6 +6,7 @@ import {
   Clock, FolderKanban, FileText, Lightbulb, HelpCircle, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
   CheckCircle2, AlertTriangle, Flag, CircleDot, Scale, GitBranch,
+  Activity, BarChart3, Settings,
 } from 'lucide-react'
 import { spring } from '../lib/animations'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
@@ -100,6 +101,15 @@ export default function CommandPalette() {
       { path: '/digest', label: 'Research Digest', icon: BookOpen, shortcut: 'G L' },
       { path: '/grants', label: 'Grants', icon: DollarSign },
       { path: '/meetings', label: 'Meetings', icon: Users, shortcut: 'G M' },
+      { path: '/activity', label: 'Activity', icon: Activity },
+      { path: '/analytics', label: 'Analytics', icon: BarChart3 },
+      { path: '/pi/analytics', label: 'PI Analytics', icon: BarChart3 },
+      { path: '/settings', label: 'Settings', icon: Settings },
+      { path: '/team', label: 'Team', icon: Users },
+      { path: '/search', label: 'Search', icon: Search, shortcut: 'G S' },
+      { path: '/sessions', label: 'Session History', icon: Clock },
+      { path: '/narratives', label: 'Narratives', icon: BookOpen },
+      { path: '/meeting-notes', label: 'Transcripts', icon: FileText },
     ]
     for (const nav of navItems) {
       items.push({
