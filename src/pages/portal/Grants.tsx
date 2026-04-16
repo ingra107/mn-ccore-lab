@@ -389,6 +389,7 @@ export default function Grants() {
   const [activeSearch, setActiveSearch] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [showAddMilestone, setShowAddMilestone] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   useListKeyboardNav({ itemCount: grants.length, focusedIndex, setFocusedIndex })
   const similarGrants = useSimilarGrants(activeSearch)
 
@@ -557,16 +558,28 @@ export default function Grants() {
                   progress = Math.max(0, Math.min(100, ((current - start) / (end - start)) * 100))
                 }
 
+                const isExpanded = expandedId === grant.id
                 return (
+                  <div key={grant.id}>
                   <div
-                    key={grant.id}
-                    className="sm:grid items-center hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+                    className="sm:grid items-center hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
                     style={{
                       gridTemplateColumns: 'minmax(200px, 2fr) 120px 100px 80px minmax(120px, 1fr) 100px',
                       height: 'var(--row-height)',
                       overflow: 'hidden',
                       padding: `var(--row-padding-y, 10px) 16px`,
-                      borderBottom: '1px solid var(--border-subtle)',
+                      borderBottom: isExpanded ? 'none' : '1px solid var(--border-subtle)',
+                      background: isExpanded ? 'var(--surface-hover, rgba(0,0,0,0.02))' : undefined,
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
+                    onClick={() => setExpandedId(isExpanded ? null : grant.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setExpandedId(isExpanded ? null : grant.id)
+                      }
                     }}
                   >
                     {/* Title */}
@@ -656,6 +669,56 @@ export default function Grants() {
                         {grant.agency || '—'}
                       </span>
                     </div>
+                  </div>
+
+                  {/* Inline detail panel (expanded via row click) */}
+                  {isExpanded && (
+                    <div
+                      style={{
+                        padding: '16px 24px',
+                        background: 'var(--surface-hover, rgba(0,0,0,0.02))',
+                        borderBottom: '1px solid var(--border-subtle)',
+                        fontSize: '13px',
+                        color: 'var(--ink)',
+                      }}
+                    >
+                      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+                        <div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Full title</div>
+                          <div>{grant.title}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>PI</div>
+                          <div className="flex items-center gap-2">
+                            <div style={{ width: 22, height: 22, flexShrink: 0 }}>
+                              <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm-plus" variant="ice" />
+                            </div>
+                            <span>{pi.name}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Mechanism</div>
+                          <div>{grant.mechanism || '—'}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Agency</div>
+                          <div>{grant.agency || '—'}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Period</div>
+                          <div>
+                            {grant.start_date ? formatMediumDate(grant.start_date) : '?'}
+                            {' – '}
+                            {grant.end_date ? formatMediumDate(grant.end_date) : '?'}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Status</div>
+                          <div>{isProposed ? 'Proposed' : 'Active'}{!isProposed && progress > 0 ? ` · ${Math.round(progress)}% through period` : ''}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   </div>
                 )
               })}
