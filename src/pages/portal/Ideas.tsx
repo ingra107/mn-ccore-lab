@@ -46,6 +46,7 @@ export default function Ideas() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [density, setDensity] = useDensity()
   const [showCreate, setShowCreate] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [sortKey, setSortKey] = useState<SortKey>('created_at')
   const [sortAsc, setSortAsc] = useState(false)
@@ -289,6 +290,8 @@ export default function Ideas() {
                   key={idea.id}
                   idea={idea}
                   isFocused={focusedIndex === idx}
+                  isExpanded={expandedId === idea.id}
+                  onToggleExpand={() => setExpandedId(expandedId === idea.id ? null : idea.id)}
                   onVote={(e) => handleVote(e, idea.id)}
                   onStatusChange={(status) => handleIdeaStatusChange(idea.id, status, idea.status)}
                 />
@@ -355,11 +358,15 @@ export default function Ideas() {
 function IdeaRowView({
   idea,
   isFocused,
+  isExpanded,
+  onToggleExpand,
   onVote,
   onStatusChange,
 }: {
   idea: IdeaRow
   isFocused: boolean
+  isExpanded: boolean
+  onToggleExpand: () => void
   onVote: (e: React.MouseEvent<HTMLButtonElement>) => void
   onStatusChange: (status: string) => void
 }) {
@@ -386,9 +393,18 @@ function IdeaRowView({
           transition: 'background-color var(--duration-fast)',
         }}
       >
-        {/* Title (dominant) */}
+        {/* Title (dominant, clickable to expand detail) */}
         <div role="gridcell" style={{ minWidth: 0 }}>
           <span
+            onClick={onToggleExpand}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onToggleExpand()
+              }
+            }}
             style={{
               fontSize: 'var(--text-base)',
               fontWeight: 'var(--weight-heading)',
@@ -397,8 +413,10 @@ function IdeaRowView({
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap' as const,
+              cursor: 'pointer',
             }}
             title={idea.title}
+            aria-expanded={isExpanded}
           >
             {idea.title}
           </span>
@@ -624,6 +642,50 @@ function IdeaRowView({
           pointer-events: auto;
         }
       `}</style>
+
+      {/* Inline detail panel (shown when title is clicked) */}
+      {isExpanded && (
+        <div
+          style={{
+            padding: 'var(--sp-md) var(--sp-lg)',
+            background: 'var(--hover-subtle, rgba(0,0,0,0.02))',
+            borderTop: '1px solid var(--border-subtle)',
+            fontSize: 'var(--text-small)',
+            color: 'var(--ink)',
+          }}
+        >
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+            <div>
+              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Title</div>
+              <div style={{ whiteSpace: 'normal' }}>{idea.title}</div>
+            </div>
+            {idea.description && (
+              <div style={{ gridColumn: '1 / -1' }}>
+                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Description</div>
+                <div style={{ whiteSpace: 'pre-wrap' }}>{idea.description}</div>
+              </div>
+            )}
+            {idea.research_area && (
+              <div>
+                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Research area</div>
+                <div style={{ color: 'var(--gold)' }}>{idea.research_area}</div>
+              </div>
+            )}
+            <div>
+              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Submitted by</div>
+              <div>{person.name || idea.submitted_by}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Submitted</div>
+              <div>{formatRelativeTime(idea.created_at)}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Votes</div>
+              <div style={{ color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}>{idea.votes}</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
