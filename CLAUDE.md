@@ -615,22 +615,24 @@ Single-day sprint closing R11 interaction gaps + R12 mobile + replacing X-Test-M
 <!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
 
 
-## Next Session Playbook
+## Next Session Playbook — April 21 Launch Prep (6 days)
 
-**Before April 21 meeting (Nick must do):**
-1. Cloudflare Access: configure @umn.edu policy on dashboard
-2. SendGrid/Resend API key: add as CF Pages secret → activates email digest
-3. Populate real data: 5-10 decisions, 10 ideas, expertise tags on 5 members, reassign 15 tasks to team
+**Nick (Cloudflare dashboard — can't be automated):**
+1. Cloudflare Access: configure @umn.edu policy so team can log in
+2. `RESEND_API_KEY` as CF Pages secret → activates daily email digest
+3. `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` in GitHub repo secrets → activates schema-drift CI
 
-**Technical items remaining:**
-- Automated progress report generator (deferred by Nick)
-- WebSocket 400 console spam (Durable Object not configured — cosmetic)
-- Project slugs with parentheses break routing (low priority)
+**Claude — make the Hub look lived-in:**
+1. Populate real data: `/ideas` has 0 real ideas (all cleaned), `/decisions` needs 5-10 from recent meetings, expertise tags on 5+ team members, reassign 15+ tasks to actual team slugs
+2. R13 Research Digest Model B (~8h) — interactive save + comment + link-to-project
+3. Hermes polling 10→60s (saves 7,200 req/day before team traffic arrives)
+4. Monday Apr 20: `/mnccore-agenda` for Tuesday's meeting (Slides + Gmail draft)
 
-**Step 4: Clean up D1 test data** (MANDATORY after every test run)
-```bash
-# See "Office of Inspection" section for full cleanup commands (tasks + ideas + questions + decisions + notifications)
-```
+**Nice-to-have:**
+- Open Science Portal (xenodochial-engelbart worktree, 15 commits, never merged)
+- Meeting Prep View polish (demo showpiece)
+
+**System state (2026-04-15 evening):** Everything Sprint v2 shipped. Hub deployed at `182396a`. WebSocket FIXED. Inspection 213+ passing. 0 console errors on all 14 pages. Workers Paid plan active. All source tracked in git.
 
 ## Test Results (2026-04-15, post-Everything Sprint v2)
 
