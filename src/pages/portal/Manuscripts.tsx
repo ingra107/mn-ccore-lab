@@ -26,6 +26,14 @@ import { useScrollReveal } from '../../hooks/useScrollReveal'
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
+// PI options for inline editing. Primary investigators on CCORE manuscripts
+// are the two directors (Nick + Nate). More PIs can be added as they start
+// owning manuscript projects.
+const PI_OPTIONS = [
+  { value: 'nick', label: 'Nick Ingraham' },
+  { value: 'nate', label: 'Nate Mesfin' },
+] as const
+
 const STALLED_THRESHOLD_DAYS = 30
 
 function daysInStage(project: Project): number {
@@ -48,6 +56,12 @@ const CATEGORY_LABEL: Record<string, string> = {
   nate: 'Mesfin',
   mentee: 'Mentee',
 }
+
+const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABEL).map(([value, label]) => ({
+  value,
+  label,
+  color: CATEGORY_DOT[value],
+}))
 
 export default function Manuscripts() {
   usePageMeta(
@@ -331,7 +345,6 @@ export default function Manuscripts() {
                 let flatIndex = 0
                 return manuscripts.map((project) => {
                   const pi = getPersonInfo(project.pi)
-                  const catLabel = CATEGORY_LABEL[project.category] ?? project.category
                   const showStageHeader = project.stage !== lastStage
                   lastStage = project.stage ?? ''
                   const tc = taskCounts.get(project.slug) || 0
@@ -437,18 +450,29 @@ export default function Manuscripts() {
                             onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
                           />
 
-                          <div className="flex items-center gap-1.5">
+                          {/* PI — inline editable. Avatar stays visible as a sibling so the
+                              visual "who owns this?" signal isn't lost when we switch to a select. */}
+                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                             <div style={{ width: 22, height: 22, flexShrink: 0 }}>
                               <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm-plus" variant="ice" />
                             </div>
-                            <span style={{ fontSize: 'var(--text-small)', color: 'var(--slate)', opacity: 0.6 }}>
-                              {pi.name.split(' ').pop()}
-                            </span>
+                            <InlineSelect
+                              value={project.pi || 'nick'}
+                              options={PI_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+                              onChange={(val) => handleFieldChange(project.slug, 'pi', val, project.pi)}
+                              size="sm"
+                            />
                           </div>
 
-                          <span style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', opacity: 0.4 }}>
-                            {catLabel}
-                          </span>
+                          {/* Category — inline editable */}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <InlineSelect
+                              value={project.category || 'lab'}
+                              options={CATEGORY_OPTIONS}
+                              onChange={(val) => handleFieldChange(project.slug, 'category', val, project.category)}
+                              size="sm"
+                            />
+                          </div>
 
                           {/* Days in stage */}
                           <span
@@ -509,16 +533,15 @@ export default function Manuscripts() {
                               options={STAGES.map((s) => ({ value: s, label: s }))}
                               onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
                             />
-                            <span
-                              style={{
-                                fontSize: '11px',
-                                color: 'var(--slate)',
-                                opacity: 0.4,
-                                marginLeft: 'auto',
-                              }}
-                            >
-                              {catLabel}
-                            </span>
+                            {/* Category — inline editable on mobile too */}
+                            <div style={{ marginLeft: 'auto' }} onClick={(e) => e.stopPropagation()}>
+                              <InlineSelect
+                                value={project.category || 'lab'}
+                                options={CATEGORY_OPTIONS}
+                                onChange={(val) => handleFieldChange(project.slug, 'category', val, project.category)}
+                                size="sm"
+                              />
+                            </div>
                           </div>
                         </div>
                       </Link>
