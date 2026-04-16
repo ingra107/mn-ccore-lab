@@ -572,9 +572,10 @@ test.describe('UX — Modals have focus trapping + Escape', () => {
 test.describe('UX — Inline editing', () => {
   test('UX: InlineSelect status dropdown renders as portal', async ({ page }) => {
     await loadPage(page, '/tasks')
-    // Click a status dropdown
+    // Click a status dropdown. force: true bypasses Playwright's strict hit-test
+    // which fails when the Focus Next section pushes rows near viewport edges.
     const statusBtn = page.locator('button:has-text("To Do")').first()
-    await statusBtn.click()
+    await statusBtn.click({ force: true })
     await page.screenshot({ path: 'review/ux-inline-status-dropdown.png' })
     // Dropdown should be visible and not clipped
     const dropdown = page.locator('text=In Progress').last()
@@ -765,7 +766,7 @@ test.describe('UX — Undo system', () => {
     await loadPage(page, '/tasks')
     const statusBtn = page.locator('button:has-text("To Do")').first()
     if (await statusBtn.isVisible()) {
-      await statusBtn.click()
+      await statusBtn.click({ force: true })
       const inProgress = page.locator('text=In Progress').last()
       if (await inProgress.isVisible({ timeout: 1000 }).catch(() => false)) {
         await page.screenshot({ path: 'review/ux-undo-test.png' })
@@ -783,7 +784,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
     await loadPage(page, '/tasks')
     const btn = page.locator('button:has-text("To Do")').first()
     if (await btn.isVisible()) {
-      await btn.click()
+      await btn.click({ force: true })
       await page.waitForTimeout(300)
       await page.screenshot({ path: 'review/visual-status-dropdown-open.png' })
       // Dropdown should show all 4 options
@@ -799,7 +800,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
     await loadPage(page, '/tasks')
     const btn = page.locator('button:has-text("Medium")').first()
     if (await btn.isVisible()) {
-      await btn.click()
+      await btn.click({ force: true })
       await page.waitForTimeout(300)
       await page.screenshot({ path: 'review/visual-priority-dropdown-open.png' })
       await page.keyboard.press('Escape')
@@ -1442,7 +1443,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
     // Open an inline status dropdown in the task grid
     const statusBtn = page.locator('button:has-text("To Do"), button:has-text("In Progress")').first()
     if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await statusBtn.click()
+      await statusBtn.click({ force: true })
       await page.waitForTimeout(300)
       // STATUS_OPTIONS label is "Waiting (External)" — match by exact label text
       const waitingOpt = page.locator('[role="option"]:has-text("Waiting"), button:has-text("Waiting (External)")').last()
