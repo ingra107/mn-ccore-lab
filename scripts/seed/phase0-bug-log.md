@@ -185,6 +185,7 @@ Error during WebSocket handshake: Unexpected response code: 400
 - **Root cause:** unknown — hub-realtime worker source is not in `c:/Users/ingra/mn-ccore-lab` (per `Context/Topics/ingestion-chains.md`, hub-realtime's source is "unknown, not in PB repo"). Worker may have been deployed from a different repo and gone stale, or the PartySocket library version bumped a handshake header the worker doesn't parse.
 - **Scope:** out-of-scope for the sprint-v2 plan, but worth landing a stub or toggle so it doesn't spam the console on every user's session.
 - **Filed severity:** **P0** (broken for all users, visible on all pages, no workaround).
+- **RESOLVED 2026-04-15 evening (commit `46f53c4`).** Root cause: `routePartykitRequest` maps DO binding `NOTIFICATION_HUB` → namespace `notification-hub`, but PartySocket client used default `main` → URL `/parties/main/mnccore` → no binding match → 400. Server fix: onMessage param order + fresh deploy. Client fix: `party: 'notification-hub'` in `useRealtimeSync.ts`. Source moved into `mn-ccore-lab/workers/hub-realtime/`. Verified: HTTP 101 Switching Protocols + 14/14 Playwright page-health tests pass with zero console errors.
 
 ### R11 runtime verification — all 4 gaps confirmed
 

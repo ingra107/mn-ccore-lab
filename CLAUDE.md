@@ -513,7 +513,7 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 | `@formkit/auto-animate` import drift | Imported in `TaskGridView.tsx` but was missing from `package.json` — blocked the first build 2026-04-13. If you see `Cannot find module 'X'`, grep the imports. |
 | Project status legacy values | `src/data/projects.ts` static fallbacks still use `'Active'`. `normalizeProjectStatus()` in `lib/taskConstants.ts` folds them. Don't delete the helper. |
 | Grant status taxonomy | R10: 7 values in `useGrantTimeline.ts:GRANT_STATUS_OPTIONS`. Only K23 provider practice variation in mechvent is `funded`. Anything else marked `Active` is legacy — see migration SQL in `scripts/round9/r10-grants-status-migration.sql`. |
-| hub-realtime WebSocket HTTP 400 | The `hub-realtime.nicholas-ingraham.workers.dev` worker returns HTTP 400 on the PartySocket handshake — broken for all users on all pages. Source repo unknown (not in this monorepo). Stubbed locally in `tests/setup/websocket-stub.ts`. Non-blocking but spammy console noise. |
+| hub-realtime WebSocket namespace | FIXED (commit `46f53c4`). Was HTTP 400 for 7 days — `routePartykitRequest` maps binding `NOTIFICATION_HUB` → namespace `notification-hub`, but PartySocket client defaulted to `main`. Fix: added `party: 'notification-hub'` to `useRealtimeSync.ts`. Source now at `workers/hub-realtime/` in this repo. WebSocket stub kept in `tests/setup/websocket-stub.ts` for local tests (Miniflare can't run the DO). |
 
 ## Peripheral Brain Connection
 
