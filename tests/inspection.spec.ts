@@ -653,7 +653,9 @@ test.describe('UX — Search', () => {
 test.describe('UX — Calendar', () => {
   test('UX: Calendar shows today highlighted', async ({ page }) => {
     await loadPage(page, '/calendar')
-    await expect(page.getByRole('button', { name: 'Month' })).toBeVisible()
+    // exact: true — otherwise 'Month' fuzzy-matches 'Previous month' + 'Next month'
+    // aria-labels added in R12-H4 touch-target fix
+    await expect(page.getByRole('button', { name: /^month$/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /^week$/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /^day$/i })).toBeVisible()
     await page.screenshot({ path: 'review/ux-calendar.png' })

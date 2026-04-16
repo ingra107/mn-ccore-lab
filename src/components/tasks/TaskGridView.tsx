@@ -1160,6 +1160,7 @@ function TaskGridRow({
                 onFocus={cp.onFocus}
                 onKeyDown={cp.onKeyDown}
                 data-testid={`task-status-${task.id}`}
+                onClick={(e) => e.stopPropagation()}
               >
                 <InlineCellSelect
                   value={task.status}
@@ -1213,6 +1214,7 @@ function TaskGridRow({
                 onFocus={cp.onFocus}
                 onKeyDown={cp.onKeyDown}
                 data-testid={`task-priority-${task.id}`}
+                onClick={(e) => e.stopPropagation()}
               >
                 <InlineCellSelect
                   value={task.priority}
