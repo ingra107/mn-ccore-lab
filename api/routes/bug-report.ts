@@ -81,13 +81,9 @@ export async function handleBugReport(
     lines.push('**Screenshot:**')
     lines.push(`![Bug screenshot](https://mn-ccore-lab.pages.dev${screenshotUrl})`)
   } else if (body.screenshot) {
-    // Fallback: embed base64 directly (GitHub may not render, but it's preserved)
+    // Base64 too large for GitHub issue body (65K limit). Note it was provided but couldn't be uploaded.
     lines.push('')
-    lines.push('<details><summary>Screenshot (base64)</summary>')
-    lines.push('')
-    lines.push(`![screenshot](${body.screenshot.slice(0, 100000)})`)
-    lines.push('')
-    lines.push('</details>')
+    lines.push('**Screenshot:** Provided but R2 upload unavailable. Ask reporter to re-paste in issue comments.')
   }
 
   // Create GitHub Issue

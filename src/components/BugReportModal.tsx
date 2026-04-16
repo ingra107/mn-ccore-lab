@@ -58,6 +58,14 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
     return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
 
+  // Ctrl+Enter to submit
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }, [description, submitting]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleSubmit = async () => {
     if (!description.trim() || submitting) return
     setSubmitting(true)
@@ -198,7 +206,8 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 onPaste={handlePaste}
-                placeholder="Describe the bug... (Ctrl+V to paste a screenshot)"
+                onKeyDown={handleKeyDown}
+                placeholder="Describe the bug... (Ctrl+V screenshot, Ctrl+Enter submit)"
                 rows={4}
                 style={{
                   width: '100%',
