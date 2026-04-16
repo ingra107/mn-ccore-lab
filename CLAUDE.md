@@ -452,9 +452,9 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 
 Biweekly Tuesdays 3pm CT. Anchor: Apr 21, May 5. Automation runs Monday mornings.
 
-## Component Coverage (last verified 2026-04-08, PARTIALLY STALE — see notes)
+## Component Coverage (verified 2026-04-15 Everything Sprint v2)
 
-**⚠️ Journey B audit on 2026-04-13 found at least 2 rows in this table that are FALSE claims.** Treat the table as best-effort until R11 re-verification. Rows with a ⚠ are confirmed false or unverified. Do not rely on this table as ground truth for new work without running a live check.
+**Re-verified via Playwright runtime + source audit (2026-04-15).** Journey B's 2026-04-13 "false claim" warning was incorrect — all rows are TRUE. N-key works on both Ideas + Decisions (`DecisionsPage.tsx:834`). Copy bibliography works on Publications (`Publications.tsx:234`). Only stale item was CVPage (removed — page was deleted per `project_hub-cv-removed.md`).
 
 | Component | Coverage | NOT Used On |
 |-----------|----------|-------------|
@@ -881,18 +881,17 @@ Key findings that reshaped the roadmap:
 - R10-3: Grant status taxonomy UI — `GRANT_STATUS_OPTIONS` (7 values: planning/in_preparation/submitted/funded/resubmission/declined/closed) + `useUpdateGrant` optimistic mutation + `PATCH /api/grants/:id` endpoint with field allowlist + status enum validation + InlineSelect wired on Grants row with undo toast. Closes Nick bug #1.
 - R10-4: Project status reuses task vocabulary — `active`/`waiting_external`/`blocked`/`done`. All 64 projects lowercased in D1. `PROJECT_STATUS_OPTIONS` + `normalizeProjectStatus()` + `isProjectActive()` helpers in `src/lib/taskConstants.ts`. 12 frontend files + 4 API routes updated to use helper or lowercase literal.
 - R10-5: Meeting dedup normalizer — `normalizeMeetingTitle()` lowercases, trims, collapses whitespace. Prevents "Lab Meeting" / "lab  meeting" duplicates (DI-7).
-- **Not deployed** — Cloudflare Workers free-tier 100K req/day cap exhausted during R8 audit traffic + baseline polling load. Resume deploy after UTC-midnight reset. See `review/SESSION-HANDOFF-2026-04-13-to-04-15.md` for Wednesday checklist.
+- **Deployed 2026-04-15** as part of Everything Sprint v2 (was blocked 2026-04-13 by Workers free-tier cap). Workers Paid plan now active.
 
-**Still open** (handed off to the next session):
-- **R11 Interaction completeness** (~4h): meeting action item inline complete, verify CLAUDE.md Coverage table claims, Deadlines/Manuscripts/Ideas/Decisions/Grants inline + click-to-detail gaps, Nick bugs #3/#6/#7
-- **R12 Mobile pass** (~3h): touch targets (18 on /dashboard, 30 on /my-tasks), 10→11px typography floor, Calendar touch nav, MobileTabBar overflow
+**Closed by Everything Sprint v2 (2026-04-15):** R11 ✓, R12 ✓, Test infra ✓ (Miniflare replaced X-Test-Mode). See section below.
+
+**Still open:**
 - **R13 Research Digest Model B** (~8h): comments, cross-date saved library, persistent link badge, multi-user save state, private notes, NIH Reporter PI-name search
 - **DI-4 duplicate projects**: handled by another session (confirmed by Nick)
 - **DI-6 dangling task project_id** (330 rows): sync_d1_push.py slug-alignment work, not touched
-- **Test infra**: X-Test-Mode routing audit (C-H1), DB_TEST seeding, inline cell data-field attributes, task_updates logging from grid edits
+- **Hermes polling 10s → 60s** (saves 7,200 req/day)
 
-Decisions locked: grant + project taxonomies approved. Research Digest = Model B. Dashboard cards resizable via RGL.
-Decisions pending: Workers Paid plan ($5/mo, strongly recommended), Hermes polling 10s → 60s, per-grant / per-project classification beyond conservative defaults.
+Decisions locked: grant + project taxonomies approved. Research Digest = Model B. Dashboard cards resizable via RGL. Workers Paid plan active (upgraded 2026-04-15).
 
 ## Everything Sprint v2 (2026-04-15) — R11/R12 + Miniflare
 
