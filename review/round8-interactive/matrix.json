@@ -1,0 +1,160 @@
+[
+  {
+    "page": "Tasks",
+    "element": "title-click",
+    "action": "click → detail",
+    "result": "FAIL",
+    "notes": "panel did not open",
+    "latencyMs": 79
+  },
+  {
+    "page": "Tasks",
+    "element": "row-body-far-right",
+    "action": "click 92% across row (empty area past columns)",
+    "result": "PASS",
+    "notes": "opened in 432ms"
+  },
+  {
+    "page": "Tasks",
+    "element": "row-focus",
+    "action": "click row 0 → row 2",
+    "result": "PASS",
+    "notes": "row0=null row2=true"
+  },
+  {
+    "page": "Tasks",
+    "element": "col-header-sort",
+    "action": "click DUE DATE",
+    "result": "PASS",
+    "notes": "clicked without error"
+  },
+  {
+    "page": "MyTasks",
+    "element": "row-body-click",
+    "action": "click 95% across row (empty right area)",
+    "result": "FAIL",
+    "notes": "only title opens detail (click target too narrow — CONFIRMS bug #9)"
+  },
+  {
+    "page": "MyTasks",
+    "element": "title-click",
+    "action": "click title → detail",
+    "result": "FRICTION",
+    "notes": "latency 400ms (CONFIRMS bug #8 — Tiptap lazy-load delay)",
+    "latencyMs": 400
+  },
+  {
+    "page": "MyTasks",
+    "element": "date-picker",
+    "action": "click date button",
+    "result": "FAIL",
+    "notes": "input[type=date] count at 50/150/500/1200ms = 1/1/0/0; preset buttons visible at end = 3. CONFIRMS bug #10 — flash-close",
+    "latencyMs": 1362
+  },
+  {
+    "page": "MyTasks",
+    "element": "row-focus-stale",
+    "action": "click row 0 → row 2",
+    "result": "PASS",
+    "notes": "data-focused: row0=none row2=none | focus-ring class: row0=false row2=false | document.activeElement testid=null. no stale focus via these signals — Nick may see a CSS :focus-visible artifact from keyboard nav state"
+  },
+  {
+    "page": "TaskDetailPanel",
+    "element": "project-picker-dropdown-positioning",
+    "action": "open project picker",
+    "result": "FAIL",
+    "notes": "CONFIRMS bug #12. ProjectSelect (FieldControls.tsx:307-450) uses absolute positioning inside the panel instead of createPortal. dropdown render=true, buttonBox.y=475. InlineSelect uses createPortal (InlineSelect.tsx:123) correctly — ProjectSelect is the odd one out. Fix: port the createPortal pattern from InlineSelect to ProjectSelect."
+  },
+  {
+    "page": "Projects",
+    "element": "status-dropdown",
+    "action": "click → dropdown",
+    "result": "PASS",
+    "notes": "opened 253ms via portal",
+    "latencyMs": 253
+  },
+  {
+    "page": "Manuscripts",
+    "element": "inline-select",
+    "action": "count",
+    "result": "PASS",
+    "notes": "12 InlineSelect triggers"
+  },
+  {
+    "page": "Manuscripts",
+    "element": "status-dropdown",
+    "action": "open",
+    "result": "PASS",
+    "notes": "portal dropdown"
+  },
+  {
+    "page": "Manuscripts",
+    "element": "title-cell",
+    "action": "click",
+    "result": "N/A",
+    "notes": "titles are read-only by design; no editor"
+  },
+  {
+    "page": "Deadlines",
+    "element": "inline-select",
+    "action": "count",
+    "result": "PASS",
+    "notes": "14 inline editors (status for tasks only)"
+  },
+  {
+    "page": "Deadlines",
+    "element": "status-dropdown",
+    "action": "open",
+    "result": "PASS",
+    "notes": "portal dropdown"
+  },
+  {
+    "page": "Deadlines",
+    "element": "due-date",
+    "action": "click",
+    "result": "FAIL",
+    "notes": "Due date is a read-only span (Deadlines.tsx:548-556). User cannot reschedule from this page."
+  },
+  {
+    "page": "Grants",
+    "element": "main-table",
+    "action": "enumerate inline editors",
+    "result": "FAIL",
+    "notes": "CONFIRMS bug #1. Main grants table has 0 inline editors. Title/PI/Status/Mechanism/Period/Agency all read-only (Grants.tsx:560-660). 0 InlineSelect found on page (milestones section only)."
+  },
+  {
+    "page": "Grants",
+    "element": "status-pill",
+    "action": "click",
+    "result": "FAIL",
+    "notes": "pill is a plain span; click does nothing"
+  },
+  {
+    "page": "Grants",
+    "element": "row-title",
+    "action": "click",
+    "result": "FAIL",
+    "notes": "Title click does not navigate to detail nor open editor"
+  },
+  {
+    "page": "Ideas",
+    "element": "status-inline",
+    "action": "count",
+    "result": "PASS",
+    "notes": "5 triggers"
+  },
+  {
+    "page": "Ideas",
+    "element": "vote-button",
+    "action": "present",
+    "result": "PASS",
+    "notes": "vote button renders"
+  },
+  {
+    "page": "Decisions",
+    "element": "outcome-inline",
+    "action": "count",
+    "result": "PASS",
+    "notes": "4 triggers"
+  }
+]

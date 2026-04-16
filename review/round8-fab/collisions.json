@@ -1,0 +1,1430 @@
+[
+  {
+    "route": "/dashboard",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/tasks",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/my-tasks",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/projects",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/manuscripts",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/grants",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/deadlines",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/ideas",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/decisions",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/meetings",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/analytics",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/personal",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/research-digest",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/ask-the-lab",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/calendar",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/search",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/settings",
+    "viewport": "mobile",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 315,
+        "y": 696,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/dashboard",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/tasks",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/my-tasks",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/projects",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/manuscripts",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/grants",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/deadlines",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/ideas",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/decisions",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/meetings",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/analytics",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/personal",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/research-digest",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/ask-the-lab",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/calendar",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/search",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/settings",
+    "viewport": "tablet",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 40,
+        "height": 44
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 708,
+        "y": 908,
+        "width": 36,
+        "height": 44
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/dashboard",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/tasks",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/my-tasks",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/projects",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/manuscripts",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/grants",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/deadlines",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/ideas",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/decisions",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/meetings",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/analytics",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/personal",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/research-digest",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/ask-the-lab",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/calendar",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/search",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  },
+  {
+    "route": "/settings",
+    "viewport": "desktop",
+    "a": {
+      "testid": "fab-quick-add",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 788,
+        "width": 40,
+        "height": 40
+      },
+      "z": "40"
+    },
+    "b": {
+      "testid": "scroll-to-top",
+      "tag": "BUTTON",
+      "text": "",
+      "rect": {
+        "x": 1380,
+        "y": 792,
+        "width": 36,
+        "height": 36
+      },
+      "z": "50"
+    }
+  }
+]

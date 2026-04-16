@@ -1,0 +1,111 @@
+[
+  {
+    "n": 1,
+    "name": "/meetings → open most recent meeting",
+    "result": "PASS",
+    "evidence": "navigated to https://mn-ccore-lab.pages.dev/meetings/mtg-2026-04-08-e4359890"
+  },
+  {
+    "n": 2,
+    "name": "Scan meeting for action items",
+    "result": "PASS",
+    "evidence": "found 2 action item references"
+  },
+  {
+    "n": 3,
+    "name": "Mark action item complete inline",
+    "result": "FRICTION",
+    "evidence": "no interactive completion control found"
+  },
+  {
+    "n": 4,
+    "name": "Undo toast appears after completion",
+    "result": "FRICTION",
+    "evidence": "no undo toast within 2s"
+  },
+  {
+    "n": 5,
+    "name": "Carry-forward button on action item",
+    "result": "FRICTION",
+    "evidence": "no explicit carry-forward button found",
+    "friction": "Coordinator must manually create next-meeting task — known UX gap"
+  },
+  {
+    "n": 6,
+    "name": "Quick-add action item on meeting detail",
+    "result": "PASS",
+    "evidence": "input accepted text_delete_ entry"
+  },
+  {
+    "n": 7,
+    "name": "/decisions N-key create (test_delete_ prefix)",
+    "result": "FRICTION",
+    "evidence": "N key did not open modal OR submission failed"
+  },
+  {
+    "n": 8,
+    "name": "New decision appears in decisions list",
+    "result": "FAIL",
+    "evidence": "decision not found after reload"
+  },
+  {
+    "n": 9,
+    "name": "Generate agenda / meeting prep view",
+    "result": "FRICTION",
+    "evidence": "no explicit agenda/prep button visible on /meetings list"
+  },
+  {
+    "n": 10,
+    "name": "/deadlines view renders with data",
+    "result": "FAIL",
+    "evidence": "0 row elements found"
+  },
+  {
+    "n": 11,
+    "name": "Download .ics from /deadlines",
+    "result": "PASS",
+    "evidence": "download event fired"
+  },
+  {
+    "n": 12,
+    "name": "Inline change deadline status",
+    "result": "FRICTION",
+    "evidence": "clicked status but no dropdown opened"
+  },
+  {
+    "n": 13,
+    "name": "/personal regulatory alert strip present",
+    "result": "FRICTION",
+    "evidence": "no regulatory strip/copy found on /personal"
+  },
+  {
+    "n": 14,
+    "name": "Regulatory alert is clickable",
+    "result": "FRICTION",
+    "evidence": "regulatory strip not interactive or absent"
+  },
+  {
+    "n": 15,
+    "name": "/publications view renders",
+    "result": "PASS",
+    "evidence": "publications page rendered"
+  },
+  {
+    "n": 16,
+    "name": "Copy bibliography button present + click",
+    "result": "FRICTION",
+    "evidence": "no Copy button on /publications"
+  },
+  {
+    "n": 17,
+    "name": "Meeting-created action item syncs to /tasks",
+    "result": "PASS",
+    "evidence": "task visible"
+  },
+  {
+    "n": 18,
+    "name": "/calendar renders for coordinator planning",
+    "result": "FRICTION",
+    "evidence": "calendar did not render"
+  }
+]
