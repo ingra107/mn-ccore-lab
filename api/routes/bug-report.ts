@@ -45,45 +45,17 @@ export async function handleBugReport(
   if (body.theme) lines.push(`- **Theme:** ${body.theme}`)
   lines.push(`- **Reported:** ${new Date().toISOString()}`)
 
-  // Handle screenshot upload to R2 if provided
-  let screenshotUrl: string | null = null
+  // Screenshot: client compresses to JPEG ~30-80KB, embed as base64 markdown image
   if (body.screenshot && body.screenshot.startsWith('data:image/')) {
-    try {
-      const r2Bucket = (env as Record<string, unknown>).FILES as {
-        put: (key: string, body: ArrayBuffer, options?: Record<string, unknown>) => Promise<unknown>
-      } | undefined
-
-      if (r2Bucket) {
-        const base64Data = body.screenshot.split(',')[1]
-        const binaryStr = atob(base64Data)
-        const bytes = new Uint8Array(binaryStr.length)
-        for (let i = 0; i < binaryStr.length; i++) {
-          bytes[i] = binaryStr.charCodeAt(i)
-        }
-
-        const ext = body.screenshot.includes('image/png') ? 'png' : 'jpg'
-        const key = `bug-screenshots/${Date.now()}.${ext}`
-        await r2Bucket.put(key, bytes.buffer, {
-          httpMetadata: { contentType: `image/${ext}` },
-        })
-
-        // R2 public URL via the files API
-        screenshotUrl = `/api/files/${key}`
-      }
-    } catch (e) {
-      // Screenshot upload failed — continue without it
-      lines.push(`- **Screenshot upload failed:** ${e instanceof Error ? e.message : 'unknown'}`)
+    // Safety check: if still over 45KB base64 (~33KB binary), truncate
+    if (body.screenshot.length < 60000) {
+      lines.push('')
+      lines.push('**Screenshot:**')
+      lines.push(`![screenshot](${body.screenshot})`)
+    } else {
+      lines.push('')
+      lines.push('**Screenshot:** Provided but too large for inline embed. Ask reporter to paste in comments.')
     }
-  }
-
-  if (screenshotUrl) {
-    lines.push('')
-    lines.push('**Screenshot:**')
-    lines.push(`![Bug screenshot](https://mn-ccore-lab.pages.dev${screenshotUrl})`)
-  } else if (body.screenshot) {
-    // Base64 too large for GitHub issue body (65K limit). Note it was provided but couldn't be uploaded.
-    lines.push('')
-    lines.push('**Screenshot:** Provided but R2 upload unavailable. Ask reporter to re-paste in issue comments.')
   }
 
   // Create GitHub Issue

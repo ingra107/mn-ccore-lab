@@ -27,6 +27,26 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
     }
   }, [open])
 
+  // Compress image via canvas to fit GitHub's 65K body limit
+  const compressImage = useCallback((dataUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new window.Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        // Max 800px wide, maintain aspect ratio
+        const maxW = 800
+        const scale = img.width > maxW ? maxW / img.width : 1
+        canvas.width = img.width * scale
+        canvas.height = img.height * scale
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        // JPEG at 60% quality — typically 30-80KB for a screenshot
+        resolve(canvas.toDataURL('image/jpeg', 0.6))
+      }
+      img.src = dataUrl
+    })
+  }, [])
+
   // Ctrl+V screenshot paste
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items
@@ -39,14 +59,16 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
         if (!blob) continue
 
         const reader = new FileReader()
-        reader.onload = () => {
-          setScreenshot(reader.result as string)
+        reader.onload = async () => {
+          const raw = reader.result as string
+          const compressed = await compressImage(raw)
+          setScreenshot(compressed)
         }
         reader.readAsDataURL(blob)
         return
       }
     }
-  }, [])
+  }, [compressImage])
 
   // Escape to close
   useEffect(() => {
