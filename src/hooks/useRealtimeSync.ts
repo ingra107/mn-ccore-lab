@@ -22,6 +22,7 @@ export function useRealtimeSync() {
     const ws = new PartySocket({
       host: WS_HOST,
       room: 'mnccore',
+      party: 'notification-hub',
     })
 
     ws.addEventListener('message', (event) => {

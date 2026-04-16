@@ -9,9 +9,10 @@ export class NotificationHub extends Server {
     // Client connected — partyserver tracks connections automatically
   }
 
-  onMessage(message: string, sender: Connection) {
+  onMessage(sender: Connection, message: string | ArrayBuffer) {
     // Broadcast to all connected clients except the sender
-    this.broadcast(message, [sender.id]);
+    const msg = typeof message === 'string' ? message : new TextDecoder().decode(message);
+    this.broadcast(msg, [sender.id]);
   }
 
   async onRequest(request: Request) {
