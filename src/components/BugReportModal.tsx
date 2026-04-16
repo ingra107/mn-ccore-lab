@@ -40,8 +40,8 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
         canvas.height = img.height * scale
         const ctx = canvas.getContext('2d')!
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-        // JPEG at 60% quality — typically 30-80KB for a screenshot
-        resolve(canvas.toDataURL('image/jpeg', 0.6))
+        // JPEG at 80% quality — typically 30-50KB, fits GitHub 65K body limit
+        resolve(canvas.toDataURL('image/jpeg', 0.8))
       }
       img.src = dataUrl
     })
