@@ -190,18 +190,20 @@ function SortableCardWrapper({ id, children }: { id: string; children: React.Rea
     <div ref={setNodeRef} style={style} {...attributes} className="group/drag">
       <button
         {...listeners}
-        className="absolute top-2 left-2 opacity-0 group-hover/drag:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+        aria-label="Drag to reorder"
+        className="absolute top-2 left-2 opacity-0 group-hover/drag:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex items-center justify-center"
         style={{
           background: 'rgba(15,25,35,0.06)',
           border: 'none',
           borderRadius: 'var(--radius-md)',
-          padding: 'var(--sp-xs)',
+          minHeight: 44,
+          minWidth: 44,
           color: 'var(--slate)',
           zIndex: 'var(--z-sticky)',
         }}
         title="Drag to reorder"
       >
-        <GripVertical size={12} />
+        <GripVertical size={16} />
       </button>
       {children}
     </div>
@@ -549,17 +551,20 @@ export default function Dashboard() {
                   {visibleCards.has(card.id) && (
                     <button
                       onClick={() => togglePin(card.id)}
+                      aria-label={pinnedCards.has(card.id) ? 'Unpin card' : 'Pin card to top'}
+                      className="flex items-center justify-center"
                       style={{
                         background: 'none',
                         border: 'none',
                         cursor: 'pointer',
-                        padding: 'var(--sp-xs)',
+                        minHeight: 44,
+                        minWidth: 44,
                         color: pinnedCards.has(card.id) ? 'var(--gold)' : 'var(--slate)',
                         opacity: pinnedCards.has(card.id) ? 1 : 0.3,
                       }}
                       title={pinnedCards.has(card.id) ? 'Unpin' : 'Pin to top'}
                     >
-                      <Pin size={12} />
+                      <Pin size={14} />
                     </button>
                   )}
                 </div>
