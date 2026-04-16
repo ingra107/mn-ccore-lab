@@ -1322,3 +1322,18 @@ a:hover {
     background-color: var(--surface-1) !important;
   }
 }
+
+/* R12: Mobile typography floor — no body text smaller than 11px on phones.
+   Raises the two token scales (--text-micro, --text-caption) plus any
+   hardcoded 9/10px utility classes. Desktop keeps the original 10px for
+   dense information density. */
+@media (max-width: 767px) {
+  :root {
+    --text-micro: 11px;
+    --text-caption: 11px;
+  }
+  .text-\[9px\],
+  .text-\[10px\] {
+    font-size: 11px !important;
+  }
+}
