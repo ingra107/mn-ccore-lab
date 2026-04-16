@@ -615,24 +615,18 @@ Single-day sprint closing R11 interaction gaps + R12 mobile + replacing X-Test-M
 <!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
 
 
-## Next Session Playbook — April 21 Launch Prep (6 days)
+## Next Session Playbook — April 21 Launch Readiness
 
-**Nick (Cloudflare dashboard — can't be automated):**
-1. Cloudflare Access: configure @umn.edu policy so team can log in
-2. `RESEND_API_KEY` as CF Pages secret → activates daily email digest
-3. `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` in GitHub repo secrets → activates schema-drift CI
+**Living plan:** `Projects/mn-ccore-lab-hub/plans/april-21-launch-readiness.md` (PB repo) — the single checklist for everything remaining. Each session checks off items + adds new todos discovered during work.
 
-**Claude — make the Hub look lived-in:**
-1. Populate real data: `/ideas` has 0 real ideas (all cleaned), `/decisions` needs 5-10 from recent meetings, expertise tags on 5+ team members, reassign 15+ tasks to actual team slugs
-2. R13 Research Digest Model B (~8h) — interactive save + comment + link-to-project
-3. Hermes polling 10→60s (saves 7,200 req/day before team traffic arrives)
-4. Monday Apr 20: `/mnccore-agenda` for Tuesday's meeting (Slides + Gmail draft)
+**3 sessions remaining:**
+1. **Session 1 (Apr 16-17):** Miniflare interactions audit — 6 user-persona journeys via Playwright on localhost. Find + fix every broken click/form/edit/mobile flow. NO prod writes.
+2. **Session 2 (Apr 18-19):** Prod data population + full pipeline validation — seed real data, watch sync chain flow through brain.db → Airtable → mobile. Verify the whole system works.
+3. **Session 3 (Apr 20 Mon):** MNCCORE agenda prep + final polish + last deploy.
 
-**Nice-to-have:**
-- Open Science Portal (xenodochial-engelbart worktree, 15 commits, never merged)
-- Meeting Prep View polish (demo showpiece)
+**Nick must do (CF dashboard):** CF Access @umn.edu, RESEND_API_KEY, GitHub secrets. Checklist in the living plan.
 
-**System state (2026-04-15 evening):** Everything Sprint v2 shipped. Hub deployed at `182396a`. WebSocket FIXED. Inspection 213+ passing. 0 console errors on all 14 pages. Workers Paid plan active. All source tracked in git.
+**System state (2026-04-15 evening):** Hub deployed at `79cd079`. WebSocket FIXED. Inspection 213+ passing. 0 console errors. Workers Paid. All source in git.
 
 ## Test Results (2026-04-15, post-Everything Sprint v2)
 
