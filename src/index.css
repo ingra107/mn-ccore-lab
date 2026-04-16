@@ -445,6 +445,9 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 .task-grid-row {
   border-bottom-color: var(--row-separator) !important;
   line-height: 1.35;
+  /* Keep scrolled-into-view rows below the 56px sticky header so inline
+     status/priority dropdowns are clickable. Matches PageHeader h-14 = 56px. */
+  scroll-margin-top: 72px;
 }
 .dark .task-grid-row {
   border-bottom-color: var(--row-separator) !important;
