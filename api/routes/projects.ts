@@ -441,6 +441,16 @@ export async function handleDeleteProject(
     return error('Project not found', 404);
   }
 
+  // Cascade-clean related rows to avoid FK-like errors or orphaned refs.
+  // `comments` and `project_updates` hold a free-form project_id (not an
+  // enforced FK), but leaving them behind means stale joins forever.
+  try {
+    await env.DB.prepare('DELETE FROM comments WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug).run();
+    await env.DB.prepare('DELETE FROM project_updates WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug).run();
+  } catch (e) {
+    console.error('project cascade-clean failed:', e);
+  }
+
   const result = await env.DB.prepare(
     'DELETE FROM projects WHERE id = ? OR slug = ?'
   ).bind(id, id).run();
