@@ -1601,7 +1601,15 @@ function InlineCellSelect({
         dropdownRef.current && !dropdownRef.current.contains(target)
       ) { setOpen(false) }
     }
-    const onScroll = () => setOpen(false)
+    // Close on outside scroll only. Scrolling INSIDE the dropdown (long option
+    // lists) must not close it. Prior behavior closed on any scroll because
+    // the capture-phase listener fired for the dropdown's own overflow-y:auto
+    // scrolls.
+    const onScroll = (e: Event) => {
+      const target = e.target as Node | null
+      if (target && dropdownRef.current?.contains(target)) return
+      setOpen(false)
+    }
     document.addEventListener('mousedown', handler)
     window.addEventListener('scroll', onScroll, true)
     return () => {
