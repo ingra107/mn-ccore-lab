@@ -626,7 +626,38 @@ Single-day sprint closing R11 interaction gaps + R12 mobile + replacing X-Test-M
 
 **Nick must do (CF dashboard):** CF Access @umn.edu, RESEND_API_KEY, GitHub secrets. Checklist in the living plan.
 
-**System state (2026-04-16):** Hub deployed at `bc51305`. 60 D1 tables (added digest_comments). Inspection 213 passed. Dogfood 14/14. 0 console errors. Workers Paid. 6 journey specs + 5 data-validation on Miniflare. Hermes polling 60s.
+**System state (2026-04-17 evening):** Hub deployed at `b9644c75`. D1 schema v42 applied (projects.key_link_1/_desc..._3/_desc added). Schema v41 applied earlier (team_members.full_name + preferred_name). Dogfood 14/14 page health, 0 console errors. Workers Paid. Audit framework live (see below). Hermes polling 60s.
+
+## Audit Infrastructure (2026-04-17)
+
+**Canonical interaction audit.** Every interaction the Hub must support is
+enumerated in `Projects/mn-ccore-lab-hub/HUB-AUDIT-CHECKLIST.md` (PB repo).
+The audit script `scripts/hub-audit.ts` mirrors that checklist — each section
+exercises real user actions (click, type, select) with `test_delete_` prefixed
+content, screenshots every state, asserts inline updates without page reload,
+and cleans up via API at the end.
+
+**Usage:**
+```bash
+npx tsx scripts/hub-audit.ts                    # full run (14 sections, ~8 min)
+npx tsx scripts/hub-audit.ts --section=tasks    # single section
+npx tsx scripts/hub-audit.ts --cleanup          # delete test_delete_* rows
+npx tsx scripts/hub-audit.ts --list             # list sections
+```
+
+**Output:** `review/audit/YYYYMMDDTHHMM/` per run — per-section screenshots +
+findings.md with PASS/FAIL/FRICTION/INFO tagging.
+
+**Trajectory (7 runs, 2 days):** 40% pass → 75% → 90% → 95% → 30+ asserted
+flows → UX bug found + fixed → key_link editor shipped. Four real product bugs
+fixed through the audit: Decisions Ctrl+Enter stale-closure (`76b1c15`),
+InlineCellSelect scroll-close race (`3901300`), InlineAssigneePicker missing
+ARIA (`9abd563`), sync_d1_push reading wrong task_key_link column (PB commit
+`aaaaecdc`).
+
+**Next-steps roadmap** (Tiers A-E with scope + time estimates) is maintained in
+the checklist's "Next-steps roadmap" section. A session opening this cold can
+pick any tier and ship it.
 
 ## Test Results (2026-04-15, post-Everything Sprint v2)
 

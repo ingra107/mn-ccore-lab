@@ -2,6 +2,83 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Phase 34: Audit Framework + Key-Link Editor + 4 Real Bugs (2026-04-16/17)
+
+**Context:** Session 3 (naming + data cleanup + consistency) ended 2026-04-16 with
+the observation that audit pass rate was a hollow ~40% — "does a modal open" isn't
+proof of working software. Nick pushed for real user-journey verification.
+
+### Audit framework shipped
+
+- **`scripts/hub-audit.ts`** (~1250 lines) — modular Playwright-based audit.
+  14 sections (`tasks / projects / ideas / decisions / asklab / meetings /
+  digest / grants / deadlines / manuscripts / dashboard / team / global /
+  mobile`) + cleanup. Full run ~8 min.
+- **`Projects/mn-ccore-lab-hub/HUB-AUDIT-CHECKLIST.md`** (PB repo, ~1060 lines)
+  — canonical living document. Every interaction the Hub must support is
+  enumerated. Run history table tracks pass trajectory.
+- **4 invariants:** real user actions (no API shortcuts), `test_delete_` prefix
+  on all created rows, verify no-refresh-needed after mutations, mechanical
+  cleanup via API at end.
+- **Output:** `review/audit/YYYYMMDDTHHMM/` per run with per-section
+  screenshots + findings.md (PASS/FAIL/FRICTION/INFO taxonomy).
+
+### 4 real product bugs found + fixed
+
+| Bug | Commit | Summary |
+|---|---|---|
+| BUG-1 | `76b1c15` | CreateDecisionModal Ctrl+Enter stale-closure — `useEffect([onClose])` captured first-render `handleSubmit` where `title=''`. Fix: `handleSubmitRef` mirroring latest closure each render. |
+| BUG-3 UX race | `3901300` | InlineCellSelect dropdown closed when scrolling inside its own long option list (assignee picker with 19 members). Capture-phase scroll listener caught the dropdown's own overflow scroll. Fix: ignore scroll events whose target is inside `dropdownRef`. |
+| BUG-6 ARIA | `9abd563` | InlineAssigneePicker member list had no `role=listbox` / `role=option`. Screen readers + Playwright couldn't identify options. Added ARIA. |
+| Sync col mismatch | `aaaaecdc` (PB) | `sync_d1_push.py::push_tasks` SELECT read `task_key_link_*` (prefixed) but brain.db data lives in `key_link_*` (plain). Only 1/90 active tasks with key_links had synced. Fixed column names; D1 went 1→5 tasks with key_links after re-push. |
+
+### Key-link visibility + editor (Nick's "links aren't noticeable" feedback)
+
+- **`0fc7def`** — Task key_links moved from Details tab (5th) to Overview tab;
+  restyled from `color: var(--ink); textDecoration: none` to
+  `color: var(--teal); textDecoration: underline; fontWeight: 500`.
+- **`0fc7def`** (same commit) — Project parity: `schema-v42.sql` adds
+  `projects.key_link_1/_desc..._3/_desc`; ProjectDetail Overview renders a
+  `ProjectKeyLinks` component; `PROJECT_ALLOWED_FIELDS` expanded so PUT can
+  edit them.
+- **`4c08694`** — `src/components/KeyLinksEditor.tsx` (225 lines) shared
+  inline editor. Display underlined teal links with hover pencil/trash
+  buttons. Empty state shows dashed "+ Add a key link" button. Form has
+  URL + optional description inputs, saves on Ctrl+Enter, cancels on Esc.
+  Wired into TaskDetailPanel (batched 6-field updateTask.mutate) + ProjectDetail
+  (d1Update.mutate). Round-trip verified via API.
+
+### Schema migrations applied to prod D1
+
+| Version | Adds | Applied |
+|---|---|---|
+| v41 | `team_members.full_name`, `team_members.preferred_name` | 2026-04-16 |
+| v42 | `projects.key_link_1/_desc..._3/_desc` (6 columns) | 2026-04-17 |
+
+### Deploys this phase
+
+| Deploy | Date | Notes |
+|---|---|---|
+| `ccfffc98` | 2026-04-17 | BUG-1 fix + theme audit-selector fix |
+| `0e6fe4c7` | 2026-04-17 | BUG-3 resolved + InlineAssigneePicker ARIA |
+| `97539d6f` | 2026-04-17 | InlineCellSelect scroll-close race fix + deep audit expansion |
+| `3a23ed53` | 2026-04-17 | Task key_link promotion + schema-v42 + ProjectKeyLinks |
+| `b9644c75` | 2026-04-17 | KeyLinksEditor — full inline add/edit/remove |
+
+### Audit pass-rate trajectory
+
+| Run | Pass profile | Tasks section PASSes |
+|---|---|---|
+| Pre-framework (dogfood R1+R2) | ~40% hollow | n/a |
+| Run #1 (first full 14-section) | ~75% | 8 |
+| Run #4 (post UX fixes) | ~95% | 8 |
+| Run #5 (deep expansion) | 30+ asserted flows | 17 |
+| Run #7 (post key-link editor) | 30+ flows, 0 P1 | 17 |
+
+Canonical state captured in `HUB-AUDIT-CHECKLIST.md`. Tier A-E roadmap lays out
+every open item with file paths + time estimates.
+
+---
 
 ## Phase 29: New Features (2026-04-09)
 
