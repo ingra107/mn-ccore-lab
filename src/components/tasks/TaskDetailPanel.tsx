@@ -4,7 +4,7 @@ import {
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
-  ChevronUp, ChevronDown, FolderOpen, Play, Clipboard,
+  ChevronUp, ChevronDown,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CollapsibleSection from '../CollapsibleSection'
@@ -25,6 +25,7 @@ import { HandoffSection } from './detail/HandoffSection'
 import { TaskComments, ProjectDecisionsSection } from './detail/TaskComments'
 import { TaskUpdateFeed } from './detail/TaskUpdateFeed'
 import { TaskActivityFeed } from './detail/TaskActivityFeed'
+import KeyLinksEditor from '../KeyLinksEditor'
 
 type Tab = 'overview' | 'notes' | 'comments' | 'activity' | 'details'
 
@@ -303,8 +304,16 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
             </div>
 
             {/* Key Links — promoted to Overview so users actually see them (prior:
-                buried on Details tab with non-underlined ink-colored text, missed). */}
-            <DetailKeyLinks task={task} />
+                buried on Details tab with non-underlined ink-colored text, missed).
+                Now fully editable: add/edit/remove up to 3 slots inline. */}
+            <DetailKeyLinks
+              task={task}
+              onUpdate={(fields) => {
+                // Batch all 6 key_link_* fields in a single mutation so the
+                // server sees one update, not six racing requests.
+                updateTask.mutate({ id: task.id, fields })
+              }}
+            />
 
             {/* Description (rich text, resizable) */}
             <div>
@@ -572,101 +581,36 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
 }
 
 // ── Detail Key Links ────────────────────────────────────
+// DetailKeyLinkRow (read-only row with copy button) is superseded by
+// KeyLinksEditor. Editor handles display + add/edit/remove inline.
 
-function DetailKeyLinkRow({ url, label }: { url: string; label?: string | null }) {
-  const [copied, setCopied] = useState(false)
-
-  const isLocalPath = url.startsWith('file:///') || url.startsWith('C:') || (url.startsWith('/') && !url.startsWith('//'))
-  const isBat = url.endsWith('.bat') || url.endsWith('.cmd') || url.endsWith('.ps1')
-  const isHttp = url.startsWith('http')
-
-  let Icon = ExternalLink
-  let href = url
-  let typeLabel = 'Link'
-  if (isBat) {
-    Icon = Play
-    const cleanPath = url.replace('file:///', '')
-    href = `mnccore://launch/${cleanPath}`
-    typeLabel = 'Script'
-  } else if (isLocalPath) {
-    Icon = FolderOpen
-    const cleanPath = url.replace('file:///', '')
-    href = `mnccore://open/${cleanPath}`
-    typeLabel = 'Folder'
-  }
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    })
-  }
-
-  return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
-      <a
-        href={href}
-        target={isHttp ? '_blank' : undefined}
-        rel={isHttp ? 'noopener noreferrer' : undefined}
-        style={{ color: 'var(--teal)', display: 'flex', alignItems: 'center', flexShrink: 0 }}
-      >
-        <Icon size={14} />
-      </a>
-      <div className="flex-1 min-w-0">
-        <a
-          href={href}
-          target={isHttp ? '_blank' : undefined}
-          rel={isHttp ? 'noopener noreferrer' : undefined}
-          className="text-sm truncate block hover:underline"
-          style={{ color: 'var(--teal)', textDecoration: 'underline', textUnderlineOffset: '2px', fontWeight: 500 }}
-          title={url}
-        >
-          {label || url}
-        </a>
-        <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-          {typeLabel}
-        </span>
-      </div>
-      <button
-        onClick={handleCopy}
-        title="Copy link"
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          color: copied ? 'var(--green)' : 'var(--slate)',
-          opacity: copied ? 1 : 'var(--ink-hint)',
-          padding: '2px',
-          transition: 'all 150ms',
-        }}
-      >
-        {copied ? <Check size={12} /> : <Clipboard size={12} />}
-      </button>
-    </div>
-  )
-}
-
-function DetailKeyLinks({ task }: { task: TaskRow }) {
+function DetailKeyLinks({
+  task,
+  onUpdate,
+}: {
+  task: TaskRow
+  onUpdate: (fields: Record<string, string | null>) => void
+}) {
   const links = [
     { url: task.key_link_1, desc: task.key_link_1_desc },
     { url: task.key_link_2, desc: task.key_link_2_desc },
     { url: task.key_link_3, desc: task.key_link_3_desc },
-  ].filter(l => l.url)
-
-  if (links.length === 0) return null
+  ]
 
   return (
-    <div>
-      <label className="flex items-center gap-1.5 mb-1.5" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', fontSize: 'var(--label-size)' }}>
-        <Link2 size={11} />
-        Key Links
-      </label>
-      <div className="flex flex-col gap-1">
-        {links.map((l, i) => (
-          <DetailKeyLinkRow key={i} url={l.url!} label={l.desc} />
-        ))}
-      </div>
-    </div>
+    <KeyLinksEditor
+      links={links}
+      onSave={(next) => {
+        onUpdate({
+          key_link_1: next[0]?.url || null,
+          key_link_1_desc: next[0]?.desc || null,
+          key_link_2: next[1]?.url || null,
+          key_link_2_desc: next[1]?.desc || null,
+          key_link_3: next[2]?.url || null,
+          key_link_3_desc: next[2]?.desc || null,
+        })
+      }}
+    />
   )
 }
 
