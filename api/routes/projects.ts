@@ -149,15 +149,20 @@ export async function handleProjects(url: URL, env: Env): Promise<Response> {
 
 // GET /api/projects/:id/comments
 export async function handleGetComments(projectId: string, env: Env): Promise<Response> {
+  // URL param may be slug or id. Resolve first so we can match comments by the
+  // canonical project.id, while ALSO accepting any legacy rows that were
+  // stored against the slug (older writes did so).
+  const project = await env.DB.prepare('SELECT id FROM projects WHERE id = ? OR slug = ?').bind(projectId, projectId).first<{ id: string }>();
+  const canonicalId = project?.id ?? projectId;
   const result = await env.DB.prepare(
     `SELECT c.id, c.content, c.created_at, c.author_id,
        COALESCE(t.name, CASE WHEN c.author_id = 'claude-ai' THEN 'Claude AI' END) as author_name,
        COALESCE(t.slug, CASE WHEN c.author_id = 'claude-ai' THEN 'claude-ai' END) as author_slug
      FROM comments c
      LEFT JOIN team_members t ON c.author_id = t.id
-     WHERE c.project_id = ?
+     WHERE c.project_id = ? OR c.project_id = ?
      ORDER BY c.created_at DESC`
-  ).bind(projectId).all();
+  ).bind(canonicalId, projectId).all();
   return json({ data: result.results, count: result.results.length });
 }
 
@@ -475,12 +480,14 @@ export async function handleAddComment(
     .bind(authorSlugResolved)
     .first<{ id: string }>();
 
+  // Use the resolved project.id (not URL param) to keep comments.project_id
+  // canonical. URL can be slug, but we store against projects.id.
   const commentId = generateId();
   await env.DB.prepare(
     'INSERT INTO comments (id, project_id, author_id, content) VALUES (?, ?, ?, ?)'
-  ).bind(commentId, projectId, member?.id ?? null, body.content.trim()).run();
+  ).bind(commentId, project.id, member?.id ?? null, body.content.trim()).run();
 
-  await logActivity(env, 'comment', `Commented on "${project.title}"`, user.email, projectId, 'project');
+  await logActivity(env, 'comment', `Commented on "${project.title}"`, user.email, project.id, 'project');
 
   // Create notifications for @mentions
   try {
