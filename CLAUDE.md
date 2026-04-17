@@ -229,6 +229,7 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 15. **Row height CSS must be `@media (min-width: 768px)` scoped.** Mobile uses `height: auto; min-height`. Unscoped fixed heights break stacked card layout on mobile.
 16. **TaskGridView `parentRef` minHeight must be STABLE.** Use `calc(100vh - 320px)` unconditionally — not conditional on data state. Conditional minHeight causes CLS flip when data arrives.
 17. **Data pages vs dashboard pages taxonomy.** Data pages (Tasks, MyTasks, Deadlines, Projects, Manuscripts, Ideas, Decisions, Grants, Meetings, Publications) use columnar `TableContainer` + `ColumnHeader`. Dashboard pages (Dashboard, Personal, PIAnalytics, Analytics) use card layouts. Never mix.
+18. **Detail panels must subscribe to cache, not parent state.** TaskDetailPanel and any future detail panel that receives a row object as prop MUST look up fresh data from the React Query cache using `queryClient.getQueryCache().subscribe(...)`. Parent pages hold `selectedTask` as `useState<TaskRow | null>` — that snapshot goes stale after any mutation updates the `['tasks']` cache, and the panel shows old assignee/priority/status. **Reference implementation:** `src/components/tasks/TaskDetailPanel.tsx` post-GH#7 fix (commit `087ba42`). Apply the same pattern to any ProjectDetailPanel, IdeaDetailPanel, DecisionDetailPanel that takes a full row as prop.
 
 ## Roadmap
 
