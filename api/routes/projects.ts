@@ -347,6 +347,18 @@ const PROJECT_ALLOWED_FIELDS = new Set([
 ]);
 const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
 
+// Canonical enum guards — reject arbitrary string storage. Keep in sync with
+// Peripheral-Brain's scripts/db/enums.py (R10 taxonomy). Found during deep
+// audit Suite 2 — "bogus_value" was round-tripping through PUT/POST.
+const PROJECT_STATUS_VALUES = new Set(['active', 'waiting_external', 'blocked', 'done']);
+const PROJECT_STAGE_VALUES = new Set(['Idea', 'Data Collection', 'Data Analysis', 'Writing', 'Submitted', 'Accepted', 'Published']);
+const PROJECT_CATEGORY_VALUES = new Set(['clif', 'lab', 'nate', 'mentee']);
+const PROJECT_ENUM_GUARDS: Record<string, Set<string>> = {
+  status: PROJECT_STATUS_VALUES,
+  stage: PROJECT_STAGE_VALUES,
+  category: PROJECT_CATEGORY_VALUES,
+};
+
 export async function handleUpdateProject(
   id: string,
   request: Request,
@@ -361,6 +373,11 @@ export async function handleUpdateProject(
     if (PROJECT_ALLOWED_FIELDS.has(key)) {
       if (PROJECT_REQUIRED_FIELDS.has(key) && (val === null || val === undefined || val === '')) {
         continue;
+      }
+      // Enum validation — reject unknown values instead of silently storing them.
+      const guard = PROJECT_ENUM_GUARDS[key];
+      if (guard && typeof val === 'string' && !guard.has(val)) {
+        return error(`Invalid ${key}: "${val}". Must be one of: ${[...guard].join(', ')}`, 400);
       }
       updates.push(`${key} = ?`);
       values.push(val as string | number | null);
@@ -399,7 +416,7 @@ export async function handleUpdateProject(
 
   await logActivity(env, 'project_update', `Updated project fields: ${Object.keys(body).join(', ')}`, user.email, id, 'project');
 
-  const updated = await env.DB.prepare('SELECT * FROM projects WHERE id = ?').bind(id).first();
+  const updated = await env.DB.prepare('SELECT * FROM projects WHERE id = ? OR slug = ?').bind(id, id).first();
   return json({ data: updated });
 }
 
@@ -445,8 +462,8 @@ export async function handleAddComment(
     return error('Comment content is required', 400);
   }
 
-  // Verify project exists
-  const project = await env.DB.prepare('SELECT id, title FROM projects WHERE id = ?').bind(projectId).first<{ id: string; title: string }>();
+  // Verify project exists (accept either id or slug — URL param can be either).
+  const project = await env.DB.prepare('SELECT id, title FROM projects WHERE id = ? OR slug = ?').bind(projectId, projectId).first<{ id: string; title: string }>();
   if (!project) {
     return error('Project not found', 404);
   }
