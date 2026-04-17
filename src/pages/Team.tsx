@@ -10,6 +10,7 @@ import { grants } from '../data/grants'
 import { usePublications, useExpertise, useActivity } from '../hooks/useApiData'
 import type { ExpertiseTag } from '../hooks/useApiData'
 import { mentees } from '../data/mentees'
+import { displayName } from '../lib/nameUtils'
 
 export default function Team() {
   const { data: publications = [] } = usePublications()
@@ -206,7 +207,7 @@ export default function Team() {
                         color: 'var(--ink)',
                       }}
                     >
-                      {director.name}, {director.credentials}
+                      {displayName(director.slug, 'formal')}
                       {activeSlugs.has(director.slug) && (
                         <span
                           title="Active this week"
@@ -326,7 +327,7 @@ export default function Team() {
                       className="text-base sm:text-lg"
                       style={{ fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--ink)' }}
                     >
-                      {member.name}{member.credentials ? `, ${member.credentials}` : ''}
+                      {member.slug ? displayName(member.slug, 'formal') : `${member.name}${member.credentials ? ', ' + member.credentials : ''}`}
                     </h3>
                     <p className="text-sm" style={{ color: 'var(--gold)', fontSize: '12px' }}>
                       {member.role}
@@ -405,7 +406,7 @@ export default function Team() {
                   className="text-xs sm:text-sm font-normal mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
                   style={{ color: 'var(--ink)' }}
                 >
-                  {member.name}{member.credentials ? `, ${member.credentials}` : ''}
+                  {member.slug ? displayName(member.slug, 'formal') : `${member.name}${member.credentials ? ', ' + member.credentials : ''}`}
                 </h3>
                 <p className="text-xs" style={{ color: 'var(--slate)' }}>
                   {member.role}
@@ -481,7 +482,7 @@ export default function Team() {
                   className="text-xs sm:text-sm font-normal mb-0.5 group-hover:text-[var(--gold)] transition-colors duration-200"
                   style={{ color: 'var(--ink)' }}
                 >
-                  {member.name}{member.credentials ? `, ${member.credentials}` : ''}
+                  {member.slug ? displayName(member.slug, 'formal') : `${member.name}${member.credentials ? ', ' + member.credentials : ''}`}
                 </h3>
                 <p className="text-xs" style={{ color: 'var(--slate)' }}>
                   {member.role}

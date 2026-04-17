@@ -18,6 +18,7 @@ import { getMemberBySlug } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
 import { projects } from '../data/projects'
 import { formatShortDate, isOverdue } from '../lib/dateUtils'
+import { displayName as formatTier } from '../lib/nameUtils'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 import WatchButton from '../components/WatchButton'
 
@@ -185,9 +186,11 @@ export default function MemberPage() {
     return <Navigate to="/team" replace />
   }
 
-  const displayName = member.credentials
-    ? `${member.name}, ${member.credentials}`
-    : member.name
+  const displayName = member.slug
+    ? formatTier(member.slug, 'formal')
+    : member.credentials
+      ? `${member.name}, ${member.credentials}`
+      : member.name
 
   // Filter publications: match by authorName in the authors string
   const memberPubs = useMemo(
