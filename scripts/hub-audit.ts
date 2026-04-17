@@ -624,13 +624,23 @@ async function auditGlobal(ctx: Ctx) {
   }
 
   // 13.5 Theme toggle Ctrl+.
+  // Hub uses `<html class="dark">` (Tailwind dark-mode-class strategy), NOT
+  // `data-theme` attribute. localStorage key is `mn-ccore-theme` (managed by
+  // src/hooks/useDarkMode.ts).
   await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
-  const themeBefore = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
+  const themeBefore = await page.evaluate(() => ({
+    dark: document.documentElement.classList.contains('dark'),
+    stored: localStorage.getItem('mn-ccore-theme'),
+  }))
   await page.keyboard.press('Control+.')
-  await page.waitForTimeout(400)
-  const themeAfter = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
-  finding(ctx, themeBefore !== themeAfter ? 'PASS' : 'FAIL', `13.5 Ctrl+. theme toggle: ${themeBefore} → ${themeAfter}`)
+  await page.waitForTimeout(500)
+  const themeAfter = await page.evaluate(() => ({
+    dark: document.documentElement.classList.contains('dark'),
+    stored: localStorage.getItem('mn-ccore-theme'),
+  }))
+  const changed = themeBefore.dark !== themeAfter.dark || themeBefore.stored !== themeAfter.stored
+  finding(ctx, changed ? 'PASS' : 'FAIL', `13.5 Ctrl+. theme toggle: ${JSON.stringify(themeBefore)} → ${JSON.stringify(themeAfter)}`)
   await snap(ctx, 'theme-toggled', 400)
 
   // 13.7 Report a Bug
