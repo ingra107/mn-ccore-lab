@@ -142,7 +142,7 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
       {open && (
         <motion.div
           className="fixed inset-0 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(15, 25, 35, 0.5)', zIndex: 'var(--z-modal-backdrop)' }}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', zIndex: 'var(--z-modal-backdrop)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

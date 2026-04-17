@@ -22,11 +22,11 @@ export async function handleIdeas(url: URL, env: Env): Promise<Response> {
 
 // POST /api/ideas — create idea
 export async function handleCreateIdea(request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { title: string; description?: string; research_area?: string };
+  const body = await request.json() as { title: string; description?: string; research_area?: string; submitted_by?: string };
   if (!body.title) return error('title required', 400);
 
   const id = generateId();
-  const submittedBy = actorSlug(user.email);
+  const submittedBy = body.submitted_by?.trim() || actorSlug(user.email);
 
   await env.DB.prepare(
     'INSERT INTO ideas (id, title, description, submitted_by, research_area) VALUES (?, ?, ?, ?, ?)'

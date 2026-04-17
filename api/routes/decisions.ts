@@ -30,11 +30,12 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
     meeting_id?: string;
     tags?: string;
     linked_projects?: string;
+    decided_by?: string;
   };
   if (!body.title) return error('title required', 400);
 
   const id = generateId();
-  const decidedBy = actorSlug(user.email);
+  const decidedBy = body.decided_by?.trim() || actorSlug(user.email);
 
   await env.DB.prepare(
     'INSERT INTO decision_log (id, title, rationale, context, project_slug, meeting_id, decided_by, tags, linked_projects) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'

@@ -106,12 +106,12 @@ export async function handleCreateProject(
 
   await env.DB.prepare(
     `INSERT INTO projects (id, title, slug, category, stage, description, pi, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'Active', datetime('now'), datetime('now'))`
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'active', datetime('now'), datetime('now'))`
   ).bind(
     id,
     body.title.trim(),
     slug,
-    body.category || 'research',
+    body.category || 'lab',
     body.stage || 'Idea',
     body.description || '',
     body.pi || user.email.split('@')[0],
@@ -383,7 +383,7 @@ export async function handleUpdateProject(
     ).bind(
       newId,
       (body.title as string) || 'Untitled',
-      (body.status as string) || 'Active',
+      (body.status as string) || 'active',
       (body.description as string) || '',
       (body.category as string) || 'lab',
       (body.stage as string) || 'Idea',

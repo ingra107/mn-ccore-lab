@@ -94,7 +94,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
               position: 'fixed',
               inset: 0,
               zIndex: 'var(--z-modal)',
-              background: 'rgba(15,25,35,0.55)',
+              background: 'rgba(0,0,0,0.6)',
               backdropFilter: 'blur(3px)',
               WebkitBackdropFilter: 'blur(3px)',
             }}

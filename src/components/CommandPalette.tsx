@@ -461,7 +461,7 @@ export default function CommandPalette() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.1 }}
-      style={{ backgroundColor: 'rgba(15, 25, 35, 0.5)' }}
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
       onClick={() => setOpen(false)}
     >
       <motion.div

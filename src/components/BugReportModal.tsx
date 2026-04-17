@@ -132,7 +132,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'rgba(0,0,0,0.6)',
           zIndex: 'var(--z-modal-backdrop)',
         }}
         onClick={onClose}

@@ -160,6 +160,12 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
     if (!open || !modalRef.current) return
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { onClose(); return }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault()
+        const form = modalRef.current?.querySelector('form')
+        if (form) form.requestSubmit()
+        return
+      }
       if (e.key !== 'Tab') return
       const focusable = modalRef.current!.querySelectorAll<HTMLElement>(
         'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
@@ -184,7 +190,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(15, 25, 35, 0.5)' }}
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
       onClick={onClose}
     >
       <div

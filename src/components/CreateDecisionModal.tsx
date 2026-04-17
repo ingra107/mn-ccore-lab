@@ -102,6 +102,11 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
     if (!modalRef.current) return
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { onClose(); return }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault()
+        handleSubmit()
+        return
+      }
       if (e.key !== 'Tab') return
       const focusable = modalRef.current!.querySelectorAll<HTMLElement>('input, select, textarea, button, [tabindex]:not([tabindex="-1"])')
       if (focusable.length === 0) return
@@ -141,7 +146,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'var(--overlay-medium)' }}
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
