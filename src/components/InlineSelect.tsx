@@ -102,6 +102,10 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
           cursor: 'pointer',
           fontSize,
           fontWeight: 500,
+          whiteSpace: 'nowrap',
+          maxWidth: '100%',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
           color: current?.color || 'var(--slate)',
           transition: 'background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
         }}

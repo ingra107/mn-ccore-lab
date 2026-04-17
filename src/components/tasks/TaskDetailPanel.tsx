@@ -44,10 +44,36 @@ interface TaskDetailPanelProps {
   onNext?: () => void
 }
 
-export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskDetailPanelProps) {
+export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNext }: TaskDetailPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const updateTask = useUpdateTask()
   const updateStatus = useUpdateTaskStatus()
+  const qc = useQueryClient()
+
+  // Parent pages hold selectedTask as a state snapshot. After a mutation
+  // the ['tasks', ...] cache updates but that snapshot goes stale (GH #7).
+  // Subscribe to the cache and surface the freshest row for this task id.
+  const [liveTask, setLiveTask] = useState<TaskRow | null>(taskProp)
+  useEffect(() => { setLiveTask(taskProp) }, [taskProp])
+  useEffect(() => {
+    if (!taskProp?.id) return
+    const findFresh = (): TaskRow | null => {
+      const queries = qc.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
+      for (const [, data] of queries) {
+        const fresh = data?.find(t => t.id === taskProp.id)
+        if (fresh) return fresh
+      }
+      return null
+    }
+    const initial = findFresh()
+    if (initial) setLiveTask(initial)
+    const unsub = qc.getQueryCache().subscribe(() => {
+      const fresh = findFresh()
+      if (fresh) setLiveTask(fresh)
+    })
+    return unsub
+  }, [qc, taskProp?.id])
+  const task = liveTask ?? taskProp
   const ackTask = useAcknowledgeTask()
   const { showUndo } = useUndoToast()
   const [activeTab, setActiveTab] = useState<Tab>('overview')

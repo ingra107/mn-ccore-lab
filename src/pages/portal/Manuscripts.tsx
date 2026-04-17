@@ -311,7 +311,7 @@ export default function Manuscripts() {
             <div
               className="hidden sm:grid"
               style={{
-                gridTemplateColumns: 'minmax(200px, 3fr) 90px 100px 90px 60px 68px',
+                gridTemplateColumns: 'minmax(200px, 3fr) 90px 100px 140px 80px 68px',
                 padding: 'var(--sp-sm) var(--sp-xl)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -382,7 +382,7 @@ export default function Manuscripts() {
                         <div
                           className="manuscript-list-row hidden sm:grid"
                           style={{
-                            gridTemplateColumns: 'minmax(200px, 3fr) 90px 100px 90px 60px 68px',
+                            gridTemplateColumns: 'minmax(200px, 3fr) 90px 100px 140px 80px 68px',
                             padding: `var(--row-padding-y, 14px) 24px`,
                             borderBottom: '1px solid var(--border-subtle)',
                             alignItems: 'center',

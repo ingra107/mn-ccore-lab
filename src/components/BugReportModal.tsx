@@ -14,6 +14,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
   const [result, setResult] = useState<{ url: string; number: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const location = useLocation()
 
   // Focus textarea on open
@@ -46,6 +47,21 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
       img.src = dataUrl
     })
   }, [])
+
+  // File input (for mobile — Ctrl+V paste isn't available on touch devices)
+  const handleFilePick = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const raw = reader.result as string
+      const compressed = await compressImage(raw)
+      setScreenshot(compressed)
+    }
+    reader.readAsDataURL(file)
+    // Reset so picking the same file again still fires onChange
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }, [compressImage])
 
   // Ctrl+V screenshot paste
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
@@ -278,15 +294,38 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                 </div>
               )}
 
-              {/* Paste hint */}
+              {/* Attach photo / paste hint */}
               {!screenshot && (
-                <div className="flex items-center gap-1.5 mt-2">
-                  <Image size={12} style={{ color: 'var(--slate)', opacity: 0.5 }} />
-                  <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.5 }}>
-                    Ctrl+V to paste a screenshot
+                <div className="flex items-center gap-3 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1.5 text-xs"
+                    style={{
+                      background: 'none',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '4px 10px',
+                      color: 'var(--slate)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Image size={12} />
+                    Attach photo
+                  </button>
+                  <span className="text-xs hidden sm:inline" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                    or Ctrl+V to paste
                   </span>
                 </div>
               )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFilePick}
+                style={{ display: 'none' }}
+              />
 
               {/* Auto-captured context (shown as hint) */}
               <div className="mt-3 text-xs" style={{ color: 'var(--slate)', opacity: 0.4 }}>

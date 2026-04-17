@@ -32,9 +32,14 @@ function getAssignableMembers() {
 
 export default function InlineAssigneePicker({ value, onChange, compact }: InlineAssigneePickerProps) {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const [focusedIdx, setFocusedIdx] = useState(-1)
   const ref = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
   const person = getPersonInfo(value)
-  const members = getAssignableMembers()
+  const allMembers = getAssignableMembers()
+  const q = search.toLowerCase()
+  const members = q ? allMembers.filter(m => m.name.toLowerCase().includes(q) || m.slug.toLowerCase().includes(q)) : allMembers
   const hoverCard = useHoverCard()
 
   // Build member HoverCard data
@@ -54,12 +59,27 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
 
   useEffect(() => {
     if (!open) return
+    setSearch('')
+    setFocusedIdx(-1)
+    setTimeout(() => searchRef.current?.focus(), 0)
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setFocusedIdx(i => Math.min(i + 1, members.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setFocusedIdx(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter') {
+      e.preventDefault()
+      const idx = focusedIdx >= 0 ? focusedIdx : 0
+      const pick = members[idx]
+      if (pick) { onChange(pick.slug); setOpen(false) }
+    }
+    else if (e.key === 'Escape') { setOpen(false) }
+  }
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -124,29 +144,46 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
         <>
           <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpen(false) }} />
           <div
-            className="absolute z-50 mt-1 rounded-lg overflow-hidden"
+            className="absolute z-50 mt-1 rounded-lg"
             role="listbox"
             aria-label="Select assignee"
             style={{
               top: '100%',
               left: 0,
-              minWidth: '180px',
-              maxHeight: '240px',
-              overflowY: 'auto',
+              minWidth: '220px',
               background: 'var(--cream)',
               border: '1px solid var(--border-subtle)',
               boxShadow: 'var(--shadow-card-hover)',
+              overflow: 'hidden',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {members.map((m) => {
+            <div style={{ padding: '6px 8px', borderBottom: '1px solid var(--border-subtle)' }}>
+              <input
+                ref={searchRef}
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setFocusedIdx(0) }}
+                onKeyDown={handleKeyDown}
+                placeholder="Filter people..."
+                className="w-full text-sm bg-transparent outline-none px-2 py-1"
+                style={{ color: 'var(--ink)' }}
+              />
+            </div>
+            <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
+            {members.length === 0 && (
+              <div style={{ padding: '8px 12px', fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No matches</div>
+            )}
+            {members.map((m, idx) => {
               const isSelected = m.slug === value
+              const focused = idx === focusedIdx
               return (
                 <button
                   key={m.slug}
                   role="option"
                   aria-selected={isSelected}
                   onClick={(e) => { e.stopPropagation(); onChange(m.slug); setOpen(false) }}
+                  onMouseEnter={() => setFocusedIdx(idx)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -155,15 +192,13 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
                     padding: '6px 12px',
                     border: 'none',
                     cursor: 'pointer',
-                    background: isSelected ? 'var(--teal-hover)' : 'none',
+                    background: focused ? 'var(--teal-active)' : (isSelected ? 'var(--teal-hover)' : 'none'),
                     fontSize: '12px',
                     fontWeight: isSelected ? 500 : 400,
                     color: 'var(--ink)',
                     textAlign: 'left',
                     transition: 'background 0.1s',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--teal-active)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = isSelected ? 'var(--teal-hover)' : 'none' }}
                 >
                   <div style={{ width: 20, height: 20, flexShrink: 0 }}>
                     <Avatar
@@ -183,6 +218,7 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
                 </button>
               )
             })}
+            </div>
           </div>
         </>
       )}

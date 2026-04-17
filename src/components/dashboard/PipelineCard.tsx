@@ -50,7 +50,7 @@ function PipelineCard() {
 
   return (
     <BentoCard title="Publication Pipeline" subtitle="From bench to print" size="span-2x2" icon={GitBranch} noLift>
-      <div ref={containerRef} className="flex flex-col h-full justify-center gap-6 py-2">
+      <div ref={containerRef} className="flex flex-col h-full gap-4 pt-1">
         {/* Funnel visualization */}
         <div className="flex flex-col gap-5">
           {stages.map((stage, i) => {

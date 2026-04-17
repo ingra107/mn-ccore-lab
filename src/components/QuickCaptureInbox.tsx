@@ -430,7 +430,7 @@ export default function QuickCaptureInbox() {
         data-testid="fab-quick-capture-inbox"
         className="fixed right-5 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
         style={{
-          bottom: 'var(--fab-stack-3)',
+          bottom: 'var(--fab-stack-2)',
           width: 44,
           height: 44,
           borderRadius: 'var(--radius-full)',

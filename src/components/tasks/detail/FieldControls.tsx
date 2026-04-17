@@ -177,10 +177,15 @@ export function PrioritySelect({ value, onChange }: { value: string; onChange: (
 
 export function AssigneeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const [focusedIdx, setFocusedIdx] = useState(-1)
   const ref = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
   const { data: team = [] } = useTeam()
   const person = getPersonInfo(value)
   const members = team.filter((m) => m.slug).sort((a, b) => a.name.localeCompare(b.name))
+  const q = search.toLowerCase()
+  const filteredMembers = q ? members.filter((m) => m.name.toLowerCase().includes(q) || (m.slug || '').toLowerCase().includes(q)) : members
 
   // Workload counts — lightweight query
   const { data: taskCounts } = useQuery<Record<string, number>>({
@@ -200,12 +205,27 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
 
   useEffect(() => {
     if (!open) return
+    setSearch('')
+    setFocusedIdx(-1)
+    setTimeout(() => searchRef.current?.focus(), 0)
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setFocusedIdx(i => Math.min(i + 1, filteredMembers.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setFocusedIdx(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter') {
+      e.preventDefault()
+      const idx = focusedIdx >= 0 ? focusedIdx : 0
+      const pick = filteredMembers[idx]
+      if (pick?.slug) { onChange(pick.slug); setOpen(false) }
+    }
+    else if (e.key === 'Escape') { setOpen(false) }
+  }
 
   return (
     <div className="relative" ref={ref}>
@@ -221,17 +241,35 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
         <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[240px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
-          {members.map((m) => {
+        <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border min-w-[220px]" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
+          <div className="px-2 py-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+            <input
+              ref={searchRef}
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setFocusedIdx(0) }}
+              onKeyDown={handleKeyDown}
+              placeholder="Filter people..."
+              className="w-full text-sm bg-transparent outline-none px-2 py-1"
+              style={{ color: 'var(--ink)' }}
+            />
+          </div>
+          <div className="py-1 max-h-[240px] overflow-y-auto">
+          {filteredMembers.length === 0 && (
+            <div className="px-3 py-2 text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>No matches</div>
+          )}
+          {filteredMembers.map((m, idx) => {
             const slug = m.slug!
             const mp = getPersonInfo(slug)
             const selected = slug === value
+            const focused = idx === focusedIdx
             return (
               <button
                 key={slug}
                 onClick={() => { onChange(slug); setOpen(false) }}
-                className="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+                onMouseEnter={() => setFocusedIdx(idx)}
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm transition-colors"
+                style={{ color: 'var(--ink)', cursor: 'pointer', background: focused ? 'var(--teal-active)' : 'none', border: 'none' }}
               >
                 <div style={{ width: 24, height: 24 }}>
                   <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="tight" variant="ice" />
@@ -252,6 +290,7 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
               </button>
             )
           })}
+          </div>
         </div>
       )}
     </div>
@@ -308,6 +347,7 @@ export function DateInput({ value, onChange }: { value: string; onChange: (v: st
 export function ProjectSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [focusedIdx, setFocusedIdx] = useState(-1)
   const ref = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -403,6 +443,17 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
       {open && (() => {
         const q = search.toLowerCase()
         const filtered = q ? projectList.filter((p) => p.title.toLowerCase().includes(q)) : projectList
+        const handleKeyDown = (e: React.KeyboardEvent) => {
+          if (e.key === 'ArrowDown') { e.preventDefault(); setFocusedIdx(i => Math.min(i + 1, filtered.length - 1)) }
+          else if (e.key === 'ArrowUp') { e.preventDefault(); setFocusedIdx(i => Math.max(i - 1, 0)) }
+          else if (e.key === 'Enter') {
+            e.preventDefault()
+            const idx = focusedIdx >= 0 ? focusedIdx : 0
+            const pick = filtered[idx]
+            if (pick) { onChange(pick.slug); setSearch(''); setOpen(false) }
+          }
+          else if (e.key === 'Escape') { setSearch(''); setOpen(false) }
+        }
         return createPortal(
         <div
           ref={dropdownRef}
@@ -426,11 +477,11 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
               autoFocus
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setFocusedIdx(0) }}
               placeholder="Search projects..."
               className="w-full text-sm bg-transparent outline-none px-2 py-1"
               style={{ color: 'var(--ink)' }}
-              onKeyDown={(e) => { if (e.key === 'Escape') { setSearch(''); setOpen(false) } }}
+              onKeyDown={handleKeyDown}
             />
           </div>
           <div className="py-1 max-h-[240px] overflow-y-auto">
@@ -444,14 +495,16 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
                 {!value && <Check size={14} style={{ color: 'var(--teal)', marginLeft: 'auto' }} />}
               </button>
             )}
-            {filtered.map((p) => {
+            {filtered.map((p, idx) => {
               const selected = p.slug === value
+              const focused = idx === focusedIdx
               return (
                 <button
                   key={p.slug}
                   onClick={() => { onChange(p.slug); setSearch(''); setOpen(false) }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                  style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
+                  onMouseEnter={() => setFocusedIdx(idx)}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors"
+                  style={{ color: 'var(--ink)', cursor: 'pointer', background: focused ? 'var(--teal-active)' : 'none', border: 'none' }}
                 >
                   <span className="flex-1 truncate">{p.title}</span>
                   {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}

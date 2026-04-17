@@ -1075,6 +1075,12 @@ a:hover {
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transition-fast) var(--ease-out);
+  padding-left: 8px;
+}
+
+.task-row-priority {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .task-grid-row:hover .task-grid-row-actions,
