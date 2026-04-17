@@ -41,7 +41,12 @@ export function useRealtimeSync() {
     return () => ws.close()
   }, [queryClient])
 
-  // Phase 1: Polling fallback (60s with WS, 10s without)
+  // Phase 1: Polling — /api/version is cheap; 15s gives acceptable cross-tab
+  // latency without thrashing. Deep-audit Suite 7 confirmed tab-to-tab edits
+  // weren't propagating through the WS path in <20s: the DO service binding
+  // (NOTIFICATION_HUB) isn't wired in wrangler.toml, so api/lib/notify.ts
+  // early-returns. Until that binding ships, polling is the real sync path.
+  // Previously 60s with WS assumed — which silently broke cross-tab UX.
   const { data } = useQuery({
     queryKey: ['_version'],
     queryFn: async () => {
@@ -49,7 +54,7 @@ export function useRealtimeSync() {
       const json = await res.json() as { version: string }
       return json.version
     },
-    refetchInterval: WS_HOST ? 60_000 : 10_000,
+    refetchInterval: 15_000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     staleTime: 0,
