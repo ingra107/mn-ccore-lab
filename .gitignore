@@ -36,3 +36,9 @@ test_create_task.txt
 test_run*.txt
 test_sidebar.txt
 test_views.txt
+
+# Audit output — per-run screenshots, regenerate locally via hub-audit.ts
+review/audit/
+review/dogfood/
+review/dogfood-round*/
+review/visual-audit/
