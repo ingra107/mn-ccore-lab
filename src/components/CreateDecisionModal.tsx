@@ -97,6 +97,13 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
 
   const modalRef = useRef<HTMLDivElement>(null)
 
+  // Keep a live ref to handleSubmit so the keydown handler always calls the
+  // latest closure (with the current title/rationale/etc. state). The effect
+  // is keyed on [onClose] only — without this ref, Ctrl+Enter would invoke
+  // the first-render handleSubmit closure where title='' and early-return.
+  const handleSubmitRef = useRef(handleSubmit)
+  handleSubmitRef.current = handleSubmit
+
   // Focus trap + Escape
   useEffect(() => {
     if (!modalRef.current) return
@@ -104,7 +111,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
       if (e.key === 'Escape') { onClose(); return }
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault()
-        handleSubmit()
+        handleSubmitRef.current()
         return
       }
       if (e.key !== 'Tab') return
