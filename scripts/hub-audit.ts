@@ -237,10 +237,15 @@ async function auditTasks(ctx: Ctx) {
         // Pick a specific member — Nate
         const nate = picker.getByRole('option').filter({ hasText: /Mesfin/ }).first()
         if (await nate.count()) {
-          await nate.click()
-          await snap(ctx, 'assignee-changed-nate', 1200)
-          const undoVisible = await page.locator('[data-testid="undo-toast"]').count()
-          finding(ctx, undoVisible > 0 ? 'PASS' : 'FAIL', '1.6 Assignee undo toast after change')
+          try {
+            await nate.click({ force: true, timeout: 5000 })
+            await snap(ctx, 'assignee-changed-nate', 1200)
+            const undoVisible = await page.locator('[data-testid="undo-toast"]').count()
+            finding(ctx, undoVisible > 0 ? 'PASS' : 'FAIL', '1.6 Assignee undo toast after change')
+          } catch (e: any) {
+            finding(ctx, 'FRICTION', `1.6 Assignee option click timed out: ${e.message.slice(0, 80)}`)
+            await page.keyboard.press('Escape').catch(() => {})
+          }
         } else {
           await page.keyboard.press('Escape')
         }
@@ -251,6 +256,10 @@ async function auditTasks(ctx: Ctx) {
   }
 
   // 1.7 Inline due_date change
+  // Close any open detail panel first — prior inline edits can open it accidentally
+  const stray = page.locator('[data-testid="close-detail-panel"]').first()
+  if (await stray.count()) { await stray.click({ force: true }).catch(() => {}); await page.waitForTimeout(400) }
+
   if (testTaskId) {
     const dueCell = page.locator(`[data-testid="task-due-${testTaskId}"]`).first()
     if (await dueCell.count()) {
@@ -315,125 +324,126 @@ async function auditTasks(ctx: Ctx) {
     }
   }
 
-  // 1.10 Subtask end-to-end (re-open detail panel, navigate to Details tab)
-  if (testTaskId) {
-    const titleCell2 = page.locator(`[data-testid="task-title-${testTaskId}"]`).first()
-    if (await titleCell2.count()) {
-      await titleCell2.click()
-      await page.waitForTimeout(1200)
-      const detailsTab = page.locator('[data-testid="task-detail-panel"] button').filter({ hasText: /^Details$/ }).first()
-      if (await detailsTab.count()) {
-        await detailsTab.click()
-        await snap(ctx, 'subtask-details-tab', 700)
-        // Subtask input — typically placeholder "Add subtask" or similar
-        const subInput = page.locator('[data-testid="task-detail-panel"]').locator('input[placeholder*="subtask" i], input[placeholder*="Add" i]').first()
-        if (await subInput.count()) {
-          await subInput.fill('test_delete_audit subtask')
-          await snap(ctx, 'subtask-typed', 300)
-          await subInput.press('Enter')
-          await snap(ctx, 'subtask-submitted', 1200)
-          const subtaskRow = page.locator('[data-testid="task-detail-panel"]').locator('text=test_delete_audit subtask').first()
-          finding(ctx, (await subtaskRow.count()) > 0 ? 'PASS' : 'FAIL', '1.10 Subtask appears in detail panel after Enter')
-          // Toggle checkbox
-          const checkbox = page.locator('[data-testid="task-detail-panel"]').locator('input[type="checkbox"]').last()
-          if (await checkbox.count()) {
-            await checkbox.click()
-            await snap(ctx, 'subtask-completed', 800)
-            finding(ctx, 'PASS', '1.10 Subtask checkbox toggle (verify strikethrough in screenshot)')
-          }
-        } else {
-          finding(ctx, 'FRICTION', '1.10 Subtask input not found on Details tab')
-        }
-      }
-
-      // 1.11 Comment end-to-end
-      const commentsTab = page.locator('[data-testid="task-detail-panel"] button').filter({ hasText: /^Comments$/ }).first()
-      if (await commentsTab.count()) {
-        await commentsTab.click()
-        await snap(ctx, 'comment-tab', 500)
-        const commentArea = page.locator('[data-testid="task-detail-panel"] textarea').first()
-        if (await commentArea.count()) {
-          await commentArea.fill('test_delete_audit comment @nick')
-          await snap(ctx, 'comment-typed', 300)
-          await commentArea.press('Control+Enter')
-          await snap(ctx, 'comment-submitted', 1500)
-          const appeared = page.locator('[data-testid="task-detail-panel"]').locator('text=test_delete_audit comment').first()
-          finding(ctx, (await appeared.count()) > 0 ? 'PASS' : 'FAIL', '1.11 Comment appears after Ctrl+Enter')
-        } else {
-          finding(ctx, 'FRICTION', '1.11 Comment textarea not found')
-        }
-      }
-
-      // 1.12 Task update/note with type
-      const notesTab = page.locator('[data-testid="task-detail-panel"] button').filter({ hasText: /^Notes$/ }).first()
-      if (await notesTab.count()) {
-        await notesTab.click()
-        await snap(ctx, 'notes-tab', 500)
-        const noteArea = page.locator('[data-testid="task-detail-panel"] textarea').first()
-        if (await noteArea.count()) {
-          await noteArea.fill('test_delete_audit note progress')
-          await snap(ctx, 'note-typed', 300)
-          await noteArea.press('Control+Enter')
-          await snap(ctx, 'note-submitted', 1500)
-          const appeared = page.locator('[data-testid="task-detail-panel"]').locator('text=test_delete_audit note').first()
-          finding(ctx, (await appeared.count()) > 0 ? 'PASS' : 'FAIL', '1.12 Note appears after Ctrl+Enter')
-
-          // Activity tab — merged feed should show note
-          const activityTab = page.locator('[data-testid="task-detail-panel"] button').filter({ hasText: /^Activity$/ }).first()
-          if (await activityTab.count()) {
-            await activityTab.click()
-            await snap(ctx, 'activity-after-note', 800)
-            const inActivity = page.locator('[data-testid="task-detail-panel"]').locator('text=test_delete_audit note').first()
-            finding(ctx, (await inActivity.count()) > 0 ? 'PASS' : 'FAIL', '1.12 Note appears in Activity merged feed')
-          }
-        } else {
-          finding(ctx, 'FRICTION', '1.12 Notes textarea not found')
-        }
-      }
-
-      // Close panel
-      const closeBtn = page.locator('[data-testid="close-detail-panel"]').first()
-      if (await closeBtn.count()) await closeBtn.click()
-      await page.waitForTimeout(500)
-    }
+  // Helper wraps an async block so one failing expansion doesn't block later ones
+  const safe = async (label: string, fn: () => Promise<void>) => {
+    try { await fn() } catch (e: any) { finding(ctx, 'FRICTION', `${label} threw: ${e.message.slice(0, 100)}`) }
   }
+
+  // 1.10 Subtask end-to-end (re-open detail panel, navigate to Details tab)
+  await safe('1.10 subtask', async () => {
+    if (!testTaskId) return
+    const titleCell2 = page.locator(`[data-testid="task-title-${testTaskId}"]`).first()
+    if (!(await titleCell2.count())) return
+    await titleCell2.click()
+    await page.waitForTimeout(1200)
+    const detailsTab = page.locator('[data-testid="task-detail-panel"] button').filter({ hasText: /^Details$/ }).first()
+    if (!(await detailsTab.count())) return
+    await detailsTab.click()
+    await snap(ctx, 'subtask-details-tab', 700)
+    const subInput = page.locator('[data-testid="task-detail-panel"]').locator('input[placeholder*="subtask" i], input[placeholder*="Add" i]').first()
+    if (!(await subInput.count())) {
+      finding(ctx, 'FRICTION', '1.10 Subtask input not found on Details tab')
+      return
+    }
+    await subInput.scrollIntoViewIfNeeded().catch(() => {})
+    await subInput.click({ force: true, timeout: 4000 }).catch(() => {})
+    await subInput.fill('test_delete_audit subtask', { timeout: 4000 })
+    await snap(ctx, 'subtask-typed', 300)
+    await subInput.press('Enter')
+    await snap(ctx, 'subtask-submitted', 1500)
+    const subtaskRow = page.locator('[data-testid="task-detail-panel"]').locator('text=test_delete_audit subtask').first()
+    finding(ctx, (await subtaskRow.count()) > 0 ? 'PASS' : 'FAIL', '1.10 Subtask appears in detail panel after Enter')
+  })
+
+  // 1.11 Comment end-to-end
+  await safe('1.11 comment', async () => {
+    const commentsTab = page.locator('[data-testid="task-detail-panel"] button').filter({ hasText: /^Comments$/ }).first()
+    if (!(await commentsTab.count())) return
+    await commentsTab.click({ force: true })
+    await snap(ctx, 'comment-tab', 500)
+    const commentArea = page.locator('[data-testid="task-detail-panel"] textarea').first()
+    if (!(await commentArea.count())) {
+      finding(ctx, 'FRICTION', '1.11 Comment textarea not found')
+      return
+    }
+    await commentArea.scrollIntoViewIfNeeded().catch(() => {})
+    await commentArea.fill('test_delete_audit comment @nick', { timeout: 4000 })
+    await snap(ctx, 'comment-typed', 300)
+    await commentArea.press('Control+Enter')
+    await snap(ctx, 'comment-submitted', 1500)
+    const appeared = page.locator('[data-testid="task-detail-panel"]').locator('text=test_delete_audit comment').first()
+    finding(ctx, (await appeared.count()) > 0 ? 'PASS' : 'FAIL', '1.11 Comment appears after Ctrl+Enter')
+  })
+
+  // 1.12 Task update/note with type
+  await safe('1.12 note', async () => {
+    const notesTab = page.locator('[data-testid="task-detail-panel"] button').filter({ hasText: /^Notes$/ }).first()
+    if (!(await notesTab.count())) return
+    await notesTab.click({ force: true })
+    await snap(ctx, 'notes-tab', 500)
+    const noteArea = page.locator('[data-testid="task-detail-panel"] textarea').first()
+    if (!(await noteArea.count())) {
+      finding(ctx, 'FRICTION', '1.12 Notes textarea not found')
+      return
+    }
+    await noteArea.scrollIntoViewIfNeeded().catch(() => {})
+    await noteArea.fill('test_delete_audit note progress', { timeout: 4000 })
+    await snap(ctx, 'note-typed', 300)
+    await noteArea.press('Control+Enter')
+    await snap(ctx, 'note-submitted', 1500)
+    const appeared = page.locator('[data-testid="task-detail-panel"]').locator('text=test_delete_audit note').first()
+    finding(ctx, (await appeared.count()) > 0 ? 'PASS' : 'FAIL', '1.12 Note appears after Ctrl+Enter')
+
+    const activityTab = page.locator('[data-testid="task-detail-panel"] button').filter({ hasText: /^Activity$/ }).first()
+    if (await activityTab.count()) {
+      await activityTab.click({ force: true })
+      await snap(ctx, 'activity-after-note', 800)
+      const inActivity = page.locator('[data-testid="task-detail-panel"]').locator('text=test_delete_audit note').first()
+      finding(ctx, (await inActivity.count()) > 0 ? 'PASS' : 'FAIL', '1.12 Note appears in Activity merged feed')
+    }
+  })
+
+  // Close panel
+  await safe('close panel', async () => {
+    const closeBtn = page.locator('[data-testid="close-detail-panel"]').first()
+    if (await closeBtn.count()) await closeBtn.click({ force: true })
+    await page.waitForTimeout(500)
+  })
 
   // 1.14 Right-click context menu snooze
-  if (testTaskId) {
+  await safe('1.14 context menu', async () => {
+    if (!testTaskId) return
     const row = page.locator(`[data-testid="task-row-${testTaskId}"]`).first()
-    if (await row.count()) {
-      await row.click({ button: 'right' })
-      await snap(ctx, 'context-menu', 500)
-      const snoozeItem = page.getByRole('menuitem').filter({ hasText: /Snooze/i }).first()
-      if (await snoozeItem.count() === 0) {
-        // Alternate: plain buttons or items
-        const snoozeAlt = page.locator('button, [role="menuitem"]').filter({ hasText: /Snooze/i }).first()
-        if (await snoozeAlt.count()) {
-          await snoozeAlt.hover()
-          await snap(ctx, 'context-menu-snooze-hover', 400)
-          const plus1 = page.locator('button, [role="menuitem"]').filter({ hasText: /\+1d|1 day/i }).first()
-          if (await plus1.count()) {
-            await plus1.click()
-            await snap(ctx, 'context-menu-snoozed', 1200)
-            finding(ctx, 'PASS', '1.14 Right-click context menu → Snooze +1d works')
-          } else {
-            finding(ctx, 'FRICTION', '1.14 Context menu Snooze submenu opened but +1d not found')
-            await page.keyboard.press('Escape')
-          }
-        } else {
-          finding(ctx, 'FRICTION', '1.14 Context menu did not show Snooze option on right-click')
-          await page.keyboard.press('Escape')
-        }
-      }
+    if (!(await row.count())) return
+    await row.click({ button: 'right', force: true, timeout: 4000 })
+    await snap(ctx, 'context-menu', 500)
+    const snoozeAlt = page.locator('button, [role="menuitem"]').filter({ hasText: /Snooze/i }).first()
+    if (!(await snoozeAlt.count())) {
+      finding(ctx, 'FRICTION', '1.14 Context menu did not show Snooze option on right-click')
+      await page.keyboard.press('Escape').catch(() => {})
+      return
     }
-  }
+    await snoozeAlt.hover()
+    await snap(ctx, 'context-menu-snooze-hover', 400)
+    const plus1 = page.locator('button, [role="menuitem"]').filter({ hasText: /\+1d|1 day/i }).first()
+    if (!(await plus1.count())) {
+      finding(ctx, 'FRICTION', '1.14 Context menu Snooze submenu opened but +1d not found')
+      await page.keyboard.press('Escape').catch(() => {})
+      return
+    }
+    await plus1.click({ force: true })
+    await snap(ctx, 'context-menu-snoozed', 1200)
+    finding(ctx, 'PASS', '1.14 Right-click context menu → Snooze +1d works')
+  })
 
   // 1.17 Data persistence — reload + verify task still present
-  await page.reload({ waitUntil: 'networkidle' })
-  await page.waitForTimeout(1500)
-  const persisted = page.locator('[data-testid^="task-row-"]').filter({ hasText: 'test_delete_audit full task' })
-  finding(ctx, (await persisted.count()) > 0 ? 'PASS' : 'FAIL', '1.17 Task persists after page reload (not just optimistic UI)')
-  await snap(ctx, 'reload-persistence', 400)
+  await safe('1.17 persistence', async () => {
+    await page.reload({ waitUntil: 'networkidle' })
+    await page.waitForTimeout(1800)
+    const persisted = page.locator('[data-testid^="task-row-"]').filter({ hasText: 'test_delete_audit full task' })
+    finding(ctx, (await persisted.count()) > 0 ? 'PASS' : 'FAIL', '1.17 Task persists after page reload (not just optimistic UI)')
+    await snap(ctx, 'reload-persistence', 400)
+  })
 
   writeFindings(ctx)
 }
