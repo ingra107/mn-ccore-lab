@@ -101,7 +101,19 @@ export async function handleCreateProject(
     return error('title required', 400);
   }
 
-  const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const baseSlug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  // Collision-avoidance: if slug already exists, append -2, -3, ... until free.
+  // Found by deep-audit Suite 8 — two creates with same title collided on slug,
+  // effectively corrupting the first project's identity.
+  let slug = baseSlug;
+  let attempt = 2;
+  while (true) {
+    const existing = await env.DB.prepare('SELECT id FROM projects WHERE slug = ?').bind(slug).first();
+    if (!existing) break;
+    slug = `${baseSlug}-${attempt}`;
+    attempt += 1;
+    if (attempt > 100) return error(`Cannot generate unique slug after 100 attempts from "${baseSlug}"`, 500);
+  }
   const id = generateId();
 
   await env.DB.prepare(
@@ -444,9 +456,12 @@ export async function handleDeleteProject(
   // Cascade-clean related rows to avoid FK-like errors or orphaned refs.
   // `comments` and `project_updates` hold a free-form project_id (not an
   // enforced FK), but leaving them behind means stale joins forever.
+  // `tasks.project_id` is soft-orphaned to NULL (keep the task, clear the ref)
+  // so users don't lose work — dangling refs found by deep-audit Suite 8.
   try {
     await env.DB.prepare('DELETE FROM comments WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug).run();
     await env.DB.prepare('DELETE FROM project_updates WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug).run();
+    await env.DB.prepare('UPDATE tasks SET project_id = NULL, updated_at = datetime(\'now\') WHERE (project_id = ? OR project_id = ?) AND deleted_at IS NULL').bind(existing.id, existing.slug).run();
   } catch (e) {
     console.error('project cascade-clean failed:', e);
   }
