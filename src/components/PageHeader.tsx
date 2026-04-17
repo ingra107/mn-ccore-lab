@@ -102,7 +102,11 @@ export default function PageHeader({
               display: 'flex',
               alignItems: 'center',
               gap: 'var(--sp-sm)',
-              flexShrink: 0,
+              flexShrink: 1,
+              flexWrap: 'wrap',
+              minWidth: 0,
+              maxWidth: '100%',
+              justifyContent: 'flex-end',
             }}
           >
             {actions}
