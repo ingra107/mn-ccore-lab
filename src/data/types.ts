@@ -90,6 +90,13 @@ export interface Project {
   notes?: ProjectNote[]
   pi_context?: string
   strategic_context?: string
+  // Key links (schema-v42, 2026-04-17). URLs + optional descriptions.
+  key_link_1?: string | null
+  key_link_1_desc?: string | null
+  key_link_2?: string | null
+  key_link_2_desc?: string | null
+  key_link_3?: string | null
+  key_link_3_desc?: string | null
 }
 
 export interface Mentee {

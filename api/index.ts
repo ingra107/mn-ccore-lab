@@ -1506,6 +1506,13 @@ export default {
             try { await env.DB.prepare('ALTER TABLE team_members ADD COLUMN preferred_name TEXT').run(); results.push('added preferred_name'); } catch { results.push('preferred_name already exists'); }
             return json({ data: { version: 41, results } });
           }
+          if (body.version === 42) {
+            const results: string[] = [];
+            for (const col of ['key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc']) {
+              try { await env.DB.prepare(`ALTER TABLE projects ADD COLUMN ${col} TEXT`).run(); results.push(`added ${col}`); } catch { results.push(`${col} already exists`); }
+            }
+            return json({ data: { version: 42, results } });
+          }
           return error(`Unknown migration version: ${body.version}`, 400);
         }
 

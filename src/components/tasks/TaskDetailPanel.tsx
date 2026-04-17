@@ -302,6 +302,10 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
               </FieldBlock>
             </div>
 
+            {/* Key Links — promoted to Overview so users actually see them (prior:
+                buried on Details tab with non-underlined ink-colored text, missed). */}
+            <DetailKeyLinks task={task} />
+
             {/* Description (rich text, resizable) */}
             <div>
               <label className="flex items-center" style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', marginBottom: 'var(--sp-xs)' }}>
@@ -327,9 +331,6 @@ export default function TaskDetailPanel({ task, onClose, onPrev, onNext }: TaskD
 
           {/* ── Details Tab ── */}
           <div style={{ display: activeTab === 'details' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}>
-
-            {/* Key Links (full width) */}
-            <DetailKeyLinks task={task} />
 
             {/* Row: Watchers + Reminder */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
@@ -616,8 +617,8 @@ function DetailKeyLinkRow({ url, label }: { url: string; label?: string | null }
           href={href}
           target={isHttp ? '_blank' : undefined}
           rel={isHttp ? 'noopener noreferrer' : undefined}
-          className="text-xs truncate block"
-          style={{ color: 'var(--ink)', textDecoration: 'none' }}
+          className="text-sm truncate block hover:underline"
+          style={{ color: 'var(--teal)', textDecoration: 'underline', textUnderlineOffset: '2px', fontWeight: 500 }}
           title={url}
         >
           {label || url}

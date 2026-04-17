@@ -975,6 +975,9 @@ function ProjectDetailInner({ project }: InnerProps) {
               )}
             </div>
 
+            {/* Key Links */}
+            <ProjectKeyLinks project={project} />
+
             {/* Team */}
             {project.team && project.team.length > 0 && (
               <div style={{ marginBottom: '16px' }}>
@@ -1339,6 +1342,70 @@ function ProjectTimeline({ createdAt, stage, tasks, updates }: {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+// Project key links — parity with task detail panel. Rendered on Overview
+// tab. Underlined teal to match "this is clickable" affordance.
+function ProjectKeyLinks({ project }: { project: Project }) {
+  const links = [
+    { url: project.key_link_1, desc: project.key_link_1_desc },
+    { url: project.key_link_2, desc: project.key_link_2_desc },
+    { url: project.key_link_3, desc: project.key_link_3_desc },
+  ].filter((l) => l.url)
+
+  if (links.length === 0) return null
+
+  return (
+    <div style={{ marginBottom: '16px' }}>
+      <label
+        style={{
+          fontSize: '10px',
+          color: 'var(--slate)',
+          opacity: 0.6,
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          display: 'block',
+          marginBottom: '8px',
+        }}
+      >
+        Key Links
+      </label>
+      <div className="flex flex-col gap-1.5">
+        {links.map((l, i) => {
+          const url = l.url!
+          const isHttp = url.startsWith('http')
+          const isLocalPath = url.startsWith('file:///') || url.startsWith('C:') || (url.startsWith('/') && !url.startsWith('//'))
+          const isBat = url.endsWith('.bat') || url.endsWith('.cmd') || url.endsWith('.ps1')
+          let href = url
+          let typeLabel = 'Link'
+          if (isBat) {
+            href = `mnccore://launch/${url.replace('file:///', '')}`
+            typeLabel = 'Script'
+          } else if (isLocalPath) {
+            href = `mnccore://open/${url.replace('file:///', '')}`
+            typeLabel = 'Folder'
+          }
+          return (
+            <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
+              <a
+                href={href}
+                target={isHttp ? '_blank' : undefined}
+                rel={isHttp ? 'noopener noreferrer' : undefined}
+                className="text-sm truncate block hover:underline flex-1"
+                style={{ color: 'var(--teal)', textDecoration: 'underline', textUnderlineOffset: '2px', fontWeight: 500 }}
+                title={url}
+              >
+                {l.desc || url}
+              </a>
+              <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                {typeLabel}
+              </span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
