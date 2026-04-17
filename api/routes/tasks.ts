@@ -266,11 +266,11 @@ export async function handleGetTaskComments(taskId: string, env: Env): Promise<R
 
 // POST /api/tasks/:id/comments
 export async function handleAddTaskComment(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { content: string };
+  const body = await request.json() as { content: string; author_slug?: string };
   if (!body.content?.trim()) return error('content required', 400);
 
   const id = generateId();
-  const authorSlug = actorSlug(user.email);
+  const authorSlug = body.author_slug?.trim() || actorSlug(user.email);
 
   await env.DB.prepare(
     'INSERT INTO task_comments (id, task_id, author_slug, content) VALUES (?, ?, ?, ?)'
@@ -516,11 +516,11 @@ export async function handleGetTaskUpdates(taskId: string, env: Env): Promise<Re
 
 // POST /api/tasks/:id/updates — post a task note/update
 export async function handlePostTaskUpdate(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { content: string; update_type?: string };
+  const body = await request.json() as { content: string; update_type?: string; author_slug?: string };
   if (!body.content?.trim()) return error('content required', 400);
 
   const id = generateId();
-  const authorSlug = actorSlug(user.email);
+  const authorSlug = body.author_slug?.trim() || actorSlug(user.email);
 
   await env.DB.prepare(
     'INSERT INTO task_updates (id, task_id, author_slug, content, update_type) VALUES (?, ?, ?, ?, ?)'

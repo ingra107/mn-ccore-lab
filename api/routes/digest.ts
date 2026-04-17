@@ -130,13 +130,13 @@ export async function handleCreateDigestComment(
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
-  const body = await request.json() as { content?: string };
+  const body = await request.json() as { content?: string; author_slug?: string };
   if (!body.content?.trim()) {
     return error('content is required', 400);
   }
 
   const id = crypto.randomUUID();
-  const authorSlug = user.email?.split('@')[0]?.replace(/\./g, '-') || 'unknown';
+  const authorSlug = body.author_slug?.trim() || user.email?.split('@')[0]?.replace(/\./g, '-') || 'unknown';
 
   await env.DB.prepare(
     'INSERT INTO digest_comments (id, paper_id, author_slug, content) VALUES (?, ?, ?, ?)'

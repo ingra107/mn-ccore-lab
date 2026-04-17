@@ -424,6 +424,12 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
     if (!open || !modalRef.current) return
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { onClose(); return }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault()
+        const form = modalRef.current?.querySelector('form')
+        if (form) form.requestSubmit()
+        return
+      }
       if (e.key !== 'Tab') return
       const focusable = modalRef.current!.querySelectorAll<HTMLElement>('input, select, textarea, button, [tabindex]:not([tabindex="-1"])')
       if (focusable.length === 0) return

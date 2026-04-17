@@ -115,6 +115,7 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
     body?: string;
     context?: string;
     project_slug?: string;
+    asked_by?: string;
   };
 
   // Accept both 'question' and 'title' field names
@@ -122,7 +123,7 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
   if (!questionText?.trim()) return error('question is required', 400);
 
   const id = generateId();
-  const askedBy = actorSlug(user.email);
+  const askedBy = body.asked_by?.trim() || actorSlug(user.email);
 
   await env.DB.prepare(
     'INSERT INTO lab_questions (id, question, context, asked_by, project_slug) VALUES (?, ?, ?, ?, ?)'
@@ -163,7 +164,7 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
 // ── POST /api/questions/:id/answers ────────────────────────────
 
 export async function handleCreateAnswer(questionId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { content: string };
+  const body = await request.json() as { content: string; author_slug?: string };
 
   if (!body.content?.trim()) return error('content is required', 400);
 
@@ -174,7 +175,7 @@ export async function handleCreateAnswer(questionId: string, request: Request, u
   if (!question) return error('Question not found', 404);
 
   const id = generateId();
-  const authorSlug = actorSlug(user.email);
+  const authorSlug = body.author_slug?.trim() || actorSlug(user.email);
 
   await env.DB.prepare(
     'INSERT INTO lab_answers (id, question_id, content, author_slug) VALUES (?, ?, ?, ?)'

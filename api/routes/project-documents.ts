@@ -24,6 +24,7 @@ export async function handleCreateProjectDocument(
     title?: string;
     url?: string;
     doc_type?: DocType;
+    created_by?: string;
   };
 
   if (!body.title?.trim()) {
@@ -35,11 +36,12 @@ export async function handleCreateProjectDocument(
 
   const id = generateId();
   const docType = body.doc_type || 'link';
+  const createdBy = body.created_by?.trim() || actorSlug(user.email);
 
   await env.DB.prepare(
     `INSERT INTO project_documents (id, project_id, title, url, doc_type, created_by)
      VALUES (?, ?, ?, ?, ?, ?)`
-  ).bind(id, projectSlug, body.title.trim(), body.url.trim(), docType, actorSlug(user.email)).run();
+  ).bind(id, projectSlug, body.title.trim(), body.url.trim(), docType, createdBy).run();
 
   await logActivity(
     env,
