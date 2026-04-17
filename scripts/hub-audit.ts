@@ -423,22 +423,29 @@ async function auditGrants(ctx: Ctx) {
   }
 
   // 8.2 Inline status dropdown
-  // Find any InlineSelect status on the grants page
-  const statusCells = page.locator('[role="button"]').filter({ hasText: /in_preparation|planning|funded|submitted|declined|closed|resubmission/i })
-  if (await statusCells.count()) {
+  // Grant status pills render the DISPLAY LABELS not the enum values:
+  //   planning / in_preparation / submitted / funded / resubmission / declined / closed
+  //   → Planning / In Preparation / Submitted / Funded / Resubmission / Declined / Closed
+  // Click the first visible status button with any of those labels.
+  const statusCells = page.locator('button').filter({ hasText: /^(Planning|In Preparation|Submitted|Funded|Resubmission|Declined|Closed)$/ })
+  const scCount = await statusCells.count()
+  finding(ctx, 'INFO', `8.2 Found ${scCount} grant status cells by label`)
+  if (scCount > 0) {
     await statusCells.first().click()
-    await snap(ctx, 'grant-status-dropdown', 600)
+    await snap(ctx, 'grant-status-dropdown', 700)
     const listbox = page.getByRole('listbox').first()
     if (await listbox.count()) {
       const options = await listbox.getByRole('option').allTextContents()
       finding(ctx, 'INFO', `8.2 Grant status options: ${options.join(' | ')}`)
-      const expected = ['planning', 'in_preparation', 'submitted', 'funded', 'resubmission', 'declined', 'closed']
-      const hit = expected.filter((e) => options.some((o) => o.toLowerCase().includes(e)))
-      finding(ctx, hit.length === 7 ? 'PASS' : 'FAIL', `8.2 R10 grant taxonomy: ${hit.length}/7 canonical values present (${hit.join(',')})`)
+      const expected = ['Planning', 'In Preparation', 'Submitted', 'Funded', 'Resubmission', 'Declined', 'Closed']
+      const hit = expected.filter((e) => options.some((o) => o.includes(e)))
+      finding(ctx, hit.length === 7 ? 'PASS' : 'FAIL', `8.2 R10 grant taxonomy: ${hit.length}/7 canonical labels present (${hit.join(', ')})`)
       await page.keyboard.press('Escape')
     } else {
       finding(ctx, 'FAIL', '8.2 Grant status dropdown did not expose role=listbox')
     }
+  } else {
+    finding(ctx, 'FAIL', '8.2 No grant status cells found on page')
   }
 
   writeFindings(ctx)

@@ -125,6 +125,8 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
           <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpen(false) }} />
           <div
             className="absolute z-50 mt-1 rounded-lg overflow-hidden"
+            role="listbox"
+            aria-label="Select assignee"
             style={{
               top: '100%',
               left: 0,
@@ -142,6 +144,8 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
               return (
                 <button
                   key={m.slug}
+                  role="option"
+                  aria-selected={isSelected}
                   onClick={(e) => { e.stopPropagation(); onChange(m.slug); setOpen(false) }}
                   style={{
                     display: 'flex',
