@@ -6,6 +6,7 @@ import { useCreateDecision } from '../hooks/useMutations'
 import { useToast } from '../hooks/useToast'
 import { useDebounce } from '../hooks/useDebounce'
 import SentimentBadge from './SentimentBadge'
+import { parseTagsString } from '../lib/tagUtils'
 
 // ── Tag auto-suggestion ──────────────────────────────────────
 
@@ -59,7 +60,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
   // Auto-suggest tags based on decision text
   const fullText = `${title} ${rationale} ${context}`
   const suggestedTags = useMemo(() => suggestTags(fullText), [fullText])
-  const currentTags = tags.split(',').map((t) => t.trim()).filter(Boolean)
+  const currentTags = parseTagsString(tags)
   const newSuggestions = suggestedTags.filter((t) => !currentTags.includes(t))
 
   // Filtered projects for linking
@@ -68,7 +69,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
     : projects.slice(0, 8)
 
   function addTag(tag: string) {
-    const existing = tags.split(',').map((t) => t.trim()).filter(Boolean)
+    const existing = parseTagsString(tags)
     if (!existing.includes(tag)) {
       setTags(existing.length > 0 ? `${tags}, ${tag}` : tag)
     }

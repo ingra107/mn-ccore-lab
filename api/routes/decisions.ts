@@ -36,6 +36,8 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
 
   const id = generateId();
   const decidedBy = body.decided_by?.trim() || actorSlug(user.email);
+  // Normalize tags to CSV on write (historical data was JSON-stringified arrays).
+  const normalizedTags = parseTagsField(body.tags).join(',') || null;
 
   await env.DB.prepare(
     'INSERT INTO decision_log (id, title, rationale, context, project_slug, meeting_id, decided_by, tags, linked_projects) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -47,7 +49,7 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
     body.project_slug || null,
     body.meeting_id || null,
     decidedBy,
-    body.tags || null,
+    normalizedTags,
     body.linked_projects || null,
   ).run();
 
@@ -95,6 +97,11 @@ export async function handleUpdateDecisionOutcome(id: string, request: Request, 
 export async function handleUpdateDecision(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
 
+  // Normalize tags to CSV on write (repair path for historical JSON-array format).
+  if (typeof body.tags === 'string') {
+    body.tags = parseTagsField(body.tags).join(',') || null;
+  }
+
   const allowedFields = ['title', 'rationale', 'context', 'project_slug', 'tags', 'linked_projects', 'outcome_sentiment'];
   const { sql, params: values, hasUpdates } = buildUpdate(body, allowedFields);
 
@@ -121,6 +128,19 @@ export async function handleGetDecisionsNeedingReview(env: Env): Promise<Respons
 }
 
 // GET /api/decisions/tags — unique tags across all decisions
+function parseTagsField(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed.map((t) => String(t).trim()).filter(Boolean);
+    } catch { /* fall through */ }
+  }
+  return trimmed.split(',').map(t => t.trim()).filter(Boolean);
+}
+
 export async function handleGetDecisionTags(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
     "SELECT tags FROM decision_log WHERE tags IS NOT NULL AND tags != ''"
@@ -128,7 +148,7 @@ export async function handleGetDecisionTags(env: Env): Promise<Response> {
 
   const tagCounts = new Map<string, number>();
   for (const row of (result.results || []) as { tags: string }[]) {
-    for (const tag of row.tags.split(',').map(t => t.trim()).filter(Boolean)) {
+    for (const tag of parseTagsField(row.tags)) {
       tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
     }
   }

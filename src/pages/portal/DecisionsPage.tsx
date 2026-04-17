@@ -25,6 +25,7 @@ import { useUndoToast } from '../../components/UndoToast'
 import { useProjects } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
+import { parseTagsString } from '../../lib/tagUtils'
 import { SENTIMENT_CONFIG } from '../../components/SentimentBadge'
 import SentimentBadge from '../../components/SentimentBadge'
 import SimilarDecisionsPanel from '../../components/SimilarDecisionsPanel'
@@ -68,9 +69,7 @@ function DecisionTimeline({
       {decisions.map((decision) => {
         const sentiment = decision.outcome_sentiment || 'pending'
         const config = SENTIMENT_CONFIG[sentiment] || SENTIMENT_CONFIG.pending
-        const tags = decision.tags
-          ? decision.tags.split(',').map((t) => t.trim()).filter(Boolean)
-          : []
+        const tags = parseTagsString(decision.tags)
         const projTitle = decision.project_slug
           ? projects.find((p) => p.slug === decision.project_slug)?.title
           : null
@@ -368,9 +367,7 @@ function DecisionRowItem({
   const projectTitle = decision.project_slug
     ? projectMap.get(decision.project_slug) || null
     : null
-  const tags = decision.tags
-    ? decision.tags.split(',').map((t) => t.trim()).filter(Boolean)
-    : []
+  const tags = parseTagsString(decision.tags)
   const visibleTags = tags.slice(0, 2)
   const extraTags = tags.length - visibleTags.length
 

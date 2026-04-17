@@ -1353,7 +1353,14 @@ a:hover {
 /* R12: Mobile typography floor — no body text smaller than 11px on phones.
    Raises the two token scales (--text-micro, --text-caption) plus any
    hardcoded 9/10px utility classes. Desktop keeps the original 10px for
-   dense information density. */
+   dense information density.
+
+   R5-follow-up (2026-04-17): Extended to inline styles via attribute
+   selectors. Many components use inline `style={{ fontSize: '10px' }}`
+   which beats external CSS without !important. Attribute-selector +
+   !important targets them. Avatar initials (text-[7px]/[6px] classes)
+   intentionally excluded — they live inside 16–22px containers and bumping
+   them would overflow the avatar. */
 @media (max-width: 767px) {
   :root {
     --text-micro: 11px;
@@ -1362,5 +1369,23 @@ a:hover {
   .text-\[9px\],
   .text-\[10px\] {
     font-size: 11px !important;
+  }
+  *[style*="font-size: 8px"],
+  *[style*="font-size:8px"],
+  *[style*="font-size: 9px"],
+  *[style*="font-size:9px"],
+  *[style*="font-size: 10px"],
+  *[style*="font-size:10px"] {
+    font-size: 11px !important;
+  }
+  /* Bump 36x36 inline icon buttons (Digest save/dismiss/comments, similar)
+     to 44x44 on mobile to meet touch-target guidelines. */
+  *[style*="min-width: 36px"],
+  *[style*="min-width:36px"] {
+    min-width: 44px !important;
+  }
+  *[style*="min-height: 36px"],
+  *[style*="min-height:36px"] {
+    min-height: 44px !important;
   }
 }

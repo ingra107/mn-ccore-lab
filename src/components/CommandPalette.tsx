@@ -264,8 +264,9 @@ export default function CommandPalette() {
       })
     }
 
-    // Tasks (pending only)
-    for (const task of tasks.filter((t) => !t.completed).slice(0, 20)) {
+    // Tasks (pending only) — include ALL so fuzzy search can find any;
+    // final filtered.slice(0, 12) caps the rendered list after user query.
+    for (const task of tasks.filter((t) => !t.completed)) {
       const person = getPersonInfo(task.assignee)
       items.push({
         id: `task-${task.id}`,
@@ -277,8 +278,8 @@ export default function CommandPalette() {
       })
     }
 
-    // Projects
-    for (const project of projects.slice(0, 15)) {
+    // Projects — include ALL so search can find projects beyond the first 15.
+    for (const project of projects) {
       items.push({
         id: `project-${project.slug}`,
         label: project.title,
@@ -301,8 +302,8 @@ export default function CommandPalette() {
       })
     }
 
-    // Meetings
-    for (const meeting of meetings.slice(0, 5)) {
+    // Meetings — include ALL so search can find older meetings too.
+    for (const meeting of meetings) {
       items.push({
         id: `meeting-${meeting.id}`,
         label: meeting.title,

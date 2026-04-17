@@ -9,6 +9,7 @@ import { getPersonInfo } from '../../../data/team'
 import { useDecisions } from '../../../hooks/useApiData'
 import type { DecisionRow } from '../../../hooks/useApiData'
 import { formatRelativeTime } from '../../../lib/dateUtils'
+import { parseTagsString } from '../../../lib/tagUtils'
 
 // ── Task Comments ────────────────────────────────────────────
 
@@ -208,7 +209,7 @@ export function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }
       {decisions.slice(0, 5).map((d: DecisionRow) => {
         const sentiment = d.outcome_sentiment || 'pending'
         const badge = SENTIMENT_BADGE[sentiment] || SENTIMENT_BADGE.pending
-        const tags = d.tags ? d.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+        const tags = parseTagsString(d.tags)
 
         return (
           <div

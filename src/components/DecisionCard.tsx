@@ -7,6 +7,7 @@ import InlineSelect from './InlineSelect'
 import SentimentBadge from './SentimentBadge'
 import SimilarDecisionsPanel from './SimilarDecisionsPanel'
 import { formatRelativeTime } from '../lib/dateUtils'
+import { parseTagsString } from '../lib/tagUtils'
 import { getPersonInfo } from '../data/team'
 import type { DecisionRow } from '../hooks/useApiData'
 import type { useUpdateDecisionOutcome } from '../hooks/useMutations'
@@ -30,7 +31,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
   const projectTitle = decision.project_slug
     ? projects.find((p) => p.slug === decision.project_slug)?.title
     : null
-  const tags = decision.tags ? decision.tags.split(',').map((t) => t.trim()).filter(Boolean) : []
+  const tags = parseTagsString(decision.tags)
   const linkedProjects = decision.linked_projects
     ? decision.linked_projects.split(',').map((s) => s.trim()).filter(Boolean)
     : []
