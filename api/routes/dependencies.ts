@@ -43,6 +43,7 @@ export async function handleCreateDependency(
     to_slug?: string;
     relationship_type?: string;
     note?: string;
+    created_by?: string;
   };
 
   if (!body.from_slug || !body.to_slug) {
@@ -64,7 +65,7 @@ export async function handleCreateDependency(
   try {
     await env.DB.prepare(
       'INSERT INTO project_dependencies (id, from_slug, to_slug, relationship_type, note, created_by) VALUES (?, ?, ?, ?, ?, ?)'
-    ).bind(id, body.from_slug, body.to_slug, relType, body.note || null, user.email).run();
+    ).bind(id, body.from_slug, body.to_slug, relType, body.note || null, body.created_by?.trim() || user.email).run();
   } catch (e: unknown) {
     if (e instanceof Error && e.message.includes('UNIQUE')) {
       return error('This dependency already exists', 409);

@@ -434,7 +434,7 @@ export async function handleAddComment(
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
-  const body = await request.json() as { content?: string };
+  const body = await request.json() as { content?: string; author_slug?: string };
 
   if (!body.content || body.content.trim().length === 0) {
     return error('Comment content is required', 400);
@@ -446,9 +446,11 @@ export async function handleAddComment(
     return error('Project not found', 404);
   }
 
-  // Look up author by email → team member
+  // Look up author — body.author_slug takes precedence so API-driven seeding
+  // attributes correctly. Falls back to the signed-in user's slug.
+  const authorSlugResolved = body.author_slug?.trim() || actorSlug(user.email);
   const member = await env.DB.prepare('SELECT id FROM team_members WHERE slug = ?')
-    .bind(actorSlug(user.email))
+    .bind(authorSlugResolved)
     .first<{ id: string }>();
 
   const commentId = generateId();
@@ -504,13 +506,13 @@ export async function handleAddComment(
 
 // POST /api/projects/:slug/updates — post project update
 export async function handlePostProjectUpdate(slug: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { content: string; update_type?: string };
+  const body = await request.json() as { content: string; update_type?: string; author?: string };
   if (!body.content) return error('content required', 400);
 
   const id = generateId();
   await env.DB.prepare(
     'INSERT INTO project_updates (id, project_id, author, content, update_type) VALUES (?, ?, ?, ?, ?)'
-  ).bind(id, slug, user.email, body.content, body.update_type ?? 'progress').run();
+  ).bind(id, slug, body.author?.trim() || user.email, body.content, body.update_type ?? 'progress').run();
 
   await logActivity(env, 'project_update', `Posted update on ${slug}: "${body.content.slice(0, 100)}"`, user.email, slug, 'project');
 
