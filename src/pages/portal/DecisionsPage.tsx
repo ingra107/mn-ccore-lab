@@ -857,7 +857,7 @@ export default function DecisionsPage() {
         subtitle={`${pendingCount} pending review, ${recordedCount} with outcomes`}
         count={allDecisions.length}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             <div
               className="flex items-center overflow-hidden"
               style={{
