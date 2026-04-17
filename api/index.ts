@@ -1500,6 +1500,12 @@ export default {
             try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_project_documents_project ON project_documents(project_id)').run(); results.push('created project index'); } catch (e) { results.push(`project index: ${e}`); }
             return json({ data: { version: 38, results } });
           }
+          if (body.version === 41) {
+            const results: string[] = [];
+            try { await env.DB.prepare('ALTER TABLE team_members ADD COLUMN full_name TEXT').run(); results.push('added full_name'); } catch { results.push('full_name already exists'); }
+            try { await env.DB.prepare('ALTER TABLE team_members ADD COLUMN preferred_name TEXT').run(); results.push('added preferred_name'); } catch { results.push('preferred_name already exists'); }
+            return json({ data: { version: 41, results } });
+          }
           return error(`Unknown migration version: ${body.version}`, 400);
         }
 

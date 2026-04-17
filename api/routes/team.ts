@@ -46,8 +46,9 @@ export async function handleUpdateTeamMember(
 ): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
 
-  // Allowlisted fields that team members can update about themselves
-  const allowed = ['bio', 'photo_url', 'scholar_id', 'title', 'department'];
+  // Allowlisted fields that team members can update about themselves.
+  // v41: full_name, preferred_name added so the profile form can edit them.
+  const allowed = ['bio', 'photo_url', 'scholar_id', 'title', 'department', 'full_name', 'preferred_name', 'credentials'];
   const updates: string[] = [];
   const values: (string | null)[] = [];
 
