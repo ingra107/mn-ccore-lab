@@ -478,7 +478,7 @@ export async function handleAddComment(
   }
 
   // Verify project exists (accept either id or slug — URL param can be either).
-  const project = await env.DB.prepare('SELECT id, title FROM projects WHERE id = ? OR slug = ?').bind(projectId, projectId).first<{ id: string; title: string }>();
+  const project = await env.DB.prepare('SELECT id, title, slug FROM projects WHERE id = ? OR slug = ?').bind(projectId, projectId).first<{ id: string; title: string; slug: string | null }>();
   if (!project) {
     return error('Project not found', 404);
   }
@@ -514,17 +514,20 @@ export async function handleAddComment(
         if (!validSet.has(slug)) continue;
         if (slug === authorSlug) continue; // don't notify yourself
 
+        // source_id references the PROJECT (what the user cares about on click),
+        // not the comment row id. Link resolves to the project's canonical slug
+        // so old id-based URLs keep working.
         await env.DB.prepare(
           'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         ).bind(
           generateId(),
           slug,
           'mention',
-          'comment',
-          commentId,
+          'project_comment',
+          project.id,
           `${user.name || user.email} mentioned you in a comment`,
           body.content.trim().slice(0, 200),
-          `/projects/${projectId}`
+          `/projects/${project.slug ?? projectId}`
         ).run();
       }
     }

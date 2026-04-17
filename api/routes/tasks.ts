@@ -72,7 +72,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
       const assignerSlug = actorSlug(item.assigned_by);
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} completed a task`, (item.title || item.description).slice(0, 200), '/tasks').run();
+      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} completed a task`, (item.title || item.description).slice(0, 200), `/tasks?open=${id}`).run();
     } catch (e) { console.error('Failed to create completion notification:', e); }
   }
 
@@ -233,7 +233,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
         id,
         `${user.name || user.email} assigned you a task`,
         title.slice(0, 200),
-        '/tasks'
+        `/tasks?open=${id}`,
       ).run();
 
       // Email notification (fire-and-forget, only if Resend configured)
@@ -283,9 +283,12 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
     const mentions = parseMentions(body.content);
     for (const slug of mentions) {
       if (slug === authorSlug) continue;
+      // source_id references the TASK (what the user cares about), not the
+      // comment row id — clicking the notification takes them to the task
+      // detail panel via ?open=. Found via deep-audit Suite 4.
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(generateId(), slug, 'mention', 'task_comment', id, `${user.name || user.email} mentioned you`, body.content.trim().slice(0, 200), '/tasks').run();
+      ).bind(generateId(), slug, 'mention', 'task_comment', taskId, `${user.name || user.email} mentioned you`, body.content.trim().slice(0, 200), `/tasks?open=${taskId}`).run();
     }
   } catch (e) { console.error('Failed to create task comment notifications:', e); }
 
@@ -481,7 +484,7 @@ export async function handleAcknowledgeTask(id: string, user: AuthUser, env: Env
       const assignerSlug = actorSlug(task.assigned_by);
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} acknowledged a task`, (task.title || task.description).slice(0, 200), '/tasks').run();
+      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} acknowledged a task`, (task.title || task.description).slice(0, 200), `/tasks?open=${id}`).run();
     } catch (e) { console.error('Failed to create acknowledge notification:', e); }
   }
 
@@ -537,7 +540,7 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
       try {
         await env.DB.prepare(
           'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-        ).bind(generateId(), slug, 'mention', 'task', taskId, `${user.name || user.email} mentioned you in a task note`, body.content.trim().slice(0, 200), '/tasks').run();
+        ).bind(generateId(), slug, 'mention', 'task', taskId, `${user.name || user.email} mentioned you in a task note`, body.content.trim().slice(0, 200), `/tasks?open=${taskId}`).run();
       } catch (e) { console.error('Failed to create mention notification:', e); }
     }
   }
