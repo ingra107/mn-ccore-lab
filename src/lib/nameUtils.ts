@@ -123,6 +123,16 @@ export function displayName(slug: string, tier: NameTier = 'display'): string {
 }
 
 /**
+ * Shortcut: just the formal full name ("Nicholas Ingraham"), no credentials appended.
+ * Use when you need the full legal name without the ", MD" suffix — e.g. when
+ * passing to a component that renders credentials separately.
+ */
+export function fullNameForSlug(slug: string): string {
+  const p = profileFromStatic(slug)
+  return (p.full_name || p.name || slug).trim()
+}
+
+/**
  * Overrides where `team.ts` legacy `name` is already a casual form
  * (e.g. "Nick" vs "Nicholas"). Seed data for schema-v41 backfill.
  * Keys are slug. Keep in sync with `api/migrations/seed-names-v41.sql`.

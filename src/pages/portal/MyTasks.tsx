@@ -120,7 +120,17 @@ export default function MyTasks() {
     })
   }
   const handleFieldChange = (id: string, field: string, value: unknown) => {
+    // Capture prev so we can undo priority/assignee/due_date/project changes.
+    // Skip content fields (title/description) — text-edit undo is noisy.
+    const task = allTasks.find((t) => t.id === id)
+    const prev = task ? (task as unknown as Record<string, unknown>)[field] : undefined
     updateTask.mutate({ id, fields: { [field]: value } })
+    if (task && prev !== undefined && prev !== value && !['title', 'description'].includes(field)) {
+      const label = field.replace(/_/g, ' ')
+      showUndo(`${label.charAt(0).toUpperCase() + label.slice(1)} → ${String(value ?? 'none')}`, () =>
+        updateTask.mutate({ id, fields: { [field]: prev } }),
+      )
+    }
   }
 
   const { user } = useAuth()

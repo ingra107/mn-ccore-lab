@@ -127,7 +127,18 @@ export default function Tasks() {
   }
 
   const handleFieldChange = (id: string, field: string, value: unknown) => {
+    // Look up the prev value so the undo toast can revert. Skip undo for
+    // content fields where a revert is noisy (title/description — users
+    // typically don't mean to undo free-text edits).
+    const task = tasks.find((t) => t.id === id)
+    const prev = task ? (task as unknown as Record<string, unknown>)[field] : undefined
     updateTask.mutate({ id, fields: { [field]: value } })
+    if (task && prev !== undefined && prev !== value && !['title', 'description'].includes(field)) {
+      const label = field.replace(/_/g, ' ')
+      showUndo(`${label.charAt(0).toUpperCase() + label.slice(1)} → ${String(value ?? 'none')}`, () =>
+        updateTask.mutate({ id, fields: { [field]: prev } }),
+      )
+    }
   }
 
   const handleCreate = (task: {

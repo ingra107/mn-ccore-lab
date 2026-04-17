@@ -89,7 +89,7 @@ export default function LabPageLayout({
             {/* Avatar */}
             <div className="flex justify-center lg:justify-start mb-6">
               <Avatar
-                name={`${name}, ${credentials}`}
+                name={credentials ? `${name}, ${credentials}` : name}
                 initials={initials}
                 photoUrl={photoUrl}
                 size="lg"
@@ -106,7 +106,7 @@ export default function LabPageLayout({
                   color: 'var(--ink)',
                 }}
               >
-                {name}, {credentials}
+                {credentials ? `${name}, ${credentials}` : name}
               </h1>
               <p
                 className="text-sm mb-1"

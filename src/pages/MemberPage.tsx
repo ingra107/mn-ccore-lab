@@ -18,7 +18,7 @@ import { getMemberBySlug } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
 import { projects } from '../data/projects'
 import { formatShortDate, isOverdue } from '../lib/dateUtils'
-import { displayName as formatTier } from '../lib/nameUtils'
+import { displayName as formatTier, fullNameForSlug } from '../lib/nameUtils'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 import WatchButton from '../components/WatchButton'
 
@@ -239,9 +239,14 @@ export default function MemberPage() {
     `${displayName} — ${member.role} at MN-CCORE Lab, University of Minnesota.${publishedCount > 0 ? ` ${publishedCount} publications.` : ''}`
   )
 
+  // Render the formal full name in the header ("Robert Adams Dudley" not
+  // "Adams Dudley"). credentials stay separate so LabPageLayout's h1 keeps
+  // its "name, credentials" composition with proper typography.
+  const formalFullName = member.slug ? fullNameForSlug(member.slug) : member.name
+
   return (
     <LabPageLayout
-      name={member.name}
+      name={formalFullName}
       credentials={member.credentials ?? ''}
       title={member.role}
       role="MN-CCORE Team Member"
@@ -249,7 +254,7 @@ export default function MemberPage() {
       bio={member.bio || mentee?.bio}
       links={memberLinks}
       photoUrl={member.photoUrl}
-      breadcrumb={<Breadcrumb backTo="/team" backLabel="Team" current={member.name} />}
+      breadcrumb={<Breadcrumb backTo="/team" backLabel="Team" current={formalFullName} />}
       sections={[
         ...(mentee
           ? [{ id: 'research-focus', label: 'Research Focus' }]
