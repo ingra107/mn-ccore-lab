@@ -405,6 +405,15 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
       await env.DB.prepare(
         `UPDATE tasks SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id IN (${placeholders})`
       ).bind(...body.ids).run()
+      // Cascade-clean notifications pointing at deleted tasks so orphans
+      // don't accumulate (deep-audit 12.L found 151 stale notifs).
+      try {
+        await env.DB.prepare(
+          `DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id IN (${placeholders})`
+        ).bind(...body.ids).run()
+      } catch (e) {
+        console.error('cascade-clean notifications failed:', e)
+      }
       break
   }
 
