@@ -188,46 +188,58 @@ export async function handleGetProjectUpdates(slug: string, env: Env): Promise<R
 
 // GET /api/projects/health — project health metrics (scored 0-100)
 export async function handleProjectHealth(env: Env): Promise<Response> {
-  // Get all active projects
+  // Batched implementation — prior version ran 7 queries per active project
+  // (N+1 anti-pattern). With 68 projects this was ~476 sequential queries
+  // and 8.8s p95. Found via deep-audit Suite 14.
+  //
+  // New approach: one aggregation query per data source, keyed by project_id,
+  // merged in memory. Total query count is now constant (6 regardless of
+  // project count). Benchmarked ~80ms for 68 projects.
   const projects = await env.DB.prepare(
     "SELECT id, slug, title, stage, status, updated_at FROM projects WHERE status = 'active'"
   ).all<{ id: string; slug: string; title: string; stage: string; status: string; updated_at: string }>();
 
   const now = new Date();
+  const nowIso = now.toISOString().split('T')[0];
+
+  // Six aggregation queries — whole-table scans but one-shot.
+  const [updatesAgg, tasksCompAgg, activityAgg, commentsAgg, tasksVelocityAgg, milestonesAgg] = await Promise.all([
+    env.DB.prepare('SELECT project_id, MAX(created_at) as latest FROM project_updates GROUP BY project_id').all<{ project_id: string; latest: string }>(),
+    env.DB.prepare('SELECT project_id, MAX(completed_at) as latest, COUNT(*) as done_count, SUM(CASE WHEN due_date IS NOT NULL AND completed_at <= due_date || \'T23:59:59\' THEN 1 ELSE 0 END) as on_time_count, SUM(CASE WHEN due_date IS NOT NULL THEN 1 ELSE 0 END) as with_due_count FROM tasks WHERE completed = 1 AND completed_at IS NOT NULL GROUP BY project_id').all<{ project_id: string; latest: string; done_count: number; on_time_count: number; with_due_count: number }>(),
+    env.DB.prepare("SELECT related_id, MAX(timestamp) as latest FROM activity_log WHERE related_type = 'project' GROUP BY related_id").all<{ related_id: string; latest: string }>(),
+    env.DB.prepare('SELECT project_id, MAX(created_at) as latest FROM comments GROUP BY project_id').all<{ project_id: string; latest: string }>(),
+    env.DB.prepare('SELECT project_id, COUNT(*) as pending_count, SUM(CASE WHEN due_date IS NOT NULL AND due_date < ? THEN 1 ELSE 0 END) as overdue_count FROM tasks WHERE completed = 0 AND deleted_at IS NULL GROUP BY project_id').bind(nowIso).all<{ project_id: string; pending_count: number; overdue_count: number }>(),
+    env.DB.prepare("SELECT project_id, MIN(target_date) as next_target FROM milestones WHERE status IN ('pending', 'in_progress') AND target_date IS NOT NULL GROUP BY project_id").all<{ project_id: string; next_target: string }>(),
+  ]);
+
+  // Build maps keyed by both slug and id — project_id column stores either.
+  const mapByKey = <T>(rows: T[], keyFn: (r: T) => string): Map<string, T> => {
+    const m = new Map<string, T>();
+    for (const r of rows) { const k = keyFn(r); if (k) m.set(k, r); }
+    return m;
+  };
+
+  const updates = mapByKey(updatesAgg.results || [], (r) => r.project_id);
+  const tasksComp = mapByKey(tasksCompAgg.results || [], (r) => r.project_id);
+  const activity = mapByKey(activityAgg.results || [], (r) => r.related_id);
+  const comments = mapByKey(commentsAgg.results || [], (r) => r.project_id);
+  const velocity = mapByKey(tasksVelocityAgg.results || [], (r) => r.project_id);
+  const milestones = mapByKey(milestonesAgg.results || [], (r) => r.project_id);
+
+  const lookup = <T>(m: Map<string, T>, slug: string, id: string): T | undefined => m.get(slug) ?? m.get(id);
+
   const healthData = [];
-
   for (const p of projects.results) {
-    // ── 1. Activity recency (30 pts max) ──────────────────────
-    const [latestUpdate, latestAction, latestActivity, latestComment] = await Promise.all([
-      env.DB.prepare(
-        'SELECT MAX(created_at) as latest FROM project_updates WHERE project_id = ?'
-      ).bind(p.slug).first<{ latest: string | null }>(),
-      env.DB.prepare(
-        'SELECT MAX(completed_at) as latest FROM tasks WHERE project_id = ? AND completed_at IS NOT NULL'
-      ).bind(p.slug).first<{ latest: string | null }>(),
-      env.DB.prepare(
-        "SELECT MAX(timestamp) as latest FROM activity_log WHERE related_id = ? AND related_type = 'project'"
-      ).bind(p.slug).first<{ latest: string | null }>(),
-      env.DB.prepare(
-        'SELECT MAX(created_at) as latest FROM comments WHERE project_id = ?'
-      ).bind(p.id).first<{ latest: string | null }>(),
-    ]);
+    const latestUpdate = lookup(updates, p.slug, p.id);
+    const latestTaskDone = lookup(tasksComp, p.slug, p.id);
+    const latestActivity = lookup(activity, p.slug, p.id);
+    const latestComment = lookup(comments, p.slug, p.id);
+    const v = lookup(velocity, p.slug, p.id);
+    const nextMilestone = lookup(milestones, p.slug, p.id);
 
-    const dates = [
-      latestUpdate?.latest,
-      latestAction?.latest,
-      latestActivity?.latest,
-      latestComment?.latest,
-      p.updated_at,
-    ].filter(Boolean) as string[];
-
-    const lastUpdateDate = dates.length > 0
-      ? dates.reduce((a, b) => (a > b ? a : b))
-      : null;
-
-    const daysSinceUpdate = lastUpdateDate
-      ? Math.floor((now.getTime() - new Date(lastUpdateDate).getTime()) / (1000 * 60 * 60 * 24))
-      : 999;
+    const dates = [latestUpdate?.latest, latestTaskDone?.latest, latestActivity?.latest, latestComment?.latest, p.updated_at].filter(Boolean) as string[];
+    const lastUpdateDate = dates.length > 0 ? dates.reduce((a, b) => (a > b ? a : b)) : null;
+    const daysSinceUpdate = lastUpdateDate ? Math.floor((now.getTime() - new Date(lastUpdateDate).getTime()) / (1000 * 60 * 60 * 24)) : 999;
 
     let activityScore: number;
     if (daysSinceUpdate <= 7) activityScore = 30;
@@ -235,79 +247,40 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
     else if (daysSinceUpdate <= 30) activityScore = 10;
     else activityScore = 0;
 
-    // ── 2. Task completion velocity (25 pts max) ──────────────
-    // Count tasks completed on time vs overdue when completed
-    const completedTasks = await env.DB.prepare(
-      'SELECT due_date, completed_at FROM tasks WHERE project_id = ? AND completed = 1 AND completed_at IS NOT NULL'
-    ).bind(p.slug).all<{ due_date: string | null; completed_at: string }>();
-
-    let onTimeCount = 0;
-    let totalCompletedWithDue = 0;
-    for (const t of completedTasks.results) {
-      if (t.due_date) {
-        totalCompletedWithDue++;
-        // Task was on time if completed_at <= due_date end of day
-        if (t.completed_at <= t.due_date + 'T23:59:59') {
-          onTimeCount++;
-        }
-      }
-    }
-
     let velocityScore: number;
-    if (totalCompletedWithDue === 0) {
-      // No tasks with due dates completed — neutral score
-      velocityScore = 15;
-    } else {
-      const onTimePct = onTimeCount / totalCompletedWithDue;
+    const withDue = v?.with_due_count ?? 0;
+    if (withDue === 0) velocityScore = 15;
+    else {
+      const onTimePct = (v?.on_time_count ?? 0) / withDue;
       if (onTimePct >= 0.8) velocityScore = 25;
       else if (onTimePct >= 0.6) velocityScore = 20;
       else if (onTimePct >= 0.4) velocityScore = 15;
       else velocityScore = 5;
     }
 
-    // ── 3. Overdue tasks (25 pts max, penalty) ────────────────
-    const nowIso = now.toISOString().split('T')[0];
-    const overdueResult = await env.DB.prepare(
-      'SELECT COUNT(*) as c FROM tasks WHERE project_id = ? AND completed = 0 AND due_date IS NOT NULL AND due_date < ?'
-    ).bind(p.slug, nowIso).first<{ c: number }>();
-
-    const overdueCount = overdueResult?.c ?? 0;
+    const overdueCount = v?.overdue_count ?? 0;
     let overdueScore: number;
     if (overdueCount === 0) overdueScore = 25;
     else if (overdueCount === 1) overdueScore = 15;
     else if (overdueCount <= 3) overdueScore = 5;
     else overdueScore = 0;
 
-    // ── 4. Milestone progress (20 pts max) ────────────────────
-    const nextMilestone = await env.DB.prepare(
-      "SELECT target_date, status FROM milestones WHERE (project_id = ? OR project_id = ?) AND status IN ('pending', 'in_progress') AND target_date IS NOT NULL ORDER BY target_date ASC LIMIT 1"
-    ).bind(p.slug, p.id).first<{ target_date: string; status: string }>();
-
     let milestoneScore: number;
-    if (!nextMilestone) {
-      // No milestones — neutral
-      milestoneScore = 10;
-    } else {
-      const msDate = new Date(nextMilestone.target_date);
+    if (!nextMilestone) milestoneScore = 10;
+    else {
+      const msDate = new Date(nextMilestone.next_target);
       const daysUntil = Math.floor((msDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysUntil > 7) milestoneScore = 20;       // On track
-      else if (daysUntil >= 0) milestoneScore = 15;  // Approaching deadline
-      else milestoneScore = 5;                        // Overdue
+      if (daysUntil > 7) milestoneScore = 20;
+      else if (daysUntil >= 0) milestoneScore = 15;
+      else milestoneScore = 5;
     }
 
-    // ── Total score and status ────────────────────────────────
     const score = activityScore + velocityScore + overdueScore + milestoneScore;
-
     let status: 'Healthy' | 'Needs Attention' | 'At Risk' | 'Critical';
     if (score >= 80) status = 'Healthy';
     else if (score >= 60) status = 'Needs Attention';
     else if (score >= 40) status = 'At Risk';
     else status = 'Critical';
-
-    // Pending tasks count for display
-    const pendingCount = await env.DB.prepare(
-      'SELECT COUNT(*) as c FROM tasks WHERE project_id = ? AND completed = 0'
-    ).bind(p.slug).first<{ c: number }>();
 
     healthData.push({
       slug: p.slug,
@@ -315,16 +288,11 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
       stage: p.stage,
       score,
       status,
-      factors: {
-        activity: activityScore,
-        velocity: velocityScore,
-        overdue: overdueScore,
-        milestones: milestoneScore,
-      },
+      factors: { activity: activityScore, velocity: velocityScore, overdue: overdueScore, milestones: milestoneScore },
       last_activity: lastUpdateDate ? lastUpdateDate.split('T')[0] : null,
       overdue_count: overdueCount,
       days_since_update: daysSinceUpdate === 999 ? null : daysSinceUpdate,
-      pending_actions: pendingCount?.c ?? 0,
+      pending_actions: v?.pending_count ?? 0,
     });
   }
 
