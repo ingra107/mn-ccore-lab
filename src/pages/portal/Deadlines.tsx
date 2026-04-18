@@ -257,6 +257,7 @@ export default function Deadlines() {
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs transition-colors border"
             style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.6 }}
             title="Export deadlines as .ics calendar file"
+            aria-label="Export to .ics"
           >
             <Download size={12} />
             Export
@@ -558,7 +559,7 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
 
         {/* Due date — inline editable for tasks, read-only for milestones (grant timeline is server-derived) */}
         {item.type === 'task' && onDueDateChange ? (
-          <div onClick={(e) => e.stopPropagation()}>
+          <div onClick={(e) => e.stopPropagation()} data-testid={`task-due-${item.id}`}>
             <InlineDatePicker
               value={item.due_date}
               onChange={(newDate) => onDueDateChange(item.id, newDate)}
