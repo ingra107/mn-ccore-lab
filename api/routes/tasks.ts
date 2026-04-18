@@ -527,7 +527,7 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
 }
 
 // POST /api/tasks/:id/acknowledge — closed-loop task acknowledgment (aviation CRM pattern)
-export async function handleAcknowledgeTask(id: string, user: AuthUser, env: Env): Promise<Response> {
+export async function handleAcknowledgeTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const task = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null; acknowledged_at: string | null }>();
   if (!task) return error('Task not found', 404);
 
@@ -535,8 +535,17 @@ export async function handleAcknowledgeTask(id: string, user: AuthUser, env: Env
     return json({ data: { already_acknowledged: true, acknowledged_at: task.acknowledged_at } });
   }
 
+  // Accept body.slug override for server-side / API-key callers who aren't
+  // logged in as the acknowledging user (e.g. deep-audit tests, backfills,
+  // Hermes). Falls back to the authenticated user's slug otherwise.
+  let overrideSlug: string | null = null;
+  try {
+    const body = await request.json() as { slug?: string } | undefined;
+    if (body?.slug && typeof body.slug === 'string') overrideSlug = body.slug.trim() || null;
+  } catch { /* no body or non-JSON — fine */ }
+
   const now = new Date().toISOString();
-  const acknowledgedBy = actorSlug(user.email);
+  const acknowledgedBy = overrideSlug ?? actorSlug(user.email);
 
   await env.DB.prepare(
     "UPDATE tasks SET acknowledged_at = ?, acknowledged_by = ?, updated_at = datetime('now') WHERE id = ?"

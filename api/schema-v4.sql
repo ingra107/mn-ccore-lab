@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   body TEXT,
   link TEXT,                       -- relative URL e.g. /projects/lpv-paper
   read INTEGER DEFAULT 0,
+  read_at TEXT,                    -- stamped when marked read (2026-04-18)
   email_sent INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
 );

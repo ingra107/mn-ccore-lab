@@ -288,6 +288,22 @@ export default {
           return await handleGetRevisions(url, env);
         }
 
+        // GET /api/projects/:slug/revisions — convenience route for the UI
+        // (ProjectDetail page) + deep-audit. Resolves slug→project_id and
+        // delegates to the same handler.
+        const projRevMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/revisions$/);
+        if (request.method === 'GET' && projRevMatch) {
+          const ref = projRevMatch[1];
+          const proj = await env.DB.prepare(
+            'SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+          ).bind(ref, ref).first<{ id: string; slug: string | null }>();
+          if (!proj) return json({ data: [] });
+          const projectId = proj.slug || proj.id;
+          const rewrittenUrl = new URL(url.toString());
+          rewrittenUrl.searchParams.set('project_id', projectId);
+          return await handleGetRevisions(rewrittenUrl, env);
+        }
+
         const revisionCommentsGet = url.pathname.match(/^\/api\/revisions\/([^/]+)\/comments$/);
         if (revisionCommentsGet) {
           return await handleGetRevisionComments(revisionCommentsGet[1], env);
@@ -343,6 +359,15 @@ export default {
         // Questions (Ask the Lab)
         if (url.pathname === '/api/questions') {
           return await handleGetQuestions(url, env);
+        }
+        // GET /api/questions/:id/answers — dedicated answers list endpoint.
+        // Must precede the /:id catch-all so answers doesn't match as id.
+        const questionAnswersGet = url.pathname.match(/^\/api\/questions\/([^/]+)\/answers$/);
+        if (questionAnswersGet) {
+          const rows = await env.DB.prepare(
+            'SELECT * FROM lab_answers WHERE question_id = ? ORDER BY is_accepted DESC, created_at ASC'
+          ).bind(questionAnswersGet[1]).all();
+          return json({ data: rows.results || [] });
         }
         const questionDetailGet = url.pathname.match(/^\/api\/questions\/([^/]+)$/);
         if (questionDetailGet) {
@@ -622,7 +647,7 @@ export default {
         // POST /api/tasks/:id/acknowledge — closed-loop task acknowledgment
         const taskAckMatch = path.match(/^\/api\/tasks\/([^/]+)\/acknowledge$/);
         if (request.method === 'POST' && taskAckMatch) {
-          return withVersionBump(await handleAcknowledgeTask(taskAckMatch[1], user, env));
+          return withVersionBump(await handleAcknowledgeTask(taskAckMatch[1], request, user, env));
         }
 
         // POST /api/tasks/:id/status — change task status

@@ -62,11 +62,11 @@ async function main() {
       return n.length
     }
 
-    section(s, '4.A  Baseline notification counts for mesfin + dudley')
-    const mesfinBase = await baselineFor('mesfin')
+    section(s, '4.A  Baseline notification counts for nate + dudley')
+    const mesfinBase = await baselineFor('nate')
     const dudleyBase = await baselineFor('dudley')
     const nickBase = await baselineFor('nick')
-    pass(s, `4.A baselines — mesfin=${mesfinBase} dudley=${dudleyBase} nick=${nickBase}`)
+    pass(s, `4.A baselines — nate=${mesfinBase} dudley=${dudleyBase} nick=${nickBase}`)
 
     section(s, '4.B  Create a task to mention people about')
     const taskTitle = marker('mention_task')
@@ -87,13 +87,13 @@ async function main() {
     createdTaskIds.push(taskId)
     pass(s, `4.B Task created ${taskId}`)
 
-    section(s, '4.C  Task comment with SINGLE @mesfin → mesfin gets +1 notification')
-    const cmt1 = `${marker('cmt')} @mesfin please review`
+    section(s, '4.C  Task comment with SINGLE @nate → nate gets +1 notification')
+    const cmt1 = `${marker('cmt')} @nate please review`
     await s.api.post(`/api/tasks/${taskId}/comments`, { data: { content: cmt1 } })
     await s.page.waitForTimeout(800)
-    const mesfinAfter1 = await listNotifications(s.api, 'mesfin')
+    const mesfinAfter1 = await listNotifications(s.api, 'nate')
     const delta1 = mesfinAfter1.length - mesfinBase
-    if (delta1 === 1) pass(s, `4.C mesfin got exactly +1 notification (was ${mesfinBase}, now ${mesfinAfter1.length})`)
+    if (delta1 === 1) pass(s, `4.C nate got exactly +1 notification (was ${mesfinBase}, now ${mesfinAfter1.length})`)
     else bug(s, 'MENTION-SINGLE-COUNT', 'P0', '4.C single @mention produces +1 notification', `delta=${delta1}`, '+1')
 
     // Check the NEW notification points at this task
@@ -103,16 +103,16 @@ async function main() {
       else bug(s, 'MENTION-SOURCE-WRONG', 'P1', '4.C notification cites task comment', `source_type=${newest.source_type} source_id=${newest.source_id}`, `source_type=task_comment source_id=${taskId}`)
     }
 
-    section(s, '4.D  Task comment with DOUBLE @mesfin @dudley → mesfin +1 AND dudley +1')
-    const cmt2 = `${marker('cmt')} @mesfin @dudley pls align`
+    section(s, '4.D  Task comment with DOUBLE @nate @dudley → nate +1 AND dudley +1')
+    const cmt2 = `${marker('cmt')} @nate @dudley pls align`
     await s.api.post(`/api/tasks/${taskId}/comments`, { data: { content: cmt2 } })
     await s.page.waitForTimeout(800)
-    const mesfinAfter2 = await listNotifications(s.api, 'mesfin')
+    const mesfinAfter2 = await listNotifications(s.api, 'nate')
     const dudleyAfter2 = await listNotifications(s.api, 'dudley')
     const m_delta = mesfinAfter2.length - mesfinAfter1.length
     const d_delta = dudleyAfter2.length - dudleyBase
-    if (m_delta === 1) pass(s, `4.D mesfin got +1 more (now ${mesfinAfter2.length})`)
-    else bug(s, 'MENTION-DOUBLE-MESFIN', 'P1', '4.D mesfin +1 from double-mention', `delta=${m_delta}`, '+1')
+    if (m_delta === 1) pass(s, `4.D nate got +1 more (now ${mesfinAfter2.length})`)
+    else bug(s, 'MENTION-DOUBLE-MESFIN', 'P1', '4.D nate +1 from double-mention', `delta=${m_delta}`, '+1')
     if (d_delta === 1) pass(s, `4.D dudley got +1 (now ${dudleyAfter2.length})`)
     else bug(s, 'MENTION-DOUBLE-DUDLEY', 'P1', '4.D dudley +1 from double-mention', `delta=${d_delta}`, '+1')
 
@@ -126,31 +126,31 @@ async function main() {
     else bug(s, 'MENTION-SELF-NOTIFIED', 'P1', '4.E self-mention produces no notification', `delta=${n_delta}`, '0')
 
     section(s, '4.F  Invalid @mention (nonexistent slug) → no notification for anyone')
-    const beforeInvalid = await listNotifications(s.api, 'mesfin')
+    const beforeInvalid = await listNotifications(s.api, 'nate')
     const cmt4 = `${marker('cmt')} @notarealperson_xyz123 hello`
     await s.api.post(`/api/tasks/${taskId}/comments`, { data: { content: cmt4 } })
     await s.page.waitForTimeout(800)
-    const afterInvalid = await listNotifications(s.api, 'mesfin')
-    if (afterInvalid.length === beforeInvalid.length) pass(s, '4.F invalid @mention produced no notification for mesfin')
-    else bug(s, 'MENTION-INVALID-FIRES', 'P2', '4.F invalid @mention should silently skip', `mesfin count went ${beforeInvalid.length}→${afterInvalid.length}`, 'no change')
+    const afterInvalid = await listNotifications(s.api, 'nate')
+    if (afterInvalid.length === beforeInvalid.length) pass(s, '4.F invalid @mention produced no notification for nate')
+    else bug(s, 'MENTION-INVALID-FIRES', 'P2', '4.F invalid @mention should silently skip', `nate count went ${beforeInvalid.length}→${afterInvalid.length}`, 'no change')
 
     section(s, '4.G  Task note via /updates — no mentions → no new notifications')
     const noteText = `${marker('note')} plain note no mentions`
-    const mesfinBeforeNote = (await listNotifications(s.api, 'mesfin')).length
+    const mesfinBeforeNote = (await listNotifications(s.api, 'nate')).length
     await s.api.post(`/api/tasks/${taskId}/updates`, { data: { content: noteText, update_type: 'progress' } })
     await s.page.waitForTimeout(800)
-    const mesfinAfterNote = (await listNotifications(s.api, 'mesfin')).length
+    const mesfinAfterNote = (await listNotifications(s.api, 'nate')).length
     if (mesfinAfterNote === mesfinBeforeNote) pass(s, '4.G plain note did not notify anyone')
-    else bug(s, 'NOTE-SPURIOUS-NOTIF', 'P1', '4.G plain note should not notify', `mesfin ${mesfinBeforeNote}→${mesfinAfterNote}`, 'no change')
+    else bug(s, 'NOTE-SPURIOUS-NOTIF', 'P1', '4.G plain note should not notify', `nate ${mesfinBeforeNote}→${mesfinAfterNote}`, 'no change')
 
-    section(s, '4.H  Task note WITH @mesfin mention → mesfin +1')
-    const noteMentioned = `${marker('note')} @mesfin update coming`
-    const mesfinBeforeNoteMent = (await listNotifications(s.api, 'mesfin')).length
+    section(s, '4.H  Task note WITH @nate mention → nate +1')
+    const noteMentioned = `${marker('note')} @nate update coming`
+    const mesfinBeforeNoteMent = (await listNotifications(s.api, 'nate')).length
     await s.api.post(`/api/tasks/${taskId}/updates`, { data: { content: noteMentioned, update_type: 'progress' } })
     await s.page.waitForTimeout(800)
-    const mesfinAfterNoteMent = (await listNotifications(s.api, 'mesfin')).length
+    const mesfinAfterNoteMent = (await listNotifications(s.api, 'nate')).length
     const noteDelta = mesfinAfterNoteMent - mesfinBeforeNoteMent
-    if (noteDelta === 1) pass(s, '4.H note with @mesfin produced +1 notification')
+    if (noteDelta === 1) pass(s, '4.H note with @nate produced +1 notification')
     else bug(s, 'NOTE-MENTION-COUNT', 'P1', '4.H note with @mention fans out', `delta=${noteDelta}`, '+1')
 
     section(s, '4.I  Create a project to test project-comment mention fan-out')
@@ -195,14 +195,14 @@ async function main() {
     }
 
     section(s, '4.L  Mark notification read — read_at stamps')
-    const mesfinFinal = await listNotifications(s.api, 'mesfin')
+    const mesfinFinal = await listNotifications(s.api, 'nate')
     const target = mesfinFinal.find((n) => n.source_id === taskId && !n.read_at)
     if (target) {
       const readResp = await s.api.post(`/api/notifications/${target.id}/read`)
       if (readResp.ok()) {
         pass(s, '4.L POST /notifications/:id/read accepted')
         await s.page.waitForTimeout(400)
-        const after = await listNotifications(s.api, 'mesfin')
+        const after = await listNotifications(s.api, 'nate')
         const updated = after.find((n) => n.id === target.id)
         if (updated?.read_at) pass(s, '4.L read_at timestamp set')
         else bug(s, 'NOTIF-READ-NOT-PERSISTED', 'P1', '4.L read_at persists', String(updated?.read_at), 'non-null timestamp')
@@ -210,7 +210,7 @@ async function main() {
         bug(s, 'NOTIF-READ-FAIL', 'P1', '4.L POST /read', `HTTP ${readResp.status()}`, '200')
       }
     } else {
-      log(s, '  INFO: 4.L no unread mesfin notification targeting this task — skipping read test')
+      log(s, '  INFO: 4.L no unread nate notification targeting this task — skipping read test')
     }
   } catch (e) {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)

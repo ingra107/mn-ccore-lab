@@ -135,12 +135,18 @@ async function main() {
     let seenLow = false
     const pollStart2 = Date.now()
     while (Date.now() - pollStart2 < 20_000) {
-      const html = await tabB.page.content().catch(() => '')
-      const rowIdx = html.indexOf(title)
-      if (rowIdx > 0) {
-        const surround = html.slice(Math.max(0, rowIdx - 500), rowIdx + 1000).toLowerCase()
-        if (surround.includes('low')) { seenLow = true; break }
-      }
+      // Scope to the row that contains the unique task title — avoids false
+      // positives from CSS classes / other tasks. Mirrors 7.C pattern.
+      const priorityText = await tabB.page.evaluate((t) => {
+        const rows = document.querySelectorAll('[class*="task-grid-row"]')
+        for (const row of rows) {
+          if ((row as HTMLElement).innerText?.includes(t)) {
+            return (row as HTMLElement).innerText.toLowerCase()
+          }
+        }
+        return ''
+      }, title).catch(() => '')
+      if (priorityText.includes('low')) { seenLow = true; break }
       await tabB.page.waitForTimeout(1000)
     }
     const elapsed2 = Math.round((Date.now() - pollStart2) / 1000)

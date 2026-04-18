@@ -54,28 +54,42 @@ export async function handleGetRevisions(url: URL, env: Env): Promise<Response> 
 // Create a new revision round
 export async function handleCreateRevision(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
-    project_id: string;
+    project_id?: string;
+    project_slug?: string;
     round?: number;
     submitted_at?: string;
     response_due?: string;
     status?: string;
     journal?: string;
     notes?: string;
+    reviewer_comments?: string;
   };
 
-  if (!body.project_id) return error('project_id required', 400);
+  // Accept project_id OR project_slug; resolve to the canonical id stored
+  // on manuscript_revisions.project_id (same pattern as /api/tasks create).
+  const ref = body.project_id || body.project_slug;
+  if (!ref) return error('project_id or project_slug required', 400);
+  const proj = await env.DB.prepare(
+    'SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+  ).bind(ref, ref).first<{ id: string; slug: string | null }>();
+  if (!proj) return error(`Unknown project "${ref}"`, 400);
+  const projectId = proj.slug || proj.id;
 
   // Auto-detect round number if not provided
   let round = body.round;
   if (!round) {
     const latest = await env.DB.prepare(
       'SELECT MAX(round) as max_round FROM manuscript_revisions WHERE project_id = ?'
-    ).bind(body.project_id).first<{ max_round: number | null }>();
+    ).bind(projectId).first<{ max_round: number | null }>();
     round = (latest?.max_round || 0) + 1;
   }
 
   const status = body.status && VALID_REVISION_STATUSES.includes(body.status)
     ? body.status : 'in_progress';
+
+  // reviewer_comments is a convenience alias for notes (the deep-audit test
+  // + UI create form both send this name).
+  const notes = body.notes ?? body.reviewer_comments ?? null;
 
   const id = generateId();
   await env.DB.prepare(`
@@ -83,13 +97,13 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     id,
-    body.project_id,
+    projectId,
     round,
     body.submitted_at || null,
     body.response_due || null,
     status,
     body.journal || null,
-    body.notes || null,
+    notes,
   ).run();
 
   const actor = actorSlug(user.email);

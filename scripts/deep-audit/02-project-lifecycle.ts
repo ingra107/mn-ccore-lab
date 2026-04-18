@@ -140,13 +140,16 @@ async function main() {
       bug(s, 'PROJ-TASK-CREATE', 'P1', '2.H Task with project_id creates', `HTTP ${taskResp.status()}`, '200')
     }
 
-    // Wait for sync + reload
+    // Wait for sync + reload. Overview tab shows task COUNTS, not titles
+    // — click the Tasks tab to surface the linked task's title.
     await s.page.waitForTimeout(800)
     await goto(s, `/projects/${p.slug}`)
+    await s.page.getByRole('button', { name: /^Tasks(\s|\()/ }).first().click({ timeout: 5000 }).catch(() => {})
+    await s.page.waitForTimeout(800)
     await snap(s, 'H-project-detail-with-task')
     const taskOnDetail = await s.page.locator(`text=${JSON.stringify(taskTitle)}`).first().isVisible({ timeout: 3000 }).catch(() => false)
-    if (taskOnDetail) pass(s, '2.H Task appears on project detail')
-    else bug(s, 'PROJ-TASK-NOT-ON-DETAIL', 'P1', '2.H linked task on project detail', 'title not found', `"${taskTitle}" visible`)
+    if (taskOnDetail) pass(s, '2.H Task appears on project detail Tasks tab')
+    else bug(s, 'PROJ-TASK-NOT-ON-DETAIL', 'P1', '2.H linked task on project detail Tasks tab', 'title not found', `"${taskTitle}" visible`)
 
     section(s, '2.I  Reassign task project_id to a DIFFERENT project — verify count decrements')
     // Use admin-tasks (known existing project) as the new target

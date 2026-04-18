@@ -70,7 +70,7 @@ async function main() {
     }
 
     // ═══════════════════ HANDOFFS ═══════════════════
-    section(s, '5.D  Task handoff request — nick → mesfin')
+    section(s, '5.D  Task handoff request — nick → nate')
     const hoTitle = marker('handoff')
     const hoTaskResp = await s.api.post('/api/tasks', {
       data: { title: hoTitle, description: hoTitle, assignee: 'nick', priority: 'medium' },
@@ -81,7 +81,15 @@ async function main() {
       bug(s, 'HO-TASK-CREATE', 'P1', '5.D Create task for handoff', 'no id', 'id returned')
     } else {
       const handoffResp = await s.api.post(`/api/tasks/${hoTaskId}/handoffs`, {
-        data: { to_slug: 'mesfin', message: `${marker('ho')} please take this over` },
+        // Handoff uses SBAR fields (situation/background/assessment/recommendation),
+        // not free-form 'message'. Situation is the only required field.
+        data: {
+          to_slug: 'nate',
+          situation: `${marker('ho')} please take this over`,
+          background: 'Deep-audit automated test — ensures the full SBAR round-trips.',
+          assessment: 'Route via task_handoffs + reassign + notification.',
+          recommendation: 'Acknowledge + continue as usual.',
+        },
       })
       if (handoffResp.ok()) {
         pass(s, '5.D Handoff request POST accepted')
@@ -89,8 +97,8 @@ async function main() {
         if (handoffs && handoffs.length >= 1) {
           pass(s, `5.D Handoff list returns ${handoffs.length} row(s)`)
           const newest = handoffs[0]
-          if (newest.to_slug === 'mesfin') pass(s, '5.D Handoff to_slug=mesfin')
-          else bug(s, 'HO-TO-DRIFT', 'P1', '5.D handoff to_slug', newest.to_slug, 'mesfin')
+          if (newest.to_slug === 'nate') pass(s, '5.D Handoff to_slug=nate')
+          else bug(s, 'HO-TO-DRIFT', 'P1', '5.D handoff to_slug', newest.to_slug, 'nate')
         } else {
           bug(s, 'HO-LIST-EMPTY', 'P1', '5.D handoff in list', `${handoffs?.length ?? 0}`, '>=1')
         }
@@ -99,16 +107,16 @@ async function main() {
       }
 
       section(s, '5.E  Acknowledge task (closed-loop CRM pattern)')
-      // Re-assign to mesfin first so ack path is valid
-      await s.api.post(`/api/tasks/${hoTaskId}`, { data: { assignee: 'mesfin' } })
-      const ackResp = await s.api.post(`/api/tasks/${hoTaskId}/acknowledge`, { data: { slug: 'mesfin' } })
+      // Re-assign to nate first so ack path is valid
+      await s.api.post(`/api/tasks/${hoTaskId}`, { data: { assignee: 'nate' } })
+      const ackResp = await s.api.post(`/api/tasks/${hoTaskId}/acknowledge`, { data: { slug: 'nate' } })
       if (ackResp.ok()) {
         pass(s, '5.E Acknowledge POST accepted')
         const row = await apiGetTaskFromList<{ id: string; acknowledged_at: string | null; acknowledged_by: string | null }>(s, hoTaskId)
         if (row?.acknowledged_at) pass(s, `5.E acknowledged_at timestamp set: ${row.acknowledged_at}`)
         else bug(s, 'ACK-TIMESTAMP-DRIFT', 'P1', '5.E acknowledged_at persists', String(row?.acknowledged_at), 'ISO timestamp')
-        if (row?.acknowledged_by === 'mesfin') pass(s, '5.E acknowledged_by=mesfin')
-        else bug(s, 'ACK-BY-DRIFT', 'P1', '5.E acknowledged_by persists', String(row?.acknowledged_by), 'mesfin')
+        if (row?.acknowledged_by === 'nate') pass(s, '5.E acknowledged_by=nate')
+        else bug(s, 'ACK-BY-DRIFT', 'P1', '5.E acknowledged_by persists', String(row?.acknowledged_by), 'nate')
       } else {
         bug(s, 'ACK-POST-FAIL', 'P1', '5.E POST /acknowledge', `HTTP ${ackResp.status()}`, '200')
       }

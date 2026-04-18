@@ -101,19 +101,30 @@ async function main() {
     else bug(s, 'TASK-TITLE-STALE-UI', 'P1', '1.E new title visible after reload', 'old or missing title', `"${title2}" visible`)
 
     section(s, '1.F  Change assignee via POST, verify on new assignee and OFF old workload')
-    const patchA = await apiPatchTask(s, task.id, { assignee: 'mesfin' })
-    if (!patchA.ok) bug(s, 'TASK-PATCH-ASSIGNEE', 'P0', '1.F POST assignee=mesfin', `HTTP ${patchA.status}`, '200')
-    else pass(s, '1.F POST assignee=mesfin accepted')
+    // 'nate' is the registered team_members slug for Nate Mesfin; 'mesfin'
+    // was never in team_members and POST validation rejects it (correctly).
+    const patchA = await apiPatchTask(s, task.id, { assignee: 'nate' })
+    if (!patchA.ok) bug(s, 'TASK-PATCH-ASSIGNEE', 'P0', '1.F POST assignee=nate', `HTTP ${patchA.status}`, '200')
+    else pass(s, '1.F POST assignee=nate accepted')
     const rb3 = await apiGetTaskFromList<{ id: string; assignee: string }>(s, task.id)
-    if (rb3?.assignee === 'mesfin') pass(s, '1.F Readback shows new assignee')
-    else bug(s, 'TASK-ASSIGNEE-NOT-PERSISTED', 'P0', '1.F readback shows assignee=mesfin', String(rb3?.assignee), 'mesfin')
+    if (rb3?.assignee === 'nate') pass(s, '1.F Readback shows new assignee')
+    else bug(s, 'TASK-ASSIGNEE-NOT-PERSISTED', 'P0', '1.F readback shows assignee=nate', String(rb3?.assignee), 'nate')
 
-    // MyTasks is /my-tasks filtered to logged-in user (nick). Task SHOULD no longer appear.
+    // MyTasks is /my-tasks filtered to logged-in user. Deep-audit runs
+    // without CF Access JWT, so useAuth().user is null and the page shows
+    // ALL tasks (by design — unauthenticated viewers see everything).
+    // Skip the filter assertion unless /api/auth/me returns an authenticated user.
     await goto(s, '/my-tasks')
     await snap(s, 'F-my-tasks-after-reassign')
-    const stillOnMyTasks = await s.page.locator(`text=${JSON.stringify(title2)}`).first().isVisible({ timeout: 2000 }).catch(() => false)
-    if (!stillOnMyTasks) pass(s, '1.F Task no longer on /my-tasks (Mine filter respects new assignee)')
-    else bug(s, 'TASK-MINE-FILTER-STALE', 'P1', '1.F /my-tasks filter drops reassigned task', 'still visible on Mine', 'hidden from Mine when assignee != current user')
+    const authRes = await s.api.get('/api/auth/me').catch(() => null)
+    const authed = authRes?.ok() ? ((await authRes.json()) as { authenticated?: boolean }).authenticated : false
+    if (!authed) {
+      log(s, '  1.F SKIP Mine filter check — no CF Access JWT (dev/test run)')
+    } else {
+      const stillOnMyTasks = await s.page.locator(`text=${JSON.stringify(title2)}`).first().isVisible({ timeout: 2000 }).catch(() => false)
+      if (!stillOnMyTasks) pass(s, '1.F Task no longer on /my-tasks (Mine filter respects new assignee)')
+      else bug(s, 'TASK-MINE-FILTER-STALE', 'P1', '1.F /my-tasks filter drops reassigned task', 'still visible on Mine', 'hidden from Mine when assignee != current user')
+    }
 
     section(s, '1.G  Change priority high→urgent')
     const patchP = await apiPatchTask(s, task.id, { priority: 'urgent' })
@@ -182,8 +193,10 @@ async function main() {
     else bug(s, 'TASK-NOTE-NOT-RETURNED', 'P1', '1.L GET /updates returns posted note', `${updates?.length ?? 0} updates, marker missing`, 'update with marker text')
 
     section(s, '1.M  Activity feed contains task creation + updates')
-    const activity = await apiGet<Array<{ body: string | null; title: string | null; source_type: string; source_id: string }>>(s, `/api/activity?limit=200`)
-    const relevantActs = activity?.filter((a) => a.source_id === task.id || (a.body && a.body.includes(title2))) ?? []
+    // activity_log stores related_id + description (not source_id + body).
+    // 2026-04-18: renamed for fidelity with the actual response schema.
+    const activity = await apiGet<Array<{ description: string | null; type: string; related_id: string | null; related_type: string | null }>>(s, `/api/activity?limit=200`)
+    const relevantActs = activity?.filter((a) => a.related_id === task.id || (a.description && a.description.includes(title2))) ?? []
     if (relevantActs.length >= 1) pass(s, `1.M ${relevantActs.length} activity entries reference this task`)
     else bug(s, 'TASK-ACTIVITY-MISSING', 'P2', '1.M Activity feed has task-related entries', '0 entries', '>=1 entry (create + edits)')
 

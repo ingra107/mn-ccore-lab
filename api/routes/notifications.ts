@@ -37,13 +37,19 @@ export async function handleNotificationCount(url: URL, request: Request, env: E
 
 // POST /api/notifications/:id/read
 export async function handleMarkNotificationRead(id: string, env: Env): Promise<Response> {
-  await env.DB.prepare('UPDATE notifications SET read = 1 WHERE id = ?').bind(id).run();
+  // read_at timestamp lets the UI show "read 5m ago" and lets sync diff
+  // legit "already seen" from "marked read but unseen".
+  await env.DB.prepare(
+    "UPDATE notifications SET read = 1, read_at = datetime('now') WHERE id = ?"
+  ).bind(id).run();
   return json({ success: true });
 }
 
 // POST /api/notifications/read-all
 export async function handleMarkAllNotificationsRead(recipient: string, env: Env): Promise<Response> {
-  await env.DB.prepare('UPDATE notifications SET read = 1 WHERE recipient_slug = ? AND read = 0').bind(recipient).run();
+  await env.DB.prepare(
+    "UPDATE notifications SET read = 1, read_at = datetime('now') WHERE recipient_slug = ? AND read = 0"
+  ).bind(recipient).run();
   return json({ success: true });
 }
 

@@ -90,7 +90,7 @@ async function main() {
 
         section(s, '3.G  Answer the question (body uses "content", not "answer")')
         const aResp = await s.api.post(`/api/questions/${qb.data.id}/answers`, {
-          data: { content: `${marker('answer')} CLIF v3 introduces a new hospital_transitions table`, author_slug: 'mesfin' },
+          data: { content: `${marker('answer')} CLIF v3 introduces a new hospital_transitions table`, author_slug: 'nate' },
         })
         if (aResp.ok()) pass(s, '3.G Answer POST accepted')
         else bug(s, 'QUESTION-ANSWER-POST', 'P1', '3.G POST /api/questions/:id/answers', `HTTP ${aResp.status()}`, '200')
