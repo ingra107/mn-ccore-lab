@@ -151,8 +151,11 @@ async function main() {
     if (dispatchResp.ok()) {
       const db = (await dispatchResp.json()) as { data?: Array<unknown> }
       pass(s, `11.N /api/pb/dispatch/pending returns ${db.data?.length ?? 0} items`)
+    } else if (dispatchResp.status() === 403) {
+      // Expected post-2026-04-18 consultant review — /api/pb/* is PI-gated.
+      pass(s, '11.N /api/pb/dispatch/pending returns 403 to non-PI (PI gate)')
     } else {
-      bug(s, 'DISPATCH-GET', 'P2', '11.N GET /api/pb/dispatch/pending', `HTTP ${dispatchResp.status()}`, '200')
+      bug(s, 'DISPATCH-GET', 'P2', '11.N GET /api/pb/dispatch/pending', `HTTP ${dispatchResp.status()}`, '200 or 403 (PI gate)')
     }
 
     // ═══════════════════ TRAJECTORY ═══════════════════
@@ -187,8 +190,10 @@ async function main() {
       pass(s, `11.S /api/pb/sessions returns ${sb.data?.length ?? 0} sessions`)
     } else if (sessionsResp.status() === 404) {
       log(s, '  11.S INFO: /api/pb/sessions not exposed — sessions may only live in brain.db')
+    } else if (sessionsResp.status() === 403) {
+      pass(s, '11.S /api/pb/sessions returns 403 to non-PI (PI gate)')
     } else {
-      bug(s, 'SESSIONS-FAIL', 'P2', '11.S GET /api/pb/sessions', `HTTP ${sessionsResp.status()}`, '200/404')
+      bug(s, 'SESSIONS-FAIL', 'P2', '11.S GET /api/pb/sessions', `HTTP ${sessionsResp.status()}`, '200/404/403')
     }
 
     // ═══════════════════ BUG REPORT ═══════════════════
@@ -197,12 +202,16 @@ async function main() {
     const bugResp = await s.api.post('/api/bug-report', { data: {} })
     if (bugResp.status() === 400) {
       pass(s, '11.T /api/bug-report rejects empty payload with 400 (endpoint reachable)')
+    } else if (bugResp.status() === 401) {
+      // Expected post-2026-04-18 consultant review — auth required to
+      // prevent spam issue-tracker flooding.
+      pass(s, '11.T /api/bug-report returns 401 to unauth callers (auth required)')
     } else if (bugResp.status() === 500) {
       log(s, '  11.T INFO: /api/bug-report 500 — may indicate missing GITHUB_TOKEN')
     } else if (bugResp.ok()) {
       log(s, '  11.T /api/bug-report accepted empty body (unusual)')
     } else {
-      bug(s, 'BUGREPORT-REACH', 'P2', '11.T /api/bug-report reachable', `HTTP ${bugResp.status()}`, '400 (empty body) or 200')
+      bug(s, 'BUGREPORT-REACH', 'P2', '11.T /api/bug-report reachable', `HTTP ${bugResp.status()}`, '400 (empty body), 401 (auth), or 200')
     }
   } catch (e) {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)

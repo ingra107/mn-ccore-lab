@@ -384,6 +384,16 @@ export async function handleSendDigestEmail(
       return error('memberSlug and to (email address) are required', 400);
     }
 
+    // Restrict outbound destinations to allowlisted domains. Without this,
+    // an authenticated user could trigger Resend sends to arbitrary addresses
+    // (consultant review 2026-04-18). Add new domains here (or move to env)
+    // when collaborators from other institutions join the lab.
+    const ALLOWED_DOMAINS = ['umn.edu', 'gmail.com'];
+    const toDomain = body.to.split('@')[1]?.toLowerCase() ?? '';
+    if (!ALLOWED_DOMAINS.includes(toDomain)) {
+      return error(`to: must be a ${ALLOWED_DOMAINS.join(' or ')} address`, 400);
+    }
+
     if (!env.RESEND_API_KEY) {
       return error('Email sending not configured (RESEND_API_KEY missing). Use /api/digest-preview to test.', 503);
     }

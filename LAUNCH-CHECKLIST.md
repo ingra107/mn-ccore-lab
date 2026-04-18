@@ -6,6 +6,39 @@
 
 ## Prerequisites (Nick must do — blocks launch)
 
+### 0. Flip the auth enforcement flags
+
+As of Phase 35 (2026-04-18), two flags gate hard auth enforcement. Both
+default OFF for PI-only public-mode operation — flip them before the team
+gets the link.
+
+**Server-side (forces 401 on any POST/PUT without JWT or API key):**
+```bash
+echo 1 | wrangler pages secret put REQUIRE_AUTH --project-name mn-ccore-lab
+```
+
+**Client-side (replaces portal routes with a sign-in wall for
+unauthenticated users):**
+```bash
+# In .env.production (create if missing):
+echo "VITE_REQUIRE_AUTH=1" >> .env.production
+# Then rebuild + deploy:
+npm run build
+npx wrangler pages deploy dist --project-name mn-ccore-lab
+```
+
+**Optional emergency bypass:** appending `?strict=1` to any URL activates
+the client-side gate immediately without redeploying (useful for testing
+the sign-in wall against a live deploy).
+
+Also make sure the `X-Test-Mode` header cannot flip prod to the test DB
+in the wild — set a secret so only Playwright knows it:
+```bash
+echo "$(openssl rand -hex 16)" | wrangler pages secret put TEST_MODE_KEY --project-name mn-ccore-lab
+```
+Playwright personas read this from the `HUB_TEST_MODE_KEY` env var when
+running against prod D1 isolation.
+
 ### 1. Cloudflare Access (team auth)
 
 Configure in Cloudflare dashboard → Zero Trust → Access → Applications:

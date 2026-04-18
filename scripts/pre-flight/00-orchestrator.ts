@@ -23,6 +23,10 @@ const OUT_ROOT = join('review', 'preflight', RUN_ID)
 mkdirSync(OUT_ROOT, { recursive: true })
 
 const PERSONAS = [
+  // Health probe first — if /api/health is RED, fail fast without wasting
+  // minutes on browser-based personas that will all fail too.
+  { name: 'health', script: 'scripts/pre-flight/persona-health.ts', role: 'Ops health probe — /api/health' },
+  { name: 'newcomer', script: 'scripts/pre-flight/persona-newcomer.ts', role: 'Brand-new team member — empty states' },
   { name: 'pi-power-user', script: 'scripts/pre-flight/persona-pi-power-user.ts', role: 'Nick — daily power user' },
   { name: 'collaborator', script: 'scripts/pre-flight/persona-collaborator.ts', role: 'Mesfin — Monday-morning catchup' },
   { name: 'coordinator', script: 'scripts/pre-flight/persona-coordinator.ts', role: 'Research coordinator — heavy data entry' },

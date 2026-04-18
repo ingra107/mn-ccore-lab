@@ -1,5 +1,5 @@
 import type { Env } from './types';
-import { corsHeaders, json, error, getAuthUser } from './helpers';
+import { corsHeaders, json, error, getAuthUser, isPiRequest } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
 import { notifyClients } from './lib/notify';
@@ -79,8 +79,16 @@ export default {
     }
 
     // Test mode: swap DB to test database when X-Test-Mode header is present.
-    // This isolates Playwright tests from production data entirely.
-    if (request.headers.get('X-Test-Mode') === 'true' && env.DB_TEST) {
+    // Gated by an env-configured shared secret (X-Test-Mode-Key) so arbitrary
+    // browsers can't flip prod reads/writes against the test DB. If no secret
+    // is configured in the env, the header is ignored entirely in prod.
+    // Consultant review 2026-04-18.
+    if (
+      request.headers.get('X-Test-Mode') === 'true'
+      && env.DB_TEST
+      && (env as unknown as { TEST_MODE_KEY?: string }).TEST_MODE_KEY
+      && request.headers.get('X-Test-Mode-Key') === (env as unknown as { TEST_MODE_KEY: string }).TEST_MODE_KEY
+    ) {
       env = { ...env, DB: env.DB_TEST };
     }
 
@@ -114,8 +122,73 @@ export default {
         return handleVersion(env);
       }
 
+      // Health check — exercises D1 + key tables + (optionally) the hub-realtime
+      // service binding. Returns 200 with {ok:true,...} when healthy, 503 with
+      // {ok:false, failures:[...]} when anything's broken. Designed for external
+      // uptime monitors (Cloudflare Worker Analytics, UptimeRobot, etc).
+      if (url.pathname === '/api/health' && method === 'GET') {
+        const failures: string[] = [];
+        const checks: Record<string, unknown> = {};
+        const t0 = Date.now();
+
+        try {
+          const r = await env.DB.prepare("SELECT COUNT(*) as n FROM tasks WHERE deleted_at IS NULL").first<{ n: number }>();
+          checks.tasks = r?.n ?? 0;
+          if ((r?.n ?? 0) === 0) failures.push('tasks table empty');
+        } catch (e) { failures.push(`tasks query: ${(e as Error).message.slice(0, 80)}`); }
+
+        try {
+          const r = await env.DB.prepare("SELECT COUNT(*) as n FROM projects").first<{ n: number }>();
+          checks.projects = r?.n ?? 0;
+          if ((r?.n ?? 0) === 0) failures.push('projects table empty');
+        } catch (e) { failures.push(`projects query: ${(e as Error).message.slice(0, 80)}`); }
+
+        try {
+          const r = await env.DB.prepare("SELECT COUNT(*) as n FROM team_members WHERE slug IS NOT NULL").first<{ n: number }>();
+          checks.team = r?.n ?? 0;
+          if ((r?.n ?? 0) < 5) failures.push(`team_members has only ${r?.n ?? 0} rows (<5 suspicious)`);
+        } catch (e) { failures.push(`team_members query: ${(e as Error).message.slice(0, 80)}`); }
+
+        // Recent activity heartbeat — anything logged in the last 14 days?
+        try {
+          const r = await env.DB.prepare(
+            "SELECT MAX(timestamp) as t FROM activity_log WHERE timestamp > datetime('now', '-14 days')"
+          ).first<{ t: string | null }>();
+          checks.last_activity = r?.t ?? null;
+          if (!r?.t) failures.push('no activity in last 14 days — pipeline may be stalled');
+        } catch (e) { failures.push(`activity query: ${(e as Error).message.slice(0, 80)}`); }
+
+        // Realtime service binding probe — absence is NOT a failure.
+        // CF Pages and Workers have different binding configs; the WS fallback
+        // (15s version poll) keeps the UI responsive when the binding is gone.
+        const hub = (env as unknown as { NOTIFICATION_HUB?: { fetch?: (u: string) => Promise<Response> } }).NOTIFICATION_HUB;
+        if (hub && typeof hub.fetch === 'function') {
+          try {
+            const r = await hub.fetch('https://hub-realtime.local/health');
+            checks.realtime = r.status;
+            if (r.status >= 500) failures.push(`realtime ${r.status}`);
+          } catch (e) { checks.realtime = `probe_error: ${(e as Error).message.slice(0, 40)}`; }
+        } else {
+          checks.realtime = 'not_bound';
+        }
+
+        checks.duration_ms = Date.now() - t0;
+        const ok = failures.length === 0;
+        return new Response(JSON.stringify({ ok, checks, failures, timestamp: new Date().toISOString() }, null, 2), {
+          status: ok ? 200 : 503,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
       // Read endpoints (GET only)
       if (request.method === 'GET') {
+        // /api/pb/* exposes Nick's private brain.db data (pomodoro sessions,
+        // TODAY.md, relay messages, plan history). Gate to PI emails only.
+        // Pre-launch consultant review 2026-04-18.
+        if (url.pathname.startsWith('/api/pb/') && !isPiRequest(request, env)) {
+          return error('Forbidden — PI access only', 403);
+        }
+
         // PB Sector — PI command center
         if (url.pathname === '/api/pb/command-center') {
           const planDate = url.searchParams.get('date') || undefined;
@@ -596,8 +669,23 @@ export default {
       // Write endpoints (POST/PUT)
       // Auth is optional — when Cloudflare Access is configured, JWT provides identity.
       // When Access is not configured, writes are open (public site mode).
+      //
+      // PRODUCTION FLAG (2026-04-18 consultant review): setting env
+      // REQUIRE_AUTH=1 forces all writes to require either a valid
+      // CF Access JWT or an API key header. Once the team starts using
+      // the Hub, flip this on:
+      //   `wrangler pages secret put REQUIRE_AUTH --project-name mn-ccore-lab`
+      //   (value: 1)
+      // Until flipped, writes fall through to an 'anonymous' user for
+      // backwards compatibility with the PI-only public-mode era.
       if (request.method === 'POST' || request.method === 'PUT') {
-        const user = getAuthUser(request) || { email: 'anonymous', name: 'Team Member' };
+        const authedUser = getAuthUser(request);
+        const hasApiKey = apiKeyResult === true;
+        const requireAuth = (env as unknown as { REQUIRE_AUTH?: string }).REQUIRE_AUTH === '1';
+        if (requireAuth && !authedUser && !hasApiKey) {
+          return error('Authentication required', 401);
+        }
+        const user = authedUser || { email: 'anonymous', name: 'Team Member' };
 
         const path = url.pathname;
 
@@ -876,8 +964,15 @@ export default {
           return withVersionBump(await handleVoteIdea(ideaVoteMatch[1], env));
         }
 
-        // POST /api/bug-report — create GitHub Issue
+        // POST /api/bug-report — create GitHub Issue.
+        // Require authenticated user OR API key — unauthenticated callers
+        // could spam the repo's issue tracker otherwise (consultant review).
         if (request.method === 'POST' && path === '/api/bug-report') {
+          const authedUser = getAuthUser(request);
+          const hasApiKey = Boolean(request.headers.get('X-API-Key'));
+          if (!authedUser && !hasApiKey) {
+            return error('Authentication required to file a bug', 401);
+          }
           return await handleBugReport(request, env);
         }
 

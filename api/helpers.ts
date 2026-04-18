@@ -74,6 +74,24 @@ export function actorSlug(email: string): string {
   return email.split('@')[0].toLowerCase()
 }
 
+/** Emails recognized as a PI (authorized to see /api/pb/* private data). */
+export const PI_EMAILS = new Set<string>([
+  'ningraha@umn.edu',
+  'sandb029@umn.edu',           // Nick (alt)
+  'nicholas.ingraham@gmail.com', // Nick personal
+])
+
+/** True iff the request is from a PI — either an authenticated CF Access
+ *  JWT matching a known PI email, OR a valid API-key request (server-side
+ *  automation / Hermes). Returns false for unauthenticated + non-PI users. */
+export function isPiRequest(request: Request, env: Env): boolean {
+  // API key callers are trusted (already validated by validateApiKey middleware).
+  if (request.headers.get('X-API-Key')) return true
+  const user = getAuthUser(request)
+  if (!user?.email) return false
+  return PI_EMAILS.has(user.email.toLowerCase())
+}
+
 /** Build a dynamic UPDATE clause from allowed fields */
 export function buildUpdate(body: Record<string, unknown>, allowedFields: string[]) {
   const updates: string[] = []
