@@ -23,8 +23,12 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
   const source = url.searchParams.get('source');
   const updatedSince = url.searchParams.get('updated_since');
   const createdSince = url.searchParams.get('created_since');
+  // Sync pipelines need to see soft-deletes to mirror them into brain.db.
+  // Default: hide deleted tasks (existing UI contract). Opt-in via flag.
+  const includeDeleted = url.searchParams.get('include_deleted') === '1';
 
-  let query = 'SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE t.deleted_at IS NULL';
+  const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
+  let query = `SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}`;
   const params: (string | number)[] = [];
 
   if (assignee) { query += ' AND t.assignee = ?'; params.push(assignee); }
@@ -215,7 +219,10 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
   const body = await request.json() as {
     title?: string; description: string; assignee: string;
     meeting_id?: string; project_id?: string; due_date?: string;
-    priority?: string; source?: string;
+    priority?: string; source?: string; status?: string;
+    key_link_1?: string | null; key_link_1_desc?: string | null;
+    key_link_2?: string | null; key_link_2_desc?: string | null;
+    key_link_3?: string | null; key_link_3_desc?: string | null;
   };
   if (!body.description || !body.assignee) return error('description and assignee required', 400);
 
@@ -247,9 +254,20 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
   const source = body.source || (body.meeting_id ? 'meeting' : 'manual');
   const priority = body.priority || 'medium';
 
+  // Validate status if provided (R10 vocab)
+  const status = body.status && ['todo', 'in_progress', 'done', 'blocked', 'waiting_external'].includes(body.status)
+    ? body.status : 'todo';
+
   await env.DB.prepare(
-    'INSERT INTO tasks (id, title, description, assignee, assigned_by, meeting_id, project_id, due_date, priority, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(id, title, body.description, body.assignee, user.email, body.meeting_id ?? null, resolvedProjectId, body.due_date ?? null, priority, source).run();
+    'INSERT INTO tasks (id, title, description, assignee, assigned_by, meeting_id, project_id, due_date, priority, status, source, key_link_1, key_link_1_desc, key_link_2, key_link_2_desc, key_link_3, key_link_3_desc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(
+    id, title, body.description, body.assignee, user.email,
+    body.meeting_id ?? null, resolvedProjectId, body.due_date ?? null,
+    priority, status, source,
+    body.key_link_1 ?? null, body.key_link_1_desc ?? null,
+    body.key_link_2 ?? null, body.key_link_2_desc ?? null,
+    body.key_link_3 ?? null, body.key_link_3_desc ?? null,
+  ).run();
 
   await logActivity(env, 'task', `Created task: "${title}" → ${body.assignee}`, user.email, id, 'task');
 
