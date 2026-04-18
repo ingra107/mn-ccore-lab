@@ -130,7 +130,7 @@ export default function WeeklyProgressCard() {
       {trend !== 'flat' && (
         <div className="flex items-center gap-1 mt-2">
           <TrendingUp size={10} style={{ color: trend === 'up' ? 'var(--green)' : 'var(--maroon)', transform: trend === 'down' ? 'scaleY(-1)' : undefined }} />
-          <span className="text-[10px]" style={{ color: trend === 'up' ? 'var(--green)' : 'var(--maroon)', opacity: 0.7 }}>
+          <span className="text-[10px]" style={{ color: trend === 'up' ? 'var(--green)' : 'var(--maroon)', opacity: 0.85 }}>
             {trend === 'up' ? 'Trending up' : 'Slowing down'}
           </span>
         </div>

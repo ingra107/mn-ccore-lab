@@ -287,7 +287,7 @@ export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants
               <div
                 key={grant.title}
                 className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3"
-                style={{ opacity: 0.7 }}
+                style={{ opacity: 0.85 }}
               >
                 <span className="mechanism-pill flex-shrink-0">
                   {grant.mechanism}
@@ -503,7 +503,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
               {mentee.role}
             </p>
             {mentee.mentor !== 'shared' && (
-              <p className="text-xs mt-0.5" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--slate)', opacity: 0.85 }}>
                 Mentor: {mentee.mentor === 'nick' ? 'Nick Ingraham' : 'Nathan Mesfin'}
               </p>
             )}
@@ -555,7 +555,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
                   fontSize: '10px',
                   letterSpacing: '0.08em',
                   color: 'var(--slate)',
-                  opacity: 0.7,
+                  opacity: 0.85,
                 }}
               >
                 Active Projects

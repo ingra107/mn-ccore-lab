@@ -309,7 +309,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 style={{
                   fontSize: 'var(--value-size)',
                   color: 'var(--slate)',
-                  opacity: project.short_name ? 0.7 : 0.4,
+                  opacity: project.short_name ? 0.85 : 0.85,
                   fontStyle: project.short_name ? 'normal' : 'italic',
                   cursor: 'pointer',
                   padding: '2px 0',
@@ -325,7 +325,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             <button
               onClick={handleCopyLink}
               className="p-1.5 rounded-md transition-colors hover:bg-black/5"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--teal)' : 'var(--slate)', opacity: copied ? 1 : 0.3 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--teal)' : 'var(--slate)', opacity: copied ? 1 : 0.85 }}
               title={copied ? 'Link copied!' : 'Copy link'}
             >
               {copied ? <Check size={14} /> : <Link2 size={14} />}
@@ -531,7 +531,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               backgroundColor: activeTab === tab.id ? 'var(--teal-active)' : 'transparent',
               border: 'none',
               cursor: 'pointer',
-              opacity: activeTab === tab.id ? 1 : 0.6,
+              opacity: activeTab === tab.id ? 1 : 0.85,
             }}
           >
             {tab.label}
@@ -771,7 +771,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   style={{
                     fontSize: '10px',
                     color: isCurrent ? 'var(--gold)' : isFuture ? 'var(--slate)' : 'var(--ink)',
-                    opacity: isCurrent ? 1 : isFuture ? 0.55 : 0.7,
+                    opacity: isCurrent ? 1 : isFuture ? 0.85 : 0.85,
                     fontWeight: isCurrent ? 700 : 400,
                     marginTop: '8px',
                     textAlign: 'center',
@@ -936,7 +936,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       margin: 0,
                       cursor: 'pointer',
                       padding: 'var(--sp-xs) 0',
-                      opacity: project.description ? 1 : 0.5,
+                      opacity: project.description ? 1 : 0.85,
                       borderBottom: '1px dashed transparent',
                       transition: 'border-color 0.2s',
                       ...(!descExpanded && project.description && project.description.length > 200 ? {
@@ -1067,7 +1067,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   style={{
                     fontSize: '12px',
                     color: 'var(--slate)',
-                    opacity: 0.7,
+                    opacity: 0.85,
                   }}
                 >
                   <Calendar size={13} />
@@ -1080,7 +1080,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   style={{
                     fontSize: '12px',
                     color: 'var(--slate)',
-                    opacity: 0.7,
+                    opacity: 0.85,
                   }}
                 >
                   <Clock size={13} />
@@ -1124,7 +1124,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       color: taskFilter === f ? 'var(--teal)' : 'var(--slate)',
                       border: `1px solid ${taskFilter === f ? 'var(--teal)' : 'var(--border-subtle)'}`,
                       cursor: 'pointer',
-                      opacity: taskFilter === f ? 1 : 0.6,
+                      opacity: taskFilter === f ? 1 : 0.85,
                     }}
                   >
                     {f.charAt(0).toUpperCase() + f.slice(1)} {count > 0 ? `(${count})` : ''}
@@ -1139,7 +1139,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   navigator.clipboard.writeText(lines.join('\n'))
                 }}
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors border"
-                style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.6 }}
+                style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
                 title="Copy task list to clipboard"
               >
                 <FileText size={11} />
@@ -1159,7 +1159,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             const filtered = taskFilter === 'all' ? projectTasks : taskFilter === 'active' ? pendingTasks : taskFilter === 'done' ? completedTasks : projectTasks.filter(t => t.status === 'blocked')
             return filtered.length === 0 ? (
               <div className="text-center py-12">
-                <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
+                <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.85, margin: '0 auto var(--sp-md)' }} />
                 <p style={{ fontSize: '14px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   {taskFilter === 'active' ? 'No active tasks.' : taskFilter === 'done' ? 'No completed tasks.' : 'No tasks for this project.'}
                 </p>

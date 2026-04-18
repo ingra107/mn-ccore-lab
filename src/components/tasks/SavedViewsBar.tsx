@@ -160,9 +160,9 @@ export default function SavedViewsBar({
                 }}
               >
                 {isCustom ? (
-                  <BookmarkCheck size={13} style={{ opacity: 0.7 }} />
+                  <BookmarkCheck size={13} style={{ opacity: 0.85 }} />
                 ) : (
-                  <Bookmark size={13} style={{ opacity: 0.7 }} />
+                  <Bookmark size={13} style={{ opacity: 0.85 }} />
                 )}
 
                 {isRenaming ? (
@@ -198,7 +198,7 @@ export default function SavedViewsBar({
                       height: 5,
                       borderRadius: 'var(--radius-circle)',
                       background: 'var(--ink)',
-                      opacity: 0.4,
+                      opacity: 0.85,
                       marginLeft: 2,
                       flexShrink: 0,
                     }}
@@ -231,7 +231,7 @@ export default function SavedViewsBar({
                         display: 'flex',
                         alignItems: 'center',
                         color: 'inherit',
-                        opacity: 0.5,
+                        opacity: 0.85,
                       }}
                       title="Rename view"
                     >
@@ -250,7 +250,7 @@ export default function SavedViewsBar({
                         display: 'flex',
                         alignItems: 'center',
                         color: 'var(--maroon)',
-                        opacity: 0.5,
+                        opacity: 0.85,
                       }}
                       title="Delete view"
                     >
@@ -279,7 +279,7 @@ export default function SavedViewsBar({
                 paddingRight: 6,
               }}
             >
-              <Plus size={13} style={{ opacity: 0.5 }} />
+              <Plus size={13} style={{ opacity: 0.85 }} />
               <input
                 ref={saveRef}
                 value={saveValue}
@@ -344,7 +344,7 @@ export default function SavedViewsBar({
                 background: 'transparent',
                 border: '1px dashed var(--border)',
                 color: 'var(--slate)',
-                opacity: 0.7,
+                opacity: 0.85,
               }}
               onMouseEnter={(e) => {
                 ;(e.currentTarget as HTMLElement).style.opacity = '1'

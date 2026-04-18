@@ -40,7 +40,7 @@ function EditableField({ value, placeholder, onSave, icon: Icon }: {
 
   return (
     <div className="flex items-center gap-2" style={{ minHeight: 28 }}>
-      <Icon size={13} style={{ color: 'var(--gold)', opacity: 0.5, flexShrink: 0 }} />
+      <Icon size={13} style={{ color: 'var(--gold)', opacity: 0.85, flexShrink: 0 }} />
       {editing ? (
         <input
           ref={inputRef}
@@ -66,7 +66,7 @@ function EditableField({ value, placeholder, onSave, icon: Icon }: {
             background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0',
             fontSize: 'var(--value-size)',
             color: value ? 'var(--ink)' : 'var(--slate)',
-            opacity: value ? 1 : 0.4,
+            opacity: value ? 1 : 0.85,
             fontStyle: value ? 'normal' : 'italic',
           }}
         >
@@ -115,7 +115,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <button onClick={handlePrevDay} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.4 }} className="hover:opacity-80">
+            <button onClick={handlePrevDay} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.85 }} className="hover:opacity-80">
               <ChevronLeft size={14} style={{ color: 'var(--slate)' }} />
             </button>
             <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', margin: 0 }}>
@@ -126,7 +126,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
                 </span>
               )}
             </p>
-            <button onClick={handleNextDay} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.4 }} className="hover:opacity-80">
+            <button onClick={handleNextDay} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.85 }} className="hover:opacity-80">
               <ChevronRight size={14} style={{ color: 'var(--slate)' }} />
             </button>
             {/* Quick toggles */}

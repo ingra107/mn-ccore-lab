@@ -79,11 +79,15 @@ export function isProjectActive(value: string | null | undefined): boolean {
 
 // ── Stages ──
 
+// Stage colors pinned for WCAG AA on near-black dark-mode bg (2026-04-18).
+// Earlier values (slate-400 / blue-400 / teal-500 / gold-500 / maroon-700 /
+// green-500) fell below 4.5:1 when rendered as small text with opacity —
+// these brighter tints survive opacity 0.85 and still contrast on white.
 export const STAGE_COLORS: Record<string, string> = {
-  Idea: '#64748b',
-  'Data Collection': '#5b8abf',
-  Analysis: '#2d8a8a',
-  Writing: '#c9a84c',
-  Review: '#7a0019',
-  Published: '#16a34a',
+  Idea: '#8591a0',
+  'Data Collection': '#7fa8d6',
+  Analysis: '#4db5b0',
+  Writing: '#dcb355',
+  Review: '#d65c66',
+  Published: '#4ecd77',
 }

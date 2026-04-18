@@ -52,7 +52,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
               exit={{ opacity: 0, y: -8 }}
               className="flex items-center gap-3 px-4 py-3"
             >
-              <GripVertical size={14} style={{ color: 'var(--gold)', opacity: 0.4, cursor: 'grab', flexShrink: 0 }} />
+              <GripVertical size={14} style={{ color: 'var(--gold)', opacity: 0.85, cursor: 'grab', flexShrink: 0 }} />
 
               {/* Complete button */}
               <button
@@ -80,7 +80,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                   {task.title || task.description}
                 </button>
                 {task.project_title && (
-                  <span style={{ fontSize: '10px', color: 'var(--gold)', opacity: 0.7 }}>
+                  <span style={{ fontSize: '10px', color: 'var(--gold)', opacity: 0.85 }}>
                     {task.project_title}
                   </span>
                 )}
@@ -107,13 +107,13 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                   className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--gold-hover)]"
                   style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                  <span style={{ fontSize: '10px', color: suggestion._isCarried ? 'var(--teal)' : 'var(--gold)', opacity: 0.5, textTransform: 'uppercase', flexShrink: 0 }}>
+                  <span style={{ fontSize: '10px', color: suggestion._isCarried ? 'var(--teal)' : 'var(--gold)', opacity: 0.85, textTransform: 'uppercase', flexShrink: 0 }}>
                     {suggestion._isCarried ? 'Carried' : 'Suggested'}
                   </span>
-                  <span className="truncate" style={{ fontSize: '14px', color: 'var(--ink)', opacity: 0.4 }}>
+                  <span className="truncate" style={{ fontSize: '14px', color: 'var(--ink)', opacity: 0.85 }}>
                     {suggestion.title || suggestion.description}
                   </span>
-                  <Plus size={14} style={{ color: 'var(--gold)', opacity: 0.4, flexShrink: 0 }} />
+                  <Plus size={14} style={{ color: 'var(--gold)', opacity: 0.85, flexShrink: 0 }} />
                 </button>
               ) : (
                 <button
@@ -121,8 +121,8 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                   className="w-full flex items-center justify-center gap-2 py-4"
                   style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                  <Plus size={16} style={{ color: 'var(--gold)', opacity: 0.4 }} />
-                  <span style={{ fontSize: '14px', color: 'var(--gold)', opacity: 0.5, fontStyle: 'italic' }}>
+                  <Plus size={16} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+                  <span style={{ fontSize: '14px', color: 'var(--gold)', opacity: 0.85, fontStyle: 'italic' }}>
                     What is the ONE thing you must do today?
                   </span>
                 </button>

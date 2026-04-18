@@ -283,7 +283,7 @@ export default function KeyLinksEditor({ links, onSave, maxSlots = 3 }: Props) {
               padding: '6px 10px',
               fontSize: 'var(--text-small)',
               color: 'var(--slate)',
-              opacity: 0.7,
+              opacity: 0.85,
               cursor: 'pointer',
               transition: 'opacity 0.15s, background 0.15s',
             }}

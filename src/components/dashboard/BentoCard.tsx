@@ -102,7 +102,7 @@ export default function BentoCard({
                 background: 'var(--surface-2)',
               }}
             >
-              <Icon size={15} style={{ color: 'var(--slate)', opacity: 0.7 }} />
+              <Icon size={15} style={{ color: 'var(--slate)', opacity: 0.85 }} />
             </div>
           )}
           <div className="min-w-0 flex-1">

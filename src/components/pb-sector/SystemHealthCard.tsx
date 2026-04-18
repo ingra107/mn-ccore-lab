@@ -71,7 +71,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
     >
       {/* Header */}
       <div className="flex items-center gap-1.5 px-3 py-2">
-        <Activity size={12} style={{ color: 'var(--teal)', opacity: 0.7 }} />
+        <Activity size={12} style={{ color: 'var(--teal)', opacity: 0.85 }} />
         <span style={{
           fontSize: '10px',
           fontWeight: 700,
@@ -88,7 +88,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
         {/* Sync rows */}
         <div className="flex items-center gap-2">
           <StatusDot timestamp={data.lastTaskSync} />
-          <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>
+          <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85 }}>
             Task sync
           </span>
           <span style={{
@@ -102,7 +102,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <StatusDot timestamp={data.lastActivityTimestamp} />
-          <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>
+          <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85 }}>
             D1 activity
           </span>
           <span style={{
@@ -120,7 +120,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
 
         {/* Counts row */}
         <div className="flex items-center gap-3" style={{ fontSize: '10px' }}>
-          <span style={{ color: 'var(--slate)', opacity: 0.7 }}>
+          <span style={{ color: 'var(--slate)', opacity: 0.85 }}>
             Tasks{' '}
             <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--ink)' }}>
               {data.tasks.active}
@@ -130,13 +130,13 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
               {data.tasks.total}
             </span>
           </span>
-          <span style={{ color: 'var(--slate)', opacity: 0.7 }}>
+          <span style={{ color: 'var(--slate)', opacity: 0.85 }}>
             Projects{' '}
             <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--ink)' }}>
               {data.projects.active}
             </span>
           </span>
-          <span style={{ color: 'var(--slate)', opacity: 0.7 }}>
+          <span style={{ color: 'var(--slate)', opacity: 0.85 }}>
             Tables{' '}
             <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--ink)' }}>
               {data.d1TableCount}

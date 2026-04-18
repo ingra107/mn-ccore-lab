@@ -101,7 +101,7 @@ function UpdateItem({ update }: { update: TaskUpdateRow }) {
       style={{
         background: 'var(--cream)',
         borderLeft: `3px solid ${config.color}`,
-        opacity: update.update_type === 'session' ? 0.7 : 1,
+        opacity: update.update_type === 'session' ? 0.85 : 1,
       }}
     >
       <div className="flex items-start gap-2">
@@ -166,7 +166,7 @@ function CommentItem({ comment }: { comment: TaskComment }) {
 function SystemItem({ entry }: { entry: ActivityEntry }) {
   return (
     <div className="flex items-start gap-2 py-1 px-1">
-      <Circle size={5} className="flex-shrink-0 mt-1.5" style={{ color: 'var(--teal)', opacity: 0.3, fill: 'var(--teal)' }} />
+      <Circle size={5} className="flex-shrink-0 mt-1.5" style={{ color: 'var(--teal)', opacity: 0.85, fill: 'var(--teal)' }} />
       <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75, flex: 1 }}>
         {entry.description}
       </span>

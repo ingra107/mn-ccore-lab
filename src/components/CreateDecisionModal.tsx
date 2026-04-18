@@ -130,7 +130,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
   const labelStyle = {
     fontSize: '10px',
     color: 'var(--slate)',
-    opacity: 0.7,
+    opacity: 0.85,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.06em',
     display: 'block',
@@ -363,7 +363,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
                         borderBottom: '1px solid var(--border-subtle)',
                       }}
                     >
-                      <Search size={10} style={{ display: 'inline', verticalAlign: '-1px', marginRight: '4px', opacity: 0.4 }} />
+                      <Search size={10} style={{ display: 'inline', verticalAlign: '-1px', marginRight: '4px', opacity: 0.85 }} />
                       {p.title}
                     </button>
                   ))}
@@ -376,7 +376,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
         {/* Footer */}
         <div className="px-6 py-4 flex items-center justify-end gap-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
           {!title.trim() && (
-            <p id="decision-submit-hint" className="text-[11px] mr-auto" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+            <p id="decision-submit-hint" className="text-[11px] mr-auto" style={{ color: 'var(--slate)', opacity: 0.85 }}>
               Decision title is required.
             </p>
           )}
@@ -397,7 +397,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
               background: title.trim() ? 'var(--teal-solid)' : 'var(--ice)',
               color: title.trim() ? 'var(--ink-bright, #fff)' : 'var(--slate)',
               border: 'none',
-              opacity: title.trim() ? 1 : 0.5,
+              opacity: title.trim() ? 1 : 0.85,
             }}
             whileTap={{ scale: 0.95 }}
           >

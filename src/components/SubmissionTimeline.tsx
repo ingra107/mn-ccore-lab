@@ -273,7 +273,7 @@ function AddEventForm({
             background: 'var(--teal-solid)',
             color: 'var(--ink-bright, #fff)',
             cursor: createEvent.isPending ? 'wait' : 'pointer',
-            opacity: createEvent.isPending ? 0.6 : 1,
+            opacity: createEvent.isPending ? 0.85 : 1,
           }}
         >
           {createEvent.isPending ? 'Adding...' : 'Add Event'}
@@ -363,7 +363,7 @@ function TimelineEvent({
               fontSize: 'var(--label-size)',
               fontWeight: 'var(--label-weight)',
               color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
-              opacity: isOverdue ? 1 : 0.5,
+              opacity: isOverdue ? 1 : 0.85,
             }}
           >
             {new Date(event.event_date + 'T00:00:00').toLocaleDateString('en-US', {
@@ -379,7 +379,7 @@ function TimelineEvent({
               fontSize: 'var(--label-size)',
               fontWeight: 'var(--label-weight)',
               color: isOverdue ? 'var(--maroon)' : 'var(--teal)',
-              opacity: isOverdue ? 1 : 0.7,
+              opacity: isOverdue ? 1 : 0.85,
               padding: '1px 6px',
               borderRadius: 'var(--radius-lg)',
               background: isOverdue ? 'var(--maroon-hover)' : 'var(--teal-hover)',
@@ -411,7 +411,7 @@ function TimelineEvent({
 
         {/* Journal */}
         {event.journal && (
-          <span style={{ fontSize: '12px', color: 'var(--ink)', opacity: 0.6, display: 'block', marginTop: '3px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--ink)', opacity: 0.85, display: 'block', marginTop: '3px' }}>
             {event.journal}
           </span>
         )}
@@ -440,7 +440,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
   if (isLoading) {
     return (
       <div style={{ padding: 'var(--sp-xl) 0' }}>
-        <div style={{ height: '60px', background: 'var(--border-subtle)', opacity: 0.3, borderRadius: 'var(--radius-lg)' }} />
+        <div style={{ height: '60px', background: 'var(--border-subtle)', opacity: 0.85, borderRadius: 'var(--radius-lg)' }} />
       </div>
     )
   }
@@ -640,7 +640,7 @@ export function ActiveSubmissionsDashboard({
               </span>
 
               {/* Days since submission */}
-              <span style={{ fontSize: '12px', color: 'var(--teal)', opacity: 0.7 }}>
+              <span style={{ fontSize: '12px', color: 'var(--teal)', opacity: 0.85 }}>
                 {sub.days_since_submission}d ago
               </span>
 
@@ -651,7 +651,7 @@ export function ActiveSubmissionsDashboard({
                     fontSize: '12px',
                     fontWeight: isOverdue ? 600 : 400,
                     color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
-                    opacity: isOverdue ? 1 : 0.6,
+                    opacity: isOverdue ? 1 : 0.85,
                   }}
                 >
                   {isOverdue

@@ -96,7 +96,7 @@ const dividerStyles: React.CSSProperties = {
 }
 
 const submenuIndicatorStyles: React.CSSProperties = {
-  opacity: 0.3,
+  opacity: 0.85,
   flexShrink: 0,
 }
 
@@ -309,7 +309,7 @@ export default function TaskContextMenu({
                 <Icon size={13} />
                 {s.label}
               </span>
-              {isCurrent && <Check size={12} style={{ opacity: 0.6 }} />}
+              {isCurrent && <Check size={12} style={{ opacity: 0.85 }} />}
             </MenuItem>
           )
         })}
@@ -337,7 +337,7 @@ export default function TaskContextMenu({
                 }} />
                 {p.label}
               </span>
-              {isCurrent && <Check size={12} style={{ opacity: 0.6 }} />}
+              {isCurrent && <Check size={12} style={{ opacity: 0.85 }} />}
             </MenuItem>
           )
         })}

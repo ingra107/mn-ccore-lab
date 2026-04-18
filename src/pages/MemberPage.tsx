@@ -68,7 +68,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
         <div
           style={{
             color: isDone ? 'var(--teal)' : 'var(--slate)',
-            opacity: isDone ? 1 : 0.5,
+            opacity: isDone ? 1 : 0.85,
             flexShrink: 0,
             marginTop: 2,
           }}
@@ -83,7 +83,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
               color: 'var(--ink)',
               lineHeight: 1.4,
               textDecoration: isDone ? 'line-through' : 'none',
-              opacity: isDone ? 0.5 : 1,
+              opacity: isDone ? 0.85 : 1,
             }}
           >
             {item.commitment}
@@ -104,7 +104,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
                 style={{
                   fontSize: '11px',
                   color: overdue ? 'var(--maroon)' : 'var(--slate)',
-                  opacity: overdue ? 1 : 0.7,
+                  opacity: overdue ? 1 : 0.85,
                   fontWeight: overdue ? 600 : 400,
                 }}
               >
@@ -470,7 +470,7 @@ export default function MemberPage() {
                       <span
                         style={{
                           fontSize: '10px',
-                          opacity: 0.5,
+                          opacity: 0.85,
                           marginLeft: '2px',
                         }}
                         title={`Source: ${t.source}, confidence: ${t.confidence}`}
@@ -571,7 +571,7 @@ export default function MemberPage() {
                     color: newTag.trim() ? 'var(--ink)' : 'var(--slate)',
                     border: 'none',
                     cursor: newTag.trim() ? 'pointer' : 'default',
-                    opacity: newTag.trim() ? 1 : 0.5,
+                    opacity: newTag.trim() ? 1 : 0.85,
                     transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), opacity var(--duration-normal) var(--ease-out)',
                   }}
                 >
@@ -719,7 +719,7 @@ export default function MemberPage() {
             </AnimatePresence>
 
             {doneCommitments.length > 0 && (
-              <div style={{ marginTop: '0.75rem', opacity: 0.6 }}>
+              <div style={{ marginTop: '0.75rem', opacity: 0.85 }}>
                 <AnimatePresence mode="popLayout">
                   {doneCommitments.map((c) => (
                     <MemberCommitmentCard key={c.id} item={c} />
@@ -933,7 +933,7 @@ function MilestoneMiniCard({
       style={{
         padding: '0.75rem 1rem',
         borderLeft: `3px solid ${borderColor}`,
-        opacity: isDone ? 0.5 : 1,
+        opacity: isDone ? 0.85 : 1,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -949,7 +949,7 @@ function MilestoneMiniCard({
             {milestone.title}
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--gold)', opacity: 0.7 }}>
+            <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--gold)', opacity: 0.85 }}>
               {MILESTONE_TYPE_LABELS[milestone.milestone_type] || milestone.milestone_type}
             </span>
             {milestone.due_date && (
@@ -958,7 +958,7 @@ function MilestoneMiniCard({
                   fontSize: '10px',
                   color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
                   fontWeight: isOverdue ? 500 : 400,
-                  opacity: isOverdue ? 1 : 0.6,
+                  opacity: isOverdue ? 1 : 0.85,
                 }}
               >
                 {isOverdue ? 'Overdue' : formatShortDate(milestone.due_date)}

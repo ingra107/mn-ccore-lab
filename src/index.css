@@ -10,13 +10,17 @@
      slate gives ~4.8:1 through --ink-label=0.70 on sidebar-bg (#d7d7d7)
      and still passes AA at full opacity on #fff (7:1+). */
   --slate: #1a2939;
-  --gold: oklch(0.73 0.12 85);           /* #c9a84c */
-  --gold-light: oklch(0.95 0.01 85);     /* #f0efe8 */
-  --cream: oklch(1.00 0 0);              /* #ffffff */
-  --maroon: oklch(0.35 0.15 20);         /* #7a0019 */
-  --ice: oklch(0.97 0.005 250);          /* #f4f5f7 */
-  --teal: oklch(0.55 0.1 190);           /* #2d8a8a */
-  --teal-subtle: oklch(0.45 0.04 190);  /* desaturated teal for bulk/ambient use */
+  /* Light-mode colors pinned to sRGB hex so axe-core 4.11 grades the
+     literal color. Each value darker than the OKLCH equivalent to reach
+     4.5:1 on both white and the tinted hover bgs (gold-active, teal-active,
+     etc.). Visual identity is preserved — just sturdier contrast. */
+  --gold: #6b5420;       /* Darker than before; passes on gold-active (self-tint) + white */
+  --gold-light: #f0efe8;
+  --cream: #ffffff;
+  --maroon: #7a0019;
+  --ice: #f4f5f7;
+  --teal: #006b66;       /* was oklch(0.55) — 5.8:1 on #fff */
+  --teal-subtle: #4a8a87;
   /* --teal-solid: darker teal for solid button/badge backgrounds where
      white text (ink-bright) is layered on top. Keeps WCAG AA (~6:1 with
      #fff) while plain --teal stays bright enough for text-on-dark uses.
@@ -25,9 +29,9 @@
      Hex (not OKLCH) so axe-core 4.11 grades the literal sRGB it sees. */
   --teal-solid: #0d6f68;      /* 6.1:1 with #fff */
   --maroon-solid: #8a1f2e;    /* 7.1:1 with #fff */
-  --orange: oklch(0.6 0.18 45);          /* #c2410c */
-  --green: oklch(0.6 0.18 145);          /* #16a34a */
-  --green-light: oklch(0.70 0.17 145);   /* #22c55e */
+  --orange: #a23d08;                     /* darker than oklch(0.6) for AA on tinted bg */
+  --green: #066e2f;                      /* darker green for AA on tinted bg */
+  --green-light: #16a34a;
 
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'DM Sans', sans-serif;
@@ -770,11 +774,13 @@ a:hover {
   color: #4ade80;
 }
 
+/* Badges: darker light-mode colors + full opacity so axe AA is met on #fff.
+   Dark-mode variants are already bright enough. 2026-04-18 */
 .badge-review {
   background: transparent;
-  color: #d97706;
+  color: #a15200;              /* was #d97706, too light on white */
   border: 1px solid currentColor;
-  opacity: 0.8;
+  opacity: 1;
 }
 
 .dark .badge-review {
@@ -785,7 +791,7 @@ a:hover {
   background: transparent;
   color: #7a0019;
   border: 1px solid currentColor;
-  opacity: 0.8;
+  opacity: 1;
 }
 
 .dark .badge-published {
@@ -794,9 +800,9 @@ a:hover {
 
 .badge-preparation {
   background: transparent;
-  color: #64748b;
+  color: #4b5563;              /* darker slate for AA on white */
   border: 1px solid currentColor;
-  opacity: 0.8;
+  opacity: 1;
 }
 
 .dark .badge-preparation {

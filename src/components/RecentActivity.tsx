@@ -122,7 +122,7 @@ export default function RecentActivity() {
                   className="flex-shrink-0 text-xs"
                   style={{
                     color: 'var(--slate)',
-                    opacity: 0.7,
+                    opacity: 0.85,
                     fontSize: '10px',
                   }}
                 >

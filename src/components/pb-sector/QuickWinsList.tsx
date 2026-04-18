@@ -32,7 +32,7 @@ function SortableQuickWin({ task, onComplete, onClickTitle }: {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.85 : 1,
   }
 
   return (
@@ -52,7 +52,7 @@ function SortableQuickWin({ task, onComplete, onClickTitle }: {
         >
           <div style={{
             width: 14, height: 14, borderRadius: 'var(--radius-sm)',
-            border: '1.5px solid var(--slate)', opacity: 0.3,
+            border: '1.5px solid var(--slate)', opacity: 0.85,
           }} />
         </button>
 
@@ -89,7 +89,7 @@ export default function QuickWinsList({ tasks, onComplete, onClickTitle, onAddCl
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-2">
         <Zap size={13} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-        <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--slate)', opacity: 0.7 }}>
+        <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--slate)', opacity: 0.85 }}>
           Quick Wins
         </span>
         {tasks.length > 0 && (

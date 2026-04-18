@@ -54,7 +54,7 @@ export function TaskUpdateFeed({ taskId }: { taskId: string }) {
                   background: isActive ? config.bg : 'transparent',
                   color: isActive ? config.color : 'var(--slate)',
                   border: isActive ? `1px solid ${config.borderColor}` : '1px solid transparent',
-                  opacity: isActive ? 1 : 0.5,
+                  opacity: isActive ? 1 : 0.85,
                 }}
               >
                 <Icon size={10} />
@@ -136,7 +136,7 @@ function NoteCard({ update }: { update: TaskUpdateRow }) {
         borderRadius: 'var(--radius-lg)',
         padding: '10px 12px',
         borderLeft: `3px solid ${config.color}`,
-        opacity: isSession ? 0.7 : 1,
+        opacity: isSession ? 0.85 : 1,
       }}
     >
       <div className="flex items-start gap-2.5">

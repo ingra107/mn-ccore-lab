@@ -45,7 +45,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             borderRadius: 'var(--radius-circle)',
             background: dotColor,
             flexShrink: 0,
-            opacity: 0.7,
+            opacity: 0.85,
             marginTop: '6px',
           }}
         />

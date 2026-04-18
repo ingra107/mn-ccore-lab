@@ -191,7 +191,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                       fontSize: 'var(--label-size)',
                       fontWeight: 'var(--label-weight)',
                       color: priority.color,
-                      opacity: 0.7,
+                      opacity: 0.85,
                       background: priority.bg,
                     }}
                   >
@@ -228,7 +228,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                     color: 'var(--ink)',
                     margin: 0,
                     textDecoration: isDone ? 'line-through' : 'none',
-                    opacity: isDone ? 0.6 : 1,
+                    opacity: isDone ? 0.85 : 1,
                   }}
                 >
                   {formatBrandName(displayText)}
@@ -367,7 +367,7 @@ export default function TaskPeekOverlay({ task, onClose }: Props) {
                   gap: 6,
                 }}
               >
-                <span style={{ ...labelStyle, opacity: 0.4 }}>
+                <span style={{ ...labelStyle, opacity: 0.85 }}>
                   <kbd className="peek-kbd" style={kbdStyle}>Esc</kbd>
                   {' or '}
                   <kbd className="peek-kbd" style={kbdStyle}>Space</kbd>

@@ -59,7 +59,7 @@ export default function ColumnHeader({
           style={{
             fontSize: '10px',
             fontWeight: 600,
-            opacity: 0.6,
+            opacity: 0.85,
             marginLeft: '1px',
           }}
         >

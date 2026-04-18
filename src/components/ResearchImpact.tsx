@@ -43,7 +43,7 @@ export default function ResearchImpact() {
     <section className="section-ink relative py-10 sm:py-14">
       <div
         className="absolute top-0 left-0 right-0"
-        style={{ height: '1px', background: 'var(--gold)', opacity: 0.3 }}
+        style={{ height: '1px', background: 'var(--gold)', opacity: 0.85 }}
       />
 
       <div className="content-container">
@@ -124,7 +124,7 @@ export default function ResearchImpact() {
                           background: isHighImpact
                             ? 'var(--gold)'
                             : 'rgba(255, 255, 255, 0.2)',
-                          opacity: isHighImpact ? 0.8 : 0.6,
+                          opacity: isHighImpact ? 0.8 : 0.85,
                         }}
                       />
                     </div>
@@ -148,7 +148,7 @@ export default function ResearchImpact() {
 
       <div
         className="absolute bottom-0 left-0 right-0"
-        style={{ height: '1px', background: 'var(--gold)', opacity: 0.3 }}
+        style={{ height: '1px', background: 'var(--gold)', opacity: 0.85 }}
       />
     </section>
   )

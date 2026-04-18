@@ -445,7 +445,7 @@ export default function PBSector() {
                 className="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg"
                 style={{ background: 'var(--cream)', border: '2px solid var(--gold)', maxWidth: 400 }}
               >
-                <GripVertical size={14} style={{ color: 'var(--gold)', opacity: 0.5 }} />
+                <GripVertical size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} />
                 <span style={{ fontSize: '14px', color: 'var(--ink)' }}>
                   {activeTask.title || activeTask.description}
                 </span>

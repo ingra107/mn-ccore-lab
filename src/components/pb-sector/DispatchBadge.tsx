@@ -40,7 +40,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
         <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--gold)' }}>
           {count}
         </span>
-        <ChevronDown size={10} style={{ color: 'var(--gold)', opacity: 0.6, transform: expanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
+        <ChevronDown size={10} style={{ color: 'var(--gold)', opacity: 0.85, transform: expanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
       </button>
 
       {/* Dropdown */}
@@ -77,7 +77,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                       style={{
                         width: 6, height: 6, borderRadius: 'var(--radius-circle)', flexShrink: 0, marginTop: 5,
                         background: item.comment_type === 'action' ? 'var(--gold)' : 'var(--slate)',
-                        opacity: item.comment_type === 'action' ? 1 : 0.4,
+                        opacity: item.comment_type === 'action' ? 1 : 0.85,
                       }}
                     />
                     <div className="flex-1 min-w-0">
@@ -105,7 +105,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                   fontSize: '11px', fontWeight: 600,
                   background: 'var(--gold)', color: 'var(--ink-bright, #fff)',
                   border: 'none', cursor: isSending ? 'wait' : 'pointer',
-                  opacity: isSending ? 0.7 : 1,
+                  opacity: isSending ? 0.85 : 1,
                 }}
               >
                 {isSending ? (

@@ -260,7 +260,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                     background: newTarget ? 'var(--teal-solid)' : 'var(--ice)',
                     color: newTarget ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                     border: 'none',
-                    opacity: newTarget ? 1 : 0.5,
+                    opacity: newTarget ? 1 : 0.85,
                   }}
                   whileTap={{ scale: 0.95 }}
                 >

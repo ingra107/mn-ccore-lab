@@ -401,6 +401,18 @@ export default {
             return await handleRecentUpdates(url, env);
           case '/api/task-updates/recent':
             return await handleGetRecentTaskUpdates(url, env);
+          case '/api/task-comments/recent': {
+            // Bulk task_comments fetch for brain.db ← Hub sync (2026-04-18).
+            const limit = Math.min(parseInt(url.searchParams.get('limit') || '200', 10), 500);
+            const since = url.searchParams.get('since');
+            const q = since
+              ? 'SELECT * FROM task_comments WHERE created_at > ? ORDER BY created_at DESC LIMIT ?'
+              : 'SELECT * FROM task_comments ORDER BY created_at DESC LIMIT ?';
+            const result = since
+              ? await env.DB.prepare(q).bind(since, limit).all()
+              : await env.DB.prepare(q).bind(limit).all();
+            return json({ data: result.results || [] });
+          }
           case '/api/projects/health':
             return await handleProjectHealth(env);
           case '/api/grants/timeline':

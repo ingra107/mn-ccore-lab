@@ -34,7 +34,7 @@ function SortableEveningItem({ task, onComplete, onClickTitle }: {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.3 : 0.7,
+    opacity: isDragging ? 0.85 : 0.85,
   }
 
   return (
@@ -100,8 +100,8 @@ export default function EveningTaskSlot({ tasks, onComplete, onClickTitle, onAdd
       </div>
 
       <div className="flex items-center gap-2 mb-2">
-        <Moon size={13} style={{ color: 'var(--gold)', opacity: 0.6 }} />
-        <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)', opacity: 0.7 }}>
+        <Moon size={13} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+        <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)', opacity: 0.85 }}>
           This Evening
         </span>
         {tasks.length > 0 && (
@@ -144,8 +144,8 @@ export default function EveningTaskSlot({ tasks, onComplete, onClickTitle, onAdd
           }}
           whileHover={{ backgroundColor: 'var(--gold-hover)' }}
         >
-          <Plus size={12} style={{ color: 'var(--gold)', opacity: 0.3 }} />
-          <span style={{ fontSize: '11px', color: 'var(--gold)', opacity: 0.3 }}>
+          <Plus size={12} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+          <span style={{ fontSize: '11px', color: 'var(--gold)', opacity: 0.85 }}>
             Defer to evening
           </span>
         </motion.button>

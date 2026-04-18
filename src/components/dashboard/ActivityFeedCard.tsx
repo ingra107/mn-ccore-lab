@@ -161,7 +161,7 @@ function ActivityFeedCard() {
                         color: 'var(--slate)',
                         fontStyle: 'italic',
                         margin: '2px 0 0 0',
-                        opacity: 0.7,
+                        opacity: 0.85,
                       }}
                     >
                       {item.detail}

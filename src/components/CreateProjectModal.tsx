@@ -249,7 +249,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
 
           {/* Submit */}
           {!title.trim() && (
-            <p id="project-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+            <p id="project-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
               Title is required.
             </p>
           )}

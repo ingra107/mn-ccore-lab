@@ -50,7 +50,7 @@ export default function EmailDraftsCard() {
               key={draft.id}
               className="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
             >
-              <Mail size={11} style={{ color: 'var(--gold)', flexShrink: 0, opacity: 0.6 }} />
+              <Mail size={11} style={{ color: 'var(--gold)', flexShrink: 0, opacity: 0.85 }} />
               {draft.gmail_link ? (
                 <a
                   href={draft.gmail_link}

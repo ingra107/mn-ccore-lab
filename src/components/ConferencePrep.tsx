@@ -120,7 +120,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
   return (
     <CollapsibleSection
       title="Conferences"
-      icon={<Presentation size={12} style={{ color: 'var(--teal)', opacity: 0.7 }} />}
+      icon={<Presentation size={12} style={{ color: 'var(--teal)', opacity: 0.85 }} />}
       badge={activeConfs.length || null}
       storageKey={`conf-${projectId}`}
     >
@@ -268,7 +268,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         size={13}
                         style={{
                           color: conf.travel_booked ? 'var(--teal)' : 'var(--slate)',
-                          opacity: conf.travel_booked ? 1 : 0.3,
+                          opacity: conf.travel_booked ? 1 : 0.85,
                         }}
                       />
                       {conf.travel_booked ? (
@@ -406,7 +406,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 background: 'var(--teal-solid)',
                 color: 'var(--ink-bright, #fff)',
                 cursor: !form.conference.trim() || !form.title.trim() ? 'not-allowed' : 'pointer',
-                opacity: !form.conference.trim() || !form.title.trim() ? 0.5 : 1,
+                opacity: !form.conference.trim() || !form.title.trim() ? 0.85 : 1,
               }}
             >
               Add
@@ -441,7 +441,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             border: 'none',
             cursor: 'pointer',
             padding: 'var(--sp-xs) 0',
-            opacity: 0.7,
+            opacity: 0.85,
           }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7' }}

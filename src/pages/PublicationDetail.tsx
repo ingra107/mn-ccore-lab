@@ -43,7 +43,7 @@ export default function PublicationDetail() {
             fontSize: '14px',
             color: 'var(--slate)',
             textDecoration: 'none',
-            opacity: 0.7,
+            opacity: 0.85,
           }}
         >
           <ArrowLeft size={16} />
@@ -89,7 +89,7 @@ export default function PublicationDetail() {
               fontSize: '14px',
               color: 'var(--slate)',
               textDecoration: 'none',
-              opacity: 0.7,
+              opacity: 0.85,
             }}
           >
             <ArrowLeft size={16} />
@@ -206,7 +206,7 @@ export default function PublicationDetail() {
             style={{
               height: '1px',
               background: 'linear-gradient(to right, var(--gold), transparent)',
-              opacity: 0.3,
+              opacity: 0.85,
               marginBottom: '2rem',
             }}
           />

@@ -252,7 +252,7 @@ function ActionItemCard({
             padding: 2,
             cursor: 'pointer',
             color: item.completed ? 'var(--teal)' : 'var(--slate)',
-            opacity: item.completed ? 1 : 0.5,
+            opacity: item.completed ? 1 : 0.85,
             flexShrink: 0,
             marginTop: 2,
             transition: 'color 0.2s, opacity 0.2s',
@@ -269,7 +269,7 @@ function ActionItemCard({
               color: 'var(--ink)',
               lineHeight: 1.4,
               textDecoration: item.completed ? 'line-through' : 'none',
-              opacity: item.completed ? 0.5 : 1,
+              opacity: item.completed ? 0.85 : 1,
             }}
           >
             {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">↻ carried</span>}{clean}</>); })()}
@@ -332,7 +332,7 @@ function ActionItemCard({
                   style={{
                     fontSize: 'var(--label-size)',
                     color: overdue ? 'var(--maroon)' : 'var(--slate)',
-                    opacity: overdue ? 1 : 0.7,
+                    opacity: overdue ? 1 : 0.85,
                     fontWeight: overdue ? 600 : 400,
                   }}
                 >
@@ -390,7 +390,7 @@ function NotificationCard({
         marginBottom: '0.5rem',
         cursor: notification.link ? 'pointer' : 'default',
         borderLeft: isUnread ? '3px solid var(--gold)' : '3px solid transparent',
-        opacity: isUnread ? 1 : 0.7,
+        opacity: isUnread ? 1 : 0.85,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
@@ -504,7 +504,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
         <div
           style={{
             color: isDone ? 'var(--teal)' : 'var(--slate)',
-            opacity: isDone ? 1 : 0.5,
+            opacity: isDone ? 1 : 0.85,
             flexShrink: 0,
             marginTop: 2,
           }}
@@ -519,7 +519,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
               color: 'var(--ink)',
               lineHeight: 1.4,
               textDecoration: isDone ? 'line-through' : 'none',
-              opacity: isDone ? 0.5 : 1,
+              opacity: isDone ? 0.85 : 1,
             }}
           >
             {item.commitment}
@@ -582,7 +582,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
                   style={{
                     fontSize: 'var(--label-size)',
                     color: overdue ? 'var(--maroon)' : 'var(--slate)',
-                    opacity: overdue ? 1 : 0.7,
+                    opacity: overdue ? 1 : 0.85,
                     fontWeight: overdue ? 600 : 400,
                   }}
                 >
@@ -783,7 +783,7 @@ export default function MyItems() {
             style={{
               fontSize: '15px',
               color: 'var(--slate)',
-              opacity: 0.7,
+              opacity: 0.85,
               marginTop: '4px',
             }}
           >
@@ -795,7 +795,7 @@ export default function MyItems() {
             style={{
               height: '1px',
               background: 'linear-gradient(to right, var(--gold), transparent)',
-              opacity: 0.3,
+              opacity: 0.85,
               marginTop: '1rem',
             }}
           />
@@ -878,7 +878,7 @@ export default function MyItems() {
                   gap: 'var(--sp-xs)',
                   fontSize: 'var(--label-size)',
                   color: 'var(--teal)',
-                  opacity: markAllRead.isPending ? 0.5 : 0.8,
+                  opacity: markAllRead.isPending ? 0.85 : 0.8,
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   padding: 'var(--sp-xs) 0',
@@ -943,7 +943,7 @@ export default function MyItems() {
             )}
 
             {doneCommitments.length > 0 && (
-              <div style={{ marginTop: '1rem', opacity: 0.6 }}>
+              <div style={{ marginTop: '1rem', opacity: 0.85 }}>
                 <AnimatePresence mode="popLayout">
                   {doneCommitments.map((c) => (
                     <CommitmentCard key={c.id} item={c} />

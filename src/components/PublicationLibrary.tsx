@@ -111,7 +111,7 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
                       right: 0,
                       height: '3px',
                       background: accent,
-                      opacity: 0.7,
+                      opacity: 0.85,
                     }}
                   />
 
@@ -154,7 +154,7 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
                       style={{
                         fontSize: '10px',
                         color: 'var(--slate)',
-                        opacity: 0.7,
+                        opacity: 0.85,
                       }}
                     >
                       {pub.authors.split(',')[0]?.trim() || ''}

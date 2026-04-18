@@ -71,7 +71,7 @@ export default function ImpactMetrics() {
         style={{
           height: '1px',
           background: 'var(--gold)',
-          opacity: 0.5,
+          opacity: 0.85,
         }}
       />
 
@@ -95,7 +95,7 @@ export default function ImpactMetrics() {
         style={{
           height: '1px',
           background: 'var(--gold)',
-          opacity: 0.5,
+          opacity: 0.85,
         }}
       />
     </section>

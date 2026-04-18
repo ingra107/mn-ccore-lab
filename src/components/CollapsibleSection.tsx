@@ -96,7 +96,7 @@ export default function CollapsibleSection({
             style={{
               fontSize: '10px',
               color: 'var(--teal)',
-              opacity: 0.7,
+              opacity: 0.85,
               marginLeft: '2px',
             }}
           >

@@ -110,7 +110,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
             border: '1px dashed var(--border-light, var(--hover-medium))',
             cursor: 'pointer',
             color: 'var(--slate)',
-            opacity: showPicker ? 0.8 : 0.35,
+            opacity: showPicker ? 0.8 : 0.85,
             fontSize: '12px',
             lineHeight: 1,
           }}

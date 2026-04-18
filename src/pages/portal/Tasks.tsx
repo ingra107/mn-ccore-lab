@@ -355,7 +355,7 @@ export default function Tasks() {
                     color: myTasksOnly ? 'var(--teal)' : 'var(--slate)',
                     border: `1px solid ${myTasksOnly ? 'rgba(45,138,138,0.3)' : 'var(--border-light)'}`,
                     cursor: 'pointer',
-                    opacity: myTasksOnly ? 1 : 0.55,
+                    opacity: myTasksOnly ? 1 : 0.85,
                   }}
                 >
                   <Users size={10} />
@@ -375,7 +375,7 @@ export default function Tasks() {
                     color: showCompleted ? 'var(--green)' : 'var(--slate)',
                     border: `1px solid ${showCompleted ? 'rgba(34,197,94,0.3)' : 'var(--border-light)'}`,
                     cursor: 'pointer',
-                    opacity: showCompleted ? 1 : 0.5,
+                    opacity: showCompleted ? 1 : 0.85,
                   }}
                 >
                   <CheckCircle2 size={10} />
@@ -390,7 +390,7 @@ export default function Tasks() {
                   color: showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--slate)',
                   border: `1px solid ${showFilters || activeFilterCount > 0 ? 'var(--teal)' : 'var(--border-light)'}`,
                   cursor: 'pointer',
-                  opacity: showFilters || activeFilterCount > 0 ? 1 : 0.5,
+                  opacity: showFilters || activeFilterCount > 0 ? 1 : 0.85,
                 }}
                 title="Toggle filters (F)"
               >

@@ -65,7 +65,7 @@ export default function ViewDropdown({ currentView, onSelect, views }: ViewDropd
                   <div className="text-sm font-medium" style={{ color: currentView === v.key ? 'var(--teal)' : 'var(--ink)' }}>
                     {v.label}
                   </div>
-                  <div className="text-[11px] mt-0.5" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+                  <div className="text-[11px] mt-0.5" style={{ color: 'var(--slate)', opacity: 0.85 }}>
                     {v.description}
                   </div>
                 </div>

@@ -56,7 +56,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
     fontSize: 13,
     fontWeight: 'var(--label-weight)',
     cursor: isUpdating ? 'not-allowed' : 'pointer',
-    opacity: isUpdating ? 0.5 : 1,
+    opacity: isUpdating ? 0.85 : 1,
     transition: 'background 150ms',
   })
 

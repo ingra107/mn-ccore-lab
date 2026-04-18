@@ -85,7 +85,7 @@ export default function PageHeader({
                   fontSize: 13,
                   fontWeight: 400,
                   color: 'var(--slate)',
-                  opacity: 0.7,
+                  opacity: 0.85,
                   flexShrink: 1,
                   minWidth: 0,
                 }}

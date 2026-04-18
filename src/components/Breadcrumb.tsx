@@ -21,14 +21,14 @@ export default function Breadcrumb({ backTo, backLabel, current, maxLength = 40 
         <Link
           to={backTo}
           className="inline-flex items-center gap-1 hover:!opacity-100 transition-opacity"
-          style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.55 }}
+          style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.85 }}
         >
           <ArrowLeft size={12} />
           {backLabel}
         </Link>
         {current && (
           <>
-            <span style={{ opacity: 0.3 }}>/</span>
+            <span style={{ opacity: 0.85 }}>/</span>
             <span style={{ color: 'var(--ink)', opacity: 0.8 }}>{truncated}</span>
           </>
         )}

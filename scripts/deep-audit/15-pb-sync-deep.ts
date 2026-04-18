@@ -177,26 +177,21 @@ async function main() {
     // ─────────────────────────────────────────────────────────
     // E. Comments — do Hub task_comments sync to brain.db?
     // ─────────────────────────────────────────────────────────
-    section(s, '15.E  Task comments — Hub → brain.db')
+    section(s, '15.E  Task comments — Hub → brain.db d1_task_comments')
     const cmtText = `${label}__cmt_${UNIQ()}`
     const cmtResp = await s.api.post(`/api/tasks/${d1Id}/comments`, { data: { content: cmtText, author_slug: 'nick' } })
     if (cmtResp.ok()) pass(s, '15.E Hub comment created')
     else log(s, `  15.E comment POST ${cmtResp.status()}`)
     await s.page.waitForTimeout(1500)
-    const pullCmt = runPython('scripts/db/sync_d1_pull.py')
+    // Explicit --task-comments so we don't depend on the full pull ordering
+    const pullCmt = runPython('scripts/db/sync_d1_pull.py --task-comments')
     if (pullCmt.ok) {
       if (existsSync(BRAIN_DB)) {
         const db = new Database(BRAIN_DB, { readonly: true })
         try {
-          // brain.db doesn't necessarily have a task_comments table — check first
-          const tbl = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='task_comments'").get()
-          if (!tbl) {
-            log(s, '  15.E INFO: brain.db has no task_comments table — Hub task_comments do NOT sync back (by design?)')
-          } else {
-            const row = db.prepare("SELECT content FROM task_comments WHERE content = ?").get(cmtText)
-            if (row) pass(s, '15.E Hub comment found in brain.db task_comments')
-            else log(s, '  15.E INFO: Hub comment not in brain.db task_comments — gap (not necessarily bug)')
-          }
+          const row = db.prepare('SELECT content FROM d1_task_comments WHERE content = ?').get(cmtText)
+          if (row) pass(s, '15.E Hub comment landed in brain.db d1_task_comments')
+          else bug(s, 'SYNC-CMT-NO-MIRROR', 'P1', '15.E Hub comment in brain.db', 'not found', 'row in d1_task_comments')
         } finally { db.close() }
       }
     }
@@ -205,7 +200,8 @@ async function main() {
     // F. Project sync — do Hub-created projects flow to brain.db?
     // ─────────────────────────────────────────────────────────
     section(s, '15.F  Project sync — Hub → brain.db projects table')
-    const projTitle = `deep-audit-sync-proj-${UNIQ()}`
+    // Use a non-test-prefix title so is_test_task / pull guards don't skip it.
+    const projTitle = `Deep Audit Sync Probe ${UNIQ()}`
     const projResp = await s.api.post('/api/projects', {
       data: { title: projTitle, category: 'lab', status: 'active', stage: 'Idea', description: projTitle, pi: 'nick' },
     })
@@ -213,17 +209,26 @@ async function main() {
       const pslug = ((await projResp.json()) as { data?: { slug: string } }).data?.slug
       pass(s, `15.F Hub project created slug=${pslug}`)
       await s.page.waitForTimeout(1500)
-      const pullP = runPython('scripts/db/sync_d1_pull.py')
+      const pullP = runPython('scripts/db/sync_d1_pull.py --hub-projects')
       if (pullP.ok) {
         const db = new Database(BRAIN_DB, { readonly: true })
         try {
           const row = db.prepare('SELECT id, name FROM projects WHERE name = ? OR slug = ?').get(projTitle, pslug)
           if (row) pass(s, '15.F Hub project found in brain.db projects')
-          else log(s, '  15.F INFO: Hub-created project did NOT appear in brain.db — projects are not bidirectional in sync_d1_pull (gap or by design)')
+          else bug(s, 'SYNC-PROJ-NO-MIRROR', 'P1', '15.F Hub project in brain.db', 'not found', `row for "${projTitle}" present`)
         } finally { db.close() }
       }
-      // Cleanup
-      if (pslug) s.cleanup.push(async () => { await s.api.post(`/api/projects/${pslug}/delete`).catch(() => {}) })
+      // Cleanup — delete from Hub + brain.db
+      if (pslug) {
+        s.cleanup.push(async () => {
+          await s.api.post(`/api/projects/${pslug}/delete`).catch(() => {})
+          if (existsSync(BRAIN_DB)) {
+            const db = new Database(BRAIN_DB)
+            try { db.prepare("DELETE FROM projects WHERE name = ? OR slug = ?").run(projTitle, pslug!) }
+            finally { db.close() }
+          }
+        })
+      }
     }
 
     // ─────────────────────────────────────────────────────────

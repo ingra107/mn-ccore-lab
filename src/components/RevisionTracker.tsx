@@ -340,7 +340,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
               onChange={(val) => onStatusChange(revision, val)}
             />
             {revision.journal && (
-              <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.7 }}>
+              <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85 }}>
                 {revision.journal}
               </span>
             )}
@@ -657,7 +657,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                 style={{
                                   fontSize: 'var(--label-size)',
                                   color: 'var(--teal)',
-                                  opacity: 0.6,
+                                  opacity: 0.85,
                                   background: 'none',
                                   border: 'none',
                                   cursor: 'pointer',
@@ -721,7 +721,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
             style={{
               fontSize: '12px',
               color: 'var(--teal)',
-              opacity: 0.7,
+              opacity: 0.85,
               background: 'none',
               border: 'none',
               cursor: 'pointer',
@@ -811,7 +811,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                   background: newCommentText.trim() ? 'var(--teal-solid)' : 'var(--slate)',
                   border: 'none',
                   cursor: newCommentText.trim() ? 'pointer' : 'not-allowed',
-                  opacity: newCommentText.trim() ? 1 : 0.5,
+                  opacity: newCommentText.trim() ? 1 : 0.85,
                 }}
               >
                 <Plus size={13} />
@@ -943,7 +943,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
                 </span>
 
                 {/* Journal */}
-                <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.7 }}>
+                <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85 }}>
                   {rev.journal || '--'}
                 </span>
 
@@ -952,7 +952,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
                   style={{
                     fontSize: '12px',
                     color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
-                    opacity: isOverdue ? 0.9 : 0.6,
+                    opacity: isOverdue ? 0.9 : 0.85,
                     fontWeight: isOverdue ? 500 : 400,
                   }}
                 >

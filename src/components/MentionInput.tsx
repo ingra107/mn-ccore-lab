@@ -301,7 +301,7 @@ export default function MentionInput({
                   style={{
                     fontSize: '11px',
                     color: 'var(--gold)',
-                    opacity: 0.7,
+                    opacity: 0.85,
                   }}
                 >
                   @{person.slug}

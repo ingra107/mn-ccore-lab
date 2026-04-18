@@ -69,6 +69,12 @@ export async function openPersona(opts: PersonaOptions): Promise<PersonaSession>
     colorScheme: opts.colorScheme ?? 'dark',
     reducedMotion: opts.reducedMotion ?? 'reduce',
   })
+  // Persist the theme preference in localStorage so the Hub's useDarkMode
+  // hook applies the `.dark` class deterministically. Without this, the
+  // hook reads from localStorage first (default 'system') which lands on
+  // the prefers-color-scheme fallback — fine, but explicit is better.
+  const themePref = opts.colorScheme ?? 'dark'
+  await ctx.addInitScript(`window.localStorage.setItem('mn-ccore-theme', '${themePref}');`)
   const page = await ctx.newPage()
   const api = await playwrightRequest.newContext({ baseURL: BASE })
 
@@ -167,13 +173,22 @@ export async function goto(s: PersonaSession, path: string, timeout = 20000): Pr
     await s.page.goto(`${BASE}${path}`, { waitUntil: 'networkidle', timeout })
     await s.page.waitForTimeout(400)
   } catch (e) {
-    record(s, {
-      id: 'NAV-FAIL',
-      severity: 'P1',
-      scenario: `Navigate to ${path}`,
-      observed: (e as Error).message.slice(0, 200),
-      expected: 'page loads within timeout',
-    })
+    // Pages with continuous animations (reagraph, canvas sims) never reach
+    // networkidle — fall back to domcontentloaded before flagging. Only
+    // records NAV-FAIL if even the DOM parse didn't complete.
+    try {
+      await s.page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded', timeout })
+      await s.page.waitForTimeout(1500)
+      return
+    } catch {
+      record(s, {
+        id: 'NAV-FAIL',
+        severity: 'P1',
+        scenario: `Navigate to ${path}`,
+        observed: (e as Error).message.slice(0, 200),
+        expected: 'page loads within timeout',
+      })
+    }
   }
 }
 

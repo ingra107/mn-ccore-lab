@@ -482,7 +482,7 @@ export default function CommandPalette() {
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
           {isProjectMode
-            ? <FolderKanban size={16} style={{ color: 'var(--teal)', opacity: 0.7 }} />
+            ? <FolderKanban size={16} style={{ color: 'var(--teal)', opacity: 0.85 }} />
             : <Search size={16} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
           }
           <input
@@ -533,7 +533,7 @@ export default function CommandPalette() {
                       onClick={item.action}
                       onMouseEnter={() => setSelectedIndex(currentIdx)}
                     >
-                      <Icon size={15} style={{ color: isSelected ? 'var(--teal)' : 'var(--slate)', opacity: isSelected ? 1 : 0.4, flexShrink: 0 }} />
+                      <Icon size={15} style={{ color: isSelected ? 'var(--teal)' : 'var(--slate)', opacity: isSelected ? 1 : 0.85, flexShrink: 0 }} />
                       <div className="flex-1 min-w-0">
                         <span className="text-sm truncate block" style={{ color: isSelected ? 'var(--teal)' : 'var(--ink)', fontWeight: isSelected ? 500 : 400 }}>
                           {item.label}

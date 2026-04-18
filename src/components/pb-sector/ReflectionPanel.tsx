@@ -78,7 +78,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
         className="w-full flex items-center gap-2 px-4 py-3 text-left"
         style={{ background: 'var(--gold-hover)', border: 'none', cursor: 'pointer' }}
       >
-        <BookOpen size={14} style={{ color: 'var(--gold)', opacity: 0.6 }} />
+        <BookOpen size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} />
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
           End of Day
         </span>
@@ -88,7 +88,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
           </span>
         )}
         <div className="flex-1" />
-        {expanded ? <ChevronDown size={14} style={{ color: 'var(--gold)', opacity: 0.5 }} /> : <ChevronRight size={14} style={{ color: 'var(--gold)', opacity: 0.5 }} />}
+        {expanded ? <ChevronDown size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} /> : <ChevronRight size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} />}
       </button>
 
       <AnimatePresence>
@@ -156,7 +156,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                     background: hasContent ? 'var(--gold)' : 'var(--gold-emphasis)',
                     color: hasContent ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                     border: 'none', cursor: hasContent ? 'pointer' : 'default',
-                    opacity: hasContent ? 1 : 0.5,
+                    opacity: hasContent ? 1 : 0.85,
                   }}
                 >
                   <BookOpen size={12} />

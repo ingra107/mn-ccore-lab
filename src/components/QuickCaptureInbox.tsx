@@ -199,7 +199,7 @@ export default function QuickCaptureInbox() {
                 fontSize: 'var(--text-micro)',
                 fontWeight: 400,
                 color: 'var(--ink-label, var(--slate))',
-                opacity: 0.7,
+                opacity: 0.85,
                 marginLeft: 'var(--sp-xs)',
               }}
             >
@@ -300,7 +300,7 @@ export default function QuickCaptureInbox() {
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
               color: 'var(--ink-label, var(--slate))',
-              opacity: 0.7,
+              opacity: 0.85,
               fontWeight: 500,
             }}
           >
@@ -346,7 +346,7 @@ export default function QuickCaptureInbox() {
             style={{
               fontSize: 'var(--text-micro, 10px)',
               color: 'var(--ink-hint, var(--slate))',
-              opacity: 0.55,
+              opacity: 0.85,
             }}
           >
             Ctrl+Enter to save · Esc to cancel
@@ -381,7 +381,7 @@ export default function QuickCaptureInbox() {
                 fontSize: 'var(--text-small, 12px)',
                 fontWeight: 500,
                 cursor: !text.trim() || submitting ? 'not-allowed' : 'pointer',
-                opacity: !text.trim() || submitting ? 0.5 : 1,
+                opacity: !text.trim() || submitting ? 0.85 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,

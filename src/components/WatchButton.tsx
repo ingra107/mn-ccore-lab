@@ -28,7 +28,7 @@ export default function WatchButton({ id, type, label, slug, compact }: WatchBut
         padding: compact ? '2px 6px' : '4px 10px',
         cursor: 'pointer',
         color: watching ? 'var(--teal)' : 'var(--slate)',
-        opacity: watching ? 1 : 0.5,
+        opacity: watching ? 1 : 0.85,
         display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)',
         fontSize: '11px',
       }}

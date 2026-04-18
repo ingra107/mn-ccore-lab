@@ -78,7 +78,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
                     background: isActive ? config.bg : 'transparent',
                     color: isActive ? config.color : 'var(--slate)',
                     border: isActive ? `1px solid ${config.borderBg}` : '1px solid transparent',
-                    opacity: isActive ? 1 : 0.5,
+                    opacity: isActive ? 1 : 0.85,
                     minHeight: '32px',
                   }}
                 >

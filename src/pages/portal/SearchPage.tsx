@@ -135,7 +135,7 @@ export default function SearchPage() {
           textAlign: 'center',
           color: 'var(--slate)',
           fontSize: 'var(--text-small)',
-          opacity: 0.5,
+          opacity: 0.85,
         }}>
           Search across tasks, projects, people, decisions, and meeting notes.
         </div>
@@ -164,7 +164,7 @@ export default function SearchPage() {
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs transition-colors hover:border-[var(--teal)]"
                 style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer' }}
               >
-                <Clock size={10} style={{ opacity: 0.4 }} />
+                <Clock size={10} style={{ opacity: 0.85 }} />
                 {s}
               </button>
             ))}

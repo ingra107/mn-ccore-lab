@@ -109,7 +109,7 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
                   height={barH}
                   rx={1.5}
                   fill={d.count > 0 ? (isHovered ? 'var(--teal)' : 'rgba(0,200,180,0.5)') : 'var(--border-subtle)'}
-                  opacity={d.count > 0 ? 1 : 0.3}
+                  opacity={d.count > 0 ? 1 : 0.85}
                   style={{ transition: 'fill 0.15s, opacity 0.15s' }}
                 />
                 {/* Day-of-week label for Mondays */}
@@ -384,7 +384,7 @@ export default function SessionHistory() {
       {isLoading ? (
         <div style={{ padding: 'var(--sp-xl)' }}>
           {[...Array(5)].map((_, i) => (
-            <div key={i} style={{ height: 36, marginBottom: 'var(--sp-xs)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--border-subtle)', opacity: 0.3, animation: 'pulse 1.5s ease-in-out infinite' }} />
+            <div key={i} style={{ height: 36, marginBottom: 'var(--sp-xs)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--border-subtle)', opacity: 0.85, animation: 'pulse 1.5s ease-in-out infinite' }} />
           ))}
         </div>
       ) : sessions.length === 0 ? (
@@ -443,7 +443,7 @@ export default function SessionHistory() {
                   }}
                 >
                   {formatMediumDate(date)}
-                  <span style={{ fontWeight: 400, opacity: 0.6, marginLeft: 'var(--sp-sm)' }}>
+                  <span style={{ fontWeight: 400, opacity: 0.85, marginLeft: 'var(--sp-sm)' }}>
                     {dateSessions.length} session{dateSessions.length !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -478,7 +478,7 @@ export default function SessionHistory() {
                     >
                       {/* Time */}
                       <div style={{ fontSize: 12, color: 'var(--slate)', display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
-                        <Clock size={11} style={{ opacity: 0.4 }} />
+                        <Clock size={11} style={{ opacity: 0.85 }} />
                         {formatTime(session.started_at)}
                       </div>
 
@@ -527,11 +527,11 @@ export default function SessionHistory() {
                       <div style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
                         {session.actions_count > 0 ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                            <Zap size={10} style={{ color: 'var(--gold)', opacity: 0.7 }} />
+                            <Zap size={10} style={{ color: 'var(--gold)', opacity: 0.85 }} />
                             {session.actions_count}
                           </span>
                         ) : (
-                          <span style={{ opacity: 0.3 }}>--</span>
+                          <span style={{ opacity: 0.85 }}>--</span>
                         )}
                       </div>
 
@@ -539,11 +539,11 @@ export default function SessionHistory() {
                       <div style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
                         {session.commits_count > 0 ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                            <GitCommit size={10} style={{ color: 'var(--teal)', opacity: 0.7 }} />
+                            <GitCommit size={10} style={{ color: 'var(--teal)', opacity: 0.85 }} />
                             {session.commits_count}
                           </span>
                         ) : (
-                          <span style={{ opacity: 0.3 }}>--</span>
+                          <span style={{ opacity: 0.85 }}>--</span>
                         )}
                       </div>
                     </motion.div>

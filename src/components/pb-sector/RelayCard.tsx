@@ -52,7 +52,7 @@ export default function RelayCard() {
         className="w-full flex items-center gap-1.5 px-3 py-2"
         style={{ background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        <Radio size={12} style={{ color: 'var(--teal)', opacity: 0.7 }} />
+        <Radio size={12} style={{ color: 'var(--teal)', opacity: 0.85 }} />
         <span style={{
           fontSize: '10px',
           fontWeight: 700,
@@ -133,7 +133,7 @@ export default function RelayCard() {
                       style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                       title="Mark completed"
                     >
-                      <Check size={12} style={{ color: 'var(--green-light)', opacity: 0.6 }} />
+                      <Check size={12} style={{ color: 'var(--green-light)', opacity: 0.85 }} />
                     </button>
                   </div>
                 )
@@ -144,7 +144,7 @@ export default function RelayCard() {
                 <div
                   key={`done-${i}`}
                   className="flex items-center gap-2"
-                  style={{ fontSize: '10px', opacity: 0.3 }}
+                  style={{ fontSize: '10px', opacity: 0.85 }}
                 >
                   <Check size={10} style={{ color: 'var(--green-light)', flexShrink: 0 }} />
                   <span style={{ color: 'var(--slate)', fontFamily: 'JetBrains Mono, monospace' }}>
@@ -230,7 +230,7 @@ export default function RelayCard() {
                           fontSize: '10px', fontWeight: 600,
                           background: 'var(--teal)', color: 'var(--cream)',
                           border: 'none', cursor: 'pointer',
-                          opacity: (!topic.trim() || !prompt.trim()) ? 0.4 : 1,
+                          opacity: (!topic.trim() || !prompt.trim()) ? 0.85 : 1,
                         }}
                       >
                         <Send size={9} /> Send
@@ -257,7 +257,7 @@ export default function RelayCard() {
                   onClick={() => setFormOpen(true)}
                   className="flex items-center gap-1 mt-0.5"
                   style={{
-                    fontSize: '10px', color: 'var(--teal)', opacity: 0.6,
+                    fontSize: '10px', color: 'var(--teal)', opacity: 0.85,
                     background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                   }}
                 >

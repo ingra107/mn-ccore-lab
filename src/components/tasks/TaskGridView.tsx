@@ -440,7 +440,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                   alignItems: 'center',
                   padding: '0 var(--sp-lg)',
                   gap: 'var(--sp-md)',
-                  opacity: 0.5,
+                  opacity: 0.85,
                 }}
                 aria-hidden="true"
               >
@@ -551,11 +551,11 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         }
         .resize-handle:hover {
           background: var(--teal);
-          opacity: 0.4;
+          opacity: 0.85;
         }
         .resize-handle-active {
           background: var(--teal);
-          opacity: 0.6;
+          opacity: 0.85;
         }
         /* Column drag handles — subtle on hover */
         .col-drag-handle {
@@ -566,7 +566,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           opacity: 0.35;
         }
         .col-drag-handle:hover {
-          opacity: 0.6 !important;
+          opacity: 0.85 !important;
         }
         /* Cell focus ring for Tab navigation */
         .cell-focused {
@@ -575,7 +575,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           border-radius: var(--radius-sm);
         }
         .task-grid-row:hover .subtask-expand-btn {
-          opacity: 0.5 !important;
+          opacity: 0.85 !important;
         }
         .task-grid-row:hover .subtask-expand-btn:hover {
           opacity: 0.8 !important;
@@ -675,7 +675,7 @@ function SortableColumnHeader({
   const dragStyle: React.CSSProperties = {
     transform: CSS.Transform.toString(transform ? { ...transform, scaleX: 1, scaleY: 1 } : null),
     transition: transition || undefined,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.85 : 1,
     zIndex: isDragging ? 'var(--z-sticky)' : undefined,
     position: 'relative' as const,
     display: 'flex',
@@ -836,7 +836,7 @@ function TaskGridRow({
           'transparent'
         }`,
         cursor: (onOpenDetail || onSelect) ? 'pointer' : 'default',
-        opacity: isDone ? 0.5 : 1,
+        opacity: isDone ? 0.85 : 1,
         transition: 'background var(--duration-normal) var(--ease-out), opacity var(--duration-normal) var(--ease-out)',
         position: 'relative',
       }}
@@ -895,7 +895,7 @@ function TaskGridRow({
                     style={{
                       background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
                       display: 'flex', alignItems: 'center', flexShrink: 0,
-                      color: 'var(--slate)', opacity: expanded ? 0.7 : 0.25,
+                      color: 'var(--slate)', opacity: expanded ? 0.85 : 0.25,
                       transition: 'opacity var(--transition-fast) var(--ease-out)',
                     }}
                     title={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
@@ -904,7 +904,7 @@ function TaskGridRow({
                   </button>
                   {hasBlockers && (
                     <span className="relative group" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
-                      <Link2 size={12} style={{ color: 'var(--maroon)', opacity: 0.7 }} />
+                      <Link2 size={12} style={{ color: 'var(--maroon)', opacity: 0.85 }} />
                       <span
                         className="absolute left-full ml-2 hidden group-hover:block z-30 rounded-lg shadow-lg border py-2 px-3"
                         style={{
@@ -1024,7 +1024,7 @@ function TaskGridRow({
                           borderRadius: 'var(--radius-sm)',
                           backgroundColor: bgColor,
                           color: textColor,
-                          opacity: 0.7,
+                          opacity: 0.85,
                           flexShrink: 0,
                           lineHeight: '14px',
                         }}
@@ -1117,7 +1117,7 @@ function TaskGridRow({
                         style={{
                           fontSize: 'var(--text-small)',
                           color: name ? 'var(--teal)' : 'var(--slate)',
-                          opacity: name ? 0.55 : 'var(--ink-hint)',
+                          opacity: name ? 0.85 : 'var(--ink-hint)',
                           maxWidth: '110px',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -1200,7 +1200,7 @@ function TaskGridRow({
                   return (
                     <span
                       title={`In progress for ${days} days \u2014 consider updating`}
-                      style={{ fontSize: 'var(--text-micro)', color: 'var(--orange)', opacity: 0.7, marginTop: '1px' }}
+                      style={{ fontSize: 'var(--text-micro)', color: 'var(--orange)', opacity: 0.85, marginTop: '1px' }}
                     >
                       {'\u26A0'} {days}d
                     </span>
@@ -1231,7 +1231,7 @@ function TaskGridRow({
                     return (
                       <span className="status-transition" style={{
                         color: opt.color,
-                        opacity: 0.7,
+                        opacity: 0.85,
                         background: cfg?.bg || 'rgba(100, 116, 139, 0.1)',
                         padding: '2px 8px',
                         borderRadius: 'var(--radius-full)',
@@ -1356,7 +1356,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
         title={label || url}
         style={{
           color: 'var(--teal)',
-          opacity: 0.5,
+          opacity: 0.85,
           transition: 'opacity var(--transition-fast) var(--ease-out)',
           display: 'inline-flex',
           alignItems: 'center',
@@ -1375,7 +1375,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
           border: 'none',
           cursor: 'pointer',
           color: copied ? 'var(--green)' : 'var(--slate)',
-          opacity: copied ? 1 : 0.35,
+          opacity: copied ? 1 : 0.85,
           transition: 'opacity var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out)',
           display: 'inline-flex',
           alignItems: 'center',
@@ -1415,7 +1415,7 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.85 : 1,
     zIndex: isDragging ? 'var(--z-sticky)' : ('auto' as const),
   }
 
@@ -1432,7 +1432,7 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
         style={{ background: 'none', border: 'none', padding: '1px', color: 'var(--slate)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <GripVertical size={10} style={{ opacity: 0.35 }} />
+        <GripVertical size={10} style={{ opacity: 0.85 }} />
       </button>
       <button
         onClick={(e) => { e.stopPropagation(); onToggle(subtask.id) }}
@@ -1449,7 +1449,7 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
           fontSize: '12px',
           color: subtask.completed ? 'var(--slate)' : 'var(--ink)',
           textDecoration: subtask.completed ? 'line-through' : 'none',
-          opacity: subtask.completed ? 0.5 : 0.8,
+          opacity: subtask.completed ? 0.85 : 0.8,
         }}
       >
         {subtask.title}
@@ -1661,7 +1661,7 @@ function InlineCellSelect({
         onMouseLeave={(e) => { if (!open) { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' } }}
       >
         {renderValue(value)}
-        <ChevronDown size={10} style={{ opacity: 0.3, marginLeft: '2px' }} />
+        <ChevronDown size={10} style={{ opacity: 0.85, marginLeft: '2px' }} />
       </button>
 
       {open && createPortal(

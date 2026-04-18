@@ -239,7 +239,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   }}
                   title={collapsed ? item.label : undefined}
                 >
-                  <span style={{ opacity: active ? 1 : 0.7, display: 'flex' }}><Icon size={18} /></span>
+                  <span style={{ opacity: active ? 1 : 0.85, display: 'flex' }}><Icon size={18} /></span>
                   {!collapsed && <span className="truncate">{item.label}</span>}
                   {!collapsed && item.hint && (
                     <span

@@ -506,7 +506,7 @@ export default function Dashboard() {
                       backgroundColor: visibleCards.has(card.id) ? 'var(--teal-active)' : 'transparent',
                       borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-subtle)',
                       cursor: 'pointer',
-                      opacity: visibleCards.has(card.id) ? 1 : 0.5,
+                      opacity: visibleCards.has(card.id) ? 1 : 0.85,
                     }}
                   >
                     {visibleCards.has(card.id) ? '\u2713' : '+'} {card.label}
@@ -523,7 +523,7 @@ export default function Dashboard() {
                         minHeight: 44,
                         minWidth: 44,
                         color: pinnedCards.has(card.id) ? 'var(--gold)' : 'var(--slate)',
-                        opacity: pinnedCards.has(card.id) ? 1 : 0.3,
+                        opacity: pinnedCards.has(card.id) ? 1 : 0.85,
                       }}
                       title={pinnedCards.has(card.id) ? 'Unpin' : 'Pin to top'}
                     >
@@ -691,7 +691,7 @@ export default function Dashboard() {
                   borderColor: 'var(--border-subtle)',
                   backgroundColor: 'transparent',
                   cursor: 'pointer',
-                  opacity: 0.6,
+                  opacity: 0.85,
                 }}
               >
                 <ChevronDown size={14} />
@@ -720,7 +720,7 @@ export default function Dashboard() {
                     backgroundColor: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    opacity: 0.5,
+                    opacity: 0.85,
                   }}
                 >
                   <ChevronUp size={14} />
@@ -814,7 +814,7 @@ export default function Dashboard() {
           border: 1px solid var(--border-subtle);
           border-radius: var(--radius-md);
           cursor: pointer;
-          opacity: 0.6;
+          opacity: 0.85;
           transition: opacity 120ms ease, color 120ms ease;
         }
         .dashboard-reset-layout:hover { opacity: 1; color: var(--ink); }
@@ -825,7 +825,7 @@ export default function Dashboard() {
 
         @keyframes status-pulse {
           0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
-          50% { opacity: 0.6; box-shadow: 0 0 4px rgba(34, 197, 94, 0.2); }
+          50% { opacity: 0.85; box-shadow: 0 0 4px rgba(34, 197, 94, 0.2); }
         }
       `}</style>
     </div>

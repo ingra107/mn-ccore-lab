@@ -61,7 +61,7 @@ export default function DensityToggle({
             cursor: 'pointer',
             background: value === key ? 'var(--teal-solid)' : 'none',
             color: value === key ? 'var(--ink-bright, #fff)' : 'var(--slate)',
-            opacity: value === key ? 1 : 0.5,
+            opacity: value === key ? 1 : 0.85,
             transition: `background var(--duration-fast), opacity var(--duration-fast)`,
           }}
         >

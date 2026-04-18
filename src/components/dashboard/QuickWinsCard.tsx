@@ -60,7 +60,7 @@ export default function QuickWinsCard() {
               {task.due_date && (
                 <span className="text-[10px] flex-shrink-0" style={{
                   color: new Date(task.due_date + 'T23:59:59') < new Date() ? 'var(--maroon)' : 'var(--slate)',
-                  opacity: 0.6,
+                  opacity: 0.85,
                 }}>
                   {task.due_date}
                 </span>

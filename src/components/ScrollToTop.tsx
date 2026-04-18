@@ -29,7 +29,7 @@ export default function ScrollToTop() {
         borderColor: 'var(--border-subtle)',
         color: 'var(--slate)',
         cursor: 'pointer',
-        opacity: 0.7,
+        opacity: 0.85,
       }}
       title="Scroll to top"
       aria-label="Scroll to top"

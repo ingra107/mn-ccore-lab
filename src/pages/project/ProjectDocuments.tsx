@@ -139,7 +139,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                     {doc.title}
                     <ExternalLink
                       size={10}
-                      style={{ opacity: 0.4, flexShrink: 0 }}
+                      style={{ opacity: 0.85, flexShrink: 0 }}
                     />
                   </a>
                   <span
@@ -164,7 +164,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                       cursor: 'pointer',
                       padding: '2px',
                       color: 'var(--slate)',
-                      opacity: hoveredId === doc.id ? 0.6 : 0,
+                      opacity: hoveredId === doc.id ? 0.85 : 0,
                       transition: 'opacity 150ms ease',
                       flexShrink: 0,
                     }}
@@ -228,7 +228,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                     color: 'var(--slate)',
                     border: '1px solid var(--border-subtle)',
                     cursor: 'pointer',
-                    opacity: 0.7,
+                    opacity: 0.85,
                   }}
                 >
                   <Icon size={12} style={{ color: config.color }} />
@@ -348,7 +348,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                   color: 'var(--ink-bright, #fff)',
                   border: 'none',
                   cursor: title.trim() && url.trim() ? 'pointer' : 'not-allowed',
-                  opacity: title.trim() && url.trim() ? 1 : 0.4,
+                  opacity: title.trim() && url.trim() ? 1 : 0.85,
                 }}
               >
                 Add Link

@@ -173,7 +173,7 @@ export default function Home() {
 
         <style>{`
           @keyframes gradientShift {
-            0% { opacity: 0.5; transform: translate(0, 0); }
+            0% { opacity: 0.85; transform: translate(0, 0); }
             100% { opacity: 0.9; transform: translate(3%, 2%); }
           }
         `}</style>
@@ -522,7 +522,7 @@ export default function Home() {
                 color: 'var(--slate)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.15em',
-                opacity: 0.7,
+                opacity: 0.85,
               }}
             >
               Research funded by
@@ -577,7 +577,7 @@ export default function Home() {
                       color: 'var(--slate)',
                       maxWidth: '140px',
                       lineHeight: 1.3,
-                      opacity: 0.6,
+                      opacity: 0.85,
                     }}
                   >
                     {agency.name}
@@ -592,7 +592,7 @@ export default function Home() {
             style={{
               height: '1px',
               background: 'linear-gradient(to right, transparent, var(--gold), transparent)',
-              opacity: 0.3,
+              opacity: 0.85,
             }}
           />
         </section>

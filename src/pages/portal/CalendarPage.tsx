@@ -197,7 +197,7 @@ export default function CalendarPage() {
               borderRadius: 'var(--radius-xl)',
               border: '1px solid var(--border-subtle)',
               background: 'var(--surface-1)',
-              opacity: 0.5,
+              opacity: 0.85,
             }}
           />
         ) : (
@@ -451,7 +451,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
         return (
           <div key={date}>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: isToday ? 'var(--teal-solid)' : 'var(--slate)', opacity: isToday ? 1 : 0.3 }} />
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: isToday ? 'var(--teal-solid)' : 'var(--slate)', opacity: isToday ? 1 : 0.85 }} />
               <span className="text-sm font-semibold" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
                 {isToday ? 'Today' : formatLongDate(date)}
               </span>

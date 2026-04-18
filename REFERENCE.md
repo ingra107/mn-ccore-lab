@@ -52,8 +52,11 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 - POST /api/meetings/:id/decisions, /api/meetings/:id/notes
 
 ### Task System
-- GET /api/tasks (7 filters), POST /api/tasks, POST /api/tasks/:id, POST /api/tasks/:id/status
+- GET /api/tasks (7 filters, `include_deleted=1` surfaces soft-deletes for sync)
+- POST /api/tasks (accepts `key_link_1/_desc/2/3` + `status`), POST /api/tasks/:id, POST /api/tasks/:id/status
+- POST /api/tasks/:id/acknowledge (accepts `body.slug` override for server-side / API-key callers)
 - GET /api/tasks/:id/comments, POST /api/tasks/:id/comments
+- **GET /api/task-comments/recent?since=&limit=** — bulk fetch for brain.db mirror sync (Phase 35)
 - GET /api/tasks/:id/updates, POST /api/tasks/:id/updates (notes/progress entries)
 - GET /api/tasks/:id/activity
 - POST /api/tasks/sync-bulk (brain.db bulk load)
@@ -86,7 +89,19 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 - POST /api/settings, /api/workflow-templates
 
 ### Notifications
-- POST /api/notifications/:id/read, /api/notifications/read-all
+- GET /api/notifications, GET /api/notifications/count
+- POST /api/notifications/:id/read, /api/notifications/read-all (stamps `read_at` — Phase 35)
+
+### Questions (Ask the Lab)
+- GET /api/questions, GET /api/questions/:id (with nested answers)
+- **GET /api/questions/:id/answers** — dedicated list endpoint (Phase 35)
+- POST /api/questions, POST /api/questions/:id/answers, POST /api/answers/:id/accept
+
+### Manuscript Revisions
+- GET /api/revisions?project_id=, GET /api/revisions/active
+- **GET /api/projects/:slug/revisions** — slug-aware convenience alias (Phase 35)
+- POST /api/revisions (accepts `project_id` OR `project_slug`, `reviewer_comments` alias for `notes`)
+- POST /api/revisions/:id, POST /api/revisions/:id/comments
 
 ### Email Drafts (Phase 29)
 - GET /api/email-drafts (?status=draft filter), /api/email-drafts/pending
@@ -269,7 +284,7 @@ Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns 
 ### Single-entity GET endpoints
 - **There is no `GET /api/tasks/:id`.** Only list endpoint + sub-resources (`/:id/comments`, `/:id/files`, `/:id/updates`, `/:id/activity`, `/:id/subtasks`, `/:id/handoffs`). Clients fetch the full list and filter by id. Deep-audit harness has `apiGetTaskFromList()` to mirror this.
 - **There is no `GET /api/projects/:slug`** either — list + sub-resources only.
-- **Questions:** answers are embedded inside `GET /api/questions/:id` (as `data.answers[]`). No `/api/questions/:id/answers` GET endpoint.
+- **Questions:** answers are embedded inside `GET /api/questions/:id` (as `data.answers[]`). **`GET /api/questions/:id/answers`** also exists as a dedicated list endpoint (Phase 35).
 
 ### Enum validation (Hub ↔ brain.db R10 taxonomy)
 - `POST /api/projects/:slug` now rejects unknown `status`/`stage`/`category` values with HTTP 400 + list of valid values. Canonical values matched against PB's `scripts/db/enums.py`.
@@ -280,7 +295,7 @@ Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns 
 - **POST `/api/tasks`** requires `description` + `assignee`. `title` is optional (defaults to description). CreateTaskModal always sends both so UI users don't notice.
 - **POST `/api/tasks/:id/comments`** takes `{ content, author_slug? }`. `source_id` in resulting notifications references the **task id** (not the comment row id) — link is `/tasks?open=${taskId}` so clicking lands on the correct task.
 - **POST `/api/questions/:id/answers`** takes `{ content, author_slug? }`. Body field is `content`, not `answer`.
-- **POST `/api/revisions`** takes `{ project_id, round?, submitted_at?, response_due?, status?, journal?, notes? }`. Flat path, not nested under project.
+- **POST `/api/revisions`** takes `{ project_id | project_slug, round?, submitted_at?, response_due?, status?, journal?, notes | reviewer_comments? }`. Accepts either id or slug; `reviewer_comments` is an alias for `notes`. Convenience GET: `/api/projects/:slug/revisions`.
 - **POST `/api/tasks/:id/handoffs`** uses SBAR format: `{ to_slug, situation, background?, assessment?, recommendation? }`. `situation` is required.
 - **POST `/api/digest/:id/status`** toggles save/dismiss. Not `POST /api/digest/:id` directly.
 

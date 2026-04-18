@@ -64,7 +64,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
         borderColor: isOverdue ? 'var(--maroon)' : 'var(--border-subtle)',
         borderLeft: `3px solid ${effectiveBorderColor}`,
         backgroundColor: isDone ? 'var(--hover-subtle)' : 'var(--cream)',
-        opacity: isDone ? 0.7 : 1,
+        opacity: isDone ? 0.85 : 1,
         cursor: onClick ? 'pointer' : 'default',
       }}
       onMouseEnter={() => onMouseEnter?.()}
@@ -134,7 +134,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
               className="text-[11px] px-1.5 py-0.5 rounded font-medium status-transition"
               style={{
                 color: priority.color,
-                opacity: 0.7,
+                opacity: 0.85,
                 backgroundColor: priority.bg,
               }}
             >
@@ -176,7 +176,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             {task.source === 'meeting' && task.meeting_title && !compact && (
               <span
                 className="text-[11px]"
-                style={{ color: 'var(--teal)', opacity: 0.7 }}
+                style={{ color: 'var(--teal)', opacity: 0.85 }}
               >
                 {formatBrandName(task.meeting_title.split(':')[0])}
               </span>

@@ -45,12 +45,44 @@ The Hub is a **research operations center**, not a magazine. Every design choice
 - **Code only:** JetBrains Mono
 - **CSS:** `--font-sans` and `--font-body` both resolve to DM Sans. `--font-display` = Fraunces (public pages only).
 
-### Palette
-- **Light:** bg white `#ffffff` / ink `#0f1923` / slate `#2c3e50`
-- **Dark:** bg `oklch(0.12 0 0)` true achromatic / ink `#e2e8f0` / slate `oklch(0.7 0.005 250)`
-- **Accents:** gold `#c9a84c` / teal `oklch(0.65 0.07 190)` (desaturated for dark) / teal-subtle `oklch(0.55 0.04 190)` (ambient) / maroon `#7a0019` / orange `#c2410c` / green `#16a34a`
-- **Containers:** light `#f5f5f5` page + `#ffffff` cards / dark uses surface tokens (no hardcoded hex)
-- Category dots: 6px, 0.7 opacity -- maroon=CLIF, teal=Lab, gold=Mesfin
+### Palette (Phase 35 hex-pinned, 2026-04-18 axe AA)
+
+All text-carrying color tokens are **literal sRGB hex**, not OKLCH.
+axe-core 4.11's OKLCH parser resolves to darker sRGB than Chromium renders,
+which failed contrast even when the visual rendering was fine. Hex stays.
+OKLCH remains only on pure-bg tokens (`--cream`, `--ice`, `--gold-light`).
+
+| Token | Light | Dark |
+|-------|-------|------|
+| `--slate` | `#1a2939` | `#b0b5b9` |
+| `--teal` | `#006b66` | `#5cbcb4` |
+| `--teal-subtle` | `#4a8a87` | — |
+| `--gold` | `#6b5420` | `#dcb355` |
+| `--maroon` | `#7a0019` | `#f0737e` |
+| `--orange` | `#a23d08` | `#f08a5b` |
+| `--green` | `#066e2f` | `#6ee89a` |
+| `--teal-solid` | `#0d6f68` (both) | — |
+| `--maroon-solid` | `#8a1f2e` (both) | — |
+
+- `--teal-solid` + `--maroon-solid` are for solid button/badge bg where
+  white text sits on top (6-7:1 with #fff). Separate token from `--teal`
+  because a button bg has opposite contrast needs than same-color text.
+- Sidebar-bg: `color-mix(in oklch, var(--cream), black 12%)` — pulse bg:
+  `var(--ink)` (inverts between modes).
+- Category dots: 6px, 0.7 opacity — maroon=CLIF, teal=Lab, gold=Mesfin
+
+### Opacity policy (dark mode AA on near-black bg)
+
+Inline `opacity: 0.30-0.55` on slate/teal/maroon/gold text fails AA with
+our hex-pinned colors. Codemod run 2026-04-18 bumped 640+ sites to 0.85.
+Use 0.85 as the floor for secondary text; reserve 0.55-0.70 for decorative
+(borders, inactive dots). Never go below 0.30 on readable text.
+
+### On gold buttons (both themes)
+
+Gold bg is identical across themes. `color: var(--ink)` flips bright/dark
+with theme, so use a fixed literal dark color like `#1a1a1a` for text on
+gold backgrounds.
 
 ### Table Pattern (apply to ALL data pages)
 - Shared `ColumnHeader` + `TableContainer` components (`src/components/table/`)
@@ -168,14 +200,23 @@ brain.db is the **sync hub**. Airtable and D1 never talk directly — changes pr
 - Machine swap: Airtable only (not D1)
 
 **Key rules:**
-- Brain.db tasks use `recXXX` IDs (Airtable). Hub-created tasks use hex IDs. Both coexist.
+- Brain.db tasks use canonical `task_{ulid}` (post-migration 030, 2026-04-15). Hub-created tasks have 32-char hex IDs. Both are reachable via `entity_aliases` — brain.db keeps the ulid PK, stores the hex id as a `hub_slug` alias.
+- On push, brain.db ↔ D1 id translation goes through `hub_slug` alias so upserts land on the same D1 row (fix 2026-04-18 — was creating duplicates).
 - Hub-created tasks pull to brain.db but do NOT push to Airtable (Airtable is Nick-only).
 - `notes` (brain.db) is private. `description` (D1) is team-visible. They do NOT sync bidirectionally.
-- Task deletion uses soft-delete (`deleted_at` column) to prevent zombie re-creation.
+- Task deletion uses soft-delete (`deleted_at` column). `GET /api/tasks?include_deleted=1` surfaces them for sync_d1_pull to mirror into brain.db.
 - `completed` field is bidirectional — Hub can reopen tasks, brain.db accepts it.
+- `task_key_link_{1,2,3}(_desc)` fields: accepted on `POST /api/tasks` create + bi-directionally synced (2026-04-18).
+
+**Phase 35 sync-parity additions (2026-04-18):**
+- Hub `task_comments` mirror into brain.db's **`d1_task_comments`** table (read-only). Pull via `sync_d1_pull --task-comments`. Hub stays authoritative for composition; brain.db uses the mirror for search + /process context.
+- Hub-originated **projects** now flow into brain.db. Pull via `sync_d1_pull --hub-projects`. Hub `category` (clif/nate/mentee/lab) maps onto brain.db `domain` (CLIF/Mentees/Research).
 
 **Implementation:** See plan at `~/.claude/plans/graceful-meandering-thimble.md`
 **Peripheral Brain sync scripts:** `scripts/db/sync_d1_push.py`, `sync_d1_pull.py`
+
+**Test coverage:** `scripts/deep-audit/15-pb-sync-deep.ts` round-trips the
+full payload across both directions every run.
 
 ### ⚠️ Cross-repo schema coordination (after R10 incident 2026-04-14)
 

@@ -270,7 +270,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
                   border: '1px solid var(--border-subtle)',
                   cursor: 'pointer',
                   color: 'var(--slate)',
-                  opacity: 0.7,
+                  opacity: 0.85,
                 }}
                 onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)'; e.currentTarget.style.opacity = '1' }}
                 onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--slate)'; e.currentTarget.style.opacity = '0.7' }}
@@ -311,7 +311,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             {/* Autofill suggestion chips */}
             {visibleSuggestions.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                <Sparkles size={12} style={{ color: 'var(--teal)', opacity: 0.6, flexShrink: 0 }} />
+                <Sparkles size={12} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
                 {visibleSuggestions.map((s) => (
                   <button
                     key={s.field}
@@ -459,7 +459,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             </p>
           </div>
           {(!title.trim() || !assignee) && (
-            <p id="task-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+            <p id="task-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
               {!title.trim() && !assignee
                 ? 'Title and owner are required.'
                 : !title.trim()

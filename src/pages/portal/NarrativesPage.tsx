@@ -8,9 +8,11 @@ import { useNarratives } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
+// Brighter blue for Data Collection stage so the 10px label survives
+// opacity 0.85 on near-black bg (axe AA, 2026-04-18). Was #5b8abf (4.28:1).
 const STAGE_COLORS: Record<string, string> = {
   Idea: 'var(--slate)',
-  'Data Collection': '#5b8abf',
+  'Data Collection': '#7fa8d6',
   Analysis: 'var(--teal)',
   Writing: 'var(--gold)',
   Review: 'var(--maroon)',
@@ -131,7 +133,7 @@ export default function NarrativesPage() {
                     <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', flex: 1 }}>
                       {p.title}
                     </span>
-                    <span style={{ fontSize: '10px', color: STAGE_COLORS[p.stage], opacity: 0.7 }}>
+                    <span style={{ fontSize: '10px', color: STAGE_COLORS[p.stage], opacity: 0.85 }}>
                       {p.stage}
                     </span>
                   </Link>

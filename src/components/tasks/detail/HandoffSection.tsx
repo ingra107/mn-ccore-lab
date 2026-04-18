@@ -43,7 +43,7 @@ export function HandoffRecipientSelect({ value, onChange, members }: { value: st
         ) : (
           <span className="text-sm px-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>Select team member...</span>
         )}
-        <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--teal)', opacity: 0.6 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--teal)', opacity: 0.85 }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
       {open && (
         <div className="absolute left-0 top-full mt-1 z-50 rounded-lg shadow-lg border py-1 min-w-[200px] max-h-[200px] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
@@ -208,7 +208,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                   color: (!toSlug || !situation.trim()) ? 'var(--slate)' : 'var(--ink-bright, #fff)',
                   border: 'none',
                   cursor: (!toSlug || !situation.trim()) ? 'not-allowed' : 'pointer',
-                  opacity: createHandoff.isPending ? 0.6 : 1,
+                  opacity: createHandoff.isPending ? 0.85 : 1,
                 }}
               >
                 <ArrowRightLeft size={12} />
@@ -281,7 +281,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                   </div>
                   <div className="mt-2">
                     {h.acknowledged ? (
-                      <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--teal)', opacity: 0.6 }}>
+                      <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--teal)', opacity: 0.85 }}>
                         <Check size={10} /> Acknowledged {h.acknowledged_at ? formatRelativeTime(h.acknowledged_at) : ''}
                       </span>
                     ) : (

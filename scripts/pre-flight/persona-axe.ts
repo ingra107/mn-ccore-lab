@@ -11,6 +11,9 @@
 import { openPersona, closePersona, section, pass, record, snap, goto } from './shared'
 import AxeBuilder from '@axe-core/playwright'
 
+// Every portal route. Detail pages (`:slug`/`:id`) resolved at runtime
+// using known live data so the axe scan catches rendering for content-rich
+// pages, not just empty shells.
 const PORTAL_PAGES = [
   '/dashboard',
   '/my-tasks',
@@ -26,17 +29,51 @@ const PORTAL_PAGES = [
   '/pi-analytics',
   '/team',
   '/settings',
+  // Extended coverage added 2026-04-18 — catches pages whose a11y hadn't
+  // been validated by axe yet.
+  '/pulse',
+  '/personal',
+  '/calendar',
+  '/digest',
+  '/search',
+  '/ask',
+  '/narratives',
+  '/deadline-cascade',
+  '/network',
+  '/publications',
+  '/activity',
 ]
 
 async function main() {
+  // CLI flag: --light forces the light-mode palette. Default stays dark so
+  // the normal preflight run is unchanged.
+  const mode: 'light' | 'dark' = process.argv.includes('--light') ? 'light' : 'dark'
   const s = await openPersona({
-    persona: 'axe',
-    role: 'axe-core formal WCAG 2.1 scan',
-    colorScheme: 'dark',
+    persona: mode === 'light' ? 'axe-light' : 'axe',
+    role: `axe-core formal WCAG 2.1 scan (${mode} mode)`,
+    colorScheme: mode,
   })
 
+  // Resolve one real project + meeting + member slug so detail pages scan
+  // content, not empty shells.
+  let detailPages: string[] = []
   try {
-    for (const path of PORTAL_PAGES) {
+    const projResp = await s.api.get('/api/projects')
+    const mtgResp = await s.api.get('/api/meetings')
+    const teamResp = await s.api.get('/api/team')
+    const proj = projResp.ok() ? ((await projResp.json()) as { data?: Array<{ slug: string }> }).data?.[0]?.slug : null
+    const mtg = mtgResp.ok() ? ((await mtgResp.json()) as { data?: Array<{ id: string }> }).data?.[0]?.id : null
+    const mem = teamResp.ok() ? ((await teamResp.json()) as { data?: Array<{ slug: string }> }).data?.find((m) => m.slug)?.slug : null
+    if (proj) detailPages.push(`/projects/${proj}`)
+    if (mtg) detailPages.push(`/meetings/${mtg}`)
+    if (mem) detailPages.push(`/team/${mem}`)
+    if (mem) detailPages.push(`/team/${mem}/trajectory`)
+  } catch { /* proceed without detail pages */ }
+
+  const allPages = [...PORTAL_PAGES, ...detailPages]
+
+  try {
+    for (const path of allPages) {
       section(s, `Scan ${path}`)
       await goto(s, path)
       await s.page.waitForTimeout(1500)

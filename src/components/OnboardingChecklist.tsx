@@ -157,7 +157,7 @@ export default function OnboardingChecklist() {
             {nextStep && (
               <p className="mt-1.5 text-xs truncate" style={{
                 color: 'var(--slate)',
-                opacity: 0.7,
+                opacity: 0.85,
               }}>
                 Next: {nextStep.title}
               </p>
@@ -238,7 +238,7 @@ export default function OnboardingChecklist() {
             fontSize: 12,
             color: 'var(--slate)',
             margin: '2px 0 0 0',
-            opacity: 0.7,
+            opacity: 0.85,
           }}>
             Learn the lab by doing real tasks in the system
           </p>
@@ -308,7 +308,7 @@ export default function OnboardingChecklist() {
                   fontSize: 10,
                   fontWeight: 600,
                   color: allDone ? 'var(--teal)' : unlocked ? 'var(--ink)' : 'var(--slate)',
-                  opacity: allDone ? 0.8 : unlocked ? 0.7 : 0.35,
+                  opacity: allDone ? 0.8 : unlocked ? 0.85 : 0.85,
                   letterSpacing: '0.03em',
                   textTransform: 'uppercase',
                 }}>
@@ -333,7 +333,7 @@ export default function OnboardingChecklist() {
                         animate={{ opacity: 1, x: 0 }}
                         className="flex items-start gap-2.5 py-2 px-2 rounded-lg transition-colors"
                         style={{
-                          opacity: !unlocked ? 0.4 : 1,
+                          opacity: !unlocked ? 0.85 : 1,
                           background: done ? 'var(--teal-hover)' : 'transparent',
                         }}
                       >
@@ -366,14 +366,14 @@ export default function OnboardingChecklist() {
                           <div className="flex items-center gap-1.5">
                             <CategoryIcon
                               size={12}
-                              style={{ color: meta.color, opacity: done ? 0.5 : 0.7, flexShrink: 0 }}
+                              style={{ color: meta.color, opacity: done ? 0.85 : 0.85, flexShrink: 0 }}
                             />
                             <span style={{
                               fontSize: 13,
                               fontWeight: 500,
                               color: done ? 'var(--slate)' : 'var(--ink)',
                               textDecoration: done ? 'line-through' : 'none',
-                              opacity: done ? 0.6 : 1,
+                              opacity: done ? 0.85 : 1,
                             }}>
                               {step.title}
                             </span>
@@ -382,7 +382,7 @@ export default function OnboardingChecklist() {
                             fontSize: 11,
                             color: 'var(--slate)',
                             margin: '2px 0 0 0',
-                            opacity: done ? 0.4 : 0.6,
+                            opacity: done ? 0.85 : 0.85,
                             lineHeight: 1.4,
                           }}>
                             {step.description}

@@ -482,7 +482,7 @@ export default function Projects() {
                                   borderRadius: 'var(--radius-circle)',
                                   background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
                                   flexShrink: 0,
-                                  opacity: 0.7,
+                                  opacity: 0.85,
                                   marginTop: '-1px',
                                 }}
                               />
@@ -511,7 +511,7 @@ export default function Projects() {
                               {(() => {
                                 const tc = taskCountByProject.get(project.slug) || 0
                                 return tc > 0 ? (
-                                  <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.7, flexShrink: 0 }} title={`${tc} open task${tc !== 1 ? 's' : ''}`}>
+                                  <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} title={`${tc} open task${tc !== 1 ? 's' : ''}`}>
                                     {tc}
                                   </span>
                                 ) : null
@@ -553,7 +553,7 @@ export default function Projects() {
                                         height: 4,
                                         borderRadius: 'var(--radius-circle)',
                                         background: si <= currentIdx ? 'var(--teal-solid)' : 'var(--border-subtle)',
-                                        opacity: si <= currentIdx ? 0.8 : 0.4,
+                                        opacity: si <= currentIdx ? 0.8 : 0.85,
                                       }}
                                     />
                                   )
@@ -567,7 +567,7 @@ export default function Projects() {
                                   <span style={{
                                     fontSize: '10px',
                                     color: days > 30 ? 'var(--maroon)' : days > 14 ? 'var(--orange)' : 'var(--slate)',
-                                    opacity: 0.6,
+                                    opacity: 0.85,
                                     flexShrink: 0,
                                   }} title={`Last activity ${days} days ago`}>
                                     {days}d ago
@@ -633,7 +633,7 @@ export default function Projects() {
                                   borderRadius: 'var(--radius-circle)',
                                   background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
                                   flexShrink: 0,
-                                  opacity: 0.7,
+                                  opacity: 0.85,
                                   marginTop: '6px',
                                 }}
                               />

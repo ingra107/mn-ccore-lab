@@ -25,7 +25,7 @@ export default function PomodoroCircles({ completed, total = 4, active = false, 
               borderRadius: 'var(--radius-circle)',
               border: `1.5px solid ${isFilled || isActive ? 'var(--teal)' : 'var(--slate)'}`,
               background: isFilled ? 'var(--teal-solid)' : 'transparent',
-              opacity: isFilled ? 1 : isActive ? 0.8 : 0.3,
+              opacity: isFilled ? 1 : isActive ? 0.8 : 0.85,
               cursor: onClickCircle && !isFilled ? 'pointer' : 'default',
               padding: 0,
             }}

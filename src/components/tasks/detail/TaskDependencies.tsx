@@ -66,7 +66,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
   return (
     <CollapsibleSection
       title="Dependencies"
-      icon={<Link2 size={11} style={{ color: hasBlockers ? 'var(--maroon)' : 'var(--slate)', opacity: hasBlockers ? 1 : 0.5 }} />}
+      icon={<Link2 size={11} style={{ color: hasBlockers ? 'var(--maroon)' : 'var(--slate)', opacity: hasBlockers ? 1 : 0.85 }} />}
       badge={hasBlockers ? `${blockerTasks.length} blocker${blockerTasks.length > 1 ? 's' : ''}` : null}
       defaultOpen={hasBlockers || hasBlocking}
       storageKey={`task-deps-${task.id}`}
@@ -74,7 +74,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
       <div className="flex flex-col gap-3">
         {/* Blocked by section */}
         <div>
-          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ color: 'var(--maroon)', opacity: 0.7 }}>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ color: 'var(--maroon)', opacity: 0.85 }}>
             <AlertTriangle size={10} />
             Blocked by
           </label>
@@ -83,7 +83,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
             <div className="flex flex-col gap-1 mb-2">
               {blockerTasks.map(bt => (
                 <div key={bt.id} className="flex items-center gap-2 py-1.5 px-2 -mx-1 rounded group hover:bg-black/[0.02] dark:hover:bg-white/[0.04] transition-colors">
-                  <Link2 size={12} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.7 }} />
+                  <Link2 size={12} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.85 }} />
                   <button
                     onClick={() => onOpenTask(bt)}
                     className="flex-1 min-w-0 text-left truncate text-sm"
@@ -146,14 +146,14 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
         {/* Blocks section (reverse lookup) */}
         {hasBlocking && (
           <div>
-            <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ color: 'var(--gold)', opacity: 0.7 }}>
+            <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ color: 'var(--gold)', opacity: 0.85 }}>
               <Ban size={10} />
               Blocks
             </label>
             <div className="flex flex-col gap-1">
               {blockingTasks.map(bt => (
                 <div key={bt.id} className="flex items-center gap-2 py-1.5 px-2 -mx-1 rounded hover:bg-black/[0.02] dark:hover:bg-white/[0.04] transition-colors">
-                  <Link2 size={12} style={{ color: 'var(--gold)', flexShrink: 0, opacity: 0.7 }} />
+                  <Link2 size={12} style={{ color: 'var(--gold)', flexShrink: 0, opacity: 0.85 }} />
                   <button
                     onClick={() => onOpenTask(bt)}
                     className="flex-1 min-w-0 text-left truncate text-sm"

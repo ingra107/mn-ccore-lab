@@ -36,7 +36,7 @@ function InsightsCard() {
             background: 'var(--teal-hover)',
             border: '1px solid color-mix(in srgb, var(--teal) 12%, transparent)',
             cursor: refreshing ? 'default' : 'pointer',
-            opacity: refreshing ? 0.5 : 1,
+            opacity: refreshing ? 0.85 : 1,
           }}
         >
           <RefreshCw
@@ -112,7 +112,7 @@ function InsightsCard() {
                       style={{
                         fontSize: '10px',
                         color: 'var(--teal)',
-                        opacity: 0.6,
+                        opacity: 0.85,
                         flexShrink: 0,
                       }}
                     >

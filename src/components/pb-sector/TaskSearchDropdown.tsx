@@ -51,7 +51,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
           <div className="rounded-xl shadow-lg overflow-hidden" style={{ background: 'var(--cream)', border: '2px solid var(--gold)' }}>
             {/* Header */}
             <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid rgba(201,168,76,0.1)' }}>
-              <Search size={16} style={{ color: 'var(--gold)', opacity: 0.6 }} />
+              <Search size={16} style={{ color: 'var(--gold)', opacity: 0.85 }} />
               <input
                 ref={inputRef}
                 type="text"
@@ -100,7 +100,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                         {task.title || task.description}
                       </span>
                       {task.project_title && (
-                        <span style={{ fontSize: '10px', color: 'var(--gold)', opacity: 0.6 }}>
+                        <span style={{ fontSize: '10px', color: 'var(--gold)', opacity: 0.85 }}>
                           {task.project_title}
                         </span>
                       )}

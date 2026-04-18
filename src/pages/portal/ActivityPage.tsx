@@ -89,6 +89,7 @@ export default function ActivityPage() {
         actions={
           <div className="flex items-center gap-2">
           <select
+            aria-label="Filter activity by person"
             value={filterPerson}
             onChange={(e) => setFilterPerson(e.target.value)}
             className="rounded-full border px-3 py-1.5 text-xs"
@@ -110,6 +111,7 @@ export default function ActivityPage() {
             {actors.map(a => <option key={a.slug} value={a.slug}>{a.name}</option>)}
           </select>
           <select
+            aria-label="Filter activity by type"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             className="rounded-full border px-3 py-1.5 text-xs"
@@ -157,7 +159,7 @@ export default function ActivityPage() {
                         paddingBottom: 'var(--sp-xs)',
                         paddingLeft: 'var(--sp-md)',
                         paddingRight: 'var(--sp-md)',
-                        opacity: 0.4,
+                        opacity: 0.85,
                       }}
                     >
                       <div style={{ width: 24, height: 24, borderRadius: 'var(--radius-full)', background: 'var(--surface-2)', flexShrink: 0 }} />

@@ -257,7 +257,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                 style={{
                   fontSize: '10px',
                   fill: 'var(--slate)',
-                  opacity: 0.6,
+                  opacity: 0.85,
                 }}
               >
                 {year}
@@ -758,7 +758,7 @@ export default function Grants() {
             >
               Funding Timeline
             </h2>
-            <span className="flex-1 h-px" style={{ background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.3 }} />
+            <span className="flex-1 h-px" style={{ background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.85 }} />
           </div>
 
           <GanttChart grants={chartGrants} />
@@ -781,7 +781,7 @@ export default function Grants() {
                   borderRadius: 'var(--radius-sm)',
                   border: '1.5px dashed var(--gold)',
                   background: 'var(--gold-active)',
-                  opacity: 0.7,
+                  opacity: 0.85,
                 }}
               />
               <span
@@ -801,7 +801,7 @@ export default function Grants() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div style={{ width: 12, height: 2, background: 'var(--maroon)', opacity: 0.7 }} />
+              <div style={{ width: 12, height: 2, background: 'var(--maroon)', opacity: 0.85 }} />
               <span
                 style={{ fontSize: '10px', color: 'var(--slate)' }}
               >
@@ -874,7 +874,7 @@ export default function Grants() {
         {/* Empty state */}
         {!isLoading && filteredGrants.length === 0 && (
           <div className="text-center py-12" style={{ color: 'var(--slate)' }}>
-            <Banknote size={40} className="mx-auto mb-3" style={{ opacity: 0.3 }} />
+            <Banknote size={40} className="mx-auto mb-3" style={{ opacity: 0.85 }} />
             <p className="text-lg mb-2">
               No grants to display.
             </p>

@@ -99,7 +99,7 @@ export default function MeetingPrep() {
             <button
               onClick={() => window.print()}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors"
-              style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.6 }}
+              style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
               title="Print prep sheet"
             >
               <Printer size={12} />
@@ -128,7 +128,7 @@ export default function MeetingPrep() {
               </span>
             )
           })()}
-          <div style={{ height: 1, background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.3, marginTop: '1rem', marginBottom: '1.5rem' }} />
+          <div style={{ height: 1, background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.85, marginTop: '1rem', marginBottom: '1.5rem' }} />
         </motion.div>
 
         {/* Stats row */}
@@ -323,7 +323,7 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
       className="detail-card"
       style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}
     >
-      <div style={{ color, opacity: 0.7 }}>{icon}</div>
+      <div style={{ color, opacity: 0.85 }}>{icon}</div>
       <div>
         <div style={{ fontSize: 18, fontWeight: 600, color: value > 0 ? color : 'var(--slate)', lineHeight: 1 }}>
           {value}
@@ -360,12 +360,12 @@ function ActionRow({ item }: { item: { id: string; description: string; assignee
       {item.completed ? (
         <CheckCircle2 size={12} style={{ color: 'var(--green)', flexShrink: 0 }} />
       ) : (
-        <Circle size={12} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.5, flexShrink: 0 }} />
+        <Circle size={12} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, flexShrink: 0 }} />
       )}
       <span style={{
         fontSize: 12, color: 'var(--ink)', flex: 1,
         textDecoration: item.completed ? 'line-through' : 'none',
-        opacity: item.completed ? 0.5 : 1,
+        opacity: item.completed ? 0.85 : 1,
       }}>
         {item.description}
       </span>

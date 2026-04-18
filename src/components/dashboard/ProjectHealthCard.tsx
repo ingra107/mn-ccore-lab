@@ -47,7 +47,7 @@ function FactorTooltip({ factors, score }: { factors: HealthFactors; score: numb
       </div>
       {(Object.keys(FACTOR_LABELS) as (keyof HealthFactors)[]).map((key) => (
         <div key={key} className="flex items-center justify-between gap-4">
-          <span style={{ opacity: 0.7 }}>{FACTOR_LABELS[key].label}</span>
+          <span style={{ opacity: 0.85 }}>{FACTOR_LABELS[key].label}</span>
           <span style={{ fontWeight: 500 }}>
             {factors[key]}/{FACTOR_LABELS[key].max}
           </span>
@@ -166,7 +166,7 @@ function ProjectHealthCard() {
           {projects.length === 0 && (
             <div
               className="flex flex-col items-center justify-center py-8"
-              style={{ opacity: 0.4 }}
+              style={{ opacity: 0.85 }}
             >
               <HeartPulse size={24} style={{ color: 'var(--teal)', marginBottom: '8px' }} />
               <p
@@ -301,7 +301,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
             fontSize: '10px',
             fontWeight: 500,
             color: isBad ? color : 'var(--slate)',
-            opacity: isBad ? 1 : 0.6,
+            opacity: isBad ? 1 : 0.85,
             minWidth: '20px',
             textAlign: 'right',
           }}

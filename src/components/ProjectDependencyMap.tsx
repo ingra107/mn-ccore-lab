@@ -377,7 +377,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
             >
               <strong>{from.title}</strong>
               {' '}
-              <span style={{ opacity: 0.7 }}>{REL_LABELS[dep.relationship_type] || dep.relationship_type}</span>
+              <span style={{ opacity: 0.85 }}>{REL_LABELS[dep.relationship_type] || dep.relationship_type}</span>
               {' '}
               <strong>{to.title}</strong>
               {dep.note && <span style={{ opacity: 'var(--ink-label)', marginLeft: '6px' }}>-- {dep.note}</span>}
@@ -416,7 +416,7 @@ export default function ProjectDependencyMap({ projects, dependencies }: Props) 
               }}
             >
               <div style={{ fontWeight: 600, marginBottom: '2px' }}>{node.title}</div>
-              <div style={{ opacity: 0.6, fontSize: '10px' }}>
+              <div style={{ opacity: 0.85, fontSize: '10px' }}>
                 {node.stage} &middot; {incoming.length} incoming &middot; {outgoing.length} outgoing
               </div>
             </motion.div>

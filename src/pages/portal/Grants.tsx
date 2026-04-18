@@ -239,7 +239,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
               <text
                 x={x} y={chartHeight - CHART_PADDING_BOTTOM + 28}
                 textAnchor="middle"
-                style={{ fontSize: '10px', fill: 'var(--slate)', opacity: 0.6 }}
+                style={{ fontSize: '10px', fill: 'var(--slate)', opacity: 0.85 }}
               >
                 {year}
               </text>
@@ -655,7 +655,7 @@ export default function Grants() {
 
                     {/* Period */}
                     <div>
-                      <span className="text-xs flex items-center gap-1" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+                      <span className="text-xs flex items-center gap-1" style={{ color: 'var(--slate)', opacity: 0.85 }}>
                         <Calendar size={10} style={{ flexShrink: 0 }} />
                         {grant.start_date ? formatMediumDate(grant.start_date) : '?'}
                         {' – '}
@@ -665,7 +665,7 @@ export default function Grants() {
 
                     {/* Agency */}
                     <div>
-                      <span className="text-xs truncate block" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+                      <span className="text-xs truncate block" style={{ color: 'var(--slate)', opacity: 0.85 }}>
                         {grant.agency || '—'}
                       </span>
                     </div>
@@ -732,13 +732,13 @@ export default function Grants() {
               style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '12px' }}
             >
               <span>{grants.length} grants</span>
-              <span style={{ opacity: 0.4 }}>·</span>
+              <span style={{ opacity: 0.85 }}>·</span>
               <span>{active.length} active</span>
-              <span style={{ opacity: 0.4 }}>·</span>
+              <span style={{ opacity: 0.85 }}>·</span>
               <span>{proposed.length} proposed</span>
               {totalFunding > 0 && (
                 <>
-                  <span style={{ opacity: 0.4 }}>·</span>
+                  <span style={{ opacity: 0.85 }}>·</span>
                   <span className="flex items-center gap-1">
                     <Banknote size={11} />
                     {formatFunding(totalFunding)} total funding
@@ -747,7 +747,7 @@ export default function Grants() {
               )}
               {mechanisms.length > 0 && (
                 <>
-                  <span style={{ opacity: 0.4 }}>·</span>
+                  <span style={{ opacity: 0.85 }}>·</span>
                   <span>mechanisms: {mechanisms.join(', ')}</span>
                 </>
               )}
@@ -933,7 +933,7 @@ export default function Grants() {
                   </span>
                   <span className="text-[11px]" style={{
                     color: m._isOverdue ? 'var(--maroon)' : (daysUntil !== null && daysUntil <= 14 ? 'var(--gold)' : 'var(--slate)'),
-                    opacity: m._isOverdue ? 1 : 0.7,
+                    opacity: m._isOverdue ? 1 : 0.85,
                     fontWeight: m._isOverdue ? 600 : 400,
                   }}>
                     {m.due_date ? formatMediumDate(m.due_date) : '--'}
@@ -1034,7 +1034,7 @@ export default function Grants() {
               )}
             </div>
             {grant.abstract && (
-              <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.7, marginTop: '4px', lineHeight: 1.4, marginBottom: 0 }}>
+              <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.85, marginTop: '4px', lineHeight: 1.4, marginBottom: 0 }}>
                 {grant.abstract}...
               </p>
             )}

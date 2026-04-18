@@ -135,7 +135,7 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
             <button
               onMouseDown={(e) => { e.preventDefault(); onChange(null); setEditing(false) }}
               className="px-2 py-1 rounded text-[10px] transition-colors"
-              style={{ border: 'none', background: 'transparent', color: 'var(--maroon)', cursor: 'pointer', opacity: 0.7 }}
+              style={{ border: 'none', background: 'transparent', color: 'var(--maroon)', cursor: 'pointer', opacity: 0.85 }}
             >
               Clear
             </button>
@@ -158,7 +158,7 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           fontSize: 'var(--text-label)',
           fontWeight: isOverdue || isToday ? 500 : 400,
           color: isOverdue ? 'var(--maroon)' : isToday ? 'var(--teal)' : isThisWeek ? 'var(--gold)' : value ? 'var(--slate)' : 'var(--slate)',
-          opacity: value ? 0.5 : 0.3,
+          opacity: value ? 0.85 : 0.85,
           fontVariantNumeric: 'tabular-nums',
         }}
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--teal-hover)' }}
@@ -171,7 +171,7 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           : isThisWeek ? (() => { const days = Math.ceil((dueDate!.getTime() - today.getTime()) / 86400000); return `in ${days}d` })()
           : formatShortDate(value)
         }</span>
-        <ChevronDown size={10} style={{ opacity: 0.3 }} />
+        <ChevronDown size={10} style={{ opacity: 0.85 }} />
       </button>
     </div>
   )

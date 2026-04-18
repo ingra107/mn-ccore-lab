@@ -357,7 +357,7 @@ export default function AnalyticsPage() {
           disabled={isCurrentWeek}
           aria-label="Next week"
           className="w-8 h-8 flex items-center justify-center rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-          style={{ borderColor: 'var(--border-subtle)', background: 'none', cursor: isCurrentWeek ? 'default' : 'pointer', color: 'var(--slate)', opacity: isCurrentWeek ? 0.3 : 1 }}
+          style={{ borderColor: 'var(--border-subtle)', background: 'none', cursor: isCurrentWeek ? 'default' : 'pointer', color: 'var(--slate)', opacity: isCurrentWeek ? 0.85 : 1 }}
         >
           <ChevronRight size={16} />
         </button>
@@ -714,7 +714,7 @@ export default function AnalyticsPage() {
                           fontSize: '13px',
                           fontWeight: count > 5 ? 600 : 500,
                           color: fg,
-                          opacity: count === 0 ? 0.4 : 1,
+                          opacity: count === 0 ? 0.85 : 1,
                           transition: 'background 200ms ease',
                         }}
                       >

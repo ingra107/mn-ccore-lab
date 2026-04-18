@@ -19,7 +19,7 @@ export function FieldBlock({ label, icon: Icon, children, noContainer }: { label
   return (
     <div className="flex flex-col" style={{ gap: 'var(--sp-xs)' }}>
       <label className="flex items-center" style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-        <Icon size={11} style={{ opacity: 0.6 }} />
+        <Icon size={11} style={{ opacity: 0.85 }} />
         {label}
       </label>
       {noContainer ? (
@@ -105,7 +105,7 @@ export function EditableTextarea({ value, onSave, placeholder }: { value: string
     <div
       onClick={() => setEditing(true)}
       className="text-sm cursor-text hover:bg-black/[0.02] dark:hover:bg-white/[0.04] rounded px-3 py-2 -mx-1 transition-colors min-h-[60px]"
-      style={{ color: value ? 'var(--ink)' : 'var(--slate)', opacity: value ? 1 : 0.5, whiteSpace: 'pre-wrap' }}
+      style={{ color: value ? 'var(--ink)' : 'var(--slate)', opacity: value ? 1 : 0.85, whiteSpace: 'pre-wrap' }}
     >
       {value || placeholder}
     </div>
@@ -131,7 +131,7 @@ export function StatusSelect({ value, onChange }: { value: string; onChange: (v:
               borderColor: active ? s.color : 'var(--border-subtle)',
               backgroundColor: active ? `color-mix(in srgb, ${s.color} 8%, transparent)` : 'transparent',
               cursor: 'pointer',
-              opacity: active ? 1 : 0.7,
+              opacity: active ? 1 : 0.85,
             }}
           >
             <Icon size={12} />
@@ -161,7 +161,7 @@ export function PrioritySelect({ value, onChange }: { value: string; onChange: (
               borderColor: active ? p.color : 'var(--border-subtle)',
               backgroundColor: active ? `color-mix(in srgb, ${p.color} 8%, transparent)` : 'transparent',
               cursor: 'pointer',
-              opacity: active ? 1 : 0.7,
+              opacity: active ? 1 : 0.85,
             }}
           >
             <Flag size={10} />
@@ -316,7 +316,7 @@ export function DateInput({ value, onChange }: { value: string; onChange: (v: st
           cursor: 'pointer',
           background: 'none',
           border: 'none',
-          opacity: formatted ? 1 : 0.6,
+          opacity: formatted ? 1 : 0.85,
         }}
       >
         {formatted || 'Set date...'}
@@ -423,10 +423,10 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
           cursor: 'pointer',
           background: current ? 'var(--teal-hover)' : 'none',
           border: 'none',
-          opacity: current ? 1 : 0.6,
+          opacity: current ? 1 : 0.85,
         }}
       >
-        <FolderKanban size={13} style={{ opacity: 0.7 }} />
+        <FolderKanban size={13} style={{ opacity: 0.85 }} />
         {current ? current.title : 'No project'}
         <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
@@ -489,7 +489,7 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
               <button
                 onClick={() => { onChange(''); setSearch(''); setOpen(false) }}
                 className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
-                style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.6 }}
+                style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.85 }}
               >
                 No project
                 {!value && <Check size={14} style={{ color: 'var(--teal)', marginLeft: 'auto' }} />}

@@ -39,7 +39,7 @@ function SidebarCard({ title, icon: Icon, iconColor, children, linkTo, linkLabel
     >
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-1.5">
-          <Icon size={12} style={{ color: iconColor, opacity: 0.7 }} />
+          <Icon size={12} style={{ color: iconColor, opacity: 0.85 }} />
           <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: iconColor }}>
             {title}
           </span>
@@ -47,7 +47,7 @@ function SidebarCard({ title, icon: Icon, iconColor, children, linkTo, linkLabel
         {linkTo && linkLabel && (
           <Link
             to={linkTo}
-            style={{ fontSize: '10px', color: 'var(--teal)', textDecoration: 'none', opacity: 0.6 }}
+            style={{ fontSize: '10px', color: 'var(--teal)', textDecoration: 'none', opacity: 0.85 }}
           >
             {linkLabel}
           </Link>
@@ -73,12 +73,12 @@ function MilestoneRow({ milestone }: { milestone: any }) {
 
   return (
     <div className="flex items-start gap-2 py-1">
-      <Flag size={10} style={{ color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.6, flexShrink: 0, marginTop: 2 }} />
+      <Flag size={10} style={{ color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.85, flexShrink: 0, marginTop: 2 }} />
       <div className="flex-1 min-w-0">
         <span className="block truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', lineHeight: 1.3 }}>
           {milestone.title || milestone.description}
         </span>
-        <span style={{ fontSize: '10px', color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.7 }}>
+        <span style={{ fontSize: '10px', color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.85 }}>
           {milestone.project_title && `${milestone.project_title} · `}
           {daysUntil !== null ? (
             isOverdue ? `${Math.abs(daysUntil)}d overdue` : daysUntil === 0 ? 'Today' : `${daysUntil}d`
@@ -153,8 +153,8 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
           <SidebarCard title="Completed" icon={CheckCircle2} iconColor="var(--teal)" linkTo="/portal/tasks" linkLabel="View all">
             {recentlyCompleted.slice(0, 5).map((t: any) => (
               <div key={t.id} className="flex items-center gap-2 py-0.5">
-                <CheckCircle2 size={10} style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0 }} />
-                <span className="truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', opacity: 0.6, textDecoration: 'line-through' }}>
+                <CheckCircle2 size={10} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
+                <span className="truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', opacity: 0.85, textDecoration: 'line-through' }}>
                   {t.title || t.description}
                 </span>
               </div>
@@ -177,7 +177,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
 
           {stats.overdue > 0 && (
             <div className="flex items-center gap-2 py-1">
-              <AlertTriangle size={10} style={{ color: 'var(--maroon)', opacity: 0.7, flexShrink: 0 }} />
+              <AlertTriangle size={10} style={{ color: 'var(--maroon)', opacity: 0.85, flexShrink: 0 }} />
               <Link to="/portal/tasks" style={{ fontSize: 'var(--label-size)', color: 'var(--maroon)', textDecoration: 'none' }}>
                 {stats.overdue} task{stats.overdue !== 1 ? 's' : ''} overdue
               </Link>
@@ -187,7 +187,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
           {staleProjects.length > 0 && (
             <div className="flex items-center gap-2 py-1">
               <TrendingDown size={10} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
-              <Link to="/projects" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none', opacity: 0.7 }}>
+              <Link to="/projects" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none', opacity: 0.85 }}>
                 {staleProjects.length} project{staleProjects.length !== 1 ? 's' : ''} stale
               </Link>
             </div>
@@ -195,8 +195,8 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
 
           {deepWorkHours !== null && (
             <div className="flex items-center gap-2 py-1 mt-1" style={{ borderTop: '1px solid rgba(201,168,76,0.06)', paddingTop: 6 }}>
-              <Clock size={10} style={{ color: 'var(--teal)', opacity: 0.6, flexShrink: 0 }} />
-              <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.7 }}>
+              <Clock size={10} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
+              <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.85 }}>
                 {deepWorkHours}h deep work available
               </span>
             </div>
@@ -209,13 +209,13 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
         <SidebarCard title="Commitments" icon={Users} iconColor="var(--teal)" linkTo="/portal/tasks" linkLabel={`${openCommitments.length} open`}>
           {openCommitments.map((c: any) => (
             <div key={c.id} className="flex items-start gap-2 py-1">
-              <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: c.due_date && c.due_date <= today ? 'var(--maroon-solid)' : 'var(--teal)', opacity: 0.5, flexShrink: 0, marginTop: 'var(--sp-xs)' }} />
+              <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: c.due_date && c.due_date <= today ? 'var(--maroon-solid)' : 'var(--teal)', opacity: 0.85, flexShrink: 0, marginTop: 'var(--sp-xs)' }} />
               <div className="flex-1 min-w-0">
                 <span className="block truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', lineHeight: 1.3 }}>
                   {c.description || c.commitment}
                 </span>
                 {c.due_date && (
-                  <span style={{ fontSize: '10px', color: c.due_date <= today ? 'var(--maroon)' : 'var(--slate)', opacity: 0.6 }}>
+                  <span style={{ fontSize: '10px', color: c.due_date <= today ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85 }}>
                     Due {c.due_date}
                   </span>
                 )}

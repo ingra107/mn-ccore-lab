@@ -70,7 +70,7 @@ function CLIFMiniCard() {
                   fill="none"
                   stroke="#2d8a8a"
                   strokeWidth="0.5"
-                  opacity={animated ? 0 : 0.4}
+                  opacity={animated ? 0 : 0.85}
                   style={{
                     animation: animated ? `pulse-ring 3s ease-out ${i * 200}ms infinite` : 'none',
                   }}
@@ -104,7 +104,7 @@ function CLIFMiniCard() {
           {/* Inline keyframes for pulse */}
           <style>{`
             @keyframes pulse-ring {
-              0% { r: 3.5; opacity: 0.4; }
+              0% { r: 3.5; opacity: 0.85; }
               70% { r: 12; opacity: 0; }
               100% { r: 12; opacity: 0; }
             }
@@ -127,7 +127,7 @@ function CLIFMiniCard() {
             style={{
               fontSize: '12px',
               color: 'var(--slate)',
-              opacity: 0.7,
+              opacity: 0.85,
               marginTop: '4px',
             }}
           >

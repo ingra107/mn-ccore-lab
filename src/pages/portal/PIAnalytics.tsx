@@ -376,7 +376,7 @@ export default function PIAnalytics() {
               setTimeout(() => setCopied(false), 2000)
             }}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-            style={{ color: copied ? 'var(--green)' : 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.7 }}
+            style={{ color: copied ? 'var(--green)' : 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
           >
             <Copy size={11} />
             {copied ? 'Copied' : 'Copy Report'}
@@ -384,7 +384,7 @@ export default function PIAnalytics() {
           <button
             onClick={() => window.print()}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-            style={{ color: 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.7 }}
+            style={{ color: 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
           >
             <Printer size={11} />
             Print
@@ -611,7 +611,7 @@ export default function PIAnalytics() {
                           style={{
                             width: `${Math.max(barWidth, 8)}%`,
                             backgroundColor: member.actions < 3 ? 'var(--slate)' : 'var(--gold)',
-                            opacity: member.actions < 3 ? 0.4 : 1,
+                            opacity: member.actions < 3 ? 0.85 : 1,
                             transition: 'width 0.6s ease',
                             minWidth: 24,
                           }}

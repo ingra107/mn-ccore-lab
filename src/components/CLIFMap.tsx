@@ -353,11 +353,11 @@ export default function CLIFMap() {
       {/* Pulse animation CSS */}
       <style>{`
         @keyframes clifPulse {
-          0% { r: 12; opacity: 0.6; }
+          0% { r: 12; opacity: 0.85; }
           100% { r: 32; opacity: 0; }
         }
         @keyframes clifPulseDelayed {
-          0% { r: 12; opacity: 0.4; }
+          0% { r: 12; opacity: 0.85; }
           100% { r: 40; opacity: 0; }
         }
         .clif-pulse-ring {

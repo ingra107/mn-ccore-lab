@@ -29,7 +29,7 @@ function PipelineCard() {
           observer.disconnect()
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.85 }
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -139,7 +139,7 @@ function PipelineCard() {
                 {stage.label.split(' ').pop()}
               </div>
               {i < stages.length - 1 && (
-                <svg width="16" height="8" viewBox="0 0 16 8" style={{ opacity: 0.3 }}>
+                <svg width="16" height="8" viewBox="0 0 16 8" style={{ opacity: 0.85 }}>
                   <path d="M0 4 L12 4 M10 1 L14 4 L10 7" fill="none" stroke="var(--gold)" strokeWidth="1.5" />
                 </svg>
               )}

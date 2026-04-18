@@ -33,7 +33,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
 
   return (
     <div style={{ marginTop: '2rem', marginBottom: '2rem' }}>
-      <div style={{ height: '1px', background: 'linear-gradient(to right, var(--teal), transparent)', opacity: 0.3, marginBottom: '1.5rem' }} />
+      <div style={{ height: '1px', background: 'linear-gradient(to right, var(--teal), transparent)', opacity: 0.85, marginBottom: '1.5rem' }} />
 
       <h2 style={{ fontWeight: 500, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--ink)', marginBottom: '1rem' }}>
         {firstName}'s Dashboard
@@ -85,7 +85,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
                 const isOverdue = item.due_date && new Date(item.due_date) < new Date()
                 return (
                   <div key={item.id} className="flex items-start gap-1.5">
-                    <Circle size={10} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.4, marginTop: '3px', flexShrink: 0 }} />
+                    <Circle size={10} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, marginTop: '3px', flexShrink: 0 }} />
                     <span style={{ fontSize: '11px', color: 'var(--ink)', lineHeight: 1.3 }}>
                       {item.description.length > 60 ? item.description.slice(0, 57) + '...' : item.description}
                     </span>

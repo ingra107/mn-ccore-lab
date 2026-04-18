@@ -44,7 +44,7 @@ function MyItemsCard() {
             <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
               {pending.length}
             </span>
-            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
               pending
             </span>
           </div>
@@ -54,7 +54,7 @@ function MyItemsCard() {
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--maroon)' }}>
                 {overdueCount}
               </span>
-              <span style={{ fontSize: '11px', color: 'var(--maroon)', opacity: 0.7 }}>
+              <span style={{ fontSize: '11px', color: 'var(--maroon)', opacity: 0.85 }}>
                 overdue
               </span>
             </div>
@@ -73,7 +73,7 @@ function MyItemsCard() {
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold)' }}>
                 {unreadCount}
               </span>
-              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.7 }}>
+              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
                 notifications
               </span>
             </div>
@@ -111,7 +111,7 @@ function MyItemsCard() {
                   style={{
                     fontSize: '10px',
                     color: overdue ? 'var(--maroon)' : 'var(--slate)',
-                    opacity: overdue ? 1 : 0.5,
+                    opacity: overdue ? 1 : 0.85,
                     marginTop: '1px',
                   }}
                 >

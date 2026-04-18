@@ -48,7 +48,7 @@ function FilterChipSelect({
       <Icon
         size={13}
         className="absolute left-3 pointer-events-none"
-        style={{ color: active ? 'var(--teal)' : 'var(--slate)', opacity: 0.7 }}
+        style={{ color: active ? 'var(--teal)' : 'var(--slate)', opacity: 0.85 }}
       />
       <select
         value={value}

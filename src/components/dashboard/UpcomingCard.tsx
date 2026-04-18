@@ -114,7 +114,7 @@ function UpcomingCard() {
               <p style={{ fontSize: '12px', color: 'var(--ink)', margin: '2px 0 0 0', lineHeight: 1.3 }}>
                 {nextMeeting.title.split(':')[0]}
               </p>
-              <p style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7, margin: '2px 0 0 0' }}>
+              <p style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, margin: '2px 0 0 0' }}>
                 {new Date(nextMeeting.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
               </p>
               {(() => {
@@ -168,7 +168,7 @@ function UpcomingCard() {
             {meetingActionCounts.total > 0 && (
               <div className="flex items-center gap-1.5">
                 <ListChecks size={11} style={{ color: 'var(--teal)', opacity: 0.8 }} />
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85 }}>
                   {meetingActionCounts.pending}/{meetingActionCounts.total} pending
                 </span>
               </div>
@@ -273,7 +273,7 @@ function UpcomingCard() {
                       height: 6,
                       borderRadius: 'var(--radius-circle)',
                       background: typeColor(d.type),
-                      opacity: 0.6,
+                      opacity: 0.85,
                     }}
                   />
                   <span
@@ -297,7 +297,7 @@ function UpcomingCard() {
       <style>{`
         @keyframes overdue-pulse {
           0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
+          50% { opacity: 0.85; }
         }
       `}</style>
     </BentoCard>

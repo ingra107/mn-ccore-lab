@@ -207,7 +207,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
 
               {/* Done (collapsed) */}
               {groups.done.length > 0 && (
-                <div style={{ opacity: 0.5 }}>
+                <div style={{ opacity: 0.85 }}>
                   <span
                     className="text-[10px] uppercase tracking-wider"
                     style={{ color: 'var(--slate)' }}
@@ -297,7 +297,7 @@ function TaskSection({
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex', flexShrink: 0 }}
                 title="Cycle status"
               >
-                <Circle size={14} style={{ color: config.color, opacity: 0.5 }} />
+                <Circle size={14} style={{ color: config.color, opacity: 0.85 }} />
               </button>
               <div className="flex-1 min-w-0">
                 <span
@@ -318,7 +318,7 @@ function TaskSection({
                   style={{
                     color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
                     fontWeight: isOverdue ? 600 : 400,
-                    opacity: isOverdue ? 1 : 0.5,
+                    opacity: isOverdue ? 1 : 0.85,
                   }}
                 >
                   {isOverdue ? 'Overdue' : formatShortDate(task.due_date)}

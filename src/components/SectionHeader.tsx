@@ -81,7 +81,7 @@ export default function SectionHeader({
           style={{
             fontWeight: 400,
             color: 'var(--slate)',
-            opacity: 0.7,
+            opacity: 0.85,
             marginTop: '2px',
             paddingLeft: Icon ? `${iconConfig.box + 12}px` : undefined,
           }}

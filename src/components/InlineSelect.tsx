@@ -121,7 +121,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
         }}
       >
         {current?.label || value}
-        <ChevronDown size={10} style={{ opacity: 0.4 }} />
+        <ChevronDown size={10} style={{ opacity: 0.85 }} />
       </button>
 
       {open && createPortal(

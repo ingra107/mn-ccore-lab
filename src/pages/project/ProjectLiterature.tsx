@@ -88,7 +88,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
                         style={{
                           fontSize: '10px',
                           color: 'var(--slate)',
-                          opacity: 0.7,
+                          opacity: 0.85,
                         }}
                       >
                         {p.journal}
@@ -335,7 +335,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                     style={{
                       background: 'none', border: 'none',
                       cursor: alreadyLinked ? 'default' : 'pointer',
-                      opacity: alreadyLinked ? 0.4 : 1,
+                      opacity: alreadyLinked ? 0.85 : 1,
                       borderBottom: '1px solid var(--border-subtle)',
                     }}
                     onMouseOver={e => { if (!alreadyLinked) (e.currentTarget.style.backgroundColor = 'var(--teal-hover)') }}
@@ -343,7 +343,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                   >
                     <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>{pub.title}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      {pub.journal && <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>{pub.journal}</span>}
+                      {pub.journal && <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85 }}>{pub.journal}</span>}
                       {pub.year && <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{pub.year}</span>}
                       {alreadyLinked && <span style={{ fontSize: '10px', color: 'var(--teal)', fontWeight: 'var(--label-weight)' }}>Already linked</span>}
                     </div>
@@ -378,7 +378,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                 color: 'var(--ink-bright, #fff)',
                 border: 'none',
                 cursor: 'pointer',
-                opacity: doiLoading || !doi.trim() ? 0.5 : 1,
+                opacity: doiLoading || !doi.trim() ? 0.85 : 1,
               }}
             >
               {doiLoading ? <Loader2 size={14} className="animate-spin" /> : null}
@@ -403,7 +403,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                 {doiData.authors}
               </p>
               <div className="flex items-center gap-2">
-                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.7, fontStyle: 'italic' }}>{doiData.journal}</span>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.85, fontStyle: 'italic' }}>{doiData.journal}</span>
                 <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{doiData.year}</span>
               </div>
               <button
@@ -418,7 +418,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                   color: 'var(--ink-bright, #fff)',
                   border: 'none',
                   cursor: 'pointer',
-                  opacity: createAndLink.isPending ? 0.5 : 1,
+                  opacity: createAndLink.isPending ? 0.85 : 1,
                 }}
               >
                 <Plus size={14} />

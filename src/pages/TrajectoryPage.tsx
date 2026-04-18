@@ -258,7 +258,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                         width: `${Math.max(stageWidth, 8)}%`,
                         backgroundColor: stageColor,
                         borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
-                        opacity: 0.7,
+                        opacity: 0.85,
                       }}
                     />
                   </div>
@@ -349,7 +349,7 @@ function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] })
           >
             <Icon
               size={18}
-              style={{ color: card.color, margin: '0 auto 0.5rem', display: 'block', opacity: 0.7 }}
+              style={{ color: card.color, margin: '0 auto 0.5rem', display: 'block', opacity: 0.85 }}
               aria-hidden="true"
             />
             <div
@@ -420,7 +420,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
           bottom: '8px',
           width: '2px',
           background: 'var(--teal)',
-          opacity: 0.3,
+          opacity: 0.85,
           borderRadius: 'var(--radius-sm)',
         }}
       />
@@ -497,7 +497,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
                   style={{
                     fontSize: 'var(--label-size)',
                     color: 'var(--slate)',
-                    opacity: 0.7,
+                    opacity: 0.85,
                   }}
                 >
                   {pub.pub_date}
@@ -617,7 +617,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
               <Cell
                 key={index}
                 fill={m.isCurrent ? 'var(--teal)' : 'var(--gold)'}
-                fillOpacity={m.completed === 0 ? 0.15 : m.isCurrent ? 1 : 0.7}
+                fillOpacity={m.completed === 0 ? 0.15 : m.isCurrent ? 1 : 0.85}
               />
             ))}
           </Bar>
@@ -759,7 +759,7 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
             style={{
               padding: '0.875rem 1.25rem',
               borderLeft: `3px solid ${dateColor}`,
-              opacity: isComplete ? 0.5 : 1,
+              opacity: isComplete ? 0.85 : 1,
             }}
           >
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
@@ -924,7 +924,7 @@ function ContribMetricCard({
     >
       <Icon
         size={20}
-        style={{ color, margin: '0 auto 0.5rem', display: 'block', opacity: 0.7 }}
+        style={{ color, margin: '0 auto 0.5rem', display: 'block', opacity: 0.85 }}
         aria-hidden="true"
       />
       <div
@@ -1325,7 +1325,7 @@ export default function TrajectoryPage() {
           fontSize: '12px',
           color: 'var(--slate)',
           textDecoration: 'none',
-          opacity: 0.7,
+          opacity: 0.85,
         }}
       >
         <ArrowLeft size={14} />

@@ -301,7 +301,7 @@ export default function MeetingDetail() {
                 border: `1px solid ${copiedSummary ? 'var(--green)' : 'var(--border-subtle)'}`,
                 background: copiedSummary ? 'var(--green-hover)' : 'none',
                 cursor: 'pointer',
-                opacity: copiedSummary ? 1 : 0.6,
+                opacity: copiedSummary ? 1 : 0.85,
               }}
             >
               {copiedSummary ? <Check size={11} /> : <Copy size={11} />}
@@ -317,7 +317,7 @@ export default function MeetingDetail() {
                 border: `1px solid ${agendaCopied ? 'var(--green)' : 'rgba(201,168,76,0.25)'}`,
                 background: agendaCopied ? 'var(--green-hover)' : 'var(--gold-hover)',
                 cursor: generatingAgenda ? 'wait' : 'pointer',
-                opacity: generatingAgenda ? 0.6 : 1,
+                opacity: generatingAgenda ? 0.85 : 1,
               }}
             >
               {agendaCopied ? <Check size={11} /> : <Sparkles size={11} />}
@@ -357,7 +357,7 @@ export default function MeetingDetail() {
           {/* Attendees — clickable toggle */}
           <AttendanceSection meetingId={meeting.id} attendees={attendees} />
 
-          <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.3, marginTop: '1.5rem' }} />
+          <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.85, marginTop: '1.5rem' }} />
         </motion.div>
 
         {/* Projects discussed — derived from action items' project_id */}
@@ -750,14 +750,14 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.85 : 1,
     zIndex: isDragging ? 'var(--z-sticky)' : ('auto' as const),
   }
   const Icon = AGENDA_TYPE_ICONS[item.type] || MessageSquarePlus
 
   return (
     <div ref={setNodeRef} style={style} className="flex items-start gap-2 py-2" {...attributes}>
-      <button {...listeners} className="cursor-grab active:cursor-grabbing mt-1 flex-shrink-0" style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}>
+      <button {...listeners} aria-label="Reorder item" className="cursor-grab active:cursor-grabbing mt-1 flex-shrink-0" style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}>
         <GripVertical size={14} />
       </button>
       <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
@@ -779,14 +779,19 @@ function SortableActionItem({ item, onToggle, selected, onToggleSelect }: { item
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.85 : 1,
     zIndex: isDragging ? 'var(--z-sticky)' : ('auto' as const),
   }
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center group/action" {...attributes}>
+    // dnd-kit attributes live on the explicit drag handle button, not the
+    // wrapper div — avoids axe nested-interactive when the child ActionItemRow
+    // renders its own buttons.
+    <div ref={setNodeRef} style={style} className="flex items-center group/action">
       <button
+        {...attributes}
         {...listeners}
+        aria-label="Reorder action item"
         className="flex-shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover/action:opacity-100 transition-opacity"
         style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}
       >
@@ -838,10 +843,12 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
     <div
       className="action-item-row flex items-start gap-3 py-2.5"
       style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)', cursor: 'pointer', borderRadius: 'var(--radius-md)', margin: '0 -8px', padding: '10px 8px', transition: 'background 0.15s', background: selected ? 'var(--teal-hover)' : undefined }}
-      onClick={() => onToggle?.(item.id)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle?.(item.id) } }}
+      // role="button" removed (axe nested-interactive): row contains a
+      // checkbox button + task-title button inside. Background click still
+      // toggles via e.target === e.currentTarget guard.
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onToggle?.(item.id)
+      }}
     >
       {/* Select checkbox */}
       {onToggleSelect && (
@@ -875,13 +882,13 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
       <div className="flex-shrink-0 relative" style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <button type="button" className="cursor-pointer hover:scale-110 transition-transform"
           onClick={(e) => { e.stopPropagation(); onToggle?.(item.id) }}
-          style={{ background: 'none', border: 'none', padding: 0, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: item.completed ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: item.completed ? 1 : 0.5 }}
+          style={{ background: 'none', border: 'none', padding: 0, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: item.completed ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: item.completed ? 1 : 0.85 }}
           title={item.completed ? 'Mark as pending' : 'Mark as completed'}>
           {item.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
         </button>
       </div>
       <div style={{ flex: 1, paddingTop: '10px' }}>
-        <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, lineHeight: 1.4, textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.5 : 1 }}>
+        <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, lineHeight: 1.4, textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.85 : 1 }}>
           {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">↻ carried</span>}{clean}</>); })()}
         </p>
         <div className="flex flex-wrap items-center gap-3 mt-1">
@@ -904,7 +911,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
             />
           </div>
           {item.due_date && (
-            <span style={{ fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
+            <span style={{ fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.85, fontWeight: isOverdue ? 600 : 400 }}>
               {isOverdue ? 'Overdue: ' : 'Due '}{formatShortDate(item.due_date)}
             </span>
           )}
@@ -957,7 +964,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
   return (
     <form onSubmit={handleSubmit} style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid rgba(45,138,138,0.08)' }}>
       <div className="flex items-center gap-2">
-        <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0 }} />
+        <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
         <input
           ref={inputRef}
           type="text"
@@ -1171,7 +1178,7 @@ function AttendanceSection({ meetingId, attendees }: { meetingId: string; attend
                   border: `1px solid ${present ? 'var(--teal)' : 'var(--border-subtle)'}`,
                   color: present ? 'var(--teal)' : 'var(--slate)',
                   cursor: 'pointer',
-                  opacity: present ? 1 : 0.6,
+                  opacity: present ? 1 : 0.85,
                 }}
               >
                 <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm-icon" />

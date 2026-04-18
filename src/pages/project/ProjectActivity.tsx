@@ -116,7 +116,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
                       border: 'none',
                       padding: 0,
                       color: item.action.completed ? 'var(--teal)' : 'var(--slate)',
-                      opacity: item.action.completed ? 1 : 0.5,
+                      opacity: item.action.completed ? 1 : 0.85,
                     }}
                     whileTap={{ scale: 0.85 }}
                   >
@@ -134,7 +134,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
                         margin: 0,
                         lineHeight: 1.4,
                         textDecoration: item.action.completed ? 'line-through' : 'none',
-                        opacity: item.action.completed ? 0.5 : 1,
+                        opacity: item.action.completed ? 0.85 : 1,
                       }}
                     >
                       {item.action.description}

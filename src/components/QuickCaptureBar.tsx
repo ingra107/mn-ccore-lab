@@ -67,7 +67,7 @@ export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
           transition: 'border-color 150ms ease, box-shadow 150ms ease',
         }}
       >
-        <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.7, flexShrink: 0 }} />
+        <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
         <input
           ref={inputRef}
           type="text"
@@ -117,7 +117,7 @@ export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
               padding: 'var(--sp-xs)',
               display: 'flex',
               alignItems: 'center',
-              opacity: capture.isPending ? 0.4 : 0.7,
+              opacity: capture.isPending ? 0.85 : 0.85,
               transition: 'opacity 150ms ease',
             }}
           >

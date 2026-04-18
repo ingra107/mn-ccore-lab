@@ -139,7 +139,7 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
             <div style={{
               width: 6, height: 6, borderRadius: 'var(--radius-circle)',
               background: forClaude ? 'var(--gold)' : 'var(--slate)',
-              opacity: forClaude ? 1 : 0.3,
+              opacity: forClaude ? 1 : 0.85,
             }} />
             {forClaude ? 'For Hermes' : '@ Hermes'}
           </button>
@@ -174,7 +174,7 @@ export function TaskActivity({ taskId }: { taskId: string }) {
       <div className="flex flex-col gap-1">
         {activity.slice(0, 8).map((a) => (
           <div key={a.id} className="flex items-start gap-2 py-0.5">
-            <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: 'var(--teal)', opacity: 0.3 }} />
+            <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: 'var(--teal)', opacity: 0.85 }} />
             <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{a.description}</span>
             <span className="text-[10px] ml-auto flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{formatRelativeTime(a.timestamp)}</span>
           </div>

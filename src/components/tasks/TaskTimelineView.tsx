@@ -28,8 +28,8 @@ const statusColors: Record<string, string> = {
 const priorityOpacity: Record<string, number> = {
   urgent: 1,
   high: 0.85,
-  medium: 0.7,
-  low: 0.55,
+  medium: 0.85,
+  low: 0.85,
 }
 
 export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }: TaskTimelineViewProps) {
@@ -225,13 +225,13 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
               </p>
               <div className="flex items-center gap-2 mt-1 text-[10px] flex-wrap" style={{ color: 'var(--slate)' }}>
                 <span>{getPersonInfo(tooltip.task.assignee).name}</span>
-                <span style={{ opacity: 0.3 }}>|</span>
+                <span style={{ opacity: 0.85 }}>|</span>
                 <span>Due {formatShortDate(tooltip.task.due_date!)}</span>
-                <span style={{ opacity: 0.3 }}>|</span>
+                <span style={{ opacity: 0.85 }}>|</span>
                 <span style={{ color: statusColors[tooltip.task.status] }}>{tooltip.task.status.replace('_', ' ')}</span>
                 {tooltip.task.project_id && projectMap.get(tooltip.task.project_id) && (
                   <>
-                    <span style={{ opacity: 0.3 }}>|</span>
+                    <span style={{ opacity: 0.85 }}>|</span>
                     <span style={{ color: 'var(--teal)' }}>{projectMap.get(tooltip.task.project_id)}</span>
                   </>
                 )}

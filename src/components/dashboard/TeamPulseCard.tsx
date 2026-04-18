@@ -49,7 +49,7 @@ function TeamPulseCard() {
           <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
             {activeThisWeek}
           </span>
-          <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.7 }}>
+          <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85 }}>
             of {totalMembers} members active
           </span>
         </div>
@@ -127,7 +127,7 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
         ) : (
           <span style={{
             fontSize: '10px', fontWeight: 700,
-            color: isActive ? 'var(--green-light)' : 'var(--slate)', opacity: isActive ? 1 : 0.45,
+            color: isActive ? 'var(--green-light)' : 'var(--slate)', opacity: isActive ? 1 : 0.85,
           }}>
             {initials}
           </span>

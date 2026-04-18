@@ -85,7 +85,7 @@ export default function PublicationTimeline({ publications }: PublicationTimelin
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 0.4 }} />
+          <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--gold)', opacity: 0.85 }} />
           <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
             In Review / Prep
           </span>

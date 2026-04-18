@@ -101,11 +101,11 @@ export default function DeadlineCascadePage() {
             color: 'var(--slate)',
             opacity: 0.75,
           }}>
-            <GitBranch size={40} style={{ margin: '0 auto var(--sp-md)', opacity: 0.3 }} />
+            <GitBranch size={40} style={{ margin: '0 auto var(--sp-md)', opacity: 0.85 }} />
             <p style={{ fontSize: '14px', fontWeight: 500, margin: '0 0 var(--sp-xs)' }}>
               No deadline chains yet
             </p>
-            <p style={{ fontSize: '12px', margin: 0, opacity: 0.6 }}>
+            <p style={{ fontSize: '12px', margin: 0, opacity: 0.85 }}>
               Create dependency links between milestones and tasks to visualize cascade impacts.
             </p>
           </div>

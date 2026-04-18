@@ -129,7 +129,7 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
             {value ? displayName(value, 'short') : person.name.split(' ')[0]}
           </span>
         )}
-        <ChevronDown size={10} style={{ opacity: 0.3 }} />
+        <ChevronDown size={10} style={{ opacity: 0.85 }} />
       </button>
 
       {memberData && !open && (

@@ -173,7 +173,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
             <h2 className="text-xl font-medium leading-snug" style={{ color: 'var(--ink)', margin: 0 }}>
               {meeting.title}
             </h2>
-            <p className="text-sm mt-1" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+            <p className="text-sm mt-1" style={{ color: 'var(--slate)', opacity: 0.85 }}>
               {formatFullDate(meeting.date)}
             </p>
             <div className="flex flex-wrap items-center gap-3 mt-2">
@@ -284,7 +284,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
                     }
                   </button>
                   <div className="flex-1 min-w-0">
-                    <span style={{ textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.6 : 1 }}>
+                    <span style={{ textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.85 : 1 }}>
                       {item.isCarried && <span className="carried-badge">&#x21bb; carried</span>}
                       {item.cleanDescription}
                     </span>
@@ -293,7 +293,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
                         <div style={{ width: 16, height: 16 }}>
                           <Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="2xs" />
                         </div>
-                        <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.7 }}>{info.name}</span>
+                        <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.85 }}>{info.name}</span>
                       </div>
                       {item.dueDate && (
                         <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
@@ -731,7 +731,7 @@ export default function Meetings() {
                     display: 'block',
                     padding: '10px 12px',
                     borderBottom: '1px solid var(--border-subtle)',
-                    opacity: 0.4,
+                    opacity: 0.85,
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -898,7 +898,7 @@ export default function Meetings() {
                         const info = getPersonInfo(item.assignee)
                         const { isCarried: cIsCarried, clean: cClean } = parseCarriedForward(item.description)
                         return (
-                          <div key={item.id || item.description} className="flex items-start gap-3 p-2.5 rounded-lg action-item-card" style={{ background: 'var(--cream)', opacity: 0.7 }}>
+                          <div key={item.id || item.description} className="flex items-start gap-3 p-2.5 rounded-lg action-item-card" style={{ background: 'var(--cream)', opacity: 0.85 }}>
                             <button type="button" className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
                               style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
                               onClick={() => item.id && toggleWithUndo(item.id)}
@@ -908,7 +908,7 @@ export default function Meetings() {
                               <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
                             </button>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm leading-snug" style={{ color: 'var(--ink)', textDecoration: 'line-through', opacity: 0.6 }}>
+                              <p className="text-sm leading-snug" style={{ color: 'var(--ink)', textDecoration: 'line-through', opacity: 0.85 }}>
                                 {cIsCarried && <span className="carried-badge">&#x21bb; carried</span>}
                                 {cClean}
                               </p>
@@ -930,7 +930,7 @@ export default function Meetings() {
             </motion.div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-              <Calendar size={32} style={{ marginBottom: '1rem', opacity: 0.4 }} />
+              <Calendar size={32} style={{ marginBottom: '1rem', opacity: 0.85 }} />
               <p className="text-sm">Select a meeting to view details</p>
             </div>
           )}

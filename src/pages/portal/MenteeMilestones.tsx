@@ -567,7 +567,7 @@ function MilestoneRow({
     <div
       style={{
         borderBottom: '1px solid var(--border-subtle)',
-        opacity: isDone ? 0.45 : 1,
+        opacity: isDone ? 0.85 : 1,
         background: item._isOverdue
           ? 'var(--maroon-hover)'
           : isFocused
@@ -630,7 +630,7 @@ function MilestoneRow({
             fontSize: 'var(--label-size)',
             fontWeight: 500,
             color: 'var(--gold)',
-            opacity: 0.7,
+            opacity: 0.85,
           }}
         >
           {getTypeLabel(item.milestone_type)}
@@ -696,7 +696,7 @@ function MilestoneRow({
               {dueStr}
             </span>
           )}
-          <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--gold)', opacity: 0.7 }}>
+          <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--gold)', opacity: 0.85 }}>
             {getTypeLabel(item.milestone_type)}
           </span>
           <div style={{ width: 18, height: 18, flexShrink: 0 }}>
@@ -1038,7 +1038,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
               fontSize: 'var(--value-size)',
               fontWeight: 500,
               cursor: title.trim() ? 'pointer' : 'not-allowed',
-              opacity: createMilestone.isPending ? 0.7 : 1,
+              opacity: createMilestone.isPending ? 0.85 : 1,
             }}
           >
             <Check size={14} />

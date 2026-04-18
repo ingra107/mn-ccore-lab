@@ -228,7 +228,7 @@ export default function CollaborationNetwork() {
     <section ref={sectionRef} className="fade-in-up section-ink relative py-8 sm:py-12">
       <div
         className="absolute top-0 left-0 right-0"
-        style={{ height: '1px', background: 'var(--gold)', opacity: 0.3 }}
+        style={{ height: '1px', background: 'var(--gold)', opacity: 0.85 }}
       />
 
       <div className="content-container">
@@ -259,7 +259,7 @@ export default function CollaborationNetwork() {
 
       <div
         className="absolute bottom-0 left-0 right-0"
-        style={{ height: '1px', background: 'var(--gold)', opacity: 0.3 }}
+        style={{ height: '1px', background: 'var(--gold)', opacity: 0.85 }}
       />
     </section>
   )

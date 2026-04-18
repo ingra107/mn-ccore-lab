@@ -112,7 +112,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
     <div
       className="card p-4 sm:p-5"
       style={{
-        opacity: isDismissed ? 0.5 : 1,
+        opacity: isDismissed ? 0.85 : 1,
         minHeight: '120px',
         transition: 'opacity var(--duration-normal) var(--ease-out), transform var(--duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--duration-slow) var(--ease-out), background-color var(--duration-normal) var(--ease-out)',
       }}
@@ -564,7 +564,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                 background: commentText.trim() ? 'var(--teal-solid)' : 'transparent',
                 color: commentText.trim() ? 'var(--cream)' : 'var(--slate)',
                 border: 'none',
-                opacity: commentText.trim() ? 1 : 0.3,
+                opacity: commentText.trim() ? 1 : 0.85,
               }}
               aria-label="Submit comment"
             >
@@ -586,7 +586,7 @@ function EmptyState() {
         className="mx-auto mb-6 w-16 h-16 rounded-2xl flex items-center justify-center"
         style={{ background: 'var(--gold-active)' }}
       >
-        <Search size={28} style={{ color: 'var(--gold)', opacity: 0.7 }} />
+        <Search size={28} style={{ color: 'var(--gold)', opacity: 0.85 }} />
       </div>
       <h2
         className="text-xl sm:text-2xl mb-3"
@@ -798,7 +798,7 @@ export default function Digest() {
                         className="ml-1.5"
                         style={{
                           fontSize: '10px',
-                          opacity: 0.7,
+                          opacity: 0.85,
                         }}
                       >
                         ({d.count})
@@ -854,7 +854,7 @@ export default function Digest() {
                         className="ml-1"
                         style={{
                           fontSize: '10px',
-                          opacity: 0.6,
+                          opacity: 0.85,
                         }}
                       >
                         {tab.count}
@@ -885,7 +885,7 @@ export default function Digest() {
                 <span
                   style={{
                     fontSize: '10px',
-                    opacity: 0.7,
+                    opacity: 0.85,
                   }}
                 >
                   ({forYouCount})
@@ -898,7 +898,7 @@ export default function Digest() {
               className="text-xs"
               style={{
                 color: 'var(--slate)',
-                opacity: 0.7,
+                opacity: 0.85,
               }}
             >
               {filteredPapers.length} paper{filteredPapers.length !== 1 ? 's' : ''}
@@ -917,7 +917,7 @@ export default function Digest() {
                   navigator.clipboard.writeText(bib)
                 }}
                 className="flex items-center gap-1 text-[11px] px-2 py-1 rounded transition-colors"
-                style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: 0.6 }}
+                style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: 0.85 }}
                 title="Copy saved papers as bibliography"
               >
                 <Copy size={10} />

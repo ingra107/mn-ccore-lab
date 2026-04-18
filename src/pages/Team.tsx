@@ -105,8 +105,10 @@ export default function Team() {
           dedicated to improving critical care outcomes through rigorous,
           data-driven research.
         </p>
-        <p className="text-xs mt-2" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-          {directors.length + seniorMentors.length + facultyCollaborators.length + researchTeam.length + mentees.length} members
+        <p className="text-xs mt-2" style={{ color: 'var(--slate)' }}>
+          <span style={{ opacity: 0.85 }}>
+            {directors.length + seniorMentors.length + facultyCollaborators.length + researchTeam.length + mentees.length} members
+          </span>
           {activeSlugs.size > 0 && <> · <span style={{ color: 'var(--green)' }}>{activeSlugs.size} active this week</span></>}
         </p>
       </section>
@@ -146,7 +148,7 @@ export default function Team() {
                 }}
               >
                 {tag}
-                <span style={{ opacity: 0.5, fontSize: '10px' }}>{count}</span>
+                <span style={{ opacity: 0.85, fontSize: '10px' }}>{count}</span>
               </button>
             ))}
           </div>

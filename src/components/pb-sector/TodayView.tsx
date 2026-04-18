@@ -226,7 +226,7 @@ function TaskCheckbox({ checked, onChange }: { checked: boolean; onChange: () =>
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        opacity: checked ? 0.6 : 1,
+        opacity: checked ? 0.85 : 1,
       }}
     >
       {checked && (
@@ -248,7 +248,7 @@ function TaskItem({ line, onToggle }: { line: ParsedLine; onToggle: () => void }
       className="flex items-start gap-2.5 py-1.5 group"
       style={{
         paddingLeft: line.indent > 0 ? `${line.indent * 8 + 4}px` : '4px',
-        opacity: line.checked ? 0.4 : 1,
+        opacity: line.checked ? 0.85 : 1,
         transition: 'opacity 0.2s',
       }}
     >
@@ -341,7 +341,7 @@ function SectionBlock({ section, onToggleTask }: { section: Section; onToggleTas
         className="flex items-center gap-2 w-full group mb-2"
         style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}
       >
-        <span style={{ color: 'var(--gold)', opacity: 0.6, transition: 'transform 0.15s' }}>
+        <span style={{ color: 'var(--gold)', opacity: 0.85, transition: 'transform 0.15s' }}>
           {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
         </span>
         <span
@@ -373,7 +373,7 @@ function SectionBlock({ section, onToggleTask }: { section: Section; onToggleTas
           style={{
             height: '1px',
             background: 'linear-gradient(to right, var(--gold), transparent)',
-            opacity: 0.35,
+            opacity: 0.85,
           }}
         />
       </button>
@@ -501,7 +501,7 @@ export default function TodayView() {
       {/* Last synced hint */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <FileText size={14} style={{ color: 'var(--gold)', opacity: 0.7 }} />
+          <FileText size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} />
           <span
             style={{
               fontSize: '11px',

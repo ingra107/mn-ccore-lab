@@ -198,7 +198,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
       const cfg = priorityConfig[key] || priorityConfig.medium
       return (
         <span className="flex items-center gap-2" style={{ color: cfg.color, fontSize: 'var(--value-size)', fontWeight: 'var(--label-weight)' }}>
-          <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: cfg.color, opacity: 0.7 }} />
+          <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: cfg.color, opacity: 0.85 }} />
           {cfg.label}
         </span>
       )
@@ -389,12 +389,12 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                             style={{ backgroundColor: col.bg, borderColor: `color-mix(in srgb, ${col.color} 30%, transparent)` }}
                           >
                             <div className="flex items-center gap-1.5">
-                              <Icon size={12} style={{ color: col.color, opacity: 0.7 }} />
+                              <Icon size={12} style={{ color: col.color, opacity: 0.85 }} />
                               <span className="text-xs" style={{ color: col.color, opacity: 0.8 }}>
                                 {col.label}
                               </span>
                             </div>
-                            <span className="text-[10px]" style={{ color: col.color, opacity: 0.6 }}>
+                            <span className="text-[10px]" style={{ color: col.color, opacity: 0.85 }}>
                               {columnTasks.length}
                             </span>
                           </div>
@@ -509,7 +509,7 @@ function CollapsedColumn({
         {label}
       </div>
 
-      <Icon size={14} style={{ color, opacity: 0.7 }} />
+      <Icon size={14} style={{ color, opacity: 0.85 }} />
 
       {/* Count badge */}
       <span
@@ -573,7 +573,7 @@ function SortableTaskCard({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.85 : 1,
     cursor: 'grab' as const,
   }
 

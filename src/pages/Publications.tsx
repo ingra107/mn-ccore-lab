@@ -216,7 +216,7 @@ export default function Publications() {
                         backgroundColor: activeYears.includes(year) ? 'var(--gold)' : 'rgba(201,168,76,0.3)',
                       }}
                     />
-                    <span className="text-[7px]" style={{ color: activeYears.includes(year) ? 'var(--gold)' : 'var(--slate)', opacity: activeYears.includes(year) ? 1 : 0.4 }}>
+                    <span className="text-[7px]" style={{ color: activeYears.includes(year) ? 'var(--gold)' : 'var(--slate)', opacity: activeYears.includes(year) ? 1 : 0.85 }}>
                       {String(year).slice(2)}
                     </span>
                   </button>
@@ -234,7 +234,7 @@ export default function Publications() {
               navigator.clipboard.writeText(bib)
             }}
             className="inline-flex items-center gap-1 mt-3 text-[11px] px-2.5 py-1 rounded transition-colors"
-            style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: 0.5 }}
+            style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: 0.85 }}
           >
             <Copy size={10} />
             Copy bibliography ({filtered.length})
@@ -326,7 +326,7 @@ export default function Publications() {
                 color: viewMode === 'list' ? 'var(--teal)' : 'var(--slate)',
                 border: `1px solid ${viewMode === 'list' ? 'var(--teal)' : 'var(--border-subtle)'}`,
                 cursor: 'pointer',
-                opacity: viewMode === 'list' ? 1 : 0.55,
+                opacity: viewMode === 'list' ? 1 : 0.85,
               }}
             >
               <List size={12} />
@@ -340,7 +340,7 @@ export default function Publications() {
                 color: viewMode === 'library' ? 'var(--teal)' : 'var(--slate)',
                 border: `1px solid ${viewMode === 'library' ? 'var(--teal)' : 'var(--border-subtle)'}`,
                 cursor: 'pointer',
-                opacity: viewMode === 'library' ? 1 : 0.55,
+                opacity: viewMode === 'library' ? 1 : 0.85,
               }}
             >
               <BookOpen size={12} />

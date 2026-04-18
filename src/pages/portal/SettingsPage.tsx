@@ -265,7 +265,7 @@ export default function SettingsPage() {
               <div className="rounded" style={{ background: '#f5f5f5', padding: 6 }}>
                 <div className="h-1.5 rounded-full mb-1.5" style={{ width: '80%', background: '#0f1923', opacity: 0.2 }} />
                 <div className="h-1.5 rounded-full mb-1.5" style={{ width: '60%', background: '#0f1923', opacity: 0.15 }} />
-                <div className="h-1.5 rounded-full" style={{ width: '70%', background: '#2d8a8a', opacity: 0.3 }} />
+                <div className="h-1.5 rounded-full" style={{ width: '70%', background: '#2d8a8a', opacity: 0.85 }} />
               </div>
             </button>
             {/* Dark theme preview — hardcoded hex intentional (showing what themes look like) */}
@@ -287,7 +287,7 @@ export default function SettingsPage() {
               <div className="rounded" style={{ background: 'color-mix(in oklch, var(--cream), white 3%)', padding: 6 }}>
                 <div className="h-1.5 rounded-full mb-1.5" style={{ width: '80%', background: '#e2e8f0', opacity: 0.2 }} />
                 <div className="h-1.5 rounded-full mb-1.5" style={{ width: '60%', background: '#e2e8f0', opacity: 0.15 }} />
-                <div className="h-1.5 rounded-full" style={{ width: '70%', background: '#2d8a8a', opacity: 0.3 }} />
+                <div className="h-1.5 rounded-full" style={{ width: '70%', background: '#2d8a8a', opacity: 0.85 }} />
               </div>
             </button>
           </div>
@@ -542,7 +542,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
             onClick={handleSubmit}
             disabled={!name.trim() || stages.filter((s) => s.trim()).length < 2}
             className="px-3 py-1.5 rounded-md text-sm font-medium"
-            style={{ backgroundColor: 'var(--teal-solid)', color: 'white', cursor: 'pointer', border: 'none', opacity: (!name.trim() || stages.filter((s) => s.trim()).length < 2) ? 0.5 : 1 }}
+            style={{ backgroundColor: 'var(--teal-solid)', color: 'white', cursor: 'pointer', border: 'none', opacity: (!name.trim() || stages.filter((s) => s.trim()).length < 2) ? 0.85 : 1 }}
           >
             Create Template
           </button>

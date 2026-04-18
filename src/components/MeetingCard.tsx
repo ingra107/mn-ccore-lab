@@ -314,7 +314,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                             )}
                           </button>
                           <div className="flex-1 min-w-0">
-                            <span style={{ textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.6 : 1 }}>
+                            <span style={{ textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.85 : 1 }}>
                               {item.description}
                             </span>
                             <div className="flex items-center gap-2 mt-1">
@@ -328,7 +328,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                                     size="2xs"
                                   />
                                 </div>
-                                <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+                                <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.85 }}>
                                   {info.name}
                                 </span>
                               </div>

@@ -90,7 +90,7 @@ export default function ProactiveBriefCard() {
             >
               <Lightbulb size={12} style={{ color: 'var(--teal)', flexShrink: 0 }} />
               <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-medium" style={{ color: 'var(--teal)', opacity: 0.7 }}>
+                <span className="text-[10px] font-medium" style={{ color: 'var(--teal)', opacity: 0.85 }}>
                   Suggested focus
                 </span>
                 <p className="text-[12px] truncate" style={{ color: 'var(--ink)', margin: 0, marginTop: 1 }}>

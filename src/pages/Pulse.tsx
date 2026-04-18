@@ -64,7 +64,7 @@ export default function Pulse() {
                   <span className="text-lg" style={{ color: 'var(--cream)' }}>
                     {formatBrandName(t.title || t.description)}
                   </span>
-                  <span className="ml-auto text-sm" style={{ color: 'var(--gold)', opacity: 0.6 }}>
+                  <span className="ml-auto text-sm" style={{ color: 'var(--gold)', opacity: 0.85 }}>
                     {person.name.split(' ')[0]}
                   </span>
                 </div>
@@ -142,7 +142,7 @@ export default function Pulse() {
           <div className="flex flex-col gap-3">
             {activity.map((a) => (
               <div key={a.id} className="flex items-center gap-3 px-4 py-2 rounded-lg" style={{ backgroundColor: 'var(--hover-light)' }}>
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--gold)', opacity: 0.6 }} />
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--gold)', opacity: 0.85 }} />
                 <span className="text-lg" style={{ color: 'var(--cream)' }}>
                   {formatBrandName(a.description)}
                 </span>
@@ -175,14 +175,17 @@ export default function Pulse() {
           <img src="/logos/mnccore-logo-mark.svg" alt="" style={{ width: 48, height: 48 }} />
           <img src="/logos/mnccore-logo-primary.svg" alt="MN-CCORE" style={{ height: 32, filter: 'brightness(2)' }} />
         </div>
-        <span className="text-sm" style={{ color: 'var(--gold)', opacity: 'var(--ink-label)' }}>
+        {/* Pulse kiosk: dark bg (--ink) + bright gold text. Hex-pinned so
+            axe grades the exact render; --gold at --ink-label reads too dim
+            once the kiosk card layers. 2026-04-18 axe AA. */}
+        <span className="text-sm" style={{ color: '#dcb355', fontWeight: 500 }}>
           Lab Pulse
         </span>
       </div>
 
       {/* Card content */}
       <div className="flex-1 flex flex-col items-center justify-center px-12 pb-12">
-        <h2 className="text-3xl font-medium mb-8" style={{ fontFamily: 'var(--font-display)', color: 'var(--gold)' }}>
+        <h2 className="text-3xl font-medium mb-8" style={{ fontFamily: 'var(--font-display)', color: '#dcb355' }}>
           {currentCard?.title}
         </h2>
         <div className="w-full max-w-4xl">
@@ -196,6 +199,8 @@ export default function Pulse() {
           <button
             key={i}
             onClick={() => setActiveCard(i)}
+            aria-label={`Go to pulse card ${i + 1} of ${cards.length}`}
+            aria-current={i === activeCard ? 'true' : undefined}
             className="transition-all"
             style={{
               width: i === activeCard ? 24 : 8,
@@ -218,7 +223,7 @@ function PulseStat({ label, value, color }: { label: string; value: number | str
       <div className="text-5xl font-bold" style={{ fontFamily: 'var(--font-display)', color: color || 'var(--cream)' }}>
         {value}
       </div>
-      <div className="text-sm mt-2" style={{ color: 'var(--gold)', opacity: 'var(--ink-label)' }}>
+      <div className="text-sm mt-2" style={{ color: '#dcb355', fontWeight: 500 }}>
         {label}
       </div>
     </div>

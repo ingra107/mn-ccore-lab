@@ -54,7 +54,7 @@ export default function StatusBar({ onOpenShortcuts }: StatusBarProps) {
         fontSize: 'var(--text-caption)',
         fontWeight: 'var(--weight-ui)',
         color: 'var(--slate)',
-        opacity: 0.7,
+        opacity: 0.85,
         background: 'var(--surface-2)',
         borderTop: '1px solid var(--border-subtle)',
         flexShrink: 0,

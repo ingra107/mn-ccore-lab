@@ -368,7 +368,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                 color: description.trim() && !submitting ? 'var(--cream)' : 'var(--slate)',
                 border: 'none',
                 cursor: description.trim() && !submitting ? 'pointer' : 'default',
-                opacity: description.trim() && !submitting ? 1 : 0.5,
+                opacity: description.trim() && !submitting ? 1 : 0.85,
               }}
             >
               {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}

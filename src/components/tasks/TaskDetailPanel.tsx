@@ -259,7 +259,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               className="flex items-center gap-1.5 px-3 py-2.5 text-[12px] font-medium transition-colors"
               style={{
                 color: activeTab === key ? 'var(--teal)' : 'var(--slate)',
-                opacity: activeTab === key ? 1 : 0.6,
+                opacity: activeTab === key ? 1 : 0.85,
                 borderBottom: activeTab === key ? '2px solid var(--teal)' : '2px solid transparent',
                 background: 'none',
                 border: 'none',
@@ -347,7 +347,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 Description
               </label>
               <div className="description-editor-wrapper">
-                <Suspense fallback={<div style={{ height: 120, padding: 'var(--sp-lg)', opacity: 0.3, fontSize: 'var(--text-small)' }}>Loading editor...</div>}>
+                <Suspense fallback={<div style={{ height: 120, padding: 'var(--sp-lg)', opacity: 0.85, fontSize: 'var(--text-small)' }}>Loading editor...</div>}>
                   <RichTextEditor
                     content={task.description_json || null}
                     plainTextFallback={task.description}
@@ -441,7 +441,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {task.project_id && (
               <CollapsibleSection
                 title="Related Decisions"
-                icon={<Scale size={11} style={{ color: 'var(--gold)', opacity: 0.7 }} />}
+                icon={<Scale size={11} style={{ color: 'var(--gold)', opacity: 0.85 }} />}
                 defaultOpen={false}
                 storageKey={`task-decisions-${task.id}`}
               >
@@ -721,7 +721,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
               onClick={() => { if (filename && url) addFile.mutate({ filename, url }) }}
               disabled={!filename || !url}
               className="text-[11px] px-3 py-1 rounded-lg font-medium"
-              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer', opacity: filename && url ? 1 : 0.4 }}
+              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer', opacity: filename && url ? 1 : 0.85 }}
             >
               Add
             </button>

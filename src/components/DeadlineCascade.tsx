@@ -216,7 +216,7 @@ function CascadeRow({
           fontSize: 'var(--label-size)',
           fontWeight: status === 'overdue' ? 500 : 400,
           color: status === 'overdue' ? 'var(--maroon)' : 'var(--slate)',
-          opacity: status === 'overdue' ? 1 : 0.6,
+          opacity: status === 'overdue' ? 1 : 0.85,
           flexShrink: 0,
         }}>
           {node.due_date ? formatShortDate(node.due_date) : 'No date'}
@@ -242,7 +242,7 @@ function CascadeRow({
           >
             <ArrowRight size={9} />
             {impactItem.projected_date ? formatShortDate(impactItem.projected_date) : '?'}
-            <span style={{ opacity: 0.7 }}>
+            <span style={{ opacity: 0.85 }}>
               ({impactItem.shift_days > 0 ? '+' : ''}{impactItem.shift_days}d)
             </span>
           </motion.span>
@@ -253,7 +253,7 @@ function CascadeRow({
           fontSize: '10px',
           fontWeight: 500,
           color,
-          opacity: 0.7,
+          opacity: 0.85,
           flexShrink: 0,
         }}>
           {statusLabel(status)}
@@ -408,7 +408,7 @@ function WhatIfPanel({
             background: 'var(--gold-active)',
             color: 'var(--gold)',
             cursor: !newDate || isLoading ? 'not-allowed' : 'pointer',
-            opacity: !newDate || isLoading ? 0.5 : 1,
+            opacity: !newDate || isLoading ? 0.85 : 1,
           }}
         >
           {isLoading ? 'Simulating...' : 'Simulate'}
@@ -453,7 +453,7 @@ function WhatIfPanel({
                   fontSize: '10px',
                   fontWeight: 500,
                   color: item.shift_days > 0 ? 'var(--maroon)' : 'var(--teal)',
-                  opacity: 0.7,
+                  opacity: 0.85,
                   flexShrink: 0,
                 }}>
                   {item.shift_days > 0 ? '+' : ''}{item.shift_days}d
@@ -525,12 +525,12 @@ export default function DeadlineCascade({
         color: 'var(--slate)',
         opacity: 'var(--ink-label)',
       }}>
-        <GitBranch size={compact ? 24 : 32} style={{ margin: '0 auto var(--sp-sm)', opacity: 0.3 }} />
+        <GitBranch size={compact ? 24 : 32} style={{ margin: '0 auto var(--sp-sm)', opacity: 0.85 }} />
         <p style={{ fontSize: compact ? '12px' : '13px', margin: 0 }}>
           {filterAtRisk ? 'No at-risk dependency chains' : 'No deadline dependencies yet'}
         </p>
         {!compact && (
-          <p style={{ fontSize: 'var(--label-size)', margin: 'var(--sp-xs) 0 0', opacity: 0.6 }}>
+          <p style={{ fontSize: 'var(--label-size)', margin: 'var(--sp-xs) 0 0', opacity: 0.85 }}>
             Link milestones and tasks to see how deadlines cascade.
           </p>
         )}

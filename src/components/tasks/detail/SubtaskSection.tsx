@@ -46,7 +46,7 @@ function SortableSubtaskItem({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.85 : 1,
     zIndex: isDragging ? 'var(--z-sticky)' : ('auto' as const),
   }
 
@@ -67,7 +67,7 @@ function SortableSubtaskItem({
         className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
         style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: undefined }}
       >
-        <GripVertical size={12} style={{ opacity: 0.4 }} />
+        <GripVertical size={12} style={{ opacity: 0.85 }} />
       </button>
 
       {/* Toggle button */}
@@ -88,7 +88,7 @@ function SortableSubtaskItem({
         style={{
           color: subtask.completed ? 'var(--slate)' : 'var(--ink)',
           textDecoration: subtask.completed ? 'line-through' : 'none',
-          opacity: subtask.completed ? 0.5 : 1,
+          opacity: subtask.completed ? 0.85 : 1,
         }}
       >
         {subtask.title}
@@ -147,7 +147,7 @@ export function SubtaskChecklist({ taskId }: { taskId: string }) {
   return (
     <div>
       <label className="flex items-center gap-1.5 mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', fontSize: 'var(--label-size)' }}>
-        <ListChecks size={12} style={{ opacity: 0.7 }} />
+        <ListChecks size={12} style={{ opacity: 0.85 }} />
         Subtasks ({completed}/{total})
       </label>
 

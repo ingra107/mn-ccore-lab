@@ -343,7 +343,7 @@ export default function Deadlines() {
             >
               <div />
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} style={{ height: 10, width: '50%', background: 'var(--surface-2)', opacity: 0.5, borderRadius: 'var(--radius-sm)' }} />
+                <div key={i} style={{ height: 10, width: '50%', background: 'var(--surface-2)', opacity: 0.85, borderRadius: 'var(--radius-sm)' }} />
               ))}
             </div>
             {Array.from({ length: 12 }).map((_, i) => (
@@ -357,7 +357,7 @@ export default function Deadlines() {
                   alignItems: 'center',
                   padding: '0 var(--sp-lg)',
                   gap: 'var(--sp-md)',
-                  opacity: 0.5,
+                  opacity: 0.85,
                 }}
                 aria-hidden="true"
               >
@@ -502,7 +502,7 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
   const person = item.assignee ? getPersonInfo(item.assignee) : null
   const isDone = item.status === 'done' || item.status === 'completed'
   return (
-    <div style={{ borderBottom: '1px solid var(--border-subtle)', opacity: isDone ? 0.45 : 1 }}>
+    <div style={{ borderBottom: '1px solid var(--border-subtle)', opacity: isDone ? 0.85 : 1 }}>
       {/* Desktop row — hidden on mobile */}
       <div
         className="deadline-list-row hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
@@ -571,7 +571,7 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
             fontSize: 'var(--text-label)',
             color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
             fontWeight: item.isOverdue ? 500 : 400,
-            opacity: item.isOverdue ? 1 : 0.5,
+            opacity: item.isOverdue ? 1 : 0.85,
             fontVariantNumeric: 'tabular-nums',
           }}>
             {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
@@ -663,7 +663,7 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
             <span style={{
               fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
               color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
-              opacity: 0.7,
+              opacity: 0.85,
             }}>
               {item.type === 'milestone' ? 'Milestone' : 'Task'}
             </span>
@@ -805,7 +805,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
     <div>
       <div
         className="flex items-center gap-3 py-2 px-3 rounded-lg transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
-        style={{ opacity: isDone ? 0.5 : 1 }}
+        style={{ opacity: isDone ? 0.85 : 1 }}
       >
         {/* Type icon */}
         {isMilestone ? (
@@ -813,7 +813,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         ) : item.isOverdue ? (
           <AlertTriangle size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
         ) : (
-          <Clock size={14} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.6 }} />
+          <Clock size={14} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.85 }} />
         )}
 
         {/* Title */}
@@ -834,7 +834,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
             style={{
               color: 'var(--gold)',
-              opacity: 0.6,
+              opacity: 0.85,
               background: 'none',
               border: 'none',
               cursor: 'pointer',
@@ -848,7 +848,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
 
         {/* Project */}
         {item.project && (
-          <span className="text-[10px] hidden sm:block" style={{ color: 'var(--gold)', opacity: 0.6 }}>
+          <span className="text-[10px] hidden sm:block" style={{ color: 'var(--gold)', opacity: 0.85 }}>
             {item.project}
           </span>
         )}
@@ -873,7 +873,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
           style={{
             color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
             fontWeight: item.isOverdue ? 600 : 400,
-            opacity: item.isOverdue ? 1 : 0.6,
+            opacity: item.isOverdue ? 1 : 0.85,
           }}
         >
           {item.daysUntil === 0 ? 'Today' : item.daysUntil === 1 ? 'Tomorrow' : formatShortDate(item.due_date)}
@@ -912,7 +912,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {/* Future Me note — compact indicator when not due soon */}
       {isMilestone && item.future_note && !isDueSoon && !isDone && (
         <div className="ml-8 mr-3 mt-0.5 mb-1 flex items-center gap-1.5">
-          <Clock size={9} style={{ color: 'var(--gold)', opacity: 0.4 }} />
+          <Clock size={9} style={{ color: 'var(--gold)', opacity: 0.85 }} />
           <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
             Future Me note attached
           </span>
@@ -975,7 +975,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
                 background: 'var(--gold-active)',
                 border: '1px solid rgba(201,168,76,0.2)',
                 cursor: saving ? 'wait' : 'pointer',
-                opacity: saving ? 0.6 : 1,
+                opacity: saving ? 0.85 : 1,
               }}
             >
               <Check size={11} />
@@ -1020,7 +1020,7 @@ function UpcomingConferencesSection() {
       }}
     >
       <div className="flex items-center gap-2 mb-3">
-        <Presentation size={14} style={{ color: 'var(--teal)', opacity: 0.7 }} />
+        <Presentation size={14} style={{ color: 'var(--teal)', opacity: 0.85 }} />
         <span
           style={{
             fontSize: 'var(--label-size)',
@@ -1121,7 +1121,7 @@ function UpcomingConferencesSection() {
                           style={{
                             fontSize: '10px',
                             color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
-                            opacity: isOverdue ? 0.8 : 0.5,
+                            opacity: isOverdue ? 0.8 : 0.85,
                             marginLeft: '4px',
                           }}
                         >

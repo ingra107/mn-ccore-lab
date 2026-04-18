@@ -58,7 +58,7 @@ function GrantTimelineCard() {
                     border: g.proposed
                       ? `1.5px dashed ${color}`
                       : 'none',
-                    opacity: g.proposed ? 0.5 : 0.85,
+                    opacity: g.proposed ? 0.85 : 0.85,
                     display: 'flex',
                     alignItems: 'center',
                     paddingLeft: '8px',
@@ -120,7 +120,7 @@ function GrantTimelineCard() {
                       width: '1.5px',
                       height: '120px',
                       background: 'var(--gold)',
-                      opacity: 0.4,
+                      opacity: 0.85,
                     }}
                   />
                 )}
@@ -128,7 +128,7 @@ function GrantTimelineCard() {
                   style={{
                     fontSize: '10px',
                     color: isCurrent ? 'var(--gold)' : 'var(--slate)',
-                    opacity: isCurrent ? 1 : 0.4,
+                    opacity: isCurrent ? 1 : 0.85,
                     fontWeight: isCurrent ? 700 : 400,
                   }}
                 >
@@ -146,7 +146,7 @@ function GrantTimelineCard() {
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>Active</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div style={{ width: 14, height: 6, borderRadius: 'var(--radius-sm)', border: '1.5px dashed #2d8a8a', opacity: 0.5 }} />
+            <div style={{ width: 14, height: 6, borderRadius: 'var(--radius-sm)', border: '1.5px dashed #2d8a8a', opacity: 0.85 }} />
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>Proposed</span>
           </div>
         </div>

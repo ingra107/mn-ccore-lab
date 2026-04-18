@@ -91,7 +91,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
       }}
     >
       {label}
-      <ArrowUpDown size={10} style={{ opacity: sortKey === field ? 1 : 0.3 }} />
+      <ArrowUpDown size={10} style={{ opacity: sortKey === field ? 1 : 0.85 }} />
     </button>
   )
 
@@ -145,7 +145,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
               className="mx-auto mb-3"
               style={{ width: 48, height: 48, borderRadius: 'var(--radius-xl)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--teal-hover)' }}
             >
-              <CheckCircle2 size={24} style={{ color: 'var(--teal)', opacity: 0.5 }} />
+              <CheckCircle2 size={24} style={{ color: 'var(--teal)', opacity: 0.85 }} />
             </div>
             <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
               No tasks match the current filters

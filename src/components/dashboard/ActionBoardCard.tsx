@@ -74,7 +74,7 @@ function ActionBoardCard() {
                               updateStatus.mutate({ id: item.id, status: 'done' })
                               showUndo('Completed task', () => updateStatus.mutate({ id: item.id, status: prev }))
                             }}
-                            style={{ '--status-color': si.color, background: 'none', border: 'none', padding: 'var(--sp-sm)', margin: '-8px', color: si.color, opacity: 0.5, transition: 'all 0.15s', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' } as React.CSSProperties}>
+                            style={{ '--status-color': si.color, background: 'none', border: 'none', padding: 'var(--sp-sm)', margin: '-8px', color: si.color, opacity: 0.85, transition: 'all 0.15s', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' } as React.CSSProperties}>
                             <StatusIcon size={14} />
                           </button>
                           <div style={{ flex: 1 }}>
@@ -83,18 +83,18 @@ function ActionBoardCard() {
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               {item.due_date && (
-                                <span style={{ fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.5, fontWeight: isOverdue ? 600 : 400 }}>
+                                <span style={{ fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.85, fontWeight: isOverdue ? 600 : 400 }}>
                                   {isOverdue ? 'Overdue' : `Due ${formatShortDate(item.due_date)}`}
                                 </span>
                               )}
                               {item.priority && item.priority !== 'medium' && (
-                                <span style={{ fontSize: '10px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? 'var(--orange)' : 'var(--slate)', opacity: 0.7 }}>
+                                <span style={{ fontSize: '10px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? 'var(--orange)' : 'var(--slate)', opacity: 0.85 }}>
                                   {item.priority}
                                 </span>
                               )}
                               {item.meeting_title && (
                                 <Link to={`/meetings/${item.meeting_id}`}
-                                  style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none', opacity: 0.7 }}
+                                  style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none', opacity: 0.85 }}
                                   onClick={(e) => e.stopPropagation()}>
                                   {formatBrandName(item.meeting_title?.split(':')[0] || '')}
                                 </Link>
@@ -109,7 +109,7 @@ function ActionBoardCard() {
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-8" style={{ opacity: 0.4 }}>
+            <div className="flex flex-col items-center justify-center py-8" style={{ opacity: 0.85 }}>
               <CheckCircle2 size={24} style={{ color: 'var(--teal)', marginBottom: '8px' }} />
               <p style={{ fontSize: '12px', color: 'var(--slate)', margin: 0 }}>
                 All caught up

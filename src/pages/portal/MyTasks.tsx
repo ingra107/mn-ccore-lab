@@ -572,7 +572,7 @@ export default function MyTasks() {
               display: 'flex',
               alignItems: 'center',
               flexShrink: 0,
-              opacity: 0.6,
+              opacity: 0.85,
             }}
             onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6' }}
@@ -664,7 +664,7 @@ export default function MyTasks() {
               return (
                 <>
                   {inProgress > 0 && <div style={{ width: `${(inProgress / total) * 100}%`, background: 'var(--teal-solid)', transition: 'width 300ms ease' }} />}
-                  {todo > 0 && <div style={{ width: `${(todo / total) * 100}%`, background: 'var(--slate)', opacity: 0.4, transition: 'width 300ms ease' }} />}
+                  {todo > 0 && <div style={{ width: `${(todo / total) * 100}%`, background: 'var(--slate)', opacity: 0.85, transition: 'width 300ms ease' }} />}
                   {waitingExt > 0 && <div style={{ width: `${(waitingExt / total) * 100}%`, background: 'var(--orange)', transition: 'width 300ms ease' }} />}
                   {blocked > 0 && <div style={{ width: `${(blocked / total) * 100}%`, background: 'var(--maroon-solid)', transition: 'width 300ms ease' }} />}
                 </>
@@ -682,7 +682,7 @@ export default function MyTasks() {
         <div className="mt-3">
           <div className="flex items-center gap-2 mb-2">
             <Zap size={14} style={{ color: 'var(--gold)' }} />
-            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--teal)', opacity: 0.7 }}>
+            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--teal)', opacity: 0.85 }}>
               Focus Next
             </span>
             <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
@@ -832,7 +832,7 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.85 : 1,
     zIndex: isDragging ? 'var(--z-sticky)' : 'auto',
     background: isPinned
       ? 'linear-gradient(135deg, rgba(45,138,138,0.06), rgba(201,168,76,0.06))'
@@ -857,7 +857,7 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
       >
         <GripVertical size={14} />
       </button>
-      <span className="text-[10px] font-medium" style={{ color: 'var(--teal)', opacity: 0.5, flexShrink: 0, width: '14px', textAlign: 'center' }}>
+      <span className="text-[10px] font-medium" style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0, width: '14px', textAlign: 'center' }}>
         {index + 1}
       </span>
       <div
@@ -870,7 +870,7 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
         </div>
       </div>
       {task.due_date && (
-        <span className="text-[10px] flex-shrink-0" style={{ color: new Date(task.due_date + 'T23:59:59') < new Date() ? 'var(--maroon)' : 'var(--slate)', opacity: 0.6 }}>
+        <span className="text-[10px] flex-shrink-0" style={{ color: new Date(task.due_date + 'T23:59:59') < new Date() ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85 }}>
           {task.due_date}
         </span>
       )}
@@ -969,7 +969,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
       {groups.map(({ label, items }) => (
         <div key={label}>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: groupColors[label] || 'var(--slate)', opacity: groupColors[label] ? 1 : 0.3 }} />
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: groupColors[label] || 'var(--slate)', opacity: groupColors[label] ? 1 : 0.85 }} />
             <h3 className="text-xs font-normal uppercase tracking-wider" style={{ color: groupColors[label] || 'var(--ink)' }}>
               {label}
             </h3>
@@ -987,7 +987,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
                   <div style={{ width: 40, height: 3, borderRadius: 'var(--radius-sm)', background: 'var(--border-subtle)', overflow: 'hidden' }}>
                     <div style={{ width: `${pct}%`, height: '100%', borderRadius: 'var(--radius-sm)', background: 'var(--green)', transition: 'width 300ms ease' }} />
                   </div>
-                  <span className="text-[10px]" style={{ color: 'var(--green)', opacity: 0.7 }}>{pct}%</span>
+                  <span className="text-[10px]" style={{ color: 'var(--green)', opacity: 0.85 }}>{pct}%</span>
                 </div>
               )
             })()}
@@ -1062,7 +1062,7 @@ function ViewDropdown({ view, setView, views }: { view: ViewMode; setView: (v: V
                   <div className="text-sm font-medium" style={{ color: view === v.key ? 'var(--teal)' : 'var(--ink)' }}>
                     {v.label}
                   </div>
-                  <div className="text-[11px] mt-0.5" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+                  <div className="text-[11px] mt-0.5" style={{ color: 'var(--slate)', opacity: 0.85 }}>
                     {v.description}
                   </div>
                 </div>

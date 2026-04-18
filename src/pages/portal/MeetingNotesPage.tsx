@@ -85,7 +85,7 @@ export default function MeetingNotesPage() {
                   <Icon size={18} style={{ color: 'var(--teal)' }} />
                 </div>
                 <h4 className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</h4>
-                <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>{item.desc}</p>
+                <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>{item.desc}</p>
               </div>
             )
           })}
@@ -366,7 +366,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               onClick={handleProcess}
               disabled={!transcript.trim() || processing}
               className="px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: 'pointer', border: 'none', opacity: (!transcript.trim() || processing) ? 0.5 : 1 }}
+              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: 'pointer', border: 'none', opacity: (!transcript.trim() || processing) ? 0.85 : 1 }}
             >
               {processing ? <Clock size={14} className="animate-spin" /> : <Brain size={14} />}
               {processing ? 'Processing...' : 'Process with AI'}

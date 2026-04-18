@@ -84,7 +84,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
         onMouseLeave={(e) => { if (!open) e.currentTarget.style.borderColor = 'transparent' }}
       >
         <span style={{ color: 'var(--teal)', fontSize: 'var(--label-size)' }}>{ROLE_LABELS[role]}</span>
-        <ChevronDown size={10} style={{ opacity: 0.5 }} />
+        <ChevronDown size={10} style={{ opacity: 0.85 }} />
       </button>
 
       {open && (
@@ -153,7 +153,7 @@ function QuickCapture() {
 
   return (
     <form onSubmit={handleSubmit} className="flex items-center gap-2">
-      <Lightbulb size={14} style={{ color: 'var(--gold)', opacity: 0.6, flexShrink: 0 }} />
+      <Lightbulb size={14} style={{ color: 'var(--gold)', opacity: 0.85, flexShrink: 0 }} />
       <input
         type="text"
         value={value}
@@ -301,7 +301,7 @@ function MyTasksColumn({
                   textTransform: 'uppercase' as const,
                   letterSpacing: '0.06em',
                   color: group === 'overdue' ? 'var(--maroon)' : 'var(--slate)',
-                  opacity: group === 'overdue' ? 1 : 0.5,
+                  opacity: group === 'overdue' ? 1 : 0.85,
                 }}
               >
                 {URGENCY_LABELS[group]}
@@ -334,7 +334,7 @@ function MyTasksColumn({
             color: 'var(--slate)',
             textDecoration: 'none',
             borderTop: '1px solid var(--border-subtle)',
-            opacity: 0.6,
+            opacity: 0.85,
           }}
         >
           +{tasks.length - MAX_TASKS} more tasks <ArrowRight size={10} />
@@ -378,7 +378,7 @@ function TaskRow({
           size={13}
           style={{
             color: task.status === 'in_progress' ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)',
-            opacity: task.status === 'in_progress' ? 1 : 0.5,
+            opacity: task.status === 'in_progress' ? 1 : 0.85,
           }}
         />
       </button>
@@ -413,7 +413,7 @@ function TaskRow({
             fontSize: 'var(--text-label)',
             color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
             fontWeight: isOverdue ? 600 : 400,
-            opacity: isOverdue ? 1 : 0.5,
+            opacity: isOverdue ? 1 : 0.85,
           }}
         >
           {isOverdue ? 'Overdue' : formatShortDate(task.due_date)}
@@ -493,7 +493,7 @@ function UpcomingCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: T
               <div key={item.id} className="flex items-center gap-2" style={{ minHeight: 28 }}>
                 {isOverdue
                   ? <AlertTriangle size={11} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
-                  : <Clock size={11} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.6 }} />
+                  : <Clock size={11} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.85 }} />
                 }
                 <span
                   className="flex-1 truncate"
@@ -506,7 +506,7 @@ function UpcomingCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: T
                     fontSize: 10,
                     color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
                     fontWeight: isOverdue ? 600 : 400,
-                    opacity: isOverdue ? 1 : 0.5,
+                    opacity: isOverdue ? 1 : 0.85,
                     flexShrink: 0,
                   }}
                 >
@@ -536,7 +536,7 @@ function RecentActivityCard({ activity }: { activity: { id: string; type: string
             <div key={a.id} className="flex items-start gap-2" style={{ minHeight: 28 }}>
               <div
                 className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: 'var(--teal)', opacity: 0.4, marginTop: 4 }}
+                style={{ backgroundColor: 'var(--teal)', opacity: 0.85, marginTop: 4 }}
               />
               <div className="flex-1 min-w-0">
                 <p
@@ -874,7 +874,7 @@ export default function Personal() {
                     borderRadius: 'var(--radius-sm)',
                     border: '1px solid color-mix(in srgb, var(--maroon) 25%, transparent)',
                     color: 'var(--maroon)',
-                    opacity: 0.7,
+                    opacity: 0.85,
                     textDecoration: 'none',
                     flexShrink: 0,
                     transition: 'opacity var(--duration-fast) ease',
@@ -997,11 +997,11 @@ export default function Personal() {
                 transition: 'transform 150ms ease',
               }}
             />
-            <span style={{ fontSize: 'var(--text-label)', fontWeight: 500, opacity: 0.7 }}>
+            <span style={{ fontSize: 'var(--text-label)', fontWeight: 500, opacity: 0.85 }}>
               30-Day Onboarding
             </span>
             {!onboardingExpanded && (
-              <span style={{ fontSize: '11px', opacity: 0.4, marginLeft: 4 }}>
+              <span style={{ fontSize: '11px', opacity: 0.85, marginLeft: 4 }}>
                 Show checklist
               </span>
             )}

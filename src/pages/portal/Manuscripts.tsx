@@ -263,7 +263,7 @@ export default function Manuscripts() {
                     fontWeight: filterStalled ? 600 : 400,
                     cursor: 'pointer',
                     transition: 'all 0.12s ease-out',
-                    opacity: filterStalled ? 1 : 0.7,
+                    opacity: filterStalled ? 1 : 0.85,
                   }}
                   title={`Manuscripts stalled in stage for more than ${STALLED_THRESHOLD_DAYS} days`}
                 >
@@ -397,14 +397,14 @@ export default function Manuscripts() {
                               style={{
                                 width: 6, height: 6, borderRadius: 'var(--radius-circle)',
                                 background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
-                                flexShrink: 0, opacity: 0.7, marginTop: '-1px',
+                                flexShrink: 0, opacity: 0.85, marginTop: '-1px',
                               }}
                             />
                             <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.35 }}>
                               {project.title}
                             </span>
                             {tc > 0 && (
-                              <span style={{ fontSize: '11px', color: 'var(--teal)', opacity: 0.7, flexShrink: 0 }}>
+                              <span style={{ fontSize: '11px', color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }}>
                                 {tc}
                               </span>
                             )}
@@ -423,7 +423,7 @@ export default function Manuscripts() {
                                           ? 'var(--teal)'
                                           : 'transparent',
                                       border: i > currentIdx ? '1px solid var(--border-subtle)' : 'none',
-                                      opacity: i > currentIdx ? 0.4 : 1,
+                                      opacity: i > currentIdx ? 0.85 : 1,
                                       transition: 'background 200ms',
                                       boxSizing: 'border-box',
                                     }}
@@ -507,14 +507,14 @@ export default function Manuscripts() {
                               style={{
                                 width: 6, height: 6, borderRadius: 'var(--radius-circle)',
                                 background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
-                                flexShrink: 0, opacity: 0.7, marginTop: '6px',
+                                flexShrink: 0, opacity: 0.85, marginTop: '6px',
                               }}
                             />
                             <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.35, flex: 1 }}>
                               {project.title}
                             </span>
                             {tc > 0 && (
-                              <span style={{ fontSize: '11px', color: 'var(--teal)', opacity: 0.7, flexShrink: 0, marginTop: '4px' }}>
+                              <span style={{ fontSize: '11px', color: 'var(--teal)', opacity: 0.85, flexShrink: 0, marginTop: '4px' }}>
                                 {tc}
                               </span>
                             )}
@@ -659,7 +659,7 @@ export default function Manuscripts() {
                               }}
                             >
                               <div className="flex items-start gap-2">
-                                <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: dotColor, flexShrink: 0, opacity: 0.7, marginTop: '5px' }} />
+                                <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: dotColor, flexShrink: 0, opacity: 0.85, marginTop: '5px' }} />
                                 <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
                                   {p.title}
                                 </p>

@@ -157,7 +157,7 @@ export default function MobileTabBar() {
                   fontSize: 'var(--text-label)',
                   textTransform: 'uppercase' as const,
                   letterSpacing: '0.06em',
-                  opacity: 0.6,
+                  opacity: 0.85,
                   fontWeight: 500,
                 }}
               >
@@ -188,7 +188,7 @@ export default function MobileTabBar() {
                     fontSize: '10px',
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.06em',
-                    opacity: 0.4,
+                    opacity: 0.85,
                     marginBottom: 6,
                     paddingLeft: 12,
                     fontWeight: 500,
@@ -229,7 +229,7 @@ export default function MobileTabBar() {
                   fontSize: '10px',
                   textTransform: 'uppercase' as const,
                   letterSpacing: '0.06em',
-                  opacity: 0.4,
+                  opacity: 0.85,
                   marginBottom: 6,
                   paddingLeft: 12,
                   fontWeight: 500,

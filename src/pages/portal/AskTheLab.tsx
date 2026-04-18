@@ -204,7 +204,7 @@ function QuestionCard({
         {/* Right side: status + answer count + chevron */}
         <div className="flex items-center gap-3 flex-shrink-0 pt-0.5">
           {/* Answer count badge */}
-          <div className="flex items-center gap-1" style={{ color: answerCount > 0 ? 'var(--teal)' : 'var(--slate)', opacity: answerCount > 0 ? 1 : 0.4 }}>
+          <div className="flex items-center gap-1" style={{ color: answerCount > 0 ? 'var(--teal)' : 'var(--slate)', opacity: answerCount > 0 ? 1 : 0.85 }}>
             <MessageSquare size={14} />
             <span className="text-xs font-medium">
               {answerCount}
@@ -534,7 +534,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
           </div>
 
           {!questionText.trim() && (
-            <p id="question-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.7 }}>
+            <p id="question-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
               Question is required.
             </p>
           )}

@@ -155,7 +155,7 @@ function DecisionTimeline({
                     fontSize: 'var(--text-label)',
                     color: 'var(--teal)',
                     textDecoration: 'none',
-                    opacity: 0.7,
+                    opacity: 0.85,
                   }}
                 >
                   <FolderKanban size={10} />
@@ -333,7 +333,7 @@ function ReviewCard({
               borderRadius: 'var(--radius-md)',
               fontSize: 'var(--text-small)',
               fontWeight: 500,
-              opacity: outcome.trim() ? 1 : 0.5,
+              opacity: outcome.trim() ? 1 : 0.85,
             }}
           >
             Save Outcome

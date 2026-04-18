@@ -881,7 +881,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
               style={{
                 fontSize: 'var(--text-label)',
                 color: 'var(--slate)',
-                opacity: 0.7,
+                opacity: 0.85,
               }}
             >
               Title is required.
