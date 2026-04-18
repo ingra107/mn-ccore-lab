@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   Home,
@@ -21,7 +21,10 @@ import {
   Newspaper,
   Target,
   Settings,
+  Bug,
 } from 'lucide-react'
+
+const BugReportModal = lazy(() => import('./BugReportModal'))
 
 /**
  * Mobile bottom tab bar — 4 primary routes + "More" overflow drawer
@@ -31,6 +34,7 @@ import {
 export default function MobileTabBar() {
   const { pathname } = useLocation()
   const [overflowOpen, setOverflowOpen] = useState(false)
+  const [bugReportOpen, setBugReportOpen] = useState(false)
 
   // Close drawer when route changes (covers programmatic nav after Link click)
   useEffect(() => {
@@ -216,8 +220,51 @@ export default function MobileTabBar() {
                 })}
               </div>
             ))}
+
+            {/* Support — mobile users can't reach the sidebar's Report-a-Bug
+                button, so expose it here. Surfaced via deep-audit persona test. */}
+            <div style={{ marginBottom: 12 }}>
+              <div
+                style={{
+                  fontSize: '10px',
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.06em',
+                  opacity: 0.4,
+                  marginBottom: 6,
+                  paddingLeft: 12,
+                  fontWeight: 500,
+                }}
+              >
+                Support
+              </div>
+              <button
+                type="button"
+                onClick={() => { setOverflowOpen(false); setBugReportOpen(true) }}
+                className="flex items-center gap-3 rounded-md"
+                style={{
+                  padding: '10px 12px',
+                  minHeight: 44,
+                  width: '100%',
+                  color: 'var(--ink)',
+                  textDecoration: 'none',
+                  fontSize: 'var(--text-base)',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <Bug size={18} aria-hidden="true" />
+                <span>Report a Bug</span>
+              </button>
+            </div>
           </div>
         </div>
+      )}
+      {bugReportOpen && (
+        <Suspense fallback={null}>
+          <BugReportModal open={bugReportOpen} onClose={() => setBugReportOpen(false)} />
+        </Suspense>
       )}
     </>
   )

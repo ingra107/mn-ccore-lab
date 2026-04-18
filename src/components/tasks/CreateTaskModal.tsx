@@ -167,16 +167,36 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
         return
       }
       if (e.key !== 'Tab') return
-      const focusable = modalRef.current!.querySelectorAll<HTMLElement>(
+      // Only consider elements that can actually receive focus — disabled
+      // buttons, hidden inputs, aria-hidden elements are in the DOM but
+      // Tab skips them. If the Submit button at the end is disabled (empty
+      // title), Tab tries to skip past it and escapes the modal.
+      // Found via deep-audit a11y persona: MODAL-FOCUS-LEAK.
+      const all = modalRef.current!.querySelectorAll<HTMLElement>(
         'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
       )
+      const focusable = Array.from(all).filter((el) => {
+        if (el.hasAttribute('disabled')) return false
+        if (el.getAttribute('aria-hidden') === 'true') return false
+        const style = window.getComputedStyle(el)
+        if (style.display === 'none' || style.visibility === 'hidden') return false
+        return true
+      })
       if (focusable.length === 0) return
       const first = focusable[0]
       const last = focusable[focusable.length - 1]
-      if (e.shiftKey && document.activeElement === first) {
+      const active = document.activeElement as HTMLElement | null
+      // If focus has already escaped the modal (e.g. onto the triggering
+      // button or document.body), pull it back to the first focusable.
+      if (active && !modalRef.current!.contains(active)) {
+        e.preventDefault()
+        first.focus()
+        return
+      }
+      if (e.shiftKey && active === first) {
         e.preventDefault()
         last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
+      } else if (!e.shiftKey && active === last) {
         e.preventDefault()
         first.focus()
       }
