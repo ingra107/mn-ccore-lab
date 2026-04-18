@@ -59,6 +59,9 @@ interface ScoredResult {
 export async function handleSearch(url: URL, env: Env): Promise<Response> {
   const q = url.searchParams.get('q')?.trim();
   if (!q || q.length < 2) return json({ data: [], count: 0 });
+  // Upper bound: 200-char search strings are already absurdly long; cap to
+  // avoid HTTP 500 on pathologically large LIKE patterns (deep-audit 13.M).
+  if (q.length > 200) return json({ data: [], count: 0, truncated: true });
 
   const like = `%${q}%`;
   const limit = 15;
