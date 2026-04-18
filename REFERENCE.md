@@ -302,4 +302,32 @@ Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns 
 - `read` is an int (0/1), not a timestamp. Mark-read endpoint: `POST /api/notifications/:id/read`.
 
 ### Deep-audit harness
-`scripts/deep-audit/` holds lifecycle audits (create → update-every-field → readback → UI reload verify → delete → cleanup). Nine suites cover the core surfaces. Run individually: `npx tsx scripts/deep-audit/01-task-lifecycle.ts` etc. Shared helpers in `harness.ts`. See `Projects/mn-ccore-lab-hub/plans/april-21-launch-readiness.md` for the suite catalog + findings history.
+`scripts/deep-audit/` holds lifecycle audits (create → update-every-field → readback → UI reload verify → delete → cleanup). Eleven suites cover the surface. Run individually: `npx tsx scripts/deep-audit/01-task-lifecycle.ts` etc. Shared helpers in `harness.ts`. See `Projects/mn-ccore-lab-hub/plans/april-21-launch-readiness.md` for the suite catalog + findings history.
+
+Suites:
+- `01-task-lifecycle.ts` — create via API, edit every field, status flow, key_links, delete
+- `02-project-lifecycle.ts` — create, edit, enum guards, key_links, comment, delete
+- `03-content-entities.ts` — meetings, grants, questions, revisions, digest
+- `04-mentions-notifications.ts` — @mention fan-out, deep-links, notification source_id
+- `05-subtasks-handoffs.ts` — subtask CRUD + order, SBAR handoff, acknowledge
+- `06-sync-pipeline.ts` — Hub ↔ brain.db round-trip via sync_d1_pull/push
+- `07-realtime-multitab.ts` — WebSocket broadcast + 15s polling cross-tab verification
+- `08-overlap-traps.ts` — duplicate slugs, dangling refs, orphan cleanup, enum validation
+- `10-misc-surfaces.ts` — reactions, search, ideas vote, activity, stats, key_links
+- `11-extended-surfaces.ts` — team/settings/narratives/inbox/cascade/pomodoro/dispatch/trajectory/PI/publications/conferences/sessions/bug-report
+
+### Response-shape quirks worth knowing
+A few endpoints break the `{ data: ... }` convention. Noted here so client code doesn't assume:
+- `POST /api/inbox` returns the inserted record **directly** (not wrapped). `GET /api/inbox` returns `{ data: [...] }` wrapped. Asymmetric.
+- `GET /api/search` returns `{ data: [...] }` flat array (not `{ data: { results: [...] } }`).
+- `POST /api/inbox` tags are whitelisted: `note | idea | decision | follow-up | meeting-note` — anything else → 400.
+- `POST /api/questions/:id/answers` body field is `content`, not `answer`.
+- Questions list answers inside `GET /api/questions/:id` (as `data.answers[]`) — no dedicated `/answers` GET.
+- `POST /api/tasks/:id/handoffs` uses SBAR shape: `{ to_slug, situation, background?, assessment?, recommendation? }`. `situation` is required.
+- `POST /api/digest/:id/status` (not `/api/digest/:id`) toggles save/dismiss.
+- `/api/team-members` does **not** exist — use `/api/team`.
+- `/api/calendar` does **not** exist — use `/api/calendar/events`.
+- `/api/pomodoro` does **not** exist — use `/api/pb/pomodoro/start` and `/complete`.
+- `/api/dispatch` does **not** exist — use `/api/pb/dispatch/pending` + `/api/pb/dispatch/add` + `/complete`.
+- `/api/sessions` does **not** exist — use `/api/pb/sessions`.
+- `/api/grants` is **read + status only**. POST /api/grants does not exist; grants flow in via brain.db sync.
