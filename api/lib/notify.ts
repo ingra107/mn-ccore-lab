@@ -1,29 +1,57 @@
 /**
- * Notify connected WebSocket clients via Durable Object.
+ * Notify connected WebSocket clients via the hub-realtime Durable Object.
  * Fire-and-forget — never blocks the mutation response.
  *
- * The hub-realtime DO lives in a separate Worker (`workers/hub-realtime`)
- * that owns the `NotificationHub` class. Cross-Worker DO access needs a
- * Pages service binding, which wasn't configured — so we go through the
- * public HTTP endpoint instead. `routePartykitRequest` forwards POST to
- * the DO's `onRequest`, which calls `broadcast(body)`. Clients receive
- * the message over their existing PartySocket WebSocket within <1s.
+ * Cross-Worker DO access runs through a service binding (wrangler.toml:
+ * `[[services]] binding = "NOTIFICATION_HUB" service = "hub-realtime"`).
+ * `env.NOTIFICATION_HUB` is a Fetcher bound to the hub-realtime worker.
+ * We POST to `/parties/notification-hub/mnccore`, the party URL that
+ * `routePartykitRequest` forwards into the DO's `onRequest`, which calls
+ * `broadcast(body)`. Clients receive over their existing PartySocket WS
+ * connection within <1s.
  *
- * Fixed 2026-04-18 (deep-audit Suite 7). Before: `env.NOTIFICATION_HUB`
- * was always undefined, broadcast never fired, clients fell back to 15s
- * polling only.
+ * Fallback: if the binding is missing (e.g. stale wrangler config on a
+ * preview deploy), fall back to a public HTTP fetch. Polling still covers
+ * the cross-tab case at 15s either way.
+ *
+ * History:
+ *  - Pre-2026-04-18: env.NOTIFICATION_HUB as DurableObjectNamespace —
+ *    binding never existed, silent no-op, clients saw updates only on
+ *    next /api/version poll.
+ *  - 2026-04-18 AM: HTTP-only path via public URL (worked but DNS+TLS).
+ *  - 2026-04-18 late: service binding wired; internal fetch is the
+ *    primary path, HTTP fallback retained for preview safety.
  */
-const PARTY_ROOM_URL = 'https://hub-realtime.nicholas-ingraham.workers.dev/parties/notification-hub/mnccore';
+const PUBLIC_FALLBACK_URL = 'https://hub-realtime.nicholas-ingraham.workers.dev/parties/notification-hub/mnccore';
 
-export async function notifyClients(_env: unknown, type: string): Promise<void> {
+interface NotifyEnv {
+  NOTIFICATION_HUB?: { fetch(request: Request): Promise<Response> };
+}
+
+export async function notifyClients(env: NotifyEnv, type: string): Promise<void> {
+  const payload = JSON.stringify({ type, timestamp: Date.now() });
+  const headers = { 'Content-Type': 'application/json' };
+
+  // Prefer the service binding — routes internally, no network hop.
+  if (env?.NOTIFICATION_HUB?.fetch) {
+    try {
+      await env.NOTIFICATION_HUB.fetch(
+        new Request('https://hub-realtime/parties/notification-hub/mnccore', {
+          method: 'POST',
+          headers,
+          body: payload,
+        }),
+      );
+      return;
+    } catch (e) {
+      console.error('DO service-binding notify failed, falling back to public URL:', e);
+    }
+  }
+
+  // Fallback: public HTTP POST (used on previews without the binding).
   try {
-    await fetch(PARTY_ROOM_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, timestamp: Date.now() }),
-    });
+    await fetch(PUBLIC_FALLBACK_URL, { method: 'POST', headers, body: payload });
   } catch (e) {
-    // Never let notification failure break mutations.
-    console.error('DO notification failed:', e);
+    console.error('DO public-URL notify failed:', e);
   }
 }

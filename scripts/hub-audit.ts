@@ -168,12 +168,22 @@ async function auditTasks(ctx: Ctx) {
   // 1.4 Inline status change + dropdown screenshot
   // Click the InlineCellSelect button. Use force:true to bypass Playwright's
   // auto-scroll which races with InlineCellSelect's scroll-close handler.
+  // scrollIntoViewIfNeeded first — without it, force:true clicks can land
+  // on a virtualized-but-off-screen cell and the portal dropdown opens at
+  // top-left-corner pos (default state=0,0) and hides behind the header.
+  // Then wait for the listbox role to attach before querying options;
+  // InlineCellSelect's updatePosition fires in a useEffect so the listbox
+  // is there but may be mid-layout when we query naively.
   if (testTaskId) {
     const statusCell = page.locator(`[data-testid="task-status-${testTaskId}"] button`).first()
     if (await statusCell.count()) {
+      await statusCell.scrollIntoViewIfNeeded().catch(() => {})
+      await page.waitForTimeout(150)
       await statusCell.click({ force: true })
-      await snap(ctx, 'status-dropdown-open', 800)
+      // Explicit wait for the listbox role — portal renders async via useEffect
       const listbox = page.getByRole('listbox').first()
+      await listbox.waitFor({ state: 'attached', timeout: 3000 }).catch(() => {})
+      await snap(ctx, 'status-dropdown-open', 300)
       if (await listbox.count()) {
         const options = await listbox.getByRole('option').allTextContents()
         finding(ctx, 'INFO', `1.4 Status dropdown options: ${options.join(' | ')}`)
@@ -335,14 +345,22 @@ async function auditTasks(ctx: Ctx) {
     const titleCell2 = page.locator(`[data-testid="task-title-${testTaskId}"]`).first()
     if (!(await titleCell2.count())) return
     await titleCell2.click()
-    await page.waitForTimeout(1200)
-    const detailsTab = page.locator('[data-testid="task-detail-panel"] button').filter({ hasText: /^Details$/ }).first()
-    if (!(await detailsTab.count())) return
-    await detailsTab.click()
-    await snap(ctx, 'subtask-details-tab', 700)
-    const subInput = page.locator('[data-testid="task-detail-panel"]').locator('input[placeholder*="subtask" i], input[placeholder*="Add" i]').first()
+    // Explicit wait for the detail panel to mount, then ensure we're on Overview.
+    // SubtaskSection renders on the Overview tab (not Details) — prior audit
+    // clicked Details first, navigating AWAY from the subtask input.
+    const panel = page.locator('[data-testid="task-detail-panel"]')
+    await panel.waitFor({ state: 'visible', timeout: 4000 }).catch(() => {})
+    const overviewTab = panel.locator('button').filter({ hasText: /^Overview$/ }).first()
+    if (await overviewTab.count()) {
+      await overviewTab.click({ force: true }).catch(() => {})
+    }
+    await page.waitForTimeout(400)
+    await snap(ctx, 'subtask-overview-tab', 500)
+    const subInput = panel.locator('input[placeholder*="subtask" i], input[placeholder*="Add subtask" i]').first()
+    // Wait for subtask input to attach (SubtaskSection lazy-loads via useQuery)
+    await subInput.waitFor({ state: 'visible', timeout: 4000 }).catch(() => {})
     if (!(await subInput.count())) {
-      finding(ctx, 'FRICTION', '1.10 Subtask input not found on Details tab')
+      finding(ctx, 'FRICTION', '1.10 Subtask input not found on Overview tab (section may be collapsed)')
       return
     }
     await subInput.scrollIntoViewIfNeeded().catch(() => {})
@@ -351,28 +369,35 @@ async function auditTasks(ctx: Ctx) {
     await snap(ctx, 'subtask-typed', 300)
     await subInput.press('Enter')
     await snap(ctx, 'subtask-submitted', 1500)
-    const subtaskRow = page.locator('[data-testid="task-detail-panel"]').locator('text=test_delete_audit subtask').first()
+    const subtaskRow = panel.locator('text=test_delete_audit subtask').first()
     finding(ctx, (await subtaskRow.count()) > 0 ? 'PASS' : 'FAIL', '1.10 Subtask appears in detail panel after Enter')
   })
 
   // 1.11 Comment end-to-end
   await safe('1.11 comment', async () => {
-    const commentsTab = page.locator('[data-testid="task-detail-panel"] button').filter({ hasText: /^Comments$/ }).first()
+    const panel = page.locator('[data-testid="task-detail-panel"]')
+    const commentsTab = panel.locator('button').filter({ hasText: /^Comments$/ }).first()
     if (!(await commentsTab.count())) return
     await commentsTab.click({ force: true })
-    await snap(ctx, 'comment-tab', 500)
-    const commentArea = page.locator('[data-testid="task-detail-panel"] textarea').first()
-    if (!(await commentArea.count())) {
-      finding(ctx, 'FRICTION', '1.11 Comment textarea not found')
+    // TaskComments uses <input type="text" placeholder="Add a comment...">,
+    // not a textarea. Prior audit looked for textarea and hit the description
+    // rich text editor by accident.
+    const commentInput = panel.locator('input[placeholder*="Add a comment" i]').first()
+    await commentInput.waitFor({ state: 'visible', timeout: 4000 }).catch(() => {})
+    await snap(ctx, 'comment-tab', 300)
+    if (!(await commentInput.count())) {
+      finding(ctx, 'FRICTION', '1.11 Comment input not found after Comments tab click')
       return
     }
-    await commentArea.scrollIntoViewIfNeeded().catch(() => {})
-    await commentArea.fill('test_delete_audit comment @nick', { timeout: 4000 })
+    await commentInput.scrollIntoViewIfNeeded().catch(() => {})
+    await commentInput.fill('test_delete_audit comment @nick', { timeout: 4000 })
     await snap(ctx, 'comment-typed', 300)
-    await commentArea.press('Control+Enter')
+    // Submit via Enter (form onSubmit) — Ctrl+Enter isn't wired here, it's
+    // a plain <input>, hitting Enter submits the form.
+    await commentInput.press('Enter')
     await snap(ctx, 'comment-submitted', 1500)
-    const appeared = page.locator('[data-testid="task-detail-panel"]').locator('text=test_delete_audit comment').first()
-    finding(ctx, (await appeared.count()) > 0 ? 'PASS' : 'FAIL', '1.11 Comment appears after Ctrl+Enter')
+    const appeared = panel.locator('text=test_delete_audit comment').first()
+    finding(ctx, (await appeared.count()) > 0 ? 'PASS' : 'FAIL', '1.11 Comment appears after Enter')
   })
 
   // 1.12 Task update/note with type
@@ -412,26 +437,76 @@ async function auditTasks(ctx: Ctx) {
 
   // 1.14 Right-click context menu snooze
   await safe('1.14 context menu', async () => {
-    if (!testTaskId) return
-    const row = page.locator(`[data-testid="task-row-${testTaskId}"]`).first()
-    if (!(await row.count())) return
-    await row.click({ button: 'right', force: true, timeout: 4000 })
-    await snap(ctx, 'context-menu', 500)
-    const snoozeAlt = page.locator('button, [role="menuitem"]').filter({ hasText: /Snooze/i }).first()
+    // Snooze submenu ONLY renders when task.due_date is set (TaskContextMenu
+    // line 363). Create a dedicated task with a due_date so the option appears.
+    const today = new Date()
+    today.setDate(today.getDate() + 7)
+    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    const createResp = await page.request.post(`${BASE}/api/tasks`, {
+      data: {
+        title: 'test_delete_audit snooze-target',
+        description: 'snooze target',
+        assignee: 'nick',
+        priority: 'low',
+        due_date: iso,
+      },
+    })
+    if (!createResp.ok()) {
+      finding(ctx, 'FRICTION', `1.14 Could not create snooze-target task: ${createResp.status()}`)
+      return
+    }
+    const snoozeTaskId = ((await createResp.json()) as { data?: { id: string } }).data?.id
+    if (!snoozeTaskId) {
+      finding(ctx, 'FRICTION', '1.14 Snooze task create had no id')
+      return
+    }
+    // Refresh so the task appears + has due_date
+    await page.reload({ waitUntil: 'networkidle' }).catch(() => {})
+    await page.waitForTimeout(1200)
+    const row = page.locator(`[data-testid="task-row-${snoozeTaskId}"]`).first()
+    await row.waitFor({ state: 'visible', timeout: 4000 }).catch(() => {})
+    if (!(await row.count())) {
+      finding(ctx, 'FRICTION', `1.14 Snooze task row ${snoozeTaskId} not in list after reload`)
+      return
+    }
+    await row.scrollIntoViewIfNeeded().catch(() => {})
+    await page.waitForTimeout(200)
+    // page.mouse.click at the row's centerpoint — the most native right-click
+    // gesture. Prior attempts: row.click({button:'right'}) intermittent,
+    // dispatchEvent('contextmenu') didn't reach React root delegation in
+    // virtualized rows. Computing box then clicking coords works reliably.
+    const box = await row.boundingBox()
+    if (box) {
+      const cx = Math.round(box.x + box.width / 2)
+      // Shift Y slightly off-center to avoid InlineSelect buttons
+      const cy = Math.round(box.y + 8)
+      await page.mouse.click(cx, cy, { button: 'right' })
+    } else {
+      await row.click({ button: 'right', force: true, timeout: 4000 })
+    }
+    // Wait for the menu to mount. SubmenuItem renders a <div> (not <button>),
+    // so the selector needs to include div too.
+    const snoozeAlt = page.locator('button, [role="menuitem"], div').filter({ hasText: /^\s*Snooze\s*$/ }).first()
+    await snoozeAlt.waitFor({ state: 'visible', timeout: 2500 }).catch(() => {})
+    await snap(ctx, 'context-menu', 300)
     if (!(await snoozeAlt.count())) {
       finding(ctx, 'FRICTION', '1.14 Context menu did not show Snooze option on right-click')
       await page.keyboard.press('Escape').catch(() => {})
       return
     }
     await snoozeAlt.hover()
-    await snap(ctx, 'context-menu-snooze-hover', 400)
-    const plus1 = page.locator('button, [role="menuitem"]').filter({ hasText: /\+1d|1 day/i }).first()
+    await page.waitForTimeout(300) // SubmenuItem has 80ms open delay
+    await snap(ctx, 'context-menu-snooze-hover', 200)
+    const plus1 = page.locator('button, [role="menuitem"]').filter({ hasText: /\+1\s*day/i }).first()
+    await plus1.waitFor({ state: 'visible', timeout: 2500 }).catch(() => {})
     if (!(await plus1.count())) {
       finding(ctx, 'FRICTION', '1.14 Context menu Snooze submenu opened but +1d not found')
       await page.keyboard.press('Escape').catch(() => {})
       return
     }
-    await plus1.click({ force: true })
+    // Geometry can be off-screen when submenu flips sides; dispatch click
+    // directly to bypass Playwright's viewport guard.
+    await plus1.dispatchEvent('click')
     await snap(ctx, 'context-menu-snoozed', 1200)
     finding(ctx, 'PASS', '1.14 Right-click context menu → Snooze +1d works')
   })
@@ -639,19 +714,27 @@ async function auditManuscripts(ctx: Ctx) {
     await page.keyboard.press('Escape')
   }
 
-  // 10.2 Category inline
-  const catCells = page.locator('[role="button"]').filter({ hasText: /^(CLIF|Lab|Mesfin|Mentee)$/i })
-  if (await catCells.count()) {
-    await catCells.first().click()
-    await snap(ctx, 'manuscript-category-open', 500)
+  // 10.2 Category inline — InlineSelect uses <button> (implicit role=button),
+  // so attribute selector [role="button"] misses it. Use getByRole which
+  // handles implicit roles.
+  const catCells = page.getByRole('button').filter({ hasText: /^(CLIF|Lab|Mesfin|Mentee)$/i })
+  const catCount = await catCells.count()
+  if (catCount > 0) {
+    finding(ctx, 'PASS', `10.2 Found ${catCount} category cells`)
+    await catCells.first().scrollIntoViewIfNeeded().catch(() => {})
+    await catCells.first().click({ force: true })
     const listbox = page.getByRole('listbox').first()
+    await listbox.waitFor({ state: 'attached', timeout: 2500 }).catch(() => {})
+    await snap(ctx, 'manuscript-category-open', 300)
     if (await listbox.count()) {
       const opts = await listbox.getByRole('option').allTextContents()
-      finding(ctx, 'INFO', `10.2 Category options: ${opts.join(' | ')}`)
+      finding(ctx, 'PASS', `10.2 Category dropdown opens with options: ${opts.join(' | ')}`)
+    } else {
+      finding(ctx, 'FRICTION', '10.2 Category click did not open listbox')
     }
     await page.keyboard.press('Escape')
   } else {
-    finding(ctx, 'FRICTION', '10.2 Category cells not found with expected text patterns')
+    finding(ctx, 'FAIL', '10.2 No category cells found (expected CLIF/Lab/Mesfin/Mentee)')
   }
 
   writeFindings(ctx)

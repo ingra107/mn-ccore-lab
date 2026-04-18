@@ -24,5 +24,15 @@ crons = ["0 13 * * 1-5", "0 11 * * *"]
 binding = "FILES"
 bucket_name = "mnccore-files"
 
+# Service binding to the hub-realtime Worker for DO broadcast. Cross-Worker
+# Durable Object access requires this — prior `env.NOTIFICATION_HUB` used as
+# a DurableObjectNamespace silently returned undefined because no binding
+# existed. Now `env.NOTIFICATION_HUB.fetch(...)` routes internally through
+# the CF edge network (no public DNS/TLS hop) to the hub-realtime worker,
+# which forwards to the DO's onRequest for broadcast.
+[[services]]
+binding = "NOTIFICATION_HUB"
+service = "hub-realtime"
+
 [site]
 bucket = "./dist"
