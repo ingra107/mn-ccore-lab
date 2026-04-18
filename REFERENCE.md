@@ -253,3 +253,53 @@ Phase 32: Final Launch Polish — 7 fix rounds, 9.44/10 aggregate (+2.26), QA GO
 ## Implementation Notes
 
 api/index.ts split into 15+ route modules: `api/routes/{tasks,projects,meetings,publications,team,digest,ideas,notifications,search,settings,reactions,calendar,activity,subtasks,trajectory,decisions,decision-replay,pi-dashboard}.ts`.
+
+## API Conventions
+
+Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns worth documenting before the next contributor re-learns them the hard way.
+
+### HTTP verbs
+- **POST, not PATCH, for updates.** Both `/api/tasks/:id` and `/api/projects/:slug` use `POST` to update. PATCH returns 405. Expressed explicitly in `scripts/deep-audit/harness.ts` via `apiPatchTask()` / `apiPatchProject()` shims.
+- **POST `/api/projects/:slug/delete`, not `DELETE /api/projects/:slug`.** The DELETE verb returns 405 here too. Same pattern for other soft-delete endpoints.
+
+### URL param resolution (slug vs id)
+- Project URL params accept **either `slug` or `id`** — handlers use `WHERE id = ? OR slug = ?`. Canonical storage is against `projects.id`; the comment+update handlers resolve the URL param first then store using the canonical id. Use `apiGetProjectFromList()` in audits rather than a nonexistent `GET /api/projects/:slug`.
+- Task URL params use `id` only (no slug concept on tasks).
+
+### Single-entity GET endpoints
+- **There is no `GET /api/tasks/:id`.** Only list endpoint + sub-resources (`/:id/comments`, `/:id/files`, `/:id/updates`, `/:id/activity`, `/:id/subtasks`, `/:id/handoffs`). Clients fetch the full list and filter by id. Deep-audit harness has `apiGetTaskFromList()` to mirror this.
+- **There is no `GET /api/projects/:slug`** either — list + sub-resources only.
+- **Questions:** answers are embedded inside `GET /api/questions/:id` (as `data.answers[]`). No `/api/questions/:id/answers` GET endpoint.
+
+### Enum validation (Hub ↔ brain.db R10 taxonomy)
+- `POST /api/projects/:slug` now rejects unknown `status`/`stage`/`category` values with HTTP 400 + list of valid values. Canonical values matched against PB's `scripts/db/enums.py`.
+- Task `POST /api/tasks` + `POST /api/tasks/:id` + batch `assign` action validate `assignee` exists in `team_members.slug` (exception: `claude-ai` for Hermes AI pipeline). Unknown slugs → 400.
+- `project_id` on task create/update is resolved to canonical form; truly unknown refs are coerced to NULL (task remains, link cleared).
+
+### Write payload shapes — non-obvious fields
+- **POST `/api/tasks`** requires `description` + `assignee`. `title` is optional (defaults to description). CreateTaskModal always sends both so UI users don't notice.
+- **POST `/api/tasks/:id/comments`** takes `{ content, author_slug? }`. `source_id` in resulting notifications references the **task id** (not the comment row id) — link is `/tasks?open=${taskId}` so clicking lands on the correct task.
+- **POST `/api/questions/:id/answers`** takes `{ content, author_slug? }`. Body field is `content`, not `answer`.
+- **POST `/api/revisions`** takes `{ project_id, round?, submitted_at?, response_due?, status?, journal?, notes? }`. Flat path, not nested under project.
+- **POST `/api/tasks/:id/handoffs`** uses SBAR format: `{ to_slug, situation, background?, assessment?, recommendation? }`. `situation` is required.
+- **POST `/api/digest/:id/status`** toggles save/dismiss. Not `POST /api/digest/:id` directly.
+
+### Read-only on the Hub
+- Grants — no POST. Grants flow in via `scripts/db/sync_d1_*.py` from brain.db. Hub only updates status via `POST /api/grants/:id`.
+- Publications — read-only. Sourced from PubMed.
+- Milestones — writable, but typically authored via the grant timeline UI which uses a dedicated endpoint set.
+
+### Mutation → client update flow
+1. Mutation hits the API via wrapped handler `withVersionBump`.
+2. `withVersionBump` runs `bumpVersion(env.DB)` + `notifyClients(env, 'data')` on any 2xx response from a non-GET.
+3. `notifyClients` tries to `fetch()` the NOTIFICATION_HUB durable object. **Currently no-op** because wrangler.toml lacks the service binding — tracked as follow-up.
+4. All clients poll `/api/version` every 15s (`useRealtimeSync`, `refetchIntervalInBackground: true`). On version change → `invalidateQueries` on all non-`_version` keys → React Query refetches active queries → UI updates.
+5. `BroadcastChannel('mnccore-sync')` + `notifyLocalTabs()` provide instant same-device cross-tab sync for locally-initiated mutations.
+
+### Notification schema (2026-04-18)
+- `source_id` points at the entity the user cares about (task id / project id), **not** the comment/note row id.
+- `link` is a deep-link to that entity — e.g. `/tasks?open=<taskId>` opens the detail panel directly, not a generic list.
+- `read` is an int (0/1), not a timestamp. Mark-read endpoint: `POST /api/notifications/:id/read`.
+
+### Deep-audit harness
+`scripts/deep-audit/` holds lifecycle audits (create → update-every-field → readback → UI reload verify → delete → cleanup). Nine suites cover the core surfaces. Run individually: `npx tsx scripts/deep-audit/01-task-lifecycle.ts` etc. Shared helpers in `harness.ts`. See `Projects/mn-ccore-lab-hub/plans/april-21-launch-readiness.md` for the suite catalog + findings history.

@@ -163,6 +163,18 @@ const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee']);
 
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
+
+  // Validate assignee slug exists (same guard as create — Suite 8 propagation).
+  if (typeof body.assignee === 'string' && body.assignee !== 'claude-ai') {
+    const member = await env.DB.prepare('SELECT 1 FROM team_members WHERE slug = ? LIMIT 1').bind(body.assignee).first();
+    if (!member) return error(`Unknown assignee "${body.assignee}". Must match team_members.slug.`, 400);
+  }
+  // Resolve project_id to canonical slug (accept id OR slug). Bogus → NULL.
+  if (typeof body.project_id === 'string' && body.project_id) {
+    const proj = await env.DB.prepare('SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1').bind(body.project_id, body.project_id).first<{ id: string; slug: string | null }>();
+    body.project_id = proj ? (proj.slug || proj.id) : null;
+  }
+
   const updates: string[] = [];
   const params: unknown[] = [];
 
@@ -207,6 +219,29 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
   };
   if (!body.description || !body.assignee) return error('description and assignee required', 400);
 
+  // Validate assignee exists in team_members — reject bogus slugs before
+  // they pollute the DB. Deep-audit Suite 8 found 'not_a_real_person_xyz'
+  // was accepted as-is. Hub-created-only slug 'claude-ai' is allowed for
+  // the Hermes AI pipeline (writes tasks back via the API key path).
+  if (body.assignee !== 'claude-ai') {
+    const member = await env.DB.prepare('SELECT 1 FROM team_members WHERE slug = ? LIMIT 1').bind(body.assignee).first();
+    if (!member) return error(`Unknown assignee "${body.assignee}". Must match team_members.slug.`, 400);
+  }
+  // Validate project_id if provided — match by slug OR id. Leave NULL on
+  // bogus input (don't reject the whole create since project link is
+  // optional on tasks).
+  let resolvedProjectId = body.project_id ?? null;
+  if (resolvedProjectId) {
+    const proj = await env.DB.prepare('SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1').bind(resolvedProjectId, resolvedProjectId).first<{ id: string; slug: string | null }>();
+    if (!proj) {
+      console.warn(`Task create: unknown project_id "${resolvedProjectId}" — storing as NULL`);
+      resolvedProjectId = null;
+    } else {
+      // Store the slug form (that's what the existing code expects on read).
+      resolvedProjectId = proj.slug || proj.id;
+    }
+  }
+
   const id = generateId();
   const title = body.title || body.description;
   const source = body.source || (body.meeting_id ? 'meeting' : 'manual');
@@ -214,7 +249,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
 
   await env.DB.prepare(
     'INSERT INTO tasks (id, title, description, assignee, assigned_by, meeting_id, project_id, due_date, priority, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(id, title, body.description, body.assignee, user.email, body.meeting_id ?? null, body.project_id ?? null, body.due_date ?? null, priority, source).run();
+  ).bind(id, title, body.description, body.assignee, user.email, body.meeting_id ?? null, resolvedProjectId, body.due_date ?? null, priority, source).run();
 
   await logActivity(env, 'task', `Created task: "${title}" → ${body.assignee}`, user.email, id, 'task');
 
@@ -348,6 +383,10 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 
     case 'assign':
       if (!body.value) return error('value (assignee) required for assign action', 400)
+      if (body.value !== 'claude-ai') {
+        const member = await env.DB.prepare('SELECT 1 FROM team_members WHERE slug = ? LIMIT 1').bind(body.value).first()
+        if (!member) return error(`Unknown assignee "${body.value}". Must match team_members.slug.`, 400)
+      }
       await env.DB.prepare(
         `UPDATE tasks SET assignee = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
       ).bind(body.value, ...body.ids).run()

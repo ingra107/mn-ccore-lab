@@ -87,13 +87,18 @@ async function main() {
     let seenUrgent = false
     const pollStart = Date.now()
     while (Date.now() - pollStart < 35_000) {
-      const html = await tabB.page.content().catch(() => '')
-      // Look for urgent priority in the row containing our title
-      const rowIdx = html.indexOf(title)
-      if (rowIdx > 0) {
-        const surround = html.slice(Math.max(0, rowIdx - 500), rowIdx + 1000).toLowerCase()
-        if (surround.includes('urgent')) { seenUrgent = true; break }
-      }
+      // Direct DOM query for the task's priority cell text — more reliable
+      // than HTML search on huge virtualized documents.
+      const priorityText = await tabB.page.evaluate((t) => {
+        const rows = document.querySelectorAll('[class*="task-grid-row"]')
+        for (const row of rows) {
+          if ((row as HTMLElement).innerText?.includes(t)) {
+            return (row as HTMLElement).innerText.toLowerCase()
+          }
+        }
+        return ''
+      }, title).catch(() => '')
+      if (priorityText.includes('urgent')) { seenUrgent = true; break }
       await tabB.page.waitForTimeout(1000)
     }
     const elapsed = Math.round((Date.now() - pollStart) / 1000)
