@@ -88,6 +88,16 @@ export default function PortalLayout() {
   return (
     <UndoToastProvider>
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg)' }}>
+      {/* Skip to content — first focusable element, visible on focus only.
+          Keyboard users can press Tab once from page-load to jump past the
+          sidebar + header and land in the main region. */}
+      <a
+        href="#portal-main"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded"
+        style={{ background: 'var(--teal)', color: 'var(--ink-bright, #fff)' }}
+      >
+        Skip to content
+      </a>
       <RouteProgressBar />
 
       {/* Desktop sidebar (hidden in focus mode) */}
@@ -211,6 +221,7 @@ export default function PortalLayout() {
         {/* Page content */}
         {/* pb-[calc(56px+env(...))] on mobile leaves room for MobileTabBar; md:pb-* resets on tablet+ */}
         <main
+          id="portal-main"
           className="portal-content p-4 md:p-6 lg:p-8 pb-[calc(1rem+56px+env(safe-area-inset-bottom))] md:pb-6 lg:pb-8"
           style={{ flex: 1 }}
         >

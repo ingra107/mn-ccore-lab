@@ -471,6 +471,7 @@ export default function MyTasks() {
           <div className="flex items-center gap-1.5">
             <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Group by:</span>
             <select
+              aria-label="Group tasks by"
               value={groupBy}
               onChange={(e) => setGroupBy(e.target.value as GroupBy)}
               className="rounded-full border px-2.5 py-1 text-xs"
@@ -495,6 +496,7 @@ export default function MyTasks() {
           <div className="flex items-center gap-1.5">
             <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Sort:</span>
             <select
+              aria-label="Sort tasks by"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortBy)}
               className="rounded-full border px-2.5 py-1 text-xs"
