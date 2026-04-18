@@ -46,7 +46,13 @@ export function useRealtimeSync() {
   // weren't propagating through the WS path in <20s: the DO service binding
   // (NOTIFICATION_HUB) isn't wired in wrangler.toml, so api/lib/notify.ts
   // early-returns. Until that binding ships, polling is the real sync path.
-  // Previously 60s with WS assumed — which silently broke cross-tab UX.
+  //
+  // refetchIntervalInBackground: true is required — React Query's default
+  // pauses the polling interval when the tab isn't focused. Real users
+  // park the Hub in background tabs between focus events; without this
+  // flag they wouldn't see any teammate's edit until they refocused.
+  // Deep-audit Suite 7 uncovered this (Playwright's headless contexts
+  // are also "unfocused" so polling stayed silent in testing too).
   const { data } = useQuery({
     queryKey: ['_version'],
     queryFn: async () => {
@@ -55,6 +61,7 @@ export function useRealtimeSync() {
       return json.version
     },
     refetchInterval: 15_000,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     staleTime: 0,

@@ -57,10 +57,19 @@ async function main() {
     const browser = s.browser
     const tabA = await openTab(browser)
     const tabB = await openTab(browser)
+    // Instrument tab B to count /api/version polls + /api/tasks refetches
+    const polls: { url: string; status: number; at: number }[] = []
+    tabB.page.on('response', (r) => {
+      const u = r.url()
+      if (u.includes('/api/version') || u.includes('/api/tasks')) {
+        polls.push({ url: u.replace('https://mn-ccore-lab.pages.dev', ''), status: r.status(), at: Date.now() })
+      }
+    })
     await tabA.page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' })
     await tabB.page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' })
     await tabA.page.waitForTimeout(1200)
     await tabB.page.waitForTimeout(1200)
+    log(s, `  7.B tab B initial network: ${polls.length} /api/version+/api/tasks calls in first 3s`)
     // Both tabs should show the task
     const aVis = await tabA.page.locator(`text=${JSON.stringify(title)}`).first().isVisible({ timeout: 3000 }).catch(() => false)
     const bVis = await tabB.page.locator(`text=${JSON.stringify(title)}`).first().isVisible({ timeout: 3000 }).catch(() => false)
@@ -74,10 +83,10 @@ async function main() {
     // Change via API (simulates what tabA's UI mutation would do)
     await s.api.post(`/api/tasks/${taskId}`, { data: { priority: 'urgent' } })
 
-    // Wait up to 20s for tab B to update (WS should be <3s, polling fallback is 10s)
+    // Wait up to 35s for tab B to update (polling fires every 15s; give it 2 cycles)
     let seenUrgent = false
     const pollStart = Date.now()
-    while (Date.now() - pollStart < 20_000) {
+    while (Date.now() - pollStart < 35_000) {
       const html = await tabB.page.content().catch(() => '')
       // Look for urgent priority in the row containing our title
       const rowIdx = html.indexOf(title)
@@ -89,7 +98,7 @@ async function main() {
     }
     const elapsed = Math.round((Date.now() - pollStart) / 1000)
     if (seenUrgent) pass(s, `7.C Tab B picked up priority=urgent without reload (~${elapsed}s)`)
-    else bug(s, 'RT-NO-PROPAGATION', 'P1', '7.C tab B sees priority change without reload', 'no urgent text found in 20s window', 'urgent text visible after WS/poll push')
+    else bug(s, 'RT-NO-PROPAGATION', 'P1', '7.C tab B sees priority change without reload', `no urgent text found in ${elapsed}s window; tab B network: ${polls.length} calls (${polls.map(p => `${p.status} ${p.url.split('?')[0]}`).join(', ').slice(0, 300)})`, 'urgent text visible after poll push')
     await snap({ ...s, page: tabB.page }, 'C-tabB-after-propagation')
 
     section(s, '7.D  Race — 5 rapid edits across both tabs')
