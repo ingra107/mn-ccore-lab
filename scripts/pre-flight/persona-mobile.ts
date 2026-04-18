@@ -102,30 +102,30 @@ async function main() {
     section(s, '8  Bug report modal opens + Attach photo button visible on mobile')
     await goto(s, '/my-tasks')
     await s.page.waitForTimeout(1000)
-    // On mobile the sidebar is collapsed; Report-a-Bug lives in the More drawer.
-    // Open the drawer first, then click.
-    const moreBtn = s.page.locator('button, a').filter({ hasText: /^More$/ }).first()
+    // On mobile the sidebar is hidden; Report-a-Bug lives in MobileTabBar's
+    // More drawer under Support section. Open drawer then click the
+    // VISIBLE Report-a-Bug (exclude the hidden sidebar button).
+    const moreBtn = s.page.locator('button[aria-controls="mobile-overflow-drawer"]').first()
     if (await moreBtn.count()) {
       await moreBtn.click({ force: true }).catch(() => {})
-      await s.page.waitForTimeout(400)
+      await s.page.waitForTimeout(500)
+      await snap(s, 'mobile-more-drawer')
     }
-    // Fallback: hamburger toggle
-    const hamburger = s.page.locator('button[aria-label*="menu" i], button[aria-label*="sidebar" i]').first()
-    if (await hamburger.count() && !(await s.page.locator('button').filter({ hasText: /Report a Bug/i }).first().isVisible().catch(() => false))) {
-      await hamburger.click({ force: true }).catch(() => {})
-      await s.page.waitForTimeout(400)
-    }
-    const bugBtn = s.page.locator('button').filter({ hasText: /Report a Bug|Report Bug/i }).first()
-    if (await bugBtn.count()) {
+    // Find the visible Report-a-Bug (scoped to the drawer or any visible button)
+    const bugBtn = s.page.locator('button:visible').filter({ hasText: /Report a Bug|Report Bug/i }).first()
+    const bugVisible = await bugBtn.isVisible({ timeout: 2000 }).catch(() => false)
+    if (bugVisible) {
       await bugBtn.click({ force: true }).catch(() => {})
-      await s.page.waitForTimeout(800)
-      await snap(s, 'bug-modal-mobile')
+      // Wait explicitly for the dialog to mount (lazy import delay + state flip)
+      const modal = s.page.locator('[role="dialog"]').filter({ hasText: /Report a Bug|bug/i }).first()
+      await modal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
+      await snap(s, 'bug-modal-mobile', 400)
       const attachBtn = await s.page.locator('button').filter({ hasText: /Attach photo/i }).first().isVisible({ timeout: 2000 }).catch(() => false)
       if (attachBtn) pass(s, 'Attach photo button visible on mobile bug reporter')
-      else record(s, { id: 'MOBILE-ATTACH', severity: 'P1', scenario: 'Mobile bug reporter has Attach photo', observed: 'not found', expected: 'visible button' })
+      else record(s, { id: 'MOBILE-ATTACH', severity: 'P1', scenario: 'Mobile bug reporter has Attach photo', observed: 'not found inside modal', expected: 'visible Attach photo button' })
       await s.page.keyboard.press('Escape').catch(() => {})
     } else {
-      record(s, { id: 'MOBILE-BUG-BTN', severity: 'P2', scenario: 'Report-a-Bug reachable on mobile', observed: 'button not found even after opening drawer/hamburger', expected: 'reachable via More drawer or hamburger' })
+      record(s, { id: 'MOBILE-BUG-BTN', severity: 'P1', scenario: 'Report-a-Bug reachable on mobile', observed: 'no visible Report-a-Bug button in More drawer', expected: 'Support section has Report-a-Bug button' })
     }
 
     section(s, '9  Font floor — no sub-11px text on mobile')
