@@ -255,7 +255,7 @@ export default function Deadlines() {
               URL.revokeObjectURL(url)
             }}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs transition-colors border"
-            style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.6 }}
+            style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
             title="Export deadlines as .ics calendar file"
             aria-label="Export to .ics"
           >
@@ -520,7 +520,7 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
               style={{
                 width: 18, height: 18, borderRadius: 'var(--radius-sm)',
                 border: `1.5px solid ${selectedIds?.has(item.id) ? 'var(--teal)' : 'var(--border-default)'}`,
-                background: selectedIds?.has(item.id) ? 'var(--teal)' : 'transparent',
+                background: selectedIds?.has(item.id) ? 'var(--teal-solid)' : 'transparent',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 padding: 0, transition: 'all 150ms ease', flexShrink: 0,
               }}
@@ -552,7 +552,7 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
         <span style={{
           fontSize: 'var(--text-small)',
           color: 'var(--teal)',
-          opacity: 0.55,
+          opacity: 0.85,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
         }}>
           {item.project ? (projectMap.get(item.project) || item.project) : ''}
@@ -585,7 +585,7 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
             </div>
           ) : (
-            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>—</span>
           )}
         </div>
 
@@ -599,7 +599,7 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
               size="sm"
             />
           ) : (
-            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>—</span>
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>—</span>
           )}
         </div>
 
@@ -607,7 +607,7 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
         <span style={{
           fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
           color: item.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
-          opacity: 0.7,
+          opacity: 0.85,
         }}>
           {item.type === 'milestone' ? 'Milestone' : 'Task'}
         </span>
@@ -624,7 +624,7 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
             style={{
               width: 18, height: 18, borderRadius: 'var(--radius-sm)',
               border: `1.5px solid ${selectedIds?.has(item.id) ? 'var(--teal)' : 'var(--border-default)'}`,
-              background: selectedIds?.has(item.id) ? 'var(--teal)' : 'transparent',
+              background: selectedIds?.has(item.id) ? 'var(--teal-solid)' : 'transparent',
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: 0, transition: 'all 150ms ease', flexShrink: 0, marginTop: 2,
             }}
@@ -712,7 +712,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onDueDateCh
         <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
           {title}
         </span>
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.35 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
           {items.length}
         </span>
         <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
@@ -900,7 +900,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded px-1"
               style={{ background: 'none', border: 'none', cursor: 'pointer' }}
             >
-              <Pencil size={9} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+              <Pencil size={9} style={{ color: 'var(--slate)', opacity: 0.75 }} />
             </button>
           </div>
           <p style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', margin: 0 }}>
@@ -913,7 +913,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {isMilestone && item.future_note && !isDueSoon && !isDone && (
         <div className="ml-8 mr-3 mt-0.5 mb-1 flex items-center gap-1.5">
           <Clock size={9} style={{ color: 'var(--gold)', opacity: 0.4 }} />
-          <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4 }}>
+          <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
             Future Me note attached
           </span>
           <button
@@ -921,7 +921,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded px-1"
             style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <Pencil size={8} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+            <Pencil size={8} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           </button>
         </div>
       )}
@@ -1033,7 +1033,7 @@ function UpcomingConferencesSection() {
         >
           Upcoming Conferences
         </span>
-        <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.7 }}>
+        <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.85 }}>
           ({conferences.length})
         </span>
       </div>

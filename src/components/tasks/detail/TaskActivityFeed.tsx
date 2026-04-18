@@ -167,10 +167,10 @@ function SystemItem({ entry }: { entry: ActivityEntry }) {
   return (
     <div className="flex items-start gap-2 py-1 px-1">
       <Circle size={5} className="flex-shrink-0 mt-1.5" style={{ color: 'var(--teal)', opacity: 0.3, fill: 'var(--teal)' }} />
-      <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6, flex: 1 }}>
+      <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75, flex: 1 }}>
         {entry.description}
       </span>
-      <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.3 }}>
+      <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.75 }}>
         {formatRelativeTime(entry.timestamp)}
       </span>
     </div>

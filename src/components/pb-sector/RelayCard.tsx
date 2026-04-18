@@ -77,8 +77,8 @@ export default function RelayCard() {
         )}
         <span style={{ marginLeft: 'auto' }}>
           {expanded
-            ? <ChevronUp size={12} style={{ color: 'var(--slate)', opacity: 0.3 }} />
-            : <ChevronDown size={12} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+            ? <ChevronUp size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            : <ChevronDown size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           }
         </span>
       </button>
@@ -115,7 +115,7 @@ export default function RelayCard() {
                     }}>
                       {msg.from}
                     </span>
-                    <span style={{ color: 'var(--slate)', opacity: 0.4 }}>-&gt;</span>
+                    <span style={{ color: 'var(--slate)', opacity: 0.75 }}>-&gt;</span>
                     <span style={{
                       color: 'var(--teal)',
                       fontFamily: 'JetBrains Mono, monospace',
@@ -184,7 +184,7 @@ export default function RelayCard() {
                         <option value="work">work</option>
                         <option value="home">home</option>
                       </select>
-                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4, alignSelf: 'center' }}>-&gt;</span>
+                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, alignSelf: 'center' }}>-&gt;</span>
                       <select
                         value={to}
                         onChange={(e) => setTo(e.target.value)}

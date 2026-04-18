@@ -260,7 +260,7 @@ export default function Projects() {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
                 style={{
                   fontWeight: 500,
-                  background: viewMode === 'list' ? 'var(--teal)' : 'transparent',
+                  background: viewMode === 'list' ? 'var(--teal-solid)' : 'transparent',
                   color: viewMode === 'list' ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                   border: 'none',
                   transition: 'all 0.15s',
@@ -274,7 +274,7 @@ export default function Projects() {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
                 style={{
                   fontWeight: 500,
-                  background: viewMode === 'pipeline' ? 'var(--teal)' : 'transparent',
+                  background: viewMode === 'pipeline' ? 'var(--teal-solid)' : 'transparent',
                   color: viewMode === 'pipeline' ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                   border: 'none',
                   transition: 'all 0.15s',
@@ -298,7 +298,7 @@ export default function Projects() {
                     fontWeight: 'var(--label-weight)',
                     fontSize: 'var(--label-size)',
                     borderRadius: 'var(--radius-md)',
-                    background: activeCategory === f.key ? 'var(--teal)' : 'transparent',
+                    background: activeCategory === f.key ? 'var(--teal-solid)' : 'transparent',
                     color: activeCategory === f.key ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                     border: activeCategory === f.key ? '1px solid var(--teal)' : '1px solid transparent',
                     transition: 'all 0.15s',
@@ -330,7 +330,7 @@ export default function Projects() {
                 style={{
                   fontSize: 'var(--label-size)',
                   fontWeight: 'var(--label-weight)',
-                  background: showDeps ? 'var(--teal)' : 'transparent',
+                  background: showDeps ? 'var(--teal-solid)' : 'transparent',
                   color: showDeps ? 'var(--ink-bright, #fff)' : 'var(--teal)',
                   border: '1px solid rgba(45, 138, 138, 0.2)',
                   transition: 'all 0.2s',
@@ -427,7 +427,7 @@ export default function Projects() {
                               style={{
                                 fontSize: 'var(--label-size)',
                                 color: 'var(--slate)',
-                                opacity: 0.35,
+                                opacity: 0.75,
                                 flexShrink: 0,
                               }}
                             >
@@ -499,7 +499,7 @@ export default function Projects() {
                                   <span style={{
                                     fontSize: '11px',
                                     color: 'var(--slate)',
-                                    opacity: 0.5,
+                                    opacity: 0.75,
                                     display: 'block',
                                     marginTop: '1px',
                                   }}>
@@ -552,7 +552,7 @@ export default function Projects() {
                                         width: 4,
                                         height: 4,
                                         borderRadius: 'var(--radius-circle)',
-                                        background: si <= currentIdx ? 'var(--teal)' : 'var(--border-subtle)',
+                                        background: si <= currentIdx ? 'var(--teal-solid)' : 'var(--border-subtle)',
                                         opacity: si <= currentIdx ? 0.8 : 0.4,
                                       }}
                                     />
@@ -651,7 +651,7 @@ export default function Projects() {
                                   <span style={{
                                     fontSize: '11px',
                                     color: 'var(--slate)',
-                                    opacity: 0.5,
+                                    opacity: 0.75,
                                     display: 'block',
                                     marginTop: '1px',
                                   }}>
@@ -783,7 +783,7 @@ export default function Projects() {
                     width: '8px',
                     height: '8px',
                     borderRadius: 'var(--radius-circle)',
-                    background: 'var(--teal)',
+                    background: 'var(--teal-solid)',
                     border: '2px solid var(--cream)',
                   }}
                 />

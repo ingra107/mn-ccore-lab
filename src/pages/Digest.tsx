@@ -197,7 +197,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                 className="text-xs"
                 style={{
                   color: 'var(--slate)',
-                  opacity: 0.6,
+                  opacity: 0.75,
                 }}
               >
                 {formatPubDate(paper.pub_date)}
@@ -513,7 +513,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                         </span>
                         <span
                           className="text-xs"
-                          style={{ color: 'var(--slate)', opacity: 0.5 }}
+                          style={{ color: 'var(--slate)', opacity: 0.75 }}
                         >
                           {formatMediumDate(c.created_at)}
                         </span>
@@ -561,7 +561,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
               disabled={!commentText.trim() || createComment.isPending}
               className="cursor-pointer p-1.5 rounded-md transition-colors"
               style={{
-                background: commentText.trim() ? 'var(--teal)' : 'transparent',
+                background: commentText.trim() ? 'var(--teal-solid)' : 'transparent',
                 color: commentText.trim() ? 'var(--cream)' : 'var(--slate)',
                 border: 'none',
                 opacity: commentText.trim() ? 1 : 0.3,
@@ -731,7 +731,7 @@ export default function Digest() {
           }}
         />
       </div>
-      <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+      <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
         {statusCounts.saved} saved · {statusCounts.new} unread · {statusCounts.all} total
       </span>
     </div>
@@ -812,7 +812,7 @@ export default function Digest() {
 
           {/* Search within papers */}
           <div className="mb-4 relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
             <input
               type="text"
               value={searchQuery}
@@ -872,7 +872,7 @@ export default function Digest() {
                 className="cursor-pointer rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5"
                 style={{
                   fontWeight: forYouFilter ? 600 : 400,
-                  background: forYouFilter ? 'var(--teal)' : 'rgba(0, 128, 128, 0.06)',
+                  background: forYouFilter ? 'var(--teal-solid)' : 'rgba(0, 128, 128, 0.06)',
                   color: forYouFilter ? 'var(--cream)' : 'var(--teal)',
                   border: forYouFilter
                     ? '1px solid var(--teal)'
@@ -987,7 +987,7 @@ export default function Digest() {
           ) : filteredPapers.length === 0 ? (
             searchQuery ? (
               <div className="text-center py-12">
-                <Search size={32} style={{ color: 'var(--slate)', opacity: 0.2, margin: '0 auto var(--sp-sm)' }} />
+                <Search size={32} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-sm)' }} />
                 <p className="text-sm" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   No papers matching "{searchQuery}"
                 </p>

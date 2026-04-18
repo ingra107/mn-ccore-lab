@@ -80,7 +80,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           style={{
             fontSize: '11px',
             color: 'var(--slate)',
-            opacity: 0.6,
+            opacity: 0.75,
           }}
         >
           {pi.name.split(' ').pop()}

@@ -164,7 +164,7 @@ export default function ProjectActivity({ project, isPi }: ProjectActivityProps)
                         style={{
                           fontSize: '10px',
                           color: 'var(--slate)',
-                          opacity: 0.35,
+                          opacity: 0.75,
                         }}
                       >
                         from {formatMediumDate(item.meetingDate)}

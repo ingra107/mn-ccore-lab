@@ -485,7 +485,7 @@ export default function MeetingDetail() {
                       <button
                         onClick={handleBatchComplete}
                         className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
-                        style={{ background: 'var(--teal)', color: 'white', border: 'none', cursor: 'pointer' }}
+                        style={{ background: 'var(--teal-solid)', color: 'white', border: 'none', cursor: 'pointer' }}
                       >
                         <CheckCircle2 size={12} />
                         Complete All
@@ -757,7 +757,7 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
 
   return (
     <div ref={setNodeRef} style={style} className="flex items-start gap-2 py-2" {...attributes}>
-      <button {...listeners} className="cursor-grab active:cursor-grabbing mt-1 flex-shrink-0" style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.3 }}>
+      <button {...listeners} className="cursor-grab active:cursor-grabbing mt-1 flex-shrink-0" style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}>
         <GripVertical size={14} />
       </button>
       <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
@@ -788,7 +788,7 @@ function SortableActionItem({ item, onToggle, selected, onToggleSelect }: { item
       <button
         {...listeners}
         className="flex-shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover/action:opacity-100 transition-opacity"
-        style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.3 }}
+        style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}
       >
         <GripVertical size={14} />
       </button>
@@ -854,7 +854,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
               height: 16,
               borderRadius: 'var(--radius-sm)',
               border: `1.5px solid ${selected ? 'var(--teal)' : 'var(--border-default)'}`,
-              background: selected ? 'var(--teal)' : 'transparent',
+              background: selected ? 'var(--teal-solid)' : 'transparent',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -894,7 +894,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
             <div style={{ width: 16, height: 16 }}>
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
             </div>
-            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>{person.name.split(' ')[0]}</span>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>{person.name.split(' ')[0]}</span>
             <HoverCard
               data={memberData}
               isVisible={hoverCard.isVisible}
@@ -980,7 +980,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             className="flex-shrink-0 p-2 rounded-lg cursor-pointer"
-            style={{ background: 'var(--teal)', color: 'white', border: 'none' }}
+            style={{ background: 'var(--teal-solid)', color: 'white', border: 'none' }}
           >
             <Plus size={14} />
           </motion.button>
@@ -988,7 +988,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
       </div>
 
       {!isAuthenticated && import.meta.env.PROD && (
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, marginLeft: '22px', marginTop: '4px', display: 'inline-block' }}>
+        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, marginLeft: '22px', marginTop: '4px', display: 'inline-block' }}>
           <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to add action items
         </span>
       )}
@@ -1025,7 +1025,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
 
       {/* Hint text */}
       {!text && (
-        <div className="flex items-center gap-3 mt-1.5 ml-6" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.35 }}>
+        <div className="flex items-center gap-3 mt-1.5 ml-6" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
           <span>@name</span>
           <span>#project</span>
           <span>p1-p3</span>
@@ -1070,7 +1070,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
           />
         </div>
         {!isAuthenticated && import.meta.env.PROD && !text.trim() && (
-          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
             <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to add items
           </span>
         )}

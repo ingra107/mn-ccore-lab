@@ -221,7 +221,7 @@ function TaskCheckbox({ checked, onChange }: { checked: boolean; onChange: () =>
         height: 18,
         borderRadius: 'var(--radius-sm)',
         border: checked ? '2px solid var(--teal)' : '2px solid var(--slate)',
-        background: checked ? 'var(--teal)' : 'transparent',
+        background: checked ? 'var(--teal-solid)' : 'transparent',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

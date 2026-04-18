@@ -45,7 +45,7 @@ function SortableEveningItem({ task, onComplete, onClickTitle }: {
       >
         {/* Drag handle */}
         <div {...listeners} style={{ cursor: 'grab', touchAction: 'none' }}>
-          <GripVertical size={14} style={{ color: 'var(--slate)', opacity: 0.2 }} />
+          <GripVertical size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         </div>
 
         {/* Complete */}
@@ -54,7 +54,7 @@ function SortableEveningItem({ task, onComplete, onClickTitle }: {
           className="flex-shrink-0 hover:scale-110 transition-transform"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <Circle size={16} style={{ color: 'var(--slate)', opacity: 0.25 }} />
+          <Circle size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         </button>
 
         {/* Title */}

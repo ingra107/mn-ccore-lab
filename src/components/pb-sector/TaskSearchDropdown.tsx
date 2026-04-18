@@ -69,7 +69,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                 }}
               />
               <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 'var(--sp-xs)', minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X size={16} style={{ color: 'var(--slate)', opacity: 0.5 }} />
+                <X size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
               </button>
             </div>
 
@@ -92,7 +92,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                     {/* Priority dot */}
                     <div style={{
                       width: 6, height: 6, borderRadius: 'var(--radius-circle)', flexShrink: 0,
-                      background: task.priority === 'urgent' ? 'var(--maroon)' : task.priority === 'high' ? '#e67e22' : task.priority === 'medium' ? 'var(--gold)' : 'var(--slate)',
+                      background: task.priority === 'urgent' ? 'var(--maroon-solid)' : task.priority === 'high' ? '#e67e22' : task.priority === 'medium' ? 'var(--gold)' : 'var(--slate)',
                     }} />
 
                     <div className="flex-1 min-w-0">

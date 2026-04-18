@@ -215,7 +215,7 @@ export default function CalendarPage() {
         {Object.entries(eventColors).map(([type, config]) => (
           <div key={type} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: config.color }} />
-            <span className="text-[10px] capitalize" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+            <span className="text-[10px] capitalize" style={{ color: 'var(--slate)', opacity: 0.75 }}>
               {type === 'task' ? 'Task Due' : type}s
             </span>
           </div>
@@ -273,7 +273,7 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
           const dayEvents = eventsByDate.get(dateStr) || []
           return (
             <div key={dateStr} className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
-              <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
+              <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent' }}>
                 {dayNum}
               </span>
               <div className="flex flex-col gap-0.5 mt-0.5">
@@ -338,7 +338,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
             {/* Day header */}
             <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{dayNames[i]}</div>
-              <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8' : ''}`} style={{ color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal)' : 'transparent' }}>
+              <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8' : ''}`} style={{ color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent' }}>
                 {dayNum}
               </div>
             </div>
@@ -358,7 +358,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
                 )
               })}
               {dayEvents.length === 0 && (
-                <div className="text-center py-4 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.3 }}>—</div>
+                <div className="text-center py-4 text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>—</div>
               )}
             </div>
           </div>
@@ -451,7 +451,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
         return (
           <div key={date}>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: isToday ? 'var(--teal)' : 'var(--slate)', opacity: isToday ? 1 : 0.3 }} />
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: isToday ? 'var(--teal-solid)' : 'var(--slate)', opacity: isToday ? 1 : 0.3 }} />
               <span className="text-sm font-semibold" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
                 {isToday ? 'Today' : formatLongDate(date)}
               </span>

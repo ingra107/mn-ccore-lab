@@ -391,7 +391,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         <div className="flex items-center gap-4 mt-2 flex-wrap">
           {pendingTasks.length > 0 && (
             <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--teal)', fontWeight: 500 }}>
-              <span style={{ width: 5, height: 5, borderRadius: 'var(--radius-circle)', background: 'var(--teal)' }} />
+              <span style={{ width: 5, height: 5, borderRadius: 'var(--radius-circle)', background: 'var(--teal-solid)' }} />
               {pendingTasks.length} active
             </span>
           )}
@@ -399,7 +399,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             const overdue = pendingTasks.filter(t => t.due_date && t.due_date < new Date().toISOString().split('T')[0])
             return overdue.length > 0 ? (
               <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--maroon)', fontWeight: 500 }}>
-                <span style={{ width: 5, height: 5, borderRadius: 'var(--radius-circle)', background: 'var(--maroon)' }} />
+                <span style={{ width: 5, height: 5, borderRadius: 'var(--radius-circle)', background: 'var(--maroon-solid)' }} />
                 {overdue.length} overdue
               </span>
             ) : null
@@ -442,7 +442,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     style={{
                       fontSize: '10px',
                       color: 'var(--slate)',
-                      opacity: 0.6,
+                      opacity: 0.75,
                       textTransform: 'uppercase',
                       letterSpacing: '0.06em',
                     }}
@@ -882,7 +882,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 style={{
                   fontSize: '10px',
                   color: 'var(--slate)',
-                  opacity: 0.6,
+                  opacity: 0.75,
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                   display: 'block',
@@ -1004,7 +1004,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   style={{
                     fontSize: '10px',
                     color: 'var(--slate)',
-                    opacity: 0.6,
+                    opacity: 0.75,
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     display: 'block',
@@ -1148,7 +1148,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               <button
                 onClick={() => setShowCreateTask(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-                style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
+                style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
               >
                 <Plus size={13} />
                 New Task
@@ -1173,7 +1173,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       style={{
                         width: 18, height: 18, borderRadius: 'var(--radius-sm)',
                         border: `1.5px solid ${selectedIds.has(task.id) ? 'var(--teal)' : 'var(--border-default)'}`,
-                        background: selectedIds.has(task.id) ? 'var(--teal)' : 'transparent',
+                        background: selectedIds.has(task.id) ? 'var(--teal-solid)' : 'transparent',
                         cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                         padding: 0, transition: 'all 150ms ease', flexShrink: 0, marginTop: 10,
                       }}

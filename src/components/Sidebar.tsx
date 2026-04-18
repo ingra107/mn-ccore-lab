@@ -256,7 +256,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                     <span
                       className="ml-auto text-xs px-1.5 py-0.5 rounded-full"
                       style={{
-                        backgroundColor: 'var(--maroon)',
+                        backgroundColor: 'var(--maroon-solid)',
                         color: 'var(--ink-bright, #fff)',
                         animation: item.to === '/my-tasks' ? 'badge-pulse 2s ease-in-out infinite' : undefined,
                       }}
@@ -278,7 +278,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           <button
             onClick={() => setShowBugReport(true)}
             className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5 w-full cursor-pointer"
-            style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.6, background: 'none', border: 'none', textAlign: 'left' }}
+            style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.85, background: 'none', border: 'none', textAlign: 'left' }}
           >
             <Bug size={16} />
             <span>Report a Bug</span>
@@ -294,13 +294,13 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             to="/search"
             prefetch="intent"
             className="flex items-center gap-2.5 px-2.5 py-2 mb-1 rounded-md text-sm transition-colors"
-            style={{ color: 'var(--slate)', opacity: 0.6 }}
+            style={{ color: 'var(--slate)', opacity: 0.75 }}
           >
             <Search size={16} />
             <span className="flex-1">Search</span>
             <kbd
               className="text-[10px] px-1.5 py-0.5 rounded border"
-              style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
+              style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)', color: 'var(--slate)', opacity: 1 }}
             >
               {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+K
             </kbd>
@@ -332,7 +332,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             </div>
             <div className="min-w-0">
               <div className="text-xs font-medium truncate">{person.name}</div>
-              <div className="text-[10px] truncate" style={{ color: 'var(--slate)', opacity: 0.6 }}>{user?.email}</div>
+              <div className="text-[10px] truncate" style={{ color: 'var(--slate)', opacity: 0.75 }}>{user?.email}</div>
             </div>
           </Link>
         )}

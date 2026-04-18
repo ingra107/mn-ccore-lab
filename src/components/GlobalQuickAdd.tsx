@@ -155,7 +155,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                   style={{
                     fontSize: '10px',
                     color: 'var(--slate)',
-                    opacity: 0.4,
+                    opacity: 0.75,
                     background: 'var(--ice)',
                     padding: '1px 5px',
                     borderRadius: 'var(--radius-sm)',
@@ -171,7 +171,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                     border: 'none',
                     cursor: 'pointer',
                     color: 'var(--slate)',
-                    opacity: 0.45,
+                    opacity: 0.75,
                     padding: '2px',
                     lineHeight: 1,
                     marginLeft: '4px',

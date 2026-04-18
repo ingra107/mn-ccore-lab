@@ -176,7 +176,7 @@ function LinkForm({
           onClick={() => canSave && onSave({ url: url.trim(), desc: desc.trim() || null })}
           disabled={!canSave}
           style={{
-            background: canSave ? 'var(--teal)' : 'var(--border-subtle)',
+            background: canSave ? 'var(--teal-solid)' : 'var(--border-subtle)',
             border: 'none',
             borderRadius: 'var(--radius-md)',
             padding: '4px 10px',

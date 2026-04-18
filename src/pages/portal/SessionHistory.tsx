@@ -60,7 +60,7 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.6, marginBottom: 'var(--sp-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.75, marginBottom: 'var(--sp-sm)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         Sessions per day (last 30 days)
       </div>
       <div style={{ position: 'relative' }}>
@@ -169,7 +169,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
         border: '1px solid var(--border-subtle)',
       }}
     >
-      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--sp-xs)' }}>
+      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--sp-xs)' }}>
         {label}
       </div>
       <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2, fontFamily: 'var(--font-display)' }}>
@@ -274,7 +274,7 @@ export default function SessionHistory() {
 
           {/* Search */}
           <div style={{ position: 'relative', minWidth: 160 }}>
-            <Search size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)', opacity: 0.4 }} />
+            <Search size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)', opacity: 0.75 }} />
             <input
               type="text"
               value={searchTerm}
@@ -505,7 +505,7 @@ export default function SessionHistory() {
                             </span>
                           </>
                         ) : (
-                          <span style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.4 }}>--</span>
+                          <span style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.75 }}>--</span>
                         )}
                       </div>
 
@@ -557,7 +557,7 @@ export default function SessionHistory() {
 
       {/* Machine legend */}
       {sessions.length > 0 && (
-        <div style={{ marginTop: 20, padding: 'var(--sp-md) var(--sp-lg)', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', display: 'flex', gap: 'var(--sp-lg)', alignItems: 'center', fontSize: 11, color: 'var(--slate)', opacity: 0.6 }}>
+        <div style={{ marginTop: 20, padding: 'var(--sp-md) var(--sp-lg)', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', display: 'flex', gap: 'var(--sp-lg)', alignItems: 'center', fontSize: 11, color: 'var(--slate)', opacity: 0.75 }}>
           <Monitor size={12} />
           <span>
             Machines: {[...new Set(sessions.filter(s => s.machine).map(s => s.machine))].join(', ') || 'none recorded'}

@@ -120,7 +120,7 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
           <span style={{
             fontSize: 'var(--text-small)',
             color: 'var(--slate)',
-            opacity: 0.6,
+            opacity: 0.75,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap' as const,

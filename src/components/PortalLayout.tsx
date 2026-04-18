@@ -94,7 +94,7 @@ export default function PortalLayout() {
       <a
         href="#portal-main"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded"
-        style={{ background: 'var(--teal)', color: 'var(--ink-bright, #fff)' }}
+        style={{ background: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)' }}
       >
         Skip to content
       </a>
@@ -266,7 +266,7 @@ export default function PortalLayout() {
         className="fixed right-5 z-40 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
         style={{
           bottom: 'var(--fab-stack-1)',
-          background: 'var(--teal)',
+          background: 'var(--teal-solid)',
           color: 'var(--ink-bright, #fff)',
           border: 'none',
           cursor: 'pointer',
@@ -332,7 +332,7 @@ export default function PortalLayout() {
               width: '6px',
               height: '6px',
               borderRadius: '50%',
-              backgroundColor: 'var(--teal)',
+              backgroundColor: 'var(--teal-solid)',
               animation: 'chord-dot-pulse 1s ease-in-out infinite',
               flexShrink: 0,
             }}

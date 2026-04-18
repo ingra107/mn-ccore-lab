@@ -67,7 +67,7 @@ export default function PageHeader({
                   fontSize: 11,
                   fontWeight: 600,
                   color: 'var(--slate)',
-                  opacity: 0.6,
+                  opacity: 0.75,
                   backgroundColor: 'var(--border-subtle)',
                   borderRadius: 'var(--radius-full)',
                   padding: '2px 8px',

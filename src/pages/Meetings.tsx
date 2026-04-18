@@ -205,7 +205,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
               )
             })}
             {(meeting.attendees?.length ?? 0) > 5 && (
-              <span className="text-xs pl-2" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+              <span className="text-xs pl-2" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                 +{(meeting.attendees?.length ?? 0) - 5}
               </span>
             )}
@@ -754,7 +754,7 @@ export default function Meetings() {
                     onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
                     onClick={() => { setSelectedMeetingId(meeting.id); setFocusedIndex(idx); setMobileShowDetail(true) }}>
                     <div className="flex items-center justify-between gap-2">
-                      <span style={{ fontSize: '11px', color: isNext ? 'var(--teal)' : 'var(--slate)', opacity: isNext ? 1 : 0.6, flexShrink: 0, fontWeight: isNext ? 600 : 400, minWidth: '46px' }}>
+                      <span style={{ fontSize: '11px', color: isNext ? 'var(--teal)' : 'var(--slate)', opacity: isNext ? 1 : 0.85, flexShrink: 0, fontWeight: isNext ? 600 : 400, minWidth: '46px' }}>
                         {formatListDate(meeting.date)}
                       </span>
                       {actionCount > 0 && (
@@ -838,7 +838,7 @@ export default function Meetings() {
                                 <div style={{ width: 18, height: 18 }}><Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="sm-icon" /></div>
                                 <span className="text-xs" style={{ color: 'var(--slate)' }}>{info.name}</span>
                               </div>
-                              {item.dueDate && <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>due {formatListDate(item.dueDate)}</span>}
+                              {item.dueDate && <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>due {formatListDate(item.dueDate)}</span>}
                               {item.projectSlug && <span className="inline-block px-2 py-0.5 rounded-full text-xs" style={{ background: 'var(--ice)', color: 'var(--slate)', fontSize: '10px' }}>{item.projectSlug}</span>}
                             </div>
                           </div>
@@ -915,7 +915,7 @@ export default function Meetings() {
                               <div className="flex flex-wrap items-center gap-3 mt-1">
                                 <div className="flex items-center gap-1.5">
                                   <div style={{ width: 16, height: 16 }}><Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="2xs" /></div>
-                                  <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.6 }}>{info.name}</span>
+                                  <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>{info.name}</span>
                                 </div>
                                 <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>from {formatListDate(item.meetingDate)}</span>
                               </div>
@@ -956,7 +956,7 @@ export default function Meetings() {
         .dark select, .dark input[type="date"] { color-scheme: dark; }
         .mtg-section-label {
           font-size: 10px; font-weight: 600; text-transform: uppercase;
-          letter-spacing: 0.06em; color: var(--slate); opacity: 0.6;
+          letter-spacing: 0.06em; color: var(--slate); opacity: 0.85;
         }
         .mtg-section-label--gold { color: var(--gold) !important; opacity: 1 !important; }
         .carried-count-badge {

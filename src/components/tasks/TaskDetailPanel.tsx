@@ -721,7 +721,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
               onClick={() => { if (filename && url) addFile.mutate({ filename, url }) }}
               disabled={!filename || !url}
               className="text-[11px] px-3 py-1 rounded-lg font-medium"
-              style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer', opacity: filename && url ? 1 : 0.4 }}
+              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer', opacity: filename && url ? 1 : 0.4 }}
             >
               Add
             </button>
@@ -755,7 +755,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
               </a>
               <button
                 onClick={() => deleteFile.mutate(f.id)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.3, padding: '2px' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.75, padding: '2px' }}
               >
                 <Trash2 size={12} />
               </button>
@@ -764,7 +764,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
         </div>
       ) : !showAdd ? (
         <div style={{ textAlign: 'center', padding: 'var(--sp-xl) var(--sp-lg)' }}>
-          <Upload size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-sm)' }} />
+          <Upload size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-sm)' }} />
           <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', margin: 0 }}>
             No attachments yet. Click "Add Link" to attach a document.
           </p>

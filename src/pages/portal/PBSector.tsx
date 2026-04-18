@@ -497,7 +497,7 @@ export default function PBSector() {
               onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.boxShadow = '0 0 0 0px rgba(45,138,138,0)' }}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center gap-2" style={{
-              fontSize: '10px', color: 'var(--slate)', opacity: 0.35,
+              fontSize: '10px', color: 'var(--slate)', opacity: 0.75,
             }}>
               <kbd className="px-1.5 py-0.5 rounded" style={{ border: '1px solid var(--border-subtle)', fontSize: '10px' }}>C</kbd>
               Enter to capture

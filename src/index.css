@@ -6,7 +6,10 @@
   /* Colors — OKLCH for perceptual uniformity + dark mode via lightness math */
   --ink: oklch(0.15 0.02 250);           /* #0f1923 */
   --ink-bright: oklch(1 0 0);            /* #ffffff — white fill on dark surfaces (hero, badges, CTAs) */
-  --slate: oklch(0.35 0.03 230);         /* #2c3e50 */
+  /* --slate explicit hex (2026-04-18 axe AA): see dark-mode note. Darker
+     slate gives ~4.8:1 through --ink-label=0.70 on sidebar-bg (#d7d7d7)
+     and still passes AA at full opacity on #fff (7:1+). */
+  --slate: #1a2939;
   --gold: oklch(0.73 0.12 85);           /* #c9a84c */
   --gold-light: oklch(0.95 0.01 85);     /* #f0efe8 */
   --cream: oklch(1.00 0 0);              /* #ffffff */
@@ -14,6 +17,14 @@
   --ice: oklch(0.97 0.005 250);          /* #f4f5f7 */
   --teal: oklch(0.55 0.1 190);           /* #2d8a8a */
   --teal-subtle: oklch(0.45 0.04 190);  /* desaturated teal for bulk/ambient use */
+  /* --teal-solid: darker teal for solid button/badge backgrounds where
+     white text (ink-bright) is layered on top. Keeps WCAG AA (~6:1 with
+     #fff) while plain --teal stays bright enough for text-on-dark uses.
+     Same value both light + dark because white-on-teal-button has the
+     same requirement regardless of page bg. 2026-04-18 axe AA.
+     Hex (not OKLCH) so axe-core 4.11 grades the literal sRGB it sees. */
+  --teal-solid: #0d6f68;      /* 6.1:1 with #fff */
+  --maroon-solid: #8a1f2e;    /* 7.1:1 with #fff */
   --orange: oklch(0.6 0.18 45);          /* #c2410c */
   --green: oklch(0.6 0.18 145);          /* #16a34a */
   --green-light: oklch(0.70 0.17 145);   /* #22c55e */
@@ -98,17 +109,27 @@
 .dark {
   --ink: oklch(0.92 0.01 250);           /* #e2e8f0 */
   --ink-bright: oklch(1.00 0 0);         /* #ffffff */
-  --slate: oklch(0.7 0.005 250);         /* reduced chroma, minimal warmth */
-  --gold: oklch(0.73 0.12 85);           /* #c9a84c */
-  --gold-light: oklch(0.18 0 0);         /* true achromatic */
-  --cream: oklch(0.12 0 0);              /* true achromatic, zero hue */
-  --maroon: oklch(0.65 0.15 20);         /* #e85d7a */
-  --ice: oklch(0.14 0 0);                /* true achromatic */
-  --teal: oklch(0.65 0.07 190);           /* desaturated teal — less wash */
-  --teal-subtle: oklch(0.55 0.04 190);  /* desaturated teal for bulk/ambient use */
-  --orange: oklch(0.65 0.18 45);         /* #e8713a */
-  --green: oklch(0.78 0.18 145);         /* #4ade80 */
-  --green-light: oklch(0.78 0.18 145);   /* #4ade80 */
+  /* --slate explicit hex instead of OKLCH (2026-04-18 axe AA): axe-core
+     4.11 parses OKLCH via a fallback path that clamps to a darker sRGB
+     than the browser renders — measured #737476 at oklch(0.80). Using
+     an sRGB-native hex gives axe the right value to grade against. */
+  /* Color variables pinned to hex sRGB (not OKLCH) so axe-core 4.11
+     grades the exact on-screen color. OKLCH in getComputedStyle returns
+     the literal functional value, which axe's parser resolves to a much
+     darker sRGB than the browser renders. 2026-04-18 axe AA. */
+  --slate: #b0b5b9;
+  --gold: #dcb355;          /* was oklch(0.73 0.12 85) — brighter for AA on #0b0b0b */
+  --gold-light: oklch(0.18 0 0);         /* true achromatic — not used as text */
+  --cream: oklch(0.12 0 0);              /* dark body bg in dark mode */
+  --maroon: #f0737e;         /* was oklch(0.65 0.15 20) — brighter for AA */
+  --ice: oklch(0.14 0 0);                /* true achromatic — bg use */
+  --teal: #5cbcb4;           /* was oklch(0.65 0.07 190) — brighter for AA */
+  --teal-subtle: #4a9a95;
+  --teal-solid: #0d6f68;    /* shared with light mode — axe-safe hex */
+  --maroon-solid: #8a1f2e;
+  --orange: #f08a5b;         /* brighter for AA on near-black */
+  --green: #6ee89a;          /* brighter for AA */
+  --green-light: #6ee89a;
 
   --muted: color-mix(in oklch, var(--ink) 70%, transparent);
 
@@ -287,9 +308,13 @@ html[data-density="relaxed"] {
 .dark {
   --field-bg: rgba(255, 255, 255, 0.03);
   --field-bg-hover: rgba(255, 255, 255, 0.06);
-  /* Dark mode: restore original visual receding hierarchy (dark bg has contrast headroom) */
-  --ink-label: 0.55;
-  --ink-hint: 0.40;
+  /* Dark mode labels/hints bumped to meet WCAG AA (2026-04-18).
+     --ink-label 0.55 -> 0.85: slate * 0.55 on #040404 was 2.92:1 (group
+     labels, kbd, pill counts). Slate is already quite bright (oklch 0.80);
+     a higher alpha stays legible without blown-out glare.
+     --ink-hint 0.40 -> 0.65: dateline hints were 2.06:1. */
+  --ink-label: 0.85;
+  --ink-hint: 0.65;
   /* Sidebar: DARKER than content (3-plane depth — reverted Phase 31.5 elevated attempt) */
   --sidebar-bg: color-mix(in oklch, var(--cream), black 12%);
 

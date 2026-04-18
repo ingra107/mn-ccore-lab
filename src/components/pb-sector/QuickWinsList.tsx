@@ -42,7 +42,7 @@ function SortableQuickWin({ task, onComplete, onClickTitle }: {
         style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}
       >
         <div {...listeners} style={{ cursor: 'grab', touchAction: 'none' }}>
-          <GripVertical size={12} style={{ color: 'var(--slate)', opacity: 0.2 }} />
+          <GripVertical size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         </div>
 
         <button
@@ -88,7 +88,7 @@ export default function QuickWinsList({ tasks, onComplete, onClickTitle, onAddCl
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-2">
-        <Zap size={13} style={{ color: 'var(--slate)', opacity: 0.6 }} />
+        <Zap size={13} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--slate)', opacity: 0.7 }}>
           Quick Wins
         </span>
@@ -131,8 +131,8 @@ export default function QuickWinsList({ tasks, onComplete, onClickTitle, onAddCl
           }}
           whileHover={{ backgroundColor: 'rgba(100,116,139,0.03)' }}
         >
-          <Plus size={12} style={{ color: 'var(--slate)', opacity: 0.3 }} />
-          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.3 }}>
+          <Plus size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
             Add quick win
           </span>
         </motion.button>

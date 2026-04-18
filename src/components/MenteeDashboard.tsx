@@ -54,13 +54,13 @@ export default function MenteeDashboard({ slug, name }: Props) {
                 <MenteeProjectLink key={p.slug} project={p} />
               ))}
               {myProjects.length > 4 && (
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
                   +{myProjects.length - 4} more
                 </span>
               )}
             </div>
           ) : (
-            <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.4, margin: 0 }}>
+            <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, margin: 0 }}>
               No projects assigned
             </p>
           )}
@@ -96,7 +96,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
           ) : (
             <div className="flex items-center gap-1.5">
               <CheckCircle2 size={12} style={{ color: 'var(--teal)' }} />
-              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
                 All caught up ({myCompleted.length} done)
               </span>
             </div>
@@ -114,7 +114,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
           <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
             {myPubs.length}
           </div>
-          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, margin: 'var(--sp-xs) 0 0' }}>
+          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, margin: 'var(--sp-xs) 0 0' }}>
             {myPubs.filter((p) => p.status === 'Published').length} published
             {myPubs.filter((p) => p.status !== 'Published').length > 0 &&
               ` · ${myPubs.filter((p) => p.status !== 'Published').length} in progress`}

@@ -73,7 +73,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
                 className="flex-shrink-0 text-right pr-2"
                 style={{
                   width: 40,
-                  fontSize: '10px', color: 'var(--slate)', opacity: 0.25,
+                  fontSize: '10px', color: 'var(--slate)', opacity: 0.75,
                   lineHeight: `${HOUR_HEIGHT}px`,
                 }}
               >

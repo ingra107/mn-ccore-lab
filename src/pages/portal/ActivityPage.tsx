@@ -211,7 +211,7 @@ export default function ActivityPage() {
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize flex-shrink-0" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}>
                           {item.type.replace('_', ' ')}
                         </span>
-                        <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.55, minWidth: 48, textAlign: 'right' }}>
+                        <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.75, minWidth: 48, textAlign: 'right' }}>
                           {formatRelativeTime(item.timestamp)}
                         </span>
                       </motion.div>

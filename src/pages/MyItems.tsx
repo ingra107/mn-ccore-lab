@@ -327,7 +327,7 @@ function ActionItemCard({
             {/* Due date */}
             {item.due_date && (
               <>
-                <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
+                <span style={{ color: 'var(--slate)', opacity: 0.75 }}>&middot;</span>
                 <span
                   style={{
                     fontSize: 'var(--label-size)',
@@ -344,7 +344,7 @@ function ActionItemCard({
             {/* Source meeting */}
             {item.meeting_title && (
               <>
-                <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
+                <span style={{ color: 'var(--slate)', opacity: 0.75 }}>&middot;</span>
                 <span
                   style={{
                     fontSize: 'var(--label-size)',
@@ -577,7 +577,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
             {/* Due date */}
             {item.due_date && (
               <>
-                <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
+                <span style={{ color: 'var(--slate)', opacity: 0.75 }}>&middot;</span>
                 <span
                   style={{
                     fontSize: 'var(--label-size)',
@@ -594,7 +594,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
             {/* Source */}
             {item.source && (
               <>
-                <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
+                <span style={{ color: 'var(--slate)', opacity: 0.75 }}>&middot;</span>
                 <span
                   style={{
                     fontSize: 'var(--label-size)',
@@ -757,7 +757,7 @@ export default function MyItems() {
               gap: 6,
               fontSize: '12px',
               color: 'var(--slate)',
-              opacity: 0.6,
+              opacity: 0.75,
               textDecoration: 'none',
             }}
           >
@@ -842,7 +842,7 @@ export default function MyItems() {
                 textAlign: 'center',
                 fontSize: '14px',
                 color: 'var(--slate)',
-                opacity: 0.6,
+                opacity: 0.75,
               }}
             >
               No pending action items. You're all caught up.
@@ -898,7 +898,7 @@ export default function MyItems() {
                 textAlign: 'center',
                 fontSize: '14px',
                 color: 'var(--slate)',
-                opacity: 0.6,
+                opacity: 0.75,
               }}
             >
               No notifications yet.
@@ -929,7 +929,7 @@ export default function MyItems() {
                   textAlign: 'center',
                   fontSize: '14px',
                   color: 'var(--slate)',
-                  opacity: 0.6,
+                  opacity: 0.75,
                 }}
               >
                 All commitments fulfilled.

@@ -194,7 +194,7 @@ export default function MenteeMilestones() {
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
             style={{
-              background: 'var(--teal)',
+              background: 'var(--teal-solid)',
               color: 'var(--ink-bright, #fff)',
               border: 'none',
               cursor: 'pointer',
@@ -396,7 +396,7 @@ export default function MenteeMilestones() {
                     color: 'var(--green)',
                   },
                 ].map((s) => (
-                  <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
+                  <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
                     {s.label}{' '}
                     <span
                       style={{
@@ -465,9 +465,9 @@ function MenteeGroup({
         }}
       >
         {expanded ? (
-          <ChevronDown size={12} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+          <ChevronDown size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         ) : (
-          <ChevronRight size={12} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+          <ChevronRight size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         )}
         <div style={{ width: 20, height: 20, flexShrink: 0 }}>
           <Avatar
@@ -488,7 +488,7 @@ function MenteeGroup({
         >
           {person.name}
         </span>
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.35 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
           {items.length}
         </span>
         {overdueCount > 0 && (
@@ -759,12 +759,12 @@ function MilestoneRow({
                 </div>
               )}
               {!item.description && !item.notes && (
-                <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4 }}>
+                <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
                   No additional details.
                 </span>
               )}
               {item.due_date && (
-                <div style={{ marginTop: '8px', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
+                <div style={{ marginTop: '8px', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
                   Due: {item.due_date}
                   {item.completed_at && ` | Completed: ${item.completed_at.split('T')[0]}`}
                 </div>
@@ -1033,7 +1033,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
               padding: 'var(--sp-sm) var(--sp-lg)',
               borderRadius: 'var(--radius-lg)',
               border: 'none',
-              background: title.trim() ? 'var(--teal)' : 'var(--border-subtle)',
+              background: title.trim() ? 'var(--teal-solid)' : 'var(--border-subtle)',
               color: title.trim() ? 'var(--ink-bright, #fff)' : 'var(--slate)',
               fontSize: 'var(--value-size)',
               fontWeight: 500,

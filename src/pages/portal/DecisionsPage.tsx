@@ -916,7 +916,7 @@ export default function DecisionsPage() {
               onClick={() => setShowCreate(true)}
               className="flex items-center gap-2 px-4 py-2"
               style={{
-                backgroundColor: 'var(--teal)',
+                backgroundColor: 'var(--teal-solid)',
                 color: 'var(--ink-bright, #fff)',
                 border: 'none',
                 borderRadius: 'var(--radius-lg)',
@@ -1014,7 +1014,7 @@ export default function DecisionsPage() {
                   color:
                     filterTag === tc.tag ? 'var(--ink-bright, #fff)' : 'var(--teal)',
                   backgroundColor:
-                    filterTag === tc.tag ? 'var(--teal)' : 'var(--teal-hover)',
+                    filterTag === tc.tag ? 'var(--teal-solid)' : 'var(--teal-hover)',
                   border: `1px solid ${
                     filterTag === tc.tag ? 'var(--teal)' : 'var(--teal-emphasis)'
                   }`,

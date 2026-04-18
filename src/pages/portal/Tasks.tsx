@@ -325,7 +325,7 @@ export default function Tasks() {
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
-              backgroundColor: 'var(--teal)',
+              backgroundColor: 'var(--teal-solid)',
               color: 'var(--ink-bright, #fff)',
               border: 'none',
               cursor: 'pointer',
@@ -395,7 +395,7 @@ export default function Tasks() {
                 title="Toggle filters (F)"
               >
                 {activeFilterCount > 0 && (
-                  <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--teal)', flexShrink: 0 }} />
+                  <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--teal-solid)', flexShrink: 0 }} />
                 )}
                 <Filter size={10} />
                 Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}

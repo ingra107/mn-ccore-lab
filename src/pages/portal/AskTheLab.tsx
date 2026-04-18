@@ -62,7 +62,7 @@ export default function AskTheLab() {
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
+            style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
           >
             <Plus size={16} />
             New Question
@@ -84,7 +84,7 @@ export default function AskTheLab() {
             )
           })}
           <div className="relative flex-1 max-w-xs">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
             <input
               type="text"
               value={searchQuery}
@@ -169,7 +169,7 @@ function QuestionCard({
           {question.context && !expanded && (
             <p
               className="mt-1 truncate"
-              style={{ fontStyle: 'italic', fontSize: 13, color: 'var(--slate)', opacity: 0.6 }}
+              style={{ fontStyle: 'italic', fontSize: 13, color: 'var(--slate)', opacity: 0.75 }}
             >
               {question.context}
             </p>
@@ -219,7 +219,7 @@ function QuestionCard({
             {status.label}
           </span>
 
-          {expanded ? <ChevronUp size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} /> : <ChevronDown size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} />}
+          {expanded ? <ChevronUp size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} /> : <ChevronDown size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />}
         </div>
       </button>
 
@@ -311,7 +311,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                     <span style={{ fontSize: '10px', color: 'var(--gold)' }}>
                       Hermes
                     </span>
-                    <span className="ml-auto" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>
+                    <span className="ml-auto" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
                       {formatRelativeTime(answer.created_at)}
                     </span>
                   </div>
@@ -372,7 +372,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
       )}
 
       {detail.answers.length === 0 && (
-        <p className="mt-4 text-sm" style={{ color: 'var(--slate)', opacity: 0.5, fontStyle: 'italic' }}>
+        <p className="mt-4 text-sm" style={{ color: 'var(--slate)', opacity: 0.75, fontStyle: 'italic' }}>
           No answers yet. Be the first to help.
         </p>
       )}

@@ -82,7 +82,7 @@ export default function SystemHealthMiniCard() {
           {health && (
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                   Last sync
                 </span>
                 <span className="text-[10px]" style={{ color: 'var(--muted)' }}>
@@ -90,7 +90,7 @@ export default function SystemHealthMiniCard() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                   Active tasks
                 </span>
                 <span className="text-[10px]" style={{ color: 'var(--muted)' }}>
@@ -98,7 +98,7 @@ export default function SystemHealthMiniCard() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                   Active projects
                 </span>
                 <span className="text-[10px]" style={{ color: 'var(--muted)' }}>

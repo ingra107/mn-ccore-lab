@@ -447,7 +447,7 @@ export default function MyTasks() {
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
-              backgroundColor: 'var(--teal)',
+              backgroundColor: 'var(--teal-solid)',
               color: 'var(--ink-bright, #fff)',
               border: 'none',
               cursor: 'pointer',
@@ -526,7 +526,7 @@ export default function MyTasks() {
                 color: showCompleted ? 'var(--green)' : 'var(--slate)',
                 border: `1px solid ${showCompleted ? 'rgba(34,197,94,0.3)' : 'var(--border-subtle)'}`,
                 cursor: 'pointer',
-                opacity: showCompleted ? 1 : 0.5,
+                opacity: showCompleted ? 1 : 0.85,
               }}
             >
               <CheckCircle2 size={10} />
@@ -640,11 +640,11 @@ export default function MyTasks() {
               color: quickFilter === f.key ? pillColor.fg : 'var(--slate)',
               border: `1px solid ${quickFilter === f.key ? pillColor.border : 'var(--border-subtle)'}`,
               cursor: 'pointer',
-              opacity: quickFilter === f.key ? 1 : 0.6,
+              opacity: quickFilter === f.key ? 1 : 0.85,
             }}
           >
             {f.label}
-            {f.count > 0 && <span style={{ opacity: 0.7 }}>{f.count}</span>}
+            {f.count > 0 && <span style={{ opacity: 0.9 }}>{f.count}</span>}
           </button>
           )
         })}
@@ -663,10 +663,10 @@ export default function MyTasks() {
               const total = active.length || 1
               return (
                 <>
-                  {inProgress > 0 && <div style={{ width: `${(inProgress / total) * 100}%`, background: 'var(--teal)', transition: 'width 300ms ease' }} />}
+                  {inProgress > 0 && <div style={{ width: `${(inProgress / total) * 100}%`, background: 'var(--teal-solid)', transition: 'width 300ms ease' }} />}
                   {todo > 0 && <div style={{ width: `${(todo / total) * 100}%`, background: 'var(--slate)', opacity: 0.4, transition: 'width 300ms ease' }} />}
                   {waitingExt > 0 && <div style={{ width: `${(waitingExt / total) * 100}%`, background: 'var(--orange)', transition: 'width 300ms ease' }} />}
-                  {blocked > 0 && <div style={{ width: `${(blocked / total) * 100}%`, background: 'var(--maroon)', transition: 'width 300ms ease' }} />}
+                  {blocked > 0 && <div style={{ width: `${(blocked / total) * 100}%`, background: 'var(--maroon-solid)', transition: 'width 300ms ease' }} />}
                 </>
               )
             })()}
@@ -685,7 +685,7 @@ export default function MyTasks() {
             <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--teal)', opacity: 0.7 }}>
               Focus Next
             </span>
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
               {focusTasks.length}/{FOCUS_MAX}
             </span>
           </div>
@@ -745,7 +745,7 @@ export default function MyTasks() {
               )
             })}
             {displayTasks.length > 5 && (
-              <span className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+              <span className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                 +{displayTasks.length - 5} more in the table below
               </span>
             )}

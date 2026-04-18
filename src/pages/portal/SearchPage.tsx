@@ -105,7 +105,7 @@ export default function SearchPage() {
       <PageHeader icon={<Search size={20} />} title="Search" subtitle="Find anything across the lab" />
       {/* M-05: focus ring using --focus-ring token */}
       <div className="mt-5 relative">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
         <input
           ref={inputRef}
           type="text"
@@ -121,7 +121,7 @@ export default function SearchPage() {
           <button
             onClick={() => { setQuery(''); inputRef.current?.focus() }}
             className="absolute right-4 top-1/2 -translate-y-1/2"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.4 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.75 }}
           >
             <X size={16} />
           </button>
@@ -145,13 +145,13 @@ export default function SearchPage() {
       {!query && recentSearches.length > 0 && (
         <div className="mt-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--slate)', opacity: 0.75 }}>
               Recent Searches
             </span>
             <button
               onClick={() => { clearRecentSearches(); setRecentSearches([]) }}
               className="text-[10px] flex items-center gap-1 transition-colors"
-              style={{ color: 'var(--slate)', opacity: 0.3, background: 'none', border: 'none', cursor: 'pointer' }}
+              style={{ color: 'var(--slate)', opacity: 0.75, background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <Trash2 size={9} /> Clear
             </button>
@@ -228,7 +228,7 @@ export default function SearchPage() {
                               </p>
                             )}
                           </div>
-                          <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.2, flexShrink: 0 }} />
+                          <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
                         </Link>
                       </motion.div>
                     ))}

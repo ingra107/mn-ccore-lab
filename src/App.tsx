@@ -47,7 +47,7 @@ class ErrorBoundary extends Component<
           <div style={{ display: 'flex', gap: 'var(--sp-sm)', marginBottom: 'var(--sp-lg)' }}>
             <button
               onClick={() => { this.setState({ hasError: false, error: null, showDetail: false }); window.location.reload() }}
-              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 'var(--radius-lg)', border: 'none', backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', cursor: 'pointer' }}
+              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 'var(--radius-lg)', border: 'none', backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: 'pointer' }}
             >
               Try again
             </button>
@@ -60,7 +60,7 @@ class ErrorBoundary extends Component<
           </div>
           <button
             onClick={() => this.setState({ showDetail: !this.state.showDetail })}
-            style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+            style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
           >
             {this.state.showDetail ? 'Hide details' : 'Show error details'}
           </button>

@@ -133,7 +133,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                     style={{
                       fontSize: '10px',
                       color: 'var(--slate)',
-                      opacity: 0.6,
+                      opacity: 0.75,
                       textTransform: 'uppercase',
                       letterSpacing: '0.06em',
                       display: 'block',
@@ -166,7 +166,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                     style={{
                       fontSize: '10px',
                       color: 'var(--slate)',
-                      opacity: 0.6,
+                      opacity: 0.75,
                       textTransform: 'uppercase',
                       letterSpacing: '0.06em',
                       display: 'block',
@@ -200,7 +200,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                     style={{
                       fontSize: '10px',
                       color: 'var(--slate)',
-                      opacity: 0.6,
+                      opacity: 0.75,
                       textTransform: 'uppercase',
                       letterSpacing: '0.06em',
                       display: 'block',
@@ -257,7 +257,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   disabled={!newTarget}
                   className="cursor-pointer px-3 py-1.5 rounded-md text-xs font-medium"
                   style={{
-                    background: newTarget ? 'var(--teal)' : 'var(--ice)',
+                    background: newTarget ? 'var(--teal-solid)' : 'var(--ice)',
                     color: newTarget ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                     border: 'none',
                     opacity: newTarget ? 1 : 0.5,
@@ -367,7 +367,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                       background: 'none',
                       border: 'none',
                       color: 'var(--slate)',
-                      opacity: 0.3,
+                      opacity: 0.75,
                     }}
                     whileHover={{ opacity: 0.8 }}
                     whileTap={{ scale: 0.9 }}
@@ -416,7 +416,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   style={{
                     fontSize: 'var(--value-size)',
                     color: 'var(--slate)',
-                    opacity: 0.6,
+                    opacity: 0.75,
                     flex: 1,
                   }}
                 >
@@ -446,7 +446,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                       background: 'none',
                       border: 'none',
                       color: 'var(--slate)',
-                      opacity: 0.3,
+                      opacity: 0.75,
                     }}
                     whileHover={{ opacity: 0.8 }}
                     whileTap={{ scale: 0.9 }}

@@ -146,7 +146,7 @@ function AddEventForm({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
         {/* Event type */}
         <div>
-          <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
+          <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.75, display: 'block', marginBottom: '4px' }}>
             Event Type
           </label>
           <div style={{ position: 'relative' }}>
@@ -178,7 +178,7 @@ function AddEventForm({
 
         {/* Date */}
         <div>
-          <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
+          <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.75, display: 'block', marginBottom: '4px' }}>
             Date
           </label>
           <input
@@ -201,7 +201,7 @@ function AddEventForm({
 
       {/* Journal */}
       <div style={{ marginBottom: '10px' }}>
-        <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
+        <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.75, display: 'block', marginBottom: '4px' }}>
           Journal
         </label>
         <input
@@ -223,7 +223,7 @@ function AddEventForm({
 
       {/* Notes */}
       <div style={{ marginBottom: '12px' }}>
-        <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: '4px' }}>
+        <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.75, display: 'block', marginBottom: '4px' }}>
           Notes
         </label>
         <textarea
@@ -270,7 +270,7 @@ function AddEventForm({
             fontWeight: 600,
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--teal)',
-            background: 'var(--teal)',
+            background: 'var(--teal-solid)',
             color: 'var(--ink-bright, #fff)',
             cursor: createEvent.isPending ? 'wait' : 'pointer',
             opacity: createEvent.isPending ? 0.6 : 1,
@@ -399,7 +399,7 @@ function TimelineEvent({
               border: 'none',
               cursor: 'pointer',
               color: 'var(--slate)',
-              opacity: 0.3,
+              opacity: 0.75,
               transition: 'opacity 0.15s',
             }}
             onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '0.8' }}
@@ -576,7 +576,7 @@ export function ActiveSubmissionsDashboard({
               fontSize: '10px',
               fontWeight: 'var(--label-weight)',
               color: 'var(--slate)',
-              opacity: 0.45,
+              opacity: 0.75,
               textTransform: 'uppercase' as const,
               letterSpacing: '0.06em',
             }}
@@ -635,7 +635,7 @@ export function ActiveSubmissionsDashboard({
               </span>
 
               {/* Journal */}
-              <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
+              <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
                 {sub.journal || '--'}
               </span>
 
@@ -660,7 +660,7 @@ export function ActiveSubmissionsDashboard({
                   }
                 </span>
               ) : (
-                <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.3 }}>--</span>
+                <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>--</span>
               )}
             </div>
 

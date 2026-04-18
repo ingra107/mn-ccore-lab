@@ -16,7 +16,7 @@ interface ReflectionPanelProps {
 function RatingDots({ value, onChange, label }: { value: number | null; onChange: (v: number) => void; label: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, width: 50, flexShrink: 0 }}>
+      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, width: 50, flexShrink: 0 }}>
         {label}
       </span>
       <div className="flex gap-1">
@@ -103,7 +103,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
             <div className="space-y-3 pt-2">
               {/* Highlight */}
               <div>
-                <label style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: 'var(--sp-xs)' }}>
+                <label style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, display: 'block', marginBottom: 'var(--sp-xs)' }}>
                   Highlight of the day
                 </label>
                 <input
@@ -122,7 +122,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
 
               {/* Learned */}
               <div>
-                <label style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, display: 'block', marginBottom: 'var(--sp-xs)' }}>
+                <label style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, display: 'block', marginBottom: 'var(--sp-xs)' }}>
                   What did I learn?
                 </label>
                 <input

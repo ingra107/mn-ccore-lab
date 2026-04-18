@@ -53,7 +53,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
           Project Updates
         </h2>
         {updates.length > 0 && (
-          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
             {updates.length}
           </span>
         )}
@@ -120,7 +120,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
             )}
           </div>
           {!isAuthenticated && import.meta.env.PROD && (
-            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, marginTop: '4px', display: 'inline-block' }}>
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, marginTop: '4px', display: 'inline-block' }}>
               <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to post updates
             </span>
           )}

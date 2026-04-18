@@ -164,7 +164,7 @@ export default function PomodoroStatsCard() {
               </span>
             )}
             {topProject && (
-              <span className="text-[10px] truncate" style={{ color: 'var(--slate)', opacity: 0.6, maxWidth: '60%' }}>
+              <span className="text-[10px] truncate" style={{ color: 'var(--slate)', opacity: 0.75, maxWidth: '60%' }}>
                 Top: {topProject.project_name}
               </span>
             )}

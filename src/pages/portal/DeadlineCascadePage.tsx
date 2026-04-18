@@ -99,7 +99,7 @@ export default function DeadlineCascadePage() {
             textAlign: 'center',
             padding: '60px 20px',
             color: 'var(--slate)',
-            opacity: 0.5,
+            opacity: 0.75,
           }}>
             <GitBranch size={40} style={{ margin: '0 auto var(--sp-md)', opacity: 0.3 }} />
             <p style={{ fontSize: '14px', fontWeight: 500, margin: '0 0 var(--sp-xs)' }}>
@@ -145,7 +145,7 @@ export default function DeadlineCascadePage() {
                     <span style={{
                       fontSize: '10px',
                       color: 'var(--slate)',
-                      opacity: 0.4,
+                      opacity: 0.75,
                     }}>
                       {group.graph.nodes.length} {group.graph.nodes.length === 1 ? 'item' : 'items'}
                       {group.graph.dependencies.length > 0 && ` / ${group.graph.dependencies.length} ${group.graph.dependencies.length === 1 ? 'link' : 'links'}`}

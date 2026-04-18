@@ -163,8 +163,8 @@ function CascadeRow({
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
           >
             {expanded
-              ? <ChevronDown size={14} style={{ color: 'var(--slate)', opacity: 0.4 }} />
-              : <ChevronRight size={14} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+              ? <ChevronDown size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+              : <ChevronRight size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
             }
           </button>
         ) : (
@@ -276,7 +276,7 @@ function CascadeRow({
             fontSize: '10px',
             fontWeight: 500,
             color: 'var(--slate)',
-            opacity: 0.4,
+            opacity: 0.75,
             background: 'rgba(148,163,184,0.06)',
             padding: '1px 5px',
             borderRadius: 'var(--radius-sm)',
@@ -378,10 +378,10 @@ function WhatIfPanel({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)', marginBottom: 'var(--sp-md)' }}>
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
           Current: {node.due_date ? formatShortDate(node.due_date) : 'No date'}
         </span>
-        <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+        <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         <input
           type="date"
           value={newDate}
@@ -437,7 +437,7 @@ function WhatIfPanel({
                 <span style={{ fontSize: '12px', color: 'var(--ink)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
                   {item.title}
                 </span>
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, flexShrink: 0 }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
                   {item.original_date ? formatShortDate(item.original_date) : 'No date'}
                 </span>
                 <ArrowRight size={10} style={{ color: 'var(--gold)', flexShrink: 0 }} />
@@ -583,7 +583,7 @@ export default function DeadlineCascade({
                     <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>done</span>
                   </span>
                 )}
-                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.35 }}>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
                   {graph.dependencies.length} {graph.dependencies.length === 1 ? 'link' : 'links'}
                 </span>
               </>

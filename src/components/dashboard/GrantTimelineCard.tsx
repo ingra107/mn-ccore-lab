@@ -143,11 +143,11 @@ function GrantTimelineCard() {
         <div className="flex items-center gap-4 mt-2">
           <div className="flex items-center gap-1.5">
             <div style={{ width: 14, height: 6, borderRadius: 'var(--radius-sm)', background: '#2d8a8a' }} />
-            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>Active</span>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>Active</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div style={{ width: 14, height: 6, borderRadius: 'var(--radius-sm)', border: '1.5px dashed #2d8a8a', opacity: 0.5 }} />
-            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>Proposed</span>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>Proposed</span>
           </div>
         </div>
       </div>

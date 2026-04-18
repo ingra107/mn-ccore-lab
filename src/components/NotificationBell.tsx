@@ -186,7 +186,7 @@ export default function NotificationBell() {
                 >
                   <Bell
                     size={24}
-                    style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-sm)' }}
+                    style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-sm)' }}
                   />
                   <p
                     style={{

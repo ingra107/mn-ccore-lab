@@ -159,7 +159,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
               {/* Workload dot */}
               <div style={{
                 width: 8, height: 8, borderRadius: 'var(--radius-circle)', flexShrink: 0,
-                background: activeCount >= 7 ? 'var(--maroon)' : activeCount >= 4 ? 'var(--gold)' : 'var(--green-light)',
+                background: activeCount >= 7 ? 'var(--maroon-solid)' : activeCount >= 4 ? 'var(--gold)' : 'var(--green-light)',
                 boxShadow: activeCount >= 7 ? '0 0 6px rgba(122,0,25,0.4)' : 'none',
               }} title={`${activeCount} open tasks`} />
             </div>
@@ -233,7 +233,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
       {grouped.length === 0 && (
         <div
           className="text-center py-12 text-sm"
-          style={{ color: 'var(--slate)', opacity: 0.6 }}
+          style={{ color: 'var(--slate)', opacity: 0.75 }}
         >
           No tasks match the current filters
         </div>

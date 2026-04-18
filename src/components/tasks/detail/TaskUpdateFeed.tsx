@@ -92,7 +92,7 @@ export function TaskUpdateFeed({ taskId }: { taskId: string }) {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
-              style={{ background: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none' }}
+              style={{ background: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none' }}
             >
               <Send size={14} />
             </motion.button>

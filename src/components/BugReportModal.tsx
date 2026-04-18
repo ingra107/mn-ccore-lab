@@ -313,7 +313,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                     <Image size={12} />
                     Attach photo
                   </button>
-                  <span className="text-xs hidden sm:inline" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+                  <span className="text-xs hidden sm:inline" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                     or Ctrl+V to paste
                   </span>
                 </div>
@@ -328,7 +328,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
               />
 
               {/* Auto-captured context (shown as hint) */}
-              <div className="mt-3 text-xs" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+              <div className="mt-3 text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                 Page: {location.pathname} | {window.innerWidth}x{window.innerHeight}
               </div>
 
@@ -364,7 +364,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
               disabled={!description.trim() || submitting}
               className="cursor-pointer px-4 py-2 rounded-md text-sm flex items-center gap-2"
               style={{
-                background: description.trim() && !submitting ? 'var(--teal)' : 'var(--surface-2)',
+                background: description.trim() && !submitting ? 'var(--teal-solid)' : 'var(--surface-2)',
                 color: description.trim() && !submitting ? 'var(--cream)' : 'var(--slate)',
                 border: 'none',
                 cursor: description.trim() && !submitting ? 'pointer' : 'default',

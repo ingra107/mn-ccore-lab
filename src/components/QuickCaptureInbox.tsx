@@ -374,7 +374,7 @@ export default function QuickCaptureInbox() {
               disabled={!text.trim() || submitting}
               style={{
                 padding: '6px 14px',
-                background: 'var(--teal)',
+                background: 'var(--teal-solid)',
                 border: '1px solid var(--teal)',
                 borderRadius: 'var(--radius-md)',
                 color: 'var(--ink-bright, #fff)',

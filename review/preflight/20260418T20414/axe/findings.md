@@ -1,0 +1,7 @@
+# Persona: axe (axe-core formal WCAG 2.1 scan)
+
+Base: https://mn-ccore-lab.pages.dev
+Pass count: 14
+Findings: 0 (P0=0, P1=0, P2=0, INFO=0)
+
+## Findings

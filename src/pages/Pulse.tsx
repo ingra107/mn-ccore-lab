@@ -121,7 +121,7 @@ export default function Pulse() {
           <div className="flex flex-col gap-3">
             {deadlines.map((t) => (
               <div key={t.id} className="flex items-center gap-4 px-4 py-2 rounded-lg" style={{ backgroundColor: 'var(--hover-light)' }}>
-                <span className="text-sm font-semibold px-3 py-1 rounded" style={{ color: 'var(--ink-bright, #fff)', backgroundColor: overdueTasks.includes(t) ? 'var(--maroon)' : 'var(--teal)' }}>
+                <span className="text-sm font-semibold px-3 py-1 rounded" style={{ color: 'var(--ink-bright, #fff)', backgroundColor: overdueTasks.includes(t) ? 'var(--maroon-solid)' : 'var(--teal)' }}>
                   {formatShortDate(t.due_date!)}
                 </span>
                 <span className="text-lg" style={{ color: 'var(--cream)' }}>

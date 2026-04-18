@@ -364,7 +364,7 @@ export default function Manuscripts() {
                               fontSize: '11px',
                               fontWeight: 500,
                               color: 'var(--slate)',
-                              opacity: 0.55,
+                              opacity: 0.75,
                               textTransform: 'uppercase' as const,
                               letterSpacing: '0.06em',
                               flexShrink: 0,
@@ -372,7 +372,7 @@ export default function Manuscripts() {
                           >
                             {project.stage}
                           </span>
-                          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.35, flexShrink: 0 }}>
+                          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
                             {manuscripts.filter((p) => p.stage === project.stage).length}
                           </span>
                           <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
@@ -482,7 +482,7 @@ export default function Manuscripts() {
                               fontSize: 'var(--text-label)',
                               fontWeight: isStalled ? 600 : 400,
                               color: isStalled ? 'var(--orange)' : 'var(--slate)',
-                              opacity: isStalled ? 0.9 : 0.45,
+                              opacity: isStalled ? 0.9 : 0.75,
                               fontVariantNumeric: 'tabular-nums',
                             }}
                             title={isStalled ? `Stalled: ${days}d in this stage` : `${days}d in stage`}
@@ -586,7 +586,7 @@ export default function Manuscripts() {
                   }}
                 >
                   {stats.map(s => (
-                    <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                    <span key={s.label} style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
                       {s.label}{' '}
                       <span style={{ fontWeight: 600, color: 'var(--slate)', opacity: 1 }}>
                         {s.value}
@@ -632,7 +632,7 @@ export default function Manuscripts() {
                     <h3 style={{ fontWeight: 500, fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
                       {stage}
                     </h3>
-                    <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4, fontWeight: 500 }}>
+                    <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75, fontWeight: 500 }}>
                       {stageProjects.length}
                     </span>
                   </div>
@@ -668,7 +668,7 @@ export default function Manuscripts() {
                                 <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                                   <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="2xs" variant="ice" />
                                 </div>
-                                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
                                   {pi.name.split(' ').pop()}
                                 </span>
                               </div>
@@ -679,7 +679,7 @@ export default function Manuscripts() {
                     </AnimatePresence>
                     {stageProjects.length === 0 && (
                       <div style={{ padding: 'var(--sp-xl) var(--sp-sm)', textAlign: 'center' }}>
-                        <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.3 }}>
+                        <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
                           No projects
                         </span>
                       </div>

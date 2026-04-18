@@ -196,7 +196,7 @@ function UpcomingCard() {
             border: '1px solid rgba(100, 116, 139, 0.08)',
           }}
         >
-          <CalendarOff size={14} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+          <CalendarOff size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             No meeting scheduled
           </span>

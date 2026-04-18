@@ -89,7 +89,7 @@ export default function OnboardingChecklist() {
           <button
             onClick={dismiss}
             className="p-1.5 rounded-lg transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
-            style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.4 }}
+            style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.75 }}
             title="Dismiss"
           >
             <X size={16} />
@@ -150,7 +150,7 @@ export default function OnboardingChecklist() {
                 style={{
                   height: '100%',
                   borderRadius: 'var(--radius-sm)',
-                  background: 'var(--teal)',
+                  background: 'var(--teal-solid)',
                 }}
               />
             </div>
@@ -163,7 +163,7 @@ export default function OnboardingChecklist() {
               </p>
             )}
           </div>
-          <ChevronDown size={16} style={{ color: 'var(--slate)', opacity: 0.4, flexShrink: 0 }} />
+          <ChevronDown size={16} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
         </div>
       </motion.div>
     )
@@ -251,7 +251,7 @@ export default function OnboardingChecklist() {
           <span style={{
             fontSize: 10,
             color: 'var(--slate)',
-            opacity: 0.6,
+            opacity: 0.75,
           }}>
             Progress
           </span>
@@ -299,7 +299,7 @@ export default function OnboardingChecklist() {
                     width: 6,
                     height: 6,
                     borderRadius: 'var(--radius-circle)',
-                    background: allDone ? 'var(--teal)' : unlocked ? 'var(--gold)' : 'var(--slate)',
+                    background: allDone ? 'var(--teal-solid)' : unlocked ? 'var(--gold)' : 'var(--slate)',
                     opacity: allDone ? 1 : unlocked ? 0.8 : 0.25,
                     flexShrink: 0,
                   }}
@@ -349,7 +349,7 @@ export default function OnboardingChecklist() {
                             border: done
                               ? '2px solid var(--teal)'
                               : '2px solid rgba(45,138,138,0.25)',
-                            background: done ? 'var(--teal)' : 'transparent',
+                            background: done ? 'var(--teal-solid)' : 'transparent',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -422,7 +422,7 @@ export default function OnboardingChecklist() {
         <span style={{
           fontSize: 10,
           color: 'var(--slate)',
-          opacity: 0.4,
+          opacity: 0.75,
         }}>
           Legitimate Peripheral Participation
         </span>

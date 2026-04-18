@@ -414,7 +414,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                                   style={{
                                     borderColor: 'var(--border-subtle)',
                                     color: 'var(--slate)',
-                                    opacity: 0.3,
+                                    opacity: 0.75,
                                     fontSize: '10px',
                                   }}
                                 >

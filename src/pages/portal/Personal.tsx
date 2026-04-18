@@ -176,7 +176,7 @@ function QuickCapture() {
             transition={{ duration: 0.15 }}
             type="submit"
             className="p-1.5 rounded-lg"
-            style={{ backgroundColor: 'var(--teal)', color: '#fff', border: 'none', cursor: 'pointer' }}
+            style={{ backgroundColor: 'var(--teal-solid)', color: '#fff', border: 'none', cursor: 'pointer' }}
           >
             <Send size={12} />
           </motion.button>
@@ -281,7 +281,7 @@ function MyTasksColumn({
       </div>
 
       {tasks.length === 0 && (
-        <p className="text-center py-8 text-sm" style={{ color: 'var(--slate)', opacity: 0.5 }}>
+        <p className="text-center py-8 text-sm" style={{ color: 'var(--slate)', opacity: 0.75 }}>
           All caught up
         </p>
       )}
@@ -306,7 +306,7 @@ function MyTasksColumn({
               >
                 {URGENCY_LABELS[group]}
               </span>
-              <div style={{ flex: 1, height: 1, background: group === 'overdue' ? 'var(--maroon)' : 'var(--border-subtle)', opacity: group === 'overdue' ? 0.2 : 1 }} />
+              <div style={{ flex: 1, height: 1, background: group === 'overdue' ? 'var(--maroon-solid)' : 'var(--border-subtle)', opacity: group === 'overdue' ? 0.2 : 1 }} />
             </div>
 
             {/* Task rows */}
@@ -482,7 +482,7 @@ function UpcomingCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: T
   return (
     <CompactCard title="Upcoming" icon={Calendar} viewAllTo="/deadlines" viewAllLabel="All deadlines">
       {items.length === 0 ? (
-        <p style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', opacity: 0.5, textAlign: 'center', padding: '12px 0' }}>
+        <p style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', opacity: 0.75, textAlign: 'center', padding: '12px 0' }}>
           No upcoming deadlines
         </p>
       ) : (
@@ -527,7 +527,7 @@ function RecentActivityCard({ activity }: { activity: { id: string; type: string
   return (
     <CompactCard title="Recent Activity" icon={Activity} iconColor="var(--gold)">
       {activity.length === 0 ? (
-        <p style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', opacity: 0.5, textAlign: 'center', padding: '12px 0' }}>
+        <p style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', opacity: 0.75, textAlign: 'center', padding: '12px 0' }}>
           No recent activity
         </p>
       ) : (
@@ -545,7 +545,7 @@ function RecentActivityCard({ activity }: { activity: { id: string; type: string
                 >
                   {a.description}
                 </p>
-                <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.4 }}>
+                <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.75 }}>
                   {formatRelativeTime(a.timestamp)}
                 </span>
               </div>
@@ -599,7 +599,7 @@ function QuickStatsCard({
             <div style={{ fontSize: 20, fontWeight: 700, color: stat.color, lineHeight: 1 }}>
               {stat.value}
             </div>
-            <div style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.6, marginTop: 2 }}>
+            <div style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.75, marginTop: 2 }}>
               {stat.label}
             </div>
           </div>
@@ -922,7 +922,7 @@ export default function Personal() {
         {recent.length > 1 && (
           <>
             <div style={{ width: 1, height: 16, background: 'var(--border-subtle)' }} />
-            <History size={11} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            <History size={11} style={{ color: 'var(--slate)', opacity: 0.75 }} />
             {recent.slice(0, 4).map((page) => (
               <Link
                 key={page.path}
@@ -992,7 +992,7 @@ export default function Personal() {
               size={14}
               style={{
                 color: 'var(--slate)',
-                opacity: 0.6,
+                opacity: 0.75,
                 transform: onboardingExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
                 transition: 'transform 150ms ease',
               }}

@@ -54,7 +54,7 @@ function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, on
       >
         {/* Drag handle */}
         <div {...listeners} style={{ cursor: 'grab', touchAction: 'none' }}>
-          <GripVertical size={14} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+          <GripVertical size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         </div>
 
         {/* Number */}
@@ -71,7 +71,7 @@ function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, on
           className="flex-shrink-0 hover:scale-110 transition-transform"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <Circle size={16} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+          <Circle size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         </button>
 
         {/* Title */}
@@ -197,8 +197,8 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
                   <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal)', opacity: 0.3, width: 16, textAlign: 'center' }}>
                     {tasks.length + i + 1}
                   </span>
-                  <Plus size={14} style={{ color: 'var(--slate)', opacity: 0.2 }} />
-                  <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.3, fontStyle: 'italic' }}>
+                  <Plus size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+                  <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.75, fontStyle: 'italic' }}>
                     Drag a task here
                   </span>
                 </motion.button>

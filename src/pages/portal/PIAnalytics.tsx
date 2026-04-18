@@ -485,7 +485,7 @@ export default function PIAnalytics() {
             >
               Response Time
             </h3>
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
               Task creation to completion
             </span>
           </div>
@@ -555,7 +555,7 @@ export default function PIAnalytics() {
             </div>
             <p
               className="text-xs"
-              style={{ color: 'var(--slate)', opacity: 0.6 }}
+              style={{ color: 'var(--slate)', opacity: 0.75 }}
             >
               Based on {data?.responseMetrics.total_tasks || 0} completed tasks
             </p>
@@ -575,7 +575,7 @@ export default function PIAnalytics() {
             >
               Team Engagement
             </h3>
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
               Last 30 days
             </span>
           </div>
@@ -618,7 +618,7 @@ export default function PIAnalytics() {
                         >
                           <span
                             className="text-[10px] font-semibold"
-                            style={{ color: 'var(--ink-bright, #fff)' }}
+                            style={{ color: '#1a1a1a' }}
                           >
                             {member.actions}
                           </span>
@@ -811,7 +811,7 @@ export default function PIAnalytics() {
                       }}
                     />
                   </div>
-                  <span className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+                  <span className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                     {Math.round((data.grantsFunnel.funded / data.grantsFunnel.submitted) * 100)}% success rate
                   </span>
                 </div>

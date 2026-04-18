@@ -340,7 +340,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
           style={{
             fontSize: 'var(--label-size)',
             color: 'var(--slate)',
-            opacity: 0.6,
+            opacity: 0.75,
           }}
         >
           {linkedProjects.length}

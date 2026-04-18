@@ -115,12 +115,12 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
             {/* Source */}
             {item.source && (
               <>
-                {item.due_date && <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>}
+                {item.due_date && <span style={{ color: 'var(--slate)', opacity: 0.75 }}>&middot;</span>}
                 <span
                   style={{
                     fontSize: '11px',
                     color: 'var(--slate)',
-                    opacity: 0.5,
+                    opacity: 0.75,
                   }}
                 >
                   from {item.source.replace(/^meeting:\s*/i, '')}
@@ -588,7 +588,7 @@ export default function MemberPage() {
             )}
 
             {expertiseTags.length === 0 && !showAddTag && (
-              <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+              <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                 No expertise tags yet.{isAuthenticated ? ' Click + Add to tag areas of expertise.' : ''}
               </p>
             )}
@@ -704,7 +704,7 @@ export default function MemberPage() {
                   style={{
                     fontSize: '11px',
                     color: 'var(--slate)',
-                    opacity: 0.6,
+                    opacity: 0.75,
                   }}
                 >
                   {openCommitments.length} open
@@ -802,7 +802,7 @@ function ContributionScoreCard({ slug }: { slug: string }) {
         <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.1 }}>
           {Math.round(data.total_score)}
         </div>
-        <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, marginTop: 2 }}>
+        <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, marginTop: 2 }}>
           contribution score
         </div>
       </div>
@@ -816,7 +816,7 @@ function ContributionScoreCard({ slug }: { slug: string }) {
       {/* Sparkline */}
       <div style={{ flex: 1 }}>
         <MiniSparkline data={data.sparkline} />
-        <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, marginTop: 2 }}>
+        <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, marginTop: 2 }}>
           Last 14 days (decay-weighted)
         </div>
       </div>
@@ -830,7 +830,7 @@ function ContributionScoreCard({ slug }: { slug: string }) {
           .map(([type, v]) => (
             <div key={type} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>{v.count}</div>
-              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>{type}s</div>
+              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>{type}s</div>
             </div>
           ))}
       </div>
@@ -888,7 +888,7 @@ function MemberMilestones({ slug }: { slug: string }) {
             Milestones
           </h2>
           {open.length > 0 && (
-            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
               {open.length} upcoming
             </span>
           )}

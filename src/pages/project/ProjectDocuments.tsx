@@ -79,7 +79,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
             style={{
               fontSize: 'var(--label-size)',
               color: 'var(--slate)',
-              opacity: 0.5,
+              opacity: 0.75,
             }}
           >
             {documents.length}
@@ -184,7 +184,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
           <div className="text-center" style={{ padding: 'var(--sp-lg) 0 var(--sp-md)' }}>
             <FolderOpen
               size={24}
-              style={{ color: 'var(--slate)', opacity: 0.25, margin: '0 auto var(--sp-sm)' }}
+              style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-sm)' }}
             />
             <p
               style={{
@@ -262,7 +262,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                   fontSize: '10px',
                   fontWeight: 500,
                   color: 'var(--slate)',
-                  opacity: 0.6,
+                  opacity: 0.75,
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                 }}
@@ -296,7 +296,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                   border: 'none',
                   cursor: 'pointer',
                   color: 'var(--slate)',
-                  opacity: 0.5,
+                  opacity: 0.75,
                   padding: '2px',
                 }}
                 aria-label="Cancel"
@@ -344,7 +344,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                 disabled={!title.trim() || !url.trim()}
                 className="px-3 py-1.5 rounded-md text-xs font-medium"
                 style={{
-                  background: title.trim() && url.trim() ? 'var(--teal)' : 'var(--slate)',
+                  background: title.trim() && url.trim() ? 'var(--teal-solid)' : 'var(--slate)',
                   color: 'var(--ink-bright, #fff)',
                   border: 'none',
                   cursor: title.trim() && url.trim() ? 'pointer' : 'not-allowed',

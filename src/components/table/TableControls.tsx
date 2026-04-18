@@ -77,7 +77,7 @@ export default function TableControls({
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
               style={{
                 fontWeight: 500,
-                background: activeView === v.key ? 'var(--teal)' : 'transparent',
+                background: activeView === v.key ? 'var(--teal-solid)' : 'transparent',
                 color: activeView === v.key ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                 border: 'none',
                 transition: 'all var(--duration-fast)',

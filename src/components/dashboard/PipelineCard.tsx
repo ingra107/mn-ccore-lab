@@ -131,7 +131,7 @@ function PipelineCard() {
                 style={{
                   fontSize: '10px',
                   color: 'var(--slate)',
-                  opacity: 0.6,
+                  opacity: 0.75,
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                 }}

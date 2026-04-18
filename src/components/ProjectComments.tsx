@@ -59,7 +59,7 @@ export default function ProjectComments({ projectSlug }: Props) {
             style={{
               fontSize: 'var(--label-size)',
               color: 'var(--slate)',
-              opacity: 0.6,
+              opacity: 0.75,
             }}
           >
             {comments.length}
@@ -107,7 +107,7 @@ export default function ProjectComments({ projectSlug }: Props) {
               onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--gold-emphasis)')}
             />
             {!isAuthenticated && import.meta.env.PROD && (
-              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
                 <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to comment
               </span>
             )}

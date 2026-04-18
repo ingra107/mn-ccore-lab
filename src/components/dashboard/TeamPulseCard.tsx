@@ -79,7 +79,7 @@ function TeamPulseCard() {
                   <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--teal)' }}>
                     {totalUpdates}
                   </span>
-                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
                     {totalUpdates === 1 ? 'project update' : 'project updates'}
                   </span>
                 </div>
@@ -89,14 +89,14 @@ function TeamPulseCard() {
                   <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold)' }}>
                     {totalCompletions}
                   </span>
-                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6 }}>
+                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
                     {totalCompletions === 1 ? 'task completed' : 'tasks completed'}
                   </span>
                 </div>
               )}
             </>
           ) : (
-            <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.4 }}>
+            <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
               No activity in the last 48 hours
             </span>
           )}

@@ -103,7 +103,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
 
         {/* Metadata row */}
         <div className="flex items-center gap-3 flex-wrap mt-2">
-          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
             <Clock size={11} style={{ display: 'inline', verticalAlign: '-1px', marginRight: '3px' }} />
             {formatRelativeTime(decision.created_at)}
           </span>

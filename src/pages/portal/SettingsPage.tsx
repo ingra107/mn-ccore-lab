@@ -98,9 +98,9 @@ export default function SettingsPage() {
         </div>
         <div style={{ flex: 1 }}>
           <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Team Directory</span>
-          <span className="ml-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.6 }}>Manage members, roles, and expertise tags</span>
+          <span className="ml-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>Manage members, roles, and expertise tags</span>
         </div>
-        <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+        <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
       </Link>
 
       <div className="flex flex-col max-w-2xl" style={{ marginTop: 'var(--sp-xl)' }}>
@@ -177,8 +177,11 @@ export default function SettingsPage() {
                         { bg: 'var(--gold-active)', text: 'var(--gold)', border: 'rgba(201,168,76,0.3)' },
                         { bg: 'var(--maroon-hover)', text: 'var(--maroon)', border: 'rgba(122,0,25,0.2)' },
                         { bg: 'rgba(34,197,94,0.1)', text: 'var(--green)', border: 'rgba(34,197,94,0.3)' },
-                        { bg: 'rgba(59,130,246,0.1)', text: '#2563eb', border: 'rgba(59,130,246,0.3)' },
-                        { bg: 'rgba(168,85,247,0.1)', text: '#7c3aed', border: 'rgba(168,85,247,0.3)' },
+                        // Lighter blue/purple for AA contrast on near-black
+                        // dark-mode bg (was #2563eb/#7c3aed — 3.4/3.1 on tinted
+                        // alpha backgrounds). 2026-04-18 axe AA.
+                        { bg: 'rgba(59,130,246,0.1)', text: '#60a5fa', border: 'rgba(59,130,246,0.3)' },
+                        { bg: 'rgba(168,85,247,0.1)', text: '#c084fc', border: 'rgba(168,85,247,0.3)' },
                       ]
                       const c = colors[i % colors.length]
                       return (
@@ -234,7 +237,7 @@ export default function SettingsPage() {
           </div>
           <div className="flex items-start gap-2 mt-3 px-1">
             <Info size={12} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0 }} />
-            <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.6, lineHeight: 1.5 }}>
+            <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75, lineHeight: 1.5 }}>
               Expertise notes help AI meeting notes recognize who should be assigned which tasks. These are used when AI processes meeting transcripts.
             </p>
           </div>
@@ -288,7 +291,7 @@ export default function SettingsPage() {
               </div>
             </button>
           </div>
-          <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+          <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.75 }}>
             You can also toggle with <kbd className="text-[10px] px-1 py-0.5 rounded" style={{ background: 'var(--border-subtle)' }}>Ctrl+.</kbd>
           </p>
         </SettingsSection>
@@ -377,7 +380,7 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
         </div>
         <div>
           <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--weight-ui)', color: 'var(--ink)', margin: 0 }}>{title}</h3>
-          <p style={{ fontSize: 'var(--text-small)', color: 'var(--slate)', opacity: 0.6, margin: 0 }}>{subtitle}</p>
+          <p style={{ fontSize: 'var(--text-small)', color: 'var(--slate)', opacity: 0.75, margin: 0 }}>{subtitle}</p>
         </div>
       </div>
       <div className="flex flex-col gap-4">
@@ -506,7 +509,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
           <span className="text-xs font-medium" style={{ color: 'var(--slate)' }}>Stages (in order)</span>
           {stages.map((stage, i) => (
             <div key={i} className="flex items-center gap-2">
-              <GripVertical size={12} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+              <GripVertical size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
               <input
                 type="text"
                 value={stage}
@@ -539,7 +542,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
             onClick={handleSubmit}
             disabled={!name.trim() || stages.filter((s) => s.trim()).length < 2}
             className="px-3 py-1.5 rounded-md text-sm font-medium"
-            style={{ backgroundColor: 'var(--teal)', color: 'white', cursor: 'pointer', border: 'none', opacity: (!name.trim() || stages.filter((s) => s.trim()).length < 2) ? 0.5 : 1 }}
+            style={{ backgroundColor: 'var(--teal-solid)', color: 'white', cursor: 'pointer', border: 'none', opacity: (!name.trim() || stages.filter((s) => s.trim()).length < 2) ? 0.5 : 1 }}
           >
             Create Template
           </button>

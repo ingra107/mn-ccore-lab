@@ -186,7 +186,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
 
           {staleProjects.length > 0 && (
             <div className="flex items-center gap-2 py-1">
-              <TrendingDown size={10} style={{ color: 'var(--slate)', opacity: 0.5, flexShrink: 0 }} />
+              <TrendingDown size={10} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
               <Link to="/projects" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none', opacity: 0.7 }}>
                 {staleProjects.length} project{staleProjects.length !== 1 ? 's' : ''} stale
               </Link>
@@ -209,7 +209,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
         <SidebarCard title="Commitments" icon={Users} iconColor="var(--teal)" linkTo="/portal/tasks" linkLabel={`${openCommitments.length} open`}>
           {openCommitments.map((c: any) => (
             <div key={c.id} className="flex items-start gap-2 py-1">
-              <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: c.due_date && c.due_date <= today ? 'var(--maroon)' : 'var(--teal)', opacity: 0.5, flexShrink: 0, marginTop: 'var(--sp-xs)' }} />
+              <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: c.due_date && c.due_date <= today ? 'var(--maroon-solid)' : 'var(--teal)', opacity: 0.5, flexShrink: 0, marginTop: 'var(--sp-xs)' }} />
               <div className="flex-1 min-w-0">
                 <span className="block truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', lineHeight: 1.3 }}>
                   {c.description || c.commitment}

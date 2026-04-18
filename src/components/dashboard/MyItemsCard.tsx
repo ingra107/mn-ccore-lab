@@ -125,7 +125,7 @@ function MyItemsCard() {
         {pending.length === 0 && (
           <div className="flex items-center gap-2 py-3">
             <CheckCircle2 size={14} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
               All caught up
             </span>
           </div>

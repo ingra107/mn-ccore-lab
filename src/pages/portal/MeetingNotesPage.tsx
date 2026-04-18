@@ -49,7 +49,7 @@ export default function MeetingNotesPage() {
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
+            style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
           >
             <Upload size={16} />
             Upload Audio
@@ -99,7 +99,7 @@ export default function MeetingNotesPage() {
             Recent Meetings
           </h3>
           <div className="relative flex-1 max-w-xs">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
             <input
               type="text"
               value={searchQuery}
@@ -119,7 +119,7 @@ export default function MeetingNotesPage() {
                 style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
               >
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: m.notes ? 'var(--green-hover)' : 'rgba(100,116,139,0.06)' }}>
-                  {m.notes ? <CheckCircle2 size={16} style={{ color: 'var(--green)' }} /> : <FileText size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} />}
+                  {m.notes ? <CheckCircle2 size={16} style={{ color: 'var(--green)' }} /> : <FileText size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{m.title}</p>
@@ -136,7 +136,7 @@ export default function MeetingNotesPage() {
                     No notes
                   </span>
                 )}
-                <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+                <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
               </Link>
             </motion.div>
           ))}
@@ -305,11 +305,11 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
               style={{ borderColor: 'var(--border-subtle)' }}
             >
-              <Upload size={32} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-sm)' }} />
+              <Upload size={32} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-sm)' }} />
               <p className="text-sm" style={{ color: 'var(--slate)' }}>
                 Click to upload audio file
               </p>
-              <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.4 }}>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                 MP3, M4A, WAV, or MP4 (max 25MB)
               </p>
               <p className="text-[10px] mt-2 px-4 py-1.5 rounded-full inline-block" style={{ color: 'var(--gold)', backgroundColor: 'var(--gold-active)' }}>
@@ -366,7 +366,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               onClick={handleProcess}
               disabled={!transcript.trim() || processing}
               className="px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-              style={{ backgroundColor: 'var(--teal)', color: 'var(--ink-bright, #fff)', cursor: 'pointer', border: 'none', opacity: (!transcript.trim() || processing) ? 0.5 : 1 }}
+              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: 'pointer', border: 'none', opacity: (!transcript.trim() || processing) ? 0.5 : 1 }}
             >
               {processing ? <Clock size={14} className="animate-spin" /> : <Brain size={14} />}
               {processing ? 'Processing...' : 'Process with AI'}

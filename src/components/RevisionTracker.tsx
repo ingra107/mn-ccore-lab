@@ -118,7 +118,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
             Revision Rounds
           </h3>
           {revisions.length > 0 && (
-            <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
+            <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
               {revisions.length}
             </span>
           )}
@@ -217,7 +217,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                   onClick={handleAddRound}
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg"
                   style={{
-                    background: 'var(--teal)',
+                    background: 'var(--teal-solid)',
                     color: 'var(--ink-bright, #fff)',
                     fontSize: 'var(--value-size)',
                     fontWeight: 500,
@@ -375,7 +375,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
         <div className="flex items-center gap-3">
           {commentCount > 0 && (
             <div style={{ width: 60, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>
+              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
                 {progress}%
               </span>
               <div
@@ -400,9 +400,9 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
             </div>
           )}
           {isExpanded ? (
-            <ChevronDown size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            <ChevronDown size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           ) : (
-            <ChevronRight size={16} style={{ color: 'var(--slate)', opacity: 0.4 }} />
+            <ChevronRight size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           )}
         </div>
       </button>
@@ -506,14 +506,14 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                     fontSize: 'var(--label-size)',
                     fontWeight: 'var(--label-weight)',
                     color: 'var(--slate)',
-                    opacity: 0.6,
+                    opacity: 0.75,
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                   }}
                 >
                   Reviewer {reviewerNum}
                 </span>
-                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.35 }}>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
                   {reviewerComments.length}
                 </span>
                 <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
@@ -621,7 +621,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                     style={{
                                       fontSize: 'var(--label-size)',
                                       color: 'var(--ink-bright, #fff)',
-                                      background: 'var(--teal)',
+                                      background: 'var(--teal-solid)',
                                       border: 'none',
                                       borderRadius: 'var(--radius-md)',
                                       padding: '4px 10px',
@@ -702,7 +702,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
           style={{
             fontSize: '12px',
             color: 'var(--slate)',
-            opacity: 0.4,
+            opacity: 0.75,
             textAlign: 'center',
             padding: 'var(--sp-md) 0',
             margin: 0,
@@ -808,7 +808,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                   fontSize: '12px',
                   fontWeight: 500,
                   color: 'var(--ink-bright, #fff)',
-                  background: newCommentText.trim() ? 'var(--teal)' : 'var(--slate)',
+                  background: newCommentText.trim() ? 'var(--teal-solid)' : 'var(--slate)',
                   border: 'none',
                   cursor: newCommentText.trim() ? 'pointer' : 'not-allowed',
                   opacity: newCommentText.trim() ? 1 : 0.5,
@@ -860,7 +860,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
         >
           Active Revisions
         </h2>
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
           {revisions.length}
         </span>
       </div>
@@ -961,7 +961,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
 
                 {/* Progress */}
                 <div className="flex items-center gap-2">
-                  <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6, whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75, whiteSpace: 'nowrap' }}>
                     {resolvedCount}/{commentCount}
                   </span>
                   {commentCount > 0 && (

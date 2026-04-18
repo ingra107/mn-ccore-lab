@@ -379,7 +379,7 @@ export default function AnalyticsPage() {
               onClick={() => setRange(r)}
               className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
               style={{
-                background: range === r ? 'var(--teal)' : 'transparent',
+                background: range === r ? 'var(--teal-solid)' : 'transparent',
                 color: range === r ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                 border: 'none',
                 cursor: 'pointer',
@@ -571,7 +571,7 @@ export default function AnalyticsPage() {
                   <span className="text-xs w-28" style={{ color: 'var(--ink)' }}>{stage}</span>
                   <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
                     <div className="h-full rounded transition-all flex items-center px-2" style={{ width: `${width}%`, backgroundColor: stageColors[stage] || 'var(--teal)', minWidth: 24 }}>
-                      <span className="text-[10px] font-semibold" style={{ color: 'var(--ink-bright, #fff)' }}>{count}</span>
+                      <span className="text-[10px] font-semibold" style={{ color: '#1a1a1a' }}>{count}</span>
                     </div>
                   </div>
                 </div>
@@ -655,7 +655,7 @@ export default function AnalyticsPage() {
                       <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
                         <div className="h-full rounded-full" style={{
                           width: `${(count / max) * 100}%`,
-                          backgroundColor: count > 8 ? 'var(--maroon)' : count > 5 ? 'var(--gold)' : 'var(--teal)',
+                          backgroundColor: count > 8 ? 'var(--maroon-solid)' : count > 5 ? 'var(--gold)' : 'var(--teal)',
                           transition: 'width 300ms ease',
                         }} />
                       </div>
@@ -682,7 +682,7 @@ export default function AnalyticsPage() {
             {/* Header row */}
             <div />
             {workloadHeatmap.weeks.map((w, i) => (
-              <div key={i} className="text-center text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)', opacity: 0.6 }}>
+              <div key={i} className="text-center text-[10px] uppercase tracking-wider pb-2" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                 {w.label}
               </div>
             ))}

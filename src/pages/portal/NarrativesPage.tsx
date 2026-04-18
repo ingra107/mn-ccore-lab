@@ -44,7 +44,7 @@ export default function NarrativesPage() {
         count={filteredNarratives.length}
       >
         <div style={{ position: 'relative', width: 200 }}>
-          <Search size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)', opacity: 0.4 }} />
+          <Search size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)', opacity: 0.75 }} />
           <input
             type="text"
             value={searchTerm}
@@ -82,7 +82,7 @@ export default function NarrativesPage() {
                 <h3 style={{ fontWeight: 500, fontSize: '18px', color: 'var(--ink)', margin: 0 }}>
                   {arc.title}
                 </h3>
-                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
                   {arc.projectCount} project{arc.projectCount !== 1 ? 's' : ''}
                 </span>
                 {arc.connectedCount > 0 && (
@@ -113,7 +113,7 @@ export default function NarrativesPage() {
                     )}
                   </div>
                 ))}
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4, marginLeft: 'var(--sp-sm)' }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, marginLeft: 'var(--sp-sm)' }}>
                   Idea → Published
                 </span>
               </div>
@@ -167,7 +167,7 @@ export default function NarrativesPage() {
                       <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
                         {p.title}
                       </span>
-                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.4, marginLeft: 'var(--sp-sm)' }}>
+                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, marginLeft: 'var(--sp-sm)' }}>
                         {p.pub_date}
                       </span>
                     </Link>

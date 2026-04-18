@@ -394,7 +394,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
             aria-describedby={!title.trim() ? 'decision-submit-hint' : undefined}
             className="cursor-pointer px-4 py-2 rounded-lg text-sm font-medium"
             style={{
-              background: title.trim() ? 'var(--teal)' : 'var(--ice)',
+              background: title.trim() ? 'var(--teal-solid)' : 'var(--ice)',
               color: title.trim() ? 'var(--ink-bright, #fff)' : 'var(--slate)',
               border: 'none',
               opacity: title.trim() ? 1 : 0.5,

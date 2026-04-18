@@ -78,7 +78,7 @@ function SortableSubtaskItem({
         {subtask.completed ? (
           <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
         ) : (
-          <Circle size={16} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+          <Circle size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         )}
       </button>
 
@@ -154,7 +154,7 @@ export function SubtaskChecklist({ taskId }: { taskId: string }) {
       {/* Progress bar */}
       {total > 0 && (
         <div style={{ width: '100%', height: 4, borderRadius: 'var(--radius-sm)', background: 'var(--gold-emphasis)', overflow: 'hidden', marginBottom: '0.75rem' }}>
-          <div style={{ width: `${pct}%`, height: '100%', background: allDone ? 'var(--teal)' : 'var(--gold)', borderRadius: 'var(--radius-sm)', transition: 'width 0.3s ease' }} />
+          <div style={{ width: `${pct}%`, height: '100%', background: allDone ? 'var(--teal-solid)' : 'var(--gold)', borderRadius: 'var(--radius-sm)', transition: 'width 0.3s ease' }} />
         </div>
       )}
 
@@ -178,7 +178,7 @@ export function SubtaskChecklist({ taskId }: { taskId: string }) {
 
       {/* Add subtask input */}
       <form onSubmit={handleAdd} className="flex items-center gap-2">
-        <Plus size={14} style={{ color: 'var(--slate)', opacity: 0.3, flexShrink: 0 }} />
+        <Plus size={14} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
         <input
           ref={inputRef}
           type="text"

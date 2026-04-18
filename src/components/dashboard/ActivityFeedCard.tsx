@@ -94,6 +94,9 @@ function ActivityFeedCard() {
         {/* Feed list */}
         <div
           className="flex-1 overflow-y-auto -mx-1 px-1"
+          tabIndex={0}
+          role="region"
+          aria-label="Activity feed"
           style={{
             maxHeight: '340px',
             scrollbarWidth: 'thin',

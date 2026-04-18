@@ -36,7 +36,7 @@ export default function ExpertSuggestion({ topic: initialTopic = '', compact = f
           <Search
             size={14}
             className="absolute left-2.5 top-1/2 -translate-y-1/2"
-            style={{ color: 'var(--slate)', opacity: 0.5 }}
+            style={{ color: 'var(--slate)', opacity: 0.75 }}
           />
           <input
             type="text"

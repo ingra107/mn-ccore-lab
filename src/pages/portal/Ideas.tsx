@@ -159,7 +159,7 @@ export default function Ideas() {
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 rounded-lg text-sm font-medium transition-colors"
             style={{
-              backgroundColor: 'var(--teal)',
+              backgroundColor: 'var(--teal-solid)',
               color: 'var(--ink-bright)',
               border: 'none',
               cursor: 'pointer',
@@ -196,7 +196,7 @@ export default function Ideas() {
                         style={{
                           fontSize: 'var(--text-micro)',
                           color: 'var(--slate)',
-                          opacity: 0.3,
+                          opacity: 0.75,
                         }}
                       >
                         &#8594;
@@ -425,7 +425,7 @@ function IdeaRowView({
               style={{
                 fontSize: 'var(--text-label)',
                 color: 'var(--gold)',
-                opacity: 0.7,
+                opacity: 0.85,
               }}
             >
               {idea.research_area}
@@ -608,7 +608,7 @@ function IdeaRowView({
             {(statusConfig[idea.status] || statusConfig.new).label}
           </span>
           {idea.research_area && (
-            <span style={{ fontSize: 'var(--text-label)', color: 'var(--gold)', opacity: 0.7 }}>
+            <span style={{ fontSize: 'var(--text-label)', color: 'var(--gold)', opacity: 0.85 }}>
               {idea.research_area}
             </span>
           )}
@@ -656,31 +656,31 @@ function IdeaRowView({
         >
           <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Title</div>
+              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Title</div>
               <div style={{ whiteSpace: 'normal' }}>{idea.title}</div>
             </div>
             {idea.description && (
               <div style={{ gridColumn: '1 / -1' }}>
-                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Description</div>
+                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Description</div>
                 <div style={{ whiteSpace: 'pre-wrap' }}>{idea.description}</div>
               </div>
             )}
             {idea.research_area && (
               <div>
-                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Research area</div>
+                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Research area</div>
                 <div style={{ color: 'var(--gold)' }}>{idea.research_area}</div>
               </div>
             )}
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Submitted by</div>
+              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Submitted by</div>
               <div>{person.name || idea.submitted_by}</div>
             </div>
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Submitted</div>
+              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Submitted</div>
               <div>{formatRelativeTime(idea.created_at)}</div>
             </div>
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Votes</div>
+              <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Votes</div>
               <div style={{ color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}>{idea.votes}</div>
             </div>
           </div>

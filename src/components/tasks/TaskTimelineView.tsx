@@ -107,7 +107,7 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
     return (
       <div
         className="text-center py-12 text-sm"
-        style={{ color: 'var(--slate)', opacity: 0.6 }}
+        style={{ color: 'var(--slate)', opacity: 0.75 }}
       >
         No tasks match the current filters
       </div>
@@ -246,7 +246,7 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
         <div className="mt-4">
           <p
             className="text-xs uppercase tracking-wider mb-2"
-            style={{ color: 'var(--slate)', opacity: 0.6 }}
+            style={{ color: 'var(--slate)', opacity: 0.75 }}
           >
             No due date ({undatedTasks.length})
           </p>

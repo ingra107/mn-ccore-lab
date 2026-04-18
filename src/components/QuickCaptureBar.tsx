@@ -127,7 +127,7 @@ export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
 
         {/* Keyboard hint */}
         {!text && !showSuccess && (
-          <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.35 }}>
+          <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.75 }}>
             Ctrl+N
           </span>
         )}

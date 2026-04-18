@@ -61,7 +61,7 @@ export default function YourWeekCard() {
                 <div style={{ fontSize: '18px', fontWeight: 600, color: item.color, lineHeight: 1 }}>
                   {item.value}
                 </div>
-                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6, marginTop: '2px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, marginTop: '2px' }}>
                   {item.label}
                 </div>
               </div>

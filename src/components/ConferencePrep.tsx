@@ -148,7 +148,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                       fontSize: '10px',
                       fontWeight: 500,
                       color: 'var(--slate)',
-                      opacity: 0.6,
+                      opacity: 0.75,
                       textTransform: 'uppercase',
                       letterSpacing: '0.04em',
                       whiteSpace: 'nowrap',
@@ -286,7 +286,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         border: 'none',
                         cursor: 'pointer',
                         color: 'var(--slate)',
-                        opacity: 0.3,
+                        opacity: 0.75,
                         padding: '2px',
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.color = 'var(--maroon)' }}
@@ -403,7 +403,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 padding: '5px 14px',
                 borderRadius: 'var(--radius-md)',
                 border: 'none',
-                background: 'var(--teal)',
+                background: 'var(--teal-solid)',
                 color: 'var(--ink-bright, #fff)',
                 cursor: !form.conference.trim() || !form.title.trim() ? 'not-allowed' : 'pointer',
                 opacity: !form.conference.trim() || !form.title.trim() ? 0.5 : 1,

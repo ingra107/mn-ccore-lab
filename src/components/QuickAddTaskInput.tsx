@@ -198,7 +198,7 @@ export default function QuickAddTaskInput({
               )
             })
           ) : (
-            <span style={{ color: 'var(--slate)', opacity: 0.4, fontWeight: 400 }}>
+            <span style={{ color: 'var(--slate)', opacity: 0.75, fontWeight: 400 }}>
               {placeholder}
             </span>
           )}

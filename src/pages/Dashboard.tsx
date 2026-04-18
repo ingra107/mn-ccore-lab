@@ -364,25 +364,25 @@ export default function Dashboard() {
                   >
                     {greeting}
                   </h1>
-                  <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
-                  <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.65, whiteSpace: 'nowrap' }}>
+                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
+                  <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.75, whiteSpace: 'nowrap' }}>
                     {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                   </span>
                   {todayProgress.completedToday > 0 && (
                     <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
                       <span style={{ fontSize: '12px', color: 'var(--green)', whiteSpace: 'nowrap' }}>{todayProgress.completedToday} done</span>
                     </>
                   )}
                   {todayProgress.dueToday > 0 && (
                     <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
                       <span style={{ fontSize: '12px', color: 'var(--teal)', whiteSpace: 'nowrap' }}>{todayProgress.dueToday} due</span>
                     </>
                   )}
                   {overdue.length > 0 && (
                     <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
                       <a
                         href="/my-tasks"
                         className="portal-footer-link"
@@ -393,7 +393,7 @@ export default function Dashboard() {
                             width: 6,
                             height: 6,
                             borderRadius: 'var(--radius-circle)',
-                            background: 'var(--maroon)',
+                            background: 'var(--maroon-solid)',
                             flexShrink: 0,
                           }}
                         />
@@ -401,7 +401,7 @@ export default function Dashboard() {
                       </a>
                     </>
                   )}
-                  <span style={{ color: 'var(--slate)', opacity: 0.35, fontSize: '14px', flexShrink: 0 }}>·</span>
+                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
                   <LabHealthScore />
                 </div>
 
@@ -417,9 +417,12 @@ export default function Dashboard() {
                         border: 'none',
                         fontSize: '12px',
                         fontWeight: activeTab === tab.id ? 600 : 400,
-                        color: activeTab === tab.id ? 'var(--ink)' : 'var(--slate)',
+                        // Active tab uses gold bg; fixed-dark text keeps AA
+                        // in both themes (--ink is light in dark mode, --cream
+                        // is light in light mode — neither passes on gold).
+                        color: activeTab === tab.id ? '#1a1a1a' : 'var(--slate)',
                         backgroundColor: activeTab === tab.id ? 'var(--gold)' : 'transparent',
-                        opacity: activeTab === tab.id ? 1 : 0.6,
+                        opacity: activeTab === tab.id ? 1 : 0.85,
                         cursor: 'pointer',
                         transition: 'color 150ms ease, background-color 150ms ease, opacity 150ms ease',
                       }}
@@ -433,7 +436,7 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                   {adaptive && activeTab === 'overview' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.55 }}>
+                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
                         Organized by your usage
                       </span>
                       <button
@@ -444,7 +447,7 @@ export default function Dashboard() {
                           border: 'none',
                           cursor: 'pointer',
                           color: 'var(--slate)',
-                          opacity: 0.3,
+                          opacity: 0.75,
                           padding: '2px',
                           display: 'flex',
                           alignItems: 'center',
@@ -464,7 +467,7 @@ export default function Dashboard() {
                       border: '1px solid',
                       borderColor: showCustomize ? 'var(--teal)' : 'var(--border-subtle)',
                       cursor: 'pointer',
-                      opacity: showCustomize ? 1 : 0.6,
+                      opacity: showCustomize ? 1 : 0.85,
                     }}
                   >
                     <Settings2 size={12} />
@@ -543,7 +546,7 @@ export default function Dashboard() {
             <Link
               to="/tasks?create=true"
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors portal-footer-link"
-              style={{ color: 'var(--ink-bright, #fff)', backgroundColor: 'var(--teal)', textDecoration: 'none' }}
+              style={{ color: 'var(--ink-bright, #fff)', backgroundColor: 'var(--teal-solid)', textDecoration: 'none' }}
             >
               <Plus size={12} />
               Task

@@ -273,7 +273,7 @@ export default function Layout() {
                     {link.label === 'Dashboard' && pendingCount > 0 && (
                       <span
                         style={{
-                          background: 'var(--maroon)',
+                          background: 'var(--maroon-solid)',
                           color: 'var(--ink-bright, #fff)',
                           fontSize: '10px',
                           lineHeight: '16px',
@@ -448,7 +448,7 @@ export default function Layout() {
                   {link.label === 'Dashboard' && pendingCount > 0 && (
                     <span
                       style={{
-                        background: 'var(--maroon)',
+                        background: 'var(--maroon-solid)',
                         color: 'var(--ink-bright, #fff)',
                         fontSize: '10px',
                         lineHeight: '16px',
@@ -719,7 +719,7 @@ export default function Layout() {
             className="mt-8 md:mt-12 pt-6 md:pt-8 text-center text-xs"
             style={{
               borderTop: '1px solid rgba(201, 168, 76, 0.2)',
-              color: 'rgba(255, 255, 255, 0.4)',
+              color: 'rgba(255, 255, 255, 0.75)',
             }}
           >
             &copy; {new Date().getFullYear()} MN-CCORE Lab, University of
@@ -727,7 +727,7 @@ export default function Layout() {
             <div
               style={{
                 fontSize: '10px',
-                opacity: 0.3,
+                opacity: 0.75,
                 marginTop: '6px',
               }}
             >

@@ -133,7 +133,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
           {(meeting.attendees?.length ?? 0) > 4 && (
             <span
               className="text-xs pl-2"
-              style={{ color: 'var(--slate)', opacity: 0.6 }}
+              style={{ color: 'var(--slate)', opacity: 0.75 }}
             >
               +{(meeting.attendees?.length ?? 0) - 4}
             </span>
@@ -169,7 +169,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
               {/* Date line */}
               <p
                 className="text-xs mt-3 mb-3"
-                style={{ color: 'var(--slate)', opacity: 0.6 }}
+                style={{ color: 'var(--slate)', opacity: 0.75 }}
               >
                 {formatFullDate(meeting.date)}
               </p>
@@ -179,7 +179,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 <div className="mb-4">
                   <h4
                     className="text-xs font-semibold uppercase tracking-wider mb-2"
-                    style={{ color: 'var(--slate)', opacity: 0.6, letterSpacing: '0.06em' }}
+                    style={{ color: 'var(--slate)', opacity: 0.75, letterSpacing: '0.06em' }}
                   >
                     Attendees
                   </h4>
@@ -215,7 +215,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 <div className="mb-4">
                   <h4
                     className="text-xs font-semibold uppercase tracking-wider mb-2"
-                    style={{ color: 'var(--slate)', opacity: 0.6, letterSpacing: '0.06em' }}
+                    style={{ color: 'var(--slate)', opacity: 0.75, letterSpacing: '0.06em' }}
                   >
                     Agenda
                   </h4>
@@ -266,7 +266,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 <div className="mb-4">
                   <h4
                     className="text-xs font-semibold uppercase tracking-wider mb-2"
-                    style={{ color: 'var(--slate)', opacity: 0.6, letterSpacing: '0.06em' }}
+                    style={{ color: 'var(--slate)', opacity: 0.75, letterSpacing: '0.06em' }}
                   >
                     Action Items
                   </h4>
@@ -354,7 +354,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
                 <div className="mb-4">
                   <h4
                     className="text-xs font-semibold uppercase tracking-wider mb-2"
-                    style={{ color: 'var(--slate)', opacity: 0.6, letterSpacing: '0.06em' }}
+                    style={{ color: 'var(--slate)', opacity: 0.75, letterSpacing: '0.06em' }}
                   >
                     Notes
                   </h4>

@@ -120,7 +120,7 @@ export default function TaskListView({ tasks, onStatusChange, onSelect, selected
                 style={{ width: 20, height: 20 }}
               >
                 {selectedIds?.has(task.id) ? (
-                  <div style={{ width: 18, height: 18, borderRadius: 'var(--radius-sm)', background: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: 'var(--radius-sm)', background: 'var(--teal-solid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <CheckCircle2 size={12} style={{ color: 'var(--ink-bright, #fff)' }} />
                   </div>
                 ) : (

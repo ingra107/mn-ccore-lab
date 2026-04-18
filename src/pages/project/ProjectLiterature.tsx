@@ -33,7 +33,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
           style={{
             fontSize: 'var(--label-size)',
             color: 'var(--slate)',
-            opacity: 0.6,
+            opacity: 0.75,
           }}
         >
           {papers.length}
@@ -145,7 +145,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
                         background: 'none',
                         border: 'none',
                         color: 'var(--slate)',
-                        opacity: 0.3,
+                        opacity: 0.75,
                       }}
                       title="Remove link"
                     >
@@ -374,7 +374,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
               disabled={doiLoading || !doi.trim()}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-medium"
               style={{
-                backgroundColor: 'var(--teal)',
+                backgroundColor: 'var(--teal-solid)',
                 color: 'var(--ink-bright, #fff)',
                 border: 'none',
                 cursor: 'pointer',
@@ -414,7 +414,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                 disabled={createAndLink.isPending}
                 className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-medium w-fit"
                 style={{
-                  backgroundColor: 'var(--teal)',
+                  backgroundColor: 'var(--teal-solid)',
                   color: 'var(--ink-bright, #fff)',
                   border: 'none',
                   cursor: 'pointer',

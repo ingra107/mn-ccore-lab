@@ -370,7 +370,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
             title="Reset view to defaults"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '4px',
-              fontSize: '11px', color: 'var(--slate)', opacity: 0.5,
+              fontSize: '11px', color: 'var(--slate)', opacity: 0.75,
               background: 'none', border: 'none', cursor: 'pointer',
               padding: '2px 6px', borderRadius: 'var(--radius-sm)',
               transition: 'opacity var(--duration-normal) var(--ease-out)',
@@ -709,7 +709,7 @@ function SortableColumnHeader({
           background: 'none',
           border: 'none',
           color: 'var(--slate)',
-          opacity: 0.25,
+          opacity: 0.75,
           flexShrink: 0,
           transition: 'opacity var(--transition-fast) var(--ease-out)',
         }}
@@ -859,7 +859,7 @@ function TaskGridRow({
           <div style={{
             width: 16, height: 16, borderRadius: 'var(--radius-sm)',
             border: selected ? 'none' : '1.5px solid var(--border-subtle)',
-            background: selected ? 'var(--teal)' : 'transparent',
+            background: selected ? 'var(--teal-solid)' : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             {selected && <CheckCircle2 size={10} style={{ color: 'var(--ink-bright, #fff)' }} />}
@@ -924,7 +924,7 @@ function TaskGridRow({
                             <span key={id} className="flex items-center gap-1.5 text-[11px] mb-1" style={{ color: 'var(--ink)' }}>
                               <span style={{
                                 width: 6, height: 6, borderRadius: 'var(--radius-circle)',
-                                background: bt.completed ? 'var(--green)' : bt.status === 'in_progress' ? 'var(--teal)' : 'var(--slate)',
+                                background: bt.completed ? 'var(--green)' : bt.status === 'in_progress' ? 'var(--teal-solid)' : 'var(--slate)',
                                 flexShrink: 0,
                               }} />
                               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1441,7 +1441,7 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
         {subtask.completed ? (
           <CheckCircle2 size={14} style={{ color: 'var(--teal)' }} />
         ) : (
-          <Circle size={14} style={{ color: 'var(--slate)', opacity: 0.3 }} />
+          <Circle size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         )}
       </button>
       <span
@@ -1521,7 +1521,7 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
         {total > 0 && (
           <div className="flex items-center gap-2 mb-1.5">
             <div style={{ flex: 1, height: 2, borderRadius: 'var(--radius-sm)', background: 'var(--gold-emphasis)', overflow: 'hidden' }}>
-              <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: completed === total ? 'var(--teal)' : 'var(--gold)', borderRadius: 'var(--radius-sm)', transition: 'width var(--duration-slow) var(--ease-out)' }} />
+              <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: completed === total ? 'var(--teal-solid)' : 'var(--gold)', borderRadius: 'var(--radius-sm)', transition: 'width var(--duration-slow) var(--ease-out)' }} />
             </div>
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{completed}/{total}</span>
           </div>
@@ -1542,7 +1542,7 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
         </DndContext>
 
         <form onSubmit={handleAdd} className="flex items-center gap-2 mt-0.5" onClick={(e) => e.stopPropagation()}>
-          <Plus size={12} style={{ color: 'var(--slate)', opacity: 0.25, flexShrink: 0 }} />
+          <Plus size={12} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
           <input
             ref={inputRef}
             type="text"

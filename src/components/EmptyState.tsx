@@ -24,7 +24,7 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
       <div
         style={{
           color: 'var(--slate)',
-          opacity: 0.3,
+          opacity: 0.75,
           fontSize: 0,
           lineHeight: 0,
         }}
@@ -52,7 +52,7 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
             fontSize: 13,
             fontWeight: 400,
             color: 'var(--slate)',
-            opacity: 0.6,
+            opacity: 0.75,
             margin: 0,
             marginTop: 6,
             maxWidth: 280,

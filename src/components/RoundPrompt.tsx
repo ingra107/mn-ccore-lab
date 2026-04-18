@@ -194,7 +194,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               title="Restore generated prompt"
               className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md border transition-colors hover:bg-[var(--gold-active)]"
               style={{
-                color: 'var(--slate)', opacity: 0.6,
+                color: 'var(--slate)', opacity: 0.75,
                 background: 'transparent', borderColor: 'var(--gold-emphasis)', cursor: 'pointer',
               }}
             >

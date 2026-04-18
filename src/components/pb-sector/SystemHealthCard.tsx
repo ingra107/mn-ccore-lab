@@ -146,7 +146,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
 
         {/* Recent activity */}
         {data.recentActivityCount > 0 && (
-          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.6 }}>
+          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
             <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--teal)' }}>
               {data.recentActivityCount}
             </span>{' '}

@@ -82,7 +82,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <TrendingUp size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
+        <TrendingUp size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No publications with dates yet
         </p>
@@ -158,7 +158,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
+        <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No active projects to track velocity
         </p>
@@ -174,7 +174,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Time in Pipeline
         </span>
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.6 }}>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
           days in current stage / total days
         </span>
       </div>
@@ -401,7 +401,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <BookOpen size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
+        <BookOpen size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No publications yet
         </p>
@@ -490,7 +490,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
                 </span>
               )}
               {pub.journal && pub.pub_date && (
-                <span style={{ color: 'var(--slate)', opacity: 0.3 }}>&middot;</span>
+                <span style={{ color: 'var(--slate)', opacity: 0.75 }}>&middot;</span>
               )}
               {pub.pub_date && (
                 <span
@@ -557,7 +557,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <BarChart3 size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
+        <BarChart3 size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No task completions in the last 12 months
         </p>
@@ -636,7 +636,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
+        <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No active projects
         </p>
@@ -699,7 +699,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
                     style={{
                       fontSize: 'var(--label-size)',
                       color: 'var(--slate)',
-                      opacity: 0.6,
+                      opacity: 0.75,
                     }}
                   >
                     {project.category}
@@ -723,7 +723,7 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <Flag size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
+        <Flag size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No milestones tracked
         </p>
@@ -779,7 +779,7 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
                   style={{
                     fontSize: 'var(--label-size)',
                     color: 'var(--slate)',
-                    opacity: 0.6,
+                    opacity: 0.75,
                   }}
                 >
                   {ms.project_title}
@@ -836,7 +836,7 @@ function SectionHeader({
           style={{
             fontSize: 'var(--label-size)',
             color: 'var(--slate)',
-            opacity: 0.6,
+            opacity: 0.75,
           }}
         >
           {count}
@@ -1046,7 +1046,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
         className="py-10 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
-        <ClipboardList size={28} style={{ color: 'var(--slate)', opacity: 0.3, margin: '0 auto var(--sp-md)' }} />
+        <ClipboardList size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
           No contributions in this period
         </p>
@@ -1154,7 +1154,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                       style={{
                         fontSize: 'var(--label-size)',
                         color: 'var(--slate)',
-                        opacity: 0.6,
+                        opacity: 0.75,
                       }}
                     >
                       {entry.subtitle}
@@ -1165,7 +1165,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                   style={{
                     fontSize: 'var(--label-size)',
                     color: 'var(--slate)',
-                    opacity: 0.6,
+                    opacity: 0.75,
                     whiteSpace: 'nowrap',
                     flexShrink: 0,
                   }}

@@ -125,6 +125,9 @@ function ProjectHealthCard() {
         {/* Scrollable project list */}
         <div
           className="flex-1 overflow-y-auto -mx-1 px-1"
+          tabIndex={0}
+          role="region"
+          aria-label="Project health"
           style={{ maxHeight: '280px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}
         >
           {/* Projects needing attention (sorted worst first) */}

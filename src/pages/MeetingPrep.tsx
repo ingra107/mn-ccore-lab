@@ -172,7 +172,7 @@ export default function MeetingPrep() {
                 </div>
               )}
               {previousActionItems.length === 0 && (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.75, textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
                   No previous meeting found
                 </p>
               )}
@@ -212,7 +212,7 @@ export default function MeetingPrep() {
                   </p>
                   {agendaItems.map((item, i) => (
                     <div key={item.id} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < agendaItems.length - 1 ? '1px solid rgba(201,168,76,0.04)' : 'none' }}>
-                      <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.55, marginTop: 2, flexShrink: 0 }}>{i + 1}.</span>
+                      <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.75, marginTop: 2, flexShrink: 0 }}>{i + 1}.</span>
                       <span style={{ fontSize: 12, color: 'var(--ink)' }}>{item.content}</span>
                     </div>
                   ))}
@@ -241,7 +241,7 @@ export default function MeetingPrep() {
               )}
 
               {agendaItems.length === 0 && overdueTasks.length === 0 && pendingPrev.length === 0 && (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.75, textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
                   No agenda items yet. The team can add items from the meeting page.
                 </p>
               )}
@@ -259,7 +259,7 @@ export default function MeetingPrep() {
                     <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
                       <Calendar size={10} style={{ color: 'var(--teal)', flexShrink: 0 }} />
                       <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
-                      <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.5 }}>{formatShortDate(task.due_date)}</span>
+                      <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.75 }}>{formatShortDate(task.due_date)}</span>
                       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                         <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
                       </div>
@@ -267,7 +267,7 @@ export default function MeetingPrep() {
                   )
                 })
               ) : (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: 'var(--sp-md) 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.75, textAlign: 'center', padding: 'var(--sp-md) 0', margin: 0 }}>
                   No deadlines in the next two weeks.
                 </p>
               )}
@@ -288,7 +288,7 @@ export default function MeetingPrep() {
                   )
                 })
               ) : (
-                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.55, textAlign: 'center', padding: 'var(--sp-md) 0', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.75, textAlign: 'center', padding: 'var(--sp-md) 0', margin: 0 }}>
                   No recent activity.
                 </p>
               )}
@@ -328,7 +328,7 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
         <div style={{ fontSize: 18, fontWeight: 600, color: value > 0 ? color : 'var(--slate)', lineHeight: 1 }}>
           {value}
         </div>
-        <div style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.5, marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.75, marginTop: 2 }}>
           {label}
         </div>
       </div>
@@ -344,7 +344,7 @@ function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title
         {title}
       </h2>
       {subtitle && (
-        <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.5 }}>
+        <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.75 }}>
           {subtitle}
         </span>
       )}
