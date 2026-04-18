@@ -213,6 +213,7 @@ export default function Manuscripts() {
             filters={
               <>
                 <select
+                  aria-label="Filter manuscripts by PI"
                   value={filterPI}
                   onChange={(e) => setFilterPI(e.target.value)}
                   className="rounded-md border px-3 py-1.5 text-xs"
@@ -229,6 +230,7 @@ export default function Manuscripts() {
                   <option value="nate">Nate Mesfin</option>
                 </select>
                 <select
+                  aria-label="Filter manuscripts by category"
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
                   className="rounded-md border px-3 py-1.5 text-xs"

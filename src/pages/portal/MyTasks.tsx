@@ -845,11 +845,13 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
       ref={setNodeRef}
       style={style}
       className="group flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-colors"
-      {...attributes}
     >
-      {/* Drag handle */}
+      {/* Drag handle — owns the dnd-kit attributes/listeners so the wrapper
+          div stays role-free (axe nested-interactive, 2026-04-18). */}
       <button
+        {...attributes}
         {...listeners}
+        aria-label="Reorder task"
         className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-40 transition-opacity flex-shrink-0"
         style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)' }}
       >

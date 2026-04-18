@@ -3,14 +3,24 @@ import type { ReactNode } from 'react'
 interface TableContainerProps {
   children: ReactNode
   className?: string
+  /** Reserved for future use. ariaLabel was briefly applied with role="table",
+   * but mixed role="grid" wrappers inside TableContainer caused axe
+   * aria-required-children — accepted as a no-op for now (2026-04-18). */
+  ariaLabel?: string
 }
 
 /**
  * Shared wrapper for data tables.
  * Provides the bordered container, density-aware classes, and overflow handling
  * that matches the project's table-container CSS pattern (index.css).
+ *
+ * Intentionally role-free: some callers wrap data rows in role="grid" (Ideas,
+ * Decisions) and some don't. Putting role="table" here would conflict with
+ * inner grids. Callers that need semantic table roles should apply them
+ * directly on their row wrappers.
  */
-export default function TableContainer({ children, className }: TableContainerProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function TableContainer({ children, className, ariaLabel: _ariaLabel }: TableContainerProps) {
   return (
     <div className={`table-container${className ? ` ${className}` : ''}`}>
       {children}

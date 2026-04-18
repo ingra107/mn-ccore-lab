@@ -373,7 +373,6 @@ function DecisionRowItem({
 
   return (
     <div
-      role="row"
       style={{
         borderBottom: '1px solid var(--row-separator, var(--border-subtle))',
         background: focused ? 'var(--hover-subtle)' : 'transparent',
@@ -392,7 +391,7 @@ function DecisionRowItem({
         }}
       >
         <div
-          role="gridcell"
+         
           onClick={onToggleExpand}
           className="task-title-clickable"
           style={{
@@ -438,7 +437,7 @@ function DecisionRowItem({
               </span>
             )}
         </div>
-        <div role="gridcell" onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()}>
           <InlineSelect
             value={decision.outcome_status || 'pending'}
             options={OUTCOME_OPTIONS}
@@ -446,7 +445,7 @@ function DecisionRowItem({
           />
         </div>
         <div
-          role="gridcell"
+         
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -489,7 +488,7 @@ function DecisionRowItem({
           )}
         </div>
         <div
-          role="gridcell"
+         
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -532,7 +531,7 @@ function DecisionRowItem({
           )}
         </div>
         <div
-          role="gridcell"
+         
           style={{
             minWidth: 0,
             overflow: 'hidden',
@@ -576,7 +575,7 @@ function DecisionRowItem({
           )}
         </div>
         <div
-          role="gridcell"
+         
           style={{
             fontSize: 'var(--text-small)',
             color: 'var(--slate)',
@@ -588,7 +587,7 @@ function DecisionRowItem({
         >
           {formatRelativeTime(decision.created_at)}
         </div>
-        <div role="gridcell" />
+        <div />
       </div>
       <AnimatePresence initial={false}>
         {isExpanded && (
@@ -1098,9 +1097,8 @@ export default function DecisionsPage() {
         ) : viewMode === 'timeline' ? (
           <DecisionTimeline decisions={filteredDecisions} projects={projects} />
         ) : (
-          <TableContainer className={densityClass(density)}>
+          <TableContainer className={densityClass(density)} ariaLabel="Decisions">
             <div
-              role="row"
               style={{
                 display: 'grid',
                 gridTemplateColumns: GRID_TEMPLATE,
@@ -1127,7 +1125,6 @@ export default function DecisionsPage() {
                 col.noSort ? (
                   <div
                     key={`${col.label}-${i}`}
-                    role="columnheader"
                     className="col-header"
                     style={{
                       display: 'inline-flex',
@@ -1138,17 +1135,7 @@ export default function DecisionsPage() {
                     {col.label}
                   </div>
                 ) : (
-                  <div
-                    key={`${col.label}-${i}`}
-                    role="columnheader"
-                    aria-sort={
-                      sortKey === col.key
-                        ? sortAsc
-                          ? 'ascending'
-                          : 'descending'
-                        : 'none'
-                    }
-                  >
+                  <div key={`${col.label}-${i}`}>
                     <ColumnHeader
                       label={col.label}
                       sortKey={col.key}
@@ -1163,7 +1150,7 @@ export default function DecisionsPage() {
               <div />
             </div>
 
-            <div role="grid" aria-label="Decisions">
+            <div>
               {filteredDecisions.map((decision, i) => (
                 <DecisionRowItem
                   key={decision.id}

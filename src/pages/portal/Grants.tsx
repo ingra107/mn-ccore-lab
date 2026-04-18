@@ -579,15 +579,13 @@ export default function Grants() {
                       borderBottom: isExpanded ? 'none' : '1px solid var(--border-subtle)',
                       background: isExpanded ? 'var(--surface-hover, rgba(0,0,0,0.02))' : undefined,
                     }}
-                    role="button"
-                    tabIndex={0}
-                    aria-expanded={isExpanded}
-                    onClick={() => setExpandedId(isExpanded ? null : grant.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        setExpandedId(isExpanded ? null : grant.id)
-                      }
+                    // role="button" removed 2026-04-18 (axe nested-interactive).
+                    // aria-expanded must live on an interactive role; removed
+                    // together to stay axe-clean. Keyboard users tab to the
+                    // inner row-title link or expand chevron.
+                    onClick={(e) => {
+                      // Only expand on background click, not on inner buttons/links.
+                      if (e.target === e.currentTarget) setExpandedId(isExpanded ? null : grant.id)
                     }}
                   >
                     {/* Title */}

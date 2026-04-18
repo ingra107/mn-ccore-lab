@@ -359,9 +359,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
   return (
     <div
       className="table-container"
-      role="grid"
       aria-label="Tasks"
-      aria-rowcount={sorted.length + 1}
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
     >
       {/* Reset view button — only show when config differs from defaults */}
@@ -394,7 +392,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         onDragEnd={handleColumnDragEnd}
       >
         <SortableContext items={orderedDataCols} strategy={horizontalListSortingStrategy}>
-          <div className="task-grid-header" role="row" aria-rowindex={1} style={{ ...colStyle, padding: 'var(--sp-sm) var(--sp-lg)', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+          <div className="task-grid-header" style={{ ...colStyle, padding: 'var(--sp-sm) var(--sp-lg)', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
             <div /> {/* Checkbox spacer — not sortable */}
             {orderedDataCols.map(col => (
               <SortableColumnHeader
@@ -688,23 +686,28 @@ function SortableColumnHeader({
     <div
       ref={setNodeRef}
       style={dragStyle}
-      {...attributes}
-      role="columnheader"
-      aria-sort={isActive ? (currentAsc ? 'ascending' : 'descending') : 'none'}
       onClick={(e) => {
         // Only sort on click if not dragging
         if (!isDragging) onSort(field, e.shiftKey)
       }}
     >
-      {/* Drag handle — small grip area before the label */}
-      <span
+      {/* Drag handle owns the dnd-kit a11y attributes so the outer div stays
+          role-free (axe nested-interactive, 2026-04-18). The handle itself
+          is a button; the ColumnHeader inside renders another button for
+          sort — still two interactive elements side by side, not nested. */}
+      <button
+        type="button"
+        {...attributes}
         {...listeners}
+        aria-label={`Reorder column: ${label}`}
         style={{
           cursor: isDragging ? 'grabbing' : 'grab',
           display: 'inline-flex',
           alignItems: 'center',
           padding: '0 2px',
           marginRight: '2px',
+          background: 'none',
+          border: 'none',
           color: 'var(--slate)',
           opacity: 0.25,
           flexShrink: 0,
@@ -715,7 +718,7 @@ function SortableColumnHeader({
         title="Drag to reorder column"
       >
         <GripVertical size={10} />
-      </span>
+      </button>
       <ColumnHeader
         label={label}
         sortKey={field}
@@ -819,9 +822,7 @@ function TaskGridRow({
     <div
       ref={rowRef}
       data-testid={`task-row-${task.id}`}
-      role="row"
-      aria-rowindex={index + 2}
-      aria-selected={selected ?? false}
+      data-selected={selected ? 'true' : undefined}
       style={{
         ...colStyle,
         padding: '0 var(--sp-lg)',
@@ -853,7 +854,7 @@ function TaskGridRow({
       onContextMenu={(e) => onContextMenu?.(e, task.id)}
     >
       {/* Checkbox */}
-      <div role="gridcell" className="task-row-checkbox" onClick={(e) => { e.stopPropagation(); onToggleSelect?.(task.id) }} style={{ cursor: 'pointer' }}>
+      <div className="task-row-checkbox" onClick={(e) => { e.stopPropagation(); onToggleSelect?.(task.id) }} style={{ cursor: 'pointer' }}>
         {onToggleSelect ? (
           <div style={{
             width: 16, height: 16, borderRadius: 'var(--radius-sm)',
@@ -876,7 +877,7 @@ function TaskGridRow({
             return (
               <div
                 key="title"
-                role="gridcell"
+               
                 className={`task-row-title ${cp.className}`}
                 ref={el => { cellRefs.current[gridPos] = el }}
                 tabIndex={cp.tabIndex}
@@ -964,6 +965,7 @@ function TaskGridRow({
                     <span
                       role="button"
                       tabIndex={0}
+                      aria-label={`Open task: ${task.title || task.description || 'untitled'}`}
                       data-testid={`task-title-${task.id}`}
                       onClick={(e) => { e.stopPropagation(); onOpenDetail?.(task) }}
                       onDoubleClick={(e) => { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) }}
@@ -1061,7 +1063,7 @@ function TaskGridRow({
             return (
               <div
                 key="assignee"
-                role="gridcell"
+               
                 className={`task-row-meta flex items-center gap-1.5 ${cp.className}`}
                 ref={el => { cellRefs.current[gridPos] = el }}
                 tabIndex={cp.tabIndex}
@@ -1094,7 +1096,7 @@ function TaskGridRow({
             return (
               <div
                 key="project"
-                role="gridcell"
+               
                 className={`task-row-meta ${cp.className}`}
                 ref={el => { cellRefs.current[gridPos] = el }}
                 tabIndex={cp.tabIndex}
@@ -1104,6 +1106,7 @@ function TaskGridRow({
                 onClick={(e) => e.stopPropagation()}
               >
                 <InlineCellSelect
+                  label="Project"
                   value={task.project_id || ''}
                   options={projectOptions}
                   onChange={(val) => onFieldChange(task.id, 'project_id', val || null)}
@@ -1134,7 +1137,7 @@ function TaskGridRow({
             return (
               <div
                 key="due_date"
-                role="gridcell"
+               
                 className={`task-row-meta col-numeric ${cp.className}`}
                 ref={el => { cellRefs.current[gridPos] = el }}
                 tabIndex={cp.tabIndex}
@@ -1163,6 +1166,7 @@ function TaskGridRow({
                 onClick={(e) => e.stopPropagation()}
               >
                 <InlineCellSelect
+                  label="Status"
                   value={task.status}
                   options={STATUS_OPTIONS}
                   onChange={(val) => {
@@ -1217,6 +1221,7 @@ function TaskGridRow({
                 onClick={(e) => e.stopPropagation()}
               >
                 <InlineCellSelect
+                  label="Priority"
                   value={task.priority}
                   options={PRIORITY_OPTIONS}
                   onChange={(val) => onFieldChange(task.id, 'priority', val)}
@@ -1558,13 +1563,16 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
 // ── Inline Cell Select ───────────────────────────────────────
 
 function InlineCellSelect({
-  value, options, onChange, renderValue,
+  value, options, onChange, renderValue, label,
 }: {
   value: string
   options: { value: string; label: string; color?: string }[]
   onChange: (val: string) => void
   renderValue: (val: string) => React.ReactNode
+  /** Screen-reader label (axe button-name); falls back to label of current value. */
+  label?: string
 }) {
+  const selectedLabel = options.find(o => o.value === value)?.label ?? value
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const [focusedIdx, setFocusedIdx] = useState(-1)
@@ -1634,6 +1642,7 @@ function InlineCellSelect({
       <button
         ref={buttonRef}
         role="combobox"
+        aria-label={label ? `${label}: ${selectedLabel} — click to change` : selectedLabel}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listboxId.current : undefined}

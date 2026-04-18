@@ -97,6 +97,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
           </span>
           <button
             onClick={() => { closeDropdowns(); onClear() }}
+            aria-label="Clear selection"
             style={{
               display: 'flex',
               alignItems: 'center',

@@ -86,6 +86,7 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
       <button
         ref={hoverCard.triggerRef as React.RefObject<HTMLButtonElement>}
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
+        aria-label={`Assignee: ${person.name || value || 'unassigned'} — click to change`}
         className="inline-flex items-center gap-1.5 rounded-md transition-colors inline-assignee-btn"
         style={{
           padding: '2px 6px',

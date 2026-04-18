@@ -266,6 +266,7 @@ export default function Deadlines() {
           <DensityToggle value={density} onChange={setDensity} />
 
           <select
+            aria-label="Filter deadlines by type"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             className="rounded-full border px-3 py-1.5 text-xs"
@@ -895,6 +896,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             </div>
             <button
               onClick={() => { setNoteText(item.future_note || ''); setEditingNote(true) }}
+              aria-label="Edit future-me note"
               className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded px-1"
               style={{ background: 'none', border: 'none', cursor: 'pointer' }}
             >

@@ -208,6 +208,7 @@ export default function Ideas() {
             </div>
 
             <select
+              aria-label="Filter ideas by status"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="rounded-full border"
@@ -252,11 +253,11 @@ export default function Ideas() {
             action={{ label: 'Submit an idea', onClick: () => setShowCreate(true) }}
           />
         ) : (
-          <TableContainer>
-            {/* Column headers - hidden on mobile */}
+          <TableContainer ariaLabel="Ideas">
+            {/* Column headers - hidden on mobile.
+                No role="row" — see note in TableContainer (axe). */}
             <div
               className="hidden sm:grid"
-              role="row"
               style={{
                 gridTemplateColumns: GRID_COLS,
                 padding: 'var(--sp-sm) var(--sp-lg)',
@@ -265,26 +266,26 @@ export default function Ideas() {
                 gap: 'var(--sp-md)',
               }}
             >
-              <div role="columnheader">
+              <div>
                 <ColumnHeader label="Title" sortKey="title" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
               </div>
-              <div role="columnheader">
+              <div>
                 <ColumnHeader label="Submitter" sortKey="submitter" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
               </div>
-              <div role="columnheader">
+              <div>
                 <ColumnHeader label="Status" sortKey="status" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
               </div>
-              <div role="columnheader" style={{ textAlign: 'right' }}>
+              <div style={{ textAlign: 'right' }}>
                 <ColumnHeader label="Votes" sortKey="votes" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} align="right" />
               </div>
-              <div role="columnheader">
+              <div>
                 <ColumnHeader label="Age" sortKey="created_at" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />
               </div>
-              <div role="columnheader" aria-label="Actions" />
+              <div />
             </div>
 
             {/* Rows */}
-            <div role="grid" aria-label="Ideas table">
+            <div>
               {sortedIdeas.map((idea, idx) => (
                 <IdeaRowView
                   key={idea.id}
@@ -374,7 +375,6 @@ function IdeaRowView({
 
   return (
     <div
-      role="row"
       className={`idea-row group${isFocused ? ' task-row-focused' : ''}`}
       style={{
         borderBottom: '1px solid var(--row-separator)',
@@ -394,7 +394,7 @@ function IdeaRowView({
         }}
       >
         {/* Title (dominant, clickable to expand detail) */}
-        <div role="gridcell" style={{ minWidth: 0 }}>
+        <div style={{ minWidth: 0 }}>
           <span
             onClick={onToggleExpand}
             role="button"
@@ -434,7 +434,7 @@ function IdeaRowView({
         </div>
 
         {/* Submitter (recedes) */}
-        <div role="gridcell" className="flex items-center gap-2" style={{ minWidth: 0 }}>
+        <div className="flex items-center gap-2" style={{ minWidth: 0 }}>
           <div style={{ width: 20, height: 20, flexShrink: 0 }}>
             <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="xs" variant="ice" />
           </div>
@@ -454,7 +454,7 @@ function IdeaRowView({
         </div>
 
         {/* Status (inline editable) */}
-        <div role="gridcell">
+        <div>
           <InlineSelect
             value={idea.status}
             options={[
@@ -469,7 +469,7 @@ function IdeaRowView({
         </div>
 
         {/* Votes (right-aligned numeric with bounce) */}
-        <div role="gridcell" style={{ textAlign: 'right' as const }}>
+        <div style={{ textAlign: 'right' as const }}>
           <button
             onClick={onVote}
             className="inline-flex items-center gap-1 rounded-md"
@@ -499,7 +499,7 @@ function IdeaRowView({
         </div>
 
         {/* Age (recedes) */}
-        <div role="gridcell">
+        <div>
           <span
             style={{
               fontSize: 'var(--text-small)',
@@ -515,7 +515,7 @@ function IdeaRowView({
 
         {/* Actions (hover-only ghost buttons) */}
         <div
-          role="gridcell"
+         
           className="idea-actions flex items-center justify-end gap-1"
         >
           <button

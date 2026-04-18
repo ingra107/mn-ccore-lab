@@ -83,16 +83,16 @@ export default function DashboardGrid({
         <div key={card.id} data-testid={`card-${card.id}`} className="dashboard-grid-item">
           <div
             className="dashboard-grid-card"
-            role={onCardClick ? 'button' : undefined}
-            tabIndex={onCardClick ? 0 : undefined}
-            onClick={onCardClick ? () => onCardClick(card.id) : undefined}
-            onKeyDown={
+            // Cards contain their own interactive elements (buttons, links),
+            // so the wrapper drops role="button" to avoid axe nested-interactive
+            // (2026-04-18). Clicks on non-interactive background areas still
+            // invoke onCardClick; keyboard reaches inner controls normally.
+            onClick={
               onCardClick
-                ? e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      onCardClick(card.id)
-                    }
+                ? (e) => {
+                    // Only trigger when the click lands on the card background,
+                    // not on an inner button/link that handled the click first.
+                    if (e.target === e.currentTarget) onCardClick(card.id)
                   }
                 : undefined
             }

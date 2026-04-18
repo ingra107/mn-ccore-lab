@@ -340,6 +340,7 @@ export default function AnalyticsPage() {
       <div className="mt-5 flex items-center gap-3 flex-wrap">
         <button
           onClick={() => setWeekOffset(weekOffset - 1)}
+          aria-label="Previous week"
           className="w-8 h-8 flex items-center justify-center rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
           style={{ borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', color: 'var(--slate)' }}
         >
@@ -354,6 +355,7 @@ export default function AnalyticsPage() {
         <button
           onClick={() => setWeekOffset(weekOffset + 1)}
           disabled={isCurrentWeek}
+          aria-label="Next week"
           className="w-8 h-8 flex items-center justify-center rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
           style={{ borderColor: 'var(--border-subtle)', background: 'none', cursor: isCurrentWeek ? 'default' : 'pointer', color: 'var(--slate)', opacity: isCurrentWeek ? 0.3 : 1 }}
         >

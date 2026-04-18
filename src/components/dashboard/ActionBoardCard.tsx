@@ -35,7 +35,7 @@ function ActionBoardCard() {
   return (
     <BentoCard title="Tasks" subtitle={`${pending.length} pending · ${completed.length} done`} size="span-2" icon={ClipboardList} drillDown noLift>
       <div className="flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto -mx-1 px-1" style={{ maxHeight: '300px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 overflow-y-auto -mx-1 px-1" tabIndex={0} role="region" aria-label="Action items" style={{ maxHeight: '300px', scrollbarWidth: 'thin', WebkitOverflowScrolling: 'touch' }}>
           {pending.length > 0 ? (
             <div className="flex flex-col gap-3">
               {Array.from(byAssignee.entries()).map(([assignee, assigneeItems]) => {
@@ -67,6 +67,7 @@ function ActionBoardCard() {
                             showUndo(`Status → ${next === 'done' ? 'Done' : 'In Progress'}`, () => updateStatus.mutate({ id: item.id, status: prev }))
                           }}>
                           <button type="button" className="cursor-pointer flex-shrink-0 action-board-status-btn"
+                            aria-label={`Mark "${item.title || item.description}" done`}
                             onClick={(e) => {
                               e.stopPropagation()
                               const prev = item.status

@@ -130,6 +130,7 @@ export default function SettingsPage() {
           </SettingsField>
           <SettingsField label="Lab Type">
             <select
+              aria-label="Lab Type"
               value={settings.lab_type || 'clinical_research'}
               onChange={(e) => updateSettings.mutate({ lab_type: e.target.value })}
               className="w-full rounded-md border px-3 py-2 text-sm cursor-pointer"

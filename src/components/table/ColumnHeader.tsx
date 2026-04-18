@@ -28,14 +28,16 @@ export default function ColumnHeader({
 }: ColumnHeaderProps) {
   const isActive = currentSort === sortKey
 
-  const sortDirection = isActive ? (sortAsc ? 'ascending' : 'descending') : 'none'
+  const sortDirection = isActive ? (sortAsc ? 'ascending' : 'descending') : null
 
   return (
     <button
       onClick={() => onSort(sortKey)}
       className="col-header"
-      aria-sort={sortDirection as 'ascending' | 'descending' | 'none'}
-      aria-label={`Sort by ${label}${isActive ? `, currently ${sortDirection}` : ''}`}
+      // aria-sort lives on role=columnheader, not on a plain <button>
+      // (axe AXE-ARIA-ALLOWED-ATTR, 2026-04-18). aria-label below already
+      // communicates the current sort state to screen readers.
+      aria-label={`Sort by ${label}${sortDirection ? `, currently ${sortDirection}` : ''}`}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

@@ -55,6 +55,7 @@ export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps
           <span>{text}</span>
           <button
             onClick={dismiss}
+            aria-label="Dismiss tooltip"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cream)', opacity: 0.5, padding: 0, display: 'flex' }}
           >
             <X size={10} />
