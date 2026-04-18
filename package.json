@@ -19,7 +19,15 @@
     "test:local:setup": "tsx scripts/local-db-bootstrap.ts && tsx scripts/local-db-seed.ts",
     "test:prod": "playwright test --config=playwright.config.prod.ts",
     "test:smoke": "npx playwright test tests/smoke.spec.ts --config=playwright.config.prod.ts",
-    "test:headed": "npx playwright test --headed"
+    "test:headed": "npx playwright test --headed",
+    "preflight": "tsx scripts/pre-flight/00-orchestrator.ts",
+    "preflight:pi": "tsx scripts/pre-flight/persona-pi-power-user.ts",
+    "preflight:collaborator": "tsx scripts/pre-flight/persona-collaborator.ts",
+    "preflight:coordinator": "tsx scripts/pre-flight/persona-coordinator.ts",
+    "preflight:trainee": "tsx scripts/pre-flight/persona-trainee.ts",
+    "preflight:mobile": "tsx scripts/pre-flight/persona-mobile.ts",
+    "preflight:a11y": "tsx scripts/pre-flight/persona-accessibility.ts",
+    "preflight:breaker": "tsx scripts/pre-flight/persona-breaker.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
