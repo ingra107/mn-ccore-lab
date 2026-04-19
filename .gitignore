@@ -39,6 +39,8 @@ test_views.txt
 
 # Audit output — per-run screenshots, regenerate locally via hub-audit.ts
 review/audit/
+review/deep-audit/
 review/dogfood/
 review/dogfood-round*/
 review/visual-audit/
+review/journey-*.png
