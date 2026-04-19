@@ -71,9 +71,8 @@ export function parseMentions(text: string): string[] {
  *  `team_members.slug` — adding a new member means adding a row here.
  *  Unknown prefix falls through to the email-prefix literal. */
 const EMAIL_PREFIX_TO_SLUG: Record<string, string> = {
-  nick: 'nick-ingraham',
-  ningraha: 'nick-ingraham',
-  sandb029: 'nick-ingraham',
+  nick: 'nick-ingraham',       // old slug, kept so legacy records resolve
+  ingra107: 'nick-ingraham',   // real UMN NetID
   nate: 'nate-mesfin',
   dudley: 'adams-dudley',
   chipman: 'jeff-chipman',
@@ -104,11 +103,11 @@ export function actorSlug(email: string): string {
 
 /** Fallback PI emails used when lab_settings query fails (cold start, DB
  *  unreachable, or migration v44 not yet run). Keep this in sync with the
- *  v44 seed so behavior doesn't silently diverge. */
+ *  v44 seed so behavior doesn't silently diverge. Ground truth:
+ *  `/c/Users/ingra107/Peripheral-Brain/Context/contacts.md`. */
 export const PI_EMAILS_FALLBACK = new Set<string>([
-  'ningraha@umn.edu',
-  'sandb029@umn.edu',           // Nick (alt)
-  'nicholas.ingraham@gmail.com', // Nick personal
+  'ingra107@umn.edu',            // Nick — real UMN address
+  'nicholas.ingraham@gmail.com', // Nick — personal
 ])
 
 let piEmailsCache: { emails: Set<string>; fetchedAt: number } | null = null;
