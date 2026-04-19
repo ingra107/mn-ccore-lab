@@ -17,7 +17,29 @@
 - `docs/archived/` — all superseded Hub docs.
 - PB side: `Projects/mn-ccore-lab-hub/_archived/` — superseded plans, specs, and audit checklists. The main PB project folder has only current reference docs (vision, future ideas, competitive research).
 
-## Gate — all green as of commit `ed40e39`
+## Gate — all green as of commit `f0d6375`
+
+## Phase 36b late add: team slug rename (2026-04-19)
+
+All 19 team_members slugs migrated from inconsistent (nick/nate as
+first-name, 17 others as last-name) to uniform `preferred_name-last_name`
+(`nick-ingraham`, `nate-mesfin`, `emma-bromley`, ...). 2,312 row updates
+across 30+ D1 tables. 239 client/API code replacements across 27 files.
+
+**Impact on every writer:** `actorSlug(email)` now maps email prefix
+through `EMAIL_PREFIX_TO_SLUG` LUT in `api/helpers.ts`. Adding a new team
+member requires a row there (plus team.ts + D1). Nick's 3 email aliases
+(`nick@`, `ningraha@`, `sandb029@`) all resolve to `nick-ingraham`.
+
+**Don't regress this:** future PI/fellow/member adds must update both
+D1 and `EMAIL_PREFIX_TO_SLUG`.
+
+Migration SQL saved at `scripts/rename-team-slugs.sql` + generator at
+`scripts/generate-slug-migration.py`. Client rename at
+`scripts/rename-client-slugs.py`. Schema-v45 (projects.deleted_at) also
+applied in same session.
+
+
 
 | Check | Result |
 |---|---|

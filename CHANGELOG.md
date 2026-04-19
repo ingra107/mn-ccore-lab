@@ -2,6 +2,67 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Phase 36b: Team Slug Rename (2026-04-19 evening)
+
+User decision during post-deploy audit: converge all team_members slugs on
+`preferred_name-last_name` format. Pre-migration, D1 had 2 directors with
+first-name-only slugs (`nick`, `nate`) and 17 members with last-name-only
+(`chipman`, `bromley`, ...) — inconsistent and caused the PI's own profile
+page to be unreachable via any coherent URL convention.
+
+**D1 migration** (`scripts/rename-team-slugs.sql`, 903 SQL lines applied to
+prod): per-member INSERT clone with new id+slug → UPDATE ~35 referring
+columns across 30+ tables → DELETE old row. 2,312 row changes total.
+FK on `comments.author_id` stayed valid throughout because both old and
+new rows exist during the UPDATE phase.
+
+**Code migration** (`scripts/rename-client-slugs.py`): 239 quoted slug
+literals across 27 files (src/data/team.ts, src/data/mentees.ts,
+src/data/projects.ts, src/data/meetings.ts, src/data/publications.ts,
+src/data/grants.ts, api/routes/pb-sector.ts, etc.).
+
+**Email → slug resolution** (`api/helpers.ts`): `actorSlug(email)` is
+called by ~40 write handlers. Before, it returned `email.split('@')[0]`
+which was the old slug. Now it maps email-prefix → canonical slug via
+`EMAIL_PREFIX_TO_SLUG`. Nick's 3 email aliases (`nick@`, `ningraha@`,
+`sandb029@`) all resolve to `nick-ingraham`. Unknown prefixes fall
+through unchanged.
+
+**Schema-v45 bonus** (`api/schema-v45.sql`): `ALTER TABLE projects ADD
+COLUMN deleted_at TEXT`. Route handlers referenced the column but it was
+missing → `/api/projects` returned 500 under load. Applied to prod in
+same session.
+
+Final renames (full list):
+
+| Old | New |
+|-----|-----|
+| nick | nick-ingraham |
+| nate | nate-mesfin |
+| dudley | adams-dudley |
+| chipman | jeff-chipman |
+| mceachron | kendall-mceachron |
+| safadi | sami-safadi |
+| begnaud | abbie-begnaud |
+| henkle | benjamin-henkle |
+| macdonald | dave-macdonald |
+| trujeque | josh-trujeque |
+| pendleton | katie-pendleton |
+| kalinoski | michael-kalinoski |
+| wacker | dave-wacker |
+| arriaza | steven-arriaza |
+| bromley | emma-bromley |
+| eddington | casey-eddington |
+| shyu | dan-shyu |
+| fitzgerald | beret-fitzgerald |
+| collins | claire-collins |
+
+Verification post-deploy:
+- `/api/health`: 600 tasks, 62 projects, 19 team — all green.
+- `/api/team`: Nick's slug = `nick-ingraham`.
+- `/team/nick-ingraham`: HTTP 200, MemberPage renders Nick's profile.
+- Mobile smoke 2/2, desktop journey 1/1.
+
 ## Phase 36: Consultant Close-out + Mobile Swipe + Data Cleanup (2026-04-19)
 
 **Context:** Phase 35 closed the accessibility + sync parity launch

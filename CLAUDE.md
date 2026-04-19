@@ -20,7 +20,8 @@ safe to ignore unless explicitly spelunking history.
 - **Phase 36 shipped.** All 5 consultant "nice-to-have" items closed (Hono router, JWT sig verify, `team_members.email`, `lab_settings.pi_emails`, `pb-sector` batched). Mobile swipe-to-dismiss on TaskDetailPanel. Slug sanitizer on `POST /api/projects`. 1 duplicate project merged in prod D1.
 - **Quality gate: 🟢 GREEN (Phase 35 baseline, not re-run for Phase 36).** Preflight 97 pass / 0 fail. Deep-audit 14/14 suites clean. Axe clean across 29 pages × 2 color schemes. Post-Phase-36 API + mobile smoke both green. Strongly suggest running preflight before team launch — Hono touched the whole API surface.
 - **Not yet live for the team.** Nick is the only active user. Going live requires CF Access config + `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` + `REQUIRE_AUTH` + `TEST_MODE_KEY` + `VITE_REQUIRE_AUTH` secrets — see `LAUNCH-CHECKLIST.md` sections 0 + 1.
-- **Current HEAD:** `ed40e39` on `main`, pushed.
+- **Team slugs:** all 19 members use `preferred_name-last_name` format (`nick-ingraham`, `emma-bromley`, ...). Migrated Phase 36b 2026-04-19 — see CHANGELOG. `actorSlug(email)` in `api/helpers.ts` maps email prefix → canonical slug via `EMAIL_PREFIX_TO_SLUG`. Adding a new team member = D1 row + team.ts entry + LUT entry.
+- **Current HEAD:** `f0d6375` on `main`, pushed.
 
 ## Vision
 
