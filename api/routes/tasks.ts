@@ -525,6 +525,64 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
   return json({ data: { ok: true, inserted } });
 }
 
+// POST /api/tasks/:id/delete — soft-delete a single task (mirrors handleDeleteProject).
+//
+// Parity with POST /api/projects/:slug/delete (projects.ts:478). Soft-deletes
+// via tasks.deleted_at (schema v22) so sync_d1_pull can mirror the tombstone
+// into brain.db without physical row loss. Idempotent: re-deleting an already-
+// deleted task returns 200 with `idempotent: true`.
+//
+// Cascade:
+//   - DELETE task_comments WHERE task_id = ?
+//   - DELETE task_updates WHERE task_id = ?
+//   - DELETE task_subtasks WHERE task_id = ?
+//   - DELETE notifications WHERE source_type IN ('task','task_comment') AND source_id = ?
+//
+// Mirrors the batch-delete notification cleanup added for audit 12.L. Subtasks
+// and task_updates are hard-deleted since they're UI-only artefacts of this task
+// (no external sync to brain.db / Airtable).
+export async function handleDeleteTask(id: string, user: AuthUser, env: Env): Promise<Response> {
+  const existing = await env.DB.prepare(
+    'SELECT id, title, description, deleted_at FROM tasks WHERE id = ?'
+  ).bind(id).first<{ id: string; title: string | null; description: string | null; deleted_at: string | null }>();
+
+  if (!existing) {
+    return error('Task not found', 404);
+  }
+
+  const label = existing.title || existing.description || id;
+
+  // Cascade-clean child rows. task_comments / task_updates / task_subtasks all
+  // carry a task_id FK-by-convention (not enforced). Leaving them orphans
+  // bloats the DB and creates stale joins forever. Notifications cleanup
+  // mirrors the batch-delete path (deep-audit 12.L).
+  try {
+    await env.DB.prepare('DELETE FROM task_comments WHERE task_id = ?').bind(id).run();
+    await env.DB.prepare('DELETE FROM task_updates WHERE task_id = ?').bind(id).run();
+    try { await env.DB.prepare('DELETE FROM task_subtasks WHERE task_id = ?').bind(id).run(); } catch { /* table may not exist */ }
+    await env.DB.prepare(
+      "DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id = ?"
+    ).bind(id).run();
+  } catch (e) {
+    console.error('task cascade-clean failed:', e);
+  }
+
+  // Soft-delete. Only flip deleted_at if it's NULL so we can detect idempotent
+  // re-deletes via meta.changes.
+  const result = await env.DB.prepare(
+    "UPDATE tasks SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND deleted_at IS NULL"
+  ).bind(id).run();
+
+  if (result.meta.changes === 0) {
+    await logActivity(env, 'task_delete', `Deleted task (idempotent): ${label}`, user.email, id, 'task');
+    return json({ data: { deleted: id, title: label, idempotent: true } });
+  }
+
+  await logActivity(env, 'task_delete', `Deleted task: ${label}`, user.email, id, 'task');
+
+  return json({ data: { deleted: id, title: label } });
+}
+
 // POST /api/tasks/:id/acknowledge — closed-loop task acknowledgment (aviation CRM pattern)
 export async function handleAcknowledgeTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const task = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null; acknowledged_at: string | null }>();
