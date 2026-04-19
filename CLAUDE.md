@@ -571,7 +571,7 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 | Network chunk 1.3MB | Expected (three.js). Code-split via React.lazy |
 | CF Access blocks all | Restrict to portal paths only |
 | Duplicate action items | Dedup by normalizing "[Carried forward]" |
-| Duplicate project slugs in D1 | Some projects have both `(prefix)-slug` and `prefix-slug` variants from old migration. Fix via D1 merge; track via `scripts/projects-dedupe.sql` when written. |
+| Duplicate project slugs in D1 | Fixed 2026-04-19: D1 is clean (0 paren slugs in prod). `POST /api/projects` now sanitizes `body.slug` server-side via `[^a-z0-9]+ → -`, so a client passing `(mceachron)-...` can't reintroduce the class. |
 | MeetingDetail Rules of Hooks | useState/useMemo must come BEFORE early returns on loading/not-found branches. Phase 31.5 perf pass introduced a variant of this bug; R6 hotfixed. |
 | `team_members.email` column | Added 2026-04-19 (schema-v43). Backfilled to `slug || '@umn.edu'` for existing rows. Read `email` column; fall back to the slug derivation only if NULL. Non-UMN collaborators get a real address. |
 | Mobile swipe on TaskDetailPanel | `onTouchStart/Move/End` on panel div; only active below 768px. Axis-locked (disengages on vertical scroll so page still scrolls). Drag >30% panel width → onClose. Respects `prefers-reduced-motion` (instant dismiss, no transform animation). Don't add any element with its own touch handler inside the panel without re-evaluating axis lock. |
@@ -745,7 +745,7 @@ pick any tier and ship it.
 ### Known Issues
 | # | Issue | Severity | Notes |
 |---|-------|----------|-------|
-| 1 | Project slugs with parentheses break routing | LOW | e.g. `(mceachron)-...`; test skips these |
+| 1 | ~~Project slugs with parentheses break routing~~ | RESOLVED 2026-04-19 | D1 has 0 paren slugs; `POST /api/projects` sanitizes on create. |
 | 2 | Subtasks, ideas, decisions are Hub-only | BY DESIGN | No brain.db sync needed |
 
 ### Sync Pipeline Field Coverage (all bidirectional)

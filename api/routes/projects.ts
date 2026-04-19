@@ -101,7 +101,12 @@ export async function handleCreateProject(
     return error('title required', 400);
   }
 
-  const baseSlug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  // Sanitize: `[a-z0-9-]` only. A client-supplied body.slug of e.g.
+  // `(mceachron)-project` would otherwise break react-router path matching
+  // downstream. Apply the same pass to the title-derived fallback.
+  const sanitize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const baseSlug = body.slug ? sanitize(body.slug) : sanitize(body.title);
+  if (!baseSlug) return error('title/slug yields empty slug after sanitization', 400);
   // Collision-avoidance: if slug already exists, append -2, -3, ... until free.
   // Found by deep-audit Suite 8 — two creates with same title collided on slug,
   // effectively corrupting the first project's identity.
