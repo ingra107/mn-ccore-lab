@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: Flip VITE_REQUIRE_AUTH=1 + `wrangler pages secret put REQUIRE_AUTH` + `TEST_MODE_KEY` before team launch. See LAUNCH-CHECKLIST.md section 0.
+next_action: Configure CF Access (Zero Trust) for @umn.edu, then set `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` + `REQUIRE_AUTH` + `TEST_MODE_KEY` secrets, then `VITE_REQUIRE_AUTH=1` + rebuild. See LAUNCH-CHECKLIST.md sections 0 + 1.
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 
@@ -15,9 +15,9 @@ React 19 + Vite 8 + Tailwind v4 + Cloudflare Pages/D1 lab management
 platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (PI-only; team not yet onboarded)
-**Repo:** https://github.com/ingra107/mn-ccore-lab  (650+ commits)
-**Current deploy:** `bd2a7cc` (2026-04-19)
-**Quality gate:** 🟢 GREEN — preflight 97 pass / 0 fail, deep-audit 14/14 suites clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes.
+**Repo:** https://github.com/ingra107/mn-ccore-lab  (660+ commits)
+**Current deploy:** `ed40e39` (2026-04-19) — Phase 36 close
+**Quality gate:** 🟢 GREEN — preflight 97 pass / 0 fail, deep-audit 14/14 suites clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, mobile smoke 2/2.
 
 ## 🚨 Read these FIRST every session
 
@@ -28,7 +28,51 @@ platform for Nick's critical-care research group at UMN.
 5. **`CHANGELOG.md`** — top entry is the most recent phase; jump there for "what changed recently."
 6. **`docs/OBSERVABILITY.md`** — /api/health runbook + how to wire external uptime monitoring.
 
-## Phase 35 COMPLETE — A11y + Sync Parity + Launch Readiness (2026-04-18/19)
+## Phase 36 COMPLETE — Consultant Close-out + Mobile Swipe + Data Cleanup (2026-04-19)
+
+**Status:** ✓ Shipped at `ed40e39` on origin/main. Deployed to
+`https://mn-ccore-lab.pages.dev` (preview `e7046581`). D1 migrations v43 +
+v44 applied to prod. Post-deploy API smoke green (health/version/auth/me/
+tasks/pb-gate), mobile smoke green (2/2 on Pixel 5 emulation).
+
+### What shipped
+
+- **Hono router** (`api/index.ts` 1875 → 1329 lines, ~225 routes). Replaces
+  flat if/else dispatcher with declarative path + method. Route-ordering
+  bug class eliminated. `hono@4.12.14` added.
+- **JWT signature verification** (`api/jwt-verify.ts`) — RS256 via CF Access
+  JWKS, exp/nbf/iss/aud checks. Activates when `CF_ACCESS_TEAM_DOMAIN` +
+  `CF_ACCESS_AUD` secrets are set. Until then, decode-only with one-shot
+  cold-start warn (no lockout risk). `getAuthUser()` + `isPiRequest()` are
+  now async.
+- **`team_members.email` column** (schema-v43 applied prod) — real column,
+  backfilled to `slug || '@umn.edu'` for all 19 existing rows. Three
+  derivation sites now read the column (with slug-derive as fallback).
+- **`lab_settings.pi_emails`** (schema-v44 applied prod) — PI allowlist
+  moved from hardcoded `Set` into DB-backed JSON. `getPiEmails(env)` reads
+  with 5-min cache + fallback. Client-side `PI_EMAILS` arrays (4 files)
+  deleted — client reads `user.isPi` from `/api/auth/me`.
+- **`pb-sector.handleCommandCenter` batched** — 11 parallel `Promise.all`
+  queries → single `env.DB.batch([...])` RPC.
+- **Mobile swipe-right-to-dismiss** on `TaskDetailPanel` (below 768px).
+  Axis-locked touch handlers, backdrop fade, >30% width threshold,
+  respects `prefers-reduced-motion`.
+- **Slug sanitizer** on `POST /api/projects` — `[^a-z0-9]+ -> -` applied to
+  client-supplied `body.slug`, not just title-derived fallback. Closes
+  the paren-slug class.
+- **DI-4 cleanup** — merged duplicate `CLIF: PF-v-SF Oxygenation Severity`
+  project (2 rows in D1 collapsed to 1). SQL at
+  `scripts/merge-pf-sf-duplicate.sql`.
+- **Mobile smoke test infra** — `tests/mobile-swipe-smoke.spec.ts` +
+  `playwright.config.mobile.ts` (Pixel 5 emulation, post-deploy).
+
+Post-launch follow-ups (not blocking):
+- Nick must configure CF Access (Zero Trust > Access > Applications) and
+  set the 4 secrets — see `LAUNCH-CHECKLIST.md` sections 0 + 1.
+- Real-device swipe verification on Nick's phone (Playwright's synthetic
+  touch doesn't reproduce gesture velocity).
+
+## Phase 35 — A11y + Sync Parity + Launch Readiness (2026-04-18/19)
 
 **Status:** ✓ Shipped at `bd2a7cc` on origin/main.
 

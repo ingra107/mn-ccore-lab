@@ -2,6 +2,204 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Phase 36: Consultant Close-out + Mobile Swipe + Data Cleanup (2026-04-19)
+
+**Context:** Phase 35 closed the accessibility + sync parity launch
+blockers but left 5 "nice-to-have" items from the consultant review
+unfinished. Phase 36 ships all five plus a Nick-requested mobile swipe
+gesture and a data-quality pass.
+
+### Commits + deploys
+
+| SHA | Scope |
+|-----|-------|
+| `30f0bf7` | Items 3/4/2/5: JWT verify + email col + lab_settings + pb-sector batch |
+| `2a92225` | Item 1: Hono router migration |
+| `a4297e0` | Mobile swipe-right-to-dismiss on TaskDetailPanel |
+| `57fd83d` | Mobile smoke test infra (Pixel 5 emulation) |
+| `ed40e39` | Slug sanitizer + duplicate-project merge (DI-4) |
+
+Deployed to `https://mn-ccore-lab.pages.dev`:
+- Preview `fa77be19` (after `a4297e0`) — first deploy
+- Preview `e7046581` (after `ed40e39`) — final
+
+D1 migrations applied in order:
+- `schema-v43.sql` — `team_members.email TEXT` + backfill (19/19 rows filled)
+- `schema-v44.sql` — `lab_settings.pi_emails` JSON seed
+- `scripts/merge-pf-sf-duplicate.sql` — DI-4 merge (1 task + 1 comment + 1 document moved; 1 project row deleted)
+
+### Gate (post-deploy)
+
+- `/api/health` live prod: 200 `{ok: true}` — 599 tasks, 62 projects (was 66, -4 from merges + cleanup), 19 team members.
+- `/api/auth/me` with no JWT: `{authenticated: false}` ✓.
+- `/api/pb/command-center` with no PI JWT: 403 ✓.
+- Mobile smoke (Pixel 5 emulation): 2/2 pass — zero JS errors + zero 5xx on `/tasks`, detail panel opens on tap + closes on button.
+- Build: `npm run build` clean.
+- Wrangler dry-run: `424 KiB / 79 KiB gzip`.
+
+### 1. Hono router migration
+
+**Before** (`api/index.ts`, 1875 lines):
+```ts
+if (url.pathname === '/api/tasks' && method === 'GET') { ... }
+else if (url.pathname === '/api/tasks' && method === 'POST') { ... }
+else if (url.pathname.match(/^\/api\/tasks\/([^/]+)$/)) { ... }
+// ...60+ more with ordering hazards
+```
+
+**After** (1329 lines, 225 declarative routes):
+```ts
+app.get('/api/tasks', async c => await handleTasks(E(c)))
+app.post('/api/tasks', async c => await handleCreateTask(R(c), USER(c), E(c)))
+app.get('/api/tasks/:id', async c => await handleGetTask(c.req.param('id'), E(c)))
+```
+
+Middleware chain: OPTIONS preflight → test-mode DB swap → API-key auth →
+authed-user resolve → PI gate (`/api/pb/*` GET) → REQUIRE_AUTH gate
+(POST/PUT) → version-bump-on-success (post-handler).
+
+Preserved verbatim: test-mode DB swap (X-Test-Mode + TEST_MODE_KEY),
+API-key validation, PI gate, REQUIRE_AUTH gate, bug-report gate, version
+bump + DO broadcast, scheduled handler (morning pulse + daily digest).
+404 fallback normalized to `{error: "Not found"}` JSON.
+
+Route handlers in `./routes/*` are **unchanged** — only `api/index.ts`
+was rewritten. `hono@4.12.14` added to package.json.
+
+### 2. JWT signature verification
+
+`api/jwt-verify.ts` — RS256 signature verification via CF Access JWKS
+endpoint `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`.
+Module-level 1h JWKS cache. Checks `exp`, `nbf`, `iss`, `aud`.
+
+Before: `getAuthUser()` decoded the `Cf-Access-Jwt-Assertion` header but
+never verified the signature. Attackers could forge a header with any
+email (including PI emails) and get past `/api/pb/*`.
+
+After: `getAuthUser(request, env)` is async and returns `null` on any
+verify failure. `isPiRequest(request, env)` is async. All 4 call sites
+in `api/index.ts` updated.
+
+Fallback: when `CF_ACCESS_TEAM_DOMAIN` env var is unset (pre-launch
+state), decodes payload without verification and logs a one-shot warn.
+Keeps pre-launch PI-only mode working until CF Access is configured.
+
+**To enable enforcement:** `LAUNCH-CHECKLIST.md` section 1 — set
+`CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` secrets after creating the
+CF Access application.
+
+### 3. `team_members.email` column (schema-v43)
+
+Before: email derived as `${slug}@umn.edu` in 3 code paths
+(`api/index.ts` pulse loop, `api/routes/digest-email.ts`,
+`api/routes/tasks.ts` assignment email). Breaks the moment a non-UMN
+collaborator is added (Carleton fellows, etc.).
+
+After: real column, backfilled to `slug || '@umn.edu'` for all 19
+existing rows. Three derivation sites read `member.email ||
+slug@umn.edu` — slug-derive kept as fallback for edge cases where the
+column is NULL. Nick can now edit emails directly via
+`lab_settings` / team admin flow without a code deploy.
+
+### 4. `lab_settings.pi_emails` (schema-v44)
+
+Before: `PI_EMAILS = new Set([...])` hardcoded in `api/helpers.ts`, plus
+4 duplicate arrays in `src/components/Sidebar.tsx`,
+`src/pages/ProjectDetail.tsx`, `src/pages/portal/AnalyticsPage.tsx`,
+`src/lib/roleDefaults.ts`. Adding a PI required a code deploy +
+client-side matching list.
+
+After: `lab_settings.pi_emails` row (JSON array), read via
+`getPiEmails(env)` with 5-min in-module cache and `PI_EMAILS_FALLBACK`
+constant (same 3 emails) as the degraded fallback when the DB query
+fails.
+
+Client stops maintaining its own list: `/api/auth/me` now returns
+`isPi: boolean`. `useAuth()` → `AuthUser.isPi`.
+`getUserRole(email)` → `getUserRoleFromAuth(user)`. The 4 duplicate
+arrays + the unused `getUserRoleFromSlug` helper deleted.
+
+### 5. `pb-sector.handleCommandCenter` batched
+
+Before: 11 separate `env.DB.prepare(...).all()` calls inside a
+`Promise.all([...])`. 11 HTTP round trips to D1.
+
+After: single `env.DB.batch([...])` call with the same 11 prepared
+statements. 1 round trip. The two formerly-`.first()` queries
+(daily_plan, daily_reflection) now read `batchResults[N].results?.[0] ??
+null`.
+
+### Mobile swipe-to-dismiss on TaskDetailPanel
+
+`src/components/tasks/TaskDetailPanel.tsx` — React touch handlers on the
+panel div (no new dependency). Below 768px viewport, drag horizontally.
+Axis-locked after ~10px so vertical scroll still works. Threshold: >30%
+of panel width → onClose. Below that, snap back to x=0. Backdrop
+opacity fades proportionally. Respects `prefers-reduced-motion` (0ms
+transitions, instant dismiss).
+
+Guard: touch starts on `input, textarea, select, button,
+[contenteditable="true"], .ProseMirror, [role="listbox"]` skip the
+drag — tapping an inline dropdown shouldn't close the panel.
+
+Fields autosave on blur (existing behavior), so the panel can dismiss
+without a "save" button.
+
+### Slug sanitizer on POST /api/projects
+
+Before: `body.slug` from client was trusted verbatim, so a client could
+supply `(mceachron)-project` and break `/project/:slug` routing.
+
+After: `[^a-z0-9]+ -> -` applied to both title-derived fallback AND
+client-supplied slug. Empty sanitization result returns 400.
+
+Audit showed D1 prod had 0 paren slugs (the class was cleaned up long
+ago) — this closes the regression path.
+
+### Duplicate project merge (DI-4)
+
+D1 had two rows for "CLIF: PF-v-SF Oxygenation Severity":
+- Canonical: id = slug = `pf-v-sf-oxygenation-severity`
+- Duplicate: id = `bc8e7ea601168a403679a13ea5c5db62`, slug = `clif-pf-sf`
+
+Merged via `scripts/merge-pf-sf-duplicate.sql`:
+- 1 task moved (`task_01KP9FM308RXMGFWAPW2DM5Q91`)
+- 1 comment moved
+- 1 project_document moved (the sneaky FK — first attempt without this
+  got `FOREIGN KEY constraint failed`; watch for this when merging)
+- Duplicate row deleted
+
+Post-merge: `SELECT title, COUNT(*) FROM projects GROUP BY title HAVING
+COUNT(*) > 1` returns 0 rows.
+
+### Mobile smoke test infra
+
+`tests/mobile-swipe-smoke.spec.ts` + `playwright.config.mobile.ts`. Two
+tests on Pixel 5 emulation against prod:
+
+1. `/tasks` loads on mobile viewport with zero JS errors + zero 5xx
+   responses. Confirms the Hono router + client bundle work end-to-end.
+2. Tapping a task title opens TaskDetailPanel + close button dismisses.
+   Confirms the new touch handlers didn't break click-to-open.
+
+Does NOT exercise the swipe gesture itself — Playwright's synthetic
+touch doesn't reproduce real touchmove velocity. Nick still needs a
+real-device pass.
+
+Run: `npx playwright test --config=playwright.config.mobile.ts`
+
+### Post-launch follow-ups
+
+- Nick must configure CF Access (Zero Trust > Access > Applications,
+  @umn.edu allow, restrict portal paths) and set the 4 secrets — see
+  `LAUNCH-CHECKLIST.md` sections 0 + 1.
+- Real-device swipe verification on Nick's phone.
+- Run `npx tsx scripts/pre-flight/00-orchestrator.ts` against prod before
+  team launch — Phase 36 touched the API surface broadly, and the Phase
+  35 baseline (97 pass / 0 fail) should be reconfirmed.
+
+---
+
 ## Phase 35: Full Accessibility + Sync Parity Sprint (2026-04-18)
 
 **Context:** Launch-readiness push. Ended Phase 34 with 8 GitHub issues +

@@ -99,7 +99,7 @@ npx tsx scripts/hub-audit.ts
 # Expect 0 P1 FAILs; frictions documented in HUB-AUDIT-CHECKLIST.md are known.
 ```
 
-### 7. Run Playwright inspection + dogfood
+### 7. Run Playwright inspection + dogfood + mobile smoke
 
 ```bash
 npx playwright test --config=playwright.config.prod.ts tests/inspection.spec.ts --reporter=list
@@ -107,6 +107,10 @@ npx playwright test --config=playwright.config.prod.ts tests/inspection.spec.ts 
 
 npx playwright test --config=playwright.config.dogfood.ts --grep "page health" --reporter=list
 # Expect 14/14 passed.
+
+# Phase 36 mobile smoke (Pixel 5 emulation)
+npx playwright test --config=playwright.config.mobile.ts --reporter=list
+# Expect 2/2 passed.
 ```
 
 ### 8. CF Access live-check

@@ -17,10 +17,10 @@ safe to ignore unless explicitly spelunking history.
 
 ## Current state (2026-04-19)
 
-- **Phase 35 shipped.** Full WCAG 2.1 AA + Hub↔brain.db sync parity + consultant-review launch blockers closed + `/api/health` observability.
-- **Quality gate: 🟢 GREEN.** Preflight 97 pass / 0 fail. Deep-audit 14/14 suites clean. Axe clean across 29 pages × 2 color schemes (58 scans).
-- **Not yet live for the team.** Nick is the only active user. Going live requires flipping `REQUIRE_AUTH` + `VITE_REQUIRE_AUTH` + `TEST_MODE_KEY` — steps in `LAUNCH-CHECKLIST.md` section 0.
-- **Current HEAD:** `bd2a7cc` on `main`, pushed.
+- **Phase 36 shipped.** All 5 consultant "nice-to-have" items closed (Hono router, JWT sig verify, `team_members.email`, `lab_settings.pi_emails`, `pb-sector` batched). Mobile swipe-to-dismiss on TaskDetailPanel. Slug sanitizer on `POST /api/projects`. 1 duplicate project merged in prod D1.
+- **Quality gate: 🟢 GREEN (Phase 35 baseline, not re-run for Phase 36).** Preflight 97 pass / 0 fail. Deep-audit 14/14 suites clean. Axe clean across 29 pages × 2 color schemes. Post-Phase-36 API + mobile smoke both green. Strongly suggest running preflight before team launch — Hono touched the whole API surface.
+- **Not yet live for the team.** Nick is the only active user. Going live requires CF Access config + `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` + `REQUIRE_AUTH` + `TEST_MODE_KEY` + `VITE_REQUIRE_AUTH` secrets — see `LAUNCH-CHECKLIST.md` sections 0 + 1.
+- **Current HEAD:** `ed40e39` on `main`, pushed.
 
 ## Vision
 
@@ -31,16 +31,16 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev (PI-only; team not yet onboarded) |
-| Repo | github.com/ingra107/mn-ccore-lab (650+ commits) |
-| Current deploy | `eb361fd` (2026-04-19) |
-| Quality gate | 🟢 GREEN — 97 preflight pass, 14/14 deep-audit clean, 0 axe findings |
+| Repo | github.com/ingra107/mn-ccore-lab (660+ commits) |
+| Current deploy | `ed40e39` (2026-04-19, Phase 36 close — preview `e7046581`) |
+| Quality gate | 🟢 GREEN (Phase 35 baseline) + post-Phase-36 API + mobile smoke green. Preflight re-run recommended before team launch. |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
-| Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
-| Testing | Playwright 1.59 (E2E, 214+ inspection tests) + Vitest 4.1 (component, browser mode) |
-| Data | TanStack Query v5 + Cloudflare D1 (61 tables, 190+ endpoints) + Recharts -- ALL LIVE |
-| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB` |
+| Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + **Hono v4.12 (API router, Phase 36)** |
+| Testing | Playwright 1.59 (E2E, 214+ inspection + mobile smoke) + Vitest 4.1 (component, browser mode) |
+| Data | TanStack Query v5 + Cloudflare D1 (60 tables, ~225 endpoints via Hono) + Recharts -- ALL LIVE |
+| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. 599 tasks, 62 projects, 19 team_members (schema v44). |
 | D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
-| D1 tables | 61 (live count via `/api/health`; +d1_task_comments in Phase 35) |
+| D1 tables | 60 (live count via `/api/health`; +d1_task_comments in Phase 35) |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
 | Reference | `REFERENCE.md` in this repo -- D1 tables, API endpoints, key files, feature list |
@@ -643,16 +643,15 @@ python -c "import sqlite3; conn=sqlite3.connect('C:/Users/ingra107/Peripheral-Br
 **Guide:** `TESTING.md`
 **Skill:** `/test-hub` (scan, run, generate, update, report)
 
-## Phase History (29-32 + R8/R9/R10) → see CHANGELOG.md
+## Phase History (29-36 + R8/R9/R10) → see CHANGELOG.md
 
-> **321 lines of phase-by-phase build history moved to `CHANGELOG.md`** to keep this file operational. Includes: Phase 29 features (9 new), Phase 30 visual QA marathon (14 commits), Phase 31 token compliance (11 commits), Phase 31.5 expert polish (22 commits), Phase 32 final launch polish (60+ commits, 7.18→9.44 aggregate, 10 consultant rounds), Nick-Review Polish R8/R9/R10 (grants taxonomy, dashboard resizable cards, 11-bug session).
+> **Phase-by-phase build history in `CHANGELOG.md`** to keep this file operational. Latest: **Phase 36** (2026-04-19) — consultant close-out + mobile swipe + data cleanup (Hono router, JWT sig verify, team_members.email, lab_settings.pi_emails, pb-sector batch, mobile swipe-to-dismiss, slug sanitizer, DI-4 merged). Earlier phases: 29 features, 30 visual QA, 31 token compliance, 31.5 expert polish, 32 final launch polish (10 consultant rounds), Nick-Review R8/R9/R10, 34 audit framework, 35 a11y + sync parity.
 >
-> **Key decisions in that history:** sidebar darker-than-content is NEVER-violate (GC-1). Framer Motion scoped to page transitions only (GC-2). Ideas + Decisions are columnar tables not cards (GC-3). Data-pages vs dashboard-pages taxonomy (GC-6). Grant + project status taxonomies locked (R10). Research Digest = Model B. Dashboard cards resizable via RGL (R9-9).
+> **Key decisions in that history:** sidebar darker-than-content is NEVER-violate (GC-1). Framer Motion scoped to page transitions only (GC-2). Ideas + Decisions are columnar tables not cards (GC-3). Data-pages vs dashboard-pages taxonomy (GC-6). Grant + project status taxonomies locked (R10). Research Digest = Model B. Dashboard cards resizable via RGL (R9-9). Hono router declarative — no raw `url.pathname` routing (Phase 36).
 
-**Still open (from R8/R9/R10 handoff):**
-- ~~R13 Research Digest Model B~~ DONE (2026-04-16). Save+link already existed; added inline comments (schema-v40, 3 API endpoints, UI with count badges). Actual scope ~2h not ~8h.
-- DI-4 duplicate projects (other session)
-- DI-6 dangling task project_id (330 rows)
+**Still open:**
+- ~~DI-4 duplicate projects~~ DONE Phase 36 (2026-04-19). 1 duplicate merged (`clif-pf-sf` → `pf-v-sf-oxygenation-severity`). SQL at `scripts/merge-pf-sf-duplicate.sql`.
+- ~~DI-6 dangling task project_id~~ RESOLVED 2026-04-19: live D1 verified at 0 dangling rows (ran `SELECT COUNT(*) FROM tasks t WHERE t.project_id IS NOT NULL AND t.project_id NOT IN ...`).
 - ~~Hermes polling 10→60s~~ DONE (2026-04-16). POLL_INTERVAL 20→60s in hub_ai_listener.py.
 
 ## Everything Sprint v2 (2026-04-15) — R11/R12 + Miniflare

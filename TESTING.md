@@ -28,6 +28,9 @@
 npx playwright test tests/inspection.spec.ts
 npx playwright test tests/daily-superuser.spec.ts --grep "EXHAUSTIVE"
 python tests/sync-pipeline.test.py
+
+# Phase 36: mobile post-deploy smoke (Pixel 5 emulation against prod)
+npx playwright test --config=playwright.config.mobile.ts
 ```
 
 ## After Adding New Features

@@ -7,8 +7,8 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 
 | Table | Rows | Purpose |
 |-------|------|---------|
-| team_members | 12 | Lab personnel + roles |
-| projects | 25+ | Research projects with stages |
+| team_members | 19 | Lab personnel + roles + `email` column (schema v43) |
+| projects | 62 | Research projects with stages (post DI-4 merge) |
 | publications | 100+ | PubMed-sourced publications |
 | grants | 10+ | Active and pending grants |
 | milestones | 30+ | Project milestones + deadlines |
@@ -21,11 +21,11 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | notifications | dynamic | In-app notification feed |
 | commitments | dynamic | Team commitments tracker |
 | collaboration_network | dynamic | Inter-member collaboration links |
-| tasks | 546+ | Unified task system (+ key_link_1/2/3 + _desc columns, schema v37) |
+| tasks | 599 | Unified task system (+ key_link_1/2/3 + _desc columns, schema v37) |
 | ideas | dynamic | Research ideas board with voting |
 | task_comments | dynamic | Per-task discussion threads |
 | task_updates | dynamic | Per-task notes/progress entries (schema v36) |
-| lab_settings | 6 | Key-value settings store |
+| lab_settings | 7 | Key-value settings store (includes `pi_emails` JSON, schema v44) |
 | workflow_templates | 3+ | Custom project stage templates |
 | email_drafts | dynamic | Email draft status synced from brain.db (schema v37) |
 | file_activity_daily | dynamic | Aggregated daily file activity from brain.db (schema v37) |
@@ -36,7 +36,19 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | pb_sessions | dynamic | Claude Code session history synced from brain.db |
 | inbox | dynamic | Quick Capture entries (FAB + Ctrl+I); synced nightly to PB Inbox/*.md (Phase 32) |
 
-## API Endpoints (180+)
+## API Endpoints (~225 via Hono v4.12 — Phase 36)
+
+> Route table is `api/index.ts` (Hono declarative). Route handlers live in
+> `api/routes/*.ts` and are untouched by the Hono migration. Middleware
+> chain: OPTIONS → test-mode swap → API-key → authed-user → PI gate
+> (`/api/pb/*` GET) → REQUIRE_AUTH (POST/PUT) → version-bump-on-success.
+> Never add routes via `url.pathname === ...` — always use
+> `app.get/post('/api/...')`.
+
+### Meta + auth
+- GET /api/version — current data version (React Query invalidator)
+- GET /api/health — D1 + realtime binding runbook ([docs/OBSERVABILITY.md](docs/OBSERVABILITY.md))
+- GET /api/auth/me — `{authenticated, email, name, isPi}` (Phase 36: adds `isPi` + awaits JWT verify)
 
 ### Core Data
 - GET /api/team, /api/projects, /api/publications, /api/grants
