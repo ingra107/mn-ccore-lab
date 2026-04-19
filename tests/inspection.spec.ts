@@ -298,7 +298,9 @@ test.describe('PAGE — Detail pages render with real data', () => {
   test('PAGE: Member page renders', async ({ page }) => {
     const errors = await loadPage(page, '/team/nick-ingraham')
     expect(errors).toEqual([])
-    await expect(page.locator('text=Nick Ingraham')).toBeVisible()
+    // Formal display tier uses `full_name + credentials` ("Nicholas Ingraham, MD"),
+    // not the preferred-name short form. Match either.
+    await expect(page.locator('body')).toContainText(/Nick(olas)? Ingraham/i)
     await page.screenshot({ path: 'review/page-member.png' })
   })
 })
@@ -1059,19 +1061,22 @@ test.describe('JOURNEY — Morning task triage', () => {
 test.describe('JOURNEY — Task manipulation', () => {
   test('JOURNEY: Show/hide completed tasks toggle', async ({ page }) => {
     await loadPage(page, '/tasks')
-    const showDone = page.locator('button:has-text("Show"), button:has-text("done")')
-    if (await showDone.isVisible().catch(() => false)) {
-      const beforeCount = await page.locator('[class*="row"], tr').count()
-      await showDone.click()
-      await page.waitForTimeout(500)
-      const afterCount = await page.locator('[class*="row"], tr').count()
-      console.log(`Show done: ${beforeCount} → ${afterCount} rows`)
-      await page.screenshot({ path: 'review/journey-show-done.png' })
-      // Should be more rows now
-      expect(afterCount).toBeGreaterThanOrEqual(beforeCount)
-      // Toggle back
-      await showDone.click()
+    // Prior selector `button:has-text("Show"), button:has-text("done")` matched
+    // every row's status pill ("Done" label) and flaked. The actual toggle is
+    // labelled "Show completed" (or "Hide completed" when already on).
+    const toggle = page.getByRole('button', { name: /show \d+ done|hide \d+ done|show completed|hide completed/i }).first()
+    if (!(await toggle.isVisible().catch(() => false))) {
+      test.skip(true, 'Completed-tasks toggle not present in current build')
+      return
     }
+    const beforeCount = await page.locator('[data-testid^="task-row-"]').count()
+    await toggle.click()
+    await page.waitForTimeout(500)
+    const afterCount = await page.locator('[data-testid^="task-row-"]').count()
+    console.log(`Show done: ${beforeCount} → ${afterCount} rows`)
+    await page.screenshot({ path: 'review/journey-show-done.png' })
+    expect(afterCount).toBeGreaterThanOrEqual(beforeCount)
+    await toggle.click()
   })
 
   test('JOURNEY: Sort tasks by clicking column header', async ({ page }) => {
