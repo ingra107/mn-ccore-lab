@@ -74,12 +74,26 @@ export const researchTeam: TeamMember[] = [
   { name: 'Claire Collins', initials: 'CC', role: 'Medical Student Researcher', slug: 'collins', authorName: 'Collins C' },
 ]
 
-// Helper: get all team members as a flat array
+// Helper: get all team members as a flat array.
+// Includes directors (Nick, Nate, Dudley, Chipman) normalized into the
+// TeamMember shape — without this, `getMemberBySlug('nick')` returns
+// undefined and `/team/nick` redirects to `/team` (the PI literally
+// can't view his own profile page). Audit caught this 2026-04-19.
 export function getAllMembers(): TeamMember[] {
-  return [...seniorMentors, ...facultyCollaborators, ...researchTeam]
+  const directorMembers: TeamMember[] = directors.map((d) => ({
+    name: d.name,
+    initials: d.initials,
+    role: d.role,
+    credentials: d.credentials,
+    slug: d.slug,
+    photoUrl: d.photoUrl,
+    bio: d.bio,
+    scholarId: d.scholarId,
+  }))
+  return [...directorMembers, ...seniorMentors, ...facultyCollaborators, ...researchTeam]
 }
 
-// Helper: find team member by slug
+// Helper: find team member by slug (directors included).
 export function getMemberBySlug(slug: string): TeamMember | undefined {
   return getAllMembers().find((m) => m.slug === slug)
 }
