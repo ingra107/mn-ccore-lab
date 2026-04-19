@@ -1,5 +1,16 @@
 # MN-CCORE Lab Hub -- QA Checklist
 
+> **As of Phase 35 (2026-04-18), the Playwright preflight + 14 deep-audit
+> suites cover ~95% of this list automatically.** Run
+> `npx tsx scripts/pre-flight/00-orchestrator.ts` for the green/red gate.
+> This file is useful ONLY for:
+> - Manual human-eye review after visual refactors
+> - Sanity-check before a launch-critical deploy
+> - Test surfaces the automation hasn't covered yet
+>
+> If you find yourself running an item manually, ask whether it should
+> become a preflight persona assertion instead.
+
 Run this after every major overhaul, before every deploy, and before launch milestones.
 Use Playwright or manual browser testing. Document results with screenshots.
 

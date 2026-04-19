@@ -1,10 +1,26 @@
 # MN-CCORE Lab Hub -- Claude Operating Guide
 
-> **Last updated: 2026-04-19.** Phase 35 shipped (full WCAG 2.1 AA, sync
-> parity, launch-readiness auth flags). Quality gate 🟢 GREEN across
-> preflight + 14 deep-audit suites + axe (29 pages × 2 modes).
-> **Before team launch, flip auth flags per `LAUNCH-CHECKLIST.md` section 0.**
-> Per-session continuity lives in `SESSION-HANDOFF.md`.
+## 🚨 First read on every session — in this order
+
+Before writing any code or answering any question about this project, read:
+
+1. **`SESSION-HANDOFF.md`** — current gate state, what-to-do-first, git HEADs, gotchas. One-page. Always.
+2. **`PROJECT.md`** — frontmatter has canonical `next_action` + `primary_folder`.
+3. **`LAUNCH-CHECKLIST.md`** — section 0 is the blocker for team launch (flip auth flags). Read if Nick mentions team / launch / go-live.
+4. **`REFERENCE.md`** — API endpoints + D1 table list when you need one.
+5. **`CHANGELOG.md`** — top entry = most recent phase; jump here when asked "what changed."
+6. **`docs/OBSERVABILITY.md`** — `/api/health` runbook.
+
+These six plus this file are authoritative. Anything else in the repo
+(especially dated "plan" / "research" / "QA checklist" files) is
+historical record, not operating guidance — check dates in the frontmatter.
+
+## Current state (2026-04-19)
+
+- **Phase 35 shipped.** Full WCAG 2.1 AA + Hub↔brain.db sync parity + consultant-review launch blockers closed + `/api/health` observability.
+- **Quality gate: 🟢 GREEN.** Preflight 97 pass / 0 fail. Deep-audit 14/14 suites clean. Axe clean across 29 pages × 2 color schemes (58 scans).
+- **Not yet live for the team.** Nick is the only active user. Going live requires flipping `REQUIRE_AUTH` + `VITE_REQUIRE_AUTH` + `TEST_MODE_KEY` — steps in `LAUNCH-CHECKLIST.md` section 0.
+- **Current HEAD:** `bd2a7cc` on `main`, pushed.
 
 ## Vision
 

@@ -1,8 +1,14 @@
 # MN-CCORE Lab Team Roster
 
-> Definitive team roster for the MN-CCORE Lab website.
+> **Not the source of truth** as of Phase 35 (2026-04-18). Roster data
+> now lives in the `team_members` D1 table + `src/data/team.ts`. This
+> file is kept as a historical reference + biographical context that
+> never made it into structured fields.
+>
+> For current team data, use the app or query `/api/team`.
+>
 > Photo URLs are from UMN Med School bio pages where available.
-> Last updated: 2026-03-23
+> Last file-level update: 2026-03-23.
 
 ---
 

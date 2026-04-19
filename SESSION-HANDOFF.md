@@ -3,7 +3,23 @@
 > Last worked: Phase 35 + consultant review (Apr 18-19). Next session picks
 > up here. One-glance state + what to do first.
 
-## Gate — all green as of commit `eb361fd`
+## 📖 Session bootstrap — read these in order before writing anything
+
+1. **This file** (you're here). Current gate, gotchas, commit, next action.
+2. **`PROJECT.md`** — frontmatter `next_action` is canonical.
+3. **`LAUNCH-CHECKLIST.md`** — section 0 is the only remaining work before the team gets the link. Read if Nick mentions launch / team / go-live.
+4. **`CLAUDE.md`** — operating guide. Design system + palette + sync model + rules. Skip sections you don't need but have it open.
+5. **`REFERENCE.md`** — reach for this when you need an API endpoint or D1 table name.
+6. **`CHANGELOG.md`** top entry — "Phase 35" has the full record of what shipped this round.
+7. **`docs/OBSERVABILITY.md`** — `/api/health` + runbook if anything looks broken.
+
+**Stale / do NOT treat as driving docs:**
+- `TEAM_ROSTER.md` — historical reference; authoritative roster lives in `team_members` D1 table + `src/data/team.ts`.
+- `QA-CHECKLIST.md` — manual-only; ~95% covered by preflight + deep-audit automation.
+- PB side: `plans/april-21-launch-readiness.md` + `specs/2026-04-12-final-launch-polish-design.md` + `HUB-AUDIT-CHECKLIST.md` — all marked SUPERSEDED / reference-only.
+- `docs/archived/*` — explicit historical archive.
+
+## Gate — all green as of commit `bd2a7cc`
 
 | Check | Result |
 |---|---|
@@ -105,7 +121,7 @@ None at the moment. Everything that's in the codebase is deployed.
 
 ## Git state
 
-Hub: `main` at `eb361fd` (pushed to origin)
-PB: `main` at `b7e1528d` (pushed to origin)
+Hub: `main` at `bd2a7cc` (pushed to origin) — plus in-flight doc updates this session
+PB: `main` at `dd375854` (pushed to origin) — plus in-flight doc updates this session
 
-Nothing in the worktree should be modified.
+Re-check before modifying: `git status --short` should be empty in both repos.
