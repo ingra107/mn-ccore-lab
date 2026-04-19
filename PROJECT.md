@@ -46,13 +46,14 @@ platform for Nick's critical-care research group at UMN.
    requires `TEST_MODE_KEY` secret, `REQUIRE_AUTH` + `VITE_REQUIRE_AUTH`
    flags wire full hard-auth, `/api/health` observability + runbook.
 
-### Deferred (consultant nice-to-haves, not blocking)
+### Consultant nice-to-haves (shipped 2026-04-19)
 
-- Replace 1700-line if/else router in `api/index.ts` with Hono/itty-router.
-- Move `PI_EMAILS` from `api/helpers.ts` + `src/lib/roleDefaults.ts` to `lab_settings` (KV table already in D1).
-- Server-side JWT signature verification (currently trusts CF Access edge).
-- `email` column on `team_members` for non-UMN collaborators.
-- N+1 rewrite on `pb-sector.ts::handleCommandCenter` (11 parallel D1 queries).
+All five closed:
+- ✅ Hono router — `api/index.ts` rewritten with `hono@4.12.14`, 1875 → 1330 lines.
+- ✅ `lab_settings.pi_emails` — schema-v44 seeded; `getPiEmails(env)` reads with 5-min cache + fallback. Client-side PI_EMAILS duplicates removed; client reads `user.isPi` from `/api/auth/me`.
+- ✅ Server-side JWT signature verification — `api/jwt-verify.ts` (RS256 via CF Access JWKS, exp/nbf/iss/aud checks). Needs `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` secrets to enforce. See LAUNCH-CHECKLIST section 1.
+- ✅ `team_members.email` — schema-v43, column + backfill; three derivation sites now read the column.
+- ✅ `pb-sector.handleCommandCenter` — 11 parallel D1 queries → single `env.DB.batch([...])` RPC.
 
 ---
 

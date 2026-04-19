@@ -54,10 +54,13 @@ Read the state above, then:
 
 1. If Nick's about to share the Hub URL with the team → follow
    `LAUNCH-CHECKLIST.md` section 0. Three secrets + one rebuild.
-2. If Nick wants to keep improving → the consultant review left a
-   "nice-to-have" list. Top item: replace the 1700-line if/else router in
-   `api/index.ts` with Hono or itty-router. Eliminates a whole class of
-   route-ordering bug for future contributors.
+2. If Nick wants to keep improving → the consultant "nice-to-have" list is
+   closed. JWT signature verification (`api/jwt-verify.ts`, needs
+   `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` secrets to enforce),
+   `team_members.email` column (v43), PI emails in `lab_settings` (v44),
+   `pb-sector.handleCommandCenter` batched D1 reads, and Hono router
+   migration are all shipped. The remaining roadmap is in
+   `Projects/mn-ccore-lab-hub/HUB-AUDIT-CHECKLIST.md` (PB repo) — Tier A-E.
 3. If Nick reports a bug → Fix Gate first (see `.claude/rules/agent-dispatch.md`),
    then reproduce with a deep-audit suite before fixing.
 
@@ -79,14 +82,26 @@ Read the state above, then:
   eventually lands in brain.db and vice versa. `sync_d1_push` translates
   canonical `task_{ulid}` PKs back to Hub hex IDs via `entity_aliases`.
 
-## Open: "nice-to-have" from consultant review (not blocking)
+## Closed: consultant-review "nice-to-have" list (2026-04-19)
 
-- Replace flat if/else router with Hono/itty-router — eliminates
-  route-ordering bug class.
-- `lab_settings` for PI/fellow email lists (currently hardcoded in 3 files).
-- Server-side JWT signature verification (currently trusts CF edge).
-- `email` column on `team_members` (currently derives `slug@umn.edu`).
-- N+1 on `pb-sector.ts::handleCommandCenter` (11 parallel D1 queries).
+All five items shipped in commits `30f0bf7` + `<hono-sha>`:
+
+- ✅ Hono router — `api/index.ts` now uses Hono v4.12 (1875 → 1330 lines,
+  ~225 route registrations with declarative path + method). Route-ordering
+  bugs structurally prevented.
+- ✅ `lab_settings.pi_emails` — PI allowlist runtime-configurable via
+  SQL; `getPiEmails(env)` reads with 5-min cache + hardcoded fallback.
+  Client-side PI_EMAILS duplicates (4 files) deleted; Sidebar/ProjectDetail/
+  AnalyticsPage/Dashboard/Tasks now read `user.isPi` from `/api/auth/me`.
+- ✅ Server-side JWT signature verification (`api/jwt-verify.ts`) — RS256
+  + JWKS + exp/nbf/iss/aud checks. Requires `CF_ACCESS_TEAM_DOMAIN` +
+  `CF_ACCESS_AUD` secrets to enforce; until set, falls back to decode-only
+  (logs warn once per cold start). See `LAUNCH-CHECKLIST.md` section 1.
+- ✅ `team_members.email` (schema-v43) — real column, backfilled with
+  `slug || '@umn.edu'`; three derivation sites read the column with the
+  slug-derive as fallback.
+- ✅ `pb-sector.handleCommandCenter` batched — 11 parallel `Promise.all`
+  queries → single `env.DB.batch([...])` RPC (1 round trip instead of 11).
 
 ## Known ignorable items
 

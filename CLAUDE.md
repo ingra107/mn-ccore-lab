@@ -207,7 +207,7 @@ Airtable ←CRDT→ brain.db ←LWW→ D1 (mnccore-lab) ←API→ React + TanSta
 ```
 
 - **Data:** TanStack Query v5 → D1 API (prod), static TS fallback (dev)
-- **API:** Cloudflare Worker, 110+ endpoints, auth-gated writes. Test isolation middleware in `api/index.ts`: if `X-Test-Mode: true` header + `DB_TEST` binding exists, swaps `env.DB` to `env.DB_TEST` so tests never touch production.
+- **API:** Cloudflare Worker, 225+ route registrations via Hono v4.12 (`api/index.ts`). Middleware chain: OPTIONS preflight → test-mode DB swap → API-key auth → authed-user resolve → PI gate for `/api/pb/*` GETs → REQUIRE_AUTH gate for POST/PUT → version-bump-on-success (post-handler). Test isolation: `X-Test-Mode: true` header + `DB_TEST` binding + matching `TEST_MODE_KEY` secret swaps `env.DB` to `env.DB_TEST` so tests never touch production. **Pre-Hono contributors:** the old flat if/else router was replaced 2026-04-19. Do not add routes with raw `url.pathname === ...` comparisons — use `app.get/post('/api/...', handler)`.
 - **Auth:** Open now. Cloudflare Access for April 21 launch (@umn.edu). JWT signature verification via JWKS lives in `api/jwt-verify.ts` — reads `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` secrets; without them, falls back to decode-only (logs a warning once per cold start) so pre-launch PI-only mode keeps working. `getAuthUser()` and `isPiRequest()` are `async` — any new caller must `await` them.
 - **Email:** Resend (`api/lib/email.ts`) + daily digest (`api/routes/digest-email.ts`). Needs `RESEND_API_KEY` Cloudflare secret. Preview: `/api/digest-preview?member=nick`
 - **Sync:** `sync_d1_push.py` / `sync_d1_pull.py` in PB, scheduled + /process-triggered
