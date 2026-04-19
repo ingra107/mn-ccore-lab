@@ -13,7 +13,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1371/journal.pone.0338943',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/41616031/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -24,7 +24,7 @@ export const publications: Publication[] = [
     year: 2026,
     status: 'Published',
     topics: ['clif'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -37,7 +37,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1093/atsscholar/aapag010',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/41734005/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -49,7 +49,7 @@ export const publications: Publication[] = [
     status: 'In Preparation',
     abstract: 'Protocol for a cluster-randomized controlled trial testing a precision practice assistance intervention to improve lung-protective ventilation adherence in the ICU.',
     topics: ['ventilation', 'quality'],
-    authorSlugs: ['nick', 'nate'],
+    authorSlugs: ['nick-ingraham', 'nate-mesfin'],
   },
 
   {
@@ -61,7 +61,7 @@ export const publications: Publication[] = [
     status: 'In Preparation',
     abstract: 'This study examines the relationship between physicians\' general decision-making styles, measured by the GDMS instrument, and their adherence to lung-protective ventilation protocols in the ICU. By linking survey data with clinical EHR data across multiple centers, we characterize how rational, intuitive, dependent, avoidant, and spontaneous decision-making styles predict evidence-based practice adherence.',
     topics: ['decision-making', 'ventilation'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -73,7 +73,7 @@ export const publications: Publication[] = [
     status: 'In Preparation',
     abstract: 'Characterizing provider-level variation in DNR order documentation patterns and their association with patient outcomes and goals-of-care conversations.',
     topics: ['decision-making'],
-    authorSlugs: ['nate'],
+    authorSlugs: ['nate-mesfin'],
   },
 
   {
@@ -85,7 +85,7 @@ export const publications: Publication[] = [
     status: 'In Preparation',
     abstract: 'A predictive modeling study examining factors that influence survivability after in-hospital cardiac arrest, with the goal of improving prognostication and clinical decision-making.',
     topics: ['decision-making'],
-    authorSlugs: ['nate'],
+    authorSlugs: ['nate-mesfin'],
   },
 
   // ── 2025 ─────────────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ export const publications: Publication[] = [
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/40126143/',
     topics: ['quality'],
     featured: true,
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -114,7 +114,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1093/jamia/ocae169',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/39530748/',
     topics: ['quality'],
-    authorSlugs: ['nick', 'nate'],
+    authorSlugs: ['nick-ingraham', 'nate-mesfin'],
   },
 
   {
@@ -127,7 +127,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1097/CCE.0000000000001341',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/41165278/',
     topics: ['quality', 'clif'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -140,7 +140,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1371/journal.pone.0323535',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/40373001/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -153,7 +153,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1177/26892820251380523',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/41142473/',
     topics: ['covid', 'decision-making'],
-    authorSlugs: ['nate', 'nick'],
+    authorSlugs: ['nate-mesfin', 'nick-ingraham'],
   },
 
   {
@@ -166,7 +166,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1007/s00134-025-08029-2',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/40658245/',
     topics: ['clif'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -180,7 +180,7 @@ export const publications: Publication[] = [
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/40080116/',
     topics: ['clif'],
     featured: true,
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -193,7 +193,7 @@ export const publications: Publication[] = [
     abstract: 'Using multi-center CLIF data, this study quantifies the extent to which provider identity explains variation in lung-protective ventilation adherence beyond patient-level factors. We demonstrate substantial provider-level variation that persists after risk adjustment, suggesting targets for provider-focused quality improvement interventions.',
     topics: ['ventilation', 'clif'],
     featured: true,
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -205,7 +205,7 @@ export const publications: Publication[] = [
     status: 'In Review',
     abstract: 'This study characterizes the incidence and risk factors for chronic critical illness (CCI) among patients with acute respiratory distress syndrome (ARDS) using multi-center ICU data. We identify distinct clinical trajectories and modifiable risk factors that may inform early intervention strategies.',
     topics: ['clif'],
-    authorSlugs: ['nate', 'nick'],
+    authorSlugs: ['nate-mesfin', 'nick-ingraham'],
   },
 
   // ── 2024 ─────────────────────────────────────────────────────────────────
@@ -220,7 +220,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1097/CCM.0000000000006333',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/38832836/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -233,7 +233,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1002/lrh2.10420',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/39036531/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -246,7 +246,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1093/cid/ciae159',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/38690892/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -259,7 +259,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1089/sur.2023.249',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/38285892/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -272,7 +272,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1016/j.amjsurg.2024.05.008',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/38782686/',
     topics: ['clif', 'quality'],
-    authorSlugs: ['nick', 'nate'],
+    authorSlugs: ['nick-ingraham', 'nate-mesfin'],
   },
 
   {
@@ -285,7 +285,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1097/CCE.0000000000001189',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/39700341/',
     topics: ['quality', 'decision-making'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -297,7 +297,7 @@ export const publications: Publication[] = [
     status: 'In Review',
     abstract: 'Updated systematic review and meta-analysis evaluating immunomodulatory therapies in COVID-19 patients.',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   // ── 2023 ─────────────────────────────────────────────────────────────────
@@ -312,7 +312,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1093/cid/ciac772',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/36124697/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -325,7 +325,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1371/journal.pone.0283326',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/37053224/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -338,7 +338,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1038/s41598-023-46343-1',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/37985892/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -351,7 +351,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.12659/AJCR.941088',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/37837186/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -366,7 +366,7 @@ export const publications: Publication[] = [
     abstract: 'In this pre-specified secondary analysis of the COVID-OUT randomized trial, we evaluated the effect of metformin, ivermectin, and fluvoxamine on the risk of developing Long COVID. Metformin was associated with a 41% reduction in Long COVID risk over 10 months of follow-up.',
     topics: ['covid'],
     featured: true,
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -379,7 +379,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1097/MLR.0000000000001878',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/37308947/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -392,7 +392,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1097/SLA.0000000000005661',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/35943199/',
     topics: ['quality', 'disparities'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   // ── 2022 ─────────────────────────────────────────────────────────────────
@@ -409,7 +409,7 @@ export const publications: Publication[] = [
     abstract: 'This phase 3, randomized, quadruple-blind trial (COVID-OUT) tested metformin, ivermectin, and fluvoxamine in non-hospitalized adults with COVID-19. Metformin reduced the risk of hypoxemia, emergency department visit, hospitalization, or death by 42% (OR 0.58; 95% CI 0.35-0.94).',
     topics: ['covid'],
     featured: true,
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -422,7 +422,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1001/jamanetworkopen.2022.2735',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/35294537/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -435,7 +435,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1148/ryai.210217',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/35923381/',
     topics: ['covid', 'quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -448,7 +448,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1093/ofid/ofac066',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/35392460/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -461,7 +461,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1371/journal.pone.0262193',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/34986168/',
     topics: ['covid', 'quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -474,7 +474,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1016/j.apmr.2022.04.009',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/35569640/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -487,7 +487,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1097/PTS.0000000000000916',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/34569998/',
     topics: ['covid', 'quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -500,7 +500,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.3390/jcm11030627',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/35160078/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -513,7 +513,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1177/0885066620982905',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/33353475/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -527,7 +527,7 @@ export const publications: Publication[] = [
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/34003427/',
     abstract: 'This study examines racial and ethnic disparities in COVID-19 hospital admissions and their relationship to neighborhood-level social determinants of health. Using geocoded data linked to area deprivation indices, we demonstrate how structural factors including neighborhood deprivation and primary language contribute to observed disparities.',
     topics: ['covid', 'disparities'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   // ── 2021 ─────────────────────────────────────────────────────────────────
@@ -544,7 +544,7 @@ export const publications: Publication[] = [
     abstract: 'Retrospective cohort analysis of 6,256 adults hospitalized with COVID-19. Metformin use before hospitalization was associated with a significant reduction in in-hospital mortality (OR 0.52; 95% CI 0.37-0.73), providing observational rationale for the COVID-OUT randomized trial.',
     topics: ['covid'],
     featured: true,
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -557,7 +557,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1002/jmv.26728',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/33314219/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -570,7 +570,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1371/journal.pone.0248956',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/33788884/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -583,7 +583,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1016/j.eclinm.2021.100957',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/34195577/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -596,7 +596,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1002/ctm2.685',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/34911167/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -609,7 +609,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.3389/fendo.2021.587801',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/34367059/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -622,7 +622,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1002/jmv.26873',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/33580540/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -633,7 +633,7 @@ export const publications: Publication[] = [
     year: 2021,
     status: 'Published',
     topics: ['covid', 'quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -646,7 +646,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1089/sur.2020.473',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/34129395/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -659,7 +659,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1093/jamiaopen/ooab070',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/34423261/',
     topics: ['covid', 'quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -672,7 +672,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1177/2150132721996283',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/33648370/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -685,7 +685,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1016/j.jpainsymman.2020.09.015',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/32949762/',
     topics: ['decision-making'],
-    authorSlugs: ['nick', 'nate'],
+    authorSlugs: ['nick-ingraham', 'nate-mesfin'],
   },
 
   {
@@ -699,7 +699,7 @@ export const publications: Publication[] = [
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/32380023/',
     abstract: 'An early review of immunomodulatory approaches to treating COVID-19, synthesizing evidence for corticosteroids, anti-cytokine therapies, convalescent plasma, and other interventions.',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   // ── 2020 ─────────────────────────────────────────────────────────────────
@@ -714,7 +714,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1016/S2213-2600(20)30153-3',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/32222166/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -727,7 +727,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1097/CCM.0000000000004524',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/32886469/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -740,7 +740,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1097/TA.0000000000002768',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/32384370/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -753,7 +753,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1186/s13054-020-02894-7',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/32345336/',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -766,7 +766,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1089/sur.2019.192',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/31618109/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -780,7 +780,7 @@ export const publications: Publication[] = [
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/32341103/',
     abstract: 'A mechanistic review of the interplay between SARS-CoV-2 and the renin-angiotensin-aldosterone system (RAAS). This paper examines ACE2 receptor biology, the theoretical implications of RAAS inhibitor use during COVID-19 infection, and the clinical evidence for or against modification of these therapies.',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   {
@@ -794,7 +794,7 @@ export const publications: Publication[] = [
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/32426750/',
     abstract: 'An editorial commentary on the challenge of evidence-based decision-making during the early COVID-19 pandemic, emphasizing the need for rigorous clinical trial evidence over untested therapeutic interventions and the importance of clinical equipoise.',
     topics: ['covid'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   // ── 2019 ─────────────────────────────────────────────────────────────────
@@ -809,7 +809,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1016/j.resuscitation.2019.11.020',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/31790757/',
     topics: ['decision-making'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   // ── 2018 ─────────────────────────────────────────────────────────────────
@@ -824,7 +824,7 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1097/QAI.0000000000001797',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/29985804/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 
   // ── 2017 ─────────────────────────────────────────────────────────────────
@@ -839,6 +839,6 @@ export const publications: Publication[] = [
     doi: 'https://doi.org/10.1155/2017/8682354',
     pubmed: 'https://pubmed.ncbi.nlm.nih.gov/28280641/',
     topics: ['quality'],
-    authorSlugs: ['nick'],
+    authorSlugs: ['nick-ingraham'],
   },
 ]

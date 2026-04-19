@@ -947,7 +947,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
     createTask.mutate({
       title: parsed.title,
       description: parsed.title,
-      assignee: parsed.assigneeSlug ?? 'nick',
+      assignee: parsed.assigneeSlug ?? 'nick-ingraham',
       meeting_id: meetingId,
       due_date: parsed.dueDate ?? undefined,
       priority: parsed.priority === 1 ? 'urgent' : parsed.priority === 2 ? 'high' : parsed.priority === 3 ? 'medium' : 'medium',

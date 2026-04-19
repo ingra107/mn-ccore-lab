@@ -504,7 +504,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
             </p>
             {mentee.mentor !== 'shared' && (
               <p className="text-xs mt-0.5" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-                Mentor: {mentee.mentor === 'nick' ? 'Nick Ingraham' : 'Nathan Mesfin'}
+                Mentor: {mentee.mentor === 'nick-ingraham' ? 'Nick Ingraham' : 'Nathan Mesfin'}
               </p>
             )}
           </div>

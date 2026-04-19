@@ -840,7 +840,7 @@ app.post('/api/admin/migrate', async (c) => {
           revision_id TEXT NOT NULL,
           reviewer_number INTEGER DEFAULT 1,
           comment_text TEXT NOT NULL,
-          assigned_to TEXT DEFAULT 'nick',
+          assigned_to TEXT DEFAULT 'nick-ingraham',
           status TEXT DEFAULT 'pending',
           response_text TEXT,
           resolved_at TEXT,

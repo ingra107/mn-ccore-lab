@@ -309,7 +309,7 @@ function NodeDetail({
       {/* Team page link */}
       {slug && (
         <Link
-          to={slug === 'nick' || slug === 'nate' ? `/${slug}` : `/team/${slug}`}
+          to={slug === 'nick-ingraham' || slug === 'nate-mesfin' ? `/${slug}` : `/team/${slug}`}
           className="flex items-center gap-2 mb-6 px-4 py-3 rounded-lg transition-all duration-200"
           style={{
             background: 'var(--gold-active)',

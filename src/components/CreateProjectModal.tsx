@@ -22,7 +22,7 @@ const CATEGORIES = [
   { value: 'infrastructure', label: 'Infrastructure' },
   { value: 'clif', label: 'CLIF' },
   { value: 'lab', label: 'Lab' },
-  { value: 'nate', label: 'Mesfin Lab' },
+  { value: 'nate-mesfin', label: 'Mesfin Lab' },
   { value: 'mentee', label: 'Mentee' },
 ]
 
@@ -220,7 +220,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               type="text"
               value={pi}
               onChange={(e) => setPi(e.target.value)}
-              placeholder="nick"
+              placeholder="nick-ingraham"
               className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1"
               style={{
                 ...selectStyle,

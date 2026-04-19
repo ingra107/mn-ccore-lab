@@ -16,7 +16,7 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
     env.DB.prepare(`
       SELECT t.*, p.title as project_title, p.slug as project_slug
       FROM tasks t LEFT JOIN projects p ON t.project_id = p.slug OR t.project_id = p.id
-      WHERE t.assignee IN ('ningraha', 'nick', 'ingra107')
+      WHERE t.assignee IN ('nick-ingraham', 'ningraha', 'ingra107')
       ORDER BY t.completed ASC,
         CASE t.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 END,
         t.due_date ASC NULLS LAST

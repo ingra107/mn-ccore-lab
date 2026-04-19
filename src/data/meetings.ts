@@ -6,7 +6,7 @@ export const meetings: Meeting[] = [
     date: '2026-04-07',
     title: 'MNCCORE Biweekly Meeting -- April 07, 2026',
     type: 'biweekly',
-    attendees: ['nick', 'nate', 'eddington', 'bromley', 'shyu', 'arriaza'],
+    attendees: ['nick-ingraham', 'nate-mesfin', 'casey-eddington', 'emma-bromley', 'dan-shyu', 'steven-arriaza'],
     agenda: [],
     actionItems: [],
     decisions: [],
@@ -17,7 +17,7 @@ export const meetings: Meeting[] = [
     date: '2026-03-25',
     title: 'MNCCORE Biweekly: CLIF Manuscript Updates & GDMS Survey Launch',
     type: 'biweekly',
-    attendees: ['nick', 'nate', 'eddington', 'bromley', 'mceachron', 'shyu'],
+    attendees: ['nick-ingraham', 'nate-mesfin', 'casey-eddington', 'emma-bromley', 'kendall-mceachron', 'dan-shyu'],
     agenda: [
       'PF-v-SF manuscript revision status (reviewer comments received)',
       'VentMode Waterfall JAMIA submission update',
@@ -28,21 +28,21 @@ export const meetings: Meeting[] = [
     actionItems: [
       {
         description: 'Address PF-v-SF reviewer comment #3 re: sensitivity analysis',
-        assignee: 'nick',
+        assignee: 'nick-ingraham',
         dueDate: '2026-04-01',
         completed: false,
         projectSlug: 'PF-v-SF Oxygenation Severity',
       },
       {
         description: 'Finalize GDMS survey REDCap instrument and test distribution',
-        assignee: 'bromley',
+        assignee: 'emma-bromley',
         dueDate: '2026-03-31',
         completed: false,
         projectSlug: 'Decision-Making Survey / GDMS',
       },
       {
         description: 'Pull updated CCI cohort counts from CLIF tables',
-        assignee: 'eddington',
+        assignee: 'casey-eddington',
         dueDate: '2026-04-04',
         completed: false,
         projectSlug: 'CCI in ARDS',
@@ -59,7 +59,7 @@ export const meetings: Meeting[] = [
     date: '2026-03-11',
     title: 'MNCCORE Biweekly: LPV Paper Proofs & IV Fluids Analysis',
     type: 'biweekly',
-    attendees: ['nick', 'nate', 'eddington', 'bromley', 'safadi', 'chipman'],
+    attendees: ['nick-ingraham', 'nate-mesfin', 'casey-eddington', 'emma-bromley', 'sami-safadi', 'jeff-chipman'],
     agenda: [
       'LPV adherence paper — galley proofs review',
       'IV Fluids shortage analysis: preliminary results',
@@ -69,21 +69,21 @@ export const meetings: Meeting[] = [
     actionItems: [
       {
         description: 'Submit galley proof corrections for LPV adherence paper',
-        assignee: 'nick',
+        assignee: 'nick-ingraham',
         dueDate: '2026-03-14',
         completed: true,
         projectSlug: 'LPV Adherence Paper',
       },
       {
         description: 'Generate IV fluids pre/post shortage comparison tables',
-        assignee: 'eddington',
+        assignee: 'casey-eddington',
         dueDate: '2026-03-20',
         completed: true,
         projectSlug: 'IV Fluids Shortage',
       },
       {
         description: 'Draft Volume vs Pressure Control statistical analysis plan',
-        assignee: 'nick',
+        assignee: 'nick-ingraham',
         dueDate: '2026-03-25',
         completed: false,
         projectSlug: 'Volume vs Pressure Control Mortality',
@@ -100,7 +100,7 @@ export const meetings: Meeting[] = [
     date: '2026-02-25',
     title: 'MNCCORE Biweekly: P1 Gender Disparities & Quality Metrics',
     type: 'biweekly',
-    attendees: ['nick', 'nate', 'eddington', 'mceachron', 'fitzgerald'],
+    attendees: ['nick-ingraham', 'nate-mesfin', 'casey-eddington', 'kendall-mceachron', 'beret-fitzgerald'],
     agenda: [
       'P1 Gender Disparities analysis update',
       'ICU Quality Metrics data extraction progress',
@@ -110,21 +110,21 @@ export const meetings: Meeting[] = [
     actionItems: [
       {
         description: 'Complete gender disparities subgroup analysis by BMI category',
-        assignee: 'eddington',
+        assignee: 'casey-eddington',
         dueDate: '2026-03-07',
         completed: true,
         projectSlug: 'P1: Gender Disparities & Low Tidal Volume',
       },
       {
         description: 'Circulate DNR manuscript outline for team feedback',
-        assignee: 'nate',
+        assignee: 'nate-mesfin',
         dueDate: '2026-03-04',
         completed: true,
         projectSlug: 'DNR Provider Variation',
       },
       {
         description: 'Set up quality metrics dashboard prototype in R Shiny',
-        assignee: 'eddington',
+        assignee: 'casey-eddington',
         dueDate: '2026-03-14',
         completed: true,
         projectSlug: 'P4: ICU Quality Metrics',
@@ -141,7 +141,7 @@ export const meetings: Meeting[] = [
     date: '2026-02-11',
     title: 'MNCCORE Biweekly: CLIF Data Pulls & Grant Planning',
     type: 'biweekly',
-    attendees: ['nick', 'nate', 'eddington', 'bromley', 'dudley'],
+    attendees: ['nick-ingraham', 'nate-mesfin', 'casey-eddington', 'emma-bromley', 'adams-dudley'],
     agenda: [
       'CLIF v3 data availability update',
       'Hypothermia rewarming rates study protocol',
@@ -151,21 +151,21 @@ export const meetings: Meeting[] = [
     actionItems: [
       {
         description: 'Submit CLIF data request for hypothermia temperature records',
-        assignee: 'nick',
+        assignee: 'nick-ingraham',
         dueDate: '2026-02-18',
         completed: true,
         projectSlug: 'Hypothermia Rewarming Rates',
       },
       {
         description: 'Draft Provider EBP specific aims page for Adams review',
-        assignee: 'nick',
+        assignee: 'nick-ingraham',
         dueDate: '2026-02-28',
         completed: true,
         projectSlug: 'Provider EBP Research Program',
       },
       {
         description: 'Compile list of UMN Research Day abstract deadlines',
-        assignee: 'bromley',
+        assignee: 'emma-bromley',
         dueDate: '2026-02-14',
         completed: true,
       },
@@ -181,7 +181,7 @@ export const meetings: Meeting[] = [
     date: '2026-01-28',
     title: 'MNCCORE Biweekly: New Year Planning & WBC/Sepsis Kickoff',
     type: 'biweekly',
-    attendees: ['nick', 'nate', 'eddington', 'bromley', 'mceachron', 'shyu', 'arriaza'],
+    attendees: ['nick-ingraham', 'nate-mesfin', 'casey-eddington', 'emma-bromley', 'kendall-mceachron', 'dan-shyu', 'steven-arriaza'],
     agenda: [
       '2026 research priorities and timeline',
       'WBC & Temperature Thresholds study design',
@@ -192,20 +192,20 @@ export const meetings: Meeting[] = [
     actionItems: [
       {
         description: 'Develop WBC threshold analysis protocol with Sepsis-3 criteria mapping',
-        assignee: 'nick',
+        assignee: 'nick-ingraham',
         dueDate: '2026-02-14',
         completed: true,
         projectSlug: 'WBC & Temperature Thresholds for Sepsis',
       },
       {
         description: 'Complete onboarding checklist and CITI training',
-        assignee: 'arriaza',
+        assignee: 'steven-arriaza',
         dueDate: '2026-02-07',
         completed: true,
       },
       {
         description: 'Create shared project tracker for 2026 milestones',
-        assignee: 'bromley',
+        assignee: 'emma-bromley',
         dueDate: '2026-02-04',
         completed: true,
       },

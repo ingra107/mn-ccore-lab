@@ -50,7 +50,7 @@ const labProjects = [
 ]
 
 // Mentees: show all (Nick mentors + shared)
-const mentees = allMentees.filter((m) => m.mentor === 'nick' || m.mentor === 'shared')
+const mentees = allMentees.filter((m) => m.mentor === 'nick-ingraham' || m.mentor === 'shared')
 
 export default function NickLab() {
   const { data: publications = [] } = usePublications()
@@ -93,7 +93,7 @@ export default function NickLab() {
       <SectionDivider />
       <div className="py-4" />
       <PublicationsSection
-        publications={publications.filter((p) => p.authorSlugs?.includes('nick'))}
+        publications={publications.filter((p) => p.authorSlugs?.includes('nick-ingraham'))}
         id="publications"
       />
     </LabPageLayout>

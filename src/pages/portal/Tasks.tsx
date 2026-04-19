@@ -93,7 +93,7 @@ export default function Tasks() {
     saveView,
     renameView,
     deleteView,
-  } = useSavedViews('nick')
+  } = useSavedViews('nick-ingraham')
 
   const currentViewFilters: ViewFilters = {
     assignee: filters.assignee || '',
@@ -429,7 +429,7 @@ export default function Tasks() {
                     if (view) {
                       const resolved = {
                         ...view.filters,
-                        assignee: view.filters.assignee === '__me__' ? 'nick' : view.filters.assignee,
+                        assignee: view.filters.assignee === '__me__' ? 'nick-ingraham' : view.filters.assignee,
                       }
                       setFilters({
                         assignee: resolved.assignee,

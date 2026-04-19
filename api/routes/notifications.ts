@@ -63,7 +63,7 @@ export async function handleCommitments(url: URL, env: Env): Promise<Response> {
   const params: string[] = [];
 
   if (toWhom) {
-    // Match partial — "Emma Bromley" or just "bromley"
+    // Match partial — "Emma Bromley" or just "emma-bromley"
     query += ' AND (LOWER(to_whom) LIKE ? OR LOWER(to_whom) LIKE ?)';
     params.push(`%${toWhom.toLowerCase()}%`, `%${toWhom.toLowerCase()}%`);
   }

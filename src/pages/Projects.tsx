@@ -28,7 +28,7 @@ const CATEGORY_FILTERS = [
   { key: 'all', label: 'All' },
   { key: 'clif', label: 'CLIF' },
   { key: 'lab', label: 'Lab' },
-  { key: 'nate', label: 'Mesfin Lab' },
+  { key: 'nate-mesfin', label: 'Mesfin Lab' },
   { key: 'mentee', label: 'Mentees' },
   { key: 'stale', label: 'Needs Attention' },
 ] as const
@@ -202,7 +202,7 @@ export default function Projects() {
   const totalCount = projects.length
   const clifCount = projects.filter((p) => p.category === 'clif').length
   const labCount = projects.filter((p) => p.category === 'lab').length
-  const nateCount = projects.filter((p) => p.category === 'nate').length
+  const nateCount = projects.filter((p) => p.category === 'nate-mesfin').length
   const menteeCount = projects.filter((p) => p.category === 'mentee').length
 
 
@@ -606,7 +606,7 @@ export default function Projects() {
                                 options={[
                                   { value: 'clif', label: 'CLIF', color: 'var(--maroon)' },
                                   { value: 'lab', label: 'Lab', color: 'var(--teal)' },
-                                  { value: 'nate', label: 'Mesfin', color: 'var(--gold)' },
+                                  { value: 'nate-mesfin', label: 'Mesfin', color: 'var(--gold)' },
                                   { value: 'mentee', label: 'Mentee', color: 'var(--slate)' },
                                 ]}
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
@@ -690,7 +690,7 @@ export default function Projects() {
                                   options={[
                                     { value: 'clif', label: 'CLIF', color: 'var(--maroon)' },
                                     { value: 'lab', label: 'Lab', color: 'var(--teal)' },
-                                    { value: 'nate', label: 'Mesfin', color: 'var(--gold)' },
+                                    { value: 'nate-mesfin', label: 'Mesfin', color: 'var(--gold)' },
                                     { value: 'mentee', label: 'Mentee', color: 'var(--slate)' },
                                   ]}
                                   onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}

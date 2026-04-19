@@ -104,7 +104,7 @@ export interface Mentee {
   slug: string            // links to TeamMember slug for photo/page
   role: string            // "Critical Care Fellow", "Research Coordinator", etc.
   credentials?: string
-  mentor: 'nick' | 'nate' | 'shared'
+  mentor: 'nick-ingraham' | 'nate-mesfin' | 'shared'
   researchInterests?: string[]
   bio?: string
   projectSlugs?: string[] // links to Project slugs

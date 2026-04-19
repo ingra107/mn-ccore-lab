@@ -30,8 +30,8 @@ const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i)
 // are the two directors (Nick + Nate). More PIs can be added as they start
 // owning manuscript projects.
 const PI_OPTIONS = [
-  { value: 'nick', label: 'Nick Ingraham' },
-  { value: 'nate', label: 'Nate Mesfin' },
+  { value: 'nick-ingraham', label: 'Nick Ingraham' },
+  { value: 'nate-mesfin', label: 'Nate Mesfin' },
 ] as const
 
 const STALLED_THRESHOLD_DAYS = 30
@@ -226,8 +226,8 @@ export default function Manuscripts() {
                   }}
                 >
                   <option value="">All PIs</option>
-                  <option value="nick">Nick Ingraham</option>
-                  <option value="nate">Nate Mesfin</option>
+                  <option value="nick-ingraham">Nick Ingraham</option>
+                  <option value="nate-mesfin">Nate Mesfin</option>
                 </select>
                 <select
                   aria-label="Filter manuscripts by category"
@@ -459,7 +459,7 @@ export default function Manuscripts() {
                               <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm-plus" variant="ice" />
                             </div>
                             <InlineSelect
-                              value={project.pi || 'nick'}
+                              value={project.pi || 'nick-ingraham'}
                               options={PI_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
                               onChange={(val) => handleFieldChange(project.slug, 'pi', val, project.pi)}
                               size="sm"

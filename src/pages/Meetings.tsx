@@ -425,14 +425,14 @@ export default function Meetings() {
 
   const [showAddAction, setShowAddAction] = useState(false)
   const [newActionDesc, setNewActionDesc] = useState('')
-  const [newActionAssignee, setNewActionAssignee] = useState('nick')
+  const [newActionAssignee, setNewActionAssignee] = useState('nick-ingraham')
   const [newActionDueDate, setNewActionDueDate] = useState('')
   const [newActionProject, setNewActionProject] = useState('')
 
   const [showAddMeeting, setShowAddMeeting] = useState(false)
   const [newMeetingDate, setNewMeetingDate] = useState('')
   const [newMeetingTitle, setNewMeetingTitle] = useState('')
-  const [newMeetingAttendees, setNewMeetingAttendees] = useState<string[]>(['nick', 'nate'])
+  const [newMeetingAttendees, setNewMeetingAttendees] = useState<string[]>(['nick-ingraham', 'nate-mesfin'])
   const [newMeetingAgenda, setNewMeetingAgenda] = useState<string[]>([''])
 
   const nextMeeting = useMemo(() => getNextMeetingDate(meetings), [meetings])
@@ -516,7 +516,7 @@ export default function Meetings() {
       ...(newActionProject ? { project_id: newActionProject } : {}),
     })
     setNewActionDesc('')
-    setNewActionAssignee('nick')
+    setNewActionAssignee('nick-ingraham')
     setNewActionDueDate('')
     setNewActionProject('')
     setShowAddAction(false)
@@ -537,7 +537,7 @@ export default function Meetings() {
     }).then(() => { window.location.reload() })
     setNewMeetingDate('')
     setNewMeetingTitle('')
-    setNewMeetingAttendees(['nick', 'nate'])
+    setNewMeetingAttendees(['nick-ingraham', 'nate-mesfin'])
     setNewMeetingAgenda([''])
     setShowAddMeeting(false)
   }
@@ -621,7 +621,7 @@ export default function Meetings() {
                   isOpen={showAddMeeting}
                   onToggle={() => setShowAddMeeting(true)}
                   onSubmit={handleAddMeeting}
-                  onCancel={() => { setShowAddMeeting(false); setNewMeetingDate(''); setNewMeetingTitle(''); setNewMeetingAttendees(['nick', 'nate']); setNewMeetingAgenda(['']) }}
+                  onCancel={() => { setShowAddMeeting(false); setNewMeetingDate(''); setNewMeetingTitle(''); setNewMeetingAttendees(['nick-ingraham', 'nate-mesfin']); setNewMeetingAgenda(['']) }}
                   triggerLabel="Record Meeting"
                   submitLabel="Save Meeting"
                 >
@@ -854,7 +854,7 @@ export default function Meetings() {
                   isOpen={showAddAction}
                   onToggle={() => setShowAddAction(true)}
                   onSubmit={handleAddActionItem}
-                  onCancel={() => { setShowAddAction(false); setNewActionDesc(''); setNewActionAssignee('nick'); setNewActionDueDate(''); setNewActionProject('') }}
+                  onCancel={() => { setShowAddAction(false); setNewActionDesc(''); setNewActionAssignee('nick-ingraham'); setNewActionDueDate(''); setNewActionProject('') }}
                   triggerLabel="Add Action Item"
                   submitLabel="Add Item"
                 >

@@ -39,10 +39,10 @@ test('desktop user journey: dashboard → tasks → detail → projects → team
   await expect(page.locator('h1')).toBeVisible();
 
   // Director profile — MUST render the MemberPage, NOT redirect back to
-  // /team. The bug class: getAllMembers() excluded directors, so
-  // getMemberBySlug('nick') → undefined → <Navigate to="/team" replace>.
-  await page.goto(`${BASE}/team/nick`, { waitUntil: 'networkidle' });
-  await expect(page).toHaveURL(/\/team\/nick/);
+  // /team. Phase 36b renamed the slug to `nick-ingraham` (preferred-last
+  // format). /team/nick now redirects to /team because that slug is gone.
+  await page.goto(`${BASE}/team/nick-ingraham`, { waitUntil: 'networkidle' });
+  await expect(page).toHaveURL(/\/team\/nick-ingraham/);
   await expect(page.locator('body')).toContainText(/Nick Ingraham/i, { timeout: 10000 });
 
   await page.goto(`${BASE}/meetings`, { waitUntil: 'networkidle' });

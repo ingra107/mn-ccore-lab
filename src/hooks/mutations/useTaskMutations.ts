@@ -138,7 +138,7 @@ export function useAcknowledgeTask() {
       const { snapshots } = optimisticListUpdate<TaskRow>(
         queryClient, ['tasks'],
         (tasks) => tasks.map((t) => t.id === id
-          ? { ...t, acknowledged_at: new Date().toISOString(), acknowledged_by: 'nick' }
+          ? { ...t, acknowledged_at: new Date().toISOString(), acknowledged_by: 'nick-ingraham' }
           : t
         ),
       )

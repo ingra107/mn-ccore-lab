@@ -5,7 +5,7 @@ import type { Mentee } from './types'
 export const mentees: Mentee[] = [
   {
     name: 'Dan Shyu',
-    slug: 'shyu',
+    slug: 'dan-shyu',
     role: 'Critical Care Fellow',
     credentials: 'MD',
     mentor: 'shared',
@@ -16,7 +16,7 @@ export const mentees: Mentee[] = [
   },
   {
     name: 'Beret Fitzgerald',
-    slug: 'fitzgerald',
+    slug: 'beret-fitzgerald',
     role: 'Critical Care Fellow',
     credentials: 'MD',
     mentor: 'shared',
@@ -27,9 +27,9 @@ export const mentees: Mentee[] = [
   },
   {
     name: 'Emma Bromley',
-    slug: 'bromley',
+    slug: 'emma-bromley',
     role: 'Research Coordinator',
-    mentor: 'nick',
+    mentor: 'nick-ingraham',
     yearStarted: 2023,
     bio: 'Pre-doctoral research coordinator leading the Decision-Making Survey (GDMS) study and supporting multi-center CLIF data collection efforts.',
     researchInterests: ['Clinical decision-making', 'Survey methodology', 'Evidence-based practice'],
@@ -37,9 +37,9 @@ export const mentees: Mentee[] = [
   },
   {
     name: 'Casey Eddington',
-    slug: 'eddington',
+    slug: 'casey-eddington',
     role: 'Data Analyst',
-    mentor: 'nick',
+    mentor: 'nick-ingraham',
     yearStarted: 2023,
     bio: 'Data analyst supporting CLIF consortium analytics, including gender disparities research and ICU quality metric development.',
     researchInterests: ['CLIF analytics', 'ICU quality metrics', 'Multi-center data'],
@@ -47,7 +47,7 @@ export const mentees: Mentee[] = [
   },
   {
     name: 'Claire Collins',
-    slug: 'collins',
+    slug: 'claire-collins',
     role: 'Medical Student Researcher',
     mentor: 'shared',
     yearStarted: 2025,
@@ -57,7 +57,7 @@ export const mentees: Mentee[] = [
   },
   {
     name: 'Steven Arriaza',
-    slug: 'arriaza',
+    slug: 'steven-arriaza',
     role: 'Research Coordinator',
     mentor: 'shared',
     yearStarted: 2024,
@@ -78,6 +78,6 @@ export function getMenteesForProject(projectSlug: string): Mentee[] {
 }
 
 // Helper: get mentees by mentor
-export function getMenteesByMentor(mentor: 'nick' | 'nate' | 'shared'): Mentee[] {
+export function getMenteesByMentor(mentor: 'nick-ingraham' | 'nate-mesfin' | 'shared'): Mentee[] {
   return mentees.filter((m) => m.mentor === mentor || m.mentor === 'shared')
 }

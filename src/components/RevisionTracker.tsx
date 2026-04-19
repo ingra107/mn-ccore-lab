@@ -451,7 +451,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
   const [showAddComment, setShowAddComment] = useState(false)
   const [newReviewerNum, setNewReviewerNum] = useState(1)
   const [newCommentText, setNewCommentText] = useState('')
-  const [newAssignedTo, setNewAssignedTo] = useState('nick')
+  const [newAssignedTo, setNewAssignedTo] = useState('nick-ingraham')
   const [editingResponse, setEditingResponse] = useState<string | null>(null)
   const [responseDraft, setResponseDraft] = useState('')
 

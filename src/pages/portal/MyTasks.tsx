@@ -167,8 +167,8 @@ export default function MyTasks() {
   const pendingCount = tasks.filter((t) => !t.completed).length
   const completedCount = tasks.filter((t) => t.completed).length
 
-  // PI slug for "Waiting On" filter — uses auth if available, else defaults to 'nick'
-  const piSlug = currentUser || 'nick'
+  // PI slug for "Waiting On" filter — uses auth if available, else defaults to 'nick-ingraham'
+  const piSlug = currentUser || 'nick-ingraham'
 
   // Quick date filter
   const quickFiltered = useMemo(() => {

@@ -46,7 +46,7 @@ const projects = [
 ]
 
 // Mentees: show all (Nate mentors + shared)
-const mentees = allMentees.filter((m) => m.mentor === 'nate' || m.mentor === 'shared')
+const mentees = allMentees.filter((m) => m.mentor === 'nate-mesfin' || m.mentor === 'shared')
 
 export default function NateLab() {
   const { data: publications = [] } = usePublications()
@@ -75,7 +75,7 @@ export default function NateLab() {
       ]}
     >
       <PublicationsSection
-        publications={publications.filter((p) => p.authorSlugs?.includes('nate'))}
+        publications={publications.filter((p) => p.authorSlugs?.includes('nate-mesfin'))}
         id="publications"
       />
       <SectionDivider />

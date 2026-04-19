@@ -7,8 +7,8 @@ export const directors: Director[] = [
     title: 'Assistant Professor, Pulmonary & Critical Care Medicine',
     role: 'Co-Director, MN-CCORE',
     initials: 'NI',
-    slug: 'nick',
-    path: '/nick',
+    slug: 'nick-ingraham',
+    path: '/nick-ingraham',
     bio: 'Physician-scientist focused on provider variation, lung-protective ventilation, and clinical decision-making in the ICU. Founding member of the CLIF Consortium.',
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-06/Nick%20Picture_2022.jpg?itok=VEDKgpUN',
     scholarId: 'ZKMVVHkAAAAJ', // Scholar stats (2026-03-24): citations 2626, h-index 24, i10-index 39
@@ -19,8 +19,8 @@ export const directors: Director[] = [
     title: 'Assistant Professor, Critical Care Medicine',
     role: 'Co-Director, MN-CCORE',
     initials: 'NM',
-    slug: 'nate',
-    path: '/nate',
+    slug: 'nate-mesfin',
+    path: '/nate-mesfin',
     bio: 'Critical care physician investigating in-hospital cardiac arrest survivability, DNR order variation, and chronic critical illness outcomes.',
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/images/dom-faculty-_0135_layer-164_0.png?itok=YWiCOKFA',
   },
@@ -32,7 +32,7 @@ export const seniorMentors: TeamMember[] = [
     initials: 'AD',
     role: 'Senior Mentor',
     credentials: 'MD, MBA',
-    slug: 'dudley',
+    slug: 'adams-dudley',
     authorName: 'Dudley RA',
     bio: 'Professor of Medicine specializing in health services research, quality measurement, and healthcare policy. Senior mentor to MN-CCORE investigators.',
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/images/r._adams_dudley_0.png?itok=BykmoC6t',
@@ -44,7 +44,7 @@ export const seniorMentors: TeamMember[] = [
     initials: 'JC',
     role: 'Senior Mentor & Surgical Critical Care',
     credentials: 'MD',
-    slug: 'chipman',
+    slug: 'jeff-chipman',
     authorName: 'Chipman JG',
     bio: 'Professor of Surgery and surgical critical care physician. Co-investigator on multiple MNCCORE studies involving provider variation and ventilator management.',
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-08/Copy%20of%20UMN-8471.jpg?itok=UqPdFLCU',
@@ -53,30 +53,30 @@ export const seniorMentors: TeamMember[] = [
 
 // Order = activity level in MNCCORE (most active first). Keep updated.
 export const facultyCollaborators: TeamMember[] = [
-  { name: 'Kendall McEachron', initials: 'KM', role: 'Faculty Collaborator', slug: 'mceachron', authorName: 'McEachron K', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/images/u_of_m_2023_resident_graduation_6-27-23_0107-edit.jpeg?itok=3fV81qKA' },
-  { name: 'Sami Safadi', initials: 'SS', role: 'Faculty Collaborator', slug: 'safadi', authorName: 'Safadi S', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0076_Layer-223.png' },
-  { name: 'Abbie Begnaud', initials: 'AB', role: 'Faculty', credentials: 'MD', slug: 'begnaud', authorName: 'Begnaud A', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/begnaud-abbie.png?itok=gSTF7AGX' },
-  { name: 'Ben Henkle', initials: 'BH', role: 'Faculty', credentials: 'MD, MPH', slug: 'henkle', authorName: 'Henkle BE', photoUrl: 'https://www.va.gov/MINNEAPOLISRESEARCH/images/staff/benjaminhenkle.jpg' },
-  { name: 'Dave MacDonald', initials: 'DM', role: 'Faculty', credentials: 'MD, MS', slug: 'macdonald', authorName: 'MacDonald DM', scholarId: 'EZt8qpMAAAAJ', /* Scholar stats (2026-03-24): citations 257, h-index 11, i10-index 11 */ links: [{ label: 'Scholar', href: 'https://scholar.google.com/citations?user=EZt8qpMAAAAJ&hl=en' }] },
-  { name: 'Josh Trujeque', initials: 'JT', role: 'Faculty', credentials: 'MD', slug: 'trujeque', authorName: 'Trujeque J', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/picture9.png' },
-  { name: 'Katie Pendleton', initials: 'KP', role: 'Faculty', credentials: 'MD', slug: 'pendleton', authorName: 'Pendleton KM', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0112_Layer-187.png?itok=1xJq3yYt' },
-  { name: 'Michael Kalinoski', initials: 'MK', role: 'Faculty', credentials: 'MD', slug: 'kalinoski', authorName: 'Kalinoski M' },
-  { name: 'Dave Wacker', initials: 'DW', role: 'Faculty', credentials: 'MD', slug: 'wacker', authorName: 'Wacker DA', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0028_Layer-271.png?itok=skFv-xW5' },
+  { name: 'Kendall McEachron', initials: 'KM', role: 'Faculty Collaborator', slug: 'kendall-mceachron', authorName: 'McEachron K', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/images/u_of_m_2023_resident_graduation_6-27-23_0107-edit.jpeg?itok=3fV81qKA' },
+  { name: 'Sami Safadi', initials: 'SS', role: 'Faculty Collaborator', slug: 'sami-safadi', authorName: 'Safadi S', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0076_Layer-223.png' },
+  { name: 'Abbie Begnaud', initials: 'AB', role: 'Faculty', credentials: 'MD', slug: 'abbie-begnaud', authorName: 'Begnaud A', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/begnaud-abbie.png?itok=gSTF7AGX' },
+  { name: 'Ben Henkle', initials: 'BH', role: 'Faculty', credentials: 'MD, MPH', slug: 'benjamin-henkle', authorName: 'Henkle BE', photoUrl: 'https://www.va.gov/MINNEAPOLISRESEARCH/images/staff/benjaminhenkle.jpg' },
+  { name: 'Dave MacDonald', initials: 'DM', role: 'Faculty', credentials: 'MD, MS', slug: 'dave-macdonald', authorName: 'MacDonald DM', scholarId: 'EZt8qpMAAAAJ', /* Scholar stats (2026-03-24): citations 257, h-index 11, i10-index 11 */ links: [{ label: 'Scholar', href: 'https://scholar.google.com/citations?user=EZt8qpMAAAAJ&hl=en' }] },
+  { name: 'Josh Trujeque', initials: 'JT', role: 'Faculty', credentials: 'MD', slug: 'josh-trujeque', authorName: 'Trujeque J', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/picture9.png' },
+  { name: 'Katie Pendleton', initials: 'KP', role: 'Faculty', credentials: 'MD', slug: 'katie-pendleton', authorName: 'Pendleton KM', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0112_Layer-187.png?itok=1xJq3yYt' },
+  { name: 'Michael Kalinoski', initials: 'MK', role: 'Faculty', credentials: 'MD', slug: 'michael-kalinoski', authorName: 'Kalinoski M' },
+  { name: 'Dave Wacker', initials: 'DW', role: 'Faculty', credentials: 'MD', slug: 'dave-wacker', authorName: 'Wacker DA', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0028_Layer-271.png?itok=skFv-xW5' },
 ]
 
 // Order = activity level in MNCCORE (most active first). Keep updated.
 export const researchTeam: TeamMember[] = [
-  { name: 'Steven Arriaza', initials: 'SA', role: 'Research Coordinator', slug: 'arriaza' },
-  { name: 'Emma Bromley', initials: 'EB', role: 'Research Coordinator', slug: 'bromley', authorName: 'Bromley E' },
-  { name: 'Casey Eddington', initials: 'CE', role: 'Data Analyst', slug: 'eddington', authorName: 'Eddington C' },
-  { name: 'Dan Shyu', initials: 'DS', role: 'Critical Care Fellow', credentials: 'MD', slug: 'shyu', authorName: 'Shyu D', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/shyu-daniel.png' },
-  { name: 'Beret Fitzgerald', initials: 'BF', role: 'Critical Care Fellow', credentials: 'MD', slug: 'fitzgerald', authorName: 'Fitzgerald B', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/fitzgerald-beret-001.png' },
-  { name: 'Claire Collins', initials: 'CC', role: 'Medical Student Researcher', slug: 'collins', authorName: 'Collins C' },
+  { name: 'Steven Arriaza', initials: 'SA', role: 'Research Coordinator', slug: 'steven-arriaza' },
+  { name: 'Emma Bromley', initials: 'EB', role: 'Research Coordinator', slug: 'emma-bromley', authorName: 'Bromley E' },
+  { name: 'Casey Eddington', initials: 'CE', role: 'Data Analyst', slug: 'casey-eddington', authorName: 'Eddington C' },
+  { name: 'Dan Shyu', initials: 'DS', role: 'Critical Care Fellow', credentials: 'MD', slug: 'dan-shyu', authorName: 'Shyu D', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/shyu-daniel.png' },
+  { name: 'Beret Fitzgerald', initials: 'BF', role: 'Critical Care Fellow', credentials: 'MD', slug: 'beret-fitzgerald', authorName: 'Fitzgerald B', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/fitzgerald-beret-001.png' },
+  { name: 'Claire Collins', initials: 'CC', role: 'Medical Student Researcher', slug: 'claire-collins', authorName: 'Collins C' },
 ]
 
 // Helper: get all team members as a flat array.
 // Includes directors (Nick, Nate, Dudley, Chipman) normalized into the
-// TeamMember shape — without this, `getMemberBySlug('nick')` returns
+// TeamMember shape — without this, `getMemberBySlug('nick-ingraham')` returns
 // undefined and `/team/nick` redirects to `/team` (the PI literally
 // can't view his own profile page). Audit caught this 2026-04-19.
 export function getAllMembers(): TeamMember[] {

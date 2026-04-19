@@ -215,7 +215,7 @@ export default function CommandPalette() {
       items.push({
         id: 'ctx-tasks-filter-mine',
         label: 'Show My Tasks Only',
-        sublabel: `${tasks.filter(t => !t.completed && t.assignee === 'nick').length} tasks assigned to you`,
+        sublabel: `${tasks.filter(t => !t.completed && t.assignee === 'nick-ingraham').length} tasks assigned to you`,
         icon: User,
         action: () => { navigate('/tasks?assignee=nick'); setOpen(false) },
         category: 'context',

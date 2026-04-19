@@ -352,7 +352,7 @@ export default function MemberPage() {
               <span className="text-xs" style={{ color: 'var(--slate)' }}>
                 {mentee.mentor === 'shared'
                   ? 'Shared mentorship — Ingraham & Mesfin'
-                  : `Mentor: ${mentee.mentor === 'nick' ? 'Nick Ingraham, MD' : 'Nathan Mesfin, MD'}`}
+                  : `Mentor: ${mentee.mentor === 'nick-ingraham' ? 'Nick Ingraham, MD' : 'Nathan Mesfin, MD'}`}
               </span>
             </div>
           </section>

@@ -195,7 +195,7 @@ export async function handleCreateRevisionComment(revisionId: string, request: R
     revisionId,
     body.reviewer_number || 1,
     body.comment_text,
-    body.assigned_to || 'nick',
+    body.assigned_to || 'nick-ingraham',
     status,
     body.response_text || null,
   ).run();
@@ -221,7 +221,7 @@ export async function handleUpdateRevisionComment(id: string, request: Request, 
   const params: (string | null)[] = [];
 
   if (body.comment_text !== undefined) { sets.push('comment_text = ?'); params.push(body.comment_text); }
-  if (body.assigned_to !== undefined) { sets.push('assigned_to = ?'); params.push(body.assigned_to || 'nick'); }
+  if (body.assigned_to !== undefined) { sets.push('assigned_to = ?'); params.push(body.assigned_to || 'nick-ingraham'); }
   if (body.response_text !== undefined) { sets.push('response_text = ?'); params.push(body.response_text || null); }
   if (body.status !== undefined) {
     if (!VALID_COMMENT_STATUSES.includes(body.status)) {

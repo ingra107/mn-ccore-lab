@@ -57,7 +57,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
     createTask.mutate({
       title: parsed.title,
       description: parsed.title,
-      assignee: parsed.assigneeSlug ?? 'nick',
+      assignee: parsed.assigneeSlug ?? 'nick-ingraham',
       ...(parsed.dueDate ? { due_date: parsed.dueDate } : {}),
       ...(parsed.projectSlug ? { project_id: parsed.projectSlug } : {}),
       ...(parsed.priority ? { priority: PRIORITY_MAP[parsed.priority] ?? 'medium' } : {}),

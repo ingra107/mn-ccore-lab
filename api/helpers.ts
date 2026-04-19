@@ -64,9 +64,42 @@ export function parseMentions(text: string): string[] {
   return [...new Set(Array.from(text.matchAll(regex), m => m[1]))];
 }
 
-/** Extract user slug from email (e.g., "nick@umn.edu" → "nick") */
+/** Map email local-part → canonical team slug. Used because team emails
+ *  (`nick@umn.edu`, `bromley@umn.edu`) don't match the post-Phase-36b
+ *  `preferred-last` slug format. Also handles Nick's real UMN address
+ *  aliases (`ningraha@`, `sandb029@`). Keep in sync with
+ *  `team_members.slug` — adding a new member means adding a row here.
+ *  Unknown prefix falls through to the email-prefix literal. */
+const EMAIL_PREFIX_TO_SLUG: Record<string, string> = {
+  nick: 'nick-ingraham',
+  ningraha: 'nick-ingraham',
+  sandb029: 'nick-ingraham',
+  nate: 'nate-mesfin',
+  dudley: 'adams-dudley',
+  chipman: 'jeff-chipman',
+  mceachron: 'kendall-mceachron',
+  safadi: 'sami-safadi',
+  begnaud: 'abbie-begnaud',
+  henkle: 'benjamin-henkle',
+  macdonald: 'dave-macdonald',
+  trujeque: 'josh-trujeque',
+  pendleton: 'katie-pendleton',
+  kalinoski: 'michael-kalinoski',
+  wacker: 'dave-wacker',
+  arriaza: 'steven-arriaza',
+  bromley: 'emma-bromley',
+  eddington: 'casey-eddington',
+  shyu: 'dan-shyu',
+  fitzgerald: 'beret-fitzgerald',
+  collins: 'claire-collins',
+}
+
+/** Extract canonical team slug from email (e.g., "nick@umn.edu" →
+ *  "nick-ingraham", "ningraha@umn.edu" → "nick-ingraham"). Returns the
+ *  literal email prefix for unknown emails. */
 export function actorSlug(email: string): string {
-  return email.split('@')[0].toLowerCase()
+  const prefix = email.split('@')[0].toLowerCase()
+  return EMAIL_PREFIX_TO_SLUG[prefix] ?? prefix
 }
 
 /** Fallback PI emails used when lab_settings query fails (cold start, DB

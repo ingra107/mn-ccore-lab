@@ -37,7 +37,7 @@ const STATUS_OPTIONS = [
 
 // TODO: Remove this hardcoded list once AddMilestoneModal receives mentee slugs as a prop
 // derived from the useMenteeOverview() API response (mentee_slug field).
-const MENTEE_SLUGS = ['shyu', 'fitzgerald', 'collins']
+const MENTEE_SLUGS = ['dan-shyu', 'beret-fitzgerald', 'claire-collins']
 
 // ── Silence Detection ──────────────────────────────────────
 const SILENCE_AMBER_DAYS = 10  // > 10d → amber "Quiet"
@@ -67,11 +67,11 @@ export default function MenteeMilestones() {
   })
   const { data: overview = [], isLoading: overviewLoading } = useMenteeOverview()
   // Per-actor last-activity queries (limit=1, actor-filtered) so high activity volume doesn't hide old entries
-  const { data: actShyu = [] }      = useActivity(1, 'shyu')
-  const { data: actFitzgerald = [] } = useActivity(1, 'fitzgerald')
-  const { data: actCollins = [] }   = useActivity(1, 'collins')
-  const { data: actEddington = [] } = useActivity(1, 'eddington')
-  const { data: actMceachron = [] } = useActivity(1, 'mceachron')
+  const { data: actShyu = [] }      = useActivity(1, 'dan-shyu')
+  const { data: actFitzgerald = [] } = useActivity(1, 'beret-fitzgerald')
+  const { data: actCollins = [] }   = useActivity(1, 'claire-collins')
+  const { data: actEddington = [] } = useActivity(1, 'casey-eddington')
+  const { data: actMceachron = [] } = useActivity(1, 'kendall-mceachron')
   const updateMilestone = useUpdateMenteeMilestone()
   const { showUndo } = useUndoToast()
 
@@ -82,8 +82,8 @@ export default function MenteeMilestones() {
     const now = Date.now()
     const map = new Map<string, number>()
     const perActorEntries: [string, typeof actShyu][] = [
-      ['shyu', actShyu], ['fitzgerald', actFitzgerald], ['collins', actCollins],
-      ['eddington', actEddington], ['mceachron', actMceachron],
+      ['dan-shyu', actShyu], ['beret-fitzgerald', actFitzgerald], ['claire-collins', actCollins],
+      ['casey-eddington', actEddington], ['kendall-mceachron', actMceachron],
     ]
     for (const [slug, entries] of perActorEntries) {
       if (entries.length > 0 && entries[0].timestamp) {
