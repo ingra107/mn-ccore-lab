@@ -7,7 +7,11 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
   const targetDate = planDate || today
   const hour = new Date().getUTCHours() - 6 // CT approximation
 
-  const [tasks, projects, milestones, commitments, meetings, recentActivity, blockedTasks, decisions, dailyPlan, pomodoroSessions, dailyReflection] = await Promise.all([
+  // D1 batch() sends all 11 reads in a single RPC round trip instead of 11
+  // separate connections (consultant review: "N+1 on handleCommandCenter").
+  // batch() always returns D1Result[] so the two formerly-`.first()` calls
+  // become `results[0] ?? null`.
+  const batchResults = await env.DB.batch([
     // All of Nick's tasks
     env.DB.prepare(`
       SELECT t.*, p.title as project_title, p.slug as project_slug
@@ -16,7 +20,7 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
       ORDER BY t.completed ASC,
         CASE t.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 END,
         t.due_date ASC NULLS LAST
-    `).all(),
+    `),
 
     // Active projects with health
     env.DB.prepare(`
@@ -26,7 +30,7 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
         (SELECT MAX(pu.created_at) FROM project_updates pu WHERE pu.project_id = p.slug) as last_update,
         (SELECT COUNT(*) FROM tasks t WHERE (t.project_id = p.slug OR t.project_id = p.id) AND t.status = 'blocked') as blocked_count
       FROM projects p WHERE p.status IN ('active', 'Active') ORDER BY p.category, p.title
-    `).all(),
+    `),
 
     // Milestones in next 30 days
     env.DB.prepare(`
@@ -34,10 +38,10 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
       FROM milestones m LEFT JOIN projects p ON m.project_id = p.slug OR m.project_id = p.id
       WHERE m.target_date >= date('now', '-7 days') AND m.target_date <= date('now', '+30 days')
       ORDER BY m.target_date ASC
-    `).all(),
+    `),
 
     // Open commitments
-    env.DB.prepare("SELECT * FROM commitments WHERE status != 'done' ORDER BY due_date ASC NULLS LAST").all(),
+    env.DB.prepare("SELECT * FROM commitments WHERE status != 'done' ORDER BY due_date ASC NULLS LAST"),
 
     // Meetings in next 7 days
     env.DB.prepare(`
@@ -46,37 +50,49 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
         (SELECT COUNT(*) FROM tasks t WHERE t.meeting_id = m.id AND t.completed = 0) as pending_actions
       FROM meetings m WHERE m.date >= date('now') AND m.date <= date('now', '+7 days')
       ORDER BY m.date ASC
-    `).all(),
+    `),
 
     // Recent activity (last 24h)
     env.DB.prepare(`
       SELECT type, description, actor, timestamp FROM activity_log
       WHERE timestamp > datetime('now', '-24 hours') ORDER BY timestamp DESC LIMIT 15
-    `).all(),
+    `),
 
     // Blocked tasks across the lab (not just Nick's)
     env.DB.prepare(`
       SELECT t.*, p.title as project_title FROM tasks t
       LEFT JOIN projects p ON t.project_id = p.slug OR t.project_id = p.id
       WHERE t.status = 'blocked' AND t.completed = 0
-    `).all(),
+    `),
 
     // Recent decisions needing outcomes
     env.DB.prepare(`
       SELECT id, title, rationale, outcome_status, created_at FROM decision_log
       WHERE outcome_status = 'pending' AND created_at < datetime('now', '-60 days')
       ORDER BY created_at ASC LIMIT 5
-    `).all(),
+    `),
 
     // Target date's daily plan
-    env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(targetDate).first(),
+    env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(targetDate),
 
     // Target date's pomodoro sessions
-    env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE plan_date = ?').bind(targetDate).all(),
+    env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE plan_date = ?').bind(targetDate),
 
     // Target date's reflection
-    env.DB.prepare('SELECT * FROM daily_reflections WHERE plan_date = ?').bind(targetDate).first(),
+    env.DB.prepare('SELECT * FROM daily_reflections WHERE plan_date = ?').bind(targetDate),
   ])
+
+  const tasks = batchResults[0]
+  const projects = batchResults[1]
+  const milestones = batchResults[2]
+  const commitments = batchResults[3]
+  const meetings = batchResults[4]
+  const recentActivity = batchResults[5]
+  const blockedTasks = batchResults[6]
+  const decisions = batchResults[7]
+  const dailyPlan = batchResults[8].results?.[0] ?? null
+  const pomodoroSessions = batchResults[9]
+  const dailyReflection = batchResults[10].results?.[0] ?? null
 
   const allTasks = (tasks.results || []) as any[]
   const openTasks = allTasks.filter((t: any) => !t.completed)

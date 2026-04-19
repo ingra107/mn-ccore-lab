@@ -1,11 +1,5 @@
 export type UserRole = 'pi' | 'fellow' | 'coordinator' | 'default'
 
-// Canonical email list for PI detection
-export const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
-
-// Email-prefix slugs that map to PIs (from CF Access JWT email.split('@')[0])
-const PI_SLUGS = ['ningraha', 'sandb029']
-
 // Mentee/trainee slugs (from mentees.ts)
 const FELLOW_SLUGS = ['shyu', 'fitzgerald', 'bromley', 'eddington', 'collins', 'arriaza']
 
@@ -13,21 +7,14 @@ const FELLOW_SLUGS = ['shyu', 'fitzgerald', 'bromley', 'eddington', 'collins', '
 // but coordinators are identified by role, not slug. We check mentees data first.)
 // In practice: fellows = anyone in mentees.ts, coordinators = anyone else in team.ts
 
-export function getUserRole(email?: string): UserRole {
-  if (!email) return 'default'
-  if (PI_EMAILS.includes(email)) return 'pi'
-  const slug = email.split('@')[0].toLowerCase()
-  if (PI_SLUGS.includes(slug)) return 'pi'
+/** Derive role from auth user. PI-ness comes from the server via user.isPi
+ *  (reflects the lab_settings.pi_emails allowlist, not a client-side list). */
+export function getUserRoleFromAuth(user: { email?: string; isPi?: boolean } | null | undefined): UserRole {
+  if (!user?.email) return 'default'
+  if (user.isPi) return 'pi'
+  const slug = user.email.split('@')[0].toLowerCase()
   if (FELLOW_SLUGS.includes(slug)) return 'fellow'
-  // Any other @umn.edu = coordinator (lab staff/faculty)
-  if (email.endsWith('@umn.edu')) return 'coordinator'
-  return 'default'
-}
-
-export function getUserRoleFromSlug(slug: string): UserRole {
-  if (PI_SLUGS.includes(slug)) return 'pi'
-  if (FELLOW_SLUGS.includes(slug)) return 'fellow'
-  // Known team members not in fellows list = coordinator
+  if (user.email.endsWith('@umn.edu')) return 'coordinator'
   return 'default'
 }
 

@@ -47,6 +47,18 @@ Configure in Cloudflare dashboard → Zero Trust → Access → Applications:
 - Allow: email ending in `@umn.edu`
 - Public paths (no auth): `/`, `/team` (public list), `/publications*`, `/network*`, `/contact*`, `/pulse*`, `/research*`, `/people*`
 
+**After CF Access is configured, set these two secrets to enable JWT signature verification** (without them the backend only *decodes* the JWT and any attacker can forge a `Cf-Access-Jwt-Assertion` header claiming to be a PI):
+
+```bash
+# Your CF Access team domain (without https://) — e.g. umn-ccore.cloudflareaccess.com
+echo "<your-team>.cloudflareaccess.com" | wrangler pages secret put CF_ACCESS_TEAM_DOMAIN --project-name mn-ccore-lab
+
+# The Application Audience (AUD) tag — from CF dashboard → Access → Applications → your app → Overview
+echo "<your-aud-tag>" | wrangler pages secret put CF_ACCESS_AUD --project-name mn-ccore-lab
+```
+
+Verification: after deploy, `curl https://mn-ccore-lab.pages.dev/api/auth/me` with a forged JWT should return `{authenticated: false}`. With a real CF Access cookie, it returns `{authenticated: true, email, name}`. Implementation in `api/jwt-verify.ts`.
+
 ### 2. RESEND_API_KEY (daily digest email)
 
 Cloudflare dashboard → Pages → mn-ccore-lab → Settings → Environment variables.

@@ -15,8 +15,6 @@ import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
 import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
 
-const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
-
 // Get Monday of the week containing the given date
 function getWeekStart(d: Date): Date {
   const date = new Date(d)
@@ -45,7 +43,7 @@ const RANGE_WEEKS: Record<TimeRange, number> = {
 
 export default function AnalyticsPage() {
   const { user } = useAuth()
-  const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
+  const isPi = user?.isPi ?? false
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
   const { data: projects = [], isLoading: projectsLoading } = useProjects()
   const { data: ideas = [] } = useIdeas()

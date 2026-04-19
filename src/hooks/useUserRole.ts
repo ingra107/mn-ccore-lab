@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useAuth } from './useAuth'
-import { getUserRole, ROLE_LABELS } from '../lib/roleDefaults'
+import { getUserRoleFromAuth, ROLE_LABELS } from '../lib/roleDefaults'
 import type { UserRole } from '../lib/roleDefaults'
 
 const OVERRIDE_KEY = 'hub-role-override'
@@ -41,8 +41,8 @@ export function useUserRole(): UseUserRoleReturn {
   // Detect role from auth
   const detectedRole: UserRole = useMemo(() => {
     if (!isAuthenticated || !user?.email) return 'default'
-    return getUserRole(user.email)
-  }, [isAuthenticated, user?.email])
+    return getUserRoleFromAuth(user)
+  }, [isAuthenticated, user])
 
   // Override state from localStorage
   const [override, setOverrideState] = useState<UserRole | null>(getStoredOverride)

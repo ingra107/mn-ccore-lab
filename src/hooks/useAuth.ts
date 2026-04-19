@@ -4,11 +4,13 @@ export interface AuthUser {
   email: string
   name?: string
   isAuthenticated: boolean
+  isPi: boolean
 }
 
 const defaultUser: AuthUser = {
   email: '',
   isAuthenticated: false,
+  isPi: false,
 }
 
 // Cloudflare Access injects a JWT in the Cf-Access-Jwt-Assertion header.
@@ -39,10 +41,13 @@ function getAuthFromCookie(): AuthUser {
   const payload = decodeJwtPayload(token)
   if (!payload) return defaultUser
 
+  // Cookie-based path is a first-paint optimization; it cannot know isPi
+  // (that answer lives server-side). Hydrates to true via /api/auth/me.
   return {
     email: (payload.email as string) || '',
     name: (payload.name as string) || (payload.email as string)?.split('@')[0] || '',
     isAuthenticated: true,
+    isPi: false,
   }
 }
 
@@ -52,10 +57,13 @@ async function fetchAuthStatus(): Promise<AuthUser> {
     const res = await fetch('/api/auth/me', { credentials: 'same-origin' })
     if (res.ok) {
       const data = await res.json()
-      return {
-        email: data.email || '',
-        name: data.name || '',
-        isAuthenticated: true,
+      if (data.authenticated) {
+        return {
+          email: data.email || '',
+          name: data.name || '',
+          isAuthenticated: true,
+          isPi: Boolean(data.isPi),
+        }
       }
     }
   } catch {
@@ -86,15 +94,14 @@ export function useAuthState(): AuthContextValue {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // First try cookie (instant)
+    // First try cookie (instant paint — isPi=false until API hydrates)
     const cookieUser = getAuthFromCookie()
     if (cookieUser.isAuthenticated) {
       setUser(cookieUser)
       setIsLoading(false)
-      return
     }
 
-    // Then try API (async, more reliable)
+    // Always hit API to get authoritative isPi (cookie cannot know it)
     fetchAuthStatus().then((apiUser) => {
       setUser(apiUser)
       setIsLoading(false)

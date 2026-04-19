@@ -292,11 +292,10 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
       // Email notification (fire-and-forget, only if Resend configured)
       if (env.RESEND_API_KEY) {
         const { sendEmail, taskAssignmentEmail } = await import('../lib/email');
-        const member = await env.DB.prepare('SELECT name FROM team_members WHERE slug = ?').bind(assignee).first<{ name: string }>();
+        const member = await env.DB.prepare('SELECT name, email FROM team_members WHERE slug = ?').bind(assignee).first<{ name: string; email: string | null }>();
         if (member) {
           const email = taskAssignmentEmail(user.name || user.email, title, id);
-          // Look up assignee email from team — use UMN convention
-          email.to = `${assignee}@umn.edu`;
+          email.to = member.email || `${assignee}@umn.edu`;
           sendEmail(env.RESEND_API_KEY, email).catch(() => {});
         }
       }

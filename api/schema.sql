@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS team_members (
   title TEXT,
   department TEXT,
   member_type TEXT, -- director, senior_mentor, faculty, research_team
+  email TEXT,       -- v43: real column (backfilled slug@umn.edu); still nullable
   created_at TEXT DEFAULT (datetime('now'))
 );
 

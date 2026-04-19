@@ -8,7 +8,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { useMeetingsApi, useTasks, useExpiringRegulatory } from '../hooks/useApiData'
 import { formatMediumDate } from '../lib/dateUtils'
-import { getUserRole, ROLE_DEFAULTS } from '../lib/roleDefaults'
+import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
 import PageTooltip from '../components/PageTooltip'
 import PipelineCard from '../components/dashboard/PipelineCard'
@@ -158,7 +158,7 @@ export default function Dashboard() {
     'Research command center for MN-CCORE. Track active projects, grant timelines, action items, and collaboration metrics across the consortium.'
   )
   const { user } = useAuth()
-  const role = getUserRole(user?.email)
+  const role = getUserRoleFromAuth(user)
   const roleCards = useMemo(() => ROLE_DEFAULTS[role].dashboardCards, [role])
 
   // Defer non-critical queries until after first paint — lets the

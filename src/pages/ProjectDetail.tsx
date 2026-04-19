@@ -44,8 +44,6 @@ import ProjectDocuments from './project/ProjectDocuments'
 
 type Tab = 'overview' | 'tasks' | 'revisions' | 'activity' | 'literature'
 
-const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
-
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
 type Stage = (typeof STAGES)[number]
 
@@ -117,7 +115,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   const { showUndo } = useUndoToast()
   const { data: projectUpdates = [] } = useProjectUpdates(project.slug)
   const { isAuthenticated, user } = useAuth()
-  const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
+  const isPi = user?.isPi ?? false
 
   // Tabs — support ?tab= query param for deep linking
   const initialTab = (() => {

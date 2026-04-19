@@ -90,8 +90,6 @@ const navGroups: NavGroup[] = [
   },
 ]
 
-const PI_EMAILS = ['ningraha@umn.edu', 'sandb029@umn.edu', 'nicholas.ingraham@gmail.com']
-
 export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
   const location = useLocation()
   const { user } = useAuth()
@@ -99,7 +97,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const userSlug = user?.email?.split('@')[0]?.toLowerCase()
   const [showBugReport, setShowBugReport] = useState(false)
   const person = userSlug ? getPersonInfo(userSlug) : null
-  const isPi = user?.email ? PI_EMAILS.includes(user.email) : false
+  const isPi = user?.isPi ?? false
 
   // Badge counts — lightweight queries, NOT full task list
   const { data: unreadCount = 0 } = useUnreadCount(userSlug || '')

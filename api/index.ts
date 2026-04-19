@@ -1,5 +1,5 @@
 import type { Env } from './types';
-import { corsHeaders, json, error, getAuthUser, isPiRequest } from './helpers';
+import { corsHeaders, json, error, getAuthUser, isPiRequest, getPiEmails } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
 import { notifyClients } from './lib/notify';
@@ -59,13 +59,15 @@ import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-act
 import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail, handleSendDailyDigests } from './routes/digest-email';
 import { handlePostInbox, handleGetInbox, handleMarkSynced } from './routes/inbox';
 
-// GET /api/auth/me — return current user or 401
-function handleAuthMe(request: Request): Response {
-  const user = getAuthUser(request);
+// GET /api/auth/me — return current user + isPi flag, or {authenticated: false}
+async function handleAuthMe(request: Request, env: Env): Promise<Response> {
+  const user = await getAuthUser(request, env);
   if (!user) {
     return json({ authenticated: false }, 200);
   }
-  return json({ authenticated: true, ...user });
+  const piEmails = await getPiEmails(env);
+  const isPi = piEmails.has(user.email.toLowerCase());
+  return json({ authenticated: true, isPi, ...user });
 }
 
 export default {
@@ -114,7 +116,7 @@ export default {
     try {
       // Auth endpoint — returns current user from Cloudflare Access JWT
       if (url.pathname === '/api/auth/me') {
-        return handleAuthMe(request);
+        return await handleAuthMe(request, env);
       }
 
       // Version endpoint — lightweight, no auth needed
@@ -185,7 +187,7 @@ export default {
         // /api/pb/* exposes Nick's private brain.db data (pomodoro sessions,
         // TODAY.md, relay messages, plan history). Gate to PI emails only.
         // Pre-launch consultant review 2026-04-18.
-        if (url.pathname.startsWith('/api/pb/') && !isPiRequest(request, env)) {
+        if (url.pathname.startsWith('/api/pb/') && !(await isPiRequest(request, env))) {
           return error('Forbidden — PI access only', 403);
         }
 
@@ -679,7 +681,7 @@ export default {
       // Until flipped, writes fall through to an 'anonymous' user for
       // backwards compatibility with the PI-only public-mode era.
       if (request.method === 'POST' || request.method === 'PUT') {
-        const authedUser = getAuthUser(request);
+        const authedUser = await getAuthUser(request, env);
         const hasApiKey = apiKeyResult === true;
         const requireAuth = (env as unknown as { REQUIRE_AUTH?: string }).REQUIRE_AUTH === '1';
         if (requireAuth && !authedUser && !hasApiKey) {
@@ -968,7 +970,7 @@ export default {
         // Require authenticated user OR API key — unauthenticated callers
         // could spam the repo's issue tracker otherwise (consultant review).
         if (request.method === 'POST' && path === '/api/bug-report') {
-          const authedUser = getAuthUser(request);
+          const authedUser = await getAuthUser(request, env);
           const hasApiKey = Boolean(request.headers.get('X-API-Key'));
           if (!authedUser && !hasApiKey) {
             return error('Authentication required to file a bug', 401);
@@ -1645,6 +1647,25 @@ export default {
             }
             return json({ data: { version: 42, results } });
           }
+          if (body.version === 43) {
+            const results: string[] = [];
+            try { await env.DB.prepare('ALTER TABLE team_members ADD COLUMN email TEXT').run(); results.push('added email'); } catch { results.push('email already exists'); }
+            try {
+              const r = await env.DB.prepare("UPDATE team_members SET email = slug || '@umn.edu' WHERE email IS NULL AND slug IS NOT NULL").run();
+              results.push(`backfilled ${r.meta?.changes ?? 0} rows`);
+            } catch (e) { results.push(`backfill: ${e}`); }
+            return json({ data: { version: 43, results } });
+          }
+          if (body.version === 44) {
+            const results: string[] = [];
+            try {
+              const r = await env.DB.prepare(
+                "INSERT OR IGNORE INTO lab_settings (key, value, updated_at) VALUES ('pi_emails', ?, datetime('now'))"
+              ).bind('["ningraha@umn.edu","sandb029@umn.edu","nicholas.ingraham@gmail.com"]').run();
+              results.push(`pi_emails seeded (changes=${r.meta?.changes ?? 0})`);
+            } catch (e) { results.push(`pi_emails: ${e}`); }
+            return json({ data: { version: 44, results } });
+          }
           return error(`Unknown migration version: ${body.version}`, 400);
         }
 
@@ -1710,10 +1731,9 @@ export default {
       console.log(`[Pulse] Impact check failed (non-fatal): ${e}`);
     }
 
-    // Get all team members — team_members table has no email column; fall back to slug@umn.edu
     const members = await env.DB.prepare(
-      'SELECT slug, name FROM team_members WHERE slug IS NOT NULL'
-    ).all<{ slug: string; name: string }>();
+      'SELECT slug, name, email FROM team_members WHERE slug IS NOT NULL'
+    ).all<{ slug: string; name: string; email: string | null }>();
 
     if (!members.results?.length) {
       console.log('[Pulse] No team members found');
@@ -1722,7 +1742,7 @@ export default {
 
     let sent = 0;
     for (const member of members.results) {
-      const email = `${member.slug}@umn.edu`; // team_members has no email column; derive from slug
+      const email = member.email || `${member.slug}@umn.edu`;
       const firstName = member.name.split(' ')[0];
 
       // Get their pending action items

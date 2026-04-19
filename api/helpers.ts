@@ -1,4 +1,5 @@
 import type { Env } from './types';
+import { verifyCfAccessJwt } from './jwt-verify';
 
 export type { Env };
 
@@ -27,22 +28,16 @@ export interface AuthUser {
   name?: string
 }
 
-export function getAuthUser(request: Request): AuthUser | null {
+export async function getAuthUser(request: Request, env: Env): Promise<AuthUser | null> {
   const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
   if (!jwt) return null;
 
-  try {
-    const parts = jwt.split('.');
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1]));
-    if (!payload.email) return null;
-    return {
-      email: payload.email,
-      name: payload.name || payload.email.split('@')[0],
-    };
-  } catch {
-    return null;
-  }
+  const payload = await verifyCfAccessJwt(jwt, env);
+  if (!payload?.email) return null;
+  return {
+    email: payload.email,
+    name: payload.name || payload.email.split('@')[0],
+  };
 }
 
 export function generateId(): string {
@@ -74,22 +69,53 @@ export function actorSlug(email: string): string {
   return email.split('@')[0].toLowerCase()
 }
 
-/** Emails recognized as a PI (authorized to see /api/pb/* private data). */
-export const PI_EMAILS = new Set<string>([
+/** Fallback PI emails used when lab_settings query fails (cold start, DB
+ *  unreachable, or migration v44 not yet run). Keep this in sync with the
+ *  v44 seed so behavior doesn't silently diverge. */
+export const PI_EMAILS_FALLBACK = new Set<string>([
   'ningraha@umn.edu',
   'sandb029@umn.edu',           // Nick (alt)
   'nicholas.ingraham@gmail.com', // Nick personal
 ])
 
+let piEmailsCache: { emails: Set<string>; fetchedAt: number } | null = null;
+const PI_EMAILS_TTL_MS = 5 * 60 * 1000;
+
+/** Read PI email allowlist from lab_settings (key='pi_emails', JSON array).
+ *  Cached for 5 minutes in-module. Falls back to PI_EMAILS_FALLBACK if the
+ *  row is missing or the query throws — no lockout risk when DB is cold. */
+export async function getPiEmails(env: Env): Promise<Set<string>> {
+  const now = Date.now();
+  if (piEmailsCache && now - piEmailsCache.fetchedAt < PI_EMAILS_TTL_MS) {
+    return piEmailsCache.emails;
+  }
+  try {
+    const row = await env.DB.prepare(
+      "SELECT value FROM lab_settings WHERE key = 'pi_emails'"
+    ).first<{ value: string }>();
+    if (row?.value) {
+      const arr = JSON.parse(row.value);
+      if (Array.isArray(arr) && arr.every(v => typeof v === 'string')) {
+        const emails = new Set<string>(arr.map((e: string) => e.toLowerCase()));
+        piEmailsCache = { emails, fetchedAt: now };
+        return emails;
+      }
+    }
+  } catch { /* fall through to fallback */ }
+  piEmailsCache = { emails: PI_EMAILS_FALLBACK, fetchedAt: now };
+  return PI_EMAILS_FALLBACK;
+}
+
 /** True iff the request is from a PI — either an authenticated CF Access
  *  JWT matching a known PI email, OR a valid API-key request (server-side
  *  automation / Hermes). Returns false for unauthenticated + non-PI users. */
-export function isPiRequest(request: Request, env: Env): boolean {
+export async function isPiRequest(request: Request, env: Env): Promise<boolean> {
   // API key callers are trusted (already validated by validateApiKey middleware).
   if (request.headers.get('X-API-Key')) return true
-  const user = getAuthUser(request)
+  const user = await getAuthUser(request, env)
   if (!user?.email) return false
-  return PI_EMAILS.has(user.email.toLowerCase())
+  const piEmails = await getPiEmails(env)
+  return piEmails.has(user.email.toLowerCase())
 }
 
 /** Build a dynamic UPDATE clause from allowed fields */

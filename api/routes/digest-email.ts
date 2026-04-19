@@ -659,9 +659,8 @@ export async function handleSendDailyDigests(env: Env): Promise<Response> {
     return error('Daily digest not configured (RESEND_API_KEY missing). Add via Cloudflare Pages secrets.', 503);
   }
 
-  // team_members table has no email column — derive address from slug@umn.edu
   const membersResult = await env.DB.prepare(
-    `SELECT slug, name FROM team_members
+    `SELECT slug, name, email FROM team_members
      WHERE member_type IN ('director', 'coordinator') AND slug IS NOT NULL`
   ).all<CoordinatorMember>();
 
@@ -678,8 +677,7 @@ export async function handleSendDailyDigests(env: Env): Promise<Response> {
   const errors: string[] = [];
 
   for (const member of members) {
-    // team_members has no email column — derive from slug@umn.edu
-    const derivedEmail = `${member.slug}@umn.edu`;
+    const derivedEmail = member.email || `${member.slug}@umn.edu`;
     const memberWithEmail = { ...member, email: derivedEmail };
     try {
       const html = await composeDailyDigest(env, memberWithEmail);

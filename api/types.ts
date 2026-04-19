@@ -9,6 +9,8 @@ export interface Env {
   RESEND_API_KEY?: string;
   NOTIFICATION_HUB?: DurableObjectNamespace;
   PB_API_KEY?: string;
+  CF_ACCESS_TEAM_DOMAIN?: string;
+  CF_ACCESS_AUD?: string;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -60,6 +62,7 @@ export interface TeamMemberRow {
   title: string | null;
   department: string | null;
   member_type: string | null;
+  email: string | null;
   created_at: string;
 }
 
