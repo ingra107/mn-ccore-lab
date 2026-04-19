@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Git pre-commit hook for mn-ccore-lab.
+#
+# Enforces that handleDeleteProject in api/routes/projects.ts cascades to
+# Airtable (or at least references the cascade), per the 2026-04-19 sync
+# propagation cure. Without this, a well-intentioned refactor could remove
+# the cascade and reintroduce Gap 2 from the sync audit.
+#
+# Activate this hook with:
+#   git config core.hooksPath .githooks
+
+# If api/routes/projects.ts is in the commit, check the handleDeleteProject body
+if git diff --cached --name-only --diff-filter=AM | grep -q "api/routes/projects.ts"; then
+    # Extract the staged content and check for cascade evidence in the
+    # handleDeleteProject function. We look for any of:
+    #   cascadeAirtableProjectDelete, AIRTABLE_TOKEN, api.airtable.com
+    # If NONE appear in a 120-line window after the function declaration,
+    # the cascade was removed — block the commit.
+    staged=$(git show ":api/routes/projects.ts" 2>/dev/null)
+
+    # Find the handleDeleteProject function line number
+    fn_line=$(echo "$staged" | grep -n "export async function handleDeleteProject" | head -1 | cut -d: -f1)
+    if [ -n "$fn_line" ]; then
+        # Grab a 150-line window starting at the function declaration
+        window=$(echo "$staged" | tail -n +"$fn_line" | head -n 150)
+
+        if ! echo "$window" | grep -qE "(cascadeAirtableProjectDelete|AIRTABLE_TOKEN|api\.airtable\.com|Airtable cascade|airtable cascade)"; then
+            echo ""
+            echo "BLOCKED: handleDeleteProject has no Airtable cascade reference."
+            echo ""
+            echo "The Hub's project delete MUST cascade to Airtable. Without the"
+            echo "cascade, Hub deletes don't stick — next sync_d1_push cycle"
+            echo "resurrects the project (Gap 2 from 2026-04-19 sync audit)."
+            echo ""
+            echo "If you are intentionally removing the cascade, add a comment"
+            echo "line containing 'Airtable cascade' explaining why."
+            echo ""
+            echo "Refs:"
+            echo "  Context/Decisions/2026-04-19-sync-propagation-cure.md"
+            echo "  Context/Decisions/2026-04-19-end-to-end-sync-audit.md"
+            exit 1
+        fi
+    fi
+fi
+
+exit 0
