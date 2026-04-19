@@ -13,11 +13,10 @@
 6. **`CHANGELOG.md`** top entry — "Phase 35" has the full record of what shipped this round.
 7. **`docs/OBSERVABILITY.md`** — `/api/health` + runbook if anything looks broken.
 
-**Stale / do NOT treat as driving docs:**
-- `TEAM_ROSTER.md` — historical reference; authoritative roster lives in `team_members` D1 table + `src/data/team.ts`.
-- `QA-CHECKLIST.md` — manual-only; ~95% covered by preflight + deep-audit automation.
-- PB side: `plans/april-21-launch-readiness.md` + `specs/2026-04-12-final-launch-polish-design.md` + `HUB-AUDIT-CHECKLIST.md` — all marked SUPERSEDED / reference-only.
-- `docs/archived/*` — explicit historical archive.
+**Where historical docs live (don't treat as driving):**
+- `docs/archived/` — all superseded Hub docs (QA checklist, team roster, old design plans, old QA checklists).
+- PB side: `Projects/mn-ccore-lab-hub/_archived/` — superseded plans, specs, and audit checklists.
+  The main PB project folder has only current reference docs (vision, future ideas, competitive research).
 
 ## Gate — all green as of commit `bd2a7cc`
 

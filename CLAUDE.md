@@ -11,9 +11,9 @@ Before writing any code or answering any question about this project, read:
 5. **`CHANGELOG.md`** — top entry = most recent phase; jump here when asked "what changed."
 6. **`docs/OBSERVABILITY.md`** — `/api/health` runbook.
 
-These six plus this file are authoritative. Anything else in the repo
-(especially dated "plan" / "research" / "QA checklist" files) is
-historical record, not operating guidance — check dates in the frontmatter.
+These six plus this file are authoritative. Historical material lives
+in `docs/archived/` (and PB-side `Projects/mn-ccore-lab-hub/_archived/`) —
+safe to ignore unless explicitly spelunking history.
 
 ## Current state (2026-04-19)
 
