@@ -1,5 +1,11 @@
 # MN-CCORE Lab Hub -- Claude Operating Guide
 
+> **Last updated: 2026-04-19.** Phase 35 shipped (full WCAG 2.1 AA, sync
+> parity, launch-readiness auth flags). Quality gate 🟢 GREEN across
+> preflight + 14 deep-audit suites + axe (29 pages × 2 modes).
+> **Before team launch, flip auth flags per `LAUNCH-CHECKLIST.md` section 0.**
+> Per-session continuity lives in `SESSION-HANDOFF.md`.
+
 ## Vision
 
 The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets managed, meetings get run, and information flows between Nick's CLI system and every team member's browser.
@@ -8,15 +14,17 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 
 | Thing | Value |
 |-------|-------|
-| Live site | mn-ccore-lab.pages.dev |
-| Repo | github.com/ingra107/mn-ccore-lab (630+ commits) |
+| Live site | mn-ccore-lab.pages.dev (PI-only; team not yet onboarded) |
+| Repo | github.com/ingra107/mn-ccore-lab (650+ commits) |
+| Current deploy | `eb361fd` (2026-04-19) |
+| Quality gate | 🟢 GREEN — 97 preflight pass, 14/14 deep-audit clean, 0 axe findings |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript |
 | Testing | Playwright 1.59 (E2E, 214+ inspection tests) + Vitest 4.1 (component, browser mode) |
-| Data | TanStack Query v5 + Cloudflare D1 (58 tables, 190+ endpoints) + Recharts -- ALL LIVE |
+| Data | TanStack Query v5 + Cloudflare D1 (61 tables, 190+ endpoints) + Recharts -- ALL LIVE |
 | D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB` |
 | D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
-| D1 tables | 60 (added digest_comments in R13) |
+| D1 tables | 61 (live count via `/api/health`; +d1_task_comments in Phase 35) |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
 | Reference | `REFERENCE.md` in this repo -- D1 tables, API endpoints, key files, feature list |

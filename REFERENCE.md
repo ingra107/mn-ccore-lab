@@ -3,7 +3,7 @@
 Detailed tables, API endpoints, key files, and feature inventory.
 Moved from CLAUDE.md to reduce session context load. Read on demand.
 
-## D1 Tables (59 — schema v37 + inbox)
+## D1 Tables (61 — live count via `/api/health`)
 
 | Table | Rows | Purpose |
 |-------|------|---------|
