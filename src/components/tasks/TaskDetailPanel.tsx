@@ -79,6 +79,66 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [copied, setCopied] = useState(false)
 
+  // Swipe-right-to-dismiss on mobile. Panel enters from the right; dragging
+  // it further right slides it off-screen, matching how a user would
+  // intuitively flick it away. Only active below 768px (mobile breakpoint).
+  // Autosave-on-blur already runs across every field so "save and dismiss"
+  // is satisfied by dismissal alone.
+  const [dragX, setDragX] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isDismissing, setIsDismissing] = useState(false)
+  const dragStartRef = useRef<{ x: number; y: number; axis: 'none' | 'x' | 'y' } | null>(null)
+  const reduceMotion = typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (typeof window === 'undefined' || window.innerWidth >= 768) return
+    const target = e.target as HTMLElement
+    // Don't start a swipe from inputs / editor / typeahead dropdowns.
+    if (target.closest('input, textarea, select, button, [contenteditable="true"], .ProseMirror, [role="listbox"]')) return
+    const t = e.touches[0]
+    dragStartRef.current = { x: t.clientX, y: t.clientY, axis: 'none' }
+    setIsDragging(true)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const start = dragStartRef.current
+    if (!start) return
+    const t = e.touches[0]
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+
+    // Lock axis after ~10px of movement. If the user is scrolling vertically,
+    // disengage the drag so the page can scroll normally.
+    if (start.axis === 'none') {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return
+      if (Math.abs(dy) > Math.abs(dx)) {
+        dragStartRef.current = null
+        setIsDragging(false)
+        setDragX(0)
+        return
+      }
+      start.axis = 'x'
+    }
+    if (start.axis !== 'x') return
+    setDragX(Math.max(0, dx))
+  }
+
+  const handleTouchEnd = () => {
+    const start = dragStartRef.current
+    dragStartRef.current = null
+    setIsDragging(false)
+    if (!start || start.axis !== 'x') { setDragX(0); return }
+    const panelWidth = panelRef.current?.offsetWidth ?? 400
+    if (dragX > panelWidth * 0.3) {
+      setIsDismissing(true)
+      setDragX(panelWidth)
+      window.setTimeout(onClose, reduceMotion ? 0 : 200)
+    } else {
+      setDragX(0)
+    }
+  }
+
   // Focus trap + Escape + Alt+Up/Down navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -149,11 +209,17 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — fades with swipe progress so dismiss feels tactile. */}
       <div
         data-testid="detail-backdrop"
-        className="fixed inset-0 z-40 transition-opacity duration-200"
-        style={{ backgroundColor: 'rgba(15, 25, 35, 0.3)' }}
+        className="fixed inset-0 z-40"
+        style={{
+          backgroundColor: 'rgba(15, 25, 35, 0.3)',
+          opacity: dragX > 0
+            ? Math.max(0, 1 - dragX / ((panelRef.current?.offsetWidth ?? 400) * 0.9))
+            : 1,
+          transition: isDragging ? 'none' : 'opacity 200ms ease-out',
+        }}
       />
 
       {/* Panel */}
@@ -163,12 +229,22 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-detail-title"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
         className="fixed right-0 top-0 h-full z-50 overflow-y-auto shadow-2xl task-detail-panel card-elevated"
         style={{
           width: 'min(480px, 90vw)',
           backgroundColor: 'var(--cream)',
           borderLeft: '1px solid var(--border-subtle)',
-          animation: 'slideIn 200ms ease-out',
+          // Skip entrance animation during dismissal so panel doesn't "bounce"
+          // back in from the animation redefinition. After dismiss the parent
+          // unmounts us anyway.
+          animation: isDismissing || dragX > 0 || reduceMotion ? 'none' : 'slideIn 200ms ease-out',
+          transform: `translateX(${dragX}px)`,
+          transition: isDragging ? 'none' : `transform ${reduceMotion ? 0 : 200}ms ease-out`,
+          touchAction: 'pan-y',
         }}
       >
         {/* Header */}

@@ -573,7 +573,8 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 | Duplicate action items | Dedup by normalizing "[Carried forward]" |
 | Duplicate project slugs in D1 | Some projects have both `(prefix)-slug` and `prefix-slug` variants from old migration. Fix via D1 merge; track via `scripts/projects-dedupe.sql` when written. |
 | MeetingDetail Rules of Hooks | useState/useMemo must come BEFORE early returns on loading/not-found branches. Phase 31.5 perf pass introduced a variant of this bug; R6 hotfixed. |
-| `team_members.email` column doesn't exist | Derive email from slug: `${slug}@umn.edu`. Do not query email column in team_members — column was never created. |
+| `team_members.email` column | Added 2026-04-19 (schema-v43). Backfilled to `slug || '@umn.edu'` for existing rows. Read `email` column; fall back to the slug derivation only if NULL. Non-UMN collaborators get a real address. |
+| Mobile swipe on TaskDetailPanel | `onTouchStart/Move/End` on panel div; only active below 768px. Axis-locked (disengages on vertical scroll so page still scrolls). Drag >30% panel width → onClose. Respects `prefers-reduced-motion` (instant dismiss, no transform animation). Don't add any element with its own touch handler inside the panel without re-evaluating axis lock. |
 | Virtualizer skeleton rows must match actual layout | TableSkeleton component was generic; pages with virtualizers need inline skeletons that match TableContainer + header + rows at `var(--row-height)` pixel-for-pixel to avoid CLS. |
 | Cloudflare Workers 100K/day cap | Free tier. Hermes polling at 10s = 8.6K/day baseline. Don't run parallel Playwright audits against deployed site — use `localhost` + dev server instead. $5/mo Paid plan = 10M/day. |
 | FAB positioning | Use `--fab-stack-{1,2,3}` CSS vars in `:root` (R9-1). NEVER `max(24px, 72px)` — that always returns 72. Mobile override is a `<768px` media query in index.css. |
