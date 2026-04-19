@@ -10,7 +10,7 @@ import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, hand
 
 // ── Route modules ──────────────────────────────────────────
 import { handleTasks, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask } from './routes/tasks';
-import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
+import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
 import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
 import { handleTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
@@ -331,6 +331,10 @@ app.get('/api/papers/by-publication', (c) => handlePapersByPublication(U(c), E(c
 // Projects (ordering matters: revisions > papers > dependencies > :slug etc.)
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/projects/health', (c) => handleProjectHealth(E(c)));
+// Tombstone endpoint — consumed by sync_d1_pull.pull_hub_projects to mirror
+// Hub project deletes into brain.db. Airtable cascade comment: handleDeleteProject
+// writes deleted_at and (when secrets present) DELETEs the matching Airtable rec.
+app.get('/api/projects/deleted-since', (c) => handleGetDeletedProjectsSince(U(c), E(c)));
 app.get('/api/projects/:slug/comments', (c) => handleGetComments(c.req.param('slug'), E(c)));
 app.get('/api/projects/:slug/updates', (c) => handleGetProjectUpdates(c.req.param('slug'), E(c)));
 app.get('/api/projects/:slug/documents', (c) => handleGetProjectDocuments(c.req.param('slug'), E(c)));
@@ -570,7 +574,7 @@ app.post('/api/files/:id/delete', (c) => handleDeleteFile(c.req.param('id'), E(c
 
 // Projects (specific first)
 app.post('/api/projects', (c) => handleCreateProject(R(c), USER(c), E(c)));
-app.post('/api/projects/:slug/delete', (c) => handleDeleteProject(c.req.param('slug'), USER(c), E(c)));
+app.post('/api/projects/:slug/delete', (c) => handleDeleteProject(c.req.param('slug'), USER(c), E(c), U(c)));
 app.post('/api/projects/:slug/comments', (c) => handleAddComment(c.req.param('slug'), R(c), USER(c), E(c)));
 app.post('/api/projects/:slug/updates', (c) => handlePostProjectUpdate(c.req.param('slug'), R(c), USER(c), E(c)));
 app.post('/api/projects/:slug/documents', (c) => handleCreateProjectDocument(c.req.param('slug'), R(c), USER(c), E(c)));
@@ -1134,6 +1138,14 @@ app.post('/api/admin/migrate', async (c) => {
       results.push(`pi_emails seeded (changes=${r.meta?.changes ?? 0})`);
     } catch (e) { results.push(`pi_emails: ${e}`); }
     return json({ data: { version: 44, results } });
+  }
+  if (body.version === 45) {
+    // v45 (2026-04-19): projects.deleted_at for soft-delete parity with tasks.
+    // Enables Hub project delete -> brain.db mirror via /api/projects/deleted-since.
+    const results: string[] = [];
+    try { await env.DB.prepare('ALTER TABLE projects ADD COLUMN deleted_at TEXT').run(); results.push('added projects.deleted_at'); } catch { results.push('projects.deleted_at already exists'); }
+    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_projects_deleted_at ON projects(deleted_at) WHERE deleted_at IS NOT NULL').run(); results.push('created idx_projects_deleted_at'); } catch (e) { results.push(`idx_projects_deleted_at: ${e}`); }
+    return json({ data: { version: 45, results } });
   }
   return error(`Unknown migration version: ${body.version}`, 400);
 });

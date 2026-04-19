@@ -140,12 +140,17 @@ export async function handleCreateProject(
   return json({ data: created }, 201);
 }
 
-// GET /api/projects?status=&category=
+// GET /api/projects?status=&category=&include_deleted=1
+// Sync pipelines can opt into seeing soft-deleted rows via ?include_deleted=1
+// (mirrors the tasks endpoint contract added 2026-04-18 for sync_d1_pull).
+// Default behavior filters deleted_at IS NULL so UI never shows tombstones.
 export async function handleProjects(url: URL, env: Env): Promise<Response> {
   const status = url.searchParams.get('status');
   const category = url.searchParams.get('category');
+  const includeDeleted = url.searchParams.get('include_deleted') === '1';
 
-  let query = 'SELECT * FROM projects WHERE 1=1';
+  const deletedFilter = includeDeleted ? '1=1' : 'deleted_at IS NULL';
+  let query = `SELECT * FROM projects WHERE ${deletedFilter}`;
   const params: string[] = [];
 
   if (status) {
@@ -410,13 +415,71 @@ export async function handleUpdateProject(
   return json({ data: updated });
 }
 
-// POST /api/projects/:id/delete — delete a project row by id or slug
-// Intentionally narrow: used for duplicate cleanup after slug drift. Does not
-// cascade — caller must reparent tasks/milestones/etc before invoking.
+// ── Airtable cascade (2026-04-19) ────────────────────────────────────────────
+//
+// Hub -> Airtable project DELETE. Best-effort. Env vars optional; when unset,
+// the cascade no-ops and brain.db cleanup still fires via sync_d1_pull calling
+// /api/projects/deleted-since (Airtable cleanup flows in from brain.db via
+// push_deletes_to_airtable.py as belt-and-suspenders).
+//
+// Env setup (set once via `wrangler pages secret put <NAME> --project-name mn-ccore-lab`):
+//   AIRTABLE_TOKEN               — PAT with data.records:write scope on the PB base
+//   AIRTABLE_BASE_ID             — e.g. appq2PfOW0Lu4V0yR
+//   AIRTABLE_PROJECTS_TABLE      — e.g. tblPY256RukHRBrbR
+//
+// Never hardcode the token. Never log it. Return 204 on "already gone" (404).
+async function cascadeAirtableProjectDelete(
+  airtableRecId: string,
+  env: Env,
+): Promise<{ ok: boolean; message: string }> {
+  if (!env.AIRTABLE_TOKEN || !env.AIRTABLE_BASE_ID || !env.AIRTABLE_PROJECTS_TABLE) {
+    return { ok: false, message: 'airtable_secrets_not_configured' };
+  }
+  const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${env.AIRTABLE_PROJECTS_TABLE}/${airtableRecId}`;
+  try {
+    const resp = await fetch(url, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${env.AIRTABLE_TOKEN}` },
+    });
+    if (resp.status === 200 || resp.status === 204) {
+      return { ok: true, message: `airtable_deleted_${resp.status}` };
+    }
+    if (resp.status === 404) {
+      return { ok: true, message: 'airtable_already_gone_404' };
+    }
+    const body = await resp.text();
+    return { ok: false, message: `airtable_http_${resp.status}: ${body.slice(0, 200)}` };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, message: `airtable_fetch_error: ${msg.slice(0, 200)}` };
+  }
+}
+
+// Heuristic: Airtable rec_IDs are always "rec" + 14 alphanumeric characters.
+// Hub-generated ids are 32-char hex. brain.db proj_{ulid} are 31 chars.
+function looksLikeAirtableRecId(id: string): boolean {
+  return /^rec[A-Za-z0-9]{14}$/.test(id);
+}
+
+// POST /api/projects/:id/delete — soft-delete a project, cascade to Airtable + brain.db
+//
+// Cascade chain (all best-effort, order: D1 first, then Airtable):
+//   1. D1: set projects.deleted_at = now (soft-delete, keeps row for
+//      /api/projects/deleted-since consumers until a 30-day sweep reclaims).
+//   2. D1: cascade-clean comments/project_updates (hard DELETE), NULL out
+//      tasks.project_id (keep the task, clear the dangling ref).
+//   3. Airtable: DELETE the matching rec_ID if the project.id is a rec_ID
+//      OR if the caller supplies ?airtable_rec_id=recXXX in the URL.
+//      This prevents the 2026-04-19 "Airtable zombie" class where Hub delete
+//      stuck in D1 but Airtable retained the row, resurrecting on next
+//      sync_d1_push.
+//   4. brain.db consumer: sync_d1_pull.pull_hub_projects polls
+//      /api/projects/deleted-since and mirrors status='done' + retires slug.
 export async function handleDeleteProject(
   id: string,
   user: AuthUser,
   env: Env,
+  url?: URL,
 ): Promise<Response> {
   const existing = await env.DB.prepare(
     'SELECT id, title, slug FROM projects WHERE id = ? OR slug = ?'
@@ -439,17 +502,91 @@ export async function handleDeleteProject(
     console.error('project cascade-clean failed:', e);
   }
 
+  // Soft-delete via projects.deleted_at (schema v45, 2026-04-19). Keeps the
+  // row queryable by /api/projects/deleted-since so brain.db mirrors the delete.
+  // GET /api/projects filters deleted_at IS NULL so the UI hides it immediately.
   const result = await env.DB.prepare(
-    'DELETE FROM projects WHERE id = ? OR slug = ?'
+    "UPDATE projects SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE (id = ? OR slug = ?) AND deleted_at IS NULL"
   ).bind(id, id).run();
 
   if (result.meta.changes === 0) {
-    return error('Project not found', 404);
+    // Either the project is already deleted (idempotent — return 200) or it's
+    // not in D1 at all. The earlier SELECT proved it exists, so re-deletion
+    // is the case. Treat as success.
+    await logActivity(env, 'project_delete', `Deleted project (idempotent): ${existing.title}`, user.email, existing.id, 'project');
+    return json({ data: { deleted: existing.id, slug: existing.slug, title: existing.title, idempotent: true } });
   }
 
-  await logActivity(env, 'project_delete', `Deleted project: ${existing.title}`, user.email, existing.id, 'project');
+  // Airtable cascade — only when we can identify the rec_ID. Two sources:
+  //   (a) project.id IS the rec_ID (happens when sync_d1_push pushed from
+  //       brain.db where project PKs are still legacy rec_ format).
+  //   (b) caller supplies ?airtable_rec_id=recXXX (brain.db push_deletes
+  //       script passes this when it knows the rec from its alias table).
+  let airtableRecId: string | null = null;
+  if (looksLikeAirtableRecId(existing.id)) {
+    airtableRecId = existing.id;
+  } else if (url) {
+    const qRec = url.searchParams.get('airtable_rec_id');
+    if (qRec && looksLikeAirtableRecId(qRec)) airtableRecId = qRec;
+  }
 
-  return json({ data: { deleted: existing.id, slug: existing.slug, title: existing.title } });
+  let airtableResult: { ok: boolean; message: string } = { ok: false, message: 'no_airtable_rec_id_found' };
+  if (airtableRecId) {
+    airtableResult = await cascadeAirtableProjectDelete(airtableRecId, env);
+    // Log cascade outcome but never block the user's delete on Airtable failure.
+    // push_deletes_to_airtable.py (brain.db side) is the belt-and-suspenders
+    // recovery path for failed Airtable cascades here.
+    if (!airtableResult.ok) {
+      console.warn(`[project-delete-cascade] ${existing.slug}: Airtable cascade failed: ${airtableResult.message}`);
+    }
+  }
+
+  await logActivity(
+    env,
+    'project_delete',
+    `Deleted project: ${existing.title} [airtable: ${airtableResult.message}]`,
+    user.email,
+    existing.id,
+    'project',
+  );
+
+  return json({
+    data: {
+      deleted: existing.id,
+      slug: existing.slug,
+      title: existing.title,
+      airtable: airtableResult,
+    },
+  });
+}
+
+// GET /api/projects/deleted-since?since=ISO_TIMESTAMP — tombstone list
+//
+// Consumed by scripts/db/sync_d1_pull.py::pull_hub_projects to mirror Hub
+// project deletes into brain.db (mark status='done', retire slug alias).
+//
+// `since` is an ISO-8601 datetime string. Returns rows where
+// deleted_at > since. When `since` is omitted, returns all tombstoned rows
+// (cap 1000, ordered newest first).
+export async function handleGetDeletedProjectsSince(
+  url: URL,
+  env: Env,
+): Promise<Response> {
+  const since = url.searchParams.get('since');
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '1000', 10), 5000);
+
+  let rows: D1Result<Record<string, unknown>>;
+  if (since) {
+    rows = await env.DB.prepare(
+      'SELECT id, title, slug, category, stage, status, deleted_at, updated_at FROM projects WHERE deleted_at IS NOT NULL AND deleted_at > ? ORDER BY deleted_at DESC LIMIT ?'
+    ).bind(since, limit).all();
+  } else {
+    rows = await env.DB.prepare(
+      'SELECT id, title, slug, category, stage, status, deleted_at, updated_at FROM projects WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC LIMIT ?'
+    ).bind(limit).all();
+  }
+
+  return json({ data: rows.results, count: rows.results.length });
 }
 
 // POST /api/projects/:id/comments — add comment

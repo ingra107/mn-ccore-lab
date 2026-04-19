@@ -11,6 +11,14 @@ export interface Env {
   PB_API_KEY?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_AUD?: string;
+  // Airtable cascade secrets — set via `wrangler pages secret put` (CF Pages
+  // dashboard). When present, handleDeleteProject cascades the delete to
+  // Airtable. When absent, Hub delete only affects D1 (brain.db cleanup
+  // still happens via /api/projects/deleted-since endpoint).
+  AIRTABLE_TOKEN?: string;
+  AIRTABLE_BASE_ID?: string;
+  AIRTABLE_PROJECTS_TABLE?: string;
+  AIRTABLE_TASKS_TABLE?: string;
 }
 
 export interface ApiResponse<T = unknown> {
