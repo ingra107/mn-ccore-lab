@@ -643,6 +643,9 @@ export default function Digest() {
   const [topicFilter, setTopicFilter] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [forYouFilter, setForYouFilter] = useState(false)
+  // P2-04: collapse the topic chip cloud behind a toggle so default view
+  // shows max 2 filter rows.
+  const [topicsExpanded, setTopicsExpanded] = useState(false)
 
   // Fetch comment counts for badge display
   const { data: commentCounts = {} } = useDigestCommentCounts(selectedDate)
@@ -926,9 +929,34 @@ export default function Digest() {
             )}
           </div>
 
-          {/* Topic filter pills */}
+          {/* Topic filter pills — collapsed behind a Topics toggle (P2-04).
+              Saves a 3rd filter row by default; click to expand the chip
+              cloud. Active topic count shows on the toggle so users know a
+              filter is on even when collapsed. */}
           {allTopics.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-6">
+            <div className="mb-6">
+              <button
+                onClick={() => setTopicsExpanded((v) => !v)}
+                className="cursor-pointer rounded-full px-3 py-1.5 text-xs inline-flex items-center gap-1.5 mb-2"
+                style={{
+                  fontSize: '11px',
+                  background: topicFilter ? 'var(--gold-hover)' : 'transparent',
+                  color: topicFilter ? 'var(--gold)' : 'var(--slate)',
+                  border: `1px solid ${topicFilter ? 'var(--gold)' : 'var(--border-subtle)'}`,
+                  fontWeight: topicFilter ? 500 : 400,
+                }}
+                aria-expanded={topicsExpanded}
+              >
+                Topics
+                {topicFilter && (
+                  <span style={{ fontSize: '10px', background: 'var(--gold)', color: 'var(--cream)', padding: '0 5px', borderRadius: 'var(--radius-full)' }}>
+                    1
+                  </span>
+                )}
+                <span style={{ opacity: 0.6 }}>{topicsExpanded ? '▾' : '▸'}</span>
+              </button>
+              {topicsExpanded && (
+              <div className="flex flex-wrap gap-1.5">
               {topicFilter && (
                 <button
                   onClick={() => setTopicFilter(null)}
@@ -967,6 +995,8 @@ export default function Digest() {
                   </button>
                 )
               })}
+              </div>
+              )}
             </div>
           )}
 

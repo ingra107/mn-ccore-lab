@@ -916,14 +916,14 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
 }) {
   const groups = useMemo(() => {
     const map = new Map<string, any[]>()
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     for (const task of tasks) {
       let key: string
       if (groupBy === 'due_date') {
         if (!task.due_date) key = 'No Due Date'
         else {
           const d = new Date(task.due_date + 'T12:00:00')
-          const now = new Date()
-          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
           const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
           const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7)
           if (d < today) key = 'Overdue'
@@ -942,10 +942,35 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
       map.get(key)!.push(task)
     }
 
+    // P2-03: when OVERDUE has >15 items, split it by age so a 74-day-stale
+    // tracker no longer scans the same as a 3-day-stale galley proof.
+    if (groupBy === 'due_date') {
+      const overdue = map.get('Overdue')
+      if (overdue && overdue.length > 15) {
+        const critical: any[] = []
+        const urgent: any[] = []
+        const recent: any[] = []
+        for (const t of overdue) {
+          const due = new Date(t.due_date + 'T12:00:00')
+          const days = Math.floor((today.getTime() - due.getTime()) / 86400000)
+          if (days >= 60) critical.push(t)
+          else if (days >= 30) urgent.push(t)
+          else recent.push(t)
+        }
+        map.delete('Overdue')
+        if (critical.length > 0) map.set('Critical · 60d+', critical)
+        if (urgent.length > 0) map.set('Urgent · 30–60d', urgent)
+        if (recent.length > 0) map.set('Recent · <30d', recent)
+      }
+    }
+
     // Sort groups by a sensible order
     const entries = [...map.entries()]
     if (groupBy === 'due_date') {
-      const order = ['Overdue', 'Today', 'This Week', 'Later', 'No Due Date']
+      const order = [
+        'Critical · 60d+', 'Urgent · 30–60d', 'Recent · <30d',
+        'Overdue', 'Today', 'This Week', 'Later', 'No Due Date',
+      ]
       entries.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))
     } else if (groupBy === 'priority') {
       const order = ['Urgent', 'High', 'Medium', 'Low']
@@ -957,6 +982,9 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
 
   const groupColors: Record<string, string> = {
     'Overdue': 'var(--maroon)',
+    'Critical · 60d+': 'var(--maroon)',
+    'Urgent · 30–60d': 'var(--orange)',
+    'Recent · <30d': 'var(--slate)',
     'Today': 'var(--teal)',
     'This Week': 'var(--gold)',
     'Urgent': 'var(--maroon)',

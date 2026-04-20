@@ -80,6 +80,35 @@ export default function SettingsPage() {
     return window.localStorage.getItem('showDebugItems') === 'true'
   })
 
+  // P2-05: tabbed layout. Hash-route deep-linkable (/settings#ai).
+  const TABS = [
+    { key: 'profile', label: 'Profile' },
+    { key: 'templates', label: 'Templates' },
+    { key: 'ai', label: 'AI' },
+    { key: 'appearance', label: 'Appearance' },
+    { key: 'danger', label: 'Danger Zone' },
+  ] as const
+  type TabKey = (typeof TABS)[number]['key']
+  const [activeTab, setActiveTab] = useState<TabKey>(() => {
+    if (typeof window === 'undefined') return 'profile'
+    const fromHash = window.location.hash.replace('#', '') as TabKey
+    return TABS.some((t) => t.key === fromHash) ? fromHash : 'profile'
+  })
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (window.location.hash !== `#${activeTab}`) {
+      window.history.replaceState(null, '', `#${activeTab}`)
+    }
+  }, [activeTab])
+  useEffect(() => {
+    function onHash() {
+      const next = window.location.hash.replace('#', '') as TabKey
+      if (TABS.some((t) => t.key === next)) setActiveTab(next)
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
   if (settingsLoading) return <TextSkeleton lines={8} />
 
   return (
@@ -107,8 +136,41 @@ export default function SettingsPage() {
         <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
       </Link>
 
+      {/* Tab strip — P2-05 */}
+      <div
+        className="flex gap-1 border-b mb-4"
+        style={{ borderColor: 'var(--border-subtle)' }}
+        role="tablist"
+        aria-label="Settings sections"
+      >
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.key
+          return (
+            <button
+              key={tab.key}
+              role="tab"
+              aria-selected={isActive}
+              aria-controls={`settings-tab-${tab.key}`}
+              onClick={() => setActiveTab(tab.key)}
+              className="px-3 py-2 text-sm transition-colors"
+              style={{
+                color: isActive ? 'var(--teal)' : 'var(--slate)',
+                borderBottom: `2px solid ${isActive ? 'var(--teal)' : 'transparent'}`,
+                background: 'none',
+                cursor: 'pointer',
+                marginBottom: '-1px',
+                fontWeight: isActive ? 'var(--weight-ui, 500)' : 400,
+              }}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
       <div className="flex flex-col max-w-2xl" style={{ marginTop: 'var(--sp-xl)' }}>
         {/* Basic Information */}
+        {activeTab === 'profile' && (
         <SettingsSection title="Basic Information" subtitle="These appear in the sidebar header and dashboard" icon={Type}>
           <SettingsField label="Lab Name" hint="Shown in the sidebar and page titles">
             <SettingsInput
@@ -148,8 +210,10 @@ export default function SettingsPage() {
             </select>
           </SettingsField>
         </SettingsSection>
+        )}
 
         {/* Workflow Templates */}
+        {activeTab === 'templates' && (
         <SettingsSection title="Workflow Templates" subtitle="Define the stages your projects move through (e.g., Idea → Analysis → Writing → Published)" icon={Layers}>
           {templates.length === 0 && (
             <EmptyState
@@ -213,8 +277,10 @@ export default function SettingsPage() {
 
           <CreateTemplateForm onSubmit={(name, stages) => createTemplate.mutate({ name, stages })} />
         </SettingsSection>
+        )}
 
         {/* AI Meeting Context */}
+        {activeTab === 'ai' && (
         <SettingsSection title="AI Meeting Context" subtitle="Help AI recognize speakers and assign tasks accurately during meeting note analysis" icon={Bot}>
           <div className="flex flex-col gap-3">
             {team.filter(m => m.slug).slice(0, 20).map((member) => {
@@ -246,8 +312,10 @@ export default function SettingsPage() {
             </p>
           </div>
         </SettingsSection>
+        )}
 
         {/* Appearance */}
+        {activeTab === 'appearance' && (
         <SettingsSection title="Appearance" subtitle="Theme and layout preferences" icon={Palette}>
           <div className="flex gap-4">
             {/* Light theme preview — hardcoded hex intentional (showing what themes look like) */}
@@ -299,9 +367,11 @@ export default function SettingsPage() {
             You can also toggle with <kbd className="text-[10px] px-1 py-0.5 rounded" style={{ background: 'var(--border-subtle)' }}>Ctrl+.</kbd>
           </p>
         </SettingsSection>
+        )}
 
-        {/* Reset */}
-        <SettingsSection title="Reset" subtitle="Clear cached preferences and layout" icon={RotateCcw}>
+        {/* Danger Zone — Reset + debug toggle */}
+        {activeTab === 'danger' && (
+        <SettingsSection title="Danger Zone" subtitle="Clear cached preferences and surface QA fixtures" icon={RotateCcw}>
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div>
@@ -375,6 +445,7 @@ export default function SettingsPage() {
             </div>
           </div>
         </SettingsSection>
+        )}
 
         {/* Save indicator */}
         {saved && (

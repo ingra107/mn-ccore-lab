@@ -50,6 +50,17 @@ export default function Ideas() {
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [sortKey, setSortKey] = useState<SortKey>('created_at')
   const [sortAsc, setSortAsc] = useState(false)
+  // P2-10: kanban-first. The data model is a 4-state pipeline; default to
+  // showing it that way. List view stays available as a toggle for sorting
+  // / filtering across all states at once.
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'kanban'
+    return (window.localStorage.getItem('ideas-view') as 'kanban' | 'list') ?? 'kanban'
+  })
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('ideas-view', viewMode)
+  }, [viewMode])
 
   // Auto-open create modal from URL params (keyboard shortcut N)
   useEffect(() => {
@@ -236,6 +247,27 @@ export default function Ideas() {
               <option value="archived">Archived</option>
             </select>
 
+            {/* View toggle (P2-10) */}
+            <div className="flex gap-1 rounded-lg p-1" style={{ background: 'var(--surface-2)' }}>
+              {(['kanban', 'list'] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setViewMode(v)}
+                  className="px-2.5 py-1 rounded text-xs"
+                  style={{
+                    background: viewMode === v ? 'var(--cream)' : 'transparent',
+                    color: viewMode === v ? 'var(--ink)' : 'var(--slate)',
+                    fontWeight: viewMode === v ? 500 : 400,
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: viewMode === v ? 'var(--shadow-card)' : 'none',
+                  }}
+                >
+                  {v === 'kanban' ? 'Board' : 'List'}
+                </button>
+              ))}
+            </div>
+
             <DensityToggle value={density} onChange={setDensity} />
           </div>
         )}
@@ -252,6 +284,73 @@ export default function Ideas() {
             subtitle="Press N or use the form above to capture the first idea. Half-formed thoughts welcome — the team will sharpen them."
             action={{ label: 'Submit an idea', onClick: () => setShowCreate(true) }}
           />
+        ) : viewMode === 'kanban' ? (
+          /* P2-10: kanban-first board view */
+          <div className="grid gap-4 overflow-x-auto" style={{ gridTemplateColumns: 'repeat(4, minmax(220px, 1fr))' }}>
+            {(['new', 'under_review', 'approved', 'parked'] as const).map((col) => {
+              const colIdeas = sortedIdeas.filter((i) => i.status === col)
+              const cfg = statusConfig[col]
+              return (
+                <div key={col} className="flex flex-col" style={{ minHeight: '200px' }}>
+                  <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: `2px solid ${cfg.color}` }}>
+                    <span style={{ color: cfg.color, fontSize: '12px', fontWeight: 'var(--weight-ui)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      {cfg.label}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
+                      {colIdeas.length}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {colIdeas.map((idea) => {
+                      const person = getPersonInfo(idea.submitted_by)
+                      return (
+                        <div
+                          key={idea.id}
+                          className="rounded-lg border p-3 cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
+                          style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}
+                          onClick={() => setExpandedId(expandedId === idea.id ? null : idea.id)}
+                        >
+                          <div style={{ fontSize: '13px', color: 'var(--ink)', fontWeight: 500, lineHeight: 1.35 }}>
+                            {idea.title}
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85 }}>
+                              {person.name.split(' ')[0]}
+                            </span>
+                            {idea.votes > 0 && (
+                              <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.85 }}>
+                                ▲ {idea.votes}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                            <select
+                              value={idea.status}
+                              onChange={(e) => handleIdeaStatusChange(idea.id, e.target.value, idea.status)}
+                              className="text-[10px] rounded border px-1.5 py-0.5"
+                              style={{ background: 'var(--surface-2)', color: 'var(--slate)', borderColor: 'var(--border-subtle)', cursor: 'pointer' }}
+                              aria-label="Change status"
+                            >
+                              <option value="new">New</option>
+                              <option value="under_review">Under Review</option>
+                              <option value="approved">Approved</option>
+                              <option value="parked">Parked</option>
+                              <option value="archived">Archived</option>
+                            </select>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {colIdeas.length === 0 && (
+                      <div style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, padding: '12px', textAlign: 'center' }}>
+                        Empty
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         ) : (
           <TableContainer ariaLabel="Ideas">
             {/* Column headers - hidden on mobile.

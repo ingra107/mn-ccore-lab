@@ -751,20 +751,20 @@ Low priority but high story value.
 - [x] P1-06 · Label/replace public Home numbers
 - [ ] P1-07 · Seed Mentee Milestones — BLOCKED on Nick (don't fabricate trainee commitments)
 - [x] P1-08 · Suppress empty mentor sections
-- [ ] P2-01 · Strip `[Carried forward]` prefix
-- [ ] P2-02 · Strip `CLIF:` prefix + Consortium column
-- [ ] P2-03 · OVERDUE sub-buckets
-- [ ] P2-04 · Digest filter collapse
-- [ ] P2-05 · Tabbed Settings
-- [ ] P2-06 · Soften trainee activity labels
-- [ ] P2-07 · Hide PB Sector nav
-- [ ] P2-08 · Mobile tab-bar padding
-- [ ] P2-09 · Analytics delta chips
-- [ ] P2-10 · Ideas kanban-first
-- [ ] P2-11 · Decision outcome pill
-- [ ] P2-12 · Publications grouping + summary
-- [ ] P2-13 · Network label collision
-- [ ] P2-14 · Post-Award Milestones populated state
+- [x] P2-01 · Strip `[Carried forward]` prefix
+- [x] P2-02 · Strip `CLIF:` prefix (no separate column — Group filter + dot already encode)
+- [x] P2-03 · OVERDUE sub-buckets
+- [x] P2-04 · Digest filter collapse
+- [x] P2-05 · Tabbed Settings
+- [x] P2-06 · Soften trainee activity labels
+- [x] P2-07 · Hide PB Sector nav
+- [x] P2-08 · Mobile tab-bar padding (already shipped Phase 36c)
+- [x] P2-09 · Analytics delta chips
+- [x] P2-10 · Ideas kanban-first
+- [x] P2-11 · Decision outcome pill
+- [x] P2-12 · Publications grouping + summary
+- [x] P2-13 · Network label collision
+- [ ] P2-14 · Post-Award Milestones populated state — populated table exists at `Grants.tsx:898`; needs Nick to seed grant_milestones rows
 - [ ] P3-01 · Lab-TV 5-slide loop
 - [ ] P3-02 · Dashboard heatmap
 - [ ] P3-03 · Manuscripts trophy grid

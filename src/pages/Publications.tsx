@@ -226,6 +226,47 @@ export default function Publications() {
           )}
         </div>
 
+        {/* P2-12: at-a-glance summary bar */}
+        {filtered.length > 0 && (
+          <div
+            className="flex flex-wrap gap-x-8 gap-y-3 mt-4 pt-4"
+            style={{ borderTop: '1px solid var(--border-subtle)' }}
+          >
+            {(() => {
+              const journalCount = new Set(filtered.map(p => p.journal).filter(Boolean)).size
+              const firstAuthorCount = filtered.filter(p => {
+                const first = (p.authors || '').split(/[,;]/)[0]?.trim().toLowerCase() || ''
+                const slugs = (p as any).authorSlugs ?? (p as any).author_slugs ?? ''
+                return /\bingraham\b/i.test(first) || /(^|,)\s*nick-ingraham\s*(,|$)/i.test(slugs)
+              }).length
+              const thisYear = new Date().getFullYear()
+              const thisYearCount = filtered.filter(p => p.year === thisYear).length
+              const stats = [
+                { value: filtered.length, label: 'publications' },
+                { value: journalCount, label: 'journals' },
+                { value: firstAuthorCount, label: 'first-author' },
+                { value: thisYearCount, label: String(thisYear) },
+              ]
+              return stats.map(s => (
+                <div key={s.label}>
+                  <span
+                    className="font-serif tabular-nums"
+                    style={{ fontSize: '1.75rem', color: 'var(--ink)', fontWeight: 600, lineHeight: 1 }}
+                  >
+                    {s.value}
+                  </span>
+                  <span
+                    className="ml-2"
+                    style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.08em' }}
+                  >
+                    {s.label}
+                  </span>
+                </div>
+              ))
+            })()}
+          </div>
+        )}
+
         {/* Export bibliography */}
         {filtered.length > 0 && (
           <button
@@ -390,10 +431,19 @@ export default function Publications() {
             ))}
           </div>
         ) : (
-          /* Grouped by year (default) — quiet label style, not display heading (M-10) */
+          /* Grouped by year (default) — sticky year headers (P2-12). M-10 quiet label style preserved. */
           years.map((year) => (
             <div key={year} className="mb-8 sm:mb-12">
-              <div className="fade-in-up flex items-center gap-3 mb-4 sm:mb-6">
+              <div
+                className="fade-in-up flex items-center gap-3 mb-4 sm:mb-6 py-2"
+                style={{
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 'var(--z-sticky)',
+                  background: 'var(--page-bg)',
+                  backdropFilter: 'blur(6px)',
+                }}
+              >
                 <span
                   style={{
                     fontSize: 'var(--text-label)',
