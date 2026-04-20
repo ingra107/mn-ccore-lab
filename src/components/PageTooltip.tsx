@@ -13,6 +13,16 @@ interface PageTooltipProps {
 }
 
 const STORAGE_PREFIX = 'mnccore-tooltip-seen-'
+const DISMISS_EVENT = 'mnccore-tooltip-dismiss'
+
+/** Imperatively dismiss a PageTooltip from anywhere — e.g. the first time
+ *  a user clicks the surface the hint pointed at. Persists across reloads. */
+export function dismissPageTooltip(id: string): void {
+  try { localStorage.setItem(STORAGE_PREFIX + id, '1') } catch { /* ok */ }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(DISMISS_EVENT, { detail: { id } }))
+  }
+}
 
 export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps) {
   const [visible, setVisible] = useState(false)
@@ -26,6 +36,15 @@ export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps
     const timer = setTimeout(() => setVisible(true), delay)
     return () => clearTimeout(timer)
   }, [storageKey, delay])
+
+  useEffect(() => {
+    function onDismiss(e: Event) {
+      const detail = (e as CustomEvent<{ id: string }>).detail
+      if (detail?.id === id) setVisible(false)
+    }
+    window.addEventListener(DISMISS_EVENT, onDismiss)
+    return () => window.removeEventListener(DISMISS_EVENT, onDismiss)
+  }, [id])
 
   const dismiss = () => {
     setVisible(false)

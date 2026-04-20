@@ -108,13 +108,29 @@ export default function MeetingDetail() {
   // Local action item order — persists in state during session
   // IMPORTANT: must be declared BEFORE conditional early returns to satisfy Rules of Hooks
   const [actionOrder, setActionOrder] = useState<string[]>([])
+  // Dedupe Cartesian duplicates from join (mirrors MyItems.tsx:678).
+  // Key: normalized title + assignee + due. Newest updated_at wins.
+  const dedupedActionItems = useMemo(() => {
+    const seen = new Map<string, ActionItemRowType>()
+    for (const item of meeting?.action_items || []) {
+      const text = (item.description || '').replace(/^\[Carried forward\]\s*/i, '').toLowerCase().trim()
+      const key = `${text}::${item.assignee ?? ''}::${item.due_date ?? ''}`
+      const existing = seen.get(key)
+      const itemTs = (item as any).updated_at ?? item.created_at ?? ''
+      const existingTs = existing ? ((existing as any).updated_at ?? existing.created_at ?? '') : ''
+      if (!existing || itemTs > existingTs) {
+        seen.set(key, item)
+      }
+    }
+    return [...seen.values()]
+  }, [meeting?.action_items])
   const pendingActions = useMemo(
-    () => (meeting?.action_items || []).filter((a: ActionItemRowType) => !a.completed),
-    [meeting?.action_items]
+    () => dedupedActionItems.filter((a: ActionItemRowType) => !a.completed),
+    [dedupedActionItems]
   )
   const completedActions = useMemo(
-    () => (meeting?.action_items || []).filter((a: ActionItemRowType) => a.completed),
-    [meeting?.action_items]
+    () => dedupedActionItems.filter((a: ActionItemRowType) => a.completed),
+    [dedupedActionItems]
   )
   const orderedPendingActions = useMemo(() => {
     if (actionOrder.length === 0) return pendingActions
@@ -179,7 +195,7 @@ export default function MeetingDetail() {
   const autoAgenda = parseJsonArray(meeting.agenda)
   const decisions = parseJsonArray(meeting.decisions)
   const statusStyle = STATUS_COLORS[meeting.status] || STATUS_COLORS.completed
-  const actionItems = meeting.action_items || []
+  const actionItems = dedupedActionItems
   const teamAgendaItems = meeting.agenda_items || []
 
   async function handleAgendaDragEnd(event: DragEndEvent) {

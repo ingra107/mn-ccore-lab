@@ -18,7 +18,7 @@ import PageHeader from '../components/PageHeader'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { parseCarriedForward } from '../lib/textUtils'
 import { formatFullDate, formatShortDate } from '../lib/dateUtils'
-import PageTooltip from '../components/PageTooltip'
+import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 
 type FilterMode = 'all' | 'decisions' | 'actions'
@@ -752,7 +752,7 @@ export default function Meetings() {
                     style={{ display: 'block', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', background: isSelected ? 'rgba(45,138,138,0.08)' : 'transparent', borderLeft: isNext ? '3px solid var(--teal)' : isSelected ? '3px solid rgba(45,138,138,0.4)' : '3px solid transparent', transition: 'background 150ms ease', outline: 'none' }}
                     onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(201,168,76,0.04)' }}
                     onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
-                    onClick={() => { setSelectedMeetingId(meeting.id); setFocusedIndex(idx); setMobileShowDetail(true) }}>
+                    onClick={() => { setSelectedMeetingId(meeting.id); setFocusedIndex(idx); setMobileShowDetail(true); dismissPageTooltip('meetings-prep-hint') }}>
                     <div className="flex items-center justify-between gap-2">
                       <span style={{ fontSize: '11px', color: isNext ? 'var(--teal)' : 'var(--slate)', opacity: isNext ? 1 : 0.85, flexShrink: 0, fontWeight: isNext ? 600 : 400, minWidth: '46px' }}>
                         {formatListDate(meeting.date)}

@@ -75,6 +75,10 @@ export default function SettingsPage() {
   })
 
   const [saved, setSaved] = useState(false)
+  const [showDebugItems, setShowDebugItems] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem('showDebugItems') === 'true'
+  })
 
   if (settingsLoading) return <TextSkeleton lines={8} />
 
@@ -338,6 +342,35 @@ export default function SettingsPage() {
                 style={{ color: 'var(--maroon)', border: '1px solid rgba(122,0,25,0.2)', background: 'none', cursor: 'pointer' }}
               >
                 Clear
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm" style={{ color: 'var(--ink)' }}>Show debug/test items</p>
+                <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                  Surface QA fixtures (`test_delete_*`, `deep-audit-sync-*`) in activity, calendar, mentee milestones
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={showDebugItems}
+                onClick={() => {
+                  const next = !showDebugItems
+                  setShowDebugItems(next)
+                  if (next) localStorage.setItem('showDebugItems', 'true')
+                  else localStorage.removeItem('showDebugItems')
+                  setSaved(true)
+                  setTimeout(() => setSaved(false), 2000)
+                }}
+                className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                style={{
+                  color: showDebugItems ? 'var(--teal)' : 'var(--slate)',
+                  border: `1px solid ${showDebugItems ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                  background: showDebugItems ? 'var(--teal-hover)' : 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {showDebugItems ? 'On' : 'Off'}
               </button>
             </div>
           </div>

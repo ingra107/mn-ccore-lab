@@ -743,14 +743,14 @@ Low priority but high story value.
 
 # Progress tracking
 
-- [ ] P1-01 · Filter test fixtures
-- [ ] P1-02 · Fix `undefined '23` labels
-- [ ] P1-03 · Dedupe action items
-- [ ] P1-04 · Fix Team Engagement scoring
-- [ ] P1-05 · Dismiss meeting tooltip
-- [ ] P1-06 · Label/replace public Home numbers
-- [ ] P1-07 · Seed Mentee Milestones
-- [ ] P1-08 · Suppress empty mentor sections
+- [x] P1-01 · Filter test fixtures
+- [x] P1-02 · Fix `undefined '23` labels
+- [x] P1-03 · Dedupe action items
+- [x] P1-04 · Fix Team Engagement scoring
+- [x] P1-05 · Dismiss meeting tooltip
+- [x] P1-06 · Label/replace public Home numbers
+- [ ] P1-07 · Seed Mentee Milestones — BLOCKED on Nick (don't fabricate trainee commitments)
+- [x] P1-08 · Suppress empty mentor sections
 - [ ] P2-01 · Strip `[Carried forward]` prefix
 - [ ] P2-02 · Strip `CLIF:` prefix + Consortium column
 - [ ] P2-03 · OVERDUE sub-buckets

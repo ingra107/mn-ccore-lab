@@ -7,6 +7,7 @@ import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import { formatBrandName } from '../../components/BrandName'
 import { useCalendarEvents } from '../../hooks/useApiData'
+import { isProductionVisible } from '../../lib/isProductionVisible'
 import { getPersonInfo } from '../../data/team'
 import { formatLongDate, formatShortDate } from '../../lib/dateUtils'
 import type { CalendarEvent } from '../../lib/api'
@@ -41,7 +42,11 @@ export default function CalendarPage() {
     }
   }, [currentDate])
 
-  const { data: events = [], isLoading } = useCalendarEvents({ start, end })
+  const { data: rawEvents = [], isLoading } = useCalendarEvents({ start, end })
+  const events = useMemo(
+    () => rawEvents.filter((e) => isProductionVisible(e.title)),
+    [rawEvents],
+  )
 
   const monthLabel = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 

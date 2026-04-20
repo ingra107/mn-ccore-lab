@@ -8,6 +8,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { useMeetingsApi, useTasks, useExpiringRegulatory } from '../hooks/useApiData'
 import { formatMediumDate } from '../lib/dateUtils'
+import { isProductionVisible } from '../lib/isProductionVisible'
 import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
 import PhaseReleaseBanner from '../components/PhaseReleaseBanner'
@@ -187,7 +188,11 @@ export default function Dashboard() {
   }, [meetings])
 
   // Expiring regulatory items — drives RegulatoryAlertStrip
-  const { data: expiringRegulatory = [] } = useExpiringRegulatory(60)
+  const { data: rawRegulatory = [] } = useExpiringRegulatory(60)
+  const expiringRegulatory = useMemo(
+    () => rawRegulatory.filter((r: any) => isProductionVisible(r.title)),
+    [rawRegulatory],
+  )
 
   const headerRef = useScrollReveal<HTMLDivElement>()
   const [showMore, setShowMore] = useState(false)

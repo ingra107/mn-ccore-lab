@@ -290,9 +290,10 @@ export default function Team() {
         </div>
       </section>
 
-      <SectionDivider />
+      {seniorMentors.filter((m) => matchesFilter(m.slug)).length > 0 && <SectionDivider />}
 
-      {/* Senior Mentors */}
+      {/* Senior Mentors — only render when populated (P1-08) */}
+      {seniorMentors.filter((m) => matchesFilter(m.slug)).length > 0 && (
       <section
         className="py-8 sm:py-12 lg:py-16 content-container"
         ref={mentorsRef}
@@ -359,10 +360,12 @@ export default function Team() {
           })}
         </div>
       </section>
+      )}
 
-      <SectionDivider />
+      {facultyCollaborators.filter(m => matchesFilter(m.slug)).length > 0 && <SectionDivider />}
 
-      {/* Faculty Collaborators */}
+      {/* Faculty Collaborators — gate on populated state (P1-08) */}
+      {facultyCollaborators.filter(m => matchesFilter(m.slug)).length > 0 && (
       <section
         className="py-8 sm:py-12 lg:py-16 content-container"
         ref={facultyRef}
@@ -435,10 +438,12 @@ export default function Team() {
           })}
         </div>
       </section>
+      )}
 
-      <SectionDivider />
+      {researchTeam.filter(m => matchesFilter(m.slug)).length > 0 && <SectionDivider />}
 
-      {/* Research Team */}
+      {/* Research Team — gate on populated state (P1-08) */}
+      {researchTeam.filter(m => matchesFilter(m.slug)).length > 0 && (
       <section
         className="py-8 sm:py-12 lg:py-16 content-container"
         ref={researchRef}
@@ -511,6 +516,7 @@ export default function Team() {
           })}
         </div>
       </section>
+      )}
     </>
   )
 }

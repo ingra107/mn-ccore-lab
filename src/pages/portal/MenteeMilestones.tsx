@@ -13,6 +13,7 @@ import type { MenteeMilestoneRow } from '../../hooks/useApiData'
 import { useCreateMenteeMilestone, useUpdateMenteeMilestone } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, isOverdue, getDaysAgo } from '../../lib/dateUtils'
+import { isProductionVisible } from '../../lib/isProductionVisible'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 // ── Constants ──────────────────────────────────────────────
@@ -60,11 +61,15 @@ export default function MenteeMilestones() {
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(-1)
 
-  const { data: milestones = [], isLoading: milestonesLoading } = useMenteeMilestones({
+  const { data: rawMilestones = [], isLoading: milestonesLoading } = useMenteeMilestones({
     mentee: filterMentee || undefined,
     status: filterStatus || undefined,
     type: filterType || undefined,
   })
+  const milestones = useMemo(
+    () => rawMilestones.filter((m: any) => isProductionVisible(m.title)),
+    [rawMilestones],
+  )
   const { data: overview = [], isLoading: overviewLoading } = useMenteeOverview()
   // Per-actor last-activity queries (limit=1, actor-filtered) so high activity volume doesn't hide old entries
   const { data: actShyu = [] }      = useActivity(1, 'dan-shyu')

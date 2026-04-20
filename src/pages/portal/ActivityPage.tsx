@@ -13,6 +13,7 @@ import { formatRelativeTime, formatMediumDate } from '../../lib/dateUtils'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { staggerContainer, staggerItem } from '../../lib/animations'
+import { isProductionVisibleActivity } from '../../lib/isProductionVisible'
 
 const typeOptions = [
   { value: '', label: 'All Types' },
@@ -27,7 +28,11 @@ const typeOptions = [
 export default function ActivityPage() {
   const [filterType, setFilterType] = useState('')
   const [filterPerson, setFilterPerson] = useState('')
-  const { data: allActivity = [], isLoading } = useActivity(200)
+  const { data: rawActivity = [], isLoading } = useActivity(200)
+  const allActivity = useMemo(
+    () => rawActivity.filter((a) => isProductionVisibleActivity({ description: a.description })),
+    [rawActivity],
+  )
 
   // Unique actors for person filter
   const actors = useMemo(() => {

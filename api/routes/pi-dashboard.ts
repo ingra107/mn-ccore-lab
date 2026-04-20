@@ -68,7 +68,9 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
       FROM grants
     `).first(),
 
-    // Team engagement: composite score per member (last 30 days)
+    // Team engagement: composite score per member (last 30 days).
+    // Excludes 'anonymous' bucket (CLI / system / unauthed events) — they
+    // dominate the leaderboard and leave real members at 0.
     env.DB.prepare(`
       SELECT actor as slug,
         COUNT(*) as total_actions,
@@ -76,7 +78,11 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
         SUM(CASE WHEN type = 'update' OR type = 'project_update' THEN 1 ELSE 0 END) as updates,
         SUM(CASE WHEN type = 'task_completed' THEN 1 ELSE 0 END) as completions
       FROM activity_log
-      WHERE timestamp > datetime('now', '-30 days') AND actor IS NOT NULL
+      WHERE timestamp > datetime('now', '-30 days')
+        AND actor IS NOT NULL
+        AND actor != 'anonymous'
+        AND actor != 'system'
+        AND actor != ''
       GROUP BY actor
       ORDER BY total_actions DESC
     `).all(),

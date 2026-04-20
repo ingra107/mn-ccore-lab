@@ -18,6 +18,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useUserRole } from '../../hooks/useUserRole'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
+import { isProductionVisible, isProductionVisibleActivity } from '../../lib/isProductionVisible'
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed'
 import { ROLE_LABELS } from '../../lib/roleDefaults'
 import type { UserRole } from '../../lib/roleDefaults'
@@ -622,10 +623,18 @@ export default function Personal() {
   const { role, setRoleOverride, clearRoleOverride } = useUserRole()
 
   const { data: allTasks = [], isLoading: tasksLoading } = useTasks()
-  const { data: activity = [] } = useActivity(10)
+  const { data: rawActivity = [] } = useActivity(10)
+  const activity = useMemo(
+    () => rawActivity.filter((a) => isProductionVisibleActivity({ description: a.description })),
+    [rawActivity],
+  )
   const { data: projects = [] } = useProjects()
   // M-25: Regulatory alerts -- visible at top of Personal, not buried
-  const { data: expiringRegulatory = [] } = useExpiringRegulatory(60)
+  const { data: rawRegulatory = [] } = useExpiringRegulatory(60)
+  const expiringRegulatory = useMemo(
+    () => rawRegulatory.filter((r: any) => isProductionVisible(r.title)),
+    [rawRegulatory],
+  )
 
   const updateStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()

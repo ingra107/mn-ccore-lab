@@ -338,12 +338,12 @@ export default function Home() {
                   </div>
                   <div
                     style={{
-                      fontSize: '10px',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.75)',
                       textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      marginTop: '6px',
-                      fontWeight: 400,
+                      letterSpacing: '0.1em',
+                      marginTop: '8px',
+                      fontWeight: 500,
                     }}
                   >
                     {metric.label}

@@ -76,7 +76,7 @@ interface PIDashboardData {
   }>
   pubsByQuarter: Array<{
     year: number
-    quarter: string
+    quarter?: string
     count: number
   }>
   grantsFunnel: {
@@ -746,9 +746,9 @@ export default function PIAnalytics() {
         </div>
       </div>
 
-      {/* Lab Output Dashboard — Two columns: Pubs per Quarter + Grants/Projects */}
+      {/* Lab Output Dashboard — Two columns: Pubs per Year + Grants/Projects */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Publications per Quarter */}
+        {/* Publications per Year */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 size={14} style={{ color: 'var(--gold)' }} />
@@ -756,14 +756,14 @@ export default function PIAnalytics() {
               className="text-xs font-normal uppercase tracking-wider"
               style={{ color: 'var(--gold)' }}
             >
-              Publications per Quarter
+              Publications per Year
             </h3>
           </div>
           <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
             {data && data.pubsByQuarter.length > 0 ? (
               <PubsBarChart
                 data={data.pubsByQuarter.map(q => ({
-                  label: `${q.quarter} '${String(q.year).slice(2)}`,
+                  label: `'${String(q.year).slice(2)}`,
                   value: q.count,
                 }))}
               />
