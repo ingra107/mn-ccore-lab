@@ -130,16 +130,21 @@ Open the site on an actual phone (or DevTools 375×812):
 - MobileTabBar "More" drawer opens and closes cleanly.
 - No horizontal scroll.
 
-## Current state (2026-04-17)
+## Current state (2026-04-20)
 
 | Item | Status |
 |------|--------|
-| Code complete | Phase 34 shipped (audit framework + key-link editor) |
-| D1 schema | v42 applied (62+ tables) |
+| Code complete | Phase 36d shipped (design sprint — 12 brand primitives + capture infra) |
+| D1 schema | v46 applied (60 tables — +projects.deleted_at v45, +7 indexes v46, +lab_settings.pi_emails v44, +team_members.email v43) |
 | Audit framework | Live — `npx tsx scripts/hub-audit.ts`, 30+ asserted flows, 0 P1 |
-| Latest deploy | `b9644c75` (2026-04-17) |
+| Latest deploy | `6dc546d` (2026-04-20, Phase 36d docs + design handoff) |
 | Dogfood page health | 14/14, 0 console errors |
+| Inspection suite | 213/213 vs prod |
+| Mobile smoke | 2/2 (Pixel 5 emulation) |
+| Desktop journey smoke | 1/1 |
+| Design handoff | Imported 2026-04-20 — `docs/design-handoff-2026-04-20/TICKETS.md` (33 tickets: 8 P1 · 14 P2 · 11 P3) |
 | Cloudflare Access | **NICK MUST CONFIGURE** |
+| CF_ACCESS_TEAM_DOMAIN + CF_ACCESS_AUD secrets | **NICK MUST SET (after CF Access config)** |
 | RESEND_API_KEY | **NICK MUST SET** |
 | GitHub secrets | **NICK MUST SET** |
 | Workers tier | Paid ($5/mo, 10M requests/day) |

@@ -2,6 +2,47 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Phase 36e: Claude Design Handoff Imported (2026-04-20)
+
+**Not a code phase — a backlog import.** Nick ran the Hub through
+Anthropic's new Claude Design product (launched 2026-04-17) and it
+returned a prioritized implementation backlog against HEAD `ef604db`.
+Bundle imported to `docs/design-handoff-2026-04-20/`.
+
+Contents:
+- `TICKETS.md` — 33 tickets ordered P1 → P2 → P3, each with file
+  paths, problem description, implementation snippets, acceptance.
+- `Audit.html` — interactive annotated screenshots of every finding.
+- `screenshots/` — 30 captures referenced by tickets.
+- `reference/colors_and_type.css` — token source of truth mirror.
+- `reference/ui-kit/*.jsx` — simplified mocks of Dashboard / Tasks /
+  Projects / Meetings / Hermes for visual direction (NOT production code).
+
+Summary of findings:
+- **P1 (8, ship-blockers):** test-fixture titles leaking into
+  production surfaces (Personal Recent Activity, Calendar, Mentee
+  Milestones); `undefined '23` chart labels on PI Dashboard;
+  duplicate meeting action items; Team Engagement attribution bug
+  (`anonymous=13,410`); persistent tooltip; unlabeled hero numbers on
+  public Home; empty Mentee Milestones; empty Senior Mentors section.
+- **P2 (14, polish):** strip `[Carried forward]` prefix to chip
+  column; lift `CLIF:` title prefix; sub-bucket OVERDUE by age;
+  collapse Research Digest filters; tabbed Settings; soften
+  "Silent 32d" → "Needs check-in"; hide PB Sector from nav pre-
+  launch; mobile tab-bar safe-area; zero-value delta chips; Ideas
+  Board kanban-first; Decision outcome as pill column; Publications
+  grouped by year; Network label collision; Post-Award Milestones
+  populated.
+- **P3 (11, new surfaces):** Lab-TV 5-slide extension; Dashboard
+  Project Health heatmap; Published-as-trophy-grid; NIH RePORTER
+  search; Project Detail vertical timeline; Team Engagement drill-
+  down; Publications-DB ↔ member card linkage; Calendar dense-week;
+  Decisions Timeline; PWA + Apple Watch complication; public Home
+  iconographic pillar grid.
+
+No code changes in this entry — just the backlog landing. Next
+session consumes TICKETS.md directly.
+
 ## Phase 36d: Design Sprint (2026-04-20)
 
 **Context:** Anthropic launched Claude Design on 2026-04-17 (conversational

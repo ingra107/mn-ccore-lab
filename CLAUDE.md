@@ -34,7 +34,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev (PI-only; team not yet onboarded) |
-| Repo | github.com/ingra107/mn-ccore-lab (670+ commits) |
+| Repo | github.com/ingra107/mn-ccore-lab (685+ commits) |
 | Current deploy | `ef604db` (2026-04-20, Phase 36d close — preview `dba34ad1`) |
 | Quality gate | 🟢 GREEN — inspection 213/213, deep-audit 14/14, axe 29×2 = 0, mobile smoke 2/2, desktop journey 1/1. |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
@@ -658,9 +658,9 @@ python -c "import sqlite3; conn=sqlite3.connect('C:/Users/ingra107/Peripheral-Br
 **Guide:** `TESTING.md`
 **Skill:** `/test-hub` (scan, run, generate, update, report)
 
-## Phase History (29-36d + R8/R9/R10) → see CHANGELOG.md
+## Phase History (29-36e + R8/R9/R10) → see CHANGELOG.md
 
-> **Phase-by-phase build history in `CHANGELOG.md`** to keep this file operational. Latest: **Phase 36d** (2026-04-20) — design sprint, 12 brand primitives (HeartbeatLine, HermesMark, CategoryIcon, EmptyStateArt, PhaseReleaseBanner, RequireAuth, generated portraits, mobile mark), cinematic Pulse Kiosk rewrite, per-route OG share cards via `functions/og/`, capture infrastructure for Claude Design. **Phase 36c** — 4-auditor deep audit + 11 P0/P1 fixes. **Phase 36b** — slug rename. **Phase 36** — consultant close-out + mobile swipe. Earlier: 29 features, 30 visual QA, 31 token compliance, 31.5 expert polish, 32 final launch polish (10 consultant rounds), Nick-Review R8/R9/R10, 34 audit framework, 35 a11y + sync parity.
+> **Phase-by-phase build history in `CHANGELOG.md`** to keep this file operational. Latest: **Phase 36e** (2026-04-20) — Claude Design handoff imported to `docs/design-handoff-2026-04-20/`; 33 tickets (8 P1, 14 P2, 11 P3) drive the next session's work. **Phase 36d** — design sprint (12 brand primitives + cinematic Pulse Kiosk + per-route OG share cards + capture infrastructure). **Phase 36c** — 4-auditor deep audit + 11 P0/P1 fixes. **Phase 36b** — slug rename. **Phase 36** — consultant close-out + mobile swipe. Earlier: 29 features, 30 visual QA, 31 token compliance, 31.5 expert polish, 32 final launch polish (10 consultant rounds), Nick-Review R8/R9/R10, 34 audit framework, 35 a11y + sync parity.
 >
 > **Key decisions in that history:** sidebar darker-than-content is NEVER-violate (GC-1). Framer Motion scoped to page transitions only (GC-2). Ideas + Decisions are columnar tables not cards (GC-3). Data-pages vs dashboard-pages taxonomy (GC-6). Grant + project status taxonomies locked (R10). Research Digest = Model B. Dashboard cards resizable via RGL (R9-9). Hono router declarative — no raw `url.pathname` routing (Phase 36).
 

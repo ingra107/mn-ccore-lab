@@ -1,8 +1,8 @@
 # Session Handoff — 2026-04-20
 
-> Last worked: Phase 36d (design sprint — 12 brand improvements +
-> capture infrastructure for Claude Design). Next session picks up
-> here. One-glance state + what to do first.
+> Last worked: Phase 36e (Claude Design handoff imported — 33 tickets
+> at `docs/design-handoff-2026-04-20/TICKETS.md`). Next session works
+> those tickets. One-glance state + what to do first.
 
 ## 📖 Session bootstrap — read these in order before writing anything
 
@@ -35,6 +35,13 @@ Rerun mobile smoke: `npx playwright test --config=playwright.config.mobile.ts`
 Rerun journey smoke: `npx playwright test --config=playwright.config.phase36.ts`
 
 ## What's new since the previous handoff
+
+**Phase 36e — Claude Design handoff imported.** Nick ran the Hub
+through Claude Design against HEAD `ef604db`; it returned 33 tickets
+with file paths, fix snippets, and acceptance criteria. Bundle at
+`docs/design-handoff-2026-04-20/` (tracked — `TICKETS.md`, `Audit.html`,
+`reference/ui-kit/*.jsx`, + 30 screenshots). Drives next session's
+work. P1 is a pre-demo punch list.
 
 **Phase 36d — design sprint.** 12 brand-level improvements shipped in
 one session after reviewing Anthropic's new Claude Design product
@@ -112,22 +119,74 @@ fixes shipped in one sprint:
 
 ## What to do FIRST in the next session
 
-1. If Nick's about to share the Hub URL with the team → follow
-   `LAUNCH-CHECKLIST.md` sections 0 + 1. Four secrets + CF Access config
-   + one rebuild. Post-launch, swipe-dismiss + JWT sig verify + auth-
-   gated bug-reports all activate with no extra deploys.
-2. If Nick wants to use Claude Design for slides / poster / brand guide
-   — the brief is already written at `scripts/claude-design-brief.txt`
-   (also copied to clipboard); 31 fresh page screenshots at
-   `review/claude-design-20260420/` (gitignored, regen via capture
-   config); 15 signature interactions ready to capture as videos via
-   `tests/capture-interactions.spec.ts` when Claude Design can consume
-   motion.
-3. If Nick wants to keep improving the Hub itself → consultant nice-to-
-   haves are closed, audit P0/P1 are closed. P2 backlog listed below.
-   Or pull from `Projects/mn-ccore-lab-hub/hub-future-ideas.md`.
-3. If Nick reports a bug → reproduce with a deep-audit suite before
-   fixing.
+**Primary work incoming: Claude Design handoff — 33 tickets at
+`docs/design-handoff-2026-04-20/TICKETS.md`.** Nick ran the Hub
+through Claude Design and it returned a prioritized backlog against
+HEAD `ef604db`. Work P1 → P2 → P3, one ticket at a time. Each ticket
+is self-contained: problem + fix + acceptance + annotated screenshot.
+
+**P1 · 8 ship-blockers (do these first — target pre-Tuesday demo):**
+1. P1-01 Filter `test_delete_*` + `deep-audit-sync-*` fixtures out of
+   Personal / Calendar / Mentee Milestones / Activity. Shared
+   predicate at query layer + localStorage debug-toggle in Settings.
+2. P1-02 Fix `undefined '23` X-axis labels on PI Dashboard
+   Publications-per-Quarter chart (template string missing quarter var).
+3. P1-03 Dedupe meeting action items.
+4. P1-04 Team Engagement scoring shows `anonymous=13,410, real
+   members=0` — attribution bug.
+5. P1-05 Dismiss "Click a meeting for prep and actions" tooltip.
+6. P1-06 Label or replace the 4 hero numbers on public Home.
+7. P1-07 Seed real Mentee Milestones (empty-state with CTA if none).
+8. P1-08 Suppress empty Senior Mentors section on public Team page.
+
+**P2 · 14 polish tickets (ship this week):** `[Carried forward]`
+strip, `CLIF:` prefix lift, OVERDUE sub-bucket by age, Research
+Digest filter-row collapse, tabbed Settings, soften "Silent 32d" →
+"Needs check-in", hide PB Sector from nav until launch, mobile
+tab-bar safe-area, zero-value delta chips, Ideas Board kanban-first,
+Decision outcome → pill column, Publications grouped-by-year, Network
+label collisions, Post-Award Milestones populated state.
+
+**P3 · 11 new surfaces (next quarter):** Lab-TV 5-slide extension,
+Project Health heatmap, Published-as-trophy-grid, NIH RePORTER
+search, vertical project timeline, Team Engagement drill-down,
+Publications-DB ↔ member cards link, Calendar dense-week toggle,
+Decisions Timeline view, PWA + Apple Watch, public Home
+iconographic grid.
+
+**Working a ticket:**
+1. Open `docs/design-handoff-2026-04-20/TICKETS.md`.
+2. Cross-reference with `docs/design-handoff-2026-04-20/Audit.html`
+   (interactive annotated screenshots — open in browser).
+3. Use `docs/design-handoff-2026-04-20/reference/ui-kit/*.jsx` as
+   VISUAL direction, not production code — real impl lands in the
+   Hub's existing React components + Tailwind.
+4. Mark the ticket's checkbox in TICKETS.md when acceptance met.
+5. Screenshot the fixed state; compare against the "before" in
+   `docs/design-handoff-2026-04-20/screenshots/`.
+
+**Scope discipline** (per the handoff README):
+- No new dependencies unless a ticket calls for one.
+- No refactors beyond ticket scope — file new ticket at bottom of P3.
+- Preserve the voice: dense, honest, anti-corporate. Don't soften
+  error messages or add emoji.
+
+---
+
+**If Nick's about to share the Hub URL with the team** → follow
+`LAUNCH-CHECKLIST.md` sections 0 + 1. Four secrets + CF Access config
++ one rebuild. Post-launch, swipe-dismiss + JWT sig verify + auth-
+gated bug-reports all activate with no extra deploys.
+
+**If Nick wants to use Claude Design for more assets** (pitch deck,
+poster, one-pager) — brief at `scripts/claude-design-brief.txt`; 31
+fresh page screenshots at `review/claude-design-20260420/`
+(gitignored, regen via capture config); 15 signature interactions
+ready to capture via `tests/capture-interactions.spec.ts` when
+needed.
+
+**If Nick reports a bug** → reproduce with a deep-audit suite before
+fixing.
 
 ## Things that WILL surprise you if you don't know
 

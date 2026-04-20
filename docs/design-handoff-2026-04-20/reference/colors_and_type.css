@@ -1,0 +1,243 @@
+/* ==========================================================================
+   MN-CCORE Lab Hub — Colors & Type Tokens
+   Dark-first operations center. All color values pinned to sRGB hex
+   (NOT OKLCH) for predictable rendering + axe-core AA verification.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ── BRAND ACCENTS ─────────────────────────────────────────────────── */
+  --gold:         #c9a84c;  /* primary accent — heartbeat, CTAs, emphasis */
+  --gold-bright:  #dbb960;  /* shimmer-stop, hover */
+  --gold-soft:    rgba(201, 168, 76, 0.12);
+  --gold-emphasis:rgba(201, 168, 76, 0.18);
+
+  --teal:         #5cbcb4;  /* interactive — links, focus, chips */
+  --teal-solid:   #0d6f68;  /* for white-on-teal buttons */
+  --teal-soft:    rgba(92, 188, 180, 0.10);
+
+  --maroon:       #f0737e;  /* CLIF / critical (dark mode) */
+  --maroon-light: #7a0019;  /* CLIF / critical (light mode) */
+
+  --orange:       #f08a5b;  /* Nate's cardiac work (dark) */
+  --orange-light: #a23d08;  /* light mode */
+
+  --green:        #6ee89a;  /* success / done (dark) */
+  --green-light:  #066e2f;  /* light mode */
+
+  /* ── NEUTRALS (DARK-FIRST) ─────────────────────────────────────────── */
+  --bg:           #0b1017;  /* deep neutral — NOT blue-tinted */
+  --surface:      #0f1923;  /* card, sidebar surface */
+  --surface-2:    #14202c;  /* elevated card */
+  --surface-3:    #1a2939;  /* hover / pressed */
+
+  --ink:          #e2e8f0;  /* body text — not pure white */
+  --ink-bright:   #ffffff;  /* titles, metrics — high-emphasis only */
+  --slate:        #b0b5b9;  /* secondary text (dark mode) */
+  --muted:        #7a828c;  /* tertiary, hints, placeholders */
+
+  /* ── LIGHT MODE ────────────────────────────────────────────────────── */
+  --cream:        #faf8f3;  /* off-white surface */
+  --cream-2:      #f4f2eb;
+  --ink-light:    #0f1923;  /* body text light mode */
+  --slate-light:  #1a2939;
+
+  /* ── BORDERS / DIVIDERS ────────────────────────────────────────────── */
+  --border-subtle:  rgba(255, 255, 255, 0.05);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong:  rgba(255, 255, 255, 0.18);
+  --border-gold:    rgba(201, 168, 76, 0.25);
+
+  /* ── OPACITY TIERS (5-tier, floor 0.30 on readable text) ───────────── */
+  --op-primary:  1.00;
+  --op-label:    0.85;  /* group labels, column headers */
+  --op-body:     0.70;  /* secondary body text */
+  --op-hint:     0.50;  /* timestamps, metadata */
+  --op-muted:    0.30;  /* disabled, decorative */
+
+  /* ── TYPE — 3 FAMILIES ─────────────────────────────────────────────── */
+  --font-body:    'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+
+  /* ── TYPE — 3 WEIGHT TIERS (+ metric 700) ──────────────────────────── */
+  --weight-body:    400;  /* reading text, cell values */
+  --weight-ui:      500;  /* nav, buttons, headers, badges */
+  --weight-heading: 600;  /* page titles, section headers */
+  --weight-metric:  700;  /* dashboard hero numbers only */
+
+  /* ── TYPE — SIZE SCALE (operations-center dense) ───────────────────── */
+  --text-micro:   10px;   /* badges, tiny labels */
+  --text-caption: 10px;   /* timestamps, column headers */
+  --text-label:   11px;   /* field labels, section dividers */
+  --text-small:   12px;   /* secondary, sidebar */
+  --text-body:    13px;   /* cell values, primary table text */
+  --text-base:    14px;   /* buttons, links, nav */
+  --text-md:      16px;   /* paragraphs */
+  --text-lg:      18px;   /* sub-headings */
+  --text-xl:      24px;   /* section titles */
+  --text-2xl:     32px;   /* page titles */
+  --text-3xl:     48px;   /* marketing / hero */
+  --text-hero:    72px;   /* kiosk hero, deck title */
+
+  /* ── LETTER-SPACING ────────────────────────────────────────────────── */
+  --tracking-display: -0.04em;
+  --tracking-heading: -0.02em;
+  --tracking-body:     0;
+  --tracking-kbd:      0.06em;  /* uppercase labels + column headers */
+
+  /* ── SPACING (8px grid, strict) ────────────────────────────────────── */
+  --sp-xs:  4px;
+  --sp-sm:  8px;
+  --sp-md:  12px;
+  --sp-lg:  16px;
+  --sp-xl:  24px;
+  --sp-2xl: 32px;
+  --sp-3xl: 48px;
+  --sp-4xl: 64px;
+
+  /* ── RADII ─────────────────────────────────────────────────────────── */
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-xl:   12px;
+  --radius-2xl:  16px;
+  --radius-full: 9999px;
+
+  /* ── ELEVATION ─────────────────────────────────────────────────────── */
+  --shadow-card:       0 1px 3px rgba(0,0,0,0.30);
+  --shadow-card-hover: 0 6px 16px rgba(0,0,0,0.60);
+  --shadow-elevated:   0 4px 12px rgba(0,0,0,0.40);
+  --shadow-menu:       0 0 0 1px var(--border-default), 0 4px 16px rgba(0,0,0,0.50);
+  --shadow-gold-glow:  0 0 12px rgba(201,168,76,0.35);
+
+  /* ── MOTION ────────────────────────────────────────────────────────── */
+  --dur-fast:    100ms;
+  --dur-normal:  150ms;
+  --dur-moderate:200ms;
+  --dur-slow:    300ms;
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-inout:  cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── SEMANTIC TOKENS ───────────────────────────────────────────────── */
+  --text-fg:        var(--ink);
+  --text-fg-bright: var(--ink-bright);
+  --text-fg-2:      var(--slate);
+  --text-fg-3:      var(--muted);
+  --link:           var(--teal);
+  --accent:         var(--gold);
+  --focus-ring:     var(--teal);
+}
+
+/* ── LIGHT MODE OVERRIDES ─────────────────────────────────────────────── */
+.light, [data-theme="light"] {
+  --bg:        var(--cream);
+  --surface:   #ffffff;
+  --surface-2: #f4f2eb;
+  --surface-3: #e8e4d9;
+  --ink:       var(--ink-light);
+  --ink-bright:#0b1017;
+  --slate:     var(--slate-light);
+  --muted:     #6b7280;
+
+  --teal:      var(--teal-solid);
+  --maroon:    var(--maroon-light);
+  --orange:    var(--orange-light);
+  --green:     var(--green-light);
+
+  --border-subtle:  rgba(15, 25, 35, 0.06);
+  --border-default: rgba(15, 25, 35, 0.12);
+  --border-strong:  rgba(15, 25, 35, 0.20);
+}
+
+/* ==========================================================================
+   SEMANTIC / ELEMENT STYLES
+   ========================================================================== */
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  font-weight: var(--weight-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-body);
+  font-weight: var(--weight-heading);
+  line-height: 1.2;
+  color: var(--ink-bright);
+  margin: 0;
+}
+h1 { font-size: var(--text-2xl); letter-spacing: var(--tracking-display); }
+h2 { font-size: var(--text-xl); letter-spacing: var(--tracking-heading); }
+h3 { font-size: var(--text-lg); }
+h4 { font-size: var(--text-base); font-weight: var(--weight-ui); }
+h5, h6 { font-size: var(--text-small); font-weight: var(--weight-ui); }
+
+/* Marketing / public pages — Fraunces display */
+.display, .public-page h1, .public-page h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+.display-hero {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-hero);
+  letter-spacing: var(--tracking-display);
+  line-height: 1.05;
+  color: var(--ink-bright);
+}
+
+p { color: var(--ink); opacity: var(--op-body); margin: 0 0 var(--sp-md); }
+small { font-size: var(--text-small); opacity: var(--op-hint); }
+
+a { color: var(--teal); text-decoration: none; transition: color var(--dur-normal) var(--ease-out); }
+a:hover { color: var(--gold); }
+
+/* Keyboard shortcut — the ONE place JetBrains Mono is allowed */
+kbd {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: var(--weight-ui);
+  padding: 2px 6px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  letter-spacing: var(--tracking-kbd);
+  text-transform: uppercase;
+}
+
+/* Metric display — 700 weight, tabular figures */
+.metric {
+  font-family: var(--font-body);
+  font-weight: var(--weight-metric);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-3xl);
+  line-height: 1;
+  color: var(--ink-bright);
+}
+
+/* Column header / small caps — dense data pages */
+.col-header, .eyebrow {
+  font-size: var(--text-caption);
+  font-weight: var(--weight-ui);
+  letter-spacing: var(--tracking-kbd);
+  text-transform: uppercase;
+  color: var(--slate);
+  opacity: var(--op-label);
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Tabular figures for data tables */
+.tabular { font-variant-numeric: tabular-nums; }

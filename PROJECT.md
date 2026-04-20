@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: Configure CF Access (Zero Trust) for @umn.edu, then set `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` + `REQUIRE_AUTH` + `TEST_MODE_KEY` secrets, then `VITE_REQUIRE_AUTH=1` + rebuild. See LAUNCH-CHECKLIST.md sections 0 + 1.
+next_action: Work through `docs/design-handoff-2026-04-20/TICKETS.md` — 33 tickets (8 P1 ship-blockers, 14 P2 polish, 11 P3 new surfaces) from the Claude Design audit. P1 first. In parallel, configure CF Access + 4 secrets per LAUNCH-CHECKLIST.md sections 0 + 1 for team launch.
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 
@@ -27,6 +27,31 @@ platform for Nick's critical-care research group at UMN.
 4. **`REFERENCE.md`** — API endpoints, D1 table list, conventions.
 5. **`CHANGELOG.md`** — top entry is the most recent phase; jump there for "what changed recently."
 6. **`docs/OBSERVABILITY.md`** — /api/health runbook + how to wire external uptime monitoring.
+
+## Phase 36e — Claude Design Handoff Imported (2026-04-20)
+
+**Not a code phase — backlog import.** Nick ran the Hub through
+Anthropic's Claude Design (launched 2026-04-17) against HEAD
+`ef604db`. Returned a prioritized 33-ticket implementation backlog
+imported to `docs/design-handoff-2026-04-20/`:
+
+- `TICKETS.md` — **next session works top-to-bottom**. 8 P1 ship-
+  blockers, 14 P2 polish, 11 P3 new surfaces.
+- `Audit.html` — interactive annotated screenshots.
+- `screenshots/` — 30 captures referenced by tickets.
+- `reference/` — token mirror + UI kit mocks (visual direction, not
+  production code).
+
+**P1 targets Tuesday 11am demo.** Headline issues:
+- Test-fixture titles (`test_delete_*` / `deep-audit-sync-*`) leaking
+  into Personal / Calendar / Mentee Milestones / Activity
+- `undefined '23` chart labels on PI Dashboard
+- Team Engagement attribution bug (`anonymous=13,410`)
+- Duplicate meeting action items
+- Persistent tooltip; unlabeled public-Home hero numbers; empty
+  Mentee Milestones; empty Senior Mentors section
+
+See `CHANGELOG.md` Phase 36e for the full list.
 
 ## Phase 36d COMPLETE — Design Sprint (2026-04-20)
 

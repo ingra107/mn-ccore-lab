@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>MN-CCORE Hub · Design Audit · Apr 20 2026</title>
+<link rel="icon" href="assets/favicon.svg"/>
+<link rel="stylesheet" href="colors_and_type.css"/>
+<style>
+  :root{
+    --bg:#0b1017;
+    --surface:#11161f;
+    --surface-2:#151b26;
+    --line:#1e2634;
+    --ink:#e7edf3;
+    --ink-dim:#aab3be;
+    --ink-faint:#6e7683;
+    --gold:#c9a84c;
+    --teal:#177e89;
+    --red:#b23a3a;
+    --amber:#c97a2f;
+    --green:#2f7a4e;
+  }
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;font-feature-settings:"ss01","cv11";line-height:1.5;-webkit-font-smoothing:antialiased}
+  *{box-sizing:border-box}
+
+  /* Top bar */
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(11,16,23,0.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .topbar-inner{max-width:1280px;margin:0 auto;padding:18px 32px;display:flex;align-items:center;gap:32px}
+  .topbar img{height:30px}
+  .topbar .meta{color:var(--ink-dim);font-size:13px;letter-spacing:0.04em}
+  .topbar .meta strong{color:var(--ink);font-weight:500}
+  .topbar nav{margin-left:auto;display:flex;gap:28px;font-size:13px}
+  .topbar nav a{color:var(--ink-dim);text-decoration:none;padding:4px 0;border-bottom:1px solid transparent}
+  .topbar nav a:hover{color:var(--gold);border-bottom-color:var(--gold)}
+
+  /* Hero */
+  .hero{max-width:1280px;margin:0 auto;padding:80px 32px 64px}
+  .eyebrow{font-size:12px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold)}
+  .eyebrow.dim{color:var(--ink-faint)}
+  .hero h1{font-family:'Fraunces',serif;font-weight:400;font-size:88px;line-height:0.98;letter-spacing:-0.025em;margin:20px 0 24px;text-wrap:balance;max-width:1100px}
+  .hero h1 em{font-style:italic;color:var(--gold);font-weight:400}
+  .hero .sub{font-size:22px;line-height:1.5;color:var(--ink-dim);max-width:820px;text-wrap:pretty}
+
+  .summary{max-width:1280px;margin:0 auto;padding:40px 32px 48px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .sum-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px 24px}
+  .sum-card .n{font-family:'Fraunces',serif;font-size:56px;font-weight:400;line-height:0.95;letter-spacing:-0.025em;color:var(--ink)}
+  .sum-card .n.p1{color:#e66a6a}
+  .sum-card .n.p2{color:var(--gold)}
+  .sum-card .n.p3{color:var(--ink-dim)}
+  .sum-card .n.ok{color:#6ee89a}
+  .sum-card .l{margin-top:6px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)}
+  .sum-card p{margin:10px 0 0;font-size:14px;color:var(--ink-dim);line-height:1.45}
+
+  .section{max-width:1280px;margin:0 auto;padding:48px 32px;border-top:1px solid var(--line)}
+  .section > .h{display:flex;align-items:baseline;justify-content:space-between;gap:24px;margin-bottom:32px}
+  .section > .h h2{font-family:'Fraunces',serif;font-weight:400;font-size:44px;letter-spacing:-0.02em;margin:0;color:var(--ink)}
+  .section > .h .note{font-size:14px;color:var(--ink-faint);max-width:520px;text-align:right}
+
+  /* Screen card */
+  .screen{display:grid;grid-template-columns:minmax(0,620px) 1fr;gap:48px;padding:40px 0;border-bottom:1px solid var(--line);align-items:start}
+  .screen:last-child{border-bottom:none}
+  .screen .shot{position:relative;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .screen .shot img{display:block;width:100%;height:auto}
+  .screen .shot-caption{padding:10px 14px;font-size:12px;color:var(--ink-faint);letter-spacing:0.08em;text-transform:uppercase;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+
+  .screen .body h3{font-family:'Fraunces',serif;font-weight:400;font-size:36px;line-height:1.05;letter-spacing:-0.02em;margin:0 0 4px;color:var(--ink)}
+  .screen .body .route{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;color:var(--ink-faint);margin-bottom:22px;display:inline-block;background:var(--surface);padding:2px 8px;border-radius:4px;border:1px solid var(--line)}
+
+  .verdict{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;padding:5px 10px;border-radius:999px;margin-left:8px}
+  .verdict.strong{background:rgba(110,232,154,0.08);color:#6ee89a;border:1px solid rgba(110,232,154,0.25)}
+  .verdict.ok{background:rgba(23,126,137,0.1);color:#5cc2c8;border:1px solid rgba(23,126,137,0.35)}
+  .verdict.attn{background:rgba(201,168,76,0.1);color:var(--gold);border:1px solid rgba(201,168,76,0.35)}
+  .verdict.bug{background:rgba(178,58,58,0.14);color:#e66a6a;border:1px solid rgba(178,58,58,0.4)}
+  .verdict.dot::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+
+  .obs{margin-top:0;padding:0;list-style:none}
+  .obs li{padding:14px 0;border-bottom:1px dashed var(--line);display:grid;grid-template-columns:54px 1fr;gap:14px;align-items:start}
+  .obs li:last-child{border-bottom:none}
+  .obs .pill{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:0.05em;font-weight:500;text-align:center;padding:3px 0;border-radius:4px;line-height:1.5}
+  .obs .pill.p1{background:rgba(178,58,58,0.18);color:#e66a6a;border:1px solid rgba(178,58,58,0.35)}
+  .obs .pill.p2{background:rgba(201,168,76,0.14);color:var(--gold);border:1px solid rgba(201,168,76,0.35)}
+  .obs .pill.p3{background:rgba(170,179,190,0.1);color:var(--ink-dim);border:1px solid rgba(170,179,190,0.25)}
+  .obs .pill.ok{background:rgba(110,232,154,0.1);color:#6ee89a;border:1px solid rgba(110,232,154,0.3)}
+  .obs .pill.idea{background:rgba(23,126,137,0.12);color:#5cc2c8;border:1px solid rgba(23,126,137,0.35)}
+  .obs .what{font-size:15.5px;color:var(--ink);line-height:1.5}
+  .obs .what em{color:var(--gold);font-style:normal;font-weight:500}
+  .obs .what code{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;background:var(--surface);padding:1px 6px;border-radius:3px;border:1px solid var(--line);color:var(--ink)}
+  .obs .fix{margin-top:6px;font-size:14px;color:var(--ink-dim);line-height:1.5}
+  .obs .fix::before{content:'→ ';color:var(--gold);font-weight:500}
+  .obs .src{margin-top:4px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:var(--ink-faint);letter-spacing:0.02em}
+
+  /* Annotation layer on screenshot */
+  .shot .anno{position:absolute;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--gold);color:#0b1017;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;font-weight:700;box-shadow:0 2px 14px rgba(201,168,76,0.5),0 0 0 3px rgba(201,168,76,0.18);cursor:default}
+  .shot .anno.red{background:#e66a6a;color:#0b1017;box-shadow:0 2px 14px rgba(230,106,106,0.55),0 0 0 3px rgba(230,106,106,0.18)}
+  .shot .anno.teal{background:#5cc2c8;color:#0b1017;box-shadow:0 2px 14px rgba(92,194,200,0.5),0 0 0 3px rgba(92,194,200,0.18)}
+  .shot .anno.small{width:22px;height:22px;font-size:11px}
+  .shot .box{position:absolute;border:2px solid var(--gold);border-radius:4px;box-shadow:0 0 0 2px rgba(201,168,76,0.18),0 0 24px rgba(201,168,76,0.25);pointer-events:none}
+  .shot .box.red{border-color:#e66a6a;box-shadow:0 0 0 2px rgba(230,106,106,0.2),0 0 24px rgba(230,106,106,0.3)}
+  .shot .box.teal{border-color:#5cc2c8;box-shadow:0 0 0 2px rgba(92,194,200,0.2),0 0 24px rgba(92,194,200,0.3)}
+
+  /* Group header stripes */
+  .group-head{display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:baseline;margin:24px 0 10px;padding:20px 0;border-top:2px solid var(--gold);position:relative}
+  .group-head::before{content:'';position:absolute;top:-2px;left:0;width:64px;height:2px;background:var(--gold)}
+  .group-head .tag{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)}
+  .group-head h4{margin:0;font-family:'Fraunces',serif;font-weight:400;font-size:32px;letter-spacing:-0.015em;color:var(--ink)}
+  .group-head .count{font-size:13px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+
+  /* Wins stripe */
+  .wins{background:linear-gradient(180deg,rgba(110,232,154,0.04) 0%,transparent 100%);border:1px solid rgba(110,232,154,0.2);border-radius:10px;padding:32px 36px;margin:32px 0;display:grid;grid-template-columns:1fr 2fr;gap:40px;align-items:start}
+  .wins .label{display:flex;flex-direction:column;gap:8px}
+  .wins .label span{font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#6ee89a}
+  .wins .label h4{font-family:'Fraunces',serif;font-weight:400;font-size:34px;letter-spacing:-0.02em;margin:0;color:var(--ink)}
+  .wins ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
+  .wins li{font-size:15px;color:var(--ink);line-height:1.5;padding-left:26px;position:relative}
+  .wins li::before{content:'✓';position:absolute;left:0;top:1px;color:#6ee89a;font-weight:700}
+  .wins li span{color:var(--ink-dim);display:block;margin-top:2px;font-size:13.5px}
+
+  /* Closing */
+  .closing{max-width:1280px;margin:0 auto;padding:80px 32px 120px}
+  .closing .eyebrow{color:var(--gold)}
+  .closing h2{font-family:'Fraunces',serif;font-weight:400;font-size:56px;letter-spacing:-0.02em;margin:16px 0 24px;color:var(--ink)}
+  .closing .body{font-size:18px;line-height:1.6;color:var(--ink-dim);max-width:820px;margin-bottom:40px}
+  .priority-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px}
+  .prio{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:28px 26px}
+  .prio.p1{border-color:rgba(178,58,58,0.35)}
+  .prio.p2{border-color:rgba(201,168,76,0.35)}
+  .prio.p3{border-color:rgba(92,194,200,0.3)}
+  .prio .tag{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:12px}
+  .prio.p1 .tag{color:#e66a6a}
+  .prio.p2 .tag{color:var(--gold)}
+  .prio.p3 .tag{color:#5cc2c8}
+  .prio h5{font-family:'Fraunces',serif;font-weight:400;font-size:24px;letter-spacing:-0.015em;margin:0 0 16px;color:var(--ink)}
+  .prio ul{margin:0;padding:0;list-style:none;font-size:14px;color:var(--ink-dim);line-height:1.5;display:flex;flex-direction:column;gap:10px}
+  .prio li{padding-left:14px;position:relative}
+  .prio li::before{content:'·';position:absolute;left:0;color:var(--ink-faint);font-weight:700}
+
+  .footer{border-top:1px solid var(--line);max-width:1280px;margin:0 auto;padding:40px 32px 60px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ink-faint)}
+  .footer svg{height:16px;vertical-align:middle;margin-right:6px;opacity:0.6}
+
+  @media (max-width:1060px){
+    .screen{grid-template-columns:1fr;gap:28px}
+    .summary{grid-template-columns:repeat(2,1fr)}
+    .priority-grid{grid-template-columns:1fr}
+    .wins{grid-template-columns:1fr}
+    .hero h1{font-size:56px}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <img src="assets/mnccore-logo-dark.svg" alt="MN-CCORE"/>
+    <div class="meta"><strong>Design Audit</strong> · Apr 20 2026 · HEAD ef604db</div>
+    <nav>
+      <a href="#portal">Portal</a>
+      <a href="#research">Research</a>
+      <a href="#lab">Lab</a>
+      <a href="#public">Public</a>
+      <a href="#kiosk">Pulse</a>
+      <a href="#priorities">Priorities</a>
+    </nav>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="eyebrow">Design audit · 24 surfaces · 30 screenshots · 205 files imported</div>
+  <h1>A tour through the Hub, with <em>what's working</em> and <em>what to fix first</em>.</h1>
+  <p class="sub">Screen-by-screen pass against live prod at <code style="font-family:'JetBrains Mono',monospace;color:var(--ink)">mn-ccore-lab.pages.dev</code>. Grounded in the imported source and the April 20 captures. Findings are tagged <strong style="color:#e66a6a">P1</strong> (ship-blocker for Tuesday), <strong style="color:var(--gold)">P2</strong> (ship this week), <strong style="color:#5cc2c8">P3</strong> (next phase).</p>
+</section>
+
+<section class="summary">
+  <div class="sum-card"><div class="n p1">8</div><div class="l">P1 · Fix before Tuesday</div><p>Data bugs and broken strings a live audience will see.</p></div>
+  <div class="sum-card"><div class="n p2">14</div><div class="l">P2 · Ship this week</div><p>Scannability, density, filter clarity — high-leverage polish.</p></div>
+  <div class="sum-card"><div class="n p3">11</div><div class="l">P3 · Next phase</div><p>Nice-to-haves, new surfaces, speculative ideas.</p></div>
+  <div class="sum-card"><div class="n ok">9</div><div class="l">Strong &mdash; leave alone</div><p>Already operating at the fidelity the rest should match.</p></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ PORTAL ═══════════════════════════════════════════════ -->
+<section class="section" id="portal">
+  <div class="h">
+    <h2>Portal · the operations core</h2>
+    <div class="note">Dashboard, My Hub, Tasks, Calendar, Deadlines. Where the lab lives day to day — where every fix compounds.</div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-01-dashboard.png" alt="Dashboard"/>
+      <span class="anno red" style="top:54%;left:24%">1</span>
+      <span class="anno" style="top:54%;left:54%">2</span>
+      <span class="anno" style="top:54%;left:82%">3</span>
+      <span class="anno teal" style="top:80%;left:33%">4</span>
+      <div class="shot-caption"><span>desktop-01-dashboard.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Dashboard <span class="verdict ok dot">Strong bones</span></h3>
+      <span class="route">/ · Home.tsx + Dashboard.tsx</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what"><em>Project Health card truncates project names to <code>CLI...</code></em> — the hero number (63 projects tracked) is undercut by unreadable slugs in the same card.</div>
+          <div class="fix">Expand card min-width, show top 3 at-risk projects with full names, or switch to a compact heatmap grid with hover tooltips.</div>
+          <div class="src">components/Dashboard.tsx — &lt;ProjectHealthCard/&gt;</div>
+        </div></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Tasks card shows <em>one</em> task preview under a card titled "42 pending · 548 done." The preview isn't load-bearing — a task list under the Tasks entry point should show at least 3–5 items or none at all.</div>
+          <div class="fix">Either show 4 tasks (trim to title + due chip) or drop the preview and make the hero number clickable.</div>
+        </div></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Publication Pipeline is the only card using horizontal bar charts — it's the visual outlier. The <em>56</em> under "Published" falls below the fold inside the card.</div>
+          <div class="fix">Match the metric-first pattern of neighboring cards: stack three big numbers (4 · 3 · 56), bars become secondary. Or raise card height so 56 is visible without scroll.</div>
+        </div></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">Recent Activity shows one entry. At 1,440px the card earns its real estate — a single activity line makes it look underpowered.</div>
+          <div class="fix">Show 4–6 activity lines with compact density; the "View all" link can carry the rest.</div>
+        </div></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">The <em>"Just Shipped · Phase 36c"</em> banner with heartbeat glyph is the best thing on this page — clear, motif-on-brand, shows momentum. Keep it as the template for future phase announcements.</div>
+        </div></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- My Hub / Personal -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-02-personal.png" alt="My Hub"/>
+      <span class="anno red" style="top:62%;left:84%">1</span>
+      <span class="anno" style="top:15%;left:50%">2</span>
+      <span class="anno" style="top:37%;left:40%">3</span>
+      <div class="shot-caption"><span>desktop-02-personal.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>My Hub <span class="verdict attn dot">Signal buried in QA noise</span></h3>
+      <span class="route">/personal · MyItems.tsx</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what">Recent Activity is <em>100% delete noise</em>: <code>Deleted task: test_delete_Future task 1</code>, <code>Deleted task: deep-audit-sync-full-3kitc1___cli_edit</code>, five in a row. Every real user will see this on first load Tuesday.</div>
+          <div class="fix">Filter activity feed to exclude tasks with <code>test_delete_</code> prefix and any <code>deep-audit-sync-*</code> slugs. Better: drop deletes from the feed entirely — creations, completions, and comments only.</div>
+          <div class="src">components/RecentActivity.tsx — add title regex filter</div>
+        </li></li>
+        <li><span class="pill p1">P1</span><div>
+          <div class="what"><em>Top banner says "Sign in with @umn.edu"</em> yet the page below is fully populated with personal tasks. Either the user is signed in (and the prompt is a bug) or they aren't (and this is showing another user's data). Either way, the state is broken.</div>
+          <div class="fix">If signed in, suppress the banner. If not, replace the populated page with a public-facing empty state.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Regulatory banner shows test fixtures: <code>test_delete_CCI-ARDS Data Use Agreement</code>. Real user's first impression on a compliance-sensitive block.</div>
+          <div class="fix">Same filter — drop <code>test_delete_*</code> from regulatory aggregations before ship.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Tasks list is 20 rows of <em>[Carried forward]</em> prefix. The prefix is 17 characters of noise on every title.</div>
+          <div class="fix">Lift the carried-forward state into a compact icon/chip in a dedicated column; strip the prefix from the title itself. Massive legibility recovery.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Three-button action row (New Task · Submit Idea · Ask a Question) above Quick capture is well-calibrated — clear primary actions without visual weight competing with the dense list.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- My Tasks -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-03-my-tasks.png" alt="My Tasks"/>
+      <span class="anno" style="top:5%;left:35%">1</span>
+      <span class="anno" style="top:11%;left:65%">2</span>
+      <span class="anno red" style="top:36%;left:20%">3</span>
+      <div class="shot-caption"><span>desktop-03-my-tasks.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Tasks table <span class="verdict ok dot">Dense, powerful, cramped</span></h3>
+      <span class="route">/tasks · pages/Tasks/*</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what">Header stacks four distinct filter/view systems in one row: view tabs (Mine/All/Team), urgency tabs (Today/Week/Overdue), view-mode tabs (list/board/table), and a sort dropdown. Visual hierarchy collapses — everything shouts equally.</div>
+          <div class="fix">Demote view-mode (list/board/table) to an icon cluster right-justified (it's already there, but duplicated). Merge the Today/Week tabs into sort — or turn them into quick-filter pills visually distinct from the primary Mine/All view tabs.</div>
+        </li></li>
+        <li><span class="pill p1">P1</span><div>
+          <div class="what">FOCUS NEXT section at top: the three cards are low-contrast and visually equal-weight to regular rows below. The anchor section of the page should feel different from everything else.</div>
+          <div class="fix">Render FOCUS NEXT as 3 substantial cards with more padding and gold left-accent; visually separate from the dense list with 48px whitespace.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Every row is <em>[Carried forward]</em> — same issue as My Hub. Title column is swallowed by meta-prefix.</div>
+          <div class="fix">Dedicated "age" column with a ↻ glyph + days carried. Title reads clean.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">OVERDUE section has 43 items. No secondary grouping (by project? by urgency?) means you scan a wall of dates.</div>
+          <div class="fix">Sub-group OVERDUE by project once it exceeds 15 rows. Match the treatment THIS WEEK / LATER already uses.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Urgent/High pills, due chips, and assignee dots are the right density for a table this dense. Don't lighten them.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-04-calendar.png" alt="Calendar"/>
+      <span class="anno" style="top:47%;left:18%">1</span>
+      <span class="anno red" style="top:48%;left:40%">2</span>
+      <div class="shot-caption"><span>desktop-04-calendar.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Lab Calendar <span class="verdict attn dot">Wrecked by test data</span></h3>
+      <span class="route">/calendar</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what">Every non-meeting event title reads <code>test_delete_preflight...</code> or <code>test_delete_audit sh...</code>. On Tuesday's shared screen demo this looks like the app is broken.</div>
+          <div class="fix">Filter <code>test_delete_*</code> events out of calendar aggregations until you actually want them in. Add a debug toggle in Settings to bring them back for QA.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Three legend dots (Meetings · Task Dues · Milestones) at the bottom are the only way to decode event colors. Hard to see on a projected screen.</div>
+          <div class="fix">Move legend to top-right next to Export; increase dot size to 10px; add high-contrast outline so green/red dots read against both dark and light event fills.</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">Empty weeks (rows 1 and 5) eat vertical space. A 5-week month always has more empty cells than full.</div>
+          <div class="fix">Add a "Dense week" toggle (default off) that collapses empty weeks to a single-line rule. Minor win, noticeable on laptop screens.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Deadlines -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-05-deadlines.png" alt="Deadlines"/>
+      <span class="anno red" style="top:15%;left:45%">1</span>
+      <span class="anno red" style="top:26%;left:25%">2</span>
+      <span class="anno" style="top:9%;left:55%">3</span>
+      <div class="shot-caption"><span>desktop-05-deadlines.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Deadlines & Milestones <span class="verdict attn dot">Redundancy + confusion</span></h3>
+      <span class="route">/deadlines · DeadlineCascade.tsx</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what">Top red banner shows <em>"[Carried forward] Create shared project tracker for 2026 milestones"</em> — 74d overdue. The <em>exact same row</em> is the first item in OVERDUE section right below.</div>
+          <div class="fix">Drop the banner when the most-overdue item is already the top row below; or change the banner to a cascade summary ("36 items overdue · 5 over 60 days") with no single-item focus.</div>
+        </li></li>
+        <li><span class="pill p1">P1</span><div>
+          <div class="what">The "Switch to Timeline for a visual map" banner is a tutorial hint that never dismisses. It sits adjacent to the List/Timeline/Cascade tabs so it implies the tabs don't work.</div>
+          <div class="fix">Either hide after first Timeline click (localStorage flag) or remove entirely — tab labels are self-explanatory.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">OVERDUE has 36 items listed as equals. A 74-day-overdue project tracker shouldn't scan the same as a 37-day-overdue galley proof.</div>
+          <div class="fix">Sub-bucket OVERDUE into <em>Critical (60d+)</em>, <em>Urgent (30–60d)</em>, <em>Recent (<30d)</em>. Nick gets to Tuesday's meeting knowing which three to discuss.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Section buckets (OVERDUE / THIS WEEK / NEXT WEEK / LATER / COMPLETED) with counts and colored dots — excellent. This is the pattern to replicate on Tasks.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ RESEARCH ═══════════════════════════════════════════════ -->
+<section class="section" id="research">
+  <div class="h">
+    <h2>Research · projects, grants, manuscripts</h2>
+    <div class="note">The research portfolio. Dense lists, long rows, category-heavy. Biggest scannability opportunity.</div>
+  </div>
+
+  <!-- Projects list -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-06-projects.png" alt="Projects"/>
+      <span class="anno" style="top:10%;left:42%">1</span>
+      <span class="anno" style="top:28%;left:30%">2</span>
+      <span class="anno red" style="top:75%;left:80%">3</span>
+      <div class="shot-caption"><span>desktop-06-projects.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Research Pipeline <span class="verdict attn dot">The CLIF prefix problem</span></h3>
+      <span class="route">/projects · pages/Projects</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what"><em>Roughly 30 of 60 project titles start with "CLIF:"</em> — the prefix is the loudest thing on every row. Eyes can't find the distinguishing token.</div>
+          <div class="fix">Add a "Consortium" filter column (CLIF / MN-CCORE / UMN / ATS / RO1 / K23) and strip the prefix from the title. Titles drop from ~40 to ~25 characters average. Enormous scan win.</div>
+          <div class="src">pages/Projects/ProjectsList.tsx — column + title transform</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Section headers (DATA COLLECTION · 9, WRITING · 8, etc) are on the same visual weight as rows. Hard to track which bucket you're scrolling through.</div>
+          <div class="fix">Sticky section headers when scrolling, with the count badge growing slightly. This pattern is already working on Deadlines — reuse it.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">PRIORITY column reads in tiny red text ("LOW", "MEDIUM") right-aligned. Priority is high-signal — should earn a small pill.</div>
+          <div class="fix">Urgent (red fill), High (amber), Medium (slate), Low (outline). Matches the Tasks treatment.</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">60-row list has no search. The Cmd+K palette partially covers, but in-context filter for projects would be expected.</div>
+          <div class="fix">Inline filter input in the header, filters as you type against title + tags.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Grouping by stage (Idea → Data Collection → Analysis → Writing → Review → Submitted) is the correct mental model for research ops. Don't change it.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Project Detail -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-07-project-detail.png" alt="Project detail"/>
+      <span class="anno" style="top:38%;left:38%">1</span>
+      <span class="anno teal" style="top:50%;left:40%">2</span>
+      <span class="anno" style="top:85%;left:30%">3</span>
+      <div class="shot-caption"><span>desktop-07-project-detail.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Project Detail · PF-v-SF <span class="verdict strong dot">Best info density on site</span></h3>
+      <span class="route">/projects/[slug] · ProjectDetail.tsx</span>
+      <ul class="obs">
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Stage selector (Idea · Data Collection · Analysis · Writing · Review · Published) as a horizontal timeline is the cleanest thing in the app. Instantly answers "where is this?"</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Related Projects "AI-detected connections" block with shared-team and shared-topic chips is a strong surface for the Hermes story — good proof of the knowledge-surface thesis.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Project Timeline bullets are chronological (Feb 6 · Mar 18 · Apr 20) but visually unanchored — no timeline line, just stacked rows.</div>
+          <div class="fix">Render as a vertical timeline with connecting rule and dot glyphs (filled for completed, outlined for current, empty for future). Reuses the Stage selector language.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Key Documents section feels perfunctory — one folder link with 4 type-tag pills below that aren't actually linked to anything. Reads as UI scaffolding.</div>
+          <div class="fix">Either populate (Box Folder, Google Doc, Dataset, Protocol as real links) or collapse to a "Add documents" empty state.</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">Tabs (Overview · Tasks 2 · Revisions · Activity · Literature) are great; Tasks count as a pill is nice. Literature tab suggests publications linkage — strong future surface.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Manuscripts -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-08-manuscripts.png" alt="Manuscripts"/>
+      <span class="anno" style="top:22%;left:50%">1</span>
+      <span class="anno" style="top:50%;left:35%">2</span>
+      <div class="shot-caption"><span>desktop-08-manuscripts.png</span><span>1440 × 3500 (long)</span></div>
+    </div>
+    <div class="body">
+      <h3>Manuscripts <span class="verdict attn dot">Dense wall of gray</span></h3>
+      <span class="route">/manuscripts</span>
+      <ul class="obs">
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Page scrolls to ~3,500px tall with roughly 60 rows. Status column (Writing, Data Analysis, Submitted, Published) carries all the signal; priority is visible but the journal/venue isn't.</div>
+          <div class="fix">Add Venue column (even if many are blank / "Target: JAMIA"). Group by stage like Projects does. Consider a "Published" grid view — final-state manuscripts should feel like trophies, not rows.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">DRAFTING section at top surfaces 6 manuscripts at once — useful, but the small section headers (DRAFTING, IN REVIEW, PUBLISHED) look like throwaway labels.</div>
+          <div class="fix">Treatment from Deadlines — dot + count + bold label. This pattern should be universal across any grouped list.</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">No date column visible. Manuscripts-in-review without a "days since submitted" count hide bottlenecks.</div>
+          <div class="fix">Add "Submitted" column with days-elapsed chip (e.g. 42d in review).</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Ideas -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-09-ideas.png" alt="Ideas"/>
+      <span class="anno" style="top:17%;left:35%">1</span>
+      <span class="anno teal" style="top:36%;left:20%">2</span>
+      <div class="shot-caption"><span>desktop-09-ideas.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Ideas Board <span class="verdict ok dot">Right concept, under-styled</span></h3>
+      <span class="route">/ideas</span>
+      <ul class="obs">
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">The pipeline <code>New → Under Review → Approved → Parked</code> is rendered as teal pills at the top but isn't visually connected to the list below. The list is flat and state is in a per-row dropdown.</div>
+          <div class="fix">Make the pipeline an actual kanban (4 columns) as the primary view; demote the table to a secondary "list" toggle. Or if staying flat: group the list by state using the same header pattern as Projects.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Category tags <code>tool</code>, <code>culture</code>, <code>ops</code> appear as tiny secondary text above titles — hard to scan.</div>
+          <div class="fix">Promote to colored chip column (culture=gold, ops=teal, tool=slate), right-aligned.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Submitter avatar + thumbs-up vote count + age-in-days is the right minimal signal set. Don't over-design it.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Decisions -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-10-decisions.png" alt="Decisions"/>
+      <span class="anno teal" style="top:20%;left:30%">1</span>
+      <span class="anno" style="top:55%;left:50%">2</span>
+      <div class="shot-caption"><span>desktop-10-decisions.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Decision Log <span class="verdict strong dot">Quietly excellent</span></h3>
+      <span class="route">/decisions · DecisionCard.tsx</span>
+      <ul class="obs">
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Tag chips (architecture · grants · infrastructure · design · sync · taxonomy) with counts — this is the clearest IA on any page. You can actually find the decision you remember.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Outcome column with "Pending / Recorded / Revisited" as inline-editable dropdowns + Neutral label on the last row — subtle structural difference from Tasks. Right choice.</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">Nothing uses the Timeline toggle. If Decisions-as-timeline is a real second view, prototype it — otherwise drop the toggle.</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">Outcome column sits between Title and Tags. In a decision log, outcome is the primary answer to "what did we decide?" — but it's visually demoted.</div>
+          <div class="fix">Move Outcome to far right as a large pill (Pending/Recorded/Neutral/Revisited). Let the row read as Title → Context → Outcome like a narrative sentence.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Research Digest -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-11-digest.png" alt="Research Digest"/>
+      <span class="anno red" style="top:6%;left:40%">1</span>
+      <span class="anno" style="top:13%;left:55%">2</span>
+      <span class="anno" style="top:17%;left:50%">3</span>
+      <div class="shot-caption"><span>desktop-11-digest.png</span><span>1440 × 2800 (long)</span></div>
+    </div>
+    <div class="body">
+      <h3>Research Digest <span class="verdict bug dot">IA collapse</span></h3>
+      <span class="route">/digest · Digest.tsx</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what">Three rows of tabs stack on top of each other, all active-looking, all unreadable at the capture resolution: a tag filter row, a time-bucket row (This Week/Month/etc), and a "Sort/Type" row. Roughly 18 controls visible before you reach a single result.</div>
+          <div class="fix">Collapse to two lines max: (1) the primary tag filter row as scroll-on-overflow, (2) a single sort/time compound. Move anything else behind a "Filters" toggle that opens a sheet.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Every result card has status pill on the left (green = Published, teal = Preprint, dark = ?) but the color code isn't legible without a legend.</div>
+          <div class="fix">Add a one-line legend directly under the filters OR label the pill with text (PUBLISHED / PREPRINT / SUBMITTED / DRAFT). Don't make users decode color alone.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Results are stacked cards all at uniform height; page reads as a wall. The content (actual titles, journals, authors) is there but buried by card chrome.</div>
+          <div class="fix">Reduce card padding ~30%, drop border-radius to 4px, let titles grow. Target 8–10 results in-viewport instead of current 4.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Grants -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-12-grants.png" alt="Grants"/>
+      <span class="anno" style="top:25%;left:20%">1</span>
+      <span class="anno teal" style="top:55%;left:45%">2</span>
+      <div class="shot-caption"><span>desktop-12-grants.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Grants & Funding <span class="verdict ok dot">Near-final</span></h3>
+      <span class="route">/grants · Grants.tsx</span>
+      <ul class="obs">
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Progress bar under title + mechanism chip (K23 / R03 / R01) + agency column is the right information order. Keep it.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Post-Award Milestones empty state reads as a placeholder. Once a grant is Funded, you'll need to populate this — make sure design follows.</div>
+          <div class="fix">Design the populated state now so ADHERE-LPV and similar R01s have a target when they move to Funded.</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">Grant Landscape (NIH RePORTER) search bar is a distinct capability buried at the bottom. If it works well, lift it into a visible tab alongside List/Timeline.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ LAB ═══════════════════════════════════════════════ -->
+<section class="section" id="lab">
+  <div class="h">
+    <h2>Lab · meetings, team, analytics</h2>
+    <div class="note">The human-centric surfaces. Meetings is the most-used; Analytics has data-integrity issues to resolve before Tuesday.</div>
+  </div>
+
+  <!-- Meetings -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-13-meetings.png" alt="Meetings"/>
+      <span class="anno red" style="top:45%;left:60%">1</span>
+      <span class="anno" style="top:25%;left:40%">2</span>
+      <span class="anno" style="top:72%;left:30%">3</span>
+      <span class="anno red" style="top:91%;left:35%">4</span>
+      <div class="shot-caption"><span>desktop-13-meetings.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Meeting Hub <span class="verdict bug dot">Data duplication + tooltip nag</span></h3>
+      <span class="route">/meetings · Meetings.tsx + MeetingDetail.tsx</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what"><em>Action Items list has duplicates.</em> "Address PF-v-SF reviewer comment #3" appears twice (Nick, due Apr 1). "Pull updated CCI cohort counts" appears twice (Casey, due Apr 4). "Draft Volume vs Pressure Control" appears twice (Nick, due Mar 25). "Finalize GDMS survey REDCap" appears twice (Emma, due Mar 31). Four duplicate pairs in one meeting.</div>
+          <div class="fix">Deduplicate action-item queries by (title, assignee, due) tuple. This is almost certainly a join producing Cartesian product.</div>
+          <div class="src">pages/Meetings/MeetingDetail.tsx — actionItems query</div>
+        </li></li>
+        <li><span class="pill p1">P1</span><div>
+          <div class="what">Tooltip "Click a meeting for prep and actions" floats at bottom over the Decisions action area, never dismisses. Looks like a stuck modal.</div>
+          <div class="fix">Dismiss on first click of any meeting (localStorage). Alternatively remove — the UI is self-explanatory.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Left meeting list is ~220px wide with truncated titles (<code>MNCCORE Biweekly: LPV Paper Proo...</code>). The right detail panel has enough room.</div>
+          <div class="fix">Widen meeting list to ~280px or allow title wrap to 2 lines. Dates can shrink.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">"Full meeting recommended" gold banner with live counts (8 blocked tasks · 23 agenda items · 555 pending · 11800 activities since last meeting) — this IS the demo-worthy part of Hub. It's literally the thesis of the product rendered in one bar.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Lab Analytics -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-14-analytics.png" alt="Lab Analytics"/>
+      <span class="anno" style="top:13%;left:45%">1</span>
+      <span class="anno" style="top:56%;left:25%">2</span>
+      <span class="anno teal" style="top:86%;left:80%">3</span>
+      <div class="shot-caption"><span>desktop-14-analytics.png</span><span>1280 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Lab Analytics <span class="verdict ok dot">Solid, a few orphan charts</span></h3>
+      <span class="route">/analytics</span>
+      <ul class="obs">
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Top-row metric cards show <em>0 / 0 / 36 / 0</em> for the 4W window. Three zeros in a row of hero metrics is deflating — even if technically true (no completes this week).</div>
+          <div class="fix">Show YoY or MoM delta chips (<code>▲ 0 vs 12 prev</code>). A zero with context becomes a signal instead of a void.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Task Velocity chart uses teal + gold bars side-by-side (likely "completed vs created") but there's no legend visible. Ambiguous.</div>
+          <div class="fix">Legend inline above the bars; color-match other charts for "completed" (teal) vs "created" (slate).</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">Workload Distribution right column is the most-useful single chart — shows Nick doing 27 vs trainees at 5/4/3. Small but load-bearing for the PI story.</div>
+          <div class="fix">Promote to wider card, or link from PI Dashboard as a drill-down.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PI Analytics -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-15-pi-analytics.png" alt="PI Analytics"/>
+      <span class="anno red" style="top:16%;left:70%">1</span>
+      <span class="anno red" style="top:64%;left:25%">2</span>
+      <span class="anno red" style="top:68%;left:25%">3</span>
+      <div class="shot-caption"><span>desktop-15-pi-analytics.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>PI Dashboard <span class="verdict bug dot">Broken strings + confusing scores</span></h3>
+      <span class="route">/pi-analytics</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what"><em>Trainee Pubs: 0</em> is a hero metric, and the page says "3 trainees." Two reactions from an audience: "Nick's trainees don't publish" or "the app can't count." Neither is what you want Tuesday.</div>
+          <div class="fix">Either pull real publication data by trainee (CLIF/MN-CCORE papers with trainee coauthors), or replace with a neutral metric: "trainees · 3 · 0 first-author papers · 2 coauthor." Better to be specific than to show 0.</div>
+        </li></li>
+        <li><span class="pill p1">P1</span><div>
+          <div class="what"><em>Publications per Quarter x-axis labels read <code>undefined '23</code>, <code>undefined '24</code>, <code>undefined '25</code>, <code>undefined '26</code></em>. Template string bug — quarter isn't being interpolated into the label.</div>
+          <div class="fix">Fix the label formatter: <code>`Q${q} '${year.slice(2)}`</code>. Verify with Q1–Q4 labels across the 4 years.</div>
+          <div class="src">pages/pi-analytics — publicationsPerQuarter label formatter</div>
+        </li></li>
+        <li><span class="pill p1">P1</span><div>
+          <div class="what"><em>Team Engagement: "anonymous" scores 13,410</em>; every real team member scores 0. Either the scoring is broken (dividing real users' contributions into the anonymous bucket) or unused accounts are being counted.</div>
+          <div class="fix">Exclude anonymous/system accounts from engagement scoring. Investigate why real members score 0 — likely a user ID mismatch between events and profiles.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Commitment Scorecard (100% kept · 4 of 4) with green ring is a genuinely strong signal — this is the unique-to-Hub metric worth putting on the deck.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Response Time block (13 days avg, 13d last 90 vs 0d prior 90) has the right framing — trend-comparative, honest when prior data is missing.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Mentee Milestones -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-16-mentee-milestones.png" alt="Mentee Milestones"/>
+      <span class="anno red" style="top:23%;left:75%">1</span>
+      <span class="anno" style="top:37%;left:60%">2</span>
+      <div class="shot-caption"><span>desktop-16-mentee-milestones.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Mentee Milestones <span class="verdict attn dot">Test data hiding a real feature</span></h3>
+      <span class="route">/mentee-milestones</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what">Every milestone title begins <code>test_delete_</code>. This is the most promising surface for trainee conversations Tuesday and it's 100% QA fixtures.</div>
+          <div class="fix">Replace with 3–4 real milestones per trainee (past + future, mix of types). If real data doesn't exist yet, seed it with plausible entries — this page is too important to demo on fake data.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what"><em>Silent 32d / Quiet 21d</em> chips next to trainee names — strong signal, but "Silent" is harsh language for a trainee status.</div>
+          <div class="fix">Soften to <em>Needs check-in · 32d</em> or just show the days-since-activity as a quiet gray chip. Saves the social cost.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Three trainee header cards (Kendall/Casey/Dan) with upcoming/done counts above the grouped table — clear and empathetic as a dashboard. Good pattern.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Milestone types (Presentation · Certification · Manuscript · Abstract · Exam · Coursework · Workshop · Grant) are the right taxonomy — covers the actual PhD/fellow journey.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PB Sector -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-17-pb-sector.png" alt="PB Sector"/>
+      <span class="anno teal" style="top:45%;left:50%">1</span>
+      <div class="shot-caption"><span>desktop-17-pb-sector.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>PB Sector <span class="verdict attn dot">Empty state for an unshipped feature</span></h3>
+      <span class="route">/pb-sector</span>
+      <ul class="obs">
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Page is "No daily plan loaded · PB Sector shows your daily plan when connected to the Peripheral Brain system." An aspirational feature living in the nav before it ships. Users will click and bounce.</div>
+          <div class="fix">Either hide the nav entry until Peripheral Brain is live, or replace the empty state with a "coming soon / sign up for preview" that sets expectation. Don't leave dead-ends in primary nav.</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">Name "PB Sector" is opaque without the acronym expansion. First-time users have no context.</div>
+          <div class="fix">Either rename to <em>Peripheral Brain</em> in nav with "PB" as secondary, or add tooltip/expansion.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-18-settings.png" alt="Settings"/>
+      <span class="anno" style="top:30%;left:55%">1</span>
+      <span class="anno" style="top:65%;left:30%">2</span>
+      <div class="shot-caption"><span>desktop-18-settings.png</span><span>1440 × 2400</span></div>
+    </div>
+    <div class="body">
+      <h3>Settings <span class="verdict ok dot">Functional, could be organized</span></h3>
+      <span class="route">/settings</span>
+      <ul class="obs">
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Page is a single vertical scroll from Basic Info → Workflow Templates → AI Meeting Context → Appearance → Reset. Nine distinct concerns stacked linearly.</div>
+          <div class="fix">Left-rail tabbed settings (Profile · Templates · AI · Appearance · Danger Zone). Standard pattern, users scan faster.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">AI Meeting Context section lists every team member with a note input — 14 rows of "e.g. skills, roles, responsibilities..." placeholder. Reads as "you should fill all of these in" which is a high bar.</div>
+          <div class="fix">Collapse by default; show only members with notes. Bulk-edit modal for "update several members" use case.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Appearance preview — side-by-side light/dark card — is the correct way to show theme choice. Don't change it.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ PUBLIC ═══════════════════════════════════════════════ -->
+<section class="section" id="public">
+  <div class="h">
+    <h2>Public · marketing + portal boundary</h2>
+    <div class="note">The first impression for external visitors. Distinct voice (Fraunces, more room, less dense) from internal tools.</div>
+  </div>
+
+  <!-- Home -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-00-home-public.png" alt="Home public"/>
+      <span class="anno red" style="top:3%;left:50%">1</span>
+      <span class="anno" style="top:8%;left:35%">2</span>
+      <span class="anno teal" style="top:20%;left:40%">3</span>
+      <div class="shot-caption"><span>desktop-00-home-public.png</span><span>1440 × 4000 (long)</span></div>
+    </div>
+    <div class="body">
+      <h3>Home (marketing) <span class="verdict attn dot">Good framework, weak hero</span></h3>
+      <span class="route">/ (public) · Home.tsx</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what">Hero strip renders as "MN-CCORE" wordmark + 4 unlabeled number boxes (02 / 09 / 22 / 14). The numbers read as debug placeholders; none are labeled with what they count. Consortium visitors land here first.</div>
+          <div class="fix">Label the metrics (Active Projects · Publications · Grants · Trainees) and make sure the numbers are real. Or drop the hero-stat pattern and go text-first: a stronger one-sentence positioning line above Four Pillars.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">"Four pillars of critical care research" — section title promises four things visually distinct; body renders as a paragraph. Readers can't map one pillar : one visual.</div>
+          <div class="fix">Make the pillars a 4-column grid, each with a single icon (placeholder) + title + 2-line description. Currently the strongest framework in the product story is the weakest visual.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">The dark "CLIF Consortium" section with research-outcomes list and collaboration network visualization is the best non-Pulse dark surface. Inherits from the same dark-first DNA as the Hub.</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">NIH / NHLBI / NLM logos at the bottom are a soft trust anchor. Worth keeping; consider adding University of Minnesota Medical School logo.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Team Public -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-19-team-public.png" alt="Team public"/>
+      <span class="anno red" style="top:30%;left:50%">1</span>
+      <span class="anno" style="top:15%;left:40%">2</span>
+      <div class="shot-caption"><span>desktop-19-team-public.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Team (public) <span class="verdict bug dot">Massive empty gap</span></h3>
+      <span class="route">/team (public)</span>
+      <ul class="obs">
+        <li><span class="pill p1">P1</span><div>
+          <div class="what"><em>"Senior Mentors" heading followed by empty white space, then another empty section, then footer.</em> Two empty sections below Co-Directors on the marketing page.</div>
+          <div class="fix">Either populate (Adams Dudley, Jeff Chipman based on Settings data) or suppress empty sections. Empty headings on public pages look abandoned.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Topic-area filter chips (Cardiac Arrest · CLIF Data Standards · Causal Inference · ... 10 total) don't appear to filter the visible cards — only Co-Directors show.</div>
+          <div class="fix">Either hide chips until filtering is hooked up, or connect them to filter mentor/trainee cards once those render.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Co-Director cards (Nick · Nathan) with avatar + role + one-sentence bio + topic chips + grants/publications/trainees counts — this is the right card template. Extend to every member.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Team member -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-20-team-member-portal.png" alt="Team member portal"/>
+      <span class="anno" style="top:25%;left:55%">1</span>
+      <div class="shot-caption"><span>desktop-20-team-member-portal.png + desktop-21-team-member-public.png</span><span>portal + public</span></div>
+    </div>
+    <div class="body">
+      <h3>Team Member page <span class="verdict strong dot">Best personal surface</span></h3>
+      <span class="route">/team/[slug] · MemberPage.tsx</span>
+      <ul class="obs">
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">The member page has a strong vertical: headshot + bio + expertise chips + Activity block (contribution score, last-14d sparkline, heatmap) + 4-card dashboard. Dense without feeling dense. This is the model for every role in the lab.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Nick's Dashboard has Publications card showing "0 published" — but the very next paragraph says "Publications for Nick Ingraham will appear here as they are added to the database."</div>
+          <div class="fix">Either wire it up to the publications DB (same source as Research Digest), or replace "0" with "—" and drop the explanatory sentence. Clean either way.</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">Portal vs public versions differ only in chrome — sidebar vs marketing-header. Good. Could add a subtle "Logged in · viewing as yourself" signal on the portal version to clarify POV.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Publications -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-22-publications.png" alt="Publications"/>
+      <div class="shot-caption"><span>desktop-22-publications.png</span><span>1440 × 4200 (long)</span></div>
+    </div>
+    <div class="body">
+      <h3>Publications (public) <span class="verdict ok dot">Dense but functional</span></h3>
+      <span class="route">/publications</span>
+      <ul class="obs">
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Same density issue as Research Digest — a long list of cards at uniform size. No visual sorting landmarks (year headers, journal, topic) beyond a flat list.</div>
+          <div class="fix">Group by year with sticky year headers. Add a 1-row "at-a-glance" bar at top: X publications · Y journals · Z first-authors · recent highlights.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Consistent footer with Research Portal / Quick Links / Affiliates / Social. Good cross-navigation across the public site.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Network -->
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-23-network.png" alt="Collaboration Network"/>
+      <span class="anno teal" style="top:50%;left:50%">1</span>
+      <div class="shot-caption"><span>desktop-23-network.png</span><span>1440 × 900</span></div>
+    </div>
+    <div class="body">
+      <h3>Collaboration Network <span class="verdict strong dot">Demo-worthy</span></h3>
+      <span class="route">/network · CollaborationNetwork.tsx</span>
+      <ul class="obs">
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">34 authors · 199 connections · 11.7 avg · 45 papers — headline numbers at top, gold-accented graph, filter chips (CLIF / COVID-19 / Decision-Making / Disparities / Quality · MNCCORE Only) year range slider. This is the visual peer to the Pulse kiosk for the public side.</div>
+        </li></li>
+        <li><span class="pill p2">P2</span><div>
+          <div class="what">Node labels overlap at current density. Ingraham and Mesfin are hub nodes but their names collide with neighbors.</div>
+          <div class="fix">Collision-aware label placement (d3-force or force-graph can do this), or label-on-hover only for dense clusters — keep hub nodes always labeled.</div>
+        </li></li>
+        <li><span class="pill p3">P3</span><div>
+          <div class="what">Three bottom pagination dots suggest multi-view (maybe 3 layouts?). If that's a real feature, make the dots clickable and labeled; if stub, remove.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ PULSE KIOSK ═══════════════════════════════════════════════ -->
+<section class="section" id="kiosk">
+  <div class="h">
+    <h2>Pulse Kiosk · the visual benchmark</h2>
+    <div class="note">The shared-screen cinematic view. This is what the rest of the Hub's premium surfaces should aspire to.</div>
+  </div>
+
+  <div class="screen">
+    <div class="shot">
+      <img src="uploads/desktop-24-pulse-kiosk.png" alt="Pulse Kiosk"/>
+      <span class="anno" style="top:22%;left:27%">1</span>
+      <span class="anno" style="top:54%;left:20%">2</span>
+      <span class="anno teal" style="top:77%;left:50%">3</span>
+      <div class="shot-caption"><span>desktop-24-pulse-kiosk.png</span><span>1920 × 1080</span></div>
+    </div>
+    <div class="body">
+      <h3>Pulse Kiosk <span class="verdict strong dot">Reference aesthetic</span></h3>
+      <span class="route">/pulse · Pulse.tsx</span>
+      <ul class="obs">
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what"><em>"The lab, right now."</em> — 9 words, Fraunces italic set huge, backed by a bottom heartbeat strip with a LIVE indicator. This is the most confident design surface in the product. It's the Hub's voice when the Hub is being itself.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Three hero numerals (42 · 61 · 19) with small gold all-caps labels below. Tabular numerals ensure alignment. This pattern should be the template for any "right now" surface.</div>
+        </li></li>
+        <li><span class="pill ok">KEEP</span><div>
+          <div class="what">Time display (9:29 AM · MONDAY, APRIL 20) bottom-right with 5 pagination dots — implies a 5-slide kiosk loop. Progression is subtle and keeps attention.</div>
+        </li></li>
+        <li><span class="pill idea">IDEA</span><div>
+          <div class="what">If there are really only 5 Pulse slides, this could be the template for a <em>Lab-TV</em> — a loop that runs on a screen in the physical lab space. Each slide: "right now", "this week", "shipping", "celebrating", "calendar."</div>
+          <div class="fix">Design the other 4 slides in the same DNA. Each is a single load-bearing idea in giant Fraunces.</div>
+        </li></li>
+        <li><span class="pill idea">IDEA</span><div>
+          <div class="what">The mobile version (<code>mobile-24-pulse-kiosk.png</code>) is equally strong — stacked 42/61/19 with breathing room. Worth adapting into a home-screen widget / Apple Watch complication if you ever ship PWA.</div>
+        </li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Wins stripe -->
+  <div class="wins">
+    <div class="label">
+      <span>What to celebrate Tuesday</span>
+      <h4>Nine surfaces that already punch above their weight.</h4>
+    </div>
+    <ul>
+      <li>Pulse Kiosk cinematic<span>The visual benchmark; lift its voice into the launch deck.</span></li>
+      <li>Project Detail stage selector<span>Clearest "where is this?" answer in the app.</span></li>
+      <li>Decision Log tag chips<span>Best information architecture on any page.</span></li>
+      <li>Meeting Hub "Full meeting recommended" banner<span>The product thesis in one bar of live numbers.</span></li>
+      <li>PI Dashboard Commitment Scorecard<span>The unique metric worth putting on a slide.</span></li>
+      <li>Member page Activity block<span>Sparkline + heatmap + score — the template for every role.</span></li>
+      <li>Deadlines section grouping<span>The pattern to replicate on Tasks, Manuscripts, and Ideas.</span></li>
+      <li>Collaboration Network<span>Demo-worthy on a projector, on-brand gold accents.</span></li>
+      <li>Just Shipped Phase 36c banner<span>Keep as the template for every phase landing.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ MOBILE ═══════════════════════════════════════════════ -->
+<section class="section" id="mobile">
+  <div class="h">
+    <h2>Mobile · six captures</h2>
+    <div class="note">Pixel 5 breakpoint. Reasonably good overall; a couple of gotchas to note. Not the Tuesday demo surface.</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:36px">
+    <figure style="margin:0"><img src="uploads/mobile-01-dashboard.png" alt="Mobile dashboard" style="width:100%;border:1px solid var(--line);border-radius:8px"/><figcaption style="font-size:12px;color:var(--ink-faint);margin-top:8px;letter-spacing:0.08em;text-transform:uppercase">Dashboard</figcaption></figure>
+    <figure style="margin:0"><img src="uploads/mobile-03-my-tasks.png" alt="Mobile tasks" style="width:100%;border:1px solid var(--line);border-radius:8px"/><figcaption style="font-size:12px;color:var(--ink-faint);margin-top:8px;letter-spacing:0.08em;text-transform:uppercase">Tasks</figcaption></figure>
+    <figure style="margin:0"><img src="uploads/mobile-07-project-detail.png" alt="Mobile project detail" style="width:100%;border:1px solid var(--line);border-radius:8px"/><figcaption style="font-size:12px;color:var(--ink-faint);margin-top:8px;letter-spacing:0.08em;text-transform:uppercase">Project Detail</figcaption></figure>
+  </div>
+
+  <ul class="obs">
+    <li><span class="pill p2">P2</span><div>
+      <div class="what">Dashboard mobile: bottom tab bar (Home · Tasks · Projects · Search · More) <em>overlaps the dashboard cards</em> — screenshot shows it floating on top of the second and third cards.</div>
+      <div class="fix">Add <code>padding-bottom: env(safe-area-inset-bottom) + 72px</code> to scroll container. Standard tab-bar padding fix.</div>
+      <div class="src">components/MobileTabBar.tsx</div>
+    </li></li>
+    <li><span class="pill p2">P2</span><div>
+      <div class="what">Tasks on mobile — list is legible but sections (OVERDUE / THIS WEEK / LATER) have low visual weight. On a 360px screen, section anchors matter more.</div>
+      <div class="fix">Stickier section headers with background color; larger count badges.</div>
+    </li></li>
+    <li><span class="pill ok">KEEP</span><div>
+      <div class="what">Project Detail on mobile is genuinely clean — stage selector horizontal-scrolls nicely, Related Projects cards stack well. Better than many desktop-first apps.</div>
+    </li></li>
+    <li><span class="pill ok">KEEP</span><div>
+      <div class="what">Pulse Kiosk mobile version retains the cinematic voice at phone size. Big Fraunces, tabular numerals, heartbeat strip intact. No changes needed.</div>
+    </li></li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════ PRIORITIES ═══════════════════════════════════════════════ -->
+<section class="section" id="priorities">
+  <div class="h">
+    <h2>Priorities</h2>
+    <div class="note">If you only touch three things before Tuesday 11am, it's the P1 column.</div>
+  </div>
+
+  <div class="priority-grid">
+    <div class="prio p1">
+      <div class="tag">P1 · Before Tuesday</div>
+      <h5>Kill test data and broken strings.</h5>
+      <ul>
+        <li>Filter <code>test_delete_*</code> and <code>deep-audit-sync-*</code> from activity feeds, calendar, milestones, regulatory banners.</li>
+        <li>Fix <code>undefined '23</code> label bug on PI Dashboard publications chart.</li>
+        <li>Dedupe action items on Meetings (Cartesian join).</li>
+        <li>Resolve anonymous=13,410 / real members=0 on Team Engagement scoring.</li>
+        <li>Populate or suppress empty "Senior Mentors" and second-tier sections on public Team page.</li>
+        <li>Dismiss "Click a meeting for prep and actions" tooltip on first click.</li>
+        <li>Seed real Mentee Milestones (trainees will see this page).</li>
+        <li>Fix/label the four hero number boxes on public Home.</li>
+      </ul>
+    </div>
+    <div class="prio p2">
+      <div class="tag">P2 · This week</div>
+      <h5>Density, grouping, scannability.</h5>
+      <ul>
+        <li>Strip <code>[Carried forward]</code> prefix from task titles; lift to a carried-days chip column.</li>
+        <li>Lift <code>CLIF:</code> prefix off project titles; add Consortium filter column.</li>
+        <li>Collapse Research Digest's 3 rows of filters to 2.</li>
+        <li>Sub-bucket OVERDUE items by age (Critical 60d+ / Urgent / Recent).</li>
+        <li>Tabbed Settings (Profile · Templates · AI · Appearance).</li>
+        <li>Soften "Silent 32d" → "Needs check-in · 32d" on Mentee Milestones.</li>
+        <li>Hide PB Sector from primary nav until feature ships.</li>
+        <li>Mobile tab-bar safe-area padding fix.</li>
+        <li>Post-Award Milestones populated state design.</li>
+        <li>Analytics zero-value handling (YoY/MoM deltas).</li>
+        <li>Ideas Board kanban-first view.</li>
+        <li>Decision Log outcome promoted to right-most pill.</li>
+        <li>Publications page: group by year, add at-a-glance top row.</li>
+        <li>Collaboration Network label collision.</li>
+      </ul>
+    </div>
+    <div class="prio p3">
+      <div class="tag">P3 · Next phase</div>
+      <h5>New surfaces and speculative.</h5>
+      <ul>
+        <li>Lab-TV: extend Pulse Kiosk to 5 slides for a physical-lab loop.</li>
+        <li>Dashboard Project Health card → compact 63-project heatmap.</li>
+        <li>Manuscripts: "Published" as a separate trophy grid.</li>
+        <li>Grants: NIH RePORTER search surfaced as a top tab.</li>
+        <li>Project Detail: Project Timeline as a real vertical timeline.</li>
+        <li>Team Engagement drill-down from PI Dashboard.</li>
+        <li>Publications DB linked to member-page publications card.</li>
+        <li>Calendar dense-week toggle.</li>
+        <li>Decisions Timeline view (or remove the toggle).</li>
+        <li>PWA + Apple Watch complication for Pulse metrics.</li>
+        <li>Public Home pillars as a 4-column iconographic grid.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="footer">
+  <div>Audit compiled from 30 screenshots + 205 imported source files · HEAD <code style="color:var(--ink-dim)">ef604db</code> · 2026-04-20</div>
+  <div>MN-CCORE Lab Hub · Design System</div>
+</div>
+
+</body>
+</html>
