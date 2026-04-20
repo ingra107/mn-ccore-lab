@@ -196,14 +196,21 @@ export default function MemberPage() {
       ? `${member.name}, ${member.credentials}`
       : member.name
 
-  // Filter publications: match by authorName in the authors string
-  const memberPubs = useMemo(
-    () =>
-      member.authorName
-        ? publications.filter((p) => p.authors.includes(member.authorName!))
-        : [],
-    [member.authorName]
-  )
+  // P3-07: filter publications by authorSlugs first (canonical, post Phase
+  // 36b rename) and fall back to substring match on `authors` for legacy
+  // pubs that haven't been re-tagged. Member slug = team_members.slug.
+  const memberPubs = useMemo(() => {
+    if (!publications.length) return []
+    return publications.filter((p) => {
+      const slugs = (p as any).authorSlugs ?? (p as any).author_slugs ?? ''
+      const slugList = typeof slugs === 'string'
+        ? slugs.split(',').map((s) => s.trim().toLowerCase())
+        : Array.isArray(slugs) ? slugs.map((s) => String(s).toLowerCase()) : []
+      if (member.slug && slugList.includes(member.slug.toLowerCase())) return true
+      if (member.authorName && p.authors?.includes(member.authorName)) return true
+      return false
+    })
+  }, [publications, member.slug, member.authorName])
 
   // Derive research topics from publications
   const topicCounts = useMemo(() => {

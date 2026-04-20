@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   BarChart as RechartsBarChart,
@@ -586,7 +587,13 @@ export default function PIAnalytics() {
                   const person = getPersonInfo(member.slug)
                   const barWidth = (member.actions / maxEngagement) * 100
                   return (
-                    <div key={member.slug} className="flex items-center gap-3">
+                    <Link
+                      key={member.slug}
+                      to={`/team/${member.slug}/trajectory`}
+                      title={`Open ${person.name}'s trajectory · ${member.score} score`}
+                      className="flex items-center gap-3 rounded-md px-1 py-1 -mx-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
+                      style={{ textDecoration: 'none' }}
+                    >
                       <div style={{ width: 24, height: 24, flexShrink: 0 }}>
                         <Avatar
                           name={person.name}
@@ -631,7 +638,7 @@ export default function PIAnalytics() {
                       >
                         {member.score}
                       </span>
-                    </div>
+                    </Link>
                   )
                 })}
                 <div className="flex items-center gap-2 mt-1 pt-2" style={{ borderTop: '1px dashed var(--border-subtle)' }}>

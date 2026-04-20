@@ -1320,49 +1320,112 @@ function ProjectTimeline({ createdAt, stage, tasks, updates }: {
     )
   }
 
+  // P3-05: stage progression strip — filled=done, ringed=current, empty=future.
+  // Mirrors the StageSelector visual vocabulary so users carry one mental model.
+  const STAGE_LIST = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
+  const stageIdx = stage ? STAGE_LIST.indexOf(stage as typeof STAGE_LIST[number]) : -1
+
   return (
-    <div className="relative" style={{ paddingLeft: '20px' }}>
-      {/* Vertical line */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '7px',
-          top: '4px',
-          bottom: '4px',
-          width: '2px',
-          background: 'var(--border-subtle)',
-          borderRadius: 'var(--radius-sm)',
-        }}
-      />
-      <div className="flex flex-col gap-3">
-        {events.map((event, i) => (
-          <div key={i} className="flex items-start gap-3 relative">
-            {/* Dot */}
-            <div
-              style={{
-                position: 'absolute',
-                left: '-17px',
-                top: '5px',
-                width: '8px',
-                height: '8px',
-                borderRadius: 'var(--radius-circle)',
-                background: event.color,
-                border: '2px solid var(--cream)',
-                zIndex: 'var(--z-base)',
-              }}
-            />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: '12px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
-                {event.label}
-              </p>
-              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                {formatShortDate(event.date)}
-                {event.type === 'task' && <span style={{ color: 'var(--green)', marginLeft: '6px' }}>completed</span>}
-                {event.type === 'update' && <span style={{ color: 'var(--teal)', marginLeft: '6px' }}>note</span>}
-              </span>
-            </div>
+    <div>
+      {stage && stageIdx >= 0 && (
+        <div className="relative mb-4" style={{ paddingLeft: '20px' }}>
+          <div
+            style={{
+              position: 'absolute',
+              left: '7px',
+              top: '8px',
+              bottom: '8px',
+              width: '2px',
+              background: 'var(--border-subtle)',
+              borderRadius: 'var(--radius-sm)',
+            }}
+          />
+          <div className="flex flex-col gap-2">
+            {STAGE_LIST.map((s, i) => {
+              const state = i < stageIdx ? 'done' : i === stageIdx ? 'current' : 'future'
+              const dotBg = state === 'done' ? 'var(--teal-solid)' : state === 'current' ? 'var(--gold)' : 'transparent'
+              const dotBorder = state === 'future' ? '2px solid var(--border-subtle)' : (state === 'current' ? '2px solid var(--gold)' : '2px solid var(--cream)')
+              const dotShadow = state === 'current' ? '0 0 0 3px color-mix(in oklch, var(--gold) 25%, transparent)' : 'none'
+              return (
+                <div key={s} className="flex items-start gap-3 relative" style={{ minHeight: 22 }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: '-17px',
+                      top: '4px',
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: 'var(--radius-circle)',
+                      background: dotBg,
+                      border: dotBorder,
+                      boxShadow: dotShadow,
+                      zIndex: 'var(--z-base)',
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      color: state === 'future' ? 'var(--slate)' : 'var(--ink)',
+                      opacity: state === 'future' ? 0.5 : 1,
+                      fontWeight: state === 'current' ? 'var(--weight-ui, 500)' : 400,
+                    }}
+                  >
+                    {s}
+                    {state === 'current' && (
+                      <span style={{ marginLeft: 6, fontSize: '10px', color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        Current
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )
+            })}
           </div>
-        ))}
+        </div>
+      )}
+      <div className="relative" style={{ paddingLeft: '20px' }}>
+        {/* Vertical line */}
+        <div
+          style={{
+            position: 'absolute',
+            left: '7px',
+            top: '4px',
+            bottom: '4px',
+            width: '2px',
+            background: 'var(--border-subtle)',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        />
+        <div className="flex flex-col gap-3">
+          {events.map((event, i) => (
+            <div key={i} className="flex items-start gap-3 relative">
+              {/* Dot */}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: '-17px',
+                  top: '5px',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: 'var(--radius-circle)',
+                  background: event.color,
+                  border: '2px solid var(--cream)',
+                  zIndex: 'var(--z-base)',
+                }}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
+                  {event.label}
+                </p>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                  {formatShortDate(event.date)}
+                  {event.type === 'task' && <span style={{ color: 'var(--green)', marginLeft: '6px' }}>completed</span>}
+                  {event.type === 'update' && <span style={{ color: 'var(--teal)', marginLeft: '6px' }}>note</span>}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

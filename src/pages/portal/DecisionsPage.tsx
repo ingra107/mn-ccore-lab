@@ -62,13 +62,60 @@ function DecisionTimeline({
   decisions: DecisionRow[]
   projects: { slug: string; title: string }[]
 }) {
+  // P3-09: group decisions by month-year so the timeline reads as a
+  // narrative arc, not a flat dump of dots.
+  const grouped = (() => {
+    const sorted = [...decisions].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+    const buckets = new Map<string, DecisionRow[]>()
+    for (const d of sorted) {
+      const dt = new Date(d.created_at)
+      const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`
+      const list = buckets.get(key) ?? []
+      list.push(d)
+      buckets.set(key, list)
+    }
+    const monthFmt = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' })
+    return [...buckets.entries()].map(([key, items]) => {
+      const [year, month] = key.split('-').map(Number)
+      return { key, label: monthFmt.format(new Date(year, month - 1, 1)), items }
+    })
+  })()
+
   return (
     <div className="relative pl-8" style={{ paddingTop: '4px' }}>
       <div
         className="absolute left-3 top-0 bottom-0"
         style={{ width: '2px', backgroundColor: 'var(--gold-hover)' }}
       />
-      {decisions.map((decision) => {
+      {grouped.map((group) => (
+        <div key={group.key}>
+          <div
+            className="relative mb-3"
+            style={{
+              fontSize: 'var(--text-label)',
+              fontWeight: 'var(--weight-ui)',
+              color: 'var(--slate)',
+              opacity: 'var(--ink-label)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              marginTop: '12px',
+            }}
+          >
+            <span
+              className="absolute"
+              style={{
+                left: '-29px',
+                top: '4px',
+                width: '18px',
+                height: '4px',
+                background: 'var(--slate)',
+                opacity: 0.4,
+                borderRadius: 'var(--radius-sm)',
+              }}
+            />
+            {group.label} · {group.items.length}
+          </div>
+      {group.items.map((decision) => {
         const sentiment = decision.outcome_sentiment || 'pending'
         const config = SENTIMENT_CONFIG[sentiment] || SENTIMENT_CONFIG.pending
         const tags = parseTagsString(decision.tags)
@@ -168,6 +215,8 @@ function DecisionTimeline({
           </div>
         )
       })}
+        </div>
+      ))}
     </div>
   )
 }

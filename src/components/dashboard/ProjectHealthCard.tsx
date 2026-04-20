@@ -60,6 +60,11 @@ function FactorTooltip({ factors, score }: { factors: HealthFactors; score: numb
 function ProjectHealthCard() {
   const { data } = useProjectHealth()
   const [showHealthy, setShowHealthy] = useState(false)
+  // P3-02: heatmap view as alt to the truncated list. localStorage persists.
+  const [viewMode, setViewMode] = useState<'list' | 'heatmap'>(() => {
+    if (typeof window === 'undefined') return 'list'
+    return (window.localStorage.getItem('project-health-view') as 'list' | 'heatmap') ?? 'list'
+  })
 
   const projects = data?.data ?? []
   const summary = data?.summary ?? { total: 0, healthy: 0, needs_attention: 0, at_risk: 0, critical: 0, avg_score: 0 }
@@ -67,6 +72,14 @@ function ProjectHealthCard() {
   // Projects that need attention (score < 80)
   const needsWork = projects.filter((p) => p.status !== 'Healthy')
   const healthyProjects = projects.filter((p) => p.status === 'Healthy')
+
+  // Heatmap: order worst-first so visual hot-spots cluster top-left.
+  const sortedAll = [...projects].sort((a, b) => a.score - b.score)
+
+  function persistView(next: 'list' | 'heatmap') {
+    setViewMode(next)
+    if (typeof window !== 'undefined') window.localStorage.setItem('project-health-view', next)
+  }
 
   return (
     <BentoCard
@@ -76,6 +89,30 @@ function ProjectHealthCard() {
       icon={HeartPulse}
     >
       <div className="flex flex-col h-full">
+        {/* View toggle (P3-02) */}
+        <div className="flex justify-end mb-2 -mt-1">
+          <div className="flex gap-0.5 rounded p-0.5" style={{ background: 'var(--surface-2)' }}>
+            {(['list', 'heatmap'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => persistView(m)}
+                className="text-[10px] px-2 py-0.5 rounded"
+                style={{
+                  background: viewMode === m ? 'var(--cream)' : 'transparent',
+                  color: viewMode === m ? 'var(--ink)' : 'var(--slate)',
+                  fontWeight: viewMode === m ? 500 : 400,
+                  border: 'none',
+                  cursor: 'pointer',
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Summary counts */}
         <div
           className="flex items-center gap-4 mb-3 pb-3"
@@ -122,7 +159,47 @@ function ProjectHealthCard() {
           ))}
         </div>
 
-        {/* Scrollable project list */}
+        {viewMode === 'heatmap' && projects.length > 0 ? (
+          /* P3-02: every project as a colored cell. Hover for tooltip. */
+          <div
+            className="flex-1 overflow-y-auto -mx-1 px-1"
+            tabIndex={0}
+            role="region"
+            aria-label="Project health heatmap"
+            style={{ maxHeight: '320px' }}
+          >
+            <div
+              className="grid gap-1.5"
+              style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(20px, 1fr))' }}
+            >
+              {sortedAll.map((p) => (
+                <Link
+                  key={p.slug}
+                  to={`/projects/${p.slug}`}
+                  title={`${p.title} · ${p.status} · ${p.score}/100`}
+                  aria-label={`${p.title} · ${p.status} · score ${p.score} of 100`}
+                  style={{
+                    display: 'block',
+                    aspectRatio: '1',
+                    borderRadius: 'var(--radius-sm)',
+                    background: STATUS_COLORS[p.status] ?? 'var(--slate)',
+                    opacity: p.status === 'Healthy' ? 0.5 : 0.85,
+                    transition: 'opacity var(--transition-fast) ease, transform var(--transition-fast) ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.15)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = p.status === 'Healthy' ? '0.5' : '0.85'; e.currentTarget.style.transform = 'scale(1)' }}
+                />
+              ))}
+            </div>
+            <p
+              className="mt-3 text-[10px]"
+              style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
+            >
+              {summary.total} projects · sorted worst first · hover for detail
+            </p>
+          </div>
+        ) : (
+        /* Scrollable project list */
         <div
           className="flex-1 overflow-y-auto -mx-1 px-1"
           tabIndex={0}
@@ -181,6 +258,7 @@ function ProjectHealthCard() {
             </div>
           )}
         </div>
+        )}
 
         {/* Footer link */}
         <Link

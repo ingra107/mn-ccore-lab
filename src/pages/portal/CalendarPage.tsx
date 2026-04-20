@@ -30,6 +30,17 @@ const eventIcons: Record<string, typeof Calendar> = {
 export default function CalendarPage() {
   const [view, setView] = useState<ViewMode>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
+  // P3-08: dense-week toggle. When on, MonthView collapses any all-empty
+  // week (Sun-Sat row with zero events) to a single rule line.
+  const [denseWeek, setDenseWeek] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem('calendar-dense-week') === 'true'
+  })
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (denseWeek) window.localStorage.setItem('calendar-dense-week', 'true')
+    else window.localStorage.removeItem('calendar-dense-week')
+  }, [denseWeek])
 
   const { start, end } = useMemo(() => {
     const y = currentDate.getFullYear()
@@ -138,20 +149,30 @@ export default function CalendarPage() {
       >
         {/* Controls */}
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-1">
-            {(['month', 'week', 'day', 'agenda'] as ViewMode[]).map((v) => {
-              const active = view === v
-              return (
-                <ToggleButton
-                  key={v}
-                  active={active}
-                  onClick={() => setView(v)}
-                  className="capitalize"
-                >
-                  {v}
-                </ToggleButton>
-              )
-            })}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {(['month', 'week', 'day', 'agenda'] as ViewMode[]).map((v) => {
+                const active = view === v
+                return (
+                  <ToggleButton
+                    key={v}
+                    active={active}
+                    onClick={() => setView(v)}
+                    className="capitalize"
+                  >
+                    {v}
+                  </ToggleButton>
+                )
+              })}
+            </div>
+            {view === 'month' && (
+              <ToggleButton
+                active={denseWeek}
+                onClick={() => setDenseWeek((v) => !v)}
+              >
+                Dense
+              </ToggleButton>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -207,7 +228,7 @@ export default function CalendarPage() {
           />
         ) : (
           <>
-            {view === 'month' && <MonthView currentDate={currentDate} events={events} />}
+            {view === 'month' && <MonthView currentDate={currentDate} events={events} denseWeek={denseWeek} />}
             {view === 'week' && <WeekView weekStart={weekStart} events={events} />}
             {view === 'day' && <DayView date={currentDate} events={events} />}
             {view === 'agenda' && <AgendaView events={events} />}
@@ -232,7 +253,7 @@ export default function CalendarPage() {
 
 // ── Month View ───────────────────────────────────────────────
 
-function MonthView({ currentDate, events }: { currentDate: Date; events: CalendarEvent[] }) {
+function MonthView({ currentDate, events, denseWeek = false }: { currentDate: Date; events: CalendarEvent[]; denseWeek?: boolean }) {
   const today = new Date().toISOString().split('T')[0]
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -259,6 +280,23 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
     return map
   }, [events])
 
+  // P3-08: bucket cells into weeks of 7 so the dense-week mode can drop
+  // any week that has zero events (incl. leading-offset filler).
+  type Cell = { kind: 'fill' } | { kind: 'day'; dateStr: string }
+  const weeks = useMemo<Cell[][]>(() => {
+    const cells: Cell[] = [
+      ...Array.from({ length: startOffset }, () => ({ kind: 'fill' as const })),
+      ...days.map((dateStr) => ({ kind: 'day' as const, dateStr })),
+    ]
+    const out: Cell[][] = []
+    for (let i = 0; i < cells.length; i += 7) out.push(cells.slice(i, i + 7))
+    // Pad final week to 7 cells
+    if (out.length > 0 && out[out.length - 1].length < 7) {
+      while (out[out.length - 1].length < 7) out[out.length - 1].push({ kind: 'fill' })
+    }
+    return out
+  }, [days, startOffset])
+
   return (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-subtle)' }}>
       <div className="grid grid-cols-7">
@@ -268,37 +306,65 @@ function MonthView({ currentDate, events }: { currentDate: Date; events: Calenda
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7">
-        {Array.from({ length: startOffset }).map((_, i) => (
-          <div key={`empty-${i}`} className="min-h-[80px] border-b border-r" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--hover-subtle)' }} />
-        ))}
-        {days.map((dateStr) => {
-          const dayNum = parseInt(dateStr.split('-')[2])
-          const isToday = dateStr === today
-          const dayEvents = eventsByDate.get(dateStr) || []
+      {weeks.map((week, wi) => {
+        const weekHasEvents = week.some((c) => c.kind === 'day' && (eventsByDate.get(c.dateStr)?.length ?? 0) > 0)
+        if (denseWeek && !weekHasEvents) {
+          const firstDay = week.find((c) => c.kind === 'day') as Extract<Cell, { kind: 'day' }> | undefined
+          const label = firstDay ? `Week of ${firstDay.dateStr}` : 'Empty week'
           return (
-            <div key={dateStr} className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
-              <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent' }}>
-                {dayNum}
-              </span>
-              <div className="flex flex-col gap-0.5 mt-0.5">
-                {dayEvents.slice(0, 3).map((e) => {
-                  const config = eventColors[e.type] || eventColors.task
-                  const Wrapper = e.type === 'meeting' ? Link : 'div' as any
-                  const wrapperProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
-                  return (
-                    <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
-                      {(() => { const t = formatBrandName(e.title); return t.length > 20 ? t.slice(0, 20) + '...' : t })()}
-                    </Wrapper>
-                  )
-                })}
-                {dayEvents.length > 3 && (
-                  <span className="text-[10px] px-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>+{dayEvents.length - 3} more</span>
-                )}
-              </div>
+            <div
+              key={`week-${wi}`}
+              className="border-b px-3 py-1.5 text-[10px] uppercase tracking-wider"
+              style={{ color: 'var(--slate)', opacity: 0.55, borderColor: 'var(--border-subtle)', background: 'var(--hover-subtle)' }}
+            >
+              {label} · no events
             </div>
           )
+        }
+        return (
+          <div key={`week-${wi}`} className="grid grid-cols-7">
+            {week.map((cell, ci) => {
+              if (cell.kind === 'fill') {
+                return (
+                  <div key={`fill-${wi}-${ci}`} className="min-h-[80px] border-b border-r" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--hover-subtle)' }} />
+                )
+              }
+              const dateStr = cell.dateStr
+              return (
+                <DayCellRender key={dateStr} dateStr={dateStr} today={today} dayEvents={eventsByDate.get(dateStr) || []} />
+              )
+            })}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Day cell (extracted for dense-week mode reuse) ───────────
+
+function DayCellRender({ dateStr, today, dayEvents }: { dateStr: string; today: string; dayEvents: CalendarEvent[] }) {
+  const dayNum = parseInt(dateStr.split('-')[2])
+  const isToday = dateStr === today
+  return (
+    <div className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
+      <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent' }}>
+        {dayNum}
+      </span>
+      <div className="flex flex-col gap-0.5 mt-0.5">
+        {dayEvents.slice(0, 3).map((e) => {
+          const config = eventColors[e.type] || eventColors.task
+          const Wrapper = e.type === 'meeting' ? Link : 'div' as any
+          const wrapperProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
+          return (
+            <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
+              {(() => { const t = formatBrandName(e.title); return t.length > 20 ? t.slice(0, 20) + '...' : t })()}
+            </Wrapper>
+          )
         })}
+        {dayEvents.length > 3 && (
+          <span className="text-[10px] px-1" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>+{dayEvents.length - 3} more</span>
+        )}
       </div>
     </div>
   )

@@ -44,6 +44,12 @@ const ROTATE_INTERVAL = 8000
 
 export default function Pulse() {
   const [activeIndex, setActiveIndex] = useState(0)
+  // P3-01: persisted pause toggle so the kiosk can be parked on one slide
+  // for a presentation without restarting the rotation each time.
+  const [paused, setPaused] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem('pulse-paused') === 'true'
+  })
 
   const { data: stats } = useStats()
   const { data: tasks = [] } = useTasks()
@@ -323,14 +329,33 @@ export default function Pulse() {
     activity,
   ])
 
-  // Auto-rotate. Loop is essential — kiosk has no input.
+  // Auto-rotate. Loop is essential — kiosk has no input. Pause halts.
   useEffect(() => {
-    if (scenes.length <= 1) return
+    if (scenes.length <= 1 || paused) return
     const t = setInterval(() => {
       setActiveIndex((i) => (i + 1) % scenes.length)
     }, ROTATE_INTERVAL)
     return () => clearInterval(t)
-  }, [scenes.length])
+  }, [scenes.length, paused])
+
+  // Spacebar toggles pause — works on the kiosk via wireless presenter remote.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault()
+        setPaused((p) => {
+          const next = !p
+          if (typeof window !== 'undefined') {
+            if (next) window.localStorage.setItem('pulse-paused', 'true')
+            else window.localStorage.removeItem('pulse-paused')
+          }
+          return next
+        })
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const scene = scenes[activeIndex] || scenes[0]
   const sceneKey = scene?.key ?? 'empty'

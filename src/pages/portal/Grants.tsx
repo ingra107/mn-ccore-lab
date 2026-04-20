@@ -390,6 +390,8 @@ export default function Grants() {
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [showAddMilestone, setShowAddMilestone] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  // P3-04: top-level tab strip. RePORTER lifted from footer to a peer tab.
+  const [activeTab, setActiveTab] = useState<'grants' | 'post-award' | 'landscape'>('grants')
   useListKeyboardNav({ itemCount: grants.length, focusedIndex, setFocusedIndex })
   const similarGrants = useSimilarGrants(activeSearch)
 
@@ -528,6 +530,42 @@ export default function Grants() {
         />
       </PageHeader>
 
+      {/* P3-04: top-level tab strip */}
+      <div
+        className="flex gap-1 border-b mb-4"
+        style={{ borderColor: 'var(--border-subtle)' }}
+        role="tablist"
+        aria-label="Grants sections"
+      >
+        {([
+          { key: 'grants', label: 'My Grants' },
+          { key: 'post-award', label: 'Post-Award' },
+          { key: 'landscape', label: 'NIH RePORTER' },
+        ] as const).map((tab) => {
+          const isActive = activeTab === tab.key
+          return (
+            <button
+              key={tab.key}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(tab.key)}
+              className="px-3 py-2 text-sm transition-colors"
+              style={{
+                color: isActive ? 'var(--teal)' : 'var(--slate)',
+                borderBottom: `2px solid ${isActive ? 'var(--teal)' : 'transparent'}`,
+                background: 'none',
+                cursor: 'pointer',
+                marginBottom: '-1px',
+                fontWeight: isActive ? 'var(--weight-ui, 500)' : 400,
+              }}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {activeTab === 'grants' && <>
       {/* ── LIST VIEW ── */}
       {!isLoading && view === 'list' && (
         <>
@@ -822,6 +860,9 @@ export default function Grants() {
         </div>
       )}
 
+      </>}
+
+      {activeTab === 'post-award' && <>
       {/* Post-Award Lifecycle Milestones */}
       <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="flex items-center justify-between mb-3">
@@ -950,7 +991,9 @@ export default function Grants() {
         )}
       </div>
 
-      {/* Add Milestone Modal */}
+      </>}
+
+      {/* Add Milestone Modal — modal stays mounted regardless of active tab */}
       <AnimatePresence>
         {showAddMilestone && (
           <AddGrantMilestoneModal
@@ -960,7 +1003,8 @@ export default function Grants() {
         )}
       </AnimatePresence>
 
-      {/* Grant Landscape — NIH RePORTER */}
+      {activeTab === 'landscape' && <>
+      {/* Grant Landscape — NIH RePORTER (P3-04: lifted to top tab) */}
       <div className="mt-6 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Telescope size={16} style={{ color: 'var(--gold)' }} />
@@ -1053,6 +1097,7 @@ export default function Grants() {
           </p>
         )}
       </div>
+      </>}
     </div>
   )
 }

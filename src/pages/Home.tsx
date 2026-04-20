@@ -401,58 +401,67 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-            {pillars.map((pillar) => {
+          {/* P3-11: 4-col iconographic grid. Each pillar: numeral + icon
+              + title + 2-line description + stat chip. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            {pillars.map((pillar, i) => {
               const Icon = pillar.icon
               return (
                 <div
                   key={pillar.title}
-                  className="fade-in-up card p-6 sm:p-7 cursor-default"
+                  className="fade-in-up card p-5 sm:p-6 cursor-default flex flex-col"
                   style={{
-                    borderLeft: `4px solid ${pillar.color}`,
+                    borderTop: `3px solid ${pillar.color}`,
                     borderRadius: 'var(--radius-xl)',
+                    minHeight: '260px',
                   }}
                 >
-                  <div className="flex items-start gap-4">
-                    <div
-                      className="flex-shrink-0 p-3 rounded-xl"
+                  <div className="flex items-baseline justify-between mb-4">
+                    <span
                       style={{
-                        background: `${pillar.color}15`,
+                        fontFamily: 'var(--font-display)',
+                        fontStyle: 'italic',
+                        fontSize: '32px',
+                        fontWeight: 400,
+                        color: pillar.color,
+                        opacity: 0.6,
+                        lineHeight: 1,
                       }}
                     >
-                      <Icon size={24} strokeWidth={1.5} style={{ color: pillar.color }} aria-hidden="true" />
-                    </div>
-                    <div className="flex-1">
-                      <h3
-                        className="text-lg sm:text-xl mb-2"
-                        style={{
-                          fontFamily: 'var(--font-display)',
-                          fontWeight: 400,
-                          color: 'var(--ink)',
-                        }}
-                      >
-                        {pillar.title}
-                      </h3>
-                      <p
-                        className="text-sm sm:text-base leading-relaxed mb-3"
-                        style={{ color: 'var(--slate)' }}
-                      >
-                        {pillar.description}
-                      </p>
-                      <span
-                        className="inline-block text-xs px-2.5 py-1 rounded-full"
-                        style={{
-                          fontSize: '10px',
-                          letterSpacing: '0.04em',
-                          background: `${pillar.color}12`,
-                          color: pillar.color,
-                          border: `1px solid ${pillar.color}20`,
-                        }}
-                      >
-                        {pillar.stat}
-                      </span>
-                    </div>
+                      0{i + 1}
+                    </span>
+                    <Icon size={22} strokeWidth={1.4} style={{ color: pillar.color, opacity: 0.85 }} aria-hidden="true" />
                   </div>
+                  <h3
+                    className="mb-2"
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 500,
+                      fontSize: '18px',
+                      color: 'var(--ink)',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {pillar.title}
+                  </h3>
+                  <p
+                    className="text-sm leading-snug mb-4 flex-1"
+                    style={{ color: 'var(--slate)' }}
+                  >
+                    {pillar.description}
+                  </p>
+                  <span
+                    className="inline-block text-xs px-2.5 py-1 rounded-full self-start"
+                    style={{
+                      fontSize: '10px',
+                      letterSpacing: '0.04em',
+                      background: `${pillar.color}12`,
+                      color: pillar.color,
+                      border: `1px solid ${pillar.color}20`,
+                    }}
+                  >
+                    {pillar.stat}
+                  </span>
                 </div>
               )
             })}

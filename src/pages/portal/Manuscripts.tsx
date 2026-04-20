@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { FileText, Plus, List, GitBranch } from 'lucide-react'
+import { FileText, Plus, List, GitBranch, BookOpen, ExternalLink } from 'lucide-react'
 import { useDensity, densityClass } from '../../components/DensityToggle'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
@@ -70,7 +70,8 @@ export default function Manuscripts() {
   )
 
   const [density, setDensity] = useDensity()
-  const [view, setView] = useState<'list' | 'pipeline'>('list')
+  // P3-03: 'trophy' = cover-style grid for Published manuscripts.
+  const [view, setView] = useState<'list' | 'pipeline' | 'trophy'>('list')
   const [filterPI, setFilterPI] = useState<string>('')
   const [filterCategory, setFilterCategory] = useState<string>('')
   const [filterStalled, setFilterStalled] = useState(false)
@@ -207,9 +208,10 @@ export default function Manuscripts() {
             views={[
               { key: 'list', icon: <List size={14} />, label: 'List' },
               { key: 'pipeline', icon: <GitBranch size={14} />, label: 'Pipeline' },
+              { key: 'trophy', icon: <BookOpen size={14} />, label: 'Trophy' },
             ]}
             activeView={view}
-            onViewChange={(v) => setView(v as 'list' | 'pipeline')}
+            onViewChange={(v) => setView(v as 'list' | 'pipeline' | 'trophy')}
             filters={
               <>
                 <select
@@ -690,6 +692,89 @@ export default function Manuscripts() {
             })}
           </div>
         )}
+
+        {/* ─── TROPHY VIEW (P3-03) ─── cover-style cards for Published manuscripts */}
+        {!isLoading && view === 'trophy' && (() => {
+          const published = manuscripts.filter((p) => p.stage === 'Published')
+          if (published.length === 0) {
+            return (
+              <div className="text-center py-12" style={{ color: 'var(--slate)' }}>
+                <BookOpen size={32} style={{ opacity: 0.4, margin: '0 auto var(--sp-sm)' }} />
+                <p className="text-sm" style={{ opacity: 'var(--ink-label)' }}>
+                  No published manuscripts yet. Trophy view shows them here once they ship.
+                </p>
+              </div>
+            )
+          }
+          return (
+            <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+              {published.map((p) => {
+                const journal = (p as any).journal_name || (p as any).target_journal || (p as any).journal || ''
+                const created = (p as any).created_at as string | undefined
+                const year = (p as any).published_year || (p as any).year || (created ? new Date(created).getFullYear() : '')
+                const doi = (p as any).doi
+                return (
+                  <div
+                    key={p.slug}
+                    className="rounded-lg border flex flex-col overflow-hidden"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      background: 'var(--surface-1)',
+                      minHeight: '220px',
+                    }}
+                  >
+                    <div
+                      className="px-4 pt-4 pb-3"
+                      style={{
+                        background: 'linear-gradient(135deg, var(--teal-active), var(--gold-active))',
+                        borderBottom: '1px solid var(--border-subtle)',
+                      }}
+                    >
+                      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '11px', color: 'var(--ink-bright, #fff)', opacity: 0.85, letterSpacing: '0.04em' }}>
+                        {journal || 'Journal'} {year ? `· ${year}` : ''}
+                      </div>
+                      <h3
+                        className="mt-2"
+                        style={{
+                          fontFamily: 'var(--font-display)',
+                          fontWeight: 500,
+                          fontSize: '15px',
+                          color: 'var(--ink-bright, #fff)',
+                          lineHeight: 1.25,
+                          minHeight: '3em',
+                          overflow: 'hidden',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical' as const,
+                        }}
+                      >
+                        {p.title}
+                      </h3>
+                    </div>
+                    <div className="flex-1 p-3 flex flex-col justify-between">
+                      <div className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--slate)' }}>
+                        <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--green)' }} />
+                        Published
+                      </div>
+                      {doi && (
+                        <a
+                          href={doi.startsWith('http') ? doi : `https://doi.org/${doi}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] mt-2"
+                          style={{ color: 'var(--teal)', textDecoration: 'none' }}
+                        >
+                          <ExternalLink size={11} />
+                          DOI
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
       </div>
 
       <CreateProjectModal

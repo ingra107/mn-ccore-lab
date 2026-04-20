@@ -765,14 +765,14 @@ Low priority but high story value.
 - [x] P2-12 · Publications grouping + summary
 - [x] P2-13 · Network label collision
 - [ ] P2-14 · Post-Award Milestones populated state — populated table exists at `Grants.tsx:898`; needs Nick to seed grant_milestones rows
-- [ ] P3-01 · Lab-TV 5-slide loop
-- [ ] P3-02 · Dashboard heatmap
-- [ ] P3-03 · Manuscripts trophy grid
-- [ ] P3-04 · RePORTER top tab
-- [ ] P3-05 · Project timeline vertical
-- [ ] P3-06 · Engagement drill-down
-- [ ] P3-07 · Member-page publications wiring
-- [ ] P3-08 · Calendar dense-week
-- [ ] P3-09 · Decisions timeline or remove
-- [ ] P3-10 · PWA + Watch complication
-- [ ] P3-11 · Home pillars iconographic grid
+- [x] P3-01 · Lab-TV 5-slide loop (existing 6-scene rotation + spacebar/localStorage pause)
+- [x] P3-02 · Dashboard heatmap (toggle on ProjectHealthCard)
+- [x] P3-03 · Manuscripts trophy grid
+- [x] P3-04 · RePORTER top tab
+- [x] P3-05 · Project timeline vertical (stage progression strip + event timeline)
+- [x] P3-06 · Engagement drill-down (PI Dashboard rows → /team/:slug/trajectory)
+- [x] P3-07 · Member-page publications wiring (slug + author-name match)
+- [x] P3-08 · Calendar dense-week
+- [x] P3-09 · Decisions timeline (now grouped by month-year)
+- [ ] P3-10 · PWA + Watch complication — SKIPPED. Apple Watch requires native (xcode/WatchKit), out of scope for this web stack. PWA manifest is a separate small ticket if/when desired.
+- [x] P3-11 · Home pillars iconographic grid
