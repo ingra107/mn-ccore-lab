@@ -100,7 +100,11 @@ async function scrollThroughEverything(page: import('@playwright/test').Page) {
 
 for (const p of PAGES) {
   test(`${DEVICE} ${p.slug}`, async ({ page }) => {
-    await page.goto(BASE + p.path, { waitUntil: 'networkidle' })
+    // Network page lazy-loads ~1.3MB three.js + reagraph WebGL — never
+    // settles to networkidle. Use a softer wait for that one route.
+    const waitMode = p.path === '/network' ? 'domcontentloaded' : 'networkidle'
+    await page.goto(BASE + p.path, { waitUntil: waitMode })
+    if (p.path === '/network') await page.waitForTimeout(4000)
     // Entry animations + initial fetch settle.
     await page.waitForTimeout(800)
     // Walk the full scroll height so lazy-loaded sections render before

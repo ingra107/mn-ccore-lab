@@ -4,13 +4,14 @@ import {
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
-  ChevronUp, ChevronDown,
+  ChevronUp, ChevronDown, Send,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
 const RichTextEditor = lazy(() => import('../RichTextEditor'))
-import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask } from '../../hooks/useMutations'
+import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask, usePostTaskUpdate } from '../../hooks/useMutations'
+import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
@@ -465,6 +466,16 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
             {/* Subtasks */}
             <SubtaskSection taskId={task.id} />
+
+            {/* P2-01 follow-up: quick add inline so users don't have to tab
+                over to Notes / Comments for a fast capture. Mode toggle
+                makes the difference between the two surfaces explicit. */}
+            <OverviewQuickAdd
+              taskId={task.id}
+              taskTitle={task.title}
+              projectSlug={task.project_id}
+              onJumpToTab={(tab) => setActiveTab(tab)}
+            />
           </div>
 
           {/* ── Details Tab ── */}
@@ -873,6 +884,242 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
           </p>
         </div>
       ) : null}
+    </div>
+  )
+}
+
+// ── Overview Quick Add ──────────────────────────────────────
+//
+// Surfaces a single fast-capture input on the Overview tab so users
+// don't have to tab over to Notes / Comments. Mode toggle keeps the
+// Phase 27 "three distinct surfaces" decision visible — the placeholder
+// changes to make it crystal-clear what each one is for.
+function OverviewQuickAdd({
+  taskId,
+  taskTitle,
+  projectSlug,
+  onJumpToTab,
+}: {
+  taskId: string
+  taskTitle?: string | null
+  projectSlug?: string | null
+  onJumpToTab: (tab: Tab) => void
+}) {
+  const [mode, setMode] = useState<'note' | 'comment'>('comment')
+  const [text, setText] = useState('')
+  const [forHermes, setForHermes] = useState(false)
+  const postUpdate = usePostTaskUpdate(taskId)
+  const { showSuccess } = useToast()
+  const queryClient = useQueryClient()
+
+  const PLACEHOLDERS = {
+    note: 'e.g. "Pulled cohort, n=412 after exclusions, APACHE>25 worked. Stuck on the merge with vitals — using ENC_ID not HOSP_ID."',
+    comment: 'e.g. "@emma can you double-check the propensity score weights? Also @hermes pull recent JAMA papers on this."',
+  }
+  const HEADLINE = {
+    note: 'Note · your private progress log (lab-notebook style)',
+    comment: 'Comment · talk to teammates · @mention works',
+  }
+
+  function reset() {
+    setText('')
+    setForHermes(false)
+  }
+
+  async function submitComment(content: string) {
+    const res = await fetch(`/api/tasks/${taskId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    })
+    if (!res.ok) throw new Error('comment failed')
+    if (forHermes) {
+      // Same dispatch hand-off as the Comments tab (TaskComments.tsx).
+      fetch('/api/pb/dispatch/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          task_id: taskId,
+          task_title: taskTitle ?? null,
+          project_slug: projectSlug ?? null,
+          comment: content,
+          comment_type: 'action',
+        }),
+      }).catch(() => { /* fire-and-forget */ })
+    }
+    queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] })
+    queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
+    queryClient.invalidateQueries({ queryKey: ['activity'] })
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const v = text.trim()
+    if (!v) return
+    if (mode === 'note') {
+      postUpdate.mutate(
+        { content: v, update_type: 'progress' },
+        { onSuccess: () => { showSuccess('Note added'); reset() } },
+      )
+    } else {
+      submitComment(v)
+        .then(() => { showSuccess('Comment posted'); reset() })
+        .catch(() => { /* leave text so user can retry */ })
+    }
+  }
+
+  return (
+    <div
+      style={{
+        borderTop: '1px solid var(--border-subtle)',
+        paddingTop: 'var(--sp-lg)',
+        marginTop: 'var(--sp-sm)',
+      }}
+    >
+      <label
+        className="flex items-center gap-1.5 mb-1.5"
+        style={{
+          color: 'var(--slate)',
+          opacity: 'var(--ink-label)',
+          fontWeight: 'var(--label-weight)',
+          fontSize: 'var(--label-size)',
+        }}
+      >
+        <Plus size={11} />
+        Quick add
+      </label>
+
+      {/* Mode pills */}
+      <div className="flex gap-1 mb-2">
+        {(['comment', 'note'] as const).map((m) => {
+          const isActive = mode === m
+          return (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className="cursor-pointer inline-flex items-center gap-1 rounded-md transition-all"
+              style={{
+                fontSize: '10px',
+                fontWeight: isActive ? 600 : 400,
+                padding: '3px 8px',
+                background: isActive ? 'var(--teal-active)' : 'transparent',
+                color: isActive ? 'var(--teal)' : 'var(--slate)',
+                border: `1px solid ${isActive ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+            >
+              {m === 'comment' ? <MessageSquare size={10} /> : <ScrollText size={10} />}
+              {m}
+            </button>
+          )
+        })}
+        <button
+          type="button"
+          onClick={() => onJumpToTab(mode === 'comment' ? 'comments' : 'notes')}
+          className="ml-auto cursor-pointer inline-flex items-center gap-1"
+          style={{
+            fontSize: '10px',
+            color: 'var(--slate)',
+            opacity: 0.65,
+            background: 'none',
+            border: 'none',
+            padding: '3px 4px',
+          }}
+          title={`Jump to full ${mode === 'comment' ? 'Comments' : 'Notes'} tab`}
+        >
+          See all →
+        </button>
+      </div>
+
+      {/* Helper line — what each surface is for */}
+      <p
+        style={{
+          fontSize: '10px',
+          color: 'var(--slate)',
+          opacity: 'var(--ink-hint)',
+          margin: '0 0 6px 0',
+          lineHeight: 1.4,
+        }}
+      >
+        {HEADLINE[mode]}
+      </p>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-1.5">
+        <div className="flex gap-2 items-end">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={PLACEHOLDERS[mode]}
+            rows={2}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault()
+                handleSubmit(e)
+              }
+            }}
+            className="flex-1 rounded-md border text-sm outline-none resize-none"
+            style={{
+              fontSize: 'var(--value-size)',
+              color: 'var(--ink)',
+              background: 'var(--cream)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '8px 10px',
+              lineHeight: 1.5,
+              transition: 'border-color 0.15s',
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+          />
+          {text.trim() && (
+            <button
+              type="submit"
+              className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
+              style={{
+                background: forHermes && mode === 'comment' ? 'var(--gold)' : 'var(--teal-solid)',
+                color: 'var(--ink-bright, #fff)',
+                border: 'none',
+                transition: 'background-color 0.15s',
+              }}
+              title={`${mode === 'comment' ? (forHermes ? 'Post + dispatch to Hermes' : 'Post comment') : 'Add note'} · Ctrl+Enter`}
+            >
+              <Send size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* Hermes toggle — only relevant on comments. Shows up after typing. */}
+        {mode === 'comment' && text.trim() && (
+          <button
+            type="button"
+            onClick={() => setForHermes((v) => !v)}
+            className="flex items-center gap-1.5 self-start px-2 py-0.5 rounded-full transition-colors"
+            style={{
+              fontSize: '10px',
+              fontWeight: 600,
+              background: forHermes ? 'var(--gold-emphasis)' : 'rgba(100,116,139,0.06)',
+              color: forHermes ? 'var(--gold)' : 'var(--slate)',
+              border: `1px solid ${forHermes ? 'rgba(201,168,76,0.3)' : 'rgba(100,116,139,0.1)'}`,
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '0.3px',
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 'var(--radius-circle)',
+                background: forHermes ? 'var(--gold)' : 'var(--slate)',
+                opacity: forHermes ? 1 : 0.85,
+              }}
+            />
+            {forHermes ? 'For Hermes' : '@ Hermes'}
+          </button>
+        )}
+      </form>
     </div>
   )
 }
