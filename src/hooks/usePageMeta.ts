@@ -12,7 +12,20 @@ function ensureMeta(attr: string, key: string, content: string) {
   }
 }
 
-export function usePageMeta(title: string, description: string, ogType?: string) {
+export interface PageMetaOptions {
+  /** og:type — e.g. 'article' for project pages, 'profile' for /team/:slug. */
+  ogType?: string
+  /** Per-route OG share-card URL — point at /og/<type>/<slug> for branded
+   *  preview images instead of the static og-image.svg fallback. */
+  ogImage?: string
+}
+
+export function usePageMeta(title: string, description: string, ogTypeOrOptions?: string | PageMetaOptions) {
+  // Back-compat: callers pass a string for og:type, or an options object.
+  const opts: PageMetaOptions = typeof ogTypeOrOptions === 'string'
+    ? { ogType: ogTypeOrOptions }
+    : ogTypeOrOptions ?? {}
+
   useEffect(() => {
     document.title = title
 
@@ -20,9 +33,13 @@ export function usePageMeta(title: string, description: string, ogType?: string)
     ensureMeta('property', 'og:title', title)
     ensureMeta('property', 'og:description', description)
     ensureMeta('property', 'og:site_name', 'MN-CCORE Lab')
+    ensureMeta('name', 'twitter:title', title)
+    ensureMeta('name', 'twitter:description', description)
 
-    if (ogType) {
-      ensureMeta('property', 'og:type', ogType)
+    if (opts.ogType) ensureMeta('property', 'og:type', opts.ogType)
+    if (opts.ogImage) {
+      ensureMeta('property', 'og:image', opts.ogImage)
+      ensureMeta('name', 'twitter:image', opts.ogImage)
     }
-  }, [title, description, ogType])
+  }, [title, description, opts.ogType, opts.ogImage])
 }

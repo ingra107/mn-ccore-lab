@@ -1,0 +1,8 @@
+# Cloudflare Pages global headers.
+# Per-route OG share-card endpoints return SVG bodies but Pages was
+# auto-coercing the Content-Type to text/html on Functions responses,
+# which broke link-preview consumers (Twitter, Slack, email scrapers).
+# Force the SVG content-type here so the share cards render correctly.
+/og/*
+  Content-Type: image/svg+xml; charset=utf-8
+  Cache-Control: public, max-age=3600, s-maxage=3600

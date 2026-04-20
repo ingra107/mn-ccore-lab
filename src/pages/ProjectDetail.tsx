@@ -62,7 +62,11 @@ export default function ProjectDetail() {
 
   usePageMeta(
     project ? `${project.title} | MN-CCORE` : 'Project Not Found | MN-CCORE',
-    project?.description ?? 'MN-CCORE research project details.'
+    project?.description ?? 'MN-CCORE research project details.',
+    {
+      ogType: 'article',
+      ogImage: slug ? `https://mn-ccore-lab.pages.dev/og/project/${slug}` : undefined,
+    },
   )
 
   if (!project) {

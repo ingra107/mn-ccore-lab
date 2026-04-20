@@ -1,15 +1,9 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Avatar from './Avatar'
+import CategoryIcon from './CategoryIcon'
 import { getPersonInfo } from '../data/team'
 import type { Project } from '../data/types'
-
-const CATEGORY_DOT: Record<string, string> = {
-  clif: 'var(--maroon)',
-  lab: 'var(--teal)',
-  nate: 'var(--gold)',
-  mentee: 'var(--slate)',
-}
 
 interface ProjectCardProps {
   project: Project
@@ -17,7 +11,6 @@ interface ProjectCardProps {
 
 export default function ProjectCard({ project }: ProjectCardProps) {
   const pi = getPersonInfo(project.pi)
-  const dotColor = CATEGORY_DOT[project.category] ?? 'var(--slate)'
 
   const cardContent = (
     <motion.div
@@ -36,19 +29,11 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         transition: 'box-shadow 0.2s ease, background 0.15s ease',
       }}
     >
-      {/* Title with category dot */}
+      {/* Title with category icon */}
       <div className="flex items-start gap-2">
-        <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: 'var(--radius-circle)',
-            background: dotColor,
-            flexShrink: 0,
-            opacity: 0.85,
-            marginTop: '6px',
-          }}
-        />
+        <span style={{ flexShrink: 0, marginTop: '2px', opacity: 0.85 }}>
+          <CategoryIcon category={project.category} size={14} />
+        </span>
         <h4
           style={{
             fontWeight: 600,

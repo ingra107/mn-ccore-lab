@@ -7,43 +7,9 @@ import Layout from './components/Layout'
 import PortalLayout from './components/PortalLayout'
 import ViewTransitionWrapper from './components/ViewTransitionWrapper'
 import PageErrorBoundary from './components/PageErrorBoundary'
+import RequireAuth from './components/RequireAuth'
 const Home = lazy(() => import('./pages/Home'))
 import { AuthProvider } from './context/AuthContext'
-import { useAuth } from './hooks/useAuth'
-
-// Route guard — portal pages require an authenticated session when
-// VITE_REQUIRE_AUTH is 1 OR when the URL has ?strict=1 (QA/demo flip).
-// Before the team goes live, set VITE_REQUIRE_AUTH=1 in .env.production
-// and redeploy. Until then, portal routes render for anyone (PI-only era).
-function RequireAuth({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth()
-  const enforce =
-    import.meta.env.VITE_REQUIRE_AUTH === '1'
-    || typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('strict') === '1'
-  if (!enforce) return <>{children}</>
-  if (isLoading) return <div style={{ padding: 40, textAlign: 'center' }}>Loading…</div>
-  if (!isAuthenticated) {
-    return (
-      <div style={{ maxWidth: 420, margin: '6rem auto', padding: 24, textAlign: 'center' }}>
-        <h1 style={{ fontSize: 20, marginBottom: 12, color: 'var(--ink)' }}>Sign in required</h1>
-        <p style={{ fontSize: 14, color: 'var(--slate)', marginBottom: 20 }}>
-          The MN-CCORE Lab Hub portal requires your UMN account. Public pages are still available.
-        </p>
-        <a
-          href="/api/auth/login"
-          style={{
-            display: 'inline-block', padding: '10px 20px', borderRadius: 8,
-            background: 'var(--teal-solid)', color: '#fff', textDecoration: 'none', fontWeight: 500,
-          }}
-        >Sign in with UMN</a>
-        <div style={{ marginTop: 16 }}>
-          <a href="/" style={{ fontSize: 13, color: 'var(--teal)' }}>Back to public site</a>
-        </div>
-      </div>
-    )
-  }
-  return <>{children}</>
-}
 
 // Error boundary to prevent one page crash from taking down the app
 class ErrorBoundary extends Component<

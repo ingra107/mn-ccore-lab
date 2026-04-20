@@ -1,9 +1,65 @@
+import HermesMark from './HermesMark'
+
+/** Lab-aesthetic generated portrait — used when a team member has no
+ *  photo_url. Two stacked geometric arcs (suggesting a tilted-head
+ *  silhouette) in a muted token-aligned palette, with the initials
+ *  layered on top. Same name → same portrait (deterministic hash). */
+function GeneratedPortrait({ name, initials, fallbackColor, textClass }: { name: string; initials: string; fallbackColor: string; textClass: string }) {
+  // Pick one of 4 palette swatches deterministically.
+  const palette = [
+    { bg: 'color-mix(in srgb, var(--teal) 22%, var(--cream))',  arc: 'var(--teal)' },
+    { bg: 'color-mix(in srgb, var(--gold) 22%, var(--cream))',  arc: 'var(--gold)' },
+    { bg: 'color-mix(in srgb, var(--maroon) 18%, var(--cream))', arc: 'var(--maroon)' },
+    { bg: 'color-mix(in srgb, var(--green) 22%, var(--cream))', arc: 'var(--green)' },
+  ]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0
+  const swatch = palette[hash % palette.length]
+  return (
+    <span
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: swatch.bg,
+      }}
+    >
+      <svg
+        viewBox="0 0 64 64"
+        width="100%"
+        height="100%"
+        style={{ position: 'absolute', inset: 0, opacity: 0.55 }}
+        aria-hidden="true"
+      >
+        <path d="M14 50 Q32 38 50 50" fill="none" stroke={swatch.arc} strokeWidth="2" strokeLinecap="round" />
+        <circle cx="32" cy="26" r="9" fill="none" stroke={swatch.arc} strokeWidth="2" />
+      </svg>
+      <span
+        className={`${textClass} font-bold select-none`}
+        style={{
+          position: 'relative',
+          fontFamily: 'var(--font-display)',
+          color: fallbackColor,
+        }}
+      >
+        {initials}
+      </span>
+    </span>
+  )
+}
+
 interface AvatarProps {
   name: string
   initials: string
   photoUrl?: string
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xs' | 'xs' | 'sm-icon' | 'sm-plus' | 'tight' | 'base-sm' | 'base' | 'base-lg' | 'base-xl'
   variant?: 'gold' | 'ice'
+  /** Slug — used to swap in the HermesMark when slug === 'claude-ai' so
+   *  Hermes shows up as a peer avatar instead of "AI" letter initials. */
+  slug?: string
   className?: string
 }
 
@@ -86,10 +142,12 @@ export default function Avatar({
   photoUrl,
   size = 'md',
   variant = 'gold',
+  slug,
   className,
 }: AvatarProps) {
   const { container, text } = sizeConfig[size]
   const styles = variantStyles[variant]
+  const isHermes = slug === 'claude-ai'
 
   return (
     <div
@@ -106,7 +164,22 @@ export default function Avatar({
         e.currentTarget.style.transform = 'scale(1)'
       }}
     >
-      {photoUrl ? (
+      {isHermes ? (
+        <span
+          aria-label="Hermes — AI research assistant"
+          title="Hermes — AI research assistant"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '70%',
+            height: '70%',
+            color: 'var(--gold)',
+          }}
+        >
+          <HermesMark variant="icon" size={32} color="var(--gold)" />
+        </span>
+      ) : photoUrl ? (
         <img
           src={photoUrl}
           alt={name}
@@ -117,15 +190,7 @@ export default function Avatar({
           className="w-full h-full rounded-full object-cover"
         />
       ) : (
-        <span
-          className={`${text} font-bold select-none`}
-          style={{
-            fontFamily: 'var(--font-display)',
-            color: styles.color,
-          }}
-        >
-          {initials}
-        </span>
+        <GeneratedPortrait name={name} initials={initials} fallbackColor={styles.color} textClass={text} />
       )}
     </div>
   )

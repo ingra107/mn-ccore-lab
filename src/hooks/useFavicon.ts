@@ -1,7 +1,17 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import { useUnreadCount } from './useNotifications'
+
+// Phase 36b: notifications.recipient_slug is the canonical
+// preferred-name-last-name slug, NOT the email prefix. `ingra107` (Nick's
+// real UMN NetID) doesn't match the slug `nick-ingraham`. Map known
+// email-prefix overrides here so badge counts surface for the right user.
+const EMAIL_PREFIX_TO_SLUG: Record<string, string> = {
+  ingra107: 'nick-ingraham',
+  nick: 'nick-ingraham',
+  nate: 'nate-mesfin',
+}
 
 const SECTION_EMOJIS: Record<string, string> = {
   '/dashboard': '📊',
@@ -75,7 +85,10 @@ function restoreFavicon() {
 export function useFavicon() {
   const { pathname } = useLocation()
   const { user } = useAuth()
-  const userSlug = user?.email?.split('@')[0]?.toLowerCase() || ''
+  const userSlug = useMemo(() => {
+    const prefix = user?.email?.split('@')[0]?.toLowerCase() || ''
+    return EMAIL_PREFIX_TO_SLUG[prefix] ?? prefix
+  }, [user?.email])
   const { data: unreadCount = 0 } = useUnreadCount(userSlug)
 
   useEffect(() => {

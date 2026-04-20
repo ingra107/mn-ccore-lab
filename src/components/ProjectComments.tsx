@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, Send, Sparkles } from 'lucide-react'
+import { MessageSquare, Send } from 'lucide-react'
+import HermesMark from './HermesMark'
 import { useComments } from '../hooks/useApiData'
 import { useAddComment } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
@@ -177,11 +178,12 @@ export default function ProjectComments({ projectSlug }: Props) {
                           }}
                         >
                           <div className="flex items-center gap-1.5 mb-1">
-                            <Sparkles size={12} style={{ color: 'var(--gold)' }} />
+                            <HermesMark size={14} variant="avatar" />
                             <span
                               style={{
                                 fontSize: '10px',
                                 color: 'var(--gold)',
+                                fontWeight: 500,
                               }}
                             >
                               Hermes

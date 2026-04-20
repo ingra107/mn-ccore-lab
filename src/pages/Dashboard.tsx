@@ -10,6 +10,7 @@ import { useMeetingsApi, useTasks, useExpiringRegulatory } from '../hooks/useApi
 import { formatMediumDate } from '../lib/dateUtils'
 import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
+import PhaseReleaseBanner from '../components/PhaseReleaseBanner'
 import PageTooltip from '../components/PageTooltip'
 import PipelineCard from '../components/dashboard/PipelineCard'
 import StatsCard from '../components/dashboard/StatsCard'
@@ -483,6 +484,7 @@ export default function Dashboard() {
         })()}
 
         {/* Welcome banner (first-visit onboarding — conditional, rarely shown) */}
+        <PhaseReleaseBanner />
         <WelcomeBanner />
 
         {/* Customize panel */}

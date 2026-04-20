@@ -345,6 +345,35 @@ html[data-density="relaxed"] {
   }
 }
 
+/* ── Heartbeat-line trace animation ──
+   Used by <HeartbeatLine /> (favicon-derived ECG motif). Traces the path
+   left-to-right in one full cycle, then pauses briefly on the trailing
+   edge before the next beat. Reduced-motion users see the full line. */
+@keyframes hb-draw {
+  0%   { stroke-dashoffset: var(--hb-len, 1320); }
+  70%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Stop the trace at fully drawn — no looping. */
+  svg [style*="hb-draw"] {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}
+
+/* ── Pulse Kiosk Ken Burns (slow zoom) ──
+   8s zoom on hero metrics. Pauses for reduced-motion users. */
+@keyframes pulse-kenburns {
+  0%   { transform: scale(1.00); }
+  100% { transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-kenburns { animation: none !important; transform: none !important; }
+}
+
 /* Tabular numbers — align digits in date/number columns (Stripe/Vercel pattern) */
 .tabular-nums,
 .task-row-meta,

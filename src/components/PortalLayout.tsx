@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, Link } from 'react-router-dom'
 import { Menu, X, Sun, Moon, Monitor, Search, Plus, AlignJustify, AlignLeft } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
@@ -145,6 +145,23 @@ export default function PortalLayout() {
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
+
+          {/* Mobile brand mark — only below lg, kept tight (28px) so the
+              top bar stays usable. Tapping returns to /dashboard. */}
+          <Link
+            to="/dashboard"
+            aria-label="MN-CCORE Lab Hub — Dashboard"
+            className="lg:hidden flex items-center mr-1"
+            style={{ color: 'inherit' }}
+          >
+            <img
+              src="/logos/mnccore-logo-mark.svg"
+              alt=""
+              width={28}
+              height={28}
+              style={{ display: 'block' }}
+            />
+          </Link>
 
           {/* Search trigger */}
           <button

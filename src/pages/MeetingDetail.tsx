@@ -145,7 +145,11 @@ export default function MeetingDetail() {
 
   usePageMeta(
     meeting ? `${meeting.title} | MN-CCORE` : 'Meeting | MN-CCORE',
-    'MNCCORE meeting details, agenda, action items, and decisions.'
+    'MNCCORE meeting details, agenda, action items, and decisions.',
+    {
+      ogType: 'article',
+      ogImage: meeting?.id ? `https://mn-ccore-lab.pages.dev/og/meeting/${meeting.id}` : undefined,
+    },
   )
 
   if (isLoading) {

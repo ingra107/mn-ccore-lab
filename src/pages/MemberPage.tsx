@@ -240,7 +240,11 @@ export default function MemberPage() {
 
   usePageMeta(
     `${member.name} | MN-CCORE Lab`,
-    `${displayName} — ${member.role} at MN-CCORE Lab, University of Minnesota.${publishedCount > 0 ? ` ${publishedCount} publications.` : ''}`
+    `${displayName} — ${member.role} at MN-CCORE Lab, University of Minnesota.${publishedCount > 0 ? ` ${publishedCount} publications.` : ''}`,
+    {
+      ogType: 'profile',
+      ogImage: slug ? `https://mn-ccore-lab.pages.dev/og/team/${slug}` : undefined,
+    },
   )
 
   // Render the formal full name in the header ("Robert Adams Dudley" not
