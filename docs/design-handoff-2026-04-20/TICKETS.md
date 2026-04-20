@@ -749,7 +749,7 @@ Low priority but high story value.
 - [x] P1-04 · Fix Team Engagement scoring
 - [x] P1-05 · Dismiss meeting tooltip
 - [x] P1-06 · Label/replace public Home numbers
-- [ ] P1-07 · Seed Mentee Milestones — BLOCKED on Nick (don't fabricate trainee commitments)
+- [x] P1-07 · Seed Mentee Milestones — Dan: ATS Fluid Shortage poster (2026-05-16). Kalinoski: PLOS One CCI in ARDS submission (2026-05-01). Mentee roster fixed: Dan / Beret / Claire / Kalinoski (Casey + Kendall removed — they aren't mentees).
 - [x] P1-08 · Suppress empty mentor sections
 - [x] P2-01 · Strip `[Carried forward]` prefix
 - [x] P2-02 · Strip `CLIF:` prefix (no separate column — Group filter + dot already encode)

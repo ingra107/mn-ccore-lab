@@ -72,12 +72,15 @@ export default function MenteeMilestones() {
     [rawMilestones],
   )
   const { data: overview = [], isLoading: overviewLoading } = useMenteeOverview()
-  // Per-actor last-activity queries (limit=1, actor-filtered) so high activity volume doesn't hide old entries
-  const { data: actShyu = [] }      = useActivity(1, 'dan-shyu')
+  // Per-actor last-activity queries (limit=1, actor-filtered) so high activity
+  // volume doesn't hide old entries. Mentee roster confirmed by Nick 2026-04-20:
+  // Dan Shyu, Beret Fitzgerald, Claire Collins, Michael Kalinoski.
+  // Casey Eddington (Data Analyst) and Kendall McEachron (Faculty Collaborator)
+  // are not mentees and were removed.
+  const { data: actShyu = [] }       = useActivity(1, 'dan-shyu')
   const { data: actFitzgerald = [] } = useActivity(1, 'beret-fitzgerald')
-  const { data: actCollins = [] }   = useActivity(1, 'claire-collins')
-  const { data: actEddington = [] } = useActivity(1, 'casey-eddington')
-  const { data: actMceachron = [] } = useActivity(1, 'kendall-mceachron')
+  const { data: actCollins = [] }    = useActivity(1, 'claire-collins')
+  const { data: actKalinoski = [] }  = useActivity(1, 'michael-kalinoski')
   const updateMilestone = useUpdateMenteeMilestone()
   const { showUndo } = useUndoToast()
 
@@ -88,8 +91,8 @@ export default function MenteeMilestones() {
     const now = Date.now()
     const map = new Map<string, number>()
     const perActorEntries: [string, typeof actShyu][] = [
-      ['dan-shyu', actShyu], ['beret-fitzgerald', actFitzgerald], ['claire-collins', actCollins],
-      ['casey-eddington', actEddington], ['kendall-mceachron', actMceachron],
+      ['dan-shyu', actShyu], ['beret-fitzgerald', actFitzgerald],
+      ['claire-collins', actCollins], ['michael-kalinoski', actKalinoski],
     ]
     for (const [slug, entries] of perActorEntries) {
       if (entries.length > 0 && entries[0].timestamp) {
@@ -100,7 +103,7 @@ export default function MenteeMilestones() {
       }
     }
     return map
-  }, [actShyu, actFitzgerald, actCollins, actEddington, actMceachron])
+  }, [actShyu, actFitzgerald, actCollins, actKalinoski])
 
   // Compute overdue status client-side for display
   const enrichedMilestones = useMemo(() => {
