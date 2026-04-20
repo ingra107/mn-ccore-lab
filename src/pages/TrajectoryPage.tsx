@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useParams, Navigate, Link } from 'react-router-dom'
+import { useParams, Navigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   AreaChart,
@@ -1287,6 +1287,8 @@ type TabId = 'trajectory' | 'contributions'
 
 export default function TrajectoryPage() {
   const { slug } = useParams<{ slug: string }>()
+  const location = useLocation()
+  const teamBase = location.pathname.startsWith('/portal/') ? '/portal/team' : '/team'
   const member = slug ? getMemberBySlug(slug) : undefined
   const { data: trajectory, isLoading } = useTrajectory(slug || '')
   const [activeTab, setActiveTab] = useState<TabId>('trajectory')
@@ -1319,7 +1321,7 @@ export default function TrajectoryPage() {
     >
       {/* Back link */}
       <Link
-        to={`/team/${slug}`}
+        to={`${teamBase}/${slug}`}
         className="inline-flex items-center gap-1.5 mb-6 no-print hover:!opacity-100 transition-opacity"
         style={{
           fontSize: '12px',

@@ -139,11 +139,14 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     }
   }
 
-  // Focus trap + Escape + Alt+Up/Down navigation
+  // Focus trap + Escape + Alt+Up/Down navigation. Audit caught: prior trap
+  // checked only `activeElement === first/last`, which leaks when async-mounted
+  // regions (KeyLinksEditor, RichTextEditor, comments) inject autofocusing
+  // elements that pull focus outside the panel. New rule: if focus drifts
+  // outside panelRef on any Tab, snap it back to the first focusable.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        // Guard: don't close when typing in a text input / textarea / contenteditable / Tiptap editor
         const target = e.target as HTMLElement
         if (target.closest('input, textarea, [contenteditable="true"], .ProseMirror')) return
         onClose()
@@ -152,7 +155,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
       if (e.altKey && e.key === 'ArrowUp' && onPrev) { e.preventDefault(); onPrev(); return }
       if (e.altKey && e.key === 'ArrowDown' && onNext) { e.preventDefault(); onNext(); return }
 
-      // Focus trap: cycle Tab / Shift+Tab within panel
       if (e.key !== 'Tab' || !panelRef.current) return
       const focusable = panelRef.current.querySelectorAll<HTMLElement>(
         'input, select, textarea, button, a[href], [tabindex]:not([tabindex="-1"]), [contenteditable="true"]'
@@ -160,10 +162,17 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
       if (focusable.length === 0) return
       const first = focusable[0]
       const last = focusable[focusable.length - 1]
-      if (e.shiftKey && document.activeElement === first) {
+      const active = document.activeElement as HTMLElement | null
+      const isInsidePanel = active && panelRef.current.contains(active)
+      if (!isInsidePanel) {
+        e.preventDefault()
+        ;(e.shiftKey ? last : first).focus()
+        return
+      }
+      if (e.shiftKey && active === first) {
         e.preventDefault()
         last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
+      } else if (!e.shiftKey && active === last) {
         e.preventDefault()
         first.focus()
       }
@@ -172,11 +181,29 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     return () => document.removeEventListener('keydown', handler)
   }, [onClose, onPrev, onNext])
 
-  // Focus close button on mount (or when task changes)
+  // Capture the element that had focus when the panel opened so we can
+  // restore focus there on close (a11y best practice). Then move focus into
+  // the panel — title region rather than close button so keyboard users
+  // don't sit on "press Enter to cancel."
+  const openerRef = useRef<HTMLElement | null>(null)
   useEffect(() => {
+    if (!openerRef.current) {
+      openerRef.current = document.activeElement as HTMLElement | null
+    }
+    const titleRegion = panelRef.current?.querySelector<HTMLElement>('#task-detail-title')
     const closeBtn = panelRef.current?.querySelector<HTMLElement>('[data-testid="close-detail-panel"]')
-    closeBtn?.focus()
+    ;(titleRegion ?? closeBtn)?.focus()
   }, [task?.id])
+
+  // Restore focus to the opener element when the panel unmounts.
+  useEffect(() => {
+    return () => {
+      const opener = openerRef.current
+      if (opener && document.body.contains(opener)) {
+        try { opener.focus() } catch { /* ignore */ }
+      }
+    }
+  }, [])
 
   // Close on click outside
   useEffect(() => {
@@ -296,7 +323,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
         {/* Always visible: Title + Status */}
         <div className="px-5 pt-5 pb-3 flex flex-col gap-4">
-          <div id="task-detail-title">
+          <div id="task-detail-title" tabIndex={-1} style={{ outline: 'none' }}>
             <EditableTitle
               value={task.title || task.description}
               onSave={(v) => handleFieldUpdate('title', v)}

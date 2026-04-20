@@ -40,7 +40,7 @@ export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 4, scale: 0.97 }}
           transition={spring.snappy}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 page-tooltip"
           style={{
             padding: '6px 12px',
             borderRadius: 'var(--radius-lg)',
@@ -49,16 +49,16 @@ export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps
             fontSize: 11,
             fontWeight: 400,
             boxShadow: 'var(--shadow-elevated)',
-            whiteSpace: 'nowrap',
+            maxWidth: 'min(92vw, 480px)',
           }}
         >
-          <span>{text}</span>
+          <span style={{ minWidth: 0 }}>{text}</span>
           <button
             onClick={dismiss}
             aria-label="Dismiss tooltip"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cream)', opacity: 0.5, padding: 0, display: 'flex' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cream)', opacity: 0.7, padding: 4, display: 'flex', minWidth: 24, minHeight: 24, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
           >
-            <X size={10} />
+            <X size={14} />
           </button>
         </motion.div>
       )}

@@ -229,6 +229,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   to={item.to}
                   prefetch="intent"
                   onClick={onNavigate}
+                  aria-current={active ? 'page' : undefined}
                   className="flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] transition-colors duration-[150ms] mb-0.5"
                   style={{
                     backgroundColor: active ? 'color-mix(in srgb, var(--teal-subtle) 12%, transparent)' : 'transparent',
@@ -320,7 +321,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         {/* User profile */}
         {person && !collapsed && (
           <Link
-            to={`/team/${userSlug}`}
+            to={`/portal/team/${userSlug}`}
             prefetch="intent"
             className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
             style={{ color: 'var(--ink)', textDecoration: 'none' }}

@@ -93,10 +93,15 @@ export function useOnboarding() {
     return ONBOARDING_STEPS.find((s) => !state.completedSteps.includes(s.id)) ?? null
   }, [state.completedSteps])
 
+  // Audit caught: WelcomeBanner shown to returning users who never
+  // explicitly dismissed it. Auto-stale after 7 days from startDate
+  // (the user is no longer "new" by then). Explicit dismiss still wins.
+  const stale = currentDay > 7
+
   return {
     startDate: state.startDate,
     completedSteps: state.completedSteps,
-    dismissed: state.dismissed,
+    dismissed: state.dismissed || stale,
     currentDay,
     totalSteps,
     completedCount,

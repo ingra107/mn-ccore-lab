@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useParams, Navigate, Link } from 'react-router-dom'
+import { useParams, Navigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
 import Breadcrumb from '../components/Breadcrumb'
@@ -137,6 +137,10 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
 export default function MemberPage() {
   const { data: publications = [] } = usePublications()
   const { slug } = useParams<{ slug: string }>()
+  // Same component renders at /team/:slug (public chrome) and
+  // /portal/team/:slug (portal chrome). Trajectory link should preserve context.
+  const location = useLocation()
+  const teamBase = location.pathname.startsWith('/portal/') ? '/portal/team' : '/team'
   const member = slug ? getMemberBySlug(slug) : undefined
 
   // Check if this member is also a mentee (trainee)
@@ -283,7 +287,7 @@ export default function MemberPage() {
       {slug && (
         <div className="mb-6 flex flex-wrap gap-2">
           <Link
-            to={`/team/${slug}/trajectory`}
+            to={`${teamBase}/${slug}/trajectory`}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium"
             style={{
               background: 'var(--ice)',

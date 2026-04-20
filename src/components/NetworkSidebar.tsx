@@ -3,7 +3,7 @@ import { X, BookOpen, Users, ArrowRight } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Avatar from './Avatar'
-import type { NetworkNode, NetworkEdge } from './EnhancedCollaborationNetwork'
+import type { NetworkNode, NetworkEdge } from './CollaborationGraph'
 import { directors, getAllMembers } from '../data/team'
 import type { TeamMember, Director } from '../data/types'
 

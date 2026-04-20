@@ -297,7 +297,7 @@ export default function CommandPalette() {
         label: member.name,
         sublabel: member.role,
         icon: User,
-        action: () => { navigate(`/team/${member.slug}`); setOpen(false) },
+        action: () => { navigate(`/portal/team/${member.slug}`); setOpen(false) },
         category: 'person',
       })
     }

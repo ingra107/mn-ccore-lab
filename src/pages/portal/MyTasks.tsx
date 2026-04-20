@@ -10,9 +10,10 @@ import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import TaskGridView from '../../components/tasks/TaskGridView'
-import TaskBoardView from '../../components/tasks/TaskBoardView'
-import TaskStandUpView from '../../components/tasks/TaskStandUpView'
-import TaskTimelineView from '../../components/tasks/TaskTimelineView'
+// Alternate views are lazy — most users open MyTasks in 'list' (grid).
+const TaskBoardView = lazy(() => import('../../components/tasks/TaskBoardView'))
+const TaskStandUpView = lazy(() => import('../../components/tasks/TaskStandUpView'))
+const TaskTimelineView = lazy(() => import('../../components/tasks/TaskTimelineView'))
 const loadTaskDetailPanel = () => import('../../components/tasks/TaskDetailPanel')
 const TaskDetailPanel = lazy(loadTaskDetailPanel)
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
@@ -772,9 +773,9 @@ export default function MyTasks() {
           />
         ) : view !== 'list' ? (
           <>
-            {view === 'board' && <TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
-            {view === 'standup' && <TaskStandUpView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} />}
-            {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} />}
+            {view === 'board' && <Suspense fallback={<TableSkeleton />}><TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} /></Suspense>}
+            {view === 'standup' && <Suspense fallback={<TableSkeleton />}><TaskStandUpView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} /></Suspense>}
+            {view === 'timeline' && <Suspense fallback={<TableSkeleton />}><TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} /></Suspense>}
           </>
         ) : groupBy === 'none' ? (
           <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} focusedIndex={focusedTaskIndex} onFocusIndex={setFocusedTaskIndex} />

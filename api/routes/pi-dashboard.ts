@@ -101,11 +101,12 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
       FROM grants
     `).first(),
 
-    // Projects by stage
+    // Projects by stage. R10 standardized projects.status to lowercase
+    // ('active'); pre-fix this was 'Active' and silently returned 0 rows.
     env.DB.prepare(`
       SELECT stage, COUNT(*) as count
       FROM projects
-      WHERE status = 'Active'
+      WHERE status = 'active'
       GROUP BY stage
       ORDER BY count DESC
     `).all(),

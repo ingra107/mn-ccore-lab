@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, ListTodo } from 'lucide-react'
@@ -10,9 +10,11 @@ import EmptyState from '../../components/EmptyState'
 import TaskFilters from '../../components/tasks/TaskFilters'
 import SavedViewsBar from '../../components/tasks/SavedViewsBar'
 import TaskGridView from '../../components/tasks/TaskGridView'
-import TaskBoardView from '../../components/tasks/TaskBoardView'
-import TaskStandUpView from '../../components/tasks/TaskStandUpView'
-import TaskTimelineView from '../../components/tasks/TaskTimelineView'
+// Alternate views are lazy-loaded — most users open Tasks in 'list' (grid)
+// view, so deferring the other 3 trims ~30-50KB from the initial chunk.
+const TaskBoardView = lazy(() => import('../../components/tasks/TaskBoardView'))
+const TaskStandUpView = lazy(() => import('../../components/tasks/TaskStandUpView'))
+const TaskTimelineView = lazy(() => import('../../components/tasks/TaskTimelineView'))
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import TaskPeekOverlay from '../../components/tasks/TaskPeekOverlay'
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
@@ -486,9 +488,9 @@ export default function Tasks() {
                 onToggleExpand={toggleExpandTask}
               />
             )}
-            {view === 'board' && <TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} />}
-            {view === 'standup' && <TaskStandUpView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={(task) => { setPeekTask(null); setSelectedTask(task) }} />}
-            {view === 'timeline' && <TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={(task) => { setPeekTask(null); setSelectedTask(task) }} />}
+            {view === 'board' && <Suspense fallback={<TableSkeleton />}><TaskBoardView tasks={displayTasks} onStatusChange={handleStatusChange} onSelect={setSelectedTask} /></Suspense>}
+            {view === 'standup' && <Suspense fallback={<TableSkeleton />}><TaskStandUpView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={(task) => { setPeekTask(null); setSelectedTask(task) }} /></Suspense>}
+            {view === 'timeline' && <Suspense fallback={<TableSkeleton />}><TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={(task) => { setPeekTask(null); setSelectedTask(task) }} /></Suspense>}
           </>
         )}
       </div>

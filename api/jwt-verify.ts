@@ -40,6 +40,12 @@ let jwksCache: { keys: Jwk[]; fetchedAt: number; domain: string } | null = null;
 const JWKS_TTL_MS = 60 * 60 * 1000;
 let fallbackWarningLogged = false;
 
+// Cached imported CryptoKeys keyed by JWKS `kid`. Importing an RSA JWK
+// via crypto.subtle.importKey costs ~5-15ms per call; CF Access typically
+// rotates keys daily so a per-cold-start cache is safe and dramatically
+// reduces JWT-verify overhead on the hot auth path.
+const importedKeyCache = new Map<string, CryptoKey>();
+
 async function fetchJwks(teamDomain: string): Promise<Jwk[]> {
   const now = Date.now();
   if (jwksCache && jwksCache.domain === teamDomain && now - jwksCache.fetchedAt < JWKS_TTL_MS) {
@@ -123,9 +129,12 @@ export async function verifyCfAccessJwt(token: string, env: Env): Promise<Verifi
   const jwk = keys.find(k => k.kid === header.kid);
   if (!jwk) return null;
 
-  let key: CryptoKey;
-  try { key = await importJwk(jwk); }
-  catch { return null; }
+  let key: CryptoKey | undefined = importedKeyCache.get(jwk.kid);
+  if (!key) {
+    try { key = await importJwk(jwk); }
+    catch { return null; }
+    importedKeyCache.set(jwk.kid, key);
+  }
 
   const sig = base64UrlToBytes(sigB64);
   const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);

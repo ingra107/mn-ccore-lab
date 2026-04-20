@@ -97,8 +97,8 @@ export default function ProjectDetail() {
   }
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <div className="content-container" style={{ paddingBottom: '4rem' }}>
+    <div style={{ minHeight: '100dvh' }}>
+      <div className="content-container" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>
         <ProjectDetailInner project={project} />
       </div>
     </div>

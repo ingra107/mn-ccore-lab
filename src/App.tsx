@@ -263,6 +263,15 @@ export default function App() {
                   <Route path="/pb" element={<ErrorBoundary><PBSector /></ErrorBoundary>} />
                   <Route path="/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
                   <Route path="/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
+
+                  {/* Team member pages — under portal layout when navigating
+                      from inside the portal. Audit caught: clicking a teammate
+                      from the sidebar would drop the logged-in user back into
+                      the public marketing chrome (Fraunces titles, top nav,
+                      footer). The /team list itself stays public so non-team
+                      visitors can browse the lab on the marketing site. */}
+                  <Route path="/portal/team/:slug" element={<ErrorBoundary><MemberPage /></ErrorBoundary>} />
+                  <Route path="/portal/team/:slug/trajectory" element={<ErrorBoundary><TrajectoryPage /></ErrorBoundary>} />
                 </Route>
 
                 {/* Catch-all: redirect unknown paths to dashboard */}
