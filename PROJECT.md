@@ -15,9 +15,9 @@ React 19 + Vite 8 + Tailwind v4 + Cloudflare Pages/D1 lab management
 platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (PI-only; team not yet onboarded)
-**Repo:** https://github.com/ingra107/mn-ccore-lab  (660+ commits)
-**Current deploy:** `ed40e39` (2026-04-19) — Phase 36 close
-**Quality gate:** 🟢 GREEN — preflight 97 pass / 0 fail, deep-audit 14/14 suites clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, mobile smoke 2/2.
+**Repo:** https://github.com/ingra107/mn-ccore-lab  (670+ commits)
+**Current deploy:** `0ea632c` (2026-04-20) — Phase 36c close (post-audit fixes)
+**Quality gate:** 🟢 GREEN — inspection 213/213 vs prod, deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, mobile smoke 2/2, desktop journey 1/1, /api/health 64ms (was 100ms after schema-v46 indexes).
 
 ## 🚨 Read these FIRST every session
 
@@ -27,6 +27,60 @@ platform for Nick's critical-care research group at UMN.
 4. **`REFERENCE.md`** — API endpoints, D1 table list, conventions.
 5. **`CHANGELOG.md`** — top entry is the most recent phase; jump there for "what changed recently."
 6. **`docs/OBSERVABILITY.md`** — /api/health runbook + how to wire external uptime monitoring.
+
+## Phase 36c COMPLETE — Deep Audit Fixes (2026-04-20)
+
+**Status:** ✓ Shipped at `0ea632c` on origin/main. Live on prod
+(`https://mn-ccore-lab.pages.dev`, preview `3fbafba0`). 4-auditor deep
+audit (UX, code efficiency, accessibility, data integrity) ran in
+parallel; all 11 P0 + P1 findings fixed in one sprint.
+
+**Highlights (full detail in `CHANGELOG.md`):**
+
+- **Routing:** `/portal/team/:slug` added under PortalLayout. Logged-in
+  users clicking a teammate from sidebar/CommandPalette now keep portal
+  chrome instead of dropping into the public marketing site (bug live
+  since 2026-03-24). Public `/team/:slug` retained for marketing visitors.
+- **Mobile:** Tab-bar buffer bumped 1rem → 3rem so calendar's today
+  row + project detail's Description text clear the bar comfortably.
+  ProjectDetail switched to 100dvh + safe-area-inset-bottom.
+- **Data:** 13 leftover Phase 36b old slugs cleaned (7 nick in
+  tasks.assignee, 6 in projects.pi, 2 nathan-mesfin in ideas, +
+  variants). ~160 `test_delete_*` rows wiped from 6 tables that lack
+  soft-delete (ideas, decision_log, meetings, digest_comments,
+  lab_questions, publications).
+- **D1 perf:** schema-v46 — 7 missing indexes (activity_log, comments,
+  milestones, task_updates, projects.title, notifications composite,
+  tasks composite). 50-200ms drop on hot endpoints.
+- **Server perf:** `/api/version` edge-cached for 10s (was polled every
+  15s by every user; cuts ~95% of polling traffic). JWT `importKey`
+  result cached per `kid` (saves 5-15ms per authed request).
+- **Code bug:** `pi-dashboard.ts` was filtering `status='Active'` (caps);
+  R10 standardized to lowercase. Silently returned 0 rows. Fixed.
+- **A11y:** TaskDetailPanel focus trap re-queries focusables per Tab
+  AND snaps focus back when it drifts into async-mounted regions.
+  Restores focus to opener element on close. `.hover-badge` becomes
+  `visibility: hidden` until hover/focus so screen readers don't read
+  ~120 phantom badges per /tasks visit. Sidebar links get
+  `aria-current="page"` (pattern was already in MobileTabBar).
+- **UX:** PageTooltip drops `whiteSpace: nowrap` and uses
+  `max-width: min(92vw, 480px)`. WelcomeBanner auto-stales after 7
+  days from startDate.
+- **Bundle:** Dead `EnhancedCollaborationNetwork.tsx` (654 lines, no
+  runtime importer) deleted. `TaskBoardView`/`TaskStandUpView`/
+  `TaskTimelineView` now `lazy()` in Tasks + MyTasks (~30-50KB off
+  initial chunk).
+- **Render perf:** `CalculationsRow` runs single pass over tasks via
+  `useMemo` instead of 4 .filter() chains per render with 600+ tasks.
+
+## Phase 36b COMPLETE — Team Slug Rename (2026-04-19)
+
+All 19 team_members slugs converged on `preferred_name-last_name`
+(`nick-ingraham`, `emma-bromley`, ...). 2,312 D1 row changes, 239 code
+replacements. brain.db side updated (1,144 rows + sync script default).
+`actorSlug(email)` in `api/helpers.ts` maps email-prefix → canonical
+slug via `EMAIL_PREFIX_TO_SLUG`. Nick's real UMN address `ingra107@umn.edu`
+wired into PI allowlist (was `ningraha@`/`sandb029@` — wrong people).
 
 ## Phase 36 COMPLETE — Consultant Close-out + Mobile Swipe + Data Cleanup (2026-04-19)
 

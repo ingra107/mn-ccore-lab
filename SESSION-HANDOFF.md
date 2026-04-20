@@ -1,168 +1,194 @@
-# Session Handoff — 2026-04-19
+# Session Handoff — 2026-04-20
 
-> Last worked: Phase 36 (consultant close-out + mobile swipe + data cleanup).
+> Last worked: Phase 36c (4-auditor deep audit + 11 P0/P1 fixes).
 > Next session picks up here. One-glance state + what to do first.
 
 ## 📖 Session bootstrap — read these in order before writing anything
 
 1. **This file** (you're here). Current gate, gotchas, commit, next action.
 2. **`PROJECT.md`** — frontmatter `next_action` is canonical.
-3. **`LAUNCH-CHECKLIST.md`** — sections 0 + 1 are the remaining work before the team gets the link. Read if Nick mentions launch / team / go-live.
-4. **`CLAUDE.md`** — operating guide. Design system + palette + sync model + rules. Skip sections you don't need but have it open.
-5. **`REFERENCE.md`** — reach for this when you need an API endpoint or D1 table name.
-6. **`CHANGELOG.md`** top entry — "Phase 36" is the full record of what shipped this round.
-7. **`docs/OBSERVABILITY.md`** — `/api/health` + runbook if anything looks broken.
+3. **`LAUNCH-CHECKLIST.md`** — sections 0 + 1 are the remaining work before the team gets the link.
+4. **`CLAUDE.md`** — operating guide. Design system + palette + sync model + rules.
+5. **`REFERENCE.md`** — API endpoints + D1 table list.
+6. **`CHANGELOG.md`** top entry — Phase 36c full record.
+7. **`docs/OBSERVABILITY.md`** — `/api/health` + runbook.
 
-**Where historical docs live (don't treat as driving):**
-- `docs/archived/` — all superseded Hub docs.
-- PB side: `Projects/mn-ccore-lab-hub/_archived/` — superseded plans, specs, and audit checklists. The main PB project folder has only current reference docs (vision, future ideas, competitive research).
-
-## Gate — all green as of commit `f0d6375`
-
-## Phase 36b late add: team slug rename (2026-04-19)
-
-All 19 team_members slugs migrated from inconsistent (nick/nate as
-first-name, 17 others as last-name) to uniform `preferred_name-last_name`
-(`nick-ingraham`, `nate-mesfin`, `emma-bromley`, ...). 2,312 row updates
-across 30+ D1 tables. 239 client/API code replacements across 27 files.
-
-**Impact on every writer:** `actorSlug(email)` now maps email prefix
-through `EMAIL_PREFIX_TO_SLUG` LUT in `api/helpers.ts`. Adding a new team
-member requires a row there (plus team.ts + D1). Nick's 3 email aliases
-(`nick@`, `ningraha@`, `sandb029@`) all resolve to `nick-ingraham`.
-
-**Don't regress this:** future PI/fellow/member adds must update both
-D1 and `EMAIL_PREFIX_TO_SLUG`.
-
-Migration SQL saved at `scripts/rename-team-slugs.sql` + generator at
-`scripts/generate-slug-migration.py`. Client rename at
-`scripts/rename-client-slugs.py`. Schema-v45 (projects.deleted_at) also
-applied in same session.
-
-
+## Gate — all green as of commit `0ea632c`
 
 | Check | Result |
 |---|---|
-| Preflight | 🟢 GREEN — 97 pass / 0 fail / 0 findings (from Phase 35; not re-run after Phase 36, see note) |
-| Deep-audit (14 suites) | 0 bugs across all (from Phase 35) |
-| Axe WCAG 2.1 AA (dark + light) | 29 pages × 2 schemes, 0 findings (from Phase 35) |
-| `/api/health` (live prod) | 200 `{ok: true}` — 599 tasks, 62 projects, 19 team members (verified post-deploy) |
-| Mobile smoke (Pixel 5) | 2/2 — tasks page loads clean, detail panel opens + closes |
-| API smoke (post-Hono-deploy) | /api/health 200, /api/version 200, /api/auth/me 200, /api/tasks 200, /api/pb/* 403 |
+| `/api/health` (live prod) | 200 ok, 601 tasks / 64 projects / 19 team / **64ms** (was 100ms before schema-v46 indexes) |
+| `/api/version` Cache-Control | `public, max-age=10, s-maxage=10` (edge-cached) |
+| `/api/pi/analytics` projectsByStage | 5 rows (was silently 0 before 'Active' fix) |
+| Mobile smoke (Pixel 5) | 2/2 ✓ |
+| Desktop journey | 1/1 ✓ |
+| Inspection (full suite vs prod) | 213/213 (Phase 36b baseline) |
+| Deep-audit (14 suites) | 14/14 clean, 0 bugs (Phase 36 baseline) |
+| Axe WCAG 2.1 AA | 29 pages × 2 schemes, 0 findings (Phase 35 baseline) |
 
-**Preflight re-run recommendation:** Hono + async-auth + batched pb-sector
-touched the whole API surface. Running `npx tsx scripts/pre-flight/00-orchestrator.ts`
-is strongly suggested before going live with the team — Phase 35 baseline
-was 97 pass, anything below that is a regression.
-
+Rerun gate: `npx tsx scripts/pre-flight/00-orchestrator.ts`
 Rerun axe light: `npx tsx scripts/pre-flight/persona-axe.ts --light`
-Rerun all deep-audits: `for f in scripts/deep-audit/0*-*.ts scripts/deep-audit/1[0-5]-*.ts; do npx tsx "$f" 2>&1 | tail -2; done`
+Rerun deep-audits: `for f in scripts/deep-audit/0*-*.ts scripts/deep-audit/1[0-5]-*.ts; do npx tsx "$f" 2>&1 | tail -2; done`
 Rerun mobile smoke: `npx playwright test --config=playwright.config.mobile.ts`
+Rerun journey smoke: `npx playwright test --config=playwright.config.phase36.ts`
 
-## What's new since the previous handoff (Phase 35)
+## What's new since the previous handoff (Phase 36)
 
-**Phase 36 shipped** — see `CHANGELOG.md` for the full record. Three tracks:
+**Phase 36b** — team slug rename. All 19 members → `preferred_name-last_name`.
+2,312 D1 row updates + 239 code replacements + brain.db side updates +
+EMAIL_PREFIX_TO_SLUG LUT in `api/helpers.ts`. Nick's real UMN address
+(`ingra107@umn.edu`) replaced wrong guesses (`ningraha@`, `sandb029@`)
+in PI allowlist.
 
-1. **Consultant close-out.** Five "nice-to-have" items from the pre-launch
-   review all shipped: Hono router, JWT sig verify, `team_members.email`
-   column (v43), `lab_settings.pi_emails` (v44), `pb-sector` batch. See
-   `CLAUDE.md` Architecture section for the new Hono middleware chain.
-2. **Mobile swipe-to-dismiss** on `TaskDetailPanel`. Below 768px, swipe
-   right past 30% panel width → onClose. Axis-locked so vertical scroll
-   still works. Respects `prefers-reduced-motion`.
-3. **Data cleanup.** 1 duplicate project merged in prod D1 (`clif-pf-sf`
-   → `pf-v-sf-oxygenation-severity`). Slug sanitizer added server-side
-   so the paren-slug class can't come back.
+**Phase 36c** — 4-auditor deep audit (UX / code / a11y / data). 11 P0+P1
+fixes shipped in one sprint:
+
+- Routing: `/portal/team/:slug` keeps logged-in users in portal chrome
+  (clicking a teammate dropped them into public marketing site since
+  2026-03-24).
+- Mobile: tab-bar buffer 1rem→3rem so calendar/project-detail bottom rows
+  clear the bar.
+- Data: 13 leftover Phase 36b old slugs cleaned. ~160 `test_delete_*`
+  rows wiped from 6 tables that lack soft-delete.
+- D1 perf: schema-v46 added 7 missing indexes (50-200ms drop on hot
+  endpoints).
+- Server perf: `/api/version` edge-cached (10s) — drops ~95% polling
+  traffic. JWT `importKey` cached per kid — saves 5-15ms per auth.
+- Code bug: `pi-dashboard.ts` filtered `status='Active'` (caps) —
+  silently empty post-R10. Fixed.
+- A11y: TaskDetailPanel focus trap re-queries focusables per Tab + snaps
+  back when async-mounted regions leak focus + restores opener focus on
+  close. `.hover-badge` now `visibility: hidden` (no phantom SR
+  announcements). Sidebar links get `aria-current="page"`.
+- UX: PageTooltip `nowrap` removed → max-width clamp. WelcomeBanner
+  auto-stales after 7 days.
+- Bundle: dead `EnhancedCollaborationNetwork.tsx` (654 lines) deleted.
+  TaskBoard/StandUp/Timeline views lazy-loaded in Tasks + MyTasks.
+- Render: `CalculationsRow` runs single pass via `useMemo`.
 
 ## What to do FIRST in the next session
-
-Read the state above, then:
 
 1. If Nick's about to share the Hub URL with the team → follow
    `LAUNCH-CHECKLIST.md` sections 0 + 1. Four secrets + CF Access config
    + one rebuild. Post-launch, swipe-dismiss + JWT sig verify both
    activate with no extra deploys.
-2. If Nick wants to keep improving → the consultant "nice-to-have" list is
-   closed. `Projects/mn-ccore-lab-hub/_archived/HUB-AUDIT-CHECKLIST.md` (PB
-   repo) has the Tier A-E roadmap; `hub-future-ideas.md` has the full
-   feature backlog (3 items still NOT BUILT, mostly peripheral).
+2. If Nick wants to keep improving → consultant nice-to-haves are closed,
+   audit P0/P1 are closed. P2 backlog in audit reports under
+   `review/audit-newteammate/` and `review/a11y-deep/` (gitignored — run
+   the audits again to regenerate). Or pull from
+   `Projects/mn-ccore-lab-hub/hub-future-ideas.md`.
 3. If Nick reports a bug → reproduce with a deep-audit suite before
-   fixing; Hono's declarative routing makes it easy to locate + patch a
-   specific handler now.
+   fixing.
 
 ## Things that WILL surprise you if you don't know
 
-- **`getAuthUser()` + `isPiRequest()` are now async.** Every caller must
-  `await`. The verifier lives in `api/jwt-verify.ts` and fetches CF Access
-  JWKS with a module-level 1h cache. Without `CF_ACCESS_TEAM_DOMAIN` set,
-  it falls back to decode-only (with a one-time cold-start warn) so
-  pre-launch PI-only mode keeps working.
-- **`PI_EMAILS` no longer lives in code.** `getPiEmails(env)` reads from
-  `lab_settings.pi_emails` (JSON array) with a 5-min cache and falls back
-  to `PI_EMAILS_FALLBACK` constant if the row is missing. To add a PI,
-  write SQL to `lab_settings`, not code. Client gets `isPi: boolean` from
-  `/api/auth/me` — do NOT reintroduce client-side PI_EMAILS arrays.
-- **`api/index.ts` is Hono now.** Do NOT add routes with
-  `url.pathname === '...'` comparisons — use `app.get/post('/api/...',
-  handler)`. Middleware chain runs in order: OPTIONS → test-mode swap →
-  API-key → authed-user resolve → PI gate (scoped `/api/pb/*` GET) →
-  REQUIRE_AUTH (scoped writes) → version-bump-on-success (post-handler).
-- **TaskDetailPanel has mobile touch handlers.** Don't add nested
-  touch-gesture elements inside without checking axis-lock in
-  `handleTouchMove` — the guard `target.closest('input, textarea, select,
-  button, [contenteditable="true"], .ProseMirror, [role="listbox"]')`
-  prevents input elements from triggering swipe.
-- **`--slate`, `--teal`, `--gold`, `--maroon`, `--orange`, `--green`** are
-  all literal sRGB hex (NOT OKLCH) in both light and dark mode. Don't
-  "restore" them to OKLCH without reading CLAUDE.md Palette section.
-- **`VITE_REQUIRE_AUTH`** env var gates the client-side sign-in wall.
-  Default off. Flipping it ON without Cloudflare Access configured will
-  lock everyone out including Nick.
-- **`REQUIRE_AUTH` server secret** gates write endpoints. Same caveat.
-- **`/api/pb/*` returns 403 to non-PI** — this is intentional. If you get
-  403 during testing, it's the PI gate, not a regression. API keys +
+- **`getAuthUser()` + `isPiRequest()` are async.** Every caller must
+  `await`. JWT signature verification via JWKS in `api/jwt-verify.ts`
+  with module-level 1h JWKS cache + per-kid CryptoKey cache. Without
+  `CF_ACCESS_TEAM_DOMAIN` env var, falls back to decode-only with one-
+  shot warn — keeps pre-launch PI-only mode working.
+- **PI allowlist lives in `lab_settings.pi_emails`** (JSON array in D1),
+  read via `getPiEmails(env)` with 5-min cache + `PI_EMAILS_FALLBACK`
+  constant in `api/helpers.ts`. To add a PI: SQL UPDATE on
+  `lab_settings.pi_emails` row, no deploy.
+- **`actorSlug(email)` maps via `EMAIL_PREFIX_TO_SLUG` LUT.** Adding a
+  new team member requires THREE updates: D1 `team_members` row,
+  `src/data/team.ts` static fallback, and `EMAIL_PREFIX_TO_SLUG` entry.
+- **All 19 team slugs are `preferred_name-last_name`** (`nick-ingraham`,
+  `emma-bromley`, etc.). Phase 36b D1 + brain.db migration. Don't
+  reintroduce the old short forms.
+- **`/portal/team/:slug` is the in-portal route**; `/team/:slug` stays
+  for the public marketing site. Sidebar + CommandPalette navigate to
+  the portal one. MemberPage + TrajectoryPage detect context via
+  `useLocation`.
+- **`api/index.ts` is Hono.** Do NOT add routes via `url.pathname === ...`
+  comparisons — use `app.get/post('/api/...', handler)`. Middleware
+  chain: OPTIONS → test-mode swap → API-key → authed-user → PI gate
+  (`/api/pb/*` GET) → REQUIRE_AUTH (POST/PUT) → version-bump-on-success.
+- **`/api/version` is edge-cached for 10s.** Cross-tab realtime
+  invalidation latency is ~25s end-to-end (poll interval 15s + cache
+  TTL 10s) — acceptable, but don't shorten the cache TTL without
+  understanding the Workers-quota tradeoff.
+- **TaskDetailPanel has touch handlers (mobile swipe-to-dismiss) AND a
+  focus trap that snaps focus back into the panel.** Don't add nested
+  touch-gesture elements OR auto-focusing async-mounted children
+  without re-checking these.
+- **`--slate`, `--teal`, `--gold`, `--maroon`, `--orange`, `--green`**
+  are literal sRGB hex (NOT OKLCH) in both modes. Don't restore to
+  OKLCH without reading CLAUDE.md Palette section.
+- **`VITE_REQUIRE_AUTH`** env var gates client sign-in wall.
+  **`REQUIRE_AUTH`** server secret gates writes. Flipping either ON
+  without CF Access configured locks everyone out.
+- **`/api/pb/*` returns 403 to non-PI** — intentional. API keys +
   `lab_settings.pi_emails` bypass.
-- **Deploy is manual via wrangler.** There's no git push → deploy webhook.
+- **Deploy is manual via wrangler.** No git push → deploy webhook.
   `npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab`
-- **brain.db ↔ D1 sync is bidirectional.** Changing a task in the Hub
-  eventually lands in brain.db and vice versa. `sync_d1_push` translates
+- **brain.db ↔ D1 sync is bidirectional.** `sync_d1_push` translates
   canonical `task_{ulid}` PKs back to Hub hex IDs via `entity_aliases`.
 
-## Closed: consultant-review "nice-to-have" list (Phase 36)
+## Closed: consultant + audit "P0/P1" lists
 
-All five items shipped across commits `30f0bf7` (items 2/3/4/5) and
-`2a92225` (item 1). Details in `CHANGELOG.md`.
+- All 5 consultant nice-to-haves: Phase 36 (`CHANGELOG.md`).
+- All 11 deep-audit P0/P1: Phase 36c (`CHANGELOG.md`).
+- All Phase 35 launch blockers: Phase 35 (`CHANGELOG.md`).
 
 ## Scaffolded — not yet live
 
-None at the moment. Everything that's in the codebase is deployed.
+None. Everything in the codebase is deployed.
 
-## Key files touched Phase 36
+## Open audit P2/P3 (not blocking, queued for later)
 
-- `api/index.ts` — full rewrite to Hono (`hono@4.12.14`). 1875 → 1329 lines.
-- `api/helpers.ts` — `getAuthUser` + `isPiRequest` → async; new `getPiEmails(env)`; `PI_EMAILS` → `PI_EMAILS_FALLBACK`.
-- `api/jwt-verify.ts` (new) — CF Access JWT signature verification via JWKS.
-- `api/types.ts` — `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD` env vars; `TeamMemberRow.email`.
-- `api/schema.sql` — `team_members.email TEXT`.
-- `api/schema-v43.sql` (new) — team_members.email column + backfill.
-- `api/schema-v44.sql` (new) — lab_settings.pi_emails row seed.
-- `api/routes/projects.ts` — slug sanitizer applied to client-supplied `body.slug`.
-- `api/routes/pb-sector.ts` — `handleCommandCenter` now uses `env.DB.batch([...])`.
-- `api/routes/tasks.ts` — email column lookup; slug-derive as fallback.
-- `api/routes/digest-email.ts` — email column lookup; slug-derive as fallback.
-- `src/hooks/useAuth.ts` — `AuthUser.isPi` field; always-fetch API to hydrate `isPi`.
-- `src/lib/roleDefaults.ts` — `getUserRoleFromAuth(user)` replaces `getUserRole(email)`; `PI_EMAILS` deleted.
-- `src/pages/Dashboard.tsx`, `src/pages/portal/Tasks.tsx`, `src/pages/ProjectDetail.tsx`, `src/pages/portal/AnalyticsPage.tsx`, `src/components/Sidebar.tsx` — consume `user.isPi`.
-- `src/components/tasks/TaskDetailPanel.tsx` — touch-handler state + axis-locked swipe-right dismissal.
-- `scripts/merge-pf-sf-duplicate.sql` (new) — DI-4 merge SQL, executed on prod.
-- `tests/mobile-swipe-smoke.spec.ts` (new) — Pixel 5 post-deploy smoke.
-- `playwright.config.mobile.ts` (new) — mobile smoke config.
-- `LAUNCH-CHECKLIST.md` — section 1 CF_ACCESS_TEAM_DOMAIN + CF_ACCESS_AUD secrets.
-- `CLAUDE.md` — Hono rule, async auth rule, email column rule, swipe gotcha, slug fix.
+From the 4-auditor deep audit (full reports were generated under
+`review/audit-newteammate/` + `review/a11y-deep/` — gitignored, regen
+via the audit specs in `tests/`):
+
+- **Server perf:** `tasks.project_id` storage canonicalization (always
+  store slug, drop `slug OR id` join) — saves ~80-150ms on
+  pb-sector.handleCommandCenter. `LIKE '%' || slug || '%'` joins on
+  pi-dashboard need a `publication_authors` join table. SQLite FTS5 on
+  tasks/projects/ideas/comments for /api/search. `RETURNING *` on all
+  single-row writes to drop the post-write SELECT round-trip.
+- **A11y:** dashboard drag-to-reorder is mouse-only (no keyboard
+  alternative for RGL grid). Subtask "checkboxes" are `<div onClick>`
+  (no role=checkbox).
+- **Data integrity:** brain.db `entity_aliases` has zero live `hub_slug`
+  rows (all retired same-day) — `sync_d1_pull_new` is the suspect.
+  brain.db has prefix-mismatch on 33/62 projects (`clif-pf-v-sf-...` vs
+  D1 `pf-v-sf-...`) — sync may dup. brain.db `d1_tasks` mirror is 13
+  days stale; `d1_action_items` 24 days. Airtable push has been
+  returning 422 all day (`INVALID_MULTIPLE_CHOICE_OPTIONS … "Mentees"`
+  / `… "CLIF"`).
+- **UX:** dashboard `<h1>` is "Good evening" (decorative, not
+  informative). 11+ touch targets <44px on mobile (CLAUDE.md says 36px
+  is the floor — already below WCAG 2.5.5 AAA).
+- **Misc:** 22 stale `nick-ingraham` test slug refs in spec files (now
+  CORRECT after rename — but test descriptions reference old context).
+
+## Key files touched Phase 36c
+
+- `src/App.tsx` — `/portal/team/:slug` + trajectory routes added.
+- `src/components/Sidebar.tsx` — `aria-current="page"`, `/portal/team/...` link.
+- `src/components/CommandPalette.tsx` — `/portal/team/...` navigate.
+- `src/components/PortalLayout.tsx` — main pad-bottom 1rem → 3rem.
+- `src/components/PageTooltip.tsx` — drop nowrap, max-width, larger X.
+- `src/components/tasks/TaskDetailPanel.tsx` — focus trap fix + opener restore + title region tabIndex=-1.
+- `src/components/tasks/TaskGridView.tsx` — `.hover-badge { visibility: hidden }`, `CalculationsRow` memoized.
+- `src/components/NetworkSidebar.tsx` — type import switched to CollaborationGraph.
+- `src/components/EnhancedCollaborationNetwork.tsx` — DELETED (654 lines).
+- `src/pages/MemberPage.tsx`, `src/pages/TrajectoryPage.tsx` — `useLocation` for portal-vs-public link context.
+- `src/pages/ProjectDetail.tsx` — 100dvh + safe-area-inset-bottom.
+- `src/pages/portal/Tasks.tsx`, `src/pages/portal/MyTasks.tsx` — `lazy()` Board/StandUp/Timeline + Suspense.
+- `src/hooks/useOnboarding.ts` — `dismissed` auto-stales after 7 days.
+- `api/lib/version.ts` — Cache-Control: public, max-age=10.
+- `api/jwt-verify.ts` — importedKeyCache map.
+- `api/routes/pi-dashboard.ts` — `'Active'` → `'active'`.
+- `api/schema-v46.sql` (new) — 7 missing indexes.
+- `scripts/phase36b-slug-cleanup.sql` (new) — 13 slug leftovers + 4 commitments fix.
+- `scripts/test-residue-cleanup.sql` (new) — ~160 test_delete_* rows across 6 tables.
 
 ## Git state
 
-Hub: `main` at `ed40e39` (pushed to origin).
-PB: `main` at `dd375854` (unchanged this session).
+Hub: `main` at `0ea632c` (pushed to origin).
+PB: `main` at `432042d2` (pushed to origin).
 
 Re-check before modifying: `git status --short` should be empty in both repos.

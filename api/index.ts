@@ -679,14 +679,21 @@ app.post('/api/ideas/:id', (c) => handleUpdateIdea(c.req.param('id'), R(c), USER
 app.post('/api/inbox', (c) => handlePostInbox(R(c), USER(c), E(c)));
 app.post('/api/inbox/sync', (c) => handleMarkSynced(R(c), E(c)));
 
-// Bug report (requires authed user OR API key — enforced here on top of the
-// standard auth gate, because bug reports create real GitHub Issues and could
-// be spammed otherwise).
+// Bug report. Once REQUIRE_AUTH is flipped on (team launch), require an
+// authed user OR API key — bug reports create real GitHub Issues and a
+// stranger could otherwise spam the repo. Until then, accept anonymous
+// reports so Nick (sole pre-launch user, can't yet sign in via CF Access)
+// can submit. Pattern mirrors the rest of /api: writes are anonymous-OK
+// pre-launch, gated post-launch via REQUIRE_AUTH=1.
 app.post('/api/bug-report', async (c) => {
-  const authed = c.get('authedUser');
-  const hasApiKey = Boolean(c.req.header('X-API-Key'));
-  if (!authed && !hasApiKey) return error('Authentication required to file a bug', 401);
-  return handleBugReport(c.req.raw, E(c));
+  const env = E(c);
+  const requireAuth = (env as unknown as { REQUIRE_AUTH?: string }).REQUIRE_AUTH === '1';
+  if (requireAuth) {
+    const authed = c.get('authedUser');
+    const hasApiKey = Boolean(c.req.header('X-API-Key'));
+    if (!authed && !hasApiKey) return error('Authentication required to file a bug', 401);
+  }
+  return handleBugReport(c.req.raw, env);
 });
 
 // Digest

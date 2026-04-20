@@ -10,20 +10,23 @@ in comments).
 ## Stack
 
 - **Frontend:** React 19 + Vite 8 + TypeScript + Tailwind v4 + Framer Motion 12
-- **Data:** TanStack Query v5 → Cloudflare D1 (62+ tables, 190+ API endpoints)
-- **Testing:** Playwright (214+ inspection tests) + Vitest (component)
+- **API:** Hono v4.12 router on Cloudflare Workers (Phase 36)
+- **Data:** TanStack Query v5 → Cloudflare D1 (60 tables, ~225 endpoints)
+- **Testing:** Playwright (213+ inspection + mobile smoke + desktop journey) + Vitest (component)
 - **Realtime:** Cloudflare Durable Objects + PartySocket (`hub-realtime` worker)
 - **AI assistant:** Hermes via `hub_ai_listener.py` (Peripheral Brain)
 
 ## Start here if you're a fresh Claude session
 
-1. **`CLAUDE.md`** — operating guide. Design system, architecture, 17 critical
+1. **`SESSION-HANDOFF.md`** — current gate, last commit, what to do first.
+   Always read this before writing any code.
+2. **`CLAUDE.md`** — operating guide. Design system, architecture, 28 critical
    rules, known gotchas. Source of truth for how this codebase is organized.
-2. **`Projects/mn-ccore-lab-hub/HUB-AUDIT-CHECKLIST.md`** (Peripheral Brain repo)
-   — canonical 15-section interaction audit + methodology + Tier A-E next-steps
-   roadmap. Drives `scripts/hub-audit.ts`.
-3. **`CHANGELOG.md`** — phase-by-phase build history. Phase 34 is the current
-   phase (audit framework + key-link editor, 2026-04-17).
+3. **`CHANGELOG.md`** — phase-by-phase build history. Phase 36c is the current
+   phase (4-auditor deep audit + 11 P0/P1 fixes, 2026-04-20). Earlier phases:
+   36b (slug rename), 36 (consultant close-out + mobile swipe), 35 (a11y + sync).
+4. **`LAUNCH-CHECKLIST.md`** sections 0 + 1 — the only remaining work before
+   the team gets the link. Four secrets + CF Access config.
 
 ## Run locally
 

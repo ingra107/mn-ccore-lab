@@ -15,13 +15,14 @@ These six plus this file are authoritative. Historical material lives
 in `docs/archived/` (and PB-side `Projects/mn-ccore-lab-hub/_archived/`) —
 safe to ignore unless explicitly spelunking history.
 
-## Current state (2026-04-19)
+## Current state (2026-04-20)
 
-- **Phase 36 shipped.** All 5 consultant "nice-to-have" items closed (Hono router, JWT sig verify, `team_members.email`, `lab_settings.pi_emails`, `pb-sector` batched). Mobile swipe-to-dismiss on TaskDetailPanel. Slug sanitizer on `POST /api/projects`. 1 duplicate project merged in prod D1.
-- **Quality gate: 🟢 GREEN (Phase 35 baseline, not re-run for Phase 36).** Preflight 97 pass / 0 fail. Deep-audit 14/14 suites clean. Axe clean across 29 pages × 2 color schemes. Post-Phase-36 API + mobile smoke both green. Strongly suggest running preflight before team launch — Hono touched the whole API surface.
+- **Phase 36c shipped.** 4-auditor deep audit fixes (UX, code, a11y, data) — all 11 P0+P1 closed in one sprint. Plus Phase 36b slug rename (preferred_name-last_name) + Phase 36 consultant close-out (Hono, JWT, team_members.email, lab_settings.pi_emails, pb-sector batch, mobile swipe).
+- **Quality gate: 🟢 GREEN.** Inspection 213/213, deep-audit 14/14 (0 bugs), axe 29 pages × 2 schemes (0 findings), mobile smoke 2/2, desktop journey 1/1, `/api/health` 64ms (was 100ms before schema-v46 indexes).
 - **Not yet live for the team.** Nick is the only active user. Going live requires CF Access config + `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` + `REQUIRE_AUTH` + `TEST_MODE_KEY` + `VITE_REQUIRE_AUTH` secrets — see `LAUNCH-CHECKLIST.md` sections 0 + 1.
-- **Team slugs:** all 19 members use `preferred_name-last_name` format (`nick-ingraham`, `emma-bromley`, ...). Migrated Phase 36b 2026-04-19 — see CHANGELOG. `actorSlug(email)` in `api/helpers.ts` maps email prefix → canonical slug via `EMAIL_PREFIX_TO_SLUG`. Adding a new team member = D1 row + team.ts entry + LUT entry.
-- **Current HEAD:** `f0d6375` on `main`, pushed.
+- **Team slugs:** all 19 members use `preferred_name-last_name` format (`nick-ingraham`, `emma-bromley`, ...). `actorSlug(email)` in `api/helpers.ts` maps email prefix → canonical slug via `EMAIL_PREFIX_TO_SLUG`. Adding a new team member = D1 row + team.ts entry + LUT entry.
+- **Routing:** `/portal/team/:slug` keeps logged-in users in portal chrome. `/team/:slug` stays for the public marketing site.
+- **Current HEAD:** `0ea632c` on `main`, pushed.
 
 ## Vision
 
@@ -32,16 +33,17 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | Thing | Value |
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev (PI-only; team not yet onboarded) |
-| Repo | github.com/ingra107/mn-ccore-lab (660+ commits) |
-| Current deploy | `ed40e39` (2026-04-19, Phase 36 close — preview `e7046581`) |
-| Quality gate | 🟢 GREEN (Phase 35 baseline) + post-Phase-36 API + mobile smoke green. Preflight re-run recommended before team launch. |
+| Repo | github.com/ingra107/mn-ccore-lab (670+ commits) |
+| Current deploy | `0ea632c` (2026-04-20, Phase 36c close — preview `3fbafba0`) |
+| Quality gate | 🟢 GREEN — inspection 213/213, deep-audit 14/14, axe 29×2 = 0, mobile smoke 2/2, desktop journey 1/1. |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
-| Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + **Hono v4.12 (API router, Phase 36)** |
-| Testing | Playwright 1.59 (E2E, 214+ inspection + mobile smoke) + Vitest 4.1 (component, browser mode) |
+| Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + **Hono v4.12 (API router)** |
+| Testing | Playwright 1.59 (E2E, 213+ inspection + mobile smoke + desktop journey) + Vitest 4.1 (component, browser mode) |
 | Data | TanStack Query v5 + Cloudflare D1 (60 tables, ~225 endpoints via Hono) + Recharts -- ALL LIVE |
-| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. 599 tasks, 62 projects, 19 team_members (schema v44). |
+| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. 601 tasks, 64 projects, 19 team_members (schema v46). |
 | D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
 | D1 tables | 60 (live count via `/api/health`; +d1_task_comments in Phase 35) |
+| D1 schema versions applied to prod | v1-v44 + v45 (projects.deleted_at, Phase 36) + v46 (7 missing indexes, Phase 36c) |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
 | Reference | `REFERENCE.md` in this repo -- D1 tables, API endpoints, key files, feature list |
@@ -300,6 +302,12 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 20. **Task mutation endpoints validate assignee + project_id.** `POST /api/tasks`, `POST /api/tasks/:id`, and `POST /api/tasks/batch` action='assign' all reject unknown assignee slugs (except `claude-ai`). `project_id` on create/update is resolved (accepting id OR slug); unknown → NULL. Keeps dangling refs out of the DB. Ref: `api/routes/tasks.ts`. Pattern found via deep-audit Suite 8 + propagated to every write path.
 21. **Project slug collision auto-resolves.** `handleCreateProject` loops appending `-2/-3/...` if the desired slug already exists. Two projects with the same title get distinct slugs; no silent overwrite. Ref: `api/routes/projects.ts`. Found via Suite 8.
 22. **Project delete cascades.** `handleDeleteProject` clears `comments`, `project_updates`, and sets active tasks' `project_id = NULL` before removing the project row. Tasks are never orphaned with dangling refs. Ref: `api/routes/projects.ts`.
+23. **Portal team-member route is `/portal/team/:slug`, NOT `/team/:slug`.** Public `/team/:slug` renders inside the marketing-site `<Layout>` chrome (Fraunces titles, top nav, footer). Phase 36c added the portal-prefixed route under `<PortalLayout>` so logged-in users keep portal chrome when clicking a teammate. Sidebar + CommandPalette navigate to the portal path. MemberPage + TrajectoryPage detect their context via `useLocation` and link relative to `teamBase = location.pathname.startsWith('/portal/') ? '/portal/team' : '/team'`. Don't link from a portal component to bare `/team/:slug`.
+24. **`actorSlug(email)` is a LUT, not a derive.** `EMAIL_PREFIX_TO_SLUG` in `api/helpers.ts` maps email-prefix → canonical team slug (post-Phase-36b rename). Adding a team member requires THREE updates in lockstep: D1 `team_members` row, `src/data/team.ts` static fallback, and `EMAIL_PREFIX_TO_SLUG` entry. Skipping the LUT means writes attribute to email-prefix instead of canonical slug.
+25. **`/api/version` is edge-cached for 10s.** `Cache-Control: public, max-age=10, s-maxage=10` in `api/lib/version.ts`. Drops ~95% of polling traffic without breaking cross-tab realtime invalidation (effective latency ~25s end-to-end with 15s poll interval). Don't shorten the TTL without understanding the Workers-quota tradeoff. Don't add `Set-Cookie` to this response (would defeat the cache).
+26. **JWT `importKey` is cached per `kid` at module scope.** `importedKeyCache: Map<string, CryptoKey>` in `api/jwt-verify.ts`. Don't replace with a per-request import unless you've measured the cold-start trade.
+27. **Hover-only badges must be `visibility: hidden`, not just `opacity: 0`.** Phase 36c a11y fix in `TaskGridView.tsx` `.hover-badge` CSS. `opacity: 0` keeps the element in the AT tree, so screen readers announce ~120 phantom badges per /tasks visit. Apply same pattern to any future hover-revealed content.
+28. **Sidebar nav links carry `aria-current="page"` on the active route.** `Sidebar.tsx` follows the same pattern `MobileTabBar.tsx:91` already uses. New navigation surfaces must set `aria-current` for screen reader navigation.
 
 ## Roadmap
 
@@ -644,9 +652,9 @@ python -c "import sqlite3; conn=sqlite3.connect('C:/Users/ingra107/Peripheral-Br
 **Guide:** `TESTING.md`
 **Skill:** `/test-hub` (scan, run, generate, update, report)
 
-## Phase History (29-36 + R8/R9/R10) → see CHANGELOG.md
+## Phase History (29-36c + R8/R9/R10) → see CHANGELOG.md
 
-> **Phase-by-phase build history in `CHANGELOG.md`** to keep this file operational. Latest: **Phase 36** (2026-04-19) — consultant close-out + mobile swipe + data cleanup (Hono router, JWT sig verify, team_members.email, lab_settings.pi_emails, pb-sector batch, mobile swipe-to-dismiss, slug sanitizer, DI-4 merged). Earlier phases: 29 features, 30 visual QA, 31 token compliance, 31.5 expert polish, 32 final launch polish (10 consultant rounds), Nick-Review R8/R9/R10, 34 audit framework, 35 a11y + sync parity.
+> **Phase-by-phase build history in `CHANGELOG.md`** to keep this file operational. Latest: **Phase 36c** (2026-04-20) — 4-auditor deep audit + 11 P0/P1 fixes (`/portal/team/:slug` routing, mobile tab-bar buffer, schema-v46 indexes, `/api/version` edge-cache, JWT importKey cache, focus trap fix, hover-badge a11y, sidebar aria-current, dead code, lazy bundle). **Phase 36b** — slug rename. **Phase 36** — consultant close-out + mobile swipe. Earlier: 29 features, 30 visual QA, 31 token compliance, 31.5 expert polish, 32 final launch polish (10 consultant rounds), Nick-Review R8/R9/R10, 34 audit framework, 35 a11y + sync parity.
 >
 > **Key decisions in that history:** sidebar darker-than-content is NEVER-violate (GC-1). Framer Motion scoped to page transitions only (GC-2). Ideas + Decisions are columnar tables not cards (GC-3). Data-pages vs dashboard-pages taxonomy (GC-6). Grant + project status taxonomies locked (R10). Research Digest = Model B. Dashboard cards resizable via RGL (R9-9). Hono router declarative — no raw `url.pathname` routing (Phase 36).
 

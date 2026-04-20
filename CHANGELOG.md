@@ -2,6 +2,157 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Phase 36c: 4-Auditor Deep Audit + 11 P0/P1 Fixes (2026-04-20)
+
+**Context:** After Phase 36b shipped, dispatched 4 specialist auditors
+in parallel against live prod (UX/interaction, code efficiency,
+accessibility-deeper-than-axe, data integrity). They returned 6 P0
+bugs + 8 P1 issues + a long P2/P3 backlog. All 11 P0+P1 fixed in this
+sprint.
+
+### Commits
+- `4599007` — 11 audit fixes (73 files, 2547+/-713 lines)
+- `0ea632c` — gitignore audit outputs
+
+Deployed at preview `3fbafba0` to `https://mn-ccore-lab.pages.dev`.
+SQL applied to prod D1: `phase36b-slug-cleanup.sql`,
+`test-residue-cleanup.sql`, `schema-v46.sql`.
+
+### Gate (post-deploy)
+- `/api/health`: 64ms (was 100ms — index win), 601 tasks / 64 projects / 19 team.
+- `/api/version`: `Cache-Control: public, max-age=10, s-maxage=10` ✓.
+- `/api/pi/analytics` projectsByStage: 5 rows (was silently 0).
+- Mobile smoke 2/2; desktop journey 1/1; build clean; wrangler dry-run clean.
+
+### P0 fixes
+
+**1. Routing — `/portal/team/:slug`.**
+`/team/:slug` was inside the public `<Layout>` block in App.tsx, so a
+logged-in team member clicking a teammate from sidebar/CommandPalette
+would drop out of portal chrome and land on the public marketing site.
+Live since 2026-03-24.
+
+Added `/portal/team/:slug` + `/portal/team/:slug/trajectory` under
+PortalLayout. Sidebar link, CommandPalette navigate, MemberPage
+trajectory link, and TrajectoryPage back-link all use the portal path.
+MemberPage + TrajectoryPage detect their context via `useLocation` so
+the trajectory ↔ profile back-and-forth preserves the prefix.
+
+**2. Mobile bottom tab bar coverage.**
+`PortalLayout` `<main>` had `pb-[calc(1rem+56px+env(safe-area-inset-bottom))]`
+which just barely cleared the tab bar — content's last row sat right
+under it on calendar + project detail. Bumped `1rem` → `3rem` so the
+last row has comfortable breathing room. ProjectDetail switched to
+`100dvh` + `safe-area-inset-bottom` in inner pad.
+
+**3. 13 leftover Phase 36b old slugs.**
+The original rename-team-slugs.sql missed 13 rows that used variants
+not in the canonical RENAMES map: 7 `tasks.assignee='nick'`, 6
+`projects.pi='nick'`, 2 `ideas.submitted_by='nathan-mesfin'`, plus
+test residue (`mesfin`, `ningraha`) and 4 `commitments.to_whom`
+storing display names. SQL: `scripts/phase36b-slug-cleanup.sql`.
+
+**4. ~160 `test_delete_*` rows across 6 tables.**
+Tables that lack `deleted_at` (ideas, decision_log, meetings,
+digest_comments, lab_questions, publications) had hundreds of test rows
+visible to any new team member opening /ideas or /decisions. Cleanup
+SQL with cascading FK handling for meeting_id and question_id:
+`scripts/test-residue-cleanup.sql`.
+
+**5. `pi-dashboard.ts` 'Active' filter (silent zero).**
+`SELECT … FROM projects WHERE status = 'Active'` (capital A). R10
+standardized to lowercase 'active', so this returned 0 rows for ~6 days.
+The PI's Projects-by-Stage card was empty. Trivial 1-line fix.
+
+**6. brain.db sync drift acknowledged.**
+Audit caught: 33/62 D1 projects have prefix-mismatch with brain.db
+(`clif-pf-v-sf-...` vs `pf-v-sf-...`); zero live `entity_aliases.hub_slug`
+rows; `d1_tasks` mirror 13 days stale. Logged for follow-up — sync is
+working day-to-day but the pull path needs investigation.
+
+### P1 fixes
+
+**7. D1 indexes (schema-v46) — 7 added.**
+`activity_log(timestamp DESC)`, `activity_log(actor, timestamp DESC)`,
+`activity_log(related_type, related_id)`, `comments(project_id,
+created_at DESC)`, `milestones(project_id, target_date)`,
+`milestones(target_date) WHERE status IN ('pending', 'in_progress')`,
+`task_updates(task_id, created_at DESC)`, `projects(title)`,
+`notifications(recipient_slug, read, created_at DESC)` (replaces single-
+col index), `tasks(completed, due_date, created_at DESC) WHERE
+deleted_at IS NULL`. Audit measured 50-200ms drops on /api/activity,
+/api/search, /api/projects/health, /api/notifications,
+/api/pb/command-center.
+
+**8. `/api/version` edge-cached.**
+`useRealtimeSync` polls every 15s on every tab, so 20 team members ×
+24h × `refetchIntervalInBackground: true` = ~115K Worker requests/day
+baseline. Added `Cache-Control: public, max-age=10, s-maxage=10` —
+~95% of polls now short-circuit at the edge. Realtime invalidation
+latency stays acceptable (~25s end-to-end).
+
+**9. JWT `importKey` cached per kid.**
+`crypto.subtle.importKey` ran on every authed request (~5-15ms). Now
+cached at module scope in `importedKeyCache: Map<string, CryptoKey>`
+keyed by JWKS `kid`. CF Access keys rotate ~daily, cache fits in cold-
+start lifetime.
+
+**10. TaskDetailPanel focus trap leak + opener restore.**
+Prior trap snapshotted focusables once; async-mounted regions
+(KeyLinksEditor, RichTextEditor, comments) injected autofocusing
+elements that pulled focus outside the panel. New rule: re-query
+focusables per Tab event; if `document.activeElement` is outside
+panelRef, snap it back to first focusable. Also: capture
+`document.activeElement` on mount (the row that opened the panel),
+restore it on unmount. Title region gets `tabIndex={-1}` so initial
+focus moves there instead of the close button.
+
+**11. `.hover-badge` visibility hidden + sidebar `aria-current="page"`.**
+TaskGridView's hover-only project/age badges rendered with `opacity: 0`
+but no `aria-hidden` — screen readers read ~120 phantom announcements
+per /tasks visit. Added `visibility: hidden` (and `:focus-within`
+reveal) so they're properly removed from the AT tree. Sidebar links
+gain `aria-current="page"` on the active route — pattern was already
+in `MobileTabBar.tsx:91`, ported to desktop sidebar.
+
+**12. PageTooltip overflow + WelcomeBanner staleness.**
+PageTooltip had `whiteSpace: 'nowrap'` so 40-char tooltips blew past
+393px on mobile. Replaced with `max-width: min(92vw, 480px)` and
+bumped the X button from 10×10 to 24×24. WelcomeBanner now auto-
+stales after `currentDay > 7` from startDate so returning users stop
+seeing it.
+
+**13. CalculationsRow memoization.**
+4 separate `tasks.filter(...)` chains plus inline `new Date()` per
+render. With 600+ tasks rerendering on every keystroke, ~20ms wasted
+per stroke. Single-pass `useMemo` over tasks.
+
+**14. Dead code + lazy bundle.**
+`src/components/EnhancedCollaborationNetwork.tsx` (654 lines, no
+runtime importer) deleted. NetworkSidebar's type import switched to
+CollaborationGraph (the live component). TaskBoardView,
+TaskStandUpView, TaskTimelineView wrapped in `lazy()` + `<Suspense
+fallback={<TableSkeleton />}>` in both Tasks.tsx and MyTasks.tsx —
+trims ~30-50KB from the initial portal chunk since most users open
+in 'list' view.
+
+### Open audit P2/P3 (queued, not blocking)
+
+- **Server perf:** Canonicalize `tasks.project_id` storage to slug-only
+  + drop `slug OR id` joins (~80-150ms on /api/pb/command-center).
+  `publication_authors` join table to drop `LIKE '%slug%'` joins
+  (~200ms on pi-dashboard mentee velocity). SQLite FTS5 on
+  tasks/projects/ideas/comments for /api/search (~50× speedup).
+  `RETURNING *` on all single-row writes.
+- **A11y:** dashboard drag-to-reorder mouse-only (no keyboard
+  alternative for RGL grid). Subtask "checkboxes" use `<div onClick>`.
+- **Data:** brain.db ↔ D1 alias resurrection (sync_d1_pull_new bug).
+  Project prefix mismatch reconciliation. Stale `d1_*` mirror tables.
+  Airtable push 422 errors (Domain/Type select-options need adding).
+- **UX:** dashboard `<h1>` is "Good evening" (decorative). 11+ touch
+  targets <44px on mobile. Status pills "Waiting External" wrap to 2
+  lines. Mobile project tab strip truncates "Liter...".
+
 ## Phase 36b: Team Slug Rename (2026-04-19 evening)
 
 User decision during post-deploy audit: converge all team_members slugs on

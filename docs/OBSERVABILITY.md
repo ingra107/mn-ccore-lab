@@ -4,23 +4,27 @@
 
 `GET /api/health` — public, no auth, safe to hit frequently.
 
-**Healthy:**
+**Healthy** (sample taken 2026-04-20 post Phase 36c):
 ```json
 HTTP/1.1 200 OK
 {
   "ok": true,
   "checks": {
-    "tasks": 583,
-    "projects": 72,
+    "tasks": 601,
+    "projects": 64,
     "team": 19,
-    "last_activity": "2026-04-18 23:10:15",
+    "last_activity": "2026-04-20 01:23:35",
     "realtime": "not_bound",
-    "duration_ms": 77
+    "duration_ms": 64
   },
   "failures": [],
-  "timestamp": "2026-04-18T23:27:24.166Z"
+  "timestamp": "2026-04-20T01:24:00.000Z"
 }
 ```
+
+`duration_ms` p50 dropped from ~100ms to ~64ms after schema-v46 added 7
+missing indexes (Phase 36c). Watch for regression — sustained >150ms
+typically means an index was dropped or a new SCAN crept in.
 
 **Unhealthy** — any check fails:
 ```json

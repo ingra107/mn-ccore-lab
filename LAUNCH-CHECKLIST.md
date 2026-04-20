@@ -8,11 +8,11 @@
 
 ### 0. Flip the auth enforcement flags
 
-As of Phase 35 (2026-04-18), two flags gate hard auth enforcement. Both
-default OFF for PI-only public-mode operation — flip them before the team
-gets the link.
+Two flags gate hard auth enforcement. Both default OFF for PI-only
+public-mode operation — flip them before the team gets the link.
 
-**Server-side (forces 401 on any POST/PUT without JWT or API key):**
+**Server-side (forces 401 on any POST/PUT without JWT or API key, AND
+on `/api/bug-report` so strangers can't spam GitHub Issues):**
 ```bash
 echo 1 | wrangler pages secret put REQUIRE_AUTH --project-name mn-ccore-lab
 ```
