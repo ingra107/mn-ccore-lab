@@ -1,0 +1,119 @@
+# Claude Design brief — MN-CCORE Lab Hub
+
+## What this is
+The MN-CCORE Lab Hub is the operating surface for Dr. Nicholas Ingraham's
+critical-care research group at the University of Minnesota. It runs the
+lab: tasks, meetings, projects, grants, manuscripts, trainee milestones,
+and an AI research assistant named Hermes. Live at
+https://mn-ccore-lab.pages.dev. React 19 + Cloudflare D1 + Hono API.
+~19 lab members. Team launch is April 21, 2026 at the MNCCORE biweekly.
+
+Full-name acronym: Minnesota Collaborative Critical care Outcomes and
+Research Effort. Shortened: MN-CCORE or MNCCORE. Typeset with an ECG
+spike (heartbeat) as the glyph between "MN" and "CCORE" in our wordmark.
+
+## Design ethos — 5 rules we never break
+1. **Operations center, not editorial magazine.** Dense information,
+   readable. Utility over decoration. Columnar tables beat card stacks
+   for data.
+2. **Dark-first.** Background is a deep neutral #0b1017 (NOT blue-
+   tinted). Light mode is secondary. Text is #e2e8f0, not pure white.
+3. **One accent per view.** Teal for interactive, gold for emphasis.
+   Max two non-neutral colors per surface.
+4. **Three-tier typography, five-tier opacity.** Body weight 400, UI
+   500, headings 600, metric displays 700 only. Opacity floor 0.30 on
+   readable text.
+5. **Zero monospace in content.** JetBrains Mono is for <kbd> only.
+   Everything else is DM Sans. Fraunces only on public-marketing titles.
+
+## Brand tokens (hex-pinned, NOT OKLCH)
+Accent:
+  --gold   #c9a84c (primary accent, used for heartbeat motif + CTAs)
+  --teal   #5cbcb4 dark / #006b66 light (interactive)
+  --maroon #f0737e dark / #7a0019 light (CLIF / critical)
+  --orange #f08a5b dark / #a23d08 light (Nate's cardiac work)
+  --green  #6ee89a dark / #066e2f light (success / done)
+
+Neutral:
+  bg       #0b1017 (deep neutral, NOT blue-tinted)
+  surface  #0f1923
+  ink      #e2e8f0 (body text)
+  slate    #b0b5b9 dark / #1a2939 light (secondary text)
+  cream    off-white light-mode surface
+
+Fonts:
+  Body   → DM Sans (400 / 500 / 600)
+  Display → Fraunces (500 / 600 — public marketing titles + kiosk heroes)
+  Code   → JetBrains Mono (only inside <kbd>)
+
+## Brand motif — the heartbeat line
+Our signature is an ECG trace, used in the favicon and everywhere that
+wants a brand moment. SVG path (use this literally):
+
+  M0 32 L80 32 L120 32 L150 24 L175 8 L200 56 L225 16 L250 38 L275 28
+  L320 32 L400 32 L440 32 L470 24 L495 8 L520 56 L545 16 L570 38 L595
+  28 L640 32
+
+Standard rendering: gold stroke (#c9a84c) 2px, glow filter ~2.5 blur,
+baseline ghost at 0.18 opacity. Animates at 60 BPM via
+stroke-dashoffset. On a dark background the glow reads as a live cardiac
+monitor — that's the emotional register we want.
+
+## Existing logos
+- `logos/mnccore-logo-mark.svg` — the square mark (dark rect, gold ECG)
+- `logos/mnccore-logo-primary.svg` — full horizontal wordmark (light bg)
+- `logos/mnccore-logo-dark.svg` — full wordmark (dark bg)
+- `favicon.svg` — the ECG mark as a 32×32 favicon
+All at https://mn-ccore-lab.pages.dev/logos/<filename>.
+
+## Source of truth
+- Live site:   https://mn-ccore-lab.pages.dev
+- Git repo:    https://github.com/ingra107/mn-ccore-lab (private —
+               make public temporarily OR upload the 4 files below)
+- Design tokens: src/index.css (first ~200 lines — all CSS variables)
+- Design ethos: CLAUDE.md "Design System" + "Design Ethos" sections
+
+## Research themes (for visuals / iconography)
+- Provider variation in mechanical ventilation (lungs / ventilator)
+- In-hospital cardiac arrest (heartbeat, code cart)
+- CLIF Consortium multi-center data (network graph, data pipes)
+- Chronic critical illness (long ICU arc)
+- Goals-of-care decisions (clinical decision-making)
+- Mentee development (trainee, grad cap)
+
+## Voice and tone
+- First-person plural ("we") when talking as the lab.
+- Direct, declarative. No hype. ("Runs the lab" beats "Empowers teams
+  to manage workflows effortlessly.")
+- Medical-professional register: confident, precise, never cute.
+- Data-first framing: numbers over adjectives whenever possible.
+
+## Deliverable I want from you first
+
+**A pitch deck to introduce the Hub to the MNCCORE biweekly meeting on
+April 21, 2026.** 10-12 slides, 16:9, export-ready PPTX.
+
+Slide order:
+1. Title — MN-CCORE Lab Hub, launch date, tagline
+2. Why we built it — 1 paragraph on the pain it solves
+3. What it is — 3 bullets (tasks, meetings, research knowledge)
+4. Live tour thumbnails — Dashboard, Tasks, Projects, Meetings, Kiosk
+   (I'll drop actual screenshots; leave placeholders)
+5. Hermes — the AI research assistant, @mention-in-comments workflow
+6. Team page + trainee trajectory
+7. Research Digest + publications network visualization
+8. How to sign in — CF Access @umn.edu flow
+9. What's next — grants lifecycle, mentee-milestone rollout, more lab
+   knowledge surfaces
+10. Open questions + feedback channels
+11. Credits + link to mn-ccore-lab.pages.dev
+12. (optional) Data-as-art closer — publications-by-year sparkline
+
+Style: heavy on the deep-neutral bg, gold heartbeat accents, Fraunces
+display titles, DM Sans body. Each slide should feel like it belongs to
+the same product. Cinematic, not cluttered.
+
+Also — while you're at it — propose a tagline. Current working option
+is "Research operations for the Minnesota Critical Care Outcomes &
+Research Effort." Give me 3 alternatives of varying tone (direct /
+aspirational / punchy).

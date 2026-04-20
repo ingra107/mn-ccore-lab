@@ -2,6 +2,132 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Phase 36d: Design Sprint (2026-04-20)
+
+**Context:** Anthropic launched Claude Design on 2026-04-17 (conversational
+prototype/slide/design-system tool powered by Opus 4.7). Used that as a
+prompt to review the Hub's brand surface. 12 improvements shipped in one
+sprint — reusable primitives that the rest of the product can pull
+from, not one-off tweaks.
+
+### Commits
+- `ef604db` — design sprint (31 files, 1600+/-200 lines)
+
+Deployed at preview `dba34ad1` to `https://mn-ccore-lab.pages.dev`.
+
+### New reusable primitives (`src/components/`)
+
+- **`HeartbeatLine.tsx`** — animated ECG trace pulled from the
+  favicon's gold heartbeat. Three variants: `live` (1bpm full trace),
+  `slow` (30bpm ambient), `static` (fully drawn, no motion). Glow
+  filter, baseline ghost, configurable color/BPM/stroke. The lab's
+  brand signature from here on.
+- **`HeartbeatDivider.tsx`** — quiet wrapper for use as a section
+  divider where a plain `<hr>` would feel bare.
+- **`HermesMark.tsx`** — Mercury alchemical glyph (crescent + circle
+  + caduceus cross) for the AI research assistant. `icon` variant for
+  inline badges, `avatar` variant for peer-avatar use. Replaces the
+  generic lucide `<Sparkles />` that was Hermes's visual identity
+  until now.
+- **`CategoryIcon.tsx`** — distinct 14px glyphs per project category:
+  lungs (CLIF), flask (Lab), heartbeat (Nate), grad cap (Mentee).
+  Replaces the 6px colored dots wherever category indicators appear.
+- **`EmptyStateArt.tsx`** — 8 two-color line illustrations
+  (clipboard / lightbulb / notebook / clock / papers / folder-stamp /
+  magnifier / flask). Drop-in for the `icon` prop on `<EmptyState>`.
+- **`PhaseReleaseBanner.tsx`** — "what shipped" banner with gold
+  heartbeat thread on the left, expandable highlights list,
+  localStorage-persisted dismiss (`mnccore-phase-banner-seen-v1`).
+  First entry: Phase 36c. Rendered above WelcomeBanner on Dashboard.
+- **`RequireAuth.tsx`** — branded sign-in splash (extracted from an
+  inline component in App.tsx). Inline wordmark + tagline + gold CTA
+  pill + 3-bullet "What you'll get" + heartbeat ambient trace +
+  secondary back-to-public link. CTA targets
+  `/cdn-cgi/access/login?redirect_url=<current>` so CF Access returns
+  the user to the deep-linked path.
+- **`pulse/PulseScene.tsx`** + `PulseMetric.tsx` + `PulseSparkline.tsx`
+  — kiosk primitives: Ken Burns scale wrapper + 96-200px Fraunces
+  hero numerals + wall-scale year-bucket chart.
+
+### Rewrites / wiring
+
+- **`src/pages/Pulse.tsx`** — full cinematic 6-scene rewrite. Each
+  scene fills 16:9 with one big idea. Slow Ken Burns (scale 1.00 →
+  1.06 over 9s), 1.6s crossfades, ambient HeartbeatLine at the
+  bottom-third (the "monitor"), 4-tick scene markers, real-time clock
+  + date in footer. Hex-pinned colors (kiosk renders without `.dark`
+  class).
+- **`src/components/Avatar.tsx`** — accepts optional `slug` prop.
+  When `slug === 'claude-ai'`, renders `<HermesMark />` instead of
+  initials. When no `photoUrl`, renders a generated geometric portrait
+  (deterministic hash → 1 of 4 token-aligned palette swatches, two
+  stacked arcs suggesting a silhouette, initials layered on top).
+- **`src/components/ProjectCard.tsx`** — CategoryIcon replaces the
+  inline 6px dot.
+- **`src/components/ProjectComments.tsx`** — HermesMark avatar
+  replaces the `<Sparkles />` icon for Hermes replies.
+- **`src/components/PortalLayout.tsx`** — adds 28×28 brand mark to
+  the mobile top bar. `lg:hidden` so desktop sidebar still owns the
+  wordmark.
+- **`src/hooks/useFavicon.ts`** — added an `EMAIL_PREFIX_TO_SLUG`
+  lookup mirroring the API-side LUT so the notification-badge emoji
+  favicon fires for the correct user post-slug-rename (was silently
+  broken for Nick because `ingra107@umn.edu` prefix ≠ canonical slug
+  `nick-ingraham`).
+- **`src/hooks/usePageMeta.ts`** — options-object signature: accepts
+  `ogType` + `ogImage`. Back-compat with old string-ogType callers.
+- **`src/pages/ProjectDetail.tsx`** / **`MemberPage.tsx`** /
+  **`MeetingDetail.tsx`** — set per-page `ogImage` pointing at
+  `/og/<type>/<slug>`.
+- **`src/pages/Dashboard.tsx`** — renders `<PhaseReleaseBanner />`
+  above `<WelcomeBanner />`.
+
+### New Cloudflare Pages Function
+
+- **`functions/og/[type]/[slug].ts`** — SVG share-card generator. Pulls
+  project title + PI + stage + category accent, team name + role +
+  credentials, meeting title + date from D1 and renders a branded
+  1200×630 card (deep-neutral gradient bg, gold accent bar, heartbeat
+  trace, brand mark + wordmark, Fraunces title, DM Sans body, edge-
+  cached 1h). Zero deps — pure SVG so the function stays deploy-light.
+- **`public/_headers`** — forces `Content-Type: image/svg+xml` on
+  `/og/*` (Pages was auto-coercing to `text/html` which broke link-
+  preview consumers).
+
+### Capture infrastructure for Claude Design
+
+- **`scripts/claude-design-brief.txt`** — 112-line brand brief
+  (tokens, motif SVG path, ethos, voice, repo + asset links).
+  Paste into Claude Design to set up a design system the pitch deck /
+  poster / one-pager outputs automatically inherit.
+- **`tests/capture-for-design.spec.ts`** + **`playwright.config.design-
+  capture.ts`** — full-page screenshots of every hero surface on live
+  prod, desktop 1440×900 + Pixel 5 mobile. Pre-scrolls every page
+  top→bottom in 400px steps to trigger IntersectionObserver / lazy-
+  loaded / virtualizer-gated content before the capture.
+- **`tests/capture-interactions.spec.ts`** + **`playwright.config.
+  interactions-capture.ts`** — 15 signature interactions as WebM
+  videos + PNG keyframe triplets. Tier 1: status-change+undo, detail
+  panel slide-in, tab switch, mobile swipe-dismiss, hover badges.
+  Tier 2: Cmd+K, assignee picker, date picker, subtask expand,
+  Kanban drag, Hermes mention. Tier 3: Pulse rotation, dashboard
+  drag-reorder, keyboard nav, Ctrl+N quick-add NLP. `afterEach` hook
+  copies each Playwright-recorded video next to its keyframes in
+  `review/interactions-<ts>/`. Ready to run when Claude Design can
+  consume motion.
+
+First screenshot run produced 31 captures (25 desktop + 6 mobile) at
+`review/claude-design-20260420/` with an INDEX.md.
+
+### Hotfix (same commit)
+
+- **`api/index.ts`** — `/api/bug-report` no longer returns 401 pre-
+  launch. Gate now piggybacks on `REQUIRE_AUTH=1` (the same flag
+  that locks all writes), auto-engages at team launch so strangers
+  can't spam GitHub Issues. Without this, Nick couldn't submit a bug
+  report today because CF Access isn't configured yet so there's no
+  JWT, and no API key either.
+
 ## Phase 36c: 4-Auditor Deep Audit + 11 P0/P1 Fixes (2026-04-20)
 
 **Context:** After Phase 36b shipped, dispatched 4 specialist auditors

@@ -47,3 +47,5 @@ review/journey-*.png
 review/*.png
 review/audit-newteammate/
 review/a11y-deep/
+review/claude-design-*/
+review/interactions-*/

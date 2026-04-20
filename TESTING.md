@@ -31,6 +31,18 @@ python tests/sync-pipeline.test.py
 
 # Phase 36: mobile post-deploy smoke (Pixel 5 emulation against prod)
 npx playwright test --config=playwright.config.mobile.ts
+
+# Phase 36d: capture full-page screenshots of every hero surface for
+# Claude Design or manual design review. Pre-scrolls each page to
+# trigger lazy loads before the snap. Desktop 1440×900 + Pixel 5.
+# Output: review/claude-design-<timestamp>/ (gitignored).
+npx playwright test --config=playwright.config.design-capture.ts
+
+# Phase 36d: capture 15 signature interactions as WebM videos + PNG
+# keyframe triplets. Run only when building design assets — 2-5 min
+# per run, not part of regression suite. Output:
+# review/interactions-<timestamp>/ (gitignored).
+npx playwright test --config=playwright.config.interactions-capture.ts
 ```
 
 ## After Adding New Features

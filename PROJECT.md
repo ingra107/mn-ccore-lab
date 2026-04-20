@@ -15,9 +15,9 @@ React 19 + Vite 8 + Tailwind v4 + Cloudflare Pages/D1 lab management
 platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (PI-only; team not yet onboarded)
-**Repo:** https://github.com/ingra107/mn-ccore-lab  (670+ commits)
-**Current deploy:** `0ea632c` (2026-04-20) — Phase 36c close (post-audit fixes)
-**Quality gate:** 🟢 GREEN — inspection 213/213 vs prod, deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, mobile smoke 2/2, desktop journey 1/1, /api/health 64ms (was 100ms after schema-v46 indexes).
+**Repo:** https://github.com/ingra107/mn-ccore-lab  (680+ commits)
+**Current deploy:** `ef604db` (2026-04-20) — Phase 36d close (design sprint)
+**Quality gate:** 🟢 GREEN — inspection 213/213 vs prod, deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, mobile smoke 2/2, desktop journey 1/1, /api/health 74ms.
 
 ## 🚨 Read these FIRST every session
 
@@ -27,6 +27,61 @@ platform for Nick's critical-care research group at UMN.
 4. **`REFERENCE.md`** — API endpoints, D1 table list, conventions.
 5. **`CHANGELOG.md`** — top entry is the most recent phase; jump there for "what changed recently."
 6. **`docs/OBSERVABILITY.md`** — /api/health runbook + how to wire external uptime monitoring.
+
+## Phase 36d COMPLETE — Design Sprint (2026-04-20)
+
+**Status:** ✓ Shipped at `ef604db` on origin/main. 12 brand-level design
+improvements in one sprint: cinematic Pulse Kiosk, branded sign-in
+splash, Hermes avatar, category icons, heartbeat-line motif system,
+empty-state illustrations, lab-aesthetic generated avatars, mobile logo,
+dynamic per-route OG share cards, phase-release banner, chart palette
+verified, favicon notification badge fixed post-slug-rename.
+
+**New reusable primitives** (all in `src/components/`):
+- `HeartbeatLine` — animated ECG trace; variants live/slow/static, BPM
+  configurable. Used in Pulse, sign-in splash, release banner. The
+  lab's brand signature.
+- `HeartbeatDivider` — quiet section divider wrapper.
+- `HermesMark` — Mercury alchemical glyph avatar for the AI assistant.
+  icon + avatar variants. Replaces generic lucide Sparkles.
+- `CategoryIcon` — distinct glyphs (lungs / flask / heartbeat / cap)
+  for CLIF / Lab / Nate / Mentee; replaces 6px colored dots.
+- `EmptyStateArt` — 8 lab-aesthetic line illustrations (clipboard /
+  lightbulb / notebook / clock / papers / folder-stamp / magnifier /
+  flask).
+- `PhaseReleaseBanner` — "what shipped" banner with heartbeat thread,
+  dismissible, localStorage persistence.
+- `RequireAuth` — branded sign-in splash (extracted from App.tsx).
+  Inline wordmark, gold CTA, heartbeat ambient trace,
+  `?redirect_url=` preserves deep-link.
+- `pulse/PulseScene`, `PulseMetric`, `PulseSparkline` — kiosk
+  primitives for Ken Burns + hero typography.
+
+**New Cloudflare Pages Function** — `functions/og/[type]/[slug].ts`
+generates per-route SVG share cards (project / team / meeting /
+default) from D1 data. Edge-cached 1h via `public/_headers`. Wired into
+`usePageMeta` options.
+
+**Capture infrastructure for Claude Design** (new):
+- `scripts/claude-design-brief.txt` — brand brief (tokens, motif path,
+  ethos, repo link). Paste into Claude Design.
+- `tests/capture-for-design.spec.ts` +
+  `playwright.config.design-capture.ts` — full-page screenshots of
+  every hero surface (desktop 1440×900 + Pixel 5 mobile). Pre-scrolls
+  each page to trigger lazy loads before the snap.
+- `tests/capture-interactions.spec.ts` +
+  `playwright.config.interactions-capture.ts` — 15 signature
+  interactions as WebM videos + PNG keyframe triplets (status change
+  + undo, detail slide-in, tab switch, swipe-dismiss, hover badges,
+  Cmd+K, assignee picker, date picker, subtask expand, Kanban drag,
+  Hermes mention, Pulse rotation, dashboard drag-reorder, keyboard
+  nav, quick-add NLP).
+- First run output at `review/claude-design-20260420/` (31 full-page
+  screenshots + INDEX.md), gitignored.
+
+Plus hotfix: `/api/bug-report` no longer returns 401 pre-launch —
+auth gate now piggybacks on `REQUIRE_AUTH=1`, auto-engages at team
+launch.
 
 ## Phase 36c COMPLETE — Deep Audit Fixes (2026-04-20)
 

@@ -218,6 +218,19 @@ Moved from CLAUDE.md to reduce session context load. Read on demand.
 | `src/components/dashboard/LabHealthScore.tsx` | Composite lab health metric card (~205 lines, Phase 32) |
 | `src/hooks/useLabHealthSignals.ts` | Health signal aggregation hook (Phase 32) |
 | `src/components/MobileTabBar.tsx` | Mobile bottom tab bar (md:hidden, safe-area, Phase 32) |
+| `src/components/HeartbeatLine.tsx` | Animated ECG brand motif; live/slow/static variants, configurable BPM (Phase 36d) |
+| `src/components/HeartbeatDivider.tsx` | Quiet section-divider wrapper around HeartbeatLine (Phase 36d) |
+| `src/components/HermesMark.tsx` | Mercury alchemical glyph for AI assistant; replaces lucide Sparkles (Phase 36d) |
+| `src/components/CategoryIcon.tsx` | Lungs/flask/heartbeat/cap glyphs for CLIF/Lab/Nate/Mentee (Phase 36d) |
+| `src/components/EmptyStateArt.tsx` | 8 lab-aesthetic line illustrations for empty states (Phase 36d) |
+| `src/components/PhaseReleaseBanner.tsx` | Dismissible "what shipped" banner with heartbeat thread (Phase 36d) |
+| `src/components/RequireAuth.tsx` | Branded sign-in splash, extracted from App.tsx (Phase 36d) |
+| `src/components/pulse/PulseScene.tsx` + `PulseMetric.tsx` + `PulseSparkline.tsx` | Cinematic kiosk primitives (Phase 36d) |
+| `functions/og/[type]/[slug].ts` | Per-route SVG share-card generator (project/team/meeting/default, edge-cached 1h, Phase 36d) |
+| `public/_headers` | Forces `image/svg+xml` content-type on `/og/*` (Phase 36d) |
+| `scripts/claude-design-brief.txt` | Brand brief for Claude Design — tokens, motif SVG path, ethos (Phase 36d) |
+| `tests/capture-for-design.spec.ts` + `playwright.config.design-capture.ts` | Full-page screenshots with pre-scroll for every hero surface (Phase 36d) |
+| `tests/capture-interactions.spec.ts` + `playwright.config.interactions-capture.ts` | 15 signature interactions as WebM + PNG keyframes (Phase 36d) |
 | `migrations/inbox-table.sql` | inbox table + idx_inbox_synced + idx_inbox_created indices |
 | `scripts/seed-test-data.sql` | 104 rows across 9 tables for DB_TEST seeding |
 | `scripts/cleanup-test-data.sql` | FK-ordered DELETE for test_delete_ prefix |

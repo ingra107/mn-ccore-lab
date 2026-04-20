@@ -49,6 +49,26 @@ npx tsx scripts/hub-audit.ts --list       # list sections
 Output goes to `review/audit/YYYYMMDDTHHMM/` — screenshots + findings per
 section.
 
+## Design assets for Claude Design
+
+```bash
+# Paste the brand brief into Claude Design (opens web app):
+cat scripts/claude-design-brief.txt | clip.exe          # Windows
+cat scripts/claude-design-brief.txt | pbcopy            # macOS
+
+# Capture fresh full-page screenshots of every hero surface:
+npx playwright test --config=playwright.config.design-capture.ts
+
+# Capture 15 signature interactions as WebM videos + PNG keyframes:
+npx playwright test --config=playwright.config.interactions-capture.ts
+```
+
+Outputs go to `review/claude-design-<ts>/` and `review/interactions-<ts>/`
+(gitignored). Upload the folder to Claude Design alongside the brief
+to ground pitch decks / posters / brand assets in the current state
+of the product. Source brand DNA is in `CLAUDE.md` "Design System" +
+"Design Ethos" sections.
+
 ## Deploy
 
 ```bash

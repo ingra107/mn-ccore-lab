@@ -17,12 +17,13 @@ safe to ignore unless explicitly spelunking history.
 
 ## Current state (2026-04-20)
 
-- **Phase 36c shipped.** 4-auditor deep audit fixes (UX, code, a11y, data) — all 11 P0+P1 closed in one sprint. Plus Phase 36b slug rename (preferred_name-last_name) + Phase 36 consultant close-out (Hono, JWT, team_members.email, lab_settings.pi_emails, pb-sector batch, mobile swipe).
-- **Quality gate: 🟢 GREEN.** Inspection 213/213, deep-audit 14/14 (0 bugs), axe 29 pages × 2 schemes (0 findings), mobile smoke 2/2, desktop journey 1/1, `/api/health` 64ms (was 100ms before schema-v46 indexes).
+- **Phase 36d shipped.** Design sprint — 12 reusable brand primitives + cinematic Pulse Kiosk rewrite + per-route OG share cards + capture infrastructure for Claude Design. Plus Phase 36c audit fixes, Phase 36b slug rename, Phase 36 consultant close-out.
+- **Quality gate: 🟢 GREEN.** Inspection 213/213, deep-audit 14/14 (0 bugs), axe 29 pages × 2 schemes (0 findings), mobile smoke 2/2, desktop journey 1/1, `/api/health` ~74ms.
 - **Not yet live for the team.** Nick is the only active user. Going live requires CF Access config + `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` + `REQUIRE_AUTH` + `TEST_MODE_KEY` + `VITE_REQUIRE_AUTH` secrets — see `LAUNCH-CHECKLIST.md` sections 0 + 1.
 - **Team slugs:** all 19 members use `preferred_name-last_name` format (`nick-ingraham`, `emma-bromley`, ...). `actorSlug(email)` in `api/helpers.ts` maps email prefix → canonical slug via `EMAIL_PREFIX_TO_SLUG`. Adding a new team member = D1 row + team.ts entry + LUT entry.
 - **Routing:** `/portal/team/:slug` keeps logged-in users in portal chrome. `/team/:slug` stays for the public marketing site.
-- **Current HEAD:** `0ea632c` on `main`, pushed.
+- **Brand primitives** live in `src/components/` — use them instead of rolling your own: `HeartbeatLine` / `HeartbeatDivider` (the lab's ECG motif), `HermesMark` (AI assistant avatar, replaces lucide Sparkles), `CategoryIcon` (lungs/flask/heartbeat/cap for CLIF/Lab/Nate/Mentee), `EmptyStateArt` (8 illustrations), `PhaseReleaseBanner` (what-shipped card), `RequireAuth` (sign-in splash).
+- **Current HEAD:** `ef604db` on `main`, pushed.
 
 ## Vision
 
@@ -34,7 +35,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev (PI-only; team not yet onboarded) |
 | Repo | github.com/ingra107/mn-ccore-lab (670+ commits) |
-| Current deploy | `0ea632c` (2026-04-20, Phase 36c close — preview `3fbafba0`) |
+| Current deploy | `ef604db` (2026-04-20, Phase 36d close — preview `dba34ad1`) |
 | Quality gate | 🟢 GREEN — inspection 213/213, deep-audit 14/14, axe 29×2 = 0, mobile smoke 2/2, desktop journey 1/1. |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + **Hono v4.12 (API router)** |
@@ -308,6 +309,11 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 26. **JWT `importKey` is cached per `kid` at module scope.** `importedKeyCache: Map<string, CryptoKey>` in `api/jwt-verify.ts`. Don't replace with a per-request import unless you've measured the cold-start trade.
 27. **Hover-only badges must be `visibility: hidden`, not just `opacity: 0`.** Phase 36c a11y fix in `TaskGridView.tsx` `.hover-badge` CSS. `opacity: 0` keeps the element in the AT tree, so screen readers announce ~120 phantom badges per /tasks visit. Apply same pattern to any future hover-revealed content.
 28. **Sidebar nav links carry `aria-current="page"` on the active route.** `Sidebar.tsx` follows the same pattern `MobileTabBar.tsx:91` already uses. New navigation surfaces must set `aria-current` for screen reader navigation.
+29. **Brand primitives live in `src/components/` — use them, don't reinvent.** `HeartbeatLine` + `HeartbeatDivider` for the ECG motif (the lab's visual signature). `HermesMark` for ANY AI-assistant surface — icon variant for badges, avatar variant for peer avatars. `CategoryIcon` for project-category indicators (lungs / flask / heartbeat / cap). `EmptyStateArt` for empty-state slots. `PhaseReleaseBanner` for shipped-announcement moments. Passing `slug='claude-ai'` to `Avatar` auto-swaps to HermesMark. Never use a generic lucide `<Sparkles />` for Hermes or a 6px colored dot for categories — the primitives carry the brand.
+30. **`/api/bug-report` gates on `REQUIRE_AUTH=1`, not a standalone check.** Before Phase 36d the endpoint always required auth, which locked Nick out pre-launch because CF Access wasn't configured. Fix: bug-report now piggybacks on the same `REQUIRE_AUTH` flag that gates writes. Don't add a separate auth check here.
+31. **Per-route OG share cards at `/og/<type>/<slug>`.** `functions/og/[type]/[slug].ts` generates SVG cards from D1 for project / team / meeting / default. `public/_headers` forces `image/svg+xml` (Pages was auto-coercing to `text/html` pre-fix). Set `ogImage: '/og/project/<slug>'` when calling `usePageMeta()` on any page that should have a branded share preview. Cached 1h at the edge.
+32. **Pulse Kiosk (`src/pages/Pulse.tsx`) hex-pins its colors deliberately.** Kiosk renders without the `.dark` class so `var(--ink)` would resolve to the blue-tinted light value. Hex-pinned (`#0b1017`, `#f5efe2`, `#dcb355`, `#5cbcb4`, `#f0737e`) matches the design-ethos deep-neutral and stays axe-stable. Don't "fix" these to CSS vars.
+33. **Capture specs for Claude Design exist but are run on demand.** `tests/capture-for-design.spec.ts` (full-page screenshots, pre-scrolls for lazy-load) + `tests/capture-interactions.spec.ts` (15 signature interactions as WebM + PNG keyframes). Output to `review/claude-design-*` / `review/interactions-*` (gitignored). Don't add these to the default test run — they're 2-5 min each and only useful when building design assets.
 
 ## Roadmap
 
@@ -652,9 +658,9 @@ python -c "import sqlite3; conn=sqlite3.connect('C:/Users/ingra107/Peripheral-Br
 **Guide:** `TESTING.md`
 **Skill:** `/test-hub` (scan, run, generate, update, report)
 
-## Phase History (29-36c + R8/R9/R10) → see CHANGELOG.md
+## Phase History (29-36d + R8/R9/R10) → see CHANGELOG.md
 
-> **Phase-by-phase build history in `CHANGELOG.md`** to keep this file operational. Latest: **Phase 36c** (2026-04-20) — 4-auditor deep audit + 11 P0/P1 fixes (`/portal/team/:slug` routing, mobile tab-bar buffer, schema-v46 indexes, `/api/version` edge-cache, JWT importKey cache, focus trap fix, hover-badge a11y, sidebar aria-current, dead code, lazy bundle). **Phase 36b** — slug rename. **Phase 36** — consultant close-out + mobile swipe. Earlier: 29 features, 30 visual QA, 31 token compliance, 31.5 expert polish, 32 final launch polish (10 consultant rounds), Nick-Review R8/R9/R10, 34 audit framework, 35 a11y + sync parity.
+> **Phase-by-phase build history in `CHANGELOG.md`** to keep this file operational. Latest: **Phase 36d** (2026-04-20) — design sprint, 12 brand primitives (HeartbeatLine, HermesMark, CategoryIcon, EmptyStateArt, PhaseReleaseBanner, RequireAuth, generated portraits, mobile mark), cinematic Pulse Kiosk rewrite, per-route OG share cards via `functions/og/`, capture infrastructure for Claude Design. **Phase 36c** — 4-auditor deep audit + 11 P0/P1 fixes. **Phase 36b** — slug rename. **Phase 36** — consultant close-out + mobile swipe. Earlier: 29 features, 30 visual QA, 31 token compliance, 31.5 expert polish, 32 final launch polish (10 consultant rounds), Nick-Review R8/R9/R10, 34 audit framework, 35 a11y + sync parity.
 >
 > **Key decisions in that history:** sidebar darker-than-content is NEVER-violate (GC-1). Framer Motion scoped to page transitions only (GC-2). Ideas + Decisions are columnar tables not cards (GC-3). Data-pages vs dashboard-pages taxonomy (GC-6). Grant + project status taxonomies locked (R10). Research Digest = Model B. Dashboard cards resizable via RGL (R9-9). Hono router declarative — no raw `url.pathname` routing (Phase 36).
 

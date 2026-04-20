@@ -1,7 +1,8 @@
 # Session Handoff — 2026-04-20
 
-> Last worked: Phase 36c (4-auditor deep audit + 11 P0/P1 fixes).
-> Next session picks up here. One-glance state + what to do first.
+> Last worked: Phase 36d (design sprint — 12 brand improvements +
+> capture infrastructure for Claude Design). Next session picks up
+> here. One-glance state + what to do first.
 
 ## 📖 Session bootstrap — read these in order before writing anything
 
@@ -13,11 +14,12 @@
 6. **`CHANGELOG.md`** top entry — Phase 36c full record.
 7. **`docs/OBSERVABILITY.md`** — `/api/health` + runbook.
 
-## Gate — all green as of commit `0ea632c`
+## Gate — all green as of commit `ef604db`
 
 | Check | Result |
 |---|---|
-| `/api/health` (live prod) | 200 ok, 601 tasks / 64 projects / 19 team / **64ms** (was 100ms before schema-v46 indexes) |
+| `/api/health` (live prod) | 200 ok, 601 tasks / 64 projects / 19 team / ~74ms |
+| `/og/team/nick-ingraham` | 200 `image/svg+xml`, Cache-Control `max-age=3600` (per-route OG cards live) |
 | `/api/version` Cache-Control | `public, max-age=10, s-maxage=10` (edge-cached) |
 | `/api/pi/analytics` projectsByStage | 5 rows (was silently 0 before 'Active' fix) |
 | Mobile smoke (Pixel 5) | 2/2 ✓ |
@@ -32,7 +34,49 @@ Rerun deep-audits: `for f in scripts/deep-audit/0*-*.ts scripts/deep-audit/1[0-5
 Rerun mobile smoke: `npx playwright test --config=playwright.config.mobile.ts`
 Rerun journey smoke: `npx playwright test --config=playwright.config.phase36.ts`
 
-## What's new since the previous handoff (Phase 36)
+## What's new since the previous handoff
+
+**Phase 36d — design sprint.** 12 brand-level improvements shipped in
+one session after reviewing Anthropic's new Claude Design product
+(launched 2026-04-17). Added reusable primitives for the Hub's visual
+identity: `HeartbeatLine` (animated ECG trace as the brand signature),
+`HeartbeatDivider`, `HermesMark` (Mercury alchemical glyph for the AI
+assistant), `CategoryIcon` (lungs / flask / heartbeat / cap — one per
+category), `EmptyStateArt` (8 lab-aesthetic line illustrations),
+`PhaseReleaseBanner` (what-shipped card), `RequireAuth` (branded sign-
+in splash, extracted from App.tsx). Rewrote `Pulse.tsx` as a cinematic
+6-scene kiosk with Ken Burns zooms + ambient heartbeat. New
+`functions/og/[type]/[slug].ts` Cloudflare Function generates per-
+route SVG OG share cards for project / team / meeting routes (edge-
+cached 1h via `public/_headers`). Hermes peer-avatar swapped into
+`Avatar` via `slug='claude-ai'`; generated geometric portraits replace
+plain colored initials for members without photos. Mobile top bar
+shows the 28×28 brand mark.
+
+**Plus:** hotfix for `/api/bug-report` so it no longer returns 401
+pre-launch (gate now piggybacks on `REQUIRE_AUTH=1`, auto-engages at
+team launch).
+
+**Capture infrastructure for Claude Design** (all gitignored output):
+- `scripts/claude-design-brief.txt` — brand brief (tokens, motif path,
+  ethos, voice). Paste into Claude Design to set up the design system.
+- `tests/capture-for-design.spec.ts` +
+  `playwright.config.design-capture.ts` — full-page screenshots, pre-
+  scrolls every page to trigger lazy loads. Run:
+  `CAPTURE_DEVICE=desktop npx playwright test --config=playwright.config.design-capture.ts --project=desktop`
+- `tests/capture-interactions.spec.ts` +
+  `playwright.config.interactions-capture.ts` — 15 signature
+  interactions as WebM video + PNG keyframe triplets. Ready for when
+  we want real-time demos for Claude Design. Run:
+  `npx playwright test --config=playwright.config.interactions-capture.ts`
+
+**Phase 36c — 4-auditor deep audit + 11 P0/P1 fixes.** `/portal/team/:slug`
+routing (logged-in users keep portal chrome), mobile tab-bar buffer,
+schema-v46 indexes, `/api/version` edge-cache, JWT `importKey` cache,
+TaskDetailPanel focus trap + opener restore, `.hover-badge` a11y,
+sidebar `aria-current`, PageTooltip overflow, welcome banner auto-
+stale, dead code + lazy bundle, `pi-dashboard` 'Active' bug, slug
+cleanup, test_delete_* residue.
 
 **Phase 36b** — team slug rename. All 19 members → `preferred_name-last_name`.
 2,312 D1 row updates + 239 code replacements + brain.db side updates +
@@ -70,18 +114,34 @@ fixes shipped in one sprint:
 
 1. If Nick's about to share the Hub URL with the team → follow
    `LAUNCH-CHECKLIST.md` sections 0 + 1. Four secrets + CF Access config
-   + one rebuild. Post-launch, swipe-dismiss + JWT sig verify both
-   activate with no extra deploys.
-2. If Nick wants to keep improving → consultant nice-to-haves are closed,
-   audit P0/P1 are closed. P2 backlog in audit reports under
-   `review/audit-newteammate/` and `review/a11y-deep/` (gitignored — run
-   the audits again to regenerate). Or pull from
-   `Projects/mn-ccore-lab-hub/hub-future-ideas.md`.
+   + one rebuild. Post-launch, swipe-dismiss + JWT sig verify + auth-
+   gated bug-reports all activate with no extra deploys.
+2. If Nick wants to use Claude Design for slides / poster / brand guide
+   — the brief is already written at `scripts/claude-design-brief.txt`
+   (also copied to clipboard); 31 fresh page screenshots at
+   `review/claude-design-20260420/` (gitignored, regen via capture
+   config); 15 signature interactions ready to capture as videos via
+   `tests/capture-interactions.spec.ts` when Claude Design can consume
+   motion.
+3. If Nick wants to keep improving the Hub itself → consultant nice-to-
+   haves are closed, audit P0/P1 are closed. P2 backlog listed below.
+   Or pull from `Projects/mn-ccore-lab-hub/hub-future-ideas.md`.
 3. If Nick reports a bug → reproduce with a deep-audit suite before
    fixing.
 
 ## Things that WILL surprise you if you don't know
 
+- **Brand primitives live in `src/components/` — use them, don't roll
+  your own.** `HeartbeatLine` / `HeartbeatDivider` for the lab's ECG
+  motif. `HermesMark` for any AI-assistant surface (icon + avatar
+  variants). `CategoryIcon` for any project-category indicator (replaces
+  6px dots). `EmptyStateArt` for lab-aesthetic empty states. Passing
+  a `slug` prop to `Avatar` triggers HermesMark auto-swap when slug
+  === 'claude-ai'.
+- **Per-route OG cards at `/og/<type>/<slug>`.** `functions/og/[type]/
+  [slug].ts` generates SVG cards from D1. Set `ogImage: '/og/project/
+  ...'` when calling `usePageMeta` for any page that wants a branded
+  share preview. `public/_headers` forces `image/svg+xml` content-type.
 - **`getAuthUser()` + `isPiRequest()` are async.** Every caller must
   `await`. JWT signature verification via JWKS in `api/jwt-verify.ts`
   with module-level 1h JWKS cache + per-kid CryptoKey cache. Without
@@ -121,6 +181,10 @@ fixes shipped in one sprint:
   without CF Access configured locks everyone out.
 - **`/api/pb/*` returns 403 to non-PI** — intentional. API keys +
   `lab_settings.pi_emails` bypass.
+- **`/api/bug-report` is open pre-launch.** Gate piggybacks on
+  `REQUIRE_AUTH=1` — same flag that locks writes. Auto-engages at
+  team launch so strangers can't spam GitHub Issues. Don't add a
+  standalone gate here.
 - **Deploy is manual via wrangler.** No git push → deploy webhook.
   `npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab`
 - **brain.db ↔ D1 sync is bidirectional.** `sync_d1_push` translates
@@ -164,6 +228,37 @@ via the audit specs in `tests/`):
 - **Misc:** 22 stale `nick-ingraham` test slug refs in spec files (now
   CORRECT after rename — but test descriptions reference old context).
 
+## Key files touched Phase 36d
+
+New reusable primitives:
+- `src/components/HeartbeatLine.tsx` — animated ECG motif (live/slow/static).
+- `src/components/HeartbeatDivider.tsx` — quiet section divider wrapper.
+- `src/components/HermesMark.tsx` — Mercury glyph for AI assistant.
+- `src/components/CategoryIcon.tsx` — lungs/flask/heartbeat/cap glyphs.
+- `src/components/EmptyStateArt.tsx` — 8 line illustrations.
+- `src/components/PhaseReleaseBanner.tsx` — dismissible shipped-list banner.
+- `src/components/RequireAuth.tsx` — branded sign-in splash (extracted from App.tsx).
+- `src/components/pulse/PulseScene.tsx`, `PulseMetric.tsx`, `PulseSparkline.tsx` — kiosk primitives.
+
+Rewrites + wiring:
+- `src/pages/Pulse.tsx` — cinematic 6-scene kiosk with Ken Burns + ambient heartbeat.
+- `src/components/Avatar.tsx` — `slug` prop triggers HermesMark for `claude-ai`; generated portrait for no-photo members.
+- `src/components/ProjectCard.tsx`, `ProjectComments.tsx` — use CategoryIcon + HermesMark.
+- `src/components/PortalLayout.tsx` — 28×28 brand mark in mobile top bar.
+- `src/hooks/useFavicon.ts` — email-prefix → canonical slug LUT so badge fires post-Phase-36b.
+- `src/hooks/usePageMeta.ts` — accepts `ogType` + `ogImage` options.
+- `src/pages/ProjectDetail.tsx`, `MemberPage.tsx`, `MeetingDetail.tsx` — per-page `ogImage` pointing at `/og/...`.
+- `src/pages/Dashboard.tsx` — renders `<PhaseReleaseBanner />` above WelcomeBanner.
+
+New Pages Functions + capture infra:
+- `functions/og/[type]/[slug].ts` — per-route SVG OG cards from D1.
+- `public/_headers` — forces `image/svg+xml` on `/og/*`.
+- `scripts/claude-design-brief.txt` — brand brief for Claude Design.
+- `tests/capture-for-design.spec.ts` + `playwright.config.design-capture.ts`.
+- `tests/capture-interactions.spec.ts` + `playwright.config.interactions-capture.ts`.
+
+Hotfix: `api/index.ts` — `/api/bug-report` gate now piggybacks on `REQUIRE_AUTH=1`.
+
 ## Key files touched Phase 36c
 
 - `src/App.tsx` — `/portal/team/:slug` + trajectory routes added.
@@ -188,7 +283,7 @@ via the audit specs in `tests/`):
 
 ## Git state
 
-Hub: `main` at `0ea632c` (pushed to origin).
-PB: `main` at `432042d2` (pushed to origin).
+Hub: `main` at `ef604db` (pushed to origin).
+PB: `main` at `c3294a24` (pushed to origin).
 
 Re-check before modifying: `git status --short` should be empty in both repos.
