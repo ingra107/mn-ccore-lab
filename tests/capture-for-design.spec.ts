@@ -52,6 +52,18 @@ const HERO_PAGES: PageCapture[] = [
   { slug: '22-publications',          path: '/publications' },
   { slug: '23-network',               path: '/network' },
   { slug: '24-pulse-kiosk',           path: '/pulse' },
+  // Round 2 additions — surfaces Claude Design didn't see last pass.
+  { slug: '25-nick-lab',              path: '/nick' },
+  { slug: '26-nate-lab',              path: '/nate' },
+  { slug: '27-my-items',              path: '/my-items' },
+  { slug: '28-deadline-cascade',      path: '/deadline-cascade' },
+  { slug: '29-ask-the-lab',           path: '/ask' },
+  { slug: '30-narratives',            path: '/narratives' },
+  { slug: '31-search',                path: '/search' },
+  { slug: '32-meeting-notes',         path: '/meeting-notes' },
+  { slug: '33-sessions',              path: '/sessions' },
+  { slug: '34-activity',              path: '/activity' },
+  { slug: '35-trajectory',            path: '/team/nick-ingraham/trajectory' },
 ]
 
 const MOBILE_SLUGS = new Set([
