@@ -21,6 +21,7 @@ import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import type { Stage } from '../components/StageSelector'
 import { staggerContainer, staggerItem } from '../lib/animations'
 import PageTooltip from '../components/PageTooltip'
+import { stripConsortiumPrefix } from '../lib/textUtils'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
 
@@ -494,7 +495,7 @@ export default function Projects() {
                                   lineHeight: 1.35,
                                 }}
                               >
-                                {project.title}
+                                {stripConsortiumPrefix(project.title).clean}
                                 {project.short_name && (
                                   <span style={{
                                     fontSize: '11px',
@@ -646,7 +647,7 @@ export default function Projects() {
                                   flex: 1,
                                 }}
                               >
-                                {project.title}
+                                {stripConsortiumPrefix(project.title).clean}
                                 {project.short_name && (
                                   <span style={{
                                     fontSize: '11px',

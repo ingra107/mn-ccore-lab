@@ -40,9 +40,10 @@ const STATUS_OPTIONS = [
 // derived from the useMenteeOverview() API response (mentee_slug field).
 const MENTEE_SLUGS = ['dan-shyu', 'beret-fitzgerald', 'claire-collins']
 
-// ── Silence Detection ──────────────────────────────────────
-const SILENCE_AMBER_DAYS = 10  // > 10d → amber "Quiet"
-const SILENCE_RED_DAYS   = 21  // > 21d → red "Silent"
+// ── Activity Lapse Detection (P2-06) ───────────────────────
+// Neutral framing: "Needs check-in" reads as a PI todo, not a trainee judgment.
+const SILENCE_AMBER_DAYS = 7   // > 7d  → "Quiet"
+const SILENCE_RED_DAYS   = 21  // > 21d → "Needs check-in"
 
 function getTypeLabel(type: string): string {
   return MILESTONE_TYPES.find((t) => t.value === type)?.label || type
@@ -257,14 +258,14 @@ export default function MenteeMilestones() {
                           fontWeight: 'var(--weight-ui)',
                           padding: '2px 6px',
                           borderRadius: 'var(--radius-sm)',
-                          backgroundColor: isSilent
-                            ? 'color-mix(in oklch, var(--maroon) 15%, transparent)'
-                            : 'color-mix(in oklch, var(--gold) 15%, transparent)',
-                          color: isSilent ? 'var(--maroon)' : 'var(--gold)',
+                          // Amber for both buckets — we're flagging PI action, not
+                          // calling out the trainee. Red was too harsh.
+                          backgroundColor: 'color-mix(in oklch, var(--gold) 15%, transparent)',
+                          color: 'var(--gold)',
                           flexShrink: 0,
                         }}
                       >
-                        {isSilent ? 'Silent' : 'Quiet'} {silenceDays}d
+                        {isSilent ? `Needs check-in · ${silenceDays}d` : `Quiet · ${silenceDays}d`}
                       </span>
                     )}
                   </div>
@@ -516,14 +517,13 @@ function MenteeGroup({
               fontWeight: 'var(--weight-ui)',
               padding: '2px 6px',
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: isSilent
-                ? 'color-mix(in oklch, var(--maroon) 15%, transparent)'
-                : 'color-mix(in oklch, var(--gold) 15%, transparent)',
-              color: isSilent ? 'var(--maroon)' : 'var(--gold)',
+              // Amber for both — neutral framing (P2-06).
+              backgroundColor: 'color-mix(in oklch, var(--gold) 15%, transparent)',
+              color: 'var(--gold)',
               flexShrink: 0,
             }}
           >
-            {isSilent ? 'Silent' : 'Quiet'} {silenceDays}d
+            {isSilent ? `Needs check-in · ${silenceDays}d` : `Quiet · ${silenceDays}d`}
           </span>
         )}
         <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />

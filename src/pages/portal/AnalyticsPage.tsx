@@ -68,18 +68,29 @@ export default function AnalyticsPage() {
   }, [selectedWeekStart])
   const isCurrentWeek = weekOffset === 0
 
-  // Week stats — relative to selected week
+  // Week stats — relative to selected week. Also computes prior week so
+  // hero metrics can render delta chips (P2-09).
   const weekStats = useMemo(() => {
     const startStr = selectedWeekStart.toISOString()
     const endStr = selectedWeekEnd.toISOString()
+    const priorStart = new Date(selectedWeekStart)
+    priorStart.setDate(priorStart.getDate() - 7)
+    const priorStartStr = priorStart.toISOString()
+    const priorEndStr = startStr
     const now = new Date()
+    const priorRefDate = new Date(selectedWeekStart)
 
     const completed = tasks.filter((t) => t.completed_at && t.completed_at >= startStr && t.completed_at < endStr).length
     const created = tasks.filter((t) => t.created_at >= startStr && t.created_at < endStr).length
     const overdue = tasks.filter((t) => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < now).length
     const activityCount = activity.filter((a) => a.timestamp >= startStr && a.timestamp < endStr).length
 
-    return { completed, created, overdue, activityCount }
+    const completedPrior = tasks.filter((t) => t.completed_at && t.completed_at >= priorStartStr && t.completed_at < priorEndStr).length
+    const createdPrior = tasks.filter((t) => t.created_at >= priorStartStr && t.created_at < priorEndStr).length
+    const overduePrior = tasks.filter((t) => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < priorRefDate).length
+    const activityPrior = activity.filter((a) => a.timestamp >= priorStartStr && a.timestamp < priorEndStr).length
+
+    return { completed, created, overdue, activityCount, completedPrior, createdPrior, overduePrior, activityPrior }
   }, [tasks, activity, selectedWeekStart, selectedWeekEnd])
 
   // Task completion by person — only computed for PIs (individual metrics are PI-only)
@@ -391,10 +402,10 @@ export default function AnalyticsPage() {
 
       {/* Weekly Summary Cards */}
       <motion.div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3" variants={staggerContainer} initial="hidden" animate="visible">
-        <motion.div variants={staggerItem}><MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} color="var(--green)" sparklineData={sparkCompleted} /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={Plus} label="Created" value={weekStats.created} color="var(--teal)" sparklineData={sparkCreated} /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={AlertTriangle} label="Overdue" value={weekStats.overdue} color="var(--maroon)" sparklineData={sparkOverdue} /></motion.div>
-        <motion.div variants={staggerItem}><MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} color="var(--gold)" sparklineData={sparkActivity} /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={CheckCircle2} label="Completed" value={weekStats.completed} previous={weekStats.completedPrior} previousLabel="vs last week" color="var(--green)" sparklineData={sparkCompleted} /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={Plus} label="Created" value={weekStats.created} previous={weekStats.createdPrior} previousLabel="vs last week" color="var(--teal)" sparklineData={sparkCreated} /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={AlertTriangle} label="Overdue" value={weekStats.overdue} previous={weekStats.overduePrior} previousLabel="vs last week" color="var(--maroon)" sparklineData={sparkOverdue} /></motion.div>
+        <motion.div variants={staggerItem}><MetricCard icon={TrendingUp} label="Activity" value={weekStats.activityCount} previous={weekStats.activityPrior} previousLabel="vs last week" color="var(--gold)" sparklineData={sparkActivity} /></motion.div>
       </motion.div>
 
       {/* Lab health summary */}

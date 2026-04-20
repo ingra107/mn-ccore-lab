@@ -35,8 +35,10 @@ import type { DecisionRow } from '../../hooks/useApiData'
 
 // ── Constants ────────────────────────────────────────────────
 
+// P2-11: Outcome moved to right-most data column. In a decision log,
+// outcome IS the answer — it shouldn't be buried in the middle.
 const GRID_TEMPLATE =
-  'minmax(200px, 3fr) 120px 160px 120px 140px 100px 80px'
+  'minmax(200px, 3fr) 160px 120px 140px 100px 140px 80px'
 
 const OUTCOME_OPTIONS = [
   { value: 'pending', label: 'Pending', color: 'var(--gold)' },
@@ -437,15 +439,8 @@ function DecisionRowItem({
               </span>
             )}
         </div>
-        <div onClick={(e) => e.stopPropagation()}>
-          <InlineSelect
-            value={decision.outcome_status || 'pending'}
-            options={OUTCOME_OPTIONS}
-            onChange={(val) => onStatusChange(decision, val)}
-          />
-        </div>
         <div
-         
+
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -586,6 +581,14 @@ function DecisionRowItem({
           }}
         >
           {formatRelativeTime(decision.created_at)}
+        </div>
+        {/* Outcome — right-most pill (P2-11) */}
+        <div onClick={(e) => e.stopPropagation()}>
+          <InlineSelect
+            value={decision.outcome_status || 'pending'}
+            options={OUTCOME_OPTIONS}
+            onChange={(val) => onStatusChange(decision, val)}
+          />
         </div>
         <div />
       </div>
@@ -1110,11 +1113,11 @@ export default function DecisionsPage() {
               {(
                 [
                   { label: 'Title', key: 'title', align: 'left' },
-                  { label: 'Outcome', key: 'outcome_status', align: 'left' },
                   { label: 'Tags', key: 'title', align: 'left', noSort: true },
                   { label: 'Decided By', key: 'decided_by', align: 'left' },
                   { label: 'Project', key: 'project', align: 'left' },
                   { label: 'Date', key: 'created_at', align: 'right' },
+                  { label: 'Outcome', key: 'outcome_status', align: 'left' },
                 ] as Array<{
                   label: string
                   key: DecisionSortKey

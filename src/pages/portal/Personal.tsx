@@ -19,6 +19,7 @@ import { useUserRole } from '../../hooks/useUserRole'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
 import { isProductionVisible, isProductionVisibleActivity } from '../../lib/isProductionVisible'
+import TaskTitle from '../../components/tasks/TaskTitle'
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed'
 import { ROLE_LABELS } from '../../lib/roleDefaults'
 import type { UserRole } from '../../lib/roleDefaults'
@@ -389,7 +390,7 @@ function TaskRow({
         className="flex-1 truncate"
         style={{ fontSize: 'var(--text-label)', color: isOverdue ? 'var(--maroon)' : 'var(--ink)', lineHeight: '1.4' }}
       >
-        {task.title || task.description}
+        <TaskTitle title={task.title} fallback={task.description} />
       </span>
 
       {/* Priority badge (urgent/high only) */}
@@ -500,7 +501,7 @@ function UpcomingCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: T
                   className="flex-1 truncate"
                   style={{ fontSize: 'var(--text-label)', color: isOverdue ? 'var(--maroon)' : 'var(--ink)' }}
                 >
-                  {item.title || item.description}
+                  <TaskTitle title={item.title as string | null} fallback={item.description} showChip={false} />
                 </span>
                 <span
                   style={{

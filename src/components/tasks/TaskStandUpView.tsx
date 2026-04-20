@@ -6,6 +6,7 @@ import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 import { useProjects } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
+import TaskTitle from './TaskTitle'
 
 interface TaskStandUpViewProps {
   tasks: TaskRow[]
@@ -304,7 +305,7 @@ function TaskSection({
                   className="text-sm task-title-clickable"
                   style={{ color: 'var(--ink)', borderRadius: 'var(--radius-sm)', padding: '1px 4px', margin: '-1px -4px', transition: 'background var(--transition-fast) ease' }}
                 >
-                  {task.title || task.description}
+                  <TaskTitle title={task.title} fallback={task.description} />
                 </span>
                 {projectName && (
                   <span style={{ fontSize: '10px', color: 'var(--slate)', backgroundColor: 'var(--surface-3)', borderLeft: '2px solid var(--teal)', padding: '1px 5px', borderRadius: 'var(--radius-sm)', marginLeft: '6px' }}>

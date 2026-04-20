@@ -276,6 +276,22 @@ export default function CollaborationGraph({
     })
   }, [networkNodes])
 
+  // P2-13: only label the top-10 nodes by paper count to prevent label
+  // collision around hub nodes (Ingraham, Mesfin). Smaller nodes still
+  // surface name + papers in the sidebar / hover via the data.* payload.
+  const labelledNodes: ReagraphNode[] = useMemo(() => {
+    const TOP_N = 10
+    const topIds = new Set(
+      [...networkNodes]
+        .sort((a, b) => b.papers - a.papers)
+        .slice(0, TOP_N)
+        .map((n) => n.id),
+    )
+    return reagraphNodes.map((n) =>
+      topIds.has(n.id) ? n : { ...n, label: undefined as unknown as string },
+    )
+  }, [reagraphNodes, networkNodes])
+
   // Map to Reagraph edge format
   const reagraphEdges: ReagraphEdge[] = useMemo(() => {
     return networkEdges.map((edge) => {
@@ -378,7 +394,7 @@ export default function CollaborationGraph({
     >
       <GraphCanvas
         ref={graphRef}
-        nodes={reagraphNodes}
+        nodes={labelledNodes}
         edges={reagraphEdges}
         theme={mnccoreTheme}
         layoutType="forceDirected2d"

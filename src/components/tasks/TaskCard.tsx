@@ -5,6 +5,7 @@ import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
 import { formatBrandName } from '../BrandName'
+import TaskTitle from './TaskTitle'
 import { updateTask } from '../../lib/api'
 import { useProjects } from '../../hooks/useApiData'
 import { STATUS_OPTIONS, PRIORITY_CONFIG, PRIORITY_COLORS, STATUS_CYCLE } from '../../lib/taskConstants'
@@ -110,7 +111,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
               textDecoration: isDone ? 'line-through' : 'none',
             }}
           >
-            {formatBrandName(task.title || task.description)}
+            <TaskTitle title={task.title} fallback={task.description} />
           </p>
 
           {/* Meta row */}

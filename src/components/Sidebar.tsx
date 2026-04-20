@@ -51,6 +51,12 @@ interface NavItem {
   hint?: string // small secondary text (e.g. "Today")
 }
 
+// Feature flags — flip to expose deferred surfaces in the sidebar nav.
+// Routes still resolve via App.tsx for direct-link access.
+const FEATURE_FLAGS = {
+  peripheralBrain: false, // /pb (Daily Plan) — empty state until PB integration ships
+}
+
 interface NavGroup {
   title: string
   items: NavItem[]
@@ -144,7 +150,9 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         {
           title: 'PI Tools',
           items: [
-            { to: '/pb', label: 'Daily Plan', icon: Terminal },
+            // PB Sector hidden until Peripheral Brain integration ships (P2-07).
+            // Route /pb still resolves for direct-link access.
+            ...(FEATURE_FLAGS.peripheralBrain ? [{ to: '/pb', label: 'Daily Plan', icon: Terminal }] : []),
             { to: '/sessions', label: 'Session History', icon: History },
             { to: '/pi/analytics', label: 'PI Dashboard', icon: Shield },
           ],

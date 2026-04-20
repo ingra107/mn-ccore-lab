@@ -7,16 +7,36 @@ interface MetricCardProps {
   color: string
   subtitle?: string
   sparklineData?: number[]
+  /** P2-09: optional delta vs prior period. Renders a chip below the
+   *  number. Pass `previous` (the prior period's value) and an optional
+   *  `previousLabel` like "vs last week". Zero is contextualized as
+   *  "no change" so empty hero cards stop reading as broken. */
+  previous?: number
+  previousLabel?: string
 }
 
-export default function MetricCard({ icon: Icon, label, value, color, subtitle, sparklineData }: MetricCardProps) {
+export default function MetricCard({ icon: Icon, label, value, color, subtitle, sparklineData, previous, previousLabel }: MetricCardProps) {
+  // Compute delta only when both sides are numeric. We render a chip even
+  // when delta === 0 so zero values get explicit context.
+  const numericValue = typeof value === 'number' ? value : null
+  const showDelta = numericValue !== null && previous !== undefined
+  const delta = showDelta ? numericValue! - previous! : null
+
   return (
     <div className="rounded-xl border p-3 sm:p-4" style={{ borderColor: 'var(--border-subtle)' }}>
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs" style={{ color: 'var(--slate)' }}>{label}</span>
         <Icon size={14} style={{ color, opacity: 0.85 }} />
       </div>
-      <div className="text-lg sm:text-xl" style={{ fontWeight: 600, color: 'var(--ink)' }}>{value}</div>
+      <div className="text-lg sm:text-xl tabular-nums" style={{ fontWeight: 600, color: 'var(--ink)' }}>{value}</div>
+      {showDelta && delta !== null && (
+        <div className="mt-1 flex items-center gap-1" style={{ fontSize: 'var(--text-micro)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+          {delta > 0 && <span style={{ color: 'var(--green)', fontWeight: 500 }}>▲ {delta}</span>}
+          {delta < 0 && <span style={{ color: 'var(--maroon)', fontWeight: 500 }}>▼ {Math.abs(delta)}</span>}
+          {delta === 0 && <span style={{ opacity: 0.7 }}>→ no change</span>}
+          <span>{previousLabel ?? 'vs prior'}</span>
+        </div>
+      )}
       {subtitle && (
         <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{subtitle}</span>
       )}

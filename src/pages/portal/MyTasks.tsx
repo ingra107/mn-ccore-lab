@@ -10,6 +10,7 @@ import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import TaskGridView from '../../components/tasks/TaskGridView'
+import TaskTitle from '../../components/tasks/TaskTitle'
 // Alternate views are lazy — most users open MyTasks in 'list' (grid).
 const TaskBoardView = lazy(() => import('../../components/tasks/TaskBoardView'))
 const TaskStandUpView = lazy(() => import('../../components/tasks/TaskStandUpView'))
@@ -740,7 +741,7 @@ export default function MyTasks() {
                     {person.name.split(' ')[0]}
                   </span>
                   <span className="truncate" style={{ cursor: 'pointer' }} onClick={() => setSelectedTask(task)}>
-                    {task.title || task.description}
+                    <TaskTitle title={task.title} fallback={task.description} showChip={false} />
                   </span>
                 </div>
               )
@@ -867,7 +868,7 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
         style={{ cursor: 'pointer' }}
       >
         <div className="text-sm truncate" style={{ color: 'var(--ink)' }}>
-          {task.title || task.description}
+          <TaskTitle title={task.title} fallback={task.description} />
         </div>
       </div>
       {task.due_date && (

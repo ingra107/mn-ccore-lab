@@ -10,7 +10,7 @@ import { CSS } from '@dnd-kit/utilities'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
-import { formatBrandName } from '../BrandName'
+import TaskTitle from './TaskTitle'
 import TaskContextMenu from './TaskContextMenu'
 import { useContextMenu } from '../../hooks/useContextMenu'
 import { useSubtasks, useProjects } from '../../hooks/useApiData'
@@ -992,7 +992,7 @@ function TaskGridRow({
                       }}
                       className="task-title-clickable"
                     >
-                      {formatBrandName(task.title || task.description)}
+                      <TaskTitle title={task.title} fallback={task.description} />
                     </span>
                   )}
                   {task.source && task.source !== 'manual' && (
