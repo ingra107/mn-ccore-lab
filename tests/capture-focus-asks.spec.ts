@@ -11,10 +11,20 @@
  *   review/claude-design-2026-04-20-post-fixes/focus-XX-*.png
  */
 import { test } from '@playwright/test'
+import fs from 'node:fs'
 import path from 'node:path'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
-const OUT = path.join('review', 'claude-design-2026-04-20-post-fixes')
+// Dated bundle dir, same pattern as capture-for-design.spec.ts. Set
+// CAPTURE_BUNDLE=<dirname> to override and write into an existing dir
+// (use this when sharing one dir with the main capture spec run).
+const TS = new Date()
+  .toISOString()
+  .replace(/[-:]/g, '')
+  .replace(/\.\d+Z$/, '')
+  .slice(0, 13)
+const OUT = path.join('review', process.env.CAPTURE_BUNDLE ?? `claude-design-${TS}`)
+if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true })
 
 test('focus-01-quick-add-overview → new Quick Add on Task Detail Overview', async ({ page }) => {
   await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })

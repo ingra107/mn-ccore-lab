@@ -21,7 +21,9 @@ const TS = new Date()
   .replace(/\.\d+Z$/, '')
   .slice(0, 13)
 
-const OUT_DIR = path.join('review', `claude-design-${TS}`)
+// Set CAPTURE_BUNDLE=<dirname> to share one dir with capture-focus-asks
+// (the regen script does this so all PNGs land in one place per run).
+const OUT_DIR = path.join('review', process.env.CAPTURE_BUNDLE ?? `claude-design-${TS}`)
 if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true })
 
 interface PageCapture { slug: string; path: string }

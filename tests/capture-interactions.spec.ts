@@ -36,7 +36,11 @@ const TS = new Date()
   .replace(/\.\d+Z$/, '')
   .slice(0, 13)
 
-const OUT_DIR = path.join('review', `interactions-${TS}`)
+// Set CAPTURE_BUNDLE=<dirname> to write into a shared bundle dir
+// (e.g. the regen script puts videos into <bundle>/videos/).
+const OUT_DIR = process.env.CAPTURE_BUNDLE
+  ? path.join('review', process.env.CAPTURE_BUNDLE, 'videos')
+  : path.join('review', `interactions-${TS}`)
 if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true })
 
 /** Write a keyframe with consistent naming. Pass the test id + phase. */
