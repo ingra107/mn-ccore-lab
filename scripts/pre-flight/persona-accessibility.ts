@@ -18,14 +18,14 @@ async function main() {
 
   try {
     section(s, '1  /my-tasks has skip-to-content link')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await snap(s, 'my-tasks-a11y')
     const skipLink = await s.page.locator('a').filter({ hasText: /skip to (content|main)/i }).first().count()
     if (skipLink > 0) pass(s, 'Skip-to-content link present')
     else record(s, { id: 'NO-SKIP-LINK', severity: 'P2', scenario: 'Skip-to-content anchor', observed: 'not found', expected: 'first focusable element' })
 
     section(s, '2  Every page has <main> landmark')
-    const pages = ['/dashboard', '/my-tasks', '/tasks', '/projects', '/manuscripts', '/meetings', '/deadlines', '/ideas', '/decisions']
+    const pages = ['/portal/dashboard', '/portal/my-tasks', '/portal/my-tasks', '/portal/projects', '/portal/manuscripts', '/portal/meetings', '/portal/deadlines', '/portal/ideas', '/portal/decisions']
     for (const p of pages) {
       await goto(s, p)
       const hasMain = await s.page.locator('main, [role="main"]').count().catch(() => 0)
@@ -34,7 +34,7 @@ async function main() {
     pass(s, `Checked <main> landmark on ${pages.length} pages`)
 
     section(s, '3  Tab through /my-tasks — focus is visible')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await s.page.waitForTimeout(1200)
     let visibleFocusCount = 0
     let unfocusableCount = 0
@@ -99,7 +99,7 @@ async function main() {
     }
 
     section(s, '5  Every form field has associated <label> or aria-label')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await s.page.waitForTimeout(800)
     const unlabeled = await s.page.evaluate(() => {
       const inputs = document.querySelectorAll('input:not([type="hidden"]), textarea, select')
@@ -120,7 +120,7 @@ async function main() {
     else record(s, { id: 'UNLABELED-FIELDS', severity: 'P2', scenario: 'Form fields labeled', observed: `${unlabeled.length} unlabeled: ${unlabeled.join(', ')}`, expected: 'all fields labeled' })
 
     section(s, '6  Heading hierarchy — no skipped levels (h1 → h3 without h2)')
-    await goto(s, '/dashboard')
+    await goto(s, '/portal/dashboard')
     await s.page.waitForTimeout(1500)
     const headings = await s.page.evaluate(() => {
       const hs = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))

@@ -82,7 +82,7 @@ async function auditTableSemantics(page: Page, path: string) {
     var colHeaders = document.querySelectorAll('[role=columnheader], th').length;
     return {gridCount: grids, rowCount: rows, cellCount: cells, colHeaderCount: colHeaders};
   })()`)
-  const dataPages = ['/tasks', '/my-tasks', '/projects', '/manuscripts', '/deadlines', '/ideas', '/decisions', '/grants']
+  const dataPages = ['/portal/my-tasks', '/portal/projects', '/portal/manuscripts', '/portal/deadlines', '/portal/ideas', '/portal/decisions', '/portal/grants']
   if (dataPages.includes(path)) {
     if (info.gridCount === 0 && info.colHeaderCount === 0) {
       record({
@@ -219,7 +219,7 @@ async function auditAvatarAlt(page: Page, path: string) {
 }
 
 async function auditCmdK(page: Page) {
-  await go(page, '/dashboard')
+  await go(page, '/portal/dashboard')
   await page.waitForTimeout(800)
   await page.keyboard.press('Control+k')
   await page.waitForTimeout(500)
@@ -268,7 +268,7 @@ async function auditCmdK(page: Page) {
 }
 
 async function auditKbdInInputs(page: Page) {
-  await go(page, '/tasks')
+  await go(page, '/portal/my-tasks')
   await page.waitForTimeout(1000)
   // Find any text input
   const focused: any = await page.evaluate(`(function(){
@@ -296,7 +296,7 @@ async function auditKbdInInputs(page: Page) {
 }
 
 async function auditDashDrag(page: Page) {
-  await go(page, '/dashboard')
+  await go(page, '/portal/dashboard')
   await page.waitForTimeout(2000)
   const info: any = await page.evaluate(`(function(){
     var items = document.querySelectorAll('.react-grid-item').length;
@@ -331,7 +331,7 @@ async function auditDashDrag(page: Page) {
 }
 
 async function auditAriaCurrent(page: Page) {
-  await go(page, '/tasks')
+  await go(page, '/portal/my-tasks')
   await page.waitForTimeout(800)
   const info: any = await page.evaluate(`(function(){
     var links = Array.prototype.slice.call(document.querySelectorAll('nav a, [role=navigation] a, aside a'));
@@ -360,7 +360,7 @@ async function auditAriaCurrent(page: Page) {
 
 async function auditMobileTabBar(page: Page) {
   await page.setViewportSize({ width: 390, height: 844 })
-  await go(page, '/tasks')
+  await go(page, '/portal/my-tasks')
   await page.waitForTimeout(800)
   const info: any = await page.evaluate(`(function(){
     var tabs = Array.prototype.slice.call(document.querySelectorAll('nav a, [role=tablist] a, [role=tab]'));
@@ -385,7 +385,7 @@ async function auditMobileTabBar(page: Page) {
 
 async function auditMobileTouchTargets(page: Page) {
   await page.setViewportSize({ width: 390, height: 844 })
-  await go(page, '/tasks')
+  await go(page, '/portal/my-tasks')
   await page.waitForTimeout(1500)
   const small: any = await page.evaluate(`(function(){
     var els = Array.prototype.slice.call(document.querySelectorAll('button, a, [role=button], input[type=button], input[type=submit], input[type=checkbox]'));
@@ -434,7 +434,7 @@ async function auditLiveRegions(page: Page, path: string) {
 }
 
 async function auditTaskDetailPanel(page: Page) {
-  await go(page, '/tasks')
+  await go(page, '/portal/my-tasks')
   await page.waitForTimeout(2500)
   // Try to click first task title
   const opened: any = await page.evaluate(`(function(){
@@ -502,7 +502,7 @@ async function auditTaskDetailPanel(page: Page) {
 }
 
 async function auditInlineEditableSemantics(page: Page) {
-  await go(page, '/tasks')
+  await go(page, '/portal/my-tasks')
   await page.waitForTimeout(2000)
   const cellInfo: any = await page.evaluate(`(function(){
     // Find candidates for inline-editable cells: status pills, priority pills, assignee picker
@@ -553,7 +553,7 @@ async function auditInlineEditableSemantics(page: Page) {
 }
 
 async function auditSkipToContent(page: Page) {
-  await go(page, '/dashboard')
+  await go(page, '/portal/dashboard')
   await page.keyboard.press('Tab')
   const info: any = await page.evaluate(`(function(){
     var ae = document.activeElement;
@@ -584,7 +584,7 @@ async function main() {
 
   const { ctx, page } = await setupPage(browser, 'dark')
 
-  const pages = ['/dashboard', '/tasks', '/my-tasks', '/projects', '/meetings', '/personal', '/team']
+  const pages = ['/portal/dashboard', '/portal/my-tasks', '/portal/my-tasks', '/portal/projects', '/portal/meetings', '/portal/personal', '/team']
   for (const p of pages) {
     try { await auditLandmarks(page, p) } catch (e: any) { console.log(`landmarks fail @ ${p}`, e.message?.slice(0, 100)) }
     try { await auditTableSemantics(page, p) } catch (e: any) { console.log(`table fail @ ${p}`, e.message?.slice(0, 100)) }
@@ -594,8 +594,8 @@ async function main() {
     try { await auditLiveRegions(page, p) } catch (e: any) { console.log(`live fail @ ${p}`, e.message?.slice(0, 100)) }
   }
 
-  try { await auditFocusVisibility(page, '/tasks') } catch (e: any) { console.log('focus fail', e.message?.slice(0, 100)) }
-  try { await auditFocusVisibility(page, '/dashboard') } catch (e: any) { console.log('focus fail', e.message?.slice(0, 100)) }
+  try { await auditFocusVisibility(page, '/portal/my-tasks') } catch (e: any) { console.log('focus fail', e.message?.slice(0, 100)) }
+  try { await auditFocusVisibility(page, '/portal/dashboard') } catch (e: any) { console.log('focus fail', e.message?.slice(0, 100)) }
   try { await auditCmdK(page) } catch (e: any) { console.log('cmdk fail', e.message?.slice(0, 100)) }
   try { await auditKbdInInputs(page) } catch (e: any) { console.log('kbd fail', e.message?.slice(0, 100)) }
   try { await auditDashDrag(page) } catch (e: any) { console.log('dash drag fail', e.message?.slice(0, 100)) }

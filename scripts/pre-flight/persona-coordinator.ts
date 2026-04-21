@@ -43,7 +43,7 @@ async function main() {
     }
 
     section(s, '2  Open one of the tasks, add a comment, add a note, mark in progress')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await snap(s, 'my-tasks-after-create', 1500)
     if (cleanupTasks.length > 0) {
       const tid = cleanupTasks[0]
@@ -122,14 +122,14 @@ async function main() {
     }
 
     section(s, '6  Navigate to Deadlines, verify due dates lined up')
-    await goto(s, '/deadlines')
+    await goto(s, '/portal/deadlines')
     await snap(s, 'deadlines', 1500)
     const dueRows = await s.page.locator('[data-testid^="task-due-"]').count().catch(() => 0)
     if (dueRows > 0) pass(s, `${dueRows} due-date cells rendered (from our 3 tasks + existing)`)
     else record(s, { id: 'DEADLINES-EMPTY', severity: 'P1', scenario: 'Deadlines shows task due cells', observed: '0 rows', expected: '>0' })
 
     section(s, '7  UI flow — open one of our tasks via title click')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await s.page.waitForTimeout(1500)
     const ourTask = s.page.locator(`text=${JSON.stringify(baseTitle)}`).first()
     if (await ourTask.count()) {
@@ -143,7 +143,7 @@ async function main() {
     }
 
     section(s, '8  Digest — save a paper + comment on it')
-    await goto(s, '/digest')
+    await goto(s, '/portal/digest')
     await snap(s, 'digest')
     // Try to save the first visible paper
     const saveBtn = s.page.locator('button').filter({ hasText: /Save|save paper/i }).first()
@@ -156,7 +156,7 @@ async function main() {
     }
 
     section(s, '9  Activity feed — recent changes visible')
-    await goto(s, '/activity')
+    await goto(s, '/portal/activity')
     await snap(s, 'activity')
     const actRows = await s.page.locator('li, [role="listitem"], [data-testid*="activity"]').count().catch(() => 0)
     if (actRows > 3) pass(s, `Activity feed has ${actRows} entries`)

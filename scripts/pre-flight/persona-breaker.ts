@@ -24,7 +24,7 @@ async function main() {
     if (xResp.ok()) {
       const tid = ((await xResp.json()) as { data?: { id: string } }).data?.id
       if (tid) cleanupTasks.push(tid)
-      await goto(s, '/tasks')
+      await goto(s, '/portal/my-tasks')
       await s.page.waitForTimeout(1500)
       const executed = await s.page.evaluate(() => !!(window as { __BREAKER_XSS?: number }).__BREAKER_XSS).catch(() => false)
       if (!executed) pass(s, 'XSS <script> in title did not execute (React escapes)')
@@ -59,7 +59,7 @@ async function main() {
     }
 
     section(s, '4  Rapid clicks — spam New Task button 5 times in 500ms')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await s.page.waitForTimeout(800)
     const newBtn = s.page.locator('button').filter({ hasText: /New Task/i }).first()
     if (await newBtn.count()) {
@@ -102,7 +102,7 @@ async function main() {
     else record(s, { id: 'EMPTY-BATCH', severity: 'P2', scenario: 'Empty batch rejected', observed: `HTTP ${empty.status()}`, expected: '400' })
 
     section(s, '8  Browser resize from 1920px → 320px — no horizontal overflow at any step')
-    await goto(s, '/dashboard')
+    await goto(s, '/portal/dashboard')
     const widths = [1920, 1600, 1280, 1024, 768, 640, 480, 375, 320]
     let overflowAtWidth: number | null = null
     for (const w of widths) {
@@ -134,7 +134,7 @@ async function main() {
       latency: 400,
     })
     const slowStart = Date.now()
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     const slowElapsed = Date.now() - slowStart
     await client.send('Network.emulateNetworkConditions', { offline: false, downloadThroughput: -1, uploadThroughput: -1, latency: 0 })
     if (slowElapsed < 20_000) pass(s, `/my-tasks loads under slow-3G in ${Math.round(slowElapsed / 1000)}s`)

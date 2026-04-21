@@ -72,14 +72,14 @@ async function main() {
     }
 
     section(s, '1.C  UI visibility — /my-tasks default filter')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await snap(s, 'C-my-tasks-initial')
     const onMyTasks = await s.page.locator(`text=${JSON.stringify(title)}`).first().isVisible({ timeout: 3000 }).catch(() => false)
     if (onMyTasks) pass(s, '1.C Task visible on /my-tasks (auto-filter Mine)')
     else bug(s, 'TASK-NOT-ON-MYTASKS', 'P1', '1.C Task visible on /my-tasks', 'title not found', `"${title}" visible`)
 
     section(s, '1.D  UI visibility — /tasks (All view)')
-    await goto(s, '/tasks')
+    await goto(s, '/portal/my-tasks')
     await snap(s, 'D-tasks-all-initial')
     const onTasksAll = await s.page.locator(`text=${JSON.stringify(title)}`).first().isVisible({ timeout: 3000 }).catch(() => false)
     if (onTasksAll) pass(s, '1.D Task visible on /tasks')
@@ -94,7 +94,7 @@ async function main() {
     if (rb2?.title === title2) pass(s, '1.E Readback shows new title')
     else bug(s, 'TASK-TITLE-NOT-PERSISTED', 'P0', '1.E readback shows new title', String(rb2?.title), title2)
 
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await snap(s, 'E-my-tasks-after-title-edit')
     const newTitleVisible = await s.page.locator(`text=${JSON.stringify(title2)}`).first().isVisible({ timeout: 3000 }).catch(() => false)
     if (newTitleVisible) pass(s, '1.E New title renders on /my-tasks after reload')
@@ -114,7 +114,7 @@ async function main() {
     // without CF Access JWT, so useAuth().user is null and the page shows
     // ALL tasks (by design — unauthenticated viewers see everything).
     // Skip the filter assertion unless /api/auth/me returns an authenticated user.
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await snap(s, 'F-my-tasks-after-reassign')
     const authRes = await s.api.get('/api/auth/me').catch(() => null)
     const authed = authRes?.ok() ? ((await authRes.json()) as { authenticated?: boolean }).authenticated : false
@@ -201,7 +201,7 @@ async function main() {
     else bug(s, 'TASK-ACTIVITY-MISSING', 'P2', '1.M Activity feed has task-related entries', '0 entries', '>=1 entry (create + edits)')
 
     section(s, '1.N  Visibility on /activity page UI')
-    await goto(s, '/activity')
+    await goto(s, '/portal/activity')
     await snap(s, 'N-activity-feed')
     const titleOnActivity = await s.page.locator(`text=${JSON.stringify(title2)}`).first().isVisible({ timeout: 2000 }).catch(() => false)
     if (titleOnActivity) pass(s, '1.N New title surfaces on /activity UI')
@@ -217,7 +217,7 @@ async function main() {
     else if (rbDel.deleted_at) pass(s, `1.O GET task after delete still returns row but deleted_at=${rbDel.deleted_at}`)
     else bug(s, 'TASK-DELETE-NO-FLAG', 'P1', '1.O deleted_at set after batch delete', 'deleted_at=null', 'deleted_at populated OR 404')
 
-    await goto(s, '/tasks')
+    await goto(s, '/portal/my-tasks')
     await snap(s, 'O-tasks-after-delete')
     const stillOnTasks = await s.page.locator(`text=${JSON.stringify(title2)}`).first().isVisible({ timeout: 2000 }).catch(() => false)
     if (!stillOnTasks) pass(s, '1.O Task hidden from /tasks after delete')

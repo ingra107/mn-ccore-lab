@@ -19,7 +19,7 @@ async function main() {
 
   try {
     section(s, '1  Arrive at /my-tasks — see what needs my attention')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await snap(s, 'my-tasks')
     await assertVisible(s, 'MyTasks page header', 'h1', { severity: 'P1' })
     const taskRows = await s.page.locator('[data-testid^="task-row-"]').count().catch(() => 0)
@@ -46,7 +46,7 @@ async function main() {
     }
 
     section(s, '3  Navigate to a project I PI')
-    await goto(s, '/projects')
+    await goto(s, '/portal/projects')
     await snap(s, 'projects')
     // Find a project where PI=mesfin or similar faculty name
     const mesProj = s.page.locator('a[href*="/projects/"]').filter({ hasText: /Mesfin|\(Mesfin\)/ }).first()
@@ -59,14 +59,14 @@ async function main() {
     }
 
     section(s, '4  Manuscripts under revision — view revision tracker')
-    await goto(s, '/manuscripts')
+    await goto(s, '/portal/manuscripts')
     await snap(s, 'manuscripts')
     const mRows = await s.page.locator('a[href*="/projects/"]').count().catch(() => 0)
     if (mRows > 5) pass(s, `Manuscripts list shows ${mRows} entries`)
     else record(s, { id: 'MANUSCRIPTS-SMALL', severity: 'P2', scenario: 'Manuscripts list populated', observed: `${mRows} rows`, expected: '>5' })
 
     section(s, '5  Grants dashboard — status of active submissions')
-    await goto(s, '/grants')
+    await goto(s, '/portal/grants')
     await snap(s, 'grants')
     const grantsList = await s.page.locator('[data-testid*="grant"], tr, [role="row"]').count().catch(() => 0)
     if (grantsList > 0) pass(s, `Grants page has ${grantsList} grant-related rows`)
@@ -80,7 +80,7 @@ async function main() {
     else record(s, { id: 'TEAM-NAME', severity: 'P1', scenario: 'My name on /team', observed: 'name not found', expected: 'formal tier visible' })
 
     section(s, '7  Meeting prep for upcoming MNCCORE')
-    await goto(s, '/meetings')
+    await goto(s, '/portal/meetings')
     await snap(s, 'meetings')
     const firstMtg = s.page.locator('a[href*="/meetings/"]').first()
     if (await firstMtg.count()) {
@@ -104,7 +104,7 @@ async function main() {
     if (notifRows >= 0) pass(s, `Notifications page loads, ${notifRows} items visible`)
 
     section(s, '9  /activity shows recent team activity')
-    await goto(s, '/activity')
+    await goto(s, '/portal/activity')
     await snap(s, 'activity')
     await assertVisible(s, 'Activity feed', 'h1, h2', { severity: 'P1' })
   } catch (e) {

@@ -20,7 +20,7 @@ async function main() {
 
   try {
     section(s, '1  Land on /my-tasks on mobile')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await snap(s, 'my-tasks-mobile', 1500)
     // No horizontal overflow
     const overflow = await s.page.evaluate(() => ({ body: document.body.scrollWidth, vw: window.innerWidth }))
@@ -79,14 +79,14 @@ async function main() {
     }
 
     section(s, '6  Dashboard on mobile — cards stack vertically, no clipping')
-    await goto(s, '/dashboard')
+    await goto(s, '/portal/dashboard')
     await snap(s, 'dashboard-mobile', 2000)
     const overflow2 = await s.page.evaluate(() => ({ body: document.body.scrollWidth, vw: window.innerWidth }))
     if (overflow2.body <= overflow2.vw + 2) pass(s, 'Dashboard mobile — no h-overflow')
     else record(s, { id: 'DASH-MOBILE-OVERFLOW', severity: 'P1', scenario: 'No h-overflow on /dashboard', observed: `body=${overflow2.body}`, expected: `≤${overflow2.vw}` })
 
     section(s, '7  /projects, /manuscripts, /deadlines, /ideas, /decisions — all no h-overflow on mobile')
-    const pages = ['/projects', '/manuscripts', '/deadlines', '/ideas', '/decisions', '/grants', '/meetings']
+    const pages = ['/portal/projects', '/portal/manuscripts', '/portal/deadlines', '/portal/ideas', '/portal/decisions', '/portal/grants', '/portal/meetings']
     let overflowCount = 0
     for (const p of pages) {
       await goto(s, p)
@@ -100,7 +100,7 @@ async function main() {
     if (overflowCount === 0) pass(s, `All ${pages.length} pages clean — no h-overflow`)
 
     section(s, '8  Bug report modal opens + Attach photo button visible on mobile')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await s.page.waitForTimeout(1000)
     // On mobile the sidebar is hidden; Report-a-Bug lives in MobileTabBar's
     // More drawer under Support section. Open drawer then click the
@@ -129,7 +129,7 @@ async function main() {
     }
 
     section(s, '9  Font floor — no sub-11px text on mobile')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await s.page.waitForTimeout(800)
     const tinyText = await s.page.evaluate(() => {
       const bad: string[] = []

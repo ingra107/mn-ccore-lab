@@ -54,7 +54,7 @@ async function main() {
       if (t?.title === xssTitle) pass(s, '13.D XSS payload stored as-is (React escapes on render)')
       else bug(s, 'XSS-STRIP', 'P2', '13.D XSS round-trips untouched', String(t?.title), xssTitle)
       // Check via UI that script does NOT execute
-      await s.page.goto('https://mn-ccore-lab.pages.dev/tasks', { waitUntil: 'networkidle' })
+      await s.page.goto('https://mn-ccore-lab.pages.dev/portal/my-tasks', { waitUntil: 'networkidle' })
       await s.page.waitForTimeout(1500)
       const wasTriggered = await s.page.evaluate(() => !!(window as unknown as { XSS_TRIGGERED?: boolean }).XSS_TRIGGERED).catch(() => false)
       if (!wasTriggered) pass(s, '13.D XSS <script> did NOT execute on /tasks (React sanitizes)')
@@ -70,7 +70,7 @@ async function main() {
       })
       if (cResp.ok()) {
         pass(s, '13.E HTML payload in comment accepted (React will escape)')
-        await s.page.goto(`https://mn-ccore-lab.pages.dev/tasks?open=${xssTask}`, { waitUntil: 'networkidle' })
+        await s.page.goto(`https://mn-ccore-lab.pages.dev/portal/my-tasks?open=${xssTask}`, { waitUntil: 'networkidle' })
         await s.page.waitForTimeout(2000)
         const imgTriggered = await s.page.evaluate(() => !!(window as unknown as { IMG_XSS?: number }).IMG_XSS).catch(() => false)
         if (!imgTriggered) pass(s, '13.E <img onerror> did not execute in comment render')

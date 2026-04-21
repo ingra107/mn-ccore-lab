@@ -15,7 +15,7 @@ async function main() {
 
   // Probe row focus by directly focusing a row
   console.log('\n=== Row direct focus styling ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2500)
   const focusInfo: any = await page.evaluate(`(function(){
     var rows = document.querySelectorAll('.task-grid-row');
@@ -39,7 +39,7 @@ async function main() {
 
   // Sidebar aria-current
   console.log('\n=== Sidebar aria-current on active link ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(1500)
   const navInfo: any = await page.evaluate(`(function(){
     var aside = document.querySelector('aside');
@@ -59,7 +59,7 @@ async function main() {
 
   // hover-only badges
   console.log('\n=== Hover-only badges (visible to AT?) ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2500)
   const hoverBadges: any = await page.evaluate(`(function(){
     var badges = Array.prototype.slice.call(document.querySelectorAll('.hover-badge'));
@@ -78,7 +78,7 @@ async function main() {
 
   // Drag-to-reorder mode test
   console.log('\n=== Drag to reorder button — does pressing it expose keyboard reorder? ===')
-  await page.goto(BASE + '/dashboard', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/dashboard', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2500)
   const beforePress: any = await page.evaluate(`(function(){
     var b = document.querySelector('button[aria-label*="reorder" i], button[aria-label*="Drag" i]');
@@ -112,7 +112,7 @@ async function main() {
 
   // Status messages frequency
   console.log('\n=== Last synced status — does it update text? ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(1500)
   const t1: any = await page.evaluate(`(function(){
     var els = Array.prototype.slice.call(document.querySelectorAll('[role=status], [aria-live]'));
@@ -128,7 +128,7 @@ async function main() {
 
   // Hub-realtime polling — does data refresh announce?
   console.log('\n=== Subtask checkbox (in detail panel) keyboard reachable? ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2500)
   await page.evaluate(`(function(){
     var rows = document.querySelectorAll('.task-grid-row');

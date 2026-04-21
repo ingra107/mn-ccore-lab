@@ -65,8 +65,8 @@ async function main() {
         polls.push({ url: u.replace('https://mn-ccore-lab.pages.dev', ''), status: r.status(), at: Date.now() })
       }
     })
-    await tabA.page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' })
-    await tabB.page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' })
+    await tabA.page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
+    await tabB.page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
     await tabA.page.waitForTimeout(1200)
     await tabB.page.waitForTimeout(1200)
     log(s, `  7.B tab B initial network: ${polls.length} /api/version+/api/tasks calls in first 3s`)
