@@ -60,28 +60,53 @@ jobs:
           //   - strips line comments (--) and block comments (/* */)
           //   - splits on semicolons (statement terminator)
           //   - collapses ALL whitespace runs to single space
-          //   - strips paren-adjacent whitespace (`( foo )` -> `(foo)`) and
-          //     comma-preceding whitespace (`, ` stays, ` ,` -> `,`) so
-          //     differences in D1's stored CREATE string vs our authored
-          //     SQL don't show up as drift
-          //   - removes "IF NOT EXISTS" (D1 doesn't preserve it in sqlite_master)
-          //   - drops empty statements + sqlite_* + _cf_KV + d1_migrations
-          //   - sorts case-insensitively for stable diff
+          //   - strips paren-adjacent whitespace
+          //   - removes "IF NOT EXISTS"
+          //   - drops sqlite_* / _cf_KV / d1_migrations internal tables
+          //   - SORTS CREATE TABLE columns alphabetically so positional
+          //     differences (e.g. prod has col X at end via ALTER but
+          //     committed schema has it inline) don't show up as drift.
+          //     Real structural differences (different defaults, NOT NULL
+          //     constraints, different PKs) still surface.
+          //   - sorts statements case-insensitively for stable diff
+          function sortTableColumns(stmt) {
+            // Match: CREATE TABLE [IF NOT EXISTS] "?name"? (body)
+            const m = stmt.match(/^(CREATE TABLE\s+(?:"[^"]+"|\w+)\s*)\((.*)\)\s*$/i)
+            if (!m) return stmt
+            const prefix = m[1]
+            const body = m[2]
+            // Split body on top-level commas (not inside parens).
+            const parts = []
+            let depth = 0
+            let buf = ''
+            for (const ch of body) {
+              if (ch === '(') depth++
+              else if (ch === ')') depth--
+              if (ch === ',' && depth === 0) {
+                parts.push(buf.trim())
+                buf = ''
+              } else {
+                buf += ch
+              }
+            }
+            if (buf.trim()) parts.push(buf.trim())
+            parts.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
+            return prefix + '(' + parts.join(', ') + ')'
+          }
           function normalizeSql(text) {
             const stripped = text
-              .replace(/\/\*[\s\S]*?\*\//g, ' ')   // block comments
-              .replace(/--[^\n]*/g, ' ')           // line comments
+              .replace(/\/\*[\s\S]*?\*\//g, ' ')
+              .replace(/--[^\n]*/g, ' ')
             const stmts = stripped
               .split(';')
               .map(s => s.replace(/\s+/g, ' ').trim())
               .map(s => s.replace(/\bIF NOT EXISTS\b/gi, '').replace(/\s+/g, ' ').trim())
-              // Paren-adjacent whitespace normalization — `( ` and ` )` and ` ,` all collapse
               .map(s => s.replace(/\(\s+/g, '(').replace(/\s+\)/g, ')').replace(/\s+,/g, ',').replace(/,\s+/g, ', '))
-              // Double-space from the previous pass → single
               .map(s => s.replace(/\s+/g, ' ').trim())
+              .map(s => /^CREATE TABLE\b/i.test(s) ? sortTableColumns(s) : s)
               .filter(s => s.length > 0)
               .filter(s => !/^CREATE TABLE\s+sqlite_sequence\b/i.test(s))
-              .filter(s => !/^CREATE TABLE\s+_cf_KV\b/i.test(s))   // CF internal
+              .filter(s => !/^CREATE TABLE\s+_cf_KV\b/i.test(s))
               .filter(s => !/^CREATE TABLE\s+d1_migrations\b/i.test(s))
             return stmts.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' })).join('\n')
           }
