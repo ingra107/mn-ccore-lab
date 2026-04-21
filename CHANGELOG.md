@@ -2,6 +2,53 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Phase 37 — Portal URL Migration (2026-04-21)
+
+Moved all 27 gated Hub routes under a `/portal/*` URL prefix so a single
+Cloudflare Access application destination
+(`mn-ccore-lab.pages.dev/portal/*`) gates the entire authenticated
+surface. Public marketing routes stay at root.
+
+**Why:** CF Access app destinations cap at 5 paths/app. Enumerating ~25
+portal paths would have required 3 apps + bypass rules — a permanent
+dashboard-maintenance tax. Consolidating under `/portal/*` is a one-time
+refactor that leaves CF Access with a single path pattern for the life
+of the project.
+
+**Architecture — dual-route migration:**
+1. `src/constants/paths.ts` — single source of truth. `PATHS.dashboard`,
+   `PATHS.project(slug)`, etc. Mirror at `tests/helpers/paths.ts` (plain
+   strings so tests don't import the prod bundle).
+2. `src/App.tsx` — added 29 `/portal/*` canonical routes inside the
+   `RequireAuth + PortalLayout` block. `NavigateWithParams` helper
+   expands `:slug`/`:id` tokens for parametric redirects.
+3. Internal nav migrated through `PATHS`: sidebar, mobile tab bar,
+   command palette (22 nav calls), keyboard shortcut hooks, ~50 `<Link>`
+   and template-literal refs across 30+ components, `window.location`
+   hard navs, pathname pattern-matching in `useRecentlyViewed`, and
+   backend search API URLs (`api/routes/search.ts`).
+4. Legacy root routes converted to `<Navigate>` redirect shims placed
+   OUTSIDE `RequireAuth` so bookmark bounces happen pre-auth. Kept
+   indefinitely; cost is negligible.
+5. 16 test specs + 5 journey specs + 27 audit scripts migrated via
+   `tests/helpers/paths.ts` or hardcoded `/portal/` prefix.
+
+**Execution:** 14 tasks, subagent-driven. Each task = implementer
+subagent + spec compliance review + code quality review before moving
+on. 13 commits on `feat/portal-url-migration` merged to `main` as merge
+commit `8600c32`. Deployed prod: `cbb9093d.mn-ccore-lab.pages.dev`.
+
+**CF Access update (manual — Nick):** Change application destination
+from bare domain to `mn-ccore-lab.pages.dev/portal/*`. Public pages
+open up automatically.
+
+**Follow-ups (not in this phase):**
+- 30-90 days post-launch: evaluate whether to drop redirect shims if
+  analytics show no traffic on legacy paths.
+- Consider hoisting `/team/:slug` (public) + `/portal/team/:slug`
+  (portal) into a single template that branches chrome via
+  `useLocation`. Currently two distinct route registrations.
+
 ## Schema-drift CI reconciliation (2026-04-21)
 
 **Unblocked a guard that had been failing silently since it shipped.** The

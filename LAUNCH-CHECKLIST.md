@@ -42,10 +42,12 @@ running against prod D1 isolation.
 ### 1. Cloudflare Access (team auth)
 
 Configure in Cloudflare dashboard → Zero Trust → Access → Applications:
-- Create application for `mn-ccore-lab.pages.dev`
-- Restrict paths: `/dashboard*`, `/personal*`, `/my-hub*`, `/tasks*`, `/my-tasks*`, `/calendar*`, `/deadlines*`, `/projects*`, `/manuscripts*`, `/ideas*`, `/decisions*`, `/search*`, `/meetings*`, `/meeting-notes*`, `/activity*`, `/analytics*`, `/settings*`, `/grants*`, `/digest*`, `/narratives*`, `/transcripts*`, `/sessions*`, `/pi*`, `/ask*`, `/team/*`
-- Allow: email ending in `@umn.edu`
-- Public paths (no auth): `/`, `/team` (public list), `/publications*`, `/network*`, `/contact*`, `/pulse*`, `/research*`, `/people*`
+- Application for `mn-ccore-lab.pages.dev`
+- **Single destination:** `mn-ccore-lab.pages.dev/portal/*` (post-2026-04-21 migration — all gated surfaces live under `/portal/*`)
+- Policies: `UMN Team` (allow @umn.edu) + `Audit Service Token` (service auth for audit scripts)
+- Public routes (no auth, at root): `/`, `/team`, `/team/:slug`, `/team/:slug/trajectory`, `/nick`, `/nate`, `/publications*`, `/network*`, `/contact*`, `/pulse*`
+
+Legacy root paths like `/dashboard`, `/projects/:slug` still work — `src/App.tsx` has `<Navigate>` redirect shims that bounce to `/portal/...` equivalents. Bookmarks continue working.
 
 **After CF Access is configured, set these two secrets to enable JWT signature verification** (without them the backend only *decodes* the JWT and any attacker can forge a `Cf-Access-Jwt-Assertion` header claiming to be a PI):
 
