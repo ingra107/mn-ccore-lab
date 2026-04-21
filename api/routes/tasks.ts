@@ -165,7 +165,11 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 // 2026-04-20 Airtable Funeral P2-1: added v47 fields (notes, effort,
 // short_title, source_thread_id, related_message_ids) so Gmail Apps
 // Script updateAirtableTasks → updateHubTasks can carry them through.
-const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'notes', 'effort', 'short_title', 'source_thread_id', 'related_message_ids']);
+// 2026-04-21 I18 drift investigation: added completed_at, completed_by,
+// completed so brain.db backfills can carry authentic historical
+// timestamps (prior behavior stamped datetime('now') even when the
+// client passed an explicit value from the local DB).
+const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'notes', 'effort', 'short_title', 'source_thread_id', 'related_message_ids', 'completed', 'completed_at', 'completed_by']);
 const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee']);
 
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
@@ -195,14 +199,23 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     }
   }
 
-  // Handle status -> completed sync
+  // Handle status -> completed sync.
+  // If the client explicitly passed completed / completed_at / completed_by,
+  // those were already pushed via TASK_ALLOWED_FIELDS above — don't clobber.
+  // Only auto-derive from status when the client didn't supply them.
   if ('status' in body) {
     const isDone = body.status === 'done';
-    updates.push('completed = ?');
-    params.push(isDone ? 1 : 0);
-    if (isDone) {
-      updates.push('completed_at = ?', 'completed_by = ?');
-      params.push(new Date().toISOString(), user.email);
+    if (!('completed' in body)) {
+      updates.push('completed = ?');
+      params.push(isDone ? 1 : 0);
+    }
+    if (isDone && !('completed_at' in body)) {
+      updates.push('completed_at = ?');
+      params.push(new Date().toISOString());
+    }
+    if (isDone && !('completed_by' in body)) {
+      updates.push('completed_by = ?');
+      params.push(user.email);
     }
   }
 
@@ -455,6 +468,12 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 
 // POST /api/tasks/sync-bulk — bulk upsert tasks from brain.db sync
 // Accepts array of tasks with their own IDs. Clears existing tasks first.
+// 2026-04-21: added stale-overwrite guard via `client_updated_at`. When the
+// client provides its local brain.db `updated_at`, Hub compares on conflict
+// and only overwrites if the client is at least as fresh as Hub's row. Prior
+// behavior was last-writer-wins (line updated_at = datetime('now')) which
+// let a stale machine clobber the peer's authoritative state (see I18
+// drift investigation 2026-04-21).
 export async function handleSyncBulkTasks(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
     tasks: Array<{
@@ -464,6 +483,11 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
       status?: string; source?: string;
       completed?: number; completed_at?: string | null;
       completed_by?: string | null; created_at?: string | null;
+      // Client-declared updated_at from brain.db. If provided AND Hub's row
+      // is newer, the upsert is a no-op (preserves the peer's authoritative
+      // state). If omitted, fallback behavior is last-writer-wins (back-
+      // compat with pre-2026-04-21 callers).
+      client_updated_at?: string | null;
       project_id?: string | null; meeting_id?: string | null;
       key_link_1?: string | null; key_link_1_desc?: string | null;
       key_link_2?: string | null; key_link_2_desc?: string | null;
@@ -490,8 +514,12 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
     const batch = body.tasks.slice(i, i + BATCH_SIZE);
     const stmts = batch.map(t =>
       env.DB.prepare(
-        `INSERT INTO tasks (id, meeting_id, project_id, title, description, assignee, assigned_by, due_date, priority, status, source, completed, completed_at, completed_by, created_at, key_link_1, key_link_1_desc, key_link_2, key_link_2_desc, key_link_3, key_link_3_desc)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        // Bind client_updated_at as the last positional parameter. When NULL,
+        // the guard falls through (new row or legacy client) and we write
+        // datetime('now') for updated_at. When present, we use it as-is and
+        // guard the UPDATE branch with a freshness check.
+        `INSERT INTO tasks (id, meeting_id, project_id, title, description, assignee, assigned_by, due_date, priority, status, source, completed, completed_at, completed_by, created_at, key_link_1, key_link_1_desc, key_link_2, key_link_2_desc, key_link_3, key_link_3_desc, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
          ON CONFLICT(id) DO UPDATE SET
            meeting_id = excluded.meeting_id,
            project_id = excluded.project_id,
@@ -515,7 +543,10 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
            key_link_2_desc = excluded.key_link_2_desc,
            key_link_3 = excluded.key_link_3,
            key_link_3_desc = excluded.key_link_3_desc,
-           updated_at = datetime('now')`
+           updated_at = COALESCE(excluded.updated_at, datetime('now'))
+         WHERE tasks.updated_at IS NULL
+            OR excluded.updated_at IS NULL
+            OR excluded.updated_at >= tasks.updated_at`
       ).bind(
         t.id, t.meeting_id ?? null, t.project_id ?? null,
         t.title, t.description ?? null, t.assignee ?? null,
@@ -527,7 +558,8 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
         t.created_at ?? null,
         t.key_link_1 ?? null, t.key_link_1_desc ?? null,
         t.key_link_2 ?? null, t.key_link_2_desc ?? null,
-        t.key_link_3 ?? null, t.key_link_3_desc ?? null
+        t.key_link_3 ?? null, t.key_link_3_desc ?? null,
+        t.client_updated_at ?? null
       )
     );
     await env.DB.batch(stmts);
