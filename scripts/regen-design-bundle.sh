@@ -61,13 +61,23 @@ if compgen -G "$VIDEO_DIR/*.webm" > /dev/null; then
     if [ -n "$c" ] && [ -x "$c" ]; then FFMPEG="$c"; break; fi
   done
   if [ -n "$FFMPEG" ]; then
-    echo ">> [4b] Re-encoding videos to MP4 via $(basename "$FFMPEG")"
+    echo ">> [4b] Re-encoding videos to MP4 + GIF via $(basename "$FFMPEG")"
     for src in "$VIDEO_DIR"/*.webm; do
       base=$(basename "$src" .webm)
+      mp4="$VIDEO_DIR/${base}.mp4"
+      gif="$VIDEO_DIR/${base}.gif"
+      pal="$VIDEO_DIR/${base}.palette.png"
+      # Reference-quality MP4 (native size, H.264).
       "$FFMPEG" -y -loglevel error -i "$src" \
         -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -movflags +faststart -an \
-        "$VIDEO_DIR/${base}.mp4" \
-        && rm "$src"
+        "$mp4"
+      # GIF for review tools that can't decode video. 10 fps, 480px wide,
+      # palette-quantized for size-vs-quality balance.
+      "$FFMPEG" -y -loglevel error -i "$src" \
+        -vf "fps=10,scale=480:-1:flags=lanczos,palettegen" "$pal"
+      "$FFMPEG" -y -loglevel error -i "$src" -i "$pal" \
+        -lavfi "fps=10,scale=480:-1:flags=lanczos [x]; [x][1:v] paletteuse" "$gif"
+      rm -f "$pal" "$src"
     done
   else
     echo ">> [4b] ffmpeg not found — leaving WebMs as-is."
@@ -79,12 +89,13 @@ fi
 # Final stats.
 PNG_COUNT=$(find "review/$BUNDLE" -maxdepth 1 -name "*.png" | wc -l)
 MP4_COUNT=$(find "review/$BUNDLE/videos" -name "*.mp4" 2>/dev/null | wc -l)
+GIF_COUNT=$(find "review/$BUNDLE/videos" -name "*.gif" 2>/dev/null | wc -l)
 WEBM_COUNT=$(find "review/$BUNDLE/videos" -name "*.webm" 2>/dev/null | wc -l)
 echo
 echo "============================================================"
 echo "Bundle ready: review/$BUNDLE"
 echo "  $PNG_COUNT screenshots"
-echo "  $MP4_COUNT MP4 videos${WEBM_COUNT:+ (+$WEBM_COUNT WebMs — install ffmpeg to convert)}"
+echo "  $MP4_COUNT MP4 videos · $GIF_COUNT GIFs${WEBM_COUNT:+ (+$WEBM_COUNT WebMs — install ffmpeg to convert)}"
 echo
 echo "Drop BRIEF.md and FEEDBACK-FOCUS.md into the bundle, then zip:"
 echo "  cd review && powershell -Command \\"
