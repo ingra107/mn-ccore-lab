@@ -394,6 +394,15 @@ export async function handleUpdateProject(
   env: Env,
 ): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
+
+  // 2026-04-21 stale-overwrite guard (mirrors handleSyncBulkTasks tasks.ts:521-549).
+  // When the client passes `client_updated_at`, use it as the new row's updated_at
+  // AND guard the UPDATE with `client_updated_at >= projects.updated_at`. Prevents
+  // a stale machine from clobbering a peer's authoritative edit. Backwards-compat:
+  // callers that don't send client_updated_at get the legacy unconditional update.
+  const clientUpdatedAt = (body.client_updated_at as string | undefined) ?? null;
+  delete body.client_updated_at;
+
   const updates: string[] = [];
   const values: (string | number | null)[] = [];
 
@@ -416,16 +425,37 @@ export async function handleUpdateProject(
     return error('No valid fields to update', 400);
   }
 
-  updates.push("updated_at = datetime('now')");
-  values.push(id);
+  // Updated_at column: use client value if present, else server now().
+  updates.push("updated_at = COALESCE(?, datetime('now'))");
+  values.push(clientUpdatedAt);
 
-  // Try update first
+  // Check row existence BEFORE the update so we can distinguish "row not found"
+  // (fall through to INSERT) from "row found but guard rejected" (return 200 with
+  // current state + rejected flag).
+  const existingCheck = await env.DB.prepare(
+    'SELECT updated_at FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+  ).bind(id, id).first<{ updated_at: string | null }>();
+
+  // Freshness guard — mirrors tasks.ts:546-549. Allows the write if the client
+  // is fresher than current, OR if either timestamp is missing (backwards-compat).
   const result = await env.DB.prepare(
-    `UPDATE projects SET ${updates.join(', ')} WHERE id = ? OR slug = ?`
-  ).bind(...values, id).run();
+    `UPDATE projects SET ${updates.join(', ')}
+     WHERE (id = ? OR slug = ?)
+       AND (projects.updated_at IS NULL
+            OR ? IS NULL
+            OR ? >= projects.updated_at)`
+  ).bind(...values, id, id, clientUpdatedAt, clientUpdatedAt).run();
 
   if (result.meta.changes === 0) {
-    // Project doesn't exist — create it (upsert)
+    if (existingCheck) {
+      // Row exists but the freshness guard rejected the write. Return current
+      // server state so the caller can reconcile. 200 (not 409) matches the
+      // task-side pattern where sync-bulk returns inserted=0 silently.
+      const current = await env.DB.prepare('SELECT * FROM projects WHERE id = ? OR slug = ?').bind(id, id).first();
+      return json({ data: current, rejected: 'stale_overwrite_guard',
+                    message: 'client_updated_at older than server; write rejected' });
+    }
+    // Project doesn't exist — create it (upsert; preserves legacy behavior).
     const slug = (body.slug as string) || id;
     const newId = id.length === 32 ? id : generateId();
     await env.DB.prepare(
