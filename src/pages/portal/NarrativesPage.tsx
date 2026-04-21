@@ -19,6 +19,15 @@ const STAGE_COLORS: Record<string, string> = {
   Published: 'var(--green-light)',
 }
 
+const STAGE_ABBREV: Record<string, string> = {
+  Idea: 'Idea',
+  'Data Collection': 'Data',
+  Analysis: 'Anal',
+  Writing: 'Writ',
+  Review: 'Rev',
+  Published: 'Pub',
+}
+
 export default function NarrativesPage() {
   usePageMeta('Research Narratives | MN-CCORE Lab', 'Auto-detected research arcs across the lab.')
   const { data: narratives = [], isLoading } = useNarratives()
@@ -95,29 +104,29 @@ export default function NarrativesPage() {
                 )}
               </div>
 
-              {/* Stage pipeline */}
-              <div className="flex items-center gap-1.5 mb-4 p-2 rounded-lg" style={{ background: 'var(--gold-hover)' }}>
+              {/* Stage pipeline — labeled so each dot's meaning is obvious */}
+              <div className="flex items-center gap-2 mb-4 p-2 rounded-lg" style={{ background: 'var(--gold-hover)' }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>
+                  Pipeline
+                </span>
                 {arc.stageDistribution.map((s, i) => (
                   <div key={s.stage} className="flex items-center gap-1">
-                    {i > 0 && <div style={{ width: 12, height: 1, background: 'var(--gold-emphasis)' }} />}
-                    <div style={{
-                      width: s.count > 0 ? 10 + s.count * 4 : 8,
-                      height: s.count > 0 ? 10 + s.count * 4 : 8,
-                      borderRadius: 'var(--radius-circle)',
-                      background: STAGE_COLORS[s.stage] || 'var(--slate)',
-                      opacity: s.count > 0 ? 1 : 0.15,
-                      transition: 'all 0.2s',
-                    }} title={`${s.stage}: ${s.count}`} />
-                    {s.count > 0 && (
-                      <span style={{ fontSize: '10px', color: STAGE_COLORS[s.stage], fontWeight: 600 }}>
-                        {s.count}
+                    {i > 0 && <div style={{ width: 8, height: 1, background: 'var(--gold-emphasis)' }} />}
+                    <div className="flex flex-col items-center" style={{ gap: 2 }}>
+                      <div style={{
+                        width: s.count > 0 ? 10 + s.count * 4 : 8,
+                        height: s.count > 0 ? 10 + s.count * 4 : 8,
+                        borderRadius: 'var(--radius-circle)',
+                        background: STAGE_COLORS[s.stage] || 'var(--slate)',
+                        opacity: s.count > 0 ? 1 : 0.25,
+                        transition: 'all 0.2s',
+                      }} title={`${s.stage}: ${s.count}`} />
+                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, lineHeight: 1 }}>
+                        {STAGE_ABBREV[s.stage] || s.stage}{s.count > 0 ? ` ${s.count}` : ''}
                       </span>
-                    )}
+                    </div>
                   </div>
                 ))}
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, marginLeft: 'var(--sp-sm)' }}>
-                  Idea → Published
-                </span>
               </div>
 
               {/* Projects */}

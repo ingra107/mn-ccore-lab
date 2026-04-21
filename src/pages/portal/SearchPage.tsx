@@ -128,16 +128,41 @@ export default function SearchPage() {
         )}
       </div>
 
-      {/* Voice hint — always shown when no active query */}
+      {/* Idle state turns into a useful browse surface (P2-R2-08).
+          Jump-to + tips appear alongside Recents so the page stops being
+          a blank canvas. */}
       {!query && (
-        <div style={{
-          marginTop: 'var(--sp-lg)',
-          textAlign: 'center',
-          color: 'var(--slate)',
-          fontSize: 'var(--text-small)',
-          opacity: 0.85,
-        }}>
-          Search across tasks, projects, people, decisions, and meeting notes.
+        <div className="grid gap-6 sm:grid-cols-2 mt-6">
+          <div>
+            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+              Jump to
+            </span>
+            <div className="flex flex-col gap-1 mt-2">
+              <Link to="/my-tasks" className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+                <CheckSquare size={13} style={{ color: 'var(--teal)' }} /> My tasks
+              </Link>
+              <Link to="/deadlines" className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+                <Activity size={13} style={{ color: 'var(--maroon)' }} /> Urgent deadlines
+              </Link>
+              <Link to="/ideas" className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+                <Lightbulb size={13} style={{ color: 'var(--gold)' }} /> New ideas
+              </Link>
+              <Link to="/decisions" className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+                <MessageSquare size={13} style={{ color: 'var(--slate)' }} /> Decisions log
+              </Link>
+            </div>
+          </div>
+          <div>
+            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+              Search tips
+            </span>
+            <ul className="mt-2 flex flex-col gap-1 text-[12px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', lineHeight: 1.6 }}>
+              <li><kbd style={{ fontFamily: 'var(--font-mono)', background: 'var(--surface-2)', padding: '0 4px', borderRadius: 3 }}>@</kbd> for people</li>
+              <li><kbd style={{ fontFamily: 'var(--font-mono)', background: 'var(--surface-2)', padding: '0 4px', borderRadius: 3 }}>#</kbd> for tags</li>
+              <li><kbd style={{ fontFamily: 'var(--font-mono)', background: 'var(--surface-2)', padding: '0 4px', borderRadius: 3 }}>/</kbd> for projects</li>
+              <li>Or type a keyword — index covers tasks, projects, people, decisions, meeting notes.</li>
+            </ul>
+          </div>
         </div>
       )}
 

@@ -194,7 +194,15 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Stage changer state
   const [confirmStage, setConfirmStage] = useState<Stage | null>(null)
-  const currentStageIndex = STAGES.indexOf(project.stage as Stage)
+  // Map brain.db granular stages onto the 6 strip stages so projects with
+  // stage="Submitted"/"Accepted" still light up a current dot. P2-R2-14.
+  const STAGE_ALIASES: Record<string, Stage> = {
+    Submitted: 'Review',
+    'Under Review': 'Review',
+    Accepted: 'Published',
+  }
+  const normalizedStage = ((project.stage && STAGE_ALIASES[project.stage]) ?? project.stage ?? '') as Stage
+  const currentStageIndex = STAGES.indexOf(normalizedStage)
 
   // Inline editing
   const [editingDescription, setEditingDescription] = useState(false)

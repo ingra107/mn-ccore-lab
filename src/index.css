@@ -1101,10 +1101,41 @@ a:hover {
   transition: color 150ms ease, background-color 150ms ease;
 }
 
-/* Focused task row indicator */
+/* InlineSelect chevron — hidden by default to reduce table clutter.
+   Reveals on row hover, cell focus, button hover, or when the dropdown is
+   open (aria-expanded). Decisions Outcome opts back in via
+   .inline-select-chevron-always. See design ticket § 0 Ask 2. */
+.inline-select-chevron {
+  opacity: 0;
+  margin-left: 2px;
+  transition: opacity var(--duration-fast, 100ms) var(--ease-out);
+}
+.task-grid-row:hover .inline-select-chevron,
+.task-grid-row:focus-within .inline-select-chevron,
+.task-row-focused .inline-select-chevron,
+.idea-row:hover .inline-select-chevron,
+.idea-row:focus-within .inline-select-chevron,
+tr:hover .inline-select-chevron,
+.inline-select-trigger:hover .inline-select-chevron,
+.inline-select-trigger:focus-visible .inline-select-chevron,
+.inline-select-trigger[aria-expanded="true"] .inline-select-chevron {
+  opacity: 0.7;
+}
+.inline-select-trigger:hover .inline-select-chevron {
+  opacity: 1;
+}
+/* Always-visible variant — earned (e.g. Decisions Outcome). */
+.inline-select-chevron-always {
+  margin-left: 2px;
+  opacity: 0.85;
+}
+
+/* J/K-focused task row — keyboard cursor.
+   3px inset left edge + 6% bg tint. WCAG: non-color signal via the edge.
+   See design_handoff_round2 § 0 Ask 3 + ticket P1-R2-05. */
 .task-row-focused {
   position: relative;
-  background: rgba(45, 138, 138, 0.04) !important;
+  background: rgba(45, 138, 138, 0.06) !important;
 }
 
 .task-row-focused::before {
@@ -1113,13 +1144,62 @@ a:hover {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 2px;
+  width: 3px;
   background: var(--teal);
   border-radius: 0 1px 1px 0;
 }
 
 .dark .task-row-focused {
-  background: rgba(61, 184, 184, 0.06) !important;
+  background: rgba(61, 184, 184, 0.10) !important;
+}
+
+/* Forced-colors / high-contrast: outline survives when bg colors are stripped. */
+@media (forced-colors: active) {
+  .task-row-focused {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}
+
+/* Click-selected row — Detail panel is open against this row.
+   Heavier than J/K-focused: 4px edge + 10% bg + soft 1px border via ::after.
+   Replaces the global :focus-visible 2px hard outline that read as ugly chrome. */
+.task-grid-row:focus-visible,
+.task-grid-row[data-selected="true"] {
+  outline: none;
+  background: rgba(45, 138, 138, 0.10) !important;
+  position: relative;
+}
+.task-grid-row:focus-visible::before,
+.task-grid-row[data-selected="true"]::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--teal);
+  border-radius: 0 1px 1px 0;
+}
+.task-grid-row:focus-visible::after,
+.task-grid-row[data-selected="true"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(in oklch, var(--teal) 30%, transparent);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+.dark .task-grid-row:focus-visible,
+.dark .task-grid-row[data-selected="true"] {
+  background: rgba(61, 184, 184, 0.14) !important;
+}
+@media (forced-colors: active) {
+  .task-grid-row:focus-visible,
+  .task-grid-row[data-selected="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
 }
 
 /* Task title clickable hover */

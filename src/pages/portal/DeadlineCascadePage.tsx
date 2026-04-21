@@ -74,10 +74,13 @@ export default function DeadlineCascadePage() {
     <div>
       <PageHeader
         icon={<GitBranch size={20} />}
-        title="Deadline Cascade"
+        // P2-R2-07: page name was "Deadline Cascade" but until dependency
+        // graph ships the actual content is grouped deadlines by project.
+        // Renamed to match what's on screen.
+        title={totalDeps > 0 ? 'Deadline Cascade' : 'Deadlines by Project'}
         subtitle={totalDeps > 0
           ? `${totalDeps} dependency ${totalDeps === 1 ? 'link' : 'links'} across ${chainsWithDeps} ${chainsWithDeps === 1 ? 'project' : 'projects'}`
-          : `${totalNodes} deadlines tracked`
+          : `${totalNodes} deadlines tracked across ${projectGroups.length} ${projectGroups.length === 1 ? 'project' : 'projects'}`
         }
       >
         <div className="flex items-center gap-2">

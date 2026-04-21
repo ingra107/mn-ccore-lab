@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info, Palette, RotateCcw, Sun, Moon, Users, ArrowRight } from 'lucide-react'
+import {
+  Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info, Palette, RotateCcw, Sun, Moon, Users, ArrowRight,
+  FlaskConical, Microscope, Brain, Heart, Activity, Stethoscope, Dna, Atom, BookOpen, Beaker,
+} from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
@@ -17,6 +20,55 @@ interface WorkflowTemplate {
   stages: string
   is_default: number
   created_at: string
+}
+
+const LAB_ICON_OPTIONS = [
+  { name: 'flask', Icon: FlaskConical },
+  { name: 'microscope', Icon: Microscope },
+  { name: 'brain', Icon: Brain },
+  { name: 'heartbeat', Icon: Activity },
+  { name: 'heart', Icon: Heart },
+  { name: 'stethoscope', Icon: Stethoscope },
+  { name: 'dna', Icon: Dna },
+  { name: 'atom', Icon: Atom },
+  { name: 'beaker', Icon: Beaker },
+  { name: 'book', Icon: BookOpen },
+] as const
+
+function LabIconPicker({ value, onChange }: { value: string; onChange: (next: string) => void }) {
+  // Legacy emoji values fall through to no-selection — picking any tile migrates.
+  const selected = LAB_ICON_OPTIONS.some(o => o.name === value) ? value : ''
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {LAB_ICON_OPTIONS.map(({ name, Icon }) => {
+        const isSelected = selected === name
+        return (
+          <button
+            key={name}
+            type="button"
+            onClick={() => onChange(name)}
+            aria-label={name}
+            aria-pressed={isSelected}
+            className="transition-colors"
+            style={{
+              width: 40,
+              height: 40,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 'var(--radius-md)',
+              border: `1px solid ${isSelected ? 'var(--teal)' : 'var(--border-subtle)'}`,
+              background: isSelected ? 'color-mix(in oklch, var(--teal) 12%, transparent)' : 'transparent',
+              color: isSelected ? 'var(--teal)' : 'var(--slate)',
+              cursor: 'pointer',
+            }}
+          >
+            <Icon size={18} />
+          </button>
+        )
+      })}
+    </div>
+  )
 }
 
 export default function SettingsPage() {
@@ -187,11 +239,10 @@ export default function SettingsPage() {
               multiline
             />
           </SettingsField>
-          <SettingsField label="Lab Icon (Emoji)" hint="Displayed next to your lab name">
-            <SettingsInput
+          <SettingsField label="Lab Icon" hint="Displayed next to your lab name">
+            <LabIconPicker
               value={settings.lab_icon || ''}
-              onSave={(v) => updateSettings.mutate({ lab_icon: v })}
-              placeholder="🧬"
+              onChange={(v) => updateSettings.mutate({ lab_icon: v })}
             />
           </SettingsField>
           <SettingsField label="Lab Type">
@@ -412,6 +463,27 @@ export default function SettingsPage() {
                 style={{ color: 'var(--maroon)', border: '1px solid rgba(122,0,25,0.2)', background: 'none', cursor: 'pointer' }}
               >
                 Clear
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm" style={{ color: 'var(--ink)' }}>Re-enable product tips</p>
+                <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                  Restores all dismissed page tooltips ("Press F to toggle filters", etc.)
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  Object.keys(localStorage)
+                    .filter(k => k.startsWith('mnccore-tooltip-seen-'))
+                    .forEach(k => localStorage.removeItem(k))
+                  setSaved(true)
+                  setTimeout(() => setSaved(false), 2000)
+                }}
+                className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                style={{ color: 'var(--teal)', border: '1px solid rgba(13,111,104,0.25)', background: 'none', cursor: 'pointer' }}
+              >
+                Restore
               </button>
             </div>
             <div className="flex items-center justify-between">

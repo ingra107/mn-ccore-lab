@@ -286,6 +286,43 @@ export default function Ideas() {
           />
         ) : viewMode === 'kanban' ? (
           /* P2-10: kanban-first board view */
+          <>
+          {(() => {
+            // P2-R2-12: when one column holds >80% of ideas the board reads
+            // as broken. Suggest List view via dismissible banner.
+            const dismissed = (() => {
+              try { return localStorage.getItem('ideas-kanban-lopsided-dismissed') === '1' } catch { return false }
+            })()
+            const total = sortedIdeas.length
+            const newCount = sortedIdeas.filter(i => i.status === 'new').length
+            const lopsided = total >= 5 && newCount / total > 0.8
+            if (!lopsided || dismissed) return null
+            return (
+              <div className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg"
+                style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.15)', fontSize: '12px', color: 'var(--slate)' }}>
+                <span>Most ideas are still in <strong>New</strong>.</span>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  style={{ background: 'none', border: 'none', color: 'var(--teal)', cursor: 'pointer', textDecoration: 'underline', padding: 0, fontSize: '12px' }}
+                >
+                  Switch to List view →
+                </button>
+                <button
+                  type="button"
+                  aria-label="Dismiss"
+                  onClick={() => {
+                    try { localStorage.setItem('ideas-kanban-lopsided-dismissed', '1') } catch { /* ok */ }
+                    // Force re-render via no-op state nudge.
+                    setViewMode((v) => v)
+                  }}
+                  style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.6, padding: 4 }}
+                >
+                  ✕
+                </button>
+              </div>
+            )
+          })()}
           <div className="grid gap-4 overflow-x-auto" style={{ gridTemplateColumns: 'repeat(4, minmax(220px, 1fr))' }}>
             {(['new', 'under_review', 'approved', 'parked'] as const).map((col) => {
               const colIdeas = sortedIdeas.filter((i) => i.status === col)
@@ -351,6 +388,7 @@ export default function Ideas() {
               )
             })}
           </div>
+          </>
         ) : (
           <TableContainer ariaLabel="Ideas">
             {/* Column headers - hidden on mobile.

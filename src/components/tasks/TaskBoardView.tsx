@@ -4,6 +4,8 @@ import {
   DragOverlay,
   closestCorners,
   PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   useDroppable,
@@ -11,7 +13,7 @@ import {
   type DragEndEvent,
   type DragOverEvent,
 } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { SortableContext, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Circle, Clock, CheckCircle2, AlertTriangle, ChevronDown, ChevronRight, Layers } from 'lucide-react'
 import TaskCard from './TaskCard'
@@ -75,8 +77,13 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(loadCollapsed)
   const [swimlaneCollapsed, setSwimlaneCollapsed] = useState<Record<string, boolean>>(loadSwimlaneCollapsed)
 
+  // PointerSensor covers mouse + trackpad; TouchSensor unlocks mobile
+  // (250ms long-press so tap-to-open-detail still works); KeyboardSensor
+  // gives a11y drag via arrow keys. Fix for P1-R2-08.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
   useEffect(() => { saveCollapsed(collapsed) }, [collapsed])

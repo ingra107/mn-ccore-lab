@@ -682,14 +682,39 @@ export default function Meetings() {
             }
           />
 
-          {cadence && cadence.recommendation !== 'no_upcoming' && (
-            <div className="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg"
-              style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.12)' }}>
-              <Activity size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-              <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600 }}>{cadence.emoji} {cadence.recommendation}</span>
-              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{cadence.reasons.join(' · ')}</span>
-            </div>
-          )}
+          {cadence && cadence.recommendation !== 'no_upcoming' && (() => {
+            // P2-R2-15: lead with the most actionable signal; tuck the rest
+            // behind a native disclosure so 5-stat callouts don't overwhelm.
+            const lead = cadence.reasons[0]
+            const rest = cadence.reasons.slice(1)
+            return (
+              <details className="mt-3 px-3 py-2 rounded-lg group"
+                style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.12)' }}>
+                <summary className="flex items-center gap-2 cursor-pointer list-none"
+                  style={{ outline: 'none' }}>
+                  <Activity size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                  <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600 }}>
+                    {cadence.emoji} {cadence.recommendation}
+                  </span>
+                  {lead && (
+                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                      {lead}
+                    </span>
+                  )}
+                  {rest.length > 0 && (
+                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, marginLeft: 'auto' }}>
+                      +{rest.length} more
+                    </span>
+                  )}
+                </summary>
+                {rest.length > 0 && (
+                  <div className="mt-1.5 pl-5" style={{ fontSize: '11px', color: 'var(--slate)', opacity: 'var(--ink-label)', lineHeight: 1.6 }}>
+                    {rest.map((r, i) => <div key={i}>· {r}</div>)}
+                  </div>
+                )}
+              </details>
+            )
+          })()}
         </div>
       </div>
 

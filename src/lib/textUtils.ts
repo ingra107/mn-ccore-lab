@@ -28,7 +28,21 @@ export function parseCarriedForward(description: string): {
  * detected consortium key (uppercased) when present (P2-02).
  */
 export function stripConsortiumPrefix(title: string): { clean: string; consortium?: string } {
-  const match = title.match(/^(CLIF|MN-CCORE|UMN|ATS|R01|RO1|K23):\s*(.*)$/i)
-  if (match && match[2]) return { clean: match[2], consortium: match[1].toUpperCase() }
+  // "CLIF: foo", "CLIF foo", "MN-CCORE: foo", "C-QODE foo", "CQODE foo",
+  // "(Mesfin) foo", "(CLIF) foo", "ATS foo", etc. P2-R2-01 — round-1 regex
+  // missed the no-colon and parens variants.
+  const patterns: RegExp[] = [
+    /^(CLIF|C-?QODE|MN-?CCORE|UMN|ATS|R0?1|K23):?\s+(.*)$/i,
+    /^\((Mesfin|CLIF|MN-?CCORE|C-?QODE)\)\s+(.*)$/i,
+  ]
+  for (const re of patterns) {
+    const m = title.match(re)
+    if (m && m[2]) {
+      return {
+        clean: m[2].trim(),
+        consortium: m[1].toUpperCase().replace(/-/g, ''),
+      }
+    }
+  }
   return { clean: title }
 }

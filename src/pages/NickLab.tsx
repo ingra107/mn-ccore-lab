@@ -49,8 +49,12 @@ const labProjects = [
   { title: 'SGLT2 & Metformin in COPD Readmissions', status: 'Active' as const, description: 'Investigating whether SGLT2 inhibitors and metformin reduce 30-day readmission risk in COPD patients.' },
 ]
 
-// Mentees: show all (Nick mentors + shared)
-const mentees = allMentees.filter((m) => m.mentor === 'nick-ingraham' || m.mentor === 'shared')
+// Mentees: show all (Nick mentors + shared) — but only with populated
+// names. Anonymous/stub rows belong on internal Team page, not the
+// public-facing list. P2-R2-04.
+const mentees = allMentees.filter(
+  (m) => (m.mentor === 'nick-ingraham' || m.mentor === 'shared') && m.name && m.name.trim().length > 0
+)
 
 export default function NickLab() {
   const { data: publications = [] } = usePublications()

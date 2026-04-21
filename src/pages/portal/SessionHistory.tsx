@@ -390,8 +390,8 @@ export default function SessionHistory() {
       ) : sessions.length === 0 ? (
         <EmptyState
           icon={<History size={32} />}
-          title="No sessions yet"
-          subtitle="Sessions will appear here once synced from brain.db"
+          title="No Claude sessions yet"
+          subtitle="Sessions show up here automatically when you use Claude Code with the MN-CCORE SessionEnd hook installed. Until then this page stays empty."
         />
       ) : (
         <motion.div variants={staggerContainer} initial="hidden" animate="visible">

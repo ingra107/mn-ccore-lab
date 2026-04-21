@@ -79,13 +79,22 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
   if (chartData.length === 0) {
     return (
       <div
-        className="py-10 text-center rounded-xl"
+        className="py-10 px-6 text-center rounded-xl"
         style={{ background: 'var(--ice)', border: '1px solid var(--border-subtle)' }}
       >
         <TrendingUp size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
-        <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
-          No publications with dates yet
+        <p style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 500, marginBottom: 6 }}>
+          Connect publications
         </p>
+        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85, marginBottom: 12 }}>
+          Need 3+ indexed publications to draw a cadence curve.
+        </p>
+        <Link
+          to="/settings"
+          style={{ fontSize: '12px', color: 'var(--teal)', textDecoration: 'underline' }}
+        >
+          Link ORCID →
+        </Link>
       </div>
     )
   }
@@ -583,7 +592,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
             letterSpacing: '0.05em',
           }}
         >
-          Tasks Completed -- Last 12 Months
+          Tasks Completed / Month -- Last 12 Months
         </span>
         <span
           style={{
@@ -596,11 +605,17 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
         </span>
       </div>
 
-      <ResponsiveContainer width="100%" height={120}>
-        <BarChart data={months} barCategoryGap="15%">
+      <ResponsiveContainer width="100%" height={130}>
+        <BarChart data={months} barCategoryGap="15%" margin={{ left: 6, right: 4, top: 4, bottom: 4 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
           <XAxis dataKey="label" tick={{ fill: 'var(--slate)', fontSize: 9 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: 'var(--slate)', fontSize: 9 }} axisLine={false} tickLine={false} allowDecimals={false} />
+          <YAxis
+            tick={{ fill: 'var(--slate)', fontSize: 9 }}
+            axisLine={false}
+            tickLine={false}
+            allowDecimals={false}
+            label={{ value: 'tasks/month', angle: -90, position: 'insideLeft', style: { fill: 'var(--slate)', fontSize: 9, opacity: 0.85 } }}
+          />
           <Tooltip
             contentStyle={{
               background: 'var(--cream)',

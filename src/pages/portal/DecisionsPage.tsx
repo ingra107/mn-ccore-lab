@@ -19,6 +19,7 @@ import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { useDecisions, useDecisionsForReview, useDecisionTags } from '../../hooks/useApiData'
+import { isProductionVisible } from '../../lib/isProductionVisible'
 import { useCreateDecision, useUpdateDecisionOutcome } from '../../hooks/useMutations'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useUndoToast } from '../../components/UndoToast'
@@ -631,12 +632,14 @@ function DecisionRowItem({
         >
           {formatRelativeTime(decision.created_at)}
         </div>
-        {/* Outcome — right-most pill (P2-11) */}
+        {/* Outcome — right-most pill (P2-11). Chevron always visible: this
+            is the high-signal cell and the dropdown affordance is the action. */}
         <div onClick={(e) => e.stopPropagation()}>
           <InlineSelect
             value={decision.outcome_status || 'pending'}
             options={OUTCOME_OPTIONS}
             onChange={(val) => onStatusChange(decision, val)}
+            alwaysShowChevron
           />
         </div>
         <div />
@@ -761,9 +764,14 @@ export default function DecisionsPage() {
   const [sortKey, setSortKey] = useState<DecisionSortKey>('created_at')
   const [sortAsc, setSortAsc] = useState(false)
 
-  const { data: allDecisions = [], isLoading } = useDecisions(
+  const { data: rawAllDecisions = [], isLoading } = useDecisions(
     undefined,
     filterTag || undefined
+  )
+  // Strip QA fixtures (test decision, test_delete_, etc) before any rendering.
+  const allDecisions = useMemo(
+    () => rawAllDecisions.filter(d => isProductionVisible(d.title)),
+    [rawAllDecisions]
   )
   const { data: reviewDecisions = [] } = useDecisionsForReview()
   const { data: projects = [] } = useProjects()

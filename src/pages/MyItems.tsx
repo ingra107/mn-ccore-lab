@@ -45,84 +45,6 @@ function notificationIcon(type: string) {
   }
 }
 
-// ── Unauthenticated State ───────────────────────────────────
-
-function SignInPrompt() {
-  return (
-    <div
-      className="content-container"
-      style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-    >
-      <div style={{ textAlign: 'center', maxWidth: 400 }}>
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 'var(--radius-circle)',
-            background: 'var(--gold-light)',
-            border: '2px solid var(--gold)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1.5rem',
-          }}
-        >
-          <Bell size={28} style={{ color: 'var(--gold)' }} />
-        </div>
-        <h2
-          style={{
-            fontWeight: 500,
-            fontSize: '1.5rem',
-            color: 'var(--ink)',
-            marginBottom: '0.75rem',
-          }}
-        >
-          Sign in to see your items
-        </h2>
-        <p
-          style={{
-            fontSize: '15px',
-            color: 'var(--slate)',
-            lineHeight: 1.6,
-          }}
-        >
-          Your action items, notifications, and assignments will appear here once you authenticate
-          through Cloudflare Access.
-        </p>
-        <a
-          href="/api/auth/login"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: '1rem',
-            fontSize: 'var(--value-size)',
-            color: 'var(--teal)',
-            fontWeight: 'var(--weight-ui)' as any,
-            textDecoration: 'underline',
-          }}
-        >
-          Sign in with @umn.edu
-        </a>
-        <Link
-          to="/dashboard"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: '1.5rem',
-            fontSize: 'var(--value-size)',
-            color: 'var(--gold)',
-          }}
-        >
-          <ArrowLeft size={14} />
-          Back to Dashboard
-        </Link>
-      </div>
-    </div>
-  )
-}
-
 // ── Stat Card ───────────────────────────────────────────────
 
 function StatCard({
@@ -625,8 +547,9 @@ export default function MyItems() {
 
   const [showCompleted, setShowCompleted] = useState(false)
 
-  // Derive user slug from email (guard against undefined user)
-  const userSlug = user?.email ? user.email.split('@')[0] : ''
+  // Derive user slug from email; pre-launch (no CF Access cookie yet) defaults
+  // to Nick so the page is useful instead of a sign-in wall.
+  const userSlug = user?.email ? user.email.split('@')[0] : 'nick-ingraham'
 
   // Data hooks
   const { data: allActionItems = [] } = useActionItems(
@@ -737,10 +660,6 @@ export default function MyItems() {
     )
   }
 
-  if (!isAuthenticated) {
-    return <SignInPrompt />
-  }
-
   const displayName = user?.name || userSlug
 
   return (
@@ -800,6 +719,31 @@ export default function MyItems() {
             }}
           />
         </div>
+
+        {/* Unauthed banner — shown when CF Access cookie is absent. Pre-launch
+            this is everyone; post-launch it's anyone who hits /my-items without
+            signing in. We default the userSlug to nick-ingraham so the page is
+            still useful in pre-launch. */}
+        {!isAuthenticated && (
+          <div
+            className="card"
+            style={{
+              padding: '0.75rem 1rem',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              borderLeft: '3px solid var(--gold)',
+              fontSize: '13px',
+              color: 'var(--slate)',
+            }}
+          >
+            <Bell size={16} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+            <span style={{ flex: 1 }}>
+              Showing Nick's items. <a href="/api/auth/login" style={{ color: 'var(--teal)', textDecoration: 'underline' }}>Sign in with @umn.edu</a> to see your own.
+            </span>
+          </div>
+        )}
 
         {/* Summary Stats */}
         <div

@@ -13,6 +13,7 @@ import { useToast } from '../../hooks/useToast'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
+import { isProductionVisible } from '../../lib/isProductionVisible'
 import type { QuestionRow } from '../../lib/api'
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -35,8 +36,14 @@ export default function AskTheLab() {
     }
   }, [searchParams, setSearchParams])
 
-  const { data: questions = [], isLoading } = useQuestions(
+  const { data: rawQuestions = [], isLoading } = useQuestions(
     filterStatus ? { status: filterStatus } : undefined
+  )
+
+  // Strip QA fixtures (test q, @claude Hi, etc) before anything renders.
+  const questions = useMemo(
+    () => rawQuestions.filter(q => isProductionVisible(q.question)),
+    [rawQuestions]
   )
 
   const filteredQuestions = useMemo(() => {

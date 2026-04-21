@@ -33,8 +33,17 @@ export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps
       if (localStorage.getItem(storageKey)) return
     } catch { return }
 
-    const timer = setTimeout(() => setVisible(true), delay)
-    return () => clearTimeout(timer)
+    const showTimer = setTimeout(() => setVisible(true), delay)
+    // Auto-dismiss after 10s of being shown so multi-page nudges don't pile
+    // up on the screen. P2-R2-13.
+    const autoDismissTimer = setTimeout(() => {
+      try { localStorage.setItem(storageKey, '1') } catch { /* ok */ }
+      setVisible(false)
+    }, delay + 10_000)
+    return () => {
+      clearTimeout(showTimer)
+      clearTimeout(autoDismissTimer)
+    }
   }, [storageKey, delay])
 
   useEffect(() => {

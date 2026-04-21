@@ -1263,6 +1263,7 @@ function TaskGridRow({
             className="task-grid-row-action-btn"
             onClick={() => onPinToFocus(task.id)}
             title="Pin to Focus Next"
+            aria-label="Pin to Focus Next"
           >
             <Pin size={12} />
           </button>
@@ -1271,6 +1272,7 @@ function TaskGridRow({
           className="task-grid-row-action-btn"
           onClick={() => setQuickComment(!quickComment)}
           title="Quick comment"
+          aria-label="Add quick comment"
         >
           <MessageSquare size={12} />
         </button>
@@ -1282,6 +1284,7 @@ function TaskGridRow({
             showUndo('Archived task', () => onStatusChange(task.id, prev))
           }}
           title="Archive task"
+          aria-label="Archive task"
         >
           <Archive size={12} />
         </button>

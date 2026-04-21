@@ -45,8 +45,10 @@ const projects = [
   },
 ]
 
-// Mentees: show all (Nate mentors + shared)
-const mentees = allMentees.filter((m) => m.mentor === 'nate-mesfin' || m.mentor === 'shared')
+// Public page: only show trainees with populated names (P2-R2-04).
+const mentees = allMentees.filter(
+  (m) => (m.mentor === 'nate-mesfin' || m.mentor === 'shared') && m.name && m.name.trim().length > 0
+)
 
 export default function NateLab() {
   const { data: publications = [] } = usePublications()

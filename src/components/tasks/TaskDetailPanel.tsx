@@ -80,65 +80,12 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [copied, setCopied] = useState(false)
 
-  // Swipe-right-to-dismiss on mobile. Panel enters from the right; dragging
-  // it further right slides it off-screen, matching how a user would
-  // intuitively flick it away. Only active below 768px (mobile breakpoint).
-  // Autosave-on-blur already runs across every field so "save and dismiss"
-  // is satisfied by dismissal alone.
-  const [dragX, setDragX] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
-  const [isDismissing, setIsDismissing] = useState(false)
-  const dragStartRef = useRef<{ x: number; y: number; axis: 'none' | 'x' | 'y' } | null>(null)
+  // Swipe-to-dismiss removed 2026-04-20 (P1-R2-07). On Pixel 5 the gesture
+  // fired but the panel never moved (inert), and the iOS Safari edge-swipe-back
+  // conflict was unsolvable in pure web. Replaced by enlarged X (top-right),
+  // sticky "Done" pill at panel bottom on mobile, and tap-outside-backdrop.
   const reduceMotion = typeof window !== 'undefined'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (typeof window === 'undefined' || window.innerWidth >= 768) return
-    const target = e.target as HTMLElement
-    // Don't start a swipe from inputs / editor / typeahead dropdowns.
-    if (target.closest('input, textarea, select, button, [contenteditable="true"], .ProseMirror, [role="listbox"]')) return
-    const t = e.touches[0]
-    dragStartRef.current = { x: t.clientX, y: t.clientY, axis: 'none' }
-    setIsDragging(true)
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const start = dragStartRef.current
-    if (!start) return
-    const t = e.touches[0]
-    const dx = t.clientX - start.x
-    const dy = t.clientY - start.y
-
-    // Lock axis after ~10px of movement. If the user is scrolling vertically,
-    // disengage the drag so the page can scroll normally.
-    if (start.axis === 'none') {
-      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return
-      if (Math.abs(dy) > Math.abs(dx)) {
-        dragStartRef.current = null
-        setIsDragging(false)
-        setDragX(0)
-        return
-      }
-      start.axis = 'x'
-    }
-    if (start.axis !== 'x') return
-    setDragX(Math.max(0, dx))
-  }
-
-  const handleTouchEnd = () => {
-    const start = dragStartRef.current
-    dragStartRef.current = null
-    setIsDragging(false)
-    if (!start || start.axis !== 'x') { setDragX(0); return }
-    const panelWidth = panelRef.current?.offsetWidth ?? 400
-    if (dragX > panelWidth * 0.3) {
-      setIsDismissing(true)
-      setDragX(panelWidth)
-      window.setTimeout(onClose, reduceMotion ? 0 : 200)
-    } else {
-      setDragX(0)
-    }
-  }
 
   // Focus trap + Escape + Alt+Up/Down navigation. Audit caught: prior trap
   // checked only `activeElement === first/last`, which leaks when async-mounted
@@ -237,16 +184,13 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
   return (
     <>
-      {/* Backdrop — fades with swipe progress so dismiss feels tactile. */}
+      {/* Backdrop — tap to dismiss (mobile primary) + visual scrim. */}
       <div
         data-testid="detail-backdrop"
         className="fixed inset-0 z-40"
         style={{
           backgroundColor: 'rgba(15, 25, 35, 0.3)',
-          opacity: dragX > 0
-            ? Math.max(0, 1 - dragX / ((panelRef.current?.offsetWidth ?? 400) * 0.9))
-            : 1,
-          transition: isDragging ? 'none' : 'opacity 200ms ease-out',
+          transition: 'opacity 200ms ease-out',
         }}
       />
 
@@ -257,22 +201,16 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-detail-title"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
         className="fixed right-0 top-0 h-full z-50 overflow-y-auto shadow-2xl task-detail-panel card-elevated"
         style={{
-          width: 'min(480px, 90vw)',
+          // Min 420 keeps date/title columns un-truncated on desktop;
+          // 40vw scales gracefully on big monitors; cap 640 prevents
+          // dwarfing the underlying list. P2-R2-02.
+          width: 'clamp(420px, 40vw, 640px)',
+          maxWidth: '90vw',
           backgroundColor: 'var(--cream)',
           borderLeft: '1px solid var(--border-subtle)',
-          // Skip entrance animation during dismissal so panel doesn't "bounce"
-          // back in from the animation redefinition. After dismiss the parent
-          // unmounts us anyway.
-          animation: isDismissing || dragX > 0 || reduceMotion ? 'none' : 'slideIn 200ms ease-out',
-          transform: `translateX(${dragX}px)`,
-          transition: isDragging ? 'none' : `transform ${reduceMotion ? 0 : 200}ms ease-out`,
-          touchAction: 'pan-y',
+          animation: reduceMotion ? 'none' : 'slideIn 200ms ease-out',
         }}
       >
         {/* Header */}
@@ -316,7 +254,22 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
             </button>
-            <button data-testid="close-detail-panel" onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
+            <button
+              data-testid="close-detail-panel"
+              onClick={onClose}
+              aria-label="Close task"
+              className="task-detail-close"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--slate)',
+                padding: 'var(--sp-xs)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <X size={18} />
             </button>
           </div>
@@ -601,6 +554,19 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
         </div>
 
+        {/* Mobile-only Done pill — replaces removed swipe-to-dismiss.
+            Hidden on desktop where Esc + click-outside are sufficient. */}
+        <div className="task-detail-done-bar">
+          <button
+            type="button"
+            onClick={onClose}
+            className="task-detail-done-btn"
+            aria-label="Done — close task"
+          >
+            Done
+          </button>
+        </div>
+
         <style>{`
           @keyframes slideIn {
             from { transform: translateX(100%); }
@@ -614,9 +580,37 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           .dark .task-detail-panel select {
             color-scheme: dark;
           }
-          @media (max-width: 640px) {
+          .task-detail-done-bar { display: none; }
+          @media (max-width: 767px) {
             .task-detail-panel .p-5 {
               padding: 1rem !important;
+            }
+            /* Enlarge close-button hit target to 44×44 for thumb reach. */
+            .task-detail-panel .task-detail-close {
+              min-width: 44px !important;
+              min-height: 44px !important;
+            }
+            /* Sticky Done bar at panel bottom. */
+            .task-detail-done-bar {
+              display: block;
+              position: sticky;
+              bottom: 0;
+              padding: 12px;
+              background: color-mix(in oklch, var(--cream) 95%, transparent);
+              backdrop-filter: blur(8px);
+              border-top: 1px solid var(--border-subtle);
+              z-index: 20;
+            }
+            .task-detail-done-btn {
+              width: 100%;
+              min-height: 48px;
+              border-radius: var(--radius-lg);
+              border: none;
+              background: var(--teal-solid);
+              color: #fff;
+              font-weight: var(--weight-ui, 500);
+              font-size: 15px;
+              cursor: pointer;
             }
           }
         `}</style>
@@ -913,12 +907,12 @@ function OverviewQuickAdd({
   const queryClient = useQueryClient()
 
   const PLACEHOLDERS = {
-    note: 'e.g. "Pulled cohort, n=412 after exclusions, APACHE>25 worked. Stuck on the merge with vitals — using ENC_ID not HOSP_ID."',
-    comment: 'e.g. "@emma can you double-check the propensity score weights? Also @hermes pull recent JAMA papers on this."',
+    note: 'Pulled cohort, n=412 after exclusions. APACHE>25 worked. Stuck on merge — using ENC_ID not HOSP_ID',
+    comment: '@emma can you double-check the propensity score weights? @hermes pull recent JAMA papers on this',
   }
-  const HEADLINE = {
-    note: 'Note · your private progress log (lab-notebook style)',
-    comment: 'Comment · talk to teammates · @mention works',
+  const TOOLTIPS = {
+    note: 'Private progress log — lab-notebook style',
+    comment: 'Talk to teammates — @mention works',
   }
 
   function reset() {
@@ -989,32 +983,44 @@ function OverviewQuickAdd({
         Quick add
       </label>
 
-      {/* Mode pills */}
-      <div className="flex gap-1 mb-2">
-        {(['comment', 'note'] as const).map((m) => {
-          const isActive = mode === m
-          return (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMode(m)}
-              className="cursor-pointer inline-flex items-center gap-1 rounded-md transition-all"
-              style={{
-                fontSize: '10px',
-                fontWeight: isActive ? 600 : 400,
-                padding: '3px 8px',
-                background: isActive ? 'var(--teal-active)' : 'transparent',
-                color: isActive ? 'var(--teal)' : 'var(--slate)',
-                border: `1px solid ${isActive ? 'var(--teal)' : 'var(--border-subtle)'}`,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              }}
-            >
-              {m === 'comment' ? <MessageSquare size={10} /> : <ScrollText size={10} />}
-              {m}
-            </button>
-          )
-        })}
+      {/* Segmented mode pills — single shared fill makes "modes of one input"
+          obvious. Tooltip on each pill replaces the helper-line below the
+          textarea (per design ticket § 0 Ask 1). */}
+      <div className="flex items-center mb-2">
+        <div
+          className="inline-flex rounded-md overflow-hidden"
+          style={{ border: '1px solid var(--border-subtle)' }}
+          role="tablist"
+          aria-label="Quick add mode"
+        >
+          {(['comment', 'note'] as const).map((m) => {
+            const isActive = mode === m
+            return (
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setMode(m)}
+                title={TOOLTIPS[m]}
+                className="cursor-pointer inline-flex items-center gap-1 transition-all"
+                style={{
+                  fontSize: '10px',
+                  fontWeight: isActive ? 600 : 400,
+                  padding: '3px 10px',
+                  background: isActive ? 'var(--teal-active)' : 'transparent',
+                  color: isActive ? 'var(--teal)' : 'var(--slate)',
+                  border: 'none',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {m === 'comment' ? <MessageSquare size={10} /> : <ScrollText size={10} />}
+                {m}
+              </button>
+            )
+          })}
+        </div>
         <button
           type="button"
           onClick={() => onJumpToTab(mode === 'comment' ? 'comments' : 'notes')}
@@ -1032,19 +1038,6 @@ function OverviewQuickAdd({
           See all →
         </button>
       </div>
-
-      {/* Helper line — what each surface is for */}
-      <p
-        style={{
-          fontSize: '10px',
-          color: 'var(--slate)',
-          opacity: 'var(--ink-hint)',
-          margin: '0 0 6px 0',
-          lineHeight: 1.4,
-        }}
-      >
-        {HEADLINE[mode]}
-      </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-1.5">
         <div className="flex gap-2 items-end">

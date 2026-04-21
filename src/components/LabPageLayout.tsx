@@ -226,8 +226,16 @@ interface GrantRow {
 }
 
 export function GrantsSection({ grants, id, title = 'Active Funding' }: { grants: GrantRow[]; id?: string; title?: string }) {
-  const activeGrants = grants.filter((g) => !g.proposed)
-  const pendingGrants = grants.filter((g) => g.proposed)
+  // Filter stub/placeholder rows from the public-facing list. Lead with real
+  // mechanism-bearing grants so visitors don't see "---" first. P2-R2-11.
+  const isRealGrant = (g: GrantRow) =>
+    g.title?.trim() &&
+    g.title.trim() !== '---' &&
+    g.title.trim() !== 'Departmental Operational Support' &&
+    g.mechanism?.trim() &&
+    g.mechanism.trim() !== '---'
+  const activeGrants = grants.filter((g) => !g.proposed && isRealGrant(g))
+  const pendingGrants = grants.filter((g) => g.proposed && isRealGrant(g))
 
   return (
     <section className="mb-16" id={id}>

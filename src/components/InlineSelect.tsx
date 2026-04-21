@@ -7,9 +7,14 @@ interface InlineSelectProps {
   options: { value: string; label: string; color?: string }[]
   onChange: (value: string) => void
   size?: 'sm' | 'md'
+  /** Force chevron always-visible. Default false — chevron only appears on
+   *  row hover / cell focus / button hover (per design ticket § 0 Ask 2).
+   *  Set true on high-signal cells like Decisions Outcome where the dropdown
+   *  affordance is the primary action. */
+  alwaysShowChevron?: boolean
 }
 
-export default function InlineSelect({ value, options, onChange, size = 'sm' }: InlineSelectProps) {
+export default function InlineSelect({ value, options, onChange, size = 'sm', alwaysShowChevron = false }: InlineSelectProps) {
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const [focusedIdx, setFocusedIdx] = useState(-1)
@@ -121,7 +126,10 @@ export default function InlineSelect({ value, options, onChange, size = 'sm' }: 
         }}
       >
         {current?.label || value}
-        <ChevronDown size={10} style={{ opacity: 0.85 }} />
+        <ChevronDown
+          size={10}
+          className={alwaysShowChevron ? 'inline-select-chevron-always' : 'inline-select-chevron'}
+        />
       </button>
 
       {open && createPortal(
