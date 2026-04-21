@@ -17,14 +17,16 @@ safe to ignore unless explicitly spelunking history.
 
 ## Current state (2026-04-21)
 
-- **Round-2 design shipped + schema-drift CI now useful.** Claude Design's round-2 review (43 tickets) shipped across three deploys (`ff7b766a` → `36e0ca34` → `cfc00ab0`): 7 P1 ship-blockers + § 0 Quick Add / chevron polish + 13 P2 + 4 motion fixes + 2 pre-existing test fixes surfaced during verification. Schema-drift CI workflow was failing silently for a week — fixed secrets, replaced `.schema` CLI command with real SQL, rewrote normalizer; then reconciled real drift via v48 (27 indexes) + v49 (13 tables + 2 unique indexes + 9 columns) applied to prod, plus edits to v14/v22 and deletion of v35. See CHANGELOG.md.
+- **🎉 LIVE FOR THE TEAM as of 2026-04-21.** CF Access gates `mn-ccore-lab.pages.dev/portal/*` with policies `UMN Team` (@umn.edu), `Nick Only` (nicholas.ingraham@gmail.com), `Audit Service Token`. All 4 server secrets set: `CF_ACCESS_TEAM_DOMAIN=peripheral-brain.cloudflareaccess.com`, `CF_ACCESS_AUD=47b7d48e...40139c`, `REQUIRE_AUTH=1`, `TEST_MODE_KEY=<32-char hex>`. JWT signature verification active. Client-side `VITE_REQUIRE_AUTH=1` in `.env.production`. See CHANGELOG.md Phase 37 for detail.
+- **Phase 37 shipped — portal URL migration.** All 27 gated routes now live under `/portal/*`. `src/constants/paths.ts` + `tests/helpers/paths.ts` are single source of truth. Legacy root paths redirect via `<Navigate>` shims.
+- **Round-2 design shipped + schema-drift CI now useful.** Claude Design's round-2 review (43 tickets) shipped across three deploys (`ff7b766a` → `36e0ca34` → `cfc00ab0`). Schema-drift CI reconciled via v48 (27 indexes) + v49 (13 tables + 2 unique indexes + 9 columns).
 - **Phase 36d shipped.** Design sprint — 12 reusable brand primitives + cinematic Pulse Kiosk rewrite + per-route OG share cards + capture infrastructure for Claude Design. Plus Phase 36c audit fixes, Phase 36b slug rename, Phase 36 consultant close-out.
 - **Quality gate: 🟢 GREEN.** Inspection 213/213, deep-audit 14/14 (0 bugs), axe 29 pages × 2 schemes (0 findings), mobile smoke 2/2, desktop journey 1/1, `/api/health` ~74ms.
-- **Not yet live for the team.** Nick is the only active user. Going live requires CF Access config + `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` + `REQUIRE_AUTH` + `TEST_MODE_KEY` + `VITE_REQUIRE_AUTH` secrets — see `LAUNCH-CHECKLIST.md` sections 0 + 1.
 - **Team slugs:** all 19 members use `preferred_name-last_name` format (`nick-ingraham`, `emma-bromley`, ...). `actorSlug(email)` in `api/helpers.ts` maps email prefix → canonical slug via `EMAIL_PREFIX_TO_SLUG`. Adding a new team member = D1 row + team.ts entry + LUT entry.
-- **Routing:** `/portal/team/:slug` keeps logged-in users in portal chrome. `/team/:slug` stays for the public marketing site.
+- **Routing:** all gated routes under `/portal/*` (Phase 37). `/portal/team/:slug` keeps logged-in users in portal chrome; `/team/:slug` stays for the public marketing site. Use `PATHS` constant from `src/constants/paths.ts` in any new internal nav.
 - **Brand primitives** live in `src/components/` — use them instead of rolling your own: `HeartbeatLine` / `HeartbeatDivider` (the lab's ECG motif), `HermesMark` (AI assistant avatar, replaces lucide Sparkles), `CategoryIcon` (lungs/flask/heartbeat/cap for CLIF/Lab/Nate/Mentee), `EmptyStateArt` (8 illustrations), `PhaseReleaseBanner` (what-shipped card), `RequireAuth` (sign-in splash).
-- **Current HEAD:** `6f9ed08` on `main`, pushed (post round-2 + schema-drift reconciliation).
+- **Current HEAD:** `143c1db` on `main`, pushed (post Phase 37 + VITE_REQUIRE_AUTH).
+- **Current deploy:** `c5e46630.mn-ccore-lab.pages.dev`.
 
 ## Vision
 
@@ -34,9 +36,9 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 
 | Thing | Value |
 |-------|-------|
-| Live site | mn-ccore-lab.pages.dev (PI-only; team not yet onboarded) |
-| Repo | github.com/ingra107/mn-ccore-lab (685+ commits) |
-| Current deploy | `cfc00ab0.mn-ccore-lab.pages.dev` (2026-04-21, round-2 + motion close; `6f9ed08` on main includes post-deploy client_updated_at guard) |
+| Live site | mn-ccore-lab.pages.dev (LIVE — CF Access gated via @umn.edu policy on `/portal/*`) |
+| Repo | github.com/ingra107/mn-ccore-lab (720+ commits) |
+| Current deploy | `c5e46630.mn-ccore-lab.pages.dev` (2026-04-21, Phase 37 portal URL migration + VITE_REQUIRE_AUTH; HEAD `143c1db`) |
 | Quality gate | 🟢 GREEN — inspection 213/213, deep-audit 14/14, axe 29×2 = 0, mobile smoke 2/2, desktop journey 1/1. |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + **Hono v4.12 (API router)** |
@@ -214,7 +216,7 @@ Airtable ←CRDT→ brain.db ←LWW→ D1 (mnccore-lab) ←API→ React + TanSta
 
 - **Data:** TanStack Query v5 → D1 API (prod), static TS fallback (dev)
 - **API:** Cloudflare Worker, 225+ route registrations via Hono v4.12 (`api/index.ts`). Middleware chain: OPTIONS preflight → test-mode DB swap → API-key auth → authed-user resolve → PI gate for `/api/pb/*` GETs → REQUIRE_AUTH gate for POST/PUT → version-bump-on-success (post-handler). Test isolation: `X-Test-Mode: true` header + `DB_TEST` binding + matching `TEST_MODE_KEY` secret swaps `env.DB` to `env.DB_TEST` so tests never touch production. **Pre-Hono contributors:** the old flat if/else router was replaced 2026-04-19. Do not add routes with raw `url.pathname === ...` comparisons — use `app.get/post('/api/...', handler)`.
-- **Auth:** Open now. Cloudflare Access for April 21 launch (@umn.edu). JWT signature verification via JWKS lives in `api/jwt-verify.ts` — reads `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` secrets; without them, falls back to decode-only (logs a warning once per cold start) so pre-launch PI-only mode keeps working. `getAuthUser()` and `isPiRequest()` are `async` — any new caller must `await` them.
+- **Auth:** LIVE 2026-04-21. Cloudflare Access gates `mn-ccore-lab.pages.dev/portal/*` (single destination). JWT signature verification via JWKS lives in `api/jwt-verify.ts` — `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` are set in prod so verification is active (no longer decode-only). `REQUIRE_AUTH=1` + `VITE_REQUIRE_AUTH=1` both active. `/api/*` is NOT gated by CF Access (auth via X-API-Key + `REQUIRE_AUTH` + JWT server-side). `getAuthUser()` and `isPiRequest()` are `async` — any new caller must `await` them.
 - **Email:** Resend (`api/lib/email.ts`) + daily digest (`api/routes/digest-email.ts`). Needs `RESEND_API_KEY` Cloudflare secret. Preview: `/api/digest-preview?member=nick`
 - **Sync:** `sync_d1_push.py` / `sync_d1_pull.py` in PB, scheduled + /process-triggered
 
@@ -318,6 +320,8 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 33. **Capture specs for Claude Design exist but are run on demand.** `tests/capture-for-design.spec.ts` (full-page screenshots, pre-scrolls for lazy-load) + `tests/capture-interactions.spec.ts` (15 signature interactions as WebM + PNG keyframes). Output to `review/claude-design-*` / `review/interactions-*` (gitignored). Don't add these to the default test run — they're 2-5 min each and only useful when building design assets.
 
 ## Roadmap
+
+**Phase 37: COMPLETE** (2026-04-21). Portal URL migration — all 27 gated routes moved under `/portal/*` prefix so a single Cloudflare Access destination gates the authenticated surface. `src/constants/paths.ts` + `tests/helpers/paths.ts` single source of truth. Legacy root paths redirect via `<Navigate>` shims. Merged as `8600c32`; deployed `c5e46630`. Launch secrets set same day. See CHANGELOG.md.
 
 **Phases 1-13: COMPLETE** (360+ commits). See `REFERENCE.md` for details.
 
@@ -660,9 +664,9 @@ python -c "import sqlite3; conn=sqlite3.connect('C:/Users/ingra107/Peripheral-Br
 **Guide:** `TESTING.md`
 **Skill:** `/test-hub` (scan, run, generate, update, report)
 
-## Phase History (29-36e + R8/R9/R10) → see CHANGELOG.md
+## Phase History (29-37 + R8/R9/R10) → see CHANGELOG.md
 
-> **Phase-by-phase build history in `CHANGELOG.md`** to keep this file operational. Latest: **Phase 36e** (2026-04-20) — Claude Design handoff imported to `docs/design-handoff-2026-04-20/`; 33 tickets (8 P1, 14 P2, 11 P3) drive the next session's work. **Phase 36d** — design sprint (12 brand primitives + cinematic Pulse Kiosk + per-route OG share cards + capture infrastructure). **Phase 36c** — 4-auditor deep audit + 11 P0/P1 fixes. **Phase 36b** — slug rename. **Phase 36** — consultant close-out + mobile swipe. Earlier: 29 features, 30 visual QA, 31 token compliance, 31.5 expert polish, 32 final launch polish (10 consultant rounds), Nick-Review R8/R9/R10, 34 audit framework, 35 a11y + sync parity.
+> **Phase-by-phase build history in `CHANGELOG.md`** to keep this file operational. Latest: **Phase 37** (2026-04-21) — Portal URL migration. All 27 gated routes under `/portal/*`. Single CF Access destination. Launch secrets set same day. **Phase 36e** — Claude Design round-1 handoff imported; 32/33 shipped. **Phase 36d** — design sprint (12 brand primitives + cinematic Pulse Kiosk + per-route OG share cards + capture infrastructure). **Phase 36c** — 4-auditor deep audit + 11 P0/P1 fixes. **Phase 36b** — slug rename. **Phase 36** — consultant close-out + mobile swipe. Earlier: 29 features, 30 visual QA, 31 token compliance, 31.5 expert polish, 32 final launch polish (10 consultant rounds), Nick-Review R8/R9/R10, 34 audit framework, 35 a11y + sync parity.
 >
 > **Key decisions in that history:** sidebar darker-than-content is NEVER-violate (GC-1). Framer Motion scoped to page transitions only (GC-2). Ideas + Decisions are columnar tables not cards (GC-3). Data-pages vs dashboard-pages taxonomy (GC-6). Grant + project status taxonomies locked (R10). Research Digest = Model B. Dashboard cards resizable via RGL (R9-9). Hono router declarative — no raw `url.pathname` routing (Phase 36).
 

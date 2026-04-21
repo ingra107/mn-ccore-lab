@@ -22,11 +22,12 @@ in comments).
    Always read this before writing any code.
 2. **`CLAUDE.md`** — operating guide. Design system, architecture, 28 critical
    rules, known gotchas. Source of truth for how this codebase is organized.
-3. **`CHANGELOG.md`** — phase-by-phase build history. Phase 36c is the current
-   phase (4-auditor deep audit + 11 P0/P1 fixes, 2026-04-20). Earlier phases:
+3. **`CHANGELOG.md`** — phase-by-phase build history. Phase 37 (portal URL
+   migration + team launch 2026-04-21) is the current phase. Earlier: 36e
+   (Claude Design handoff), 36d (design sprint), 36c (4-auditor deep audit),
    36b (slug rename), 36 (consultant close-out + mobile swipe), 35 (a11y + sync).
-4. **`LAUNCH-CHECKLIST.md`** sections 0 + 1 — the only remaining work before
-   the team gets the link. Four secrets + CF Access config.
+4. **`LAUNCH-CHECKLIST.md`** — launch work complete 2026-04-21. Only
+   `RESEND_API_KEY` (daily digest email, optional) remains.
 
 ## Run locally
 
@@ -103,11 +104,15 @@ docs/
   archived/          Historical session logs + superseded specs
 ```
 
-## Launch prerequisites
+## Launch status
 
-See `LAUNCH-CHECKLIST.md` for the Cloudflare Access + RESEND_API_KEY + GitHub
-secrets that Nick needs to set before April 21. The living launch plan is in
-the Peripheral Brain repo: `Projects/mn-ccore-lab-hub/plans/april-21-launch-readiness.md`.
+**LIVE 2026-04-21.** CF Access gates `mn-ccore-lab.pages.dev/portal/*`
+via @umn.edu policy. All 4 server secrets + client-side
+`VITE_REQUIRE_AUTH=1` set. GitHub Actions secrets for schema-drift CI
+set. Remaining optional: `RESEND_API_KEY` for daily digest email
+cron. See `LAUNCH-CHECKLIST.md` for the full status table. Living
+launch plan in the Peripheral Brain repo:
+`Projects/mn-ccore-lab-hub/plans/april-21-launch-readiness.md`.
 
 ## License
 

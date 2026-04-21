@@ -1105,3 +1105,16 @@ git push origin main
 **Known deliberate asymmetries:**
 - `PATHS.tasks = /portal/tasks` but palette navigates users to `PATHS.myTasks` for create/status actions (line mapping in Task 5, step 2). This matches current prod behavior — `/tasks` is already a redirect to `/my-tasks` today.
 - `/team/:slug` (public) and `/portal/team/:slug` (portal) remain two distinct routes rendering the same component. Phase 36c design, preserved.
+
+---
+
+## Execution log — Complete 2026-04-21
+
+All 14 tasks shipped. Merged to main as `8600c32`. Prod deploy:
+`c5e46630.mn-ccore-lab.pages.dev`. See CHANGELOG.md Phase 37 for
+post-mortem. CF Access configured same day with `UMN Team` + `Nick
+Only` + `Audit Service Token` policies; JWT secrets
+(`CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD`) set — JWT signature
+verification now active. `REQUIRE_AUTH=1`, `TEST_MODE_KEY`, and
+client-side `VITE_REQUIRE_AUTH=1` all active. Hub is LIVE for the
+team.

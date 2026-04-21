@@ -1,24 +1,30 @@
 # Session Handoff — 2026-04-21
 
-> Last worked: Round-2 design handoff (43 tickets shipped across
-> `ff7b766a` → `36e0ca34` → `cfc00ab0`) + D1 schema-drift CI
-> reconciliation (v48 + v49 applied to prod; workflow 🟢 green for the
-> first time since 2026-04-16). Current HEAD `6f9ed08`. Round-1 P2-14
-> (Post-Award Milestones populated state) still outstanding — that's a
-> data-entry ask, not a design one. See CHANGELOG.md top two entries
-> for the full record.
+> Last worked: **Phase 37 — Portal URL Migration shipped + CF Access
+> configured + launch secrets set. Hub is LIVE for the team as of
+> 2026-04-21.** All 27 gated routes now live under `/portal/*`; legacy
+> root paths redirect via `<Navigate>` shims. CF Access app gates
+> `mn-ccore-lab.pages.dev/portal/*` with `UMN Team` + `Nick Only` +
+> `Audit Service Token` policies. Server secrets set:
+> `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `REQUIRE_AUTH=1`,
+> `TEST_MODE_KEY`. Client-side `VITE_REQUIRE_AUTH=1` in
+> `.env.production`. GitHub Actions secrets (`CLOUDFLARE_API_TOKEN` +
+> `CLOUDFLARE_ACCOUNT_ID`) set for schema-drift CI. Prior session also
+> landed round-2 design (43 tickets) + schema-drift CI reconciliation
+> (v48 + v49). Current HEAD `143c1db`. See CHANGELOG.md Phase 37 for
+> full record.
 
 ## 📖 Session bootstrap — read these in order before writing anything
 
 1. **This file** (you're here). Current gate, gotchas, commit, next action.
 2. **`PROJECT.md`** — frontmatter `next_action` is canonical.
-3. **`LAUNCH-CHECKLIST.md`** — sections 0 + 1 are the remaining work before the team gets the link.
+3. **`LAUNCH-CHECKLIST.md`** — launch work complete; only RESEND_API_KEY (optional) remains.
 4. **`CLAUDE.md`** — operating guide. Design system + palette + sync model + rules.
 5. **`REFERENCE.md`** — API endpoints + D1 table list.
-6. **`CHANGELOG.md`** top entry — Phase 36c full record.
+6. **`CHANGELOG.md`** top entry — Phase 37 full record.
 7. **`docs/OBSERVABILITY.md`** — `/api/health` + runbook.
 
-## Gate — all green as of commit `6f9ed08` (deployed `cfc00ab0`)
+## Gate — all green as of commit `143c1db` (deployed `c5e46630`)
 
 | Check | Result |
 |---|---|
@@ -40,12 +46,43 @@ Rerun journey smoke: `npx playwright test --config=playwright.config.phase36.ts`
 
 ## What's new since the previous handoff
 
-**Phase 36e — Claude Design handoff imported.** Nick ran the Hub
-through Claude Design against HEAD `ef604db`; it returned 33 tickets
-with file paths, fix snippets, and acceptance criteria. Bundle at
-`docs/design-handoff-2026-04-20/` (tracked — `TICKETS.md`, `Audit.html`,
-`reference/ui-kit/*.jsx`, + 30 screenshots). Drives next session's
-work. P1 is a pre-demo punch list.
+**Phase 37 — Portal URL Migration + launch go-live.** All 27 gated Hub
+routes migrated under `/portal/*` prefix so a single Cloudflare Access
+app destination (`mn-ccore-lab.pages.dev/portal/*`) gates the entire
+authenticated surface. Public marketing stays at root. `src/constants/
+paths.ts` is the single source of truth (`PATHS.dashboard`,
+`PATHS.project(slug)`, etc.); mirrored at `tests/helpers/paths.ts`.
+Legacy root paths redirect via `<Navigate>` shims in `src/App.tsx`
+placed outside `RequireAuth` so bookmark bounces happen pre-auth. 14
+tasks, subagent-driven; merged to `main` as `8600c32`. Prod deploy:
+`c5e46630.mn-ccore-lab.pages.dev` (HEAD `143c1db`).
+
+**Cloudflare Access configured.** App targets
+`mn-ccore-lab.pages.dev/portal/*`. Policies: `UMN Team` (allow
+@umn.edu), `Nick Only` (allow nicholas.ingraham@gmail.com), `Audit
+Service Token` (service auth for `scripts/hub-audit.ts`). Public
+routes (`/`, `/team`, `/publications*`, etc.) remain open. `/api/*` is
+NOT gated by CF Access — X-API-Key + server-side `REQUIRE_AUTH` + JWT
+verify handle API auth.
+
+**Launch secrets set** (Cloudflare Pages):
+`CF_ACCESS_TEAM_DOMAIN=peripheral-brain.cloudflareaccess.com`,
+`CF_ACCESS_AUD=47b7d48e...40139c`, `REQUIRE_AUTH=1`,
+`TEST_MODE_KEY=<32-char hex>`. JWT signature verification is now
+active (no longer decode-only). Client-side `VITE_REQUIRE_AUTH=1` in
+`.env.production` — unauthenticated users see branded RequireAuth
+splash. **GitHub Actions** secrets set for schema-drift CI:
+`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`. **Audit Service
+Token** active (`mn-ccore-lab-audit`) — local env vars
+`HUB_TEST_MODE_KEY`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`
+set on both work + home machines.
+
+**Phase 36e — Claude Design handoff (round 1 + round 2 complete).**
+Nick ran the Hub through Claude Design against HEAD `ef604db`; it
+returned 33 tickets in round 1, then 43 more in round 2. 32/33 round-1
+tickets shipped (P2-14 Post-Award Milestones is a data-entry ask).
+43/43 round-2 tickets shipped across `ff7b766a` → `36e0ca34` →
+`cfc00ab0`. Bundle still at `docs/design-handoff-2026-04-20/`.
 
 **Phase 36d — design sprint.** 12 brand-level improvements shipped in
 one session after reviewing Anthropic's new Claude Design product
@@ -123,64 +160,36 @@ fixes shipped in one sprint:
 
 ## What to do FIRST in the next session
 
-**Primary work incoming: Claude Design handoff — 33 tickets at
-`docs/design-handoff-2026-04-20/TICKETS.md`.** Nick ran the Hub
-through Claude Design and it returned a prioritized backlog against
-HEAD `ef604db`. Work P1 → P2 → P3, one ticket at a time. Each ticket
-is self-contained: problem + fix + acceptance + annotated screenshot.
+**The Hub is live. The big open work is done.** Design handoffs
+(round 1 + round 2) are shipped. CF Access is configured. Portal URL
+migration is deployed. All launch secrets are set. The only
+outstanding *blocker* is that Nick still needs to share the URL with
+the team — that's a Nick action, not a code action.
 
-**P1 · 8 ship-blockers (do these first — target pre-Tuesday demo):**
-1. P1-01 Filter `test_delete_*` + `deep-audit-sync-*` fixtures out of
-   Personal / Calendar / Mentee Milestones / Activity. Shared
-   predicate at query layer + localStorage debug-toggle in Settings.
-2. P1-02 Fix `undefined '23` X-axis labels on PI Dashboard
-   Publications-per-Quarter chart (template string missing quarter var).
-3. P1-03 Dedupe meeting action items.
-4. P1-04 Team Engagement scoring shows `anonymous=13,410, real
-   members=0` — attribution bug.
-5. P1-05 Dismiss "Click a meeting for prep and actions" tooltip.
-6. P1-06 Label or replace the 4 hero numbers on public Home.
-7. P1-07 Seed real Mentee Milestones (empty-state with CTA if none).
-8. P1-08 Suppress empty Senior Mentors section on public Team page.
+**If Nick wants to actually tell the team:** send an email/slack
+announcing `mn-ccore-lab.pages.dev` + the sign-in flow. First-time
+visitors to `/portal/*` will hit CF Access → @umn.edu login. Public
+marketing pages (`/`, `/team`, `/publications*`) stay open.
 
-**P2 · 14 polish tickets (ship this week):** `[Carried forward]`
-strip, `CLIF:` prefix lift, OVERDUE sub-bucket by age, Research
-Digest filter-row collapse, tabbed Settings, soften "Silent 32d" →
-"Needs check-in", hide PB Sector from nav until launch, mobile
-tab-bar safe-area, zero-value delta chips, Ideas Board kanban-first,
-Decision outcome → pill column, Publications grouped-by-year, Network
-label collisions, Post-Award Milestones populated state.
+**Small optional follow-ups, in roughly decreasing order of value:**
 
-**P3 · 11 new surfaces (next quarter):** Lab-TV 5-slide extension,
-Project Health heatmap, Published-as-trophy-grid, NIH RePORTER
-search, vertical project timeline, Team Engagement drill-down,
-Publications-DB ↔ member cards link, Calendar dense-week toggle,
-Decisions Timeline view, PWA + Apple Watch, public Home
-iconographic grid.
+1. **RESEND_API_KEY** (optional, postponable indefinitely). Signing up
+   at [resend.com](https://resend.com) + adding `RESEND_API_KEY` to
+   Cloudflare Pages env vars activates the daily coordinator email
+   digest cron (`api/routes/digest-email.ts`). Without it the preview
+   endpoint `/api/digest-preview?member=nick` still works.
+2. **Post-launch monitoring.** Watch `/api/health` + schema-drift CI.
+   External uptime monitor is wired but optional (see
+   `docs/OBSERVABILITY.md`).
+3. **Round-1 P2-14 — Post-Award Milestones populated state.** Data-
+   entry ask: seed `grant_milestones` rows for Funded grants. Not a
+   code task.
+4. **30-90 days post-launch:** evaluate dropping the legacy root-path
+   redirect shims in `src/App.tsx` once analytics confirm no traffic
+   on legacy paths. Remove `LEGACY_REDIRECTS` from `paths.ts`.
 
-**Working a ticket:**
-1. Open `docs/design-handoff-2026-04-20/TICKETS.md`.
-2. Cross-reference with `docs/design-handoff-2026-04-20/Audit.html`
-   (interactive annotated screenshots — open in browser).
-3. Use `docs/design-handoff-2026-04-20/reference/ui-kit/*.jsx` as
-   VISUAL direction, not production code — real impl lands in the
-   Hub's existing React components + Tailwind.
-4. Mark the ticket's checkbox in TICKETS.md when acceptance met.
-5. Screenshot the fixed state; compare against the "before" in
-   `docs/design-handoff-2026-04-20/screenshots/`.
-
-**Scope discipline** (per the handoff README):
-- No new dependencies unless a ticket calls for one.
-- No refactors beyond ticket scope — file new ticket at bottom of P3.
-- Preserve the voice: dense, honest, anti-corporate. Don't soften
-  error messages or add emoji.
-
----
-
-**If Nick's about to share the Hub URL with the team** → follow
-`LAUNCH-CHECKLIST.md` sections 0 + 1. Four secrets + CF Access config
-+ one rebuild. Post-launch, swipe-dismiss + JWT sig verify + auth-
-gated bug-reports all activate with no extra deploys.
+**If Nick reports a bug** → reproduce with a deep-audit suite before
+fixing (`scripts/deep-audit/*.ts`).
 
 **If Nick wants to use Claude Design for more assets** (pitch deck,
 poster, one-pager) — brief at `scripts/claude-design-brief.txt`; 31
@@ -189,11 +198,26 @@ fresh page screenshots at `review/claude-design-20260420/`
 ready to capture via `tests/capture-interactions.spec.ts` when
 needed.
 
-**If Nick reports a bug** → reproduce with a deep-audit suite before
-fixing.
-
 ## Things that WILL surprise you if you don't know
 
+- **All gated routes now live under `/portal/*`.** `src/constants/
+  paths.ts` (+ `tests/helpers/paths.ts` mirror for tests) is the single
+  source of truth. Internal nav uses `PATHS.dashboard`,
+  `PATHS.project(slug)`, etc. Legacy root paths (`/dashboard`,
+  `/projects/:slug`, ...) redirect via `<Navigate>` shims in
+  `src/App.tsx` placed outside `RequireAuth` so bookmark bounces
+  happen pre-auth. Don't add new gated routes at root — always
+  `/portal/<path>` and extend `paths.ts`.
+- **CF Access gates `/portal/*` only.** Public marketing (`/`,
+  `/team`, `/publications*`, etc.) remains open. `/api/*` is NOT gated
+  by CF Access — auth is enforced server-side via X-API-Key + JWT
+  verify + `REQUIRE_AUTH=1`.
+- **JWT signature verification is ACTIVE.** `CF_ACCESS_TEAM_DOMAIN` +
+  `CF_ACCESS_AUD` are set in prod, so `api/jwt-verify.ts` validates
+  CF Access JWTs against JWKS. No longer decode-only.
+- **`REQUIRE_AUTH=1` and `VITE_REQUIRE_AUTH=1` are BOTH ACTIVE.**
+  Server rejects unauth POST/PUT with 401; client shows branded
+  `RequireAuth` splash for unauthenticated users on `/portal/*`.
 - **Brand primitives live in `src/components/` — use them, don't roll
   your own.** `HeartbeatLine` / `HeartbeatDivider` for the lab's ECG
   motif. `HermesMark` for any AI-assistant surface (icon + avatar
@@ -258,6 +282,10 @@ fixing.
 - All 5 consultant nice-to-haves: Phase 36 (`CHANGELOG.md`).
 - All 11 deep-audit P0/P1: Phase 36c (`CHANGELOG.md`).
 - All Phase 35 launch blockers: Phase 35 (`CHANGELOG.md`).
+- Round-1 design handoff: 32/33 tickets shipped (P2-14 is a data-entry ask).
+- Round-2 design handoff: 43/43 tickets shipped (`CHANGELOG.md` round-2 entry).
+- Phase 37 Portal URL Migration: 14/14 tasks shipped (`CHANGELOG.md` Phase 37).
+- Launch secrets + CF Access config: all set 2026-04-21.
 
 ## Scaffolded — not yet live
 
@@ -290,6 +318,28 @@ via the audit specs in `tests/`):
   is the floor — already below WCAG 2.5.5 AAA).
 - **Misc:** 22 stale `nick-ingraham` test slug refs in spec files (now
   CORRECT after rename — but test descriptions reference old context).
+
+## Key files touched Phase 37
+
+New path constants:
+- `src/constants/paths.ts` — single source of truth for every gated URL (`PATHS.dashboard`, `PATHS.project(slug)`, etc.) + `LEGACY_REDIRECTS`.
+- `tests/helpers/paths.ts` — plain-string mirror so tests don't import the prod bundle.
+
+Routing:
+- `src/App.tsx` — 29 new `/portal/*` canonical routes under `RequireAuth + PortalLayout`; `<Navigate>` redirect shims outside `RequireAuth` for legacy root paths; `NavigateWithParams` helper for parametric redirects.
+
+Nav + links migrated through `PATHS`:
+- `src/components/Sidebar.tsx`, `MobileTabBar.tsx`, `CommandPalette.tsx` (22 nav sites).
+- `src/hooks/useKeyboardShortcuts.ts`, `src/hooks/useProjectKeyboardNav.ts`.
+- ~50 `<Link>` + template-literal refs across 30+ components.
+- `src/hooks/useRecentlyViewed.ts` — pathname pattern-matching.
+- `api/routes/search.ts` — backend search link URLs.
+
+Client env:
+- `.env.production` — `VITE_REQUIRE_AUTH=1`.
+
+Tests + audits:
+- 16 test specs + 5 journey specs + 27 audit scripts migrated via `tests/helpers/paths.ts` or hardcoded `/portal/` prefix.
 
 ## Key files touched Phase 36d
 
@@ -346,7 +396,7 @@ Hotfix: `api/index.ts` — `/api/bug-report` gate now piggybacks on `REQUIRE_AUT
 
 ## Git state
 
-Hub: `main` at `ef604db` (pushed to origin).
-PB: `main` at `c3294a24` (pushed to origin).
+Hub: `main` at `143c1db` (pushed to origin; clean).
+PB: unchanged this session — see PB-side `work_status.md` for PB-specific state.
 
 Re-check before modifying: `git status --short` should be empty in both repos.

@@ -4,6 +4,12 @@
 
 `GET /api/health` — public, no auth, safe to hit frequently.
 
+> **Note:** post-Phase 37, `/api/*` routes are NOT gated by
+> Cloudflare Access (CF Access only gates `/portal/*`). API auth is
+> enforced server-side via X-API-Key + `REQUIRE_AUTH=1` + JWT
+> verification. `/api/health` is deliberately exempt from auth so
+> external uptime monitors can probe it.
+
 **Healthy** (sample taken 2026-04-20 post Phase 36c):
 ```json
 HTTP/1.1 200 OK

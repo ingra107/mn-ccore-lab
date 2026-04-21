@@ -3,6 +3,32 @@
 Detailed tables, API endpoints, key files, and feature inventory.
 Moved from CLAUDE.md to reduce session context load. Read on demand.
 
+## Routing (post-Phase 37, 2026-04-21)
+
+All gated routes live under `/portal/*`. `src/constants/paths.ts` is
+the single source of truth (`PATHS.dashboard`, `PATHS.project(slug)`,
+etc.). `tests/helpers/paths.ts` mirrors it for tests. Legacy root
+paths (`/dashboard`, `/projects/:slug`, ...) redirect via `<Navigate>`
+shims in `src/App.tsx` placed outside `RequireAuth`.
+
+| Category | Path pattern | Notes |
+|---|---|---|
+| **Gated (portal)** | `/portal/*` | CF Access + `RequireAuth` + `PortalLayout` chrome. 27 canonical routes. |
+| Dashboard | `/portal/dashboard` | — |
+| Tasks | `/portal/tasks`, `/portal/my-tasks`, `/portal/my-items` | `/portal/tasks` redirects → `/portal/my-tasks` |
+| Projects | `/portal/projects`, `/portal/projects/:slug` | — |
+| Data | `/portal/manuscripts`, `/portal/deadlines`, `/portal/deadline-cascade`, `/portal/ideas`, `/portal/decisions`, `/portal/grants`, `/portal/publications` | — |
+| Meetings | `/portal/meetings`, `/portal/meetings/:id`, `/portal/meeting-prep`, `/portal/meeting-notes` | — |
+| Calendar | `/portal/calendar` | — |
+| Analytics | `/portal/analytics`, `/portal/pi-analytics`, `/portal/personal` | — |
+| Team (portal) | `/portal/team/:slug`, `/portal/team/:slug/trajectory` | Phase 36c — keeps chrome for logged-in users |
+| Other | `/portal/settings`, `/portal/search`, `/portal/activity`, `/portal/narratives`, `/portal/session-history`, `/portal/ask`, `/portal/digest`, `/portal/network`, `/portal/pb-sector`, `/portal/mentee-milestones` | — |
+| **Public (marketing)** | `/`, `/team`, `/team/:slug`, `/team/:slug/trajectory`, `/nick`, `/nate`, `/publications`, `/publications/:id`, `/network`, `/contact`, `/pulse` | Layout chrome — no auth |
+| **Redirects** | `/dashboard`, `/projects/:slug`, ... → `/portal/...` | `<Navigate>` shims; outside `RequireAuth` so bookmarks bounce pre-auth |
+
+**API routes** (`/api/*`) are NOT gated by CF Access. Auth enforced
+server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
+
 ## D1 Tables (61 — live count via `/api/health`)
 
 | Table | Rows | Purpose |

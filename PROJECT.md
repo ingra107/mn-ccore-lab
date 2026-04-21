@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: Configure CF Access + 4 secrets per LAUNCH-CHECKLIST.md sections 0 + 1 for team launch. Round-1 and round-2 design handoffs are complete (37 of 38 tickets shipped; P2-14 Post-Award Milestones is a data-entry ask, not design — seed `grant_milestones` rows for Funded grants when ready).
+next_action: LIVE for team — URL ready to share. Phase 37 portal URL migration shipped + CF Access configured + launch secrets set 2026-04-21. Optional follow-up: sign up for Resend and set RESEND_API_KEY secret to activate daily digest email cron. Otherwise post-launch monitoring via /api/health + schema-drift CI.
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 
@@ -14,9 +14,9 @@ primary_folder: C:/Users/ingra107/mn-ccore-lab
 React 19 + Vite 8 + Tailwind v4 + Cloudflare Pages/D1 lab management
 platform for Nick's critical-care research group at UMN.
 
-**Live:** https://mn-ccore-lab.pages.dev  (PI-only; team not yet onboarded)
+**Live:** https://mn-ccore-lab.pages.dev  (LIVE for team — CF Access gates `/portal/*` via @umn.edu)
 **Repo:** https://github.com/ingra107/mn-ccore-lab  (720+ commits)
-**Current deploy:** `cfc00ab0.mn-ccore-lab.pages.dev` (2026-04-21, round-2 + motion close; HEAD `2802fb7` on main includes post-deploy schema-drift reconciliation + docs refresh)
+**Current deploy:** `c5e46630.mn-ccore-lab.pages.dev` (2026-04-21, Phase 37 portal URL migration + VITE_REQUIRE_AUTH client gate; HEAD `143c1db` on main)
 **Quality gate:** 🟢 GREEN — inspection 213/213 vs prod, smoke 27/27, deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
 
 ## 🚨 Read these FIRST every session
@@ -27,6 +27,45 @@ platform for Nick's critical-care research group at UMN.
 4. **`REFERENCE.md`** — API endpoints, D1 table list, conventions.
 5. **`CHANGELOG.md`** — top entry is the most recent phase; jump there for "what changed recently."
 6. **`docs/OBSERVABILITY.md`** — /api/health runbook + how to wire external uptime monitoring.
+
+## Phase 37 COMPLETE — Portal URL Migration + Team Launch (2026-04-21)
+
+**Status:** ✓ Shipped. Merged to `main` as `8600c32`; HEAD `143c1db`.
+Prod deploy: `c5e46630.mn-ccore-lab.pages.dev`. **Hub is LIVE for
+the team.**
+
+All 27 gated Hub routes moved under a `/portal/*` URL prefix so a
+single Cloudflare Access application destination
+(`mn-ccore-lab.pages.dev/portal/*`) gates the entire authenticated
+surface. Public marketing routes stay at root. `src/constants/paths.ts`
+is the single source of truth; `tests/helpers/paths.ts` mirrors it.
+Legacy root paths (`/dashboard`, `/projects/:slug`, ...) redirect via
+`<Navigate>` shims in `src/App.tsx` placed outside `RequireAuth` so
+bookmark bounces happen pre-auth. 14 subagent-driven tasks; 13 commits
+on `feat/portal-url-migration`.
+
+**CF Access configured** for `mn-ccore-lab.pages.dev/portal/*` with
+policies: `UMN Team` (@umn.edu), `Nick Only`
+(nicholas.ingraham@gmail.com), `Audit Service Token` (service auth).
+
+**Server secrets set in Cloudflare Pages:**
+`CF_ACCESS_TEAM_DOMAIN=peripheral-brain.cloudflareaccess.com`,
+`CF_ACCESS_AUD=47b7d48e...40139c`, `REQUIRE_AUTH=1`, `TEST_MODE_KEY`
+(32-char hex). JWT signature verification now ACTIVE via JWKS. Plus
+client-side `VITE_REQUIRE_AUTH=1` in `.env.production` — branded
+`RequireAuth` splash for unauthenticated users.
+
+**GitHub Actions secrets set** for schema-drift CI:
+`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`.
+
+**Audit Service Token** active (`mn-ccore-lab-audit`); local env vars
+`HUB_TEST_MODE_KEY`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`
+set on work + home.
+
+**Optional follow-up:** `RESEND_API_KEY` not yet set. Daily digest
+email cron is dormant until signed up. Skippable indefinitely.
+
+See `CHANGELOG.md` "Phase 37 — Portal URL Migration" for full record.
 
 ## Phase 36e — Claude Design Handoff Imported (2026-04-20)
 

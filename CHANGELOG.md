@@ -36,11 +36,31 @@ of the project.
 **Execution:** 14 tasks, subagent-driven. Each task = implementer
 subagent + spec compliance review + code quality review before moving
 on. 13 commits on `feat/portal-url-migration` merged to `main` as merge
-commit `8600c32`. Deployed prod: `cbb9093d.mn-ccore-lab.pages.dev`.
+commit `8600c32`. Initial deploy `cbb9093d.mn-ccore-lab.pages.dev`; final
+post-VITE_REQUIRE_AUTH deploy `c5e46630.mn-ccore-lab.pages.dev` (HEAD
+`143c1db`).
 
-**CF Access update (manual — Nick):** Change application destination
-from bare domain to `mn-ccore-lab.pages.dev/portal/*`. Public pages
-open up automatically.
+**CF Access + launch secrets (completed same day):**
+- App configured in Cloudflare dashboard → Zero Trust → Access →
+  Applications for `mn-ccore-lab.pages.dev/portal/*` with policies:
+  `UMN Team` (allow @umn.edu), `Nick Only`
+  (nicholas.ingraham@gmail.com), `Audit Service Token` (service auth
+  for audit scripts).
+- Secrets set via `wrangler pages secret put`:
+  `CF_ACCESS_TEAM_DOMAIN=peripheral-brain.cloudflareaccess.com`,
+  `CF_ACCESS_AUD=47b7d48e...40139c`, `REQUIRE_AUTH=1`,
+  `TEST_MODE_KEY=<32-char hex>`. JWT signature verification now active.
+- Client-side `VITE_REQUIRE_AUTH=1` added to `.env.production`
+  (triggers branded `RequireAuth` splash for unauthenticated users).
+- GitHub Actions secrets set for schema-drift CI:
+  `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`.
+- Audit Service Token (`mn-ccore-lab-audit`) active; local env vars
+  `HUB_TEST_MODE_KEY`, `CF_ACCESS_CLIENT_ID`,
+  `CF_ACCESS_CLIENT_SECRET` set on work + home.
+
+**Hub is LIVE for the team** as of 2026-04-21. Optional follow-up:
+`RESEND_API_KEY` (daily digest email cron) still pending — skippable
+indefinitely.
 
 **Follow-ups (not in this phase):**
 - 30-90 days post-launch: evaluate whether to drop redirect shims if
@@ -48,6 +68,8 @@ open up automatically.
 - Consider hoisting `/team/:slug` (public) + `/portal/team/:slug`
   (portal) into a single template that branches chrome via
   `useLocation`. Currently two distinct route registrations.
+- Sign up for Resend + set `RESEND_API_KEY` to activate daily
+  coordinator digest cron (`api/routes/digest-email.ts`).
 
 ## Schema-drift CI reconciliation (2026-04-21)
 
