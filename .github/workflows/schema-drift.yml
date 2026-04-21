@@ -101,15 +101,36 @@ jobs:
 
       - name: Build committed schema reference
         run: |
-          # api/schema.sql is the *canonical* state — every column added
-          # by a migration is also reflected here. Migration files
-          # (schema-v*.sql) are HISTORICAL archive of how prod got there;
-          # replaying them against a fresh DB produces "duplicate column"
-          # errors because schema.sql already has the additions inline.
-          # So we bootstrap from schema.sql alone, then dump the result
-          # for apples-to-apples comparison with prod's sqlite_master.
+          # api/schema.sql holds the canonical TABLE definitions (every
+          # column ever added is reflected inline). Indexes live in
+          # api/schema-v*.sql migration files. We:
+          #   1. Bootstrap a fresh SQLite from schema.sql (gets all tables)
+          #   2. Apply only CREATE [UNIQUE] INDEX statements from
+          #      migrations (skip ALTER TABLE ADD COLUMN — those would
+          #      duplicate schema.sql)
+          #   3. Dump the resulting schema for diff against prod
           rm -f committed.db
           sqlite3 committed.db < api/schema.sql
+          # Extract index statements from migrations and apply.
+          node -e "
+            const fs = require('fs'); const path = require('path');
+            const dir = 'api';
+            const mig = fs.readdirSync(dir)
+              .map(f => { const m = f.match(/^schema-v(\d+)(?:-([^.]+))?\.sql\$/); return m ? { file: f, version: +m[1], variant: m[2] ? 1 : 0 } : null })
+              .filter(Boolean)
+              .sort((a, b) => a.version - b.version || a.variant - b.variant)
+              .map(x => fs.readFileSync(path.join(dir, x.file), 'utf8'))
+              .join('\n');
+            // Strip block + line comments first, then split on ';'
+            const stripped = mig.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
+            const indexStmts = stripped.split(';')
+              .map(s => s.replace(/\s+/g, ' ').trim())
+              .filter(s => /^CREATE\s+(UNIQUE\s+)?INDEX\b/i.test(s))
+              .map(s => s + ';')
+              .join('\n');
+            fs.writeFileSync('committed-indexes.sql', indexStmts + '\n');
+          "
+          sqlite3 committed.db < committed-indexes.sql
           sqlite3 committed.db .schema > committed-raw.sql
           node -e "
             const { normalizeSql } = require('./normalize-sql.cjs');
