@@ -1,4 +1,5 @@
 # MN-CCORE Lab Hub — Changelog
+<!-- redeploy-trigger: 2026-04-21T16:13:38.085161 -->
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
