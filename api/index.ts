@@ -10,7 +10,7 @@ import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, hand
 
 // ── Route modules ──────────────────────────────────────────
 import { handleTasks, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
-import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote } from './routes/projects';
+import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
 import { handleTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
@@ -633,6 +633,7 @@ app.post('/api/meetings/:id/agenda', (c) => handleAddAgendaItem(c.req.param('id'
 
 // Milestones
 app.post('/api/milestones/:id/note', (c) => handleUpdateMilestoneNote(c.req.param('id'), R(c), USER(c), E(c)));
+app.post('/api/milestones/:id/complete', (c) => handleUpdateMilestoneCompletion(c.req.param('id'), R(c), USER(c), E(c)));
 
 // Commitments
 app.post('/api/commitments', (c) => handleCreateCommitment(R(c), E(c)));

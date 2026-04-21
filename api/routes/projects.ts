@@ -52,6 +52,39 @@ export async function handleGetMilestones(url: URL, env: Env): Promise<Response>
   return json({ data: result.results, count: result.results.length });
 }
 
+// POST /api/milestones/:id/complete — toggle milestone completion
+// 2026-04-20 Airtable Funeral P2-2: PWA syncMilestoneToAirtable flips
+// to this endpoint. Body: {completed: true|false}. Sets status +
+// completed_date atomically.
+export async function handleUpdateMilestoneCompletion(
+  id: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const body = await request.json() as { completed: boolean };
+
+  if (typeof body.completed !== 'boolean') {
+    return error('completed field (boolean) is required', 400);
+  }
+
+  const completedDate = body.completed ? new Date().toISOString().split('T')[0] : null;
+  const status = body.completed ? 'completed' : 'pending';
+
+  await env.DB.prepare(
+    'UPDATE milestones SET status = ?, completed_date = ? WHERE id = ?'
+  ).bind(status, completedDate, id).run();
+
+  const updated = await env.DB.prepare('SELECT * FROM milestones WHERE id = ?').bind(id).first();
+  if (!updated) {
+    return error('Milestone not found', 404);
+  }
+
+  await logActivity(env, 'milestone', `${body.completed ? 'Completed' : 'Reopened'} milestone`, user.email, id, 'milestone');
+
+  return json({ data: updated });
+}
+
 // POST /api/milestones/:id/note — add/update "Future Me" note
 export async function handleUpdateMilestoneNote(
   id: string,
