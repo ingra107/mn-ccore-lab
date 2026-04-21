@@ -27,6 +27,7 @@
 import { test, expect, type Page, type TestInfo } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
+import { P } from './helpers/paths'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
 
@@ -68,7 +69,7 @@ test.afterEach(async ({}, testInfo: TestInfo) => {
 // ─────────────────────────────────────────────────────────────────────────
 
 test('01-status-change-undo → inline status pill + undo toast', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   const firstRow = page.locator('[data-testid^="task-row-"]').first()
   await firstRow.waitFor({ state: 'visible' })
   await frame(page, '01-status-change-undo', 'a-before')
@@ -88,7 +89,7 @@ test('01-status-change-undo → inline status pill + undo toast', async ({ page 
 })
 
 test('02-detail-panel-slide-in → click task row opens detail panel', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   const firstRow = page.locator('[data-testid^="task-row-"]').first()
   await firstRow.waitFor({ state: 'visible' })
   await frame(page, '02-detail-panel', 'a-list-only')
@@ -104,7 +105,7 @@ test('02-detail-panel-slide-in → click task row opens detail panel', async ({ 
 })
 
 test('03-detail-panel-tabs → Overview → Notes → Comments → Activity → Details', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   const firstRow = page.locator('[data-testid^="task-row-"]').first()
   await firstRow.waitFor({ state: 'visible' })
   await firstRow.locator('div').filter({ hasText: /\S/ }).first().click({ force: true })
@@ -122,7 +123,7 @@ test('03-detail-panel-tabs → Overview → Notes → Comments → Activity → 
 test('04-swipe-to-dismiss → mobile touch gesture (Pixel 5 project only)', async ({ page, browserName }, testInfo) => {
   // Only meaningful under the mobile project — skip on desktop.
   if (testInfo.project.name !== 'mobile') test.skip()
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   const firstRow = page.locator('[data-testid^="task-row-"]').first()
   await firstRow.waitFor({ state: 'visible' })
   await firstRow.locator('div').filter({ hasText: /\S/ }).first().tap()
@@ -148,7 +149,7 @@ test('04-swipe-to-dismiss → mobile touch gesture (Pixel 5 project only)', asyn
 })
 
 test('05-hover-row-badges → hover reveals age + project badges', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   const firstRow = page.locator('[data-testid^="task-row-"]').first()
   await firstRow.waitFor({ state: 'visible' })
   await frame(page, '05-hover-badges', 'a-idle')
@@ -162,7 +163,7 @@ test('05-hover-row-badges → hover reveals age + project badges', async ({ page
 // ─────────────────────────────────────────────────────────────────────────
 
 test('06-cmd-k-palette → fuzzy search + quick filters', async ({ page }) => {
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.dashboard}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(500)
   await page.keyboard.press('Control+k')
   await page.waitForTimeout(400)
@@ -174,7 +175,7 @@ test('06-cmd-k-palette → fuzzy search + quick filters', async ({ page }) => {
 })
 
 test('07-assignee-picker → inline dropdown with team', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   const firstRow = page.locator('[data-testid^="task-row-"]').first()
   await firstRow.waitFor({ state: 'visible' })
   await frame(page, '07-assignee-picker', 'a-idle')
@@ -190,7 +191,7 @@ test('07-assignee-picker → inline dropdown with team', async ({ page }) => {
 })
 
 test('08-date-picker → relative presets + calendar', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   const firstRow = page.locator('[data-testid^="task-row-"]').first()
   await firstRow.waitFor({ state: 'visible' })
   await frame(page, '08-date-picker', 'a-idle')
@@ -203,7 +204,7 @@ test('08-date-picker → relative presets + calendar', async ({ page }) => {
 })
 
 test('09-subtask-expand → inline expand + add', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   const firstRow = page.locator('[data-testid^="task-row-"]').first()
   await firstRow.waitFor({ state: 'visible' })
   await frame(page, '09-subtasks', 'a-collapsed')
@@ -216,7 +217,7 @@ test('09-subtask-expand → inline expand + add', async ({ page }) => {
 })
 
 test('10-board-drag → Kanban column drag', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks?view=board`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}?view=board`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
   await frame(page, '10-board-drag', 'a-board-loaded')
   // Synthesize a drag from the first card in the first column to the
@@ -239,7 +240,7 @@ test('10-board-drag → Kanban column drag', async ({ page }) => {
 })
 
 test('11-hermes-mention → @hermes in comment gets gold badge', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   const firstRow = page.locator('[data-testid^="task-row-"]').first()
   await firstRow.waitFor({ state: 'visible' })
   await firstRow.locator('div').filter({ hasText: /\S/ }).first().click({ force: true })
@@ -263,7 +264,7 @@ test('11-hermes-mention → @hermes in comment gets gold badge', async ({ page }
 // ─────────────────────────────────────────────────────────────────────────
 
 test('12-pulse-kiosk → 20s scene rotation', async ({ page }) => {
-  await page.goto(`${BASE}/pulse`, { waitUntil: 'domcontentloaded' })
+  await page.goto(`${BASE}${P.pulse}`, { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(500)
   for (let i = 0; i < 6; i++) {
     await frame(page, '12-pulse-kiosk', `scene-${i + 1}`)
@@ -272,7 +273,7 @@ test('12-pulse-kiosk → 20s scene rotation', async ({ page }) => {
 })
 
 test('13-dashboard-drag-reorder → customize toggle + drag', async ({ page }) => {
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.dashboard}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(500)
   await frame(page, '13-dashboard-drag', 'a-idle')
   // Toggle customize mode — accessible via a button labelled "Customize"
@@ -298,7 +299,7 @@ test('13-dashboard-drag-reorder → customize toggle + drag', async ({ page }) =
 })
 
 test('14-keyboard-nav → J/K/Space/Enter on task list', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(600)
   await frame(page, '14-keyboard-nav', 'a-idle')
   await page.keyboard.press('j')
@@ -315,7 +316,7 @@ test('14-keyboard-nav → J/K/Space/Enter on task list', async ({ page }) => {
 })
 
 test('15-quick-add-nlp → Ctrl+N NLP token parsing', async ({ page }) => {
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.dashboard}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(500)
   await page.keyboard.press('Control+n')
   await page.waitForTimeout(400)

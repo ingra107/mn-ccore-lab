@@ -2,6 +2,7 @@
 import { test, Page } from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
+import { P } from './helpers/paths'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
 const TS = process.env.AUDIT_TS || new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 12)
@@ -27,7 +28,7 @@ test('deep desktop interactions', async ({ page }) => {
   page.on('pageerror', (e) => log(`[pageerror] ${e.message}`))
 
   // 1) Cmd+K palette — try multiple ways
-  await page.goto(`${BASE}/dashboard`)
+  await page.goto(`${BASE}${P.dashboard}`)
   await page.waitForTimeout(2000)
   await page.keyboard.press('Control+k')
   await page.waitForTimeout(400)
@@ -58,7 +59,7 @@ test('deep desktop interactions', async ({ page }) => {
   await page.keyboard.press('Escape')
 
   // 2) Tasks page — click a task title, open detail panel
-  await page.goto(`${BASE}/tasks`)
+  await page.goto(`${BASE}${P.myTasks}`)
   await page.waitForTimeout(2500)
   await page.screenshot({ path: path.join(OUT, '02-tasks-loaded.png') })
 
@@ -81,7 +82,7 @@ test('deep desktop interactions', async ({ page }) => {
   }
 
   // 3) Inline edit — try clicking a Status pill
-  await page.goto(`${BASE}/tasks`)
+  await page.goto(`${BASE}${P.myTasks}`)
   await page.waitForTimeout(2500)
   const statusPill = page
     .locator('button, [role="button"]')
@@ -98,7 +99,7 @@ test('deep desktop interactions', async ({ page }) => {
   }
 
   // 4) Quick capture box — does it autosave? does it require explicit click?
-  await page.goto(`${BASE}/dashboard`)
+  await page.goto(`${BASE}${P.dashboard}`)
   await page.waitForTimeout(2000)
   const quickAdd = page.locator('input[placeholder*="Quick capture" i]').first()
   if (await quickAdd.isVisible().catch(() => false)) {
@@ -121,7 +122,7 @@ test('deep desktop interactions', async ({ page }) => {
   }
 
   // 5) Visit a project detail page
-  await page.goto(`${BASE}/projects`)
+  await page.goto(`${BASE}${P.projects}`)
   await page.waitForTimeout(2500)
   const projectLink = page.locator('a[href*="/projects/"]').first()
   if (await projectLink.isVisible().catch(() => false)) {
@@ -135,7 +136,7 @@ test('deep desktop interactions', async ({ page }) => {
   }
 
   // 6) Open a meeting detail page
-  await page.goto(`${BASE}/meetings`)
+  await page.goto(`${BASE}${P.meetings}`)
   await page.waitForTimeout(2500)
   const meetingLink = page.locator('a[href*="/meeting"]').first()
   if (await meetingLink.isVisible().catch(() => false)) {
@@ -147,7 +148,7 @@ test('deep desktop interactions', async ({ page }) => {
   }
 
   // 7) Check what % of /ideas rows are test_delete_*
-  await page.goto(`${BASE}/ideas`)
+  await page.goto(`${BASE}${P.ideas}`)
   await page.waitForTimeout(2500)
   const ideaRowsAll = await page.locator('tr, [role="row"]').count()
   const ideaTestRows = await page.getByText(/test_delete/i).count()
@@ -155,7 +156,7 @@ test('deep desktop interactions', async ({ page }) => {
   await page.screenshot({ path: path.join(OUT, '09-ideas.png'), fullPage: true })
 
   // 8) Same for decisions
-  await page.goto(`${BASE}/decisions`)
+  await page.goto(`${BASE}${P.decisions}`)
   await page.waitForTimeout(2500)
   const decRowsAll = await page.locator('tr, [role="row"]').count()
   const decTestRows = await page.getByText(/test_delete/i).count()
@@ -163,7 +164,7 @@ test('deep desktop interactions', async ({ page }) => {
   await page.screenshot({ path: path.join(OUT, '10-decisions.png'), fullPage: true })
 
   // 9) Calendar — what date is "today" highlighted on, and how much test_delete
-  await page.goto(`${BASE}/calendar`)
+  await page.goto(`${BASE}${P.calendar}`)
   await page.waitForTimeout(2500)
   const todayCell = await page
     .locator('[aria-current="date"], [class*="today" i]')
@@ -176,7 +177,7 @@ test('deep desktop interactions', async ({ page }) => {
   await page.screenshot({ path: path.join(OUT, '11-calendar.png'), fullPage: true })
 
   // 10) /my-tasks vs /tasks parity check
-  await page.goto(`${BASE}/my-tasks`)
+  await page.goto(`${BASE}${P.myTasks}`)
   await page.waitForTimeout(2500)
   const myUrl = page.url()
   const myH = await page
@@ -193,7 +194,7 @@ test('deep desktop interactions', async ({ page }) => {
   await page.screenshot({ path: path.join(OUT, '12-my-tasks.png') })
 
   // 11) Check that GROUP BY dropdown actually opens on /tasks
-  await page.goto(`${BASE}/tasks`)
+  await page.goto(`${BASE}${P.myTasks}`)
   await page.waitForTimeout(2000)
   const groupBy = page.locator('button, [role="button"]').filter({ hasText: /Group by/i }).first()
   if (await groupBy.isVisible().catch(() => false)) {

@@ -1,4 +1,5 @@
 import { test, expect, devices } from '@playwright/test';
+import { P } from './helpers/paths';
 
 // Post-deploy mobile smoke. Verifies:
 //   1. Tasks page loads on mobile viewport without JS errors (confirms the
@@ -19,7 +20,7 @@ test('mobile: tasks page loads without JS errors', async ({ page }) => {
     if (r.status() >= 500) failed5xx.push(`${r.status()} ${r.url()}`);
   });
 
-  await page.goto('https://mn-ccore-lab.pages.dev/tasks', { waitUntil: 'networkidle' });
+  await page.goto(`https://mn-ccore-lab.pages.dev${P.myTasks}`, { waitUntil: 'networkidle' });
 
   // At least one task row rendered — confirms /api/tasks returned data.
   const firstRow = page.locator('[data-testid^="task-row-"]').first();
@@ -33,7 +34,7 @@ test('mobile: clicking task title opens TaskDetailPanel', async ({ page }) => {
   const jsErrors: string[] = [];
   page.on('pageerror', (err) => jsErrors.push(err.message));
 
-  await page.goto('https://mn-ccore-lab.pages.dev/tasks', { waitUntil: 'networkidle' });
+  await page.goto(`https://mn-ccore-lab.pages.dev${P.myTasks}`, { waitUntil: 'networkidle' });
   const firstRow = page.locator('[data-testid^="task-row-"]').first();
   await firstRow.waitFor({ state: 'visible', timeout: 15000 });
 

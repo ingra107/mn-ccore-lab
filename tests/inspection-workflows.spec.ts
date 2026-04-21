@@ -19,6 +19,7 @@
  */
 import { test, expect, type Page } from '@playwright/test'
 import { cleanupTestTasks } from './test-cleanup'
+import { P } from './helpers/paths'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
 
@@ -65,7 +66,7 @@ async function getFirstMeetingId(request: any): Promise<string | null> {
 
 test.describe('ROUTE — Missing portal pages', () => {
   test('ROUTE: Deadline Cascade (/deadline-cascade) renders', async ({ page }) => {
-    const errors = await loadPage(page, '/deadline-cascade')
+    const errors = await loadPage(page, P.deadlineCascade)
     expect(errors).toEqual([])
     const crashed = await page.locator('text=Something went wrong').count()
     expect(crashed).toBe(0)
@@ -73,7 +74,7 @@ test.describe('ROUTE — Missing portal pages', () => {
   })
 
   test('ROUTE: My Items (/my-items) renders', async ({ page }) => {
-    const errors = await loadPage(page, '/my-items')
+    const errors = await loadPage(page, P.myItems)
     expect(errors).toEqual([])
     const crashed = await page.locator('text=Something went wrong').count()
     expect(crashed).toBe(0)
@@ -81,7 +82,7 @@ test.describe('ROUTE — Missing portal pages', () => {
   })
 
   test('ROUTE: PB Sector / Planner (/pb) renders', async ({ page }) => {
-    const errors = await loadPage(page, '/pb')
+    const errors = await loadPage(page, P.pb)
     expect(errors).toEqual([])
     const crashed = await page.locator('text=Something went wrong').count()
     expect(crashed).toBe(0)
@@ -89,13 +90,13 @@ test.describe('ROUTE — Missing portal pages', () => {
   })
 
   test('ROUTE: Pulse / Kiosk (/pulse) renders', async ({ page }) => {
-    const errors = await loadPage(page, '/pulse')
+    const errors = await loadPage(page, P.pulse)
     expect(errors).toEqual([])
     await page.screenshot({ path: 'review/route-pulse.png' })
   })
 
   test('ROUTE: Collaboration Network (/network) renders', async ({ page }) => {
-    const errors = await loadPage(page, '/network')
+    const errors = await loadPage(page, P.network)
     expect(errors).toEqual([])
     await page.screenshot({ path: 'review/route-network.png' })
   })
@@ -104,7 +105,7 @@ test.describe('ROUTE — Missing portal pages', () => {
     const pubs = await (await request.get(`${BASE}/api/publications`)).json()
     const id = pubs.data?.[0]?.id
     if (!id) { test.skip(); return }
-    const errors = await loadPage(page, `/publications/${id}`)
+    const errors = await loadPage(page, P.publication(id))
     expect(errors).toEqual([])
     await page.screenshot({ path: 'review/route-publication-detail.png' })
   })
@@ -113,7 +114,7 @@ test.describe('ROUTE — Missing portal pages', () => {
 
   test('ROUTE: Trainee Trajectory (/team/:slug/trajectory) renders', async ({ page }) => {
     // Use a known trainee slug, fallback to nick
-    const errors = await loadPage(page, '/team/nick-ingraham/trajectory')
+    const errors = await loadPage(page, `/team/nick-ingraham/trajectory`)
     expect(errors).toEqual([])
     await page.screenshot({ path: 'review/route-trajectory.png' })
   })
@@ -121,7 +122,7 @@ test.describe('ROUTE — Missing portal pages', () => {
   test('ROUTE: Meeting Prep (/meetings/:id/prep) renders', async ({ page, request }) => {
     const id = await getFirstMeetingId(request)
     if (!id) { test.skip(); return }
-    const errors = await loadPage(page, `/meetings/${id}/prep`)
+    const errors = await loadPage(page, P.meetingPrep(id))
     expect(errors).toEqual([])
     await page.screenshot({ path: 'review/route-meeting-prep.png' })
   })
@@ -346,7 +347,7 @@ test.describe('FEATURE — G+key navigation shortcuts', () => {
 
   for (const [key, expectedPath, name] of gNavTests) {
     test(`FEATURE: G then ${key.toUpperCase()} navigates to ${name}`, async ({ page }) => {
-      await loadPage(page, '/dashboard')
+      await loadPage(page, P.dashboard)
       await page.keyboard.press('g')
       await page.waitForTimeout(200)
       await page.keyboard.press(key)
@@ -358,7 +359,7 @@ test.describe('FEATURE — G+key navigation shortcuts', () => {
 
 test.describe('FEATURE — Space bar peek overlay', () => {
   test('FEATURE: Space opens peek overlay on focused task', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Select first task with J
     await page.keyboard.press('j')
     await page.waitForTimeout(300)
@@ -377,7 +378,7 @@ test.describe('FEATURE — Space bar peek overlay', () => {
 
 test.describe('FEATURE — Subtask expand/collapse with arrow keys', () => {
   test('FEATURE: → expands subtasks, ← collapses', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Focus first task
     await page.keyboard.press('j')
     await page.waitForTimeout(300)
@@ -408,7 +409,7 @@ test.describe('FEATURE — Subtask expand/collapse with arrow keys', () => {
 
 test.describe('FEATURE — Bulk selection and actions', () => {
   test('FEATURE: X key toggles task selection, toolbar appears', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Select first task
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
@@ -438,7 +439,7 @@ test.describe('FEATURE — Bulk selection and actions', () => {
 
 test.describe('FEATURE — Snooze functionality', () => {
   test('FEATURE: Z key or context menu triggers snooze', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Focus first task
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
@@ -460,7 +461,7 @@ test.describe('FEATURE — Snooze functionality', () => {
 
 test.describe('FEATURE — Right-click context menu', () => {
   test('FEATURE: Right-click on task row shows context menu', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Find a task row
     const row = page.locator('[class*="row"], [class*="Row"], tr').filter({ hasText: /\w{3,}/ }).first()
     if (await row.isVisible().catch(() => false)) {
@@ -485,7 +486,7 @@ test.describe('FEATURE — Right-click context menu', () => {
 
 test.describe('FEATURE — Blocker flagging', () => {
   test('FEATURE: B key toggles blocker on focused task', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
     await page.keyboard.press('b')
@@ -501,7 +502,7 @@ test.describe('FEATURE — Blocker flagging', () => {
 
 test.describe('FEATURE — S key status cycle', () => {
   test('FEATURE: S key cycles task status (todo → in_progress → done)', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
 
@@ -525,7 +526,7 @@ test.describe('FEATURE — S key status cycle', () => {
 
 test.describe('FEATURE — Sidebar collapse', () => {
   test('FEATURE: [ key collapses sidebar, [ again expands', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const sidebar = page.locator('nav').first()
     const beforeWidth = await sidebar.evaluate(el => el.getBoundingClientRect().width).catch(() => 0)
 
@@ -549,7 +550,7 @@ test.describe('FEATURE — Sidebar collapse', () => {
 
 test.describe('FEATURE — Notification bell', () => {
   test('FEATURE: Notification bell click opens dropdown', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const bell = page.locator('[class*="notification"], [class*="bell"], button[aria-label*="notif"]').first()
     if (await bell.isVisible().catch(() => false)) {
       await bell.click()
@@ -568,7 +569,7 @@ test.describe('FEATURE — Notification bell', () => {
 
 test.describe('FEATURE — Favicon badge', () => {
   test('FEATURE: Favicon changes with notification count', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const favicon = await page.evaluate(() => {
       const link = document.querySelector('link[rel="icon"]') as HTMLLinkElement
       return link?.href ?? null
@@ -582,7 +583,7 @@ test.describe('FEATURE — Favicon badge', () => {
 
 test.describe('FEATURE — Dashboard customize', () => {
   test('FEATURE: Customize button opens card selection', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const customizeBtn = page.locator('button:has-text("Customize")')
     if (await customizeBtn.isVisible().catch(() => false)) {
       await customizeBtn.click()
@@ -601,7 +602,7 @@ test.describe('FEATURE — Dashboard customize', () => {
 
 test.describe('FEATURE — Welcome banner', () => {
   test('FEATURE: Welcome banner shows and can be dismissed', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const banner = page.locator('[class*="welcome"], [class*="Welcome"]').first()
     const bannerVisible = await banner.isVisible().catch(() => false)
     console.log(`Welcome banner visible: ${bannerVisible}`)
@@ -620,7 +621,7 @@ test.describe('FEATURE — Welcome banner', () => {
 
 test.describe('FEATURE — CommandPalette quick actions', () => {
   test('FEATURE: Cmd+K shows contextual actions on Tasks page', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.keyboard.press('Control+k')
     await page.waitForTimeout(500)
 
@@ -639,7 +640,7 @@ test.describe('FEATURE — CommandPalette quick actions', () => {
   })
 
   test('FEATURE: Cmd+K "Create Task" action opens modal', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     await page.keyboard.press('Control+k')
     await page.waitForTimeout(500)
     await page.keyboard.type('Create Task', { delay: 30 })
@@ -657,7 +658,7 @@ test.describe('FEATURE — CommandPalette quick actions', () => {
 
 test.describe('FEATURE — @mention autocomplete', () => {
   test('FEATURE: @mention shows team member suggestions', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Open task detail
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
@@ -690,7 +691,7 @@ test.describe('FEATURE — @mention autocomplete', () => {
 
 test.describe('FEATURE — Inline date picker', () => {
   test('FEATURE: Click due date shows date picker with presets', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Find a due date cell
     const dateCell = page.locator('[class*="date"], button:has-text("Apr"), button:has-text("May"), button:has-text("Mar")').first()
     if (await dateCell.isVisible().catch(() => false)) {
@@ -711,7 +712,7 @@ test.describe('FEATURE — Inline date picker', () => {
 
 test.describe('FEATURE — Inline assignee picker', () => {
   test('FEATURE: Click assignee shows team member dropdown', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Find an assignee avatar/cell
     const assigneeCell = page.locator('[class*="assignee"], [class*="avatar"]').first()
     if (await assigneeCell.isVisible().catch(() => false)) {
@@ -732,7 +733,7 @@ test.describe('FEATURE — Meeting NLP quick-add', () => {
   test('FEATURE: NLP quick-add parses @person, priority, date on meeting page', async ({ page, request }) => {
     const meetingId = await getFirstMeetingId(request)
     if (!meetingId) { test.skip(); return }
-    await loadPage(page, `/meetings/${meetingId}`)
+    await loadPage(page, P.meeting(meetingId))
 
     // Find the NLP quick-add input
     const nlpInput = page.locator('input[placeholder*="quick"], input[placeholder*="@"], input[placeholder*="action"]').first()
@@ -759,7 +760,7 @@ test.describe('FEATURE — Meeting NLP quick-add', () => {
 
 test.describe('FEATURE — Calendar view modes', () => {
   test('FEATURE: Calendar Week view renders', async ({ page }) => {
-    await loadPage(page, '/calendar')
+    await loadPage(page, P.calendar)
     const weekBtn = page.getByRole('button', { name: /^week$/i })
     await weekBtn.click()
     await page.waitForTimeout(500)
@@ -767,7 +768,7 @@ test.describe('FEATURE — Calendar view modes', () => {
   })
 
   test('FEATURE: Calendar Day view renders', async ({ page }) => {
-    await loadPage(page, '/calendar')
+    await loadPage(page, P.calendar)
     const dayBtn = page.getByRole('button', { name: /^day$/i })
     await dayBtn.click()
     await page.waitForTimeout(500)
@@ -775,7 +776,7 @@ test.describe('FEATURE — Calendar view modes', () => {
   })
 
   test('FEATURE: Calendar Agenda view renders', async ({ page }) => {
-    await loadPage(page, '/calendar')
+    await loadPage(page, P.calendar)
     const agendaBtn = page.getByRole('button', { name: /agenda/i })
     if (await agendaBtn.isVisible().catch(() => false)) {
       await agendaBtn.click()
@@ -785,7 +786,7 @@ test.describe('FEATURE — Calendar view modes', () => {
   })
 
   test('FEATURE: Calendar T key jumps to today', async ({ page }) => {
-    await loadPage(page, '/calendar')
+    await loadPage(page, P.calendar)
     // Navigate away from today
     const prevBtn = page.locator('button:has-text("‹"), button[aria-label*="previous"]').first()
     if (await prevBtn.isVisible().catch(() => false)) {
@@ -802,7 +803,7 @@ test.describe('FEATURE — Calendar view modes', () => {
 
 test.describe('FEATURE — Saved views', () => {
   test('FEATURE: Saved views selector exists on Tasks page', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const savedViews = page.locator('text=Saved Views, [class*="saved-view"], button:has-text("Views")')
     const visible = await savedViews.first().isVisible().catch(() => false)
     console.log(`Saved views control: ${visible}`)
@@ -811,7 +812,7 @@ test.describe('FEATURE — Saved views', () => {
 
 test.describe('FEATURE — Rich text editor', () => {
   test('FEATURE: Task description uses Tiptap rich text editor', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
     await page.keyboard.press('Enter')
@@ -837,7 +838,7 @@ test.describe('FEATURE — Copy/Export buttons', () => {
   test('FEATURE: Copy Summary on Meeting Detail', async ({ page, request }) => {
     const meetingId = await getFirstMeetingId(request)
     if (!meetingId) { test.skip(); return }
-    await loadPage(page, `/meetings/${meetingId}`)
+    await loadPage(page, P.meeting(meetingId))
     const copyBtn = page.locator('button:has-text("Copy Summary"), button:has-text("Copy")')
     const visible = await copyBtn.first().isVisible().catch(() => false)
     console.log(`Copy Summary button: ${visible}`)
@@ -851,7 +852,7 @@ test.describe('FEATURE — Copy/Export buttons', () => {
   })
 
   test('FEATURE: Print button on PI Analytics', async ({ page }) => {
-    await loadPage(page, '/pi/analytics')
+    await loadPage(page, P.piAnalytics)
     const printBtn = page.locator('button:has-text("Print")')
     const visible = await printBtn.isVisible().catch(() => false)
     console.log(`Print on PI Analytics: ${visible}`)
@@ -860,7 +861,7 @@ test.describe('FEATURE — Copy/Export buttons', () => {
 
 test.describe('FEATURE — Onboarding checklist', () => {
   test('FEATURE: Personal Hub shows onboarding progress', async ({ page }) => {
-    await loadPage(page, '/personal')
+    await loadPage(page, P.personal)
     const onboarding = page.locator('text=onboarding, text=Getting Started, text=Checklist').first()
     const visible = await onboarding.isVisible({ timeout: 3000 }).catch(() => false)
     console.log(`Onboarding section visible: ${visible}`)
@@ -870,7 +871,7 @@ test.describe('FEATURE — Onboarding checklist', () => {
 
 test.describe('FEATURE — Ideas voting bounce animation', () => {
   test('FEATURE: Vote button works and shows count', async ({ page }) => {
-    await loadPage(page, '/ideas')
+    await loadPage(page, P.ideas)
     const voteBtn = page.locator('button:has(svg), button[aria-label*="vote"], button[class*="vote"]').first()
     if (await voteBtn.isVisible().catch(() => false)) {
       const beforeText = await voteBtn.textContent()
@@ -884,7 +885,7 @@ test.describe('FEATURE — Ideas voting bounce animation', () => {
 
 test.describe('FEATURE — Decision tags and filtering', () => {
   test('FEATURE: Decision tags filter the list', async ({ page }) => {
-    await loadPage(page, '/decisions')
+    await loadPage(page, P.decisions)
     // Look for tag pills
     const tagPill = page.locator('[class*="tag"], [class*="chip"], button[class*="filter"]').filter({ hasText: /\w+/ }).first()
     if (await tagPill.isVisible().catch(() => false)) {
@@ -897,7 +898,7 @@ test.describe('FEATURE — Decision tags and filtering', () => {
 
 test.describe('FEATURE — Project keyboard shortcuts', () => {
   test('FEATURE: P key pins/unpins project on Projects page', async ({ page }) => {
-    await loadPage(page, '/projects')
+    await loadPage(page, P.projects)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
     await page.keyboard.press('p')
@@ -911,7 +912,7 @@ test.describe('FEATURE — Project keyboard shortcuts', () => {
 
 test.describe('FEATURE — Settings interactions', () => {
   test('FEATURE: Settings reset dashboard + clear searches', async ({ page }) => {
-    await loadPage(page, '/settings')
+    await loadPage(page, P.settings)
     const resetBtn = page.locator('button:has-text("Reset Dashboard")')
     const clearBtn = page.locator('button:has-text("Clear Searches"), button:has-text("Clear")')
     console.log(`Reset Dashboard: ${await resetBtn.isVisible().catch(() => false)}`)
@@ -926,7 +927,7 @@ test.describe('FEATURE — Settings interactions', () => {
 
 test.describe('JOURNEY — Full task lifecycle', () => {
   test('JOURNEY: Create task → assign → set date → add subtask → status cycle → complete → reopen', async ({ page, request }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
 
     // 1. Create task via API (faster than UI for setup)
     const create = await request.post(`${BASE}/api/tasks`, {
@@ -999,14 +1000,14 @@ test.describe('JOURNEY — Meeting lifecycle', () => {
     expect([200, 201]).toContain(agenda.status())
 
     // 3. Navigate to meeting detail in browser
-    await loadPage(page, `/meetings/${meetingId}`)
+    await loadPage(page, P.meeting(meetingId))
     await page.waitForTimeout(1000)
     const errors = await page.locator('text=Something went wrong').count()
     expect(errors).toBe(0)
     await page.screenshot({ path: 'review/journey-meeting-lifecycle.png' })
 
     // 4. Check prep view
-    await page.goto(`${BASE}/meetings/${meetingId}/prep`, { waitUntil: 'networkidle', timeout: 15000 })
+    await page.goto(`${BASE}${P.meetingPrep(meetingId)}`, { waitUntil: 'networkidle', timeout: 15000 })
     await page.waitForTimeout(1000)
     await page.screenshot({ path: 'review/journey-meeting-prep.png' })
   })
@@ -1014,7 +1015,7 @@ test.describe('JOURNEY — Meeting lifecycle', () => {
 
 test.describe('JOURNEY — Project exploration', () => {
   test('JOURNEY: Projects list → filter by category → click project → each tab → post update', async ({ page, request }) => {
-    await loadPage(page, '/projects')
+    await loadPage(page, P.projects)
 
     // 1. Filter by CLIF
     const clifFilter = page.locator('button:has-text("CLIF")')
@@ -1045,7 +1046,7 @@ test.describe('JOURNEY — Project exploration', () => {
 
 test.describe('JOURNEY — Research digest daily flow', () => {
   test('JOURNEY: Open digest → read dates → filter topic → expand abstract → bookmark → dismiss → check counts', async ({ page }) => {
-    await loadPage(page, '/digest')
+    await loadPage(page, P.digest)
 
     // 1. Check reading progress bar
     const progressBar = page.locator('[class*="progress"], [role="progressbar"]').first()
@@ -1079,7 +1080,7 @@ test.describe('JOURNEY — Research digest daily flow', () => {
 
 test.describe('JOURNEY — Manuscript pipeline view', () => {
   test('JOURNEY: Manuscripts → pipeline view → click stage → inline status edit', async ({ page }) => {
-    await loadPage(page, '/manuscripts')
+    await loadPage(page, P.manuscripts)
 
     // 1. Check stage dots
     const stageDots = page.locator('[class*="dot"], [class*="stage"]')
@@ -1106,7 +1107,7 @@ test.describe('JOURNEY — Manuscript pipeline view', () => {
 
 test.describe('JOURNEY — Analytics deep dive', () => {
   test('JOURNEY: Analytics → read metrics → scroll charts → copy report', async ({ page }) => {
-    await loadPage(page, '/analytics')
+    await loadPage(page, P.analytics)
 
     // 1. Read metric cards
     const metricCards = page.locator('[class*="metric"], [class*="card"]').filter({ hasText: /\d+/ })
@@ -1134,7 +1135,7 @@ test.describe('JOURNEY — Analytics deep dive', () => {
 
 test.describe('JOURNEY — Search deep dive', () => {
   test('JOURNEY: Search → type query → filter by type → click result → navigate', async ({ page }) => {
-    await loadPage(page, '/search')
+    await loadPage(page, P.search)
 
     // 1. Type query
     const input = page.locator('input[placeholder*="Search"]').first()
@@ -1172,7 +1173,7 @@ test.describe('JOURNEY — Search deep dive', () => {
 
 test.describe('JOURNEY — Grants timeline interaction', () => {
   test('JOURNEY: Grants page → see timeline → check mechanism badges → legend', async ({ page }) => {
-    await loadPage(page, '/grants')
+    await loadPage(page, P.grants)
 
     // 1. SVG timeline should render
     const svg = page.locator('svg').first()
@@ -1200,7 +1201,7 @@ test.describe('JOURNEY — Grants timeline interaction', () => {
 
 test.describe('JOURNEY — Mentee milestones', () => {
   test('JOURNEY: Mentee page → filter by person → filter by type → see cards', async ({ page }) => {
-    await loadPage(page, '/mentee-milestones')
+    await loadPage(page, P.menteeMilestones)
 
     // Check for filters
     const menteeFilter = page.locator('select, [class*="filter"]').first()
@@ -1216,7 +1217,7 @@ test.describe('JOURNEY — Mentee milestones', () => {
 
 test.describe('JOURNEY — My Tasks daily triage', () => {
   test('JOURNEY: MyTasks → Overdue pill → see overdue tasks → click one → change status → undo', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
 
     // 1. Click Overdue filter
     const overdueBtn = page.locator('button:has-text("Overdue")')
@@ -1245,7 +1246,7 @@ test.describe('JOURNEY — My Tasks daily triage', () => {
 
 test.describe('JOURNEY — PB Sector planner flow', () => {
   test('JOURNEY: PB Sector → star task → focus tasks → pomodoro → reflection', async ({ page }) => {
-    await loadPage(page, '/pb')
+    await loadPage(page, P.pb)
     await page.waitForTimeout(1000)
 
     // 1. Check main planner sections
@@ -1269,7 +1270,7 @@ test.describe('JOURNEY — PB Sector planner flow', () => {
 
 test.describe('JOURNEY — Team member exploration', () => {
   test('JOURNEY: Team page → click member → see profile → cv link → trajectory link', async ({ page }) => {
-    await loadPage(page, '/team')
+    await loadPage(page, P.publicTeam)
 
     // Click Nick's card
     const nickCard = page.locator('a[href*="nick-ingraham"], text=Nick Ingraham').first()
@@ -1296,7 +1297,7 @@ test.describe('JOURNEY — Team member exploration', () => {
 
 test.describe('JOURNEY — Publications library', () => {
   test('JOURNEY: Publications → scroll journal covers → search → year filter', async ({ page }) => {
-    await loadPage(page, '/publications')
+    await loadPage(page, P.publications)
 
     // 1. Journal cover cards (horizontal scroll)
     const covers = page.locator('[class*="cover"], [class*="journal"]')
@@ -1324,7 +1325,7 @@ test.describe('JOURNEY — Publications library', () => {
 
 test.describe('JOURNEY — Activity feed', () => {
   test('JOURNEY: Activity → filter by person → filter by type → scroll', async ({ page }) => {
-    await loadPage(page, '/activity')
+    await loadPage(page, P.activity)
 
     // 1. Person filter
     const personFilter = page.locator('select, [class*="filter"]').filter({ hasText: /Nick|All|Person/ }).first()
@@ -1345,7 +1346,7 @@ test.describe('JOURNEY — Activity feed', () => {
 
 test.describe('JOURNEY — Deadline cascade', () => {
   test('JOURNEY: Deadline cascade → dependency graph → impact view', async ({ page }) => {
-    await loadPage(page, '/deadline-cascade')
+    await loadPage(page, P.deadlineCascade)
     await page.waitForTimeout(1000)
 
     // Check for cascade visualization
@@ -1406,7 +1407,7 @@ test.describe('EDGE — Task with no due date', () => {
     expect(res.status()).toBe(201)
 
     // Load tasks page and verify no crash
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const errors = await page.locator('text=Something went wrong').count()
     expect(errors).toBe(0)
   })
@@ -1414,7 +1415,7 @@ test.describe('EDGE — Task with no due date', () => {
 
 test.describe('EDGE — Empty API responses', () => {
   test('EDGE: Search with no results', async ({ page }) => {
-    await loadPage(page, '/search')
+    await loadPage(page, P.search)
     const input = page.locator('input[placeholder*="Search"]').first()
     await input.fill('zzzzzzzzzznonexistent12345')
     await page.waitForTimeout(1000)
@@ -1426,7 +1427,7 @@ test.describe('EDGE — Empty API responses', () => {
   })
 
   test('EDGE: Digest with no papers for topic', async ({ page }) => {
-    await loadPage(page, '/digest')
+    await loadPage(page, P.digest)
     // Search for nonexistent topic
     const searchInput = page.locator('input[placeholder*="Search"], input[placeholder*="search"]').first()
     if (await searchInput.isVisible().catch(() => false)) {
@@ -1440,7 +1441,7 @@ test.describe('EDGE — Empty API responses', () => {
 
 test.describe('EDGE — 404 and invalid routes', () => {
   test('EDGE: Invalid project slug shows error or 404', async ({ page }) => {
-    const errors = await loadPage(page, '/projects/nonexistent-slug-12345')
+    const errors = await loadPage(page, P.project('nonexistent-slug-12345'))
     // Should show "not found" or redirect, not crash
     const crashed = await page.locator('text=Something went wrong').count()
     // Acceptable: 0 (graceful) or 1 (error boundary catches it)
@@ -1449,7 +1450,7 @@ test.describe('EDGE — 404 and invalid routes', () => {
   })
 
   test('EDGE: Invalid meeting ID shows error or 404', async ({ page }) => {
-    await loadPage(page, '/meetings/nonexistent-id-12345')
+    await loadPage(page, P.meeting('nonexistent-id-12345'))
     const crashed = await page.locator('text=Something went wrong').count()
     await page.screenshot({ path: 'review/edge-invalid-meeting.png' })
     console.log(`Invalid meeting: crashed=${crashed}`)
@@ -1573,8 +1574,8 @@ test.describe('SYNC — Cross-tab BroadcastChannel', () => {
     const page1 = await ctx.newPage()
     const page2 = await ctx.newPage()
 
-    await loadPage(page1, '/tasks')
-    await loadPage(page2, '/tasks')
+    await loadPage(page1, P.myTasks)
+    await loadPage(page2, P.myTasks)
 
     // Set up BroadcastChannel listener in page2
     const received = page2.evaluate(() => {
@@ -1666,7 +1667,7 @@ test.describe('SYNC — Comment and note persistence', () => {
 
 test.describe('VISUAL — Overdue date red styling', () => {
   test('VISUAL: Overdue tasks show red date indicator', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Look for overdue indicators (red text, red dot, or danger class)
     const overdueIndicators = await page.evaluate(() => {
       const els = document.querySelectorAll('[class*="overdue"], [class*="red"], [class*="danger"], [style*="color: red"], [style*="color: rgb(239"]')
@@ -1679,7 +1680,7 @@ test.describe('VISUAL — Overdue date red styling', () => {
 
 test.describe('VISUAL — Hover row actions', () => {
   test('VISUAL: Task row hover reveals Edit/Archive actions', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const row = page.locator('[class*="row"], [class*="Row"]').filter({ hasText: /\w{3,}/ }).first()
     if (await row.isVisible().catch(() => false)) {
       await row.hover()
@@ -1703,7 +1704,7 @@ test.describe('VISUAL — Loading skeletons', () => {
       await route.continue()
     })
 
-    await page.goto(`${BASE}/tasks`, { waitUntil: 'domcontentloaded', timeout: 15000 })
+    await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'domcontentloaded', timeout: 15000 })
 
     // Screenshot during loading state
     await page.waitForTimeout(500)
@@ -1720,7 +1721,7 @@ test.describe('VISUAL — Loading skeletons', () => {
 
 test.describe('VISUAL — Light mode full check', () => {
   test('VISUAL: Light mode renders correctly on key pages', { timeout: 90000 }, async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
 
     // Force light mode
     await page.evaluate(() => {
@@ -1746,7 +1747,7 @@ test.describe('VISUAL — Light mode full check', () => {
 test.describe('VISUAL — Stagger animations', () => {
   test('VISUAL: Ideas page has staggered card entrance', async ({ page }) => {
     // Navigate fresh to trigger entrance animation
-    await page.goto(`${BASE}/ideas`, { waitUntil: 'domcontentloaded', timeout: 15000 })
+    await page.goto(`${BASE}${P.ideas}`, { waitUntil: 'domcontentloaded', timeout: 15000 })
     // Quick screenshot to catch animation in progress
     await page.waitForTimeout(200)
     await page.screenshot({ path: 'review/visual-stagger-early.png' })
@@ -1757,7 +1758,7 @@ test.describe('VISUAL — Stagger animations', () => {
 
 test.describe('VISUAL — Card hover lift', () => {
   test('VISUAL: Dashboard card lifts on hover', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const card = page.locator('[class*="bento"], [class*="card"]').first()
     if (await card.isVisible().catch(() => false)) {
       // Get transform before hover
@@ -1775,7 +1776,7 @@ test.describe('VISUAL — Card hover lift', () => {
 
 test.describe('VISUAL — Route progress bar', () => {
   test('VISUAL: Navigation shows progress bar', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     // Click nav link and look for progress bar during transition
     const link = page.locator('nav >> a:has-text("All Tasks")').first()
     if (await link.isVisible().catch(() => false)) {
@@ -1796,7 +1797,7 @@ test.describe('VISUAL — Route progress bar', () => {
 test.describe('MOBILE — Phone viewport tests', () => {
   test('MOBILE: Task page at 375px — card layout, no table', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
 
     // Should use card layout, not columnar table
     const table = page.locator('table, thead, th')
@@ -1807,7 +1808,7 @@ test.describe('MOBILE — Phone viewport tests', () => {
 
   test('MOBILE: Dashboard at 375px — single column', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     await page.screenshot({ path: 'review/mobile-dashboard-375.png' })
 
     // No horizontal overflow
@@ -1819,7 +1820,7 @@ test.describe('MOBILE — Phone viewport tests', () => {
 
   test('MOBILE: "Press F" tooltip hidden on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const tooltip = page.locator('text=Press F')
     const visible = await tooltip.isVisible().catch(() => false)
     expect(visible, '"Press F" should be hidden on mobile').toBe(false)
@@ -1827,7 +1828,7 @@ test.describe('MOBILE — Phone viewport tests', () => {
 
   test('MOBILE: Sidebar hamburger menu works', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
 
     // Look for hamburger menu button
     const hamburger = page.locator('button[aria-label*="menu"], button[aria-label*="nav"], button:has(svg)').first()
@@ -1847,7 +1848,7 @@ test.describe('MOBILE — Phone viewport tests', () => {
     await page.setViewportSize({ width: 375, height: 812 })
     const slug = await getFirstProjectSlug(request)
     if (!slug) { test.skip(); return }
-    await loadPage(page, `/projects/${slug}`)
+    await loadPage(page, P.project(slug))
 
     const overflow = await page.evaluate(() =>
       document.documentElement.scrollWidth > document.documentElement.clientWidth
@@ -1860,7 +1861,7 @@ test.describe('MOBILE — Phone viewport tests', () => {
     await page.setViewportSize({ width: 375, height: 812 })
     const id = await getFirstMeetingId(request)
     if (!id) { test.skip(); return }
-    await loadPage(page, `/meetings/${id}`)
+    await loadPage(page, P.meeting(id))
     await page.screenshot({ path: 'review/mobile-meeting-detail.png' })
   })
 })
@@ -1920,7 +1921,7 @@ test.describe('FILTER — Complex filter combinations', () => {
 
 test.describe('A11Y — Focus management', () => {
   test('A11Y: Tab key cycles through interactive elements on Dashboard', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     await page.keyboard.press('Tab')
     await page.waitForTimeout(200)
 
@@ -1934,7 +1935,7 @@ test.describe('A11Y — Focus management', () => {
   })
 
   test('A11Y: All modals trap focus', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Open create task modal
     await page.keyboard.press('c')
     await page.waitForTimeout(500)
@@ -1955,7 +1956,7 @@ test.describe('A11Y — Focus management', () => {
   })
 
   test('A11Y: PageHeader has aria-live for dynamic content', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const ariaLive = await page.evaluate(() => {
       const el = document.querySelector('[aria-live]')
       return el ? { tag: el.tagName, text: el.textContent?.substring(0, 50) } : null
@@ -1965,7 +1966,7 @@ test.describe('A11Y — Focus management', () => {
 
   test('A11Y: prefers-reduced-motion disables animations', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
 
     // Check that animation durations are 0 or near-0
     const animDuration = await page.evaluate(() => {
@@ -1976,7 +1977,7 @@ test.describe('A11Y — Focus management', () => {
   })
 
   test('A11Y: Dark mode contrast — text on dark bg meets 4.5:1', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const contrast = await page.evaluate(() => {
       const body = document.querySelector('main, body')
       if (!body) return null
@@ -1995,7 +1996,7 @@ test.describe('A11Y — Focus management', () => {
 
 test.describe('VISUAL — Missing page screenshots', () => {
   const missingPages = [
-    '/deadline-cascade', '/my-items', '/pb', '/pulse', '/network',
+    P.deadlineCascade, P.myItems, P.pb, P.pulse, P.network,
     '/team/nick-ingraham/cv', '/team/nick-ingraham/trajectory',
   ]
 

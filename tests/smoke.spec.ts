@@ -1,24 +1,25 @@
 import { test, expect } from '@playwright/test'
+import { P } from './helpers/paths'
 
 const ROUTES = [
-  { path: '/', title: 'MN-CCORE', section: 'public' },
-  { path: '/team', title: 'Team', section: 'public' },
-  { path: '/publications', title: 'Publications', section: 'public' },
-  { path: '/network', title: 'Network', section: 'public' },
-  { path: '/contact', title: 'Contact', section: 'public' },
-  { path: '/dashboard', title: 'Dashboard', section: 'portal' },
-  { path: '/personal', title: 'Personal', section: 'portal' },
-  { path: '/my-items', title: 'My Items', section: 'portal' },
-  { path: '/tasks', title: 'Tasks', section: 'portal' },
-  { path: '/calendar', title: 'Calendar', section: 'portal' },
-  { path: '/deadlines', title: 'Deadlines', section: 'portal' },
-  { path: '/projects', title: 'Projects', section: 'portal' },
-  { path: '/manuscripts', title: 'Manuscripts', section: 'portal' },
-  { path: '/ideas', title: 'Ideas', section: 'portal' },
-  { path: '/digest', title: 'Digest', section: 'portal' },
-  { path: '/search', title: 'Search', section: 'portal' },
-  { path: '/meetings', title: 'Meetings', section: 'portal' },
-  { path: '/pulse', title: 'Pulse', section: 'portal' },
+  { path: P.home, title: 'MN-CCORE', section: 'public' },
+  { path: P.publicTeam, title: 'Team', section: 'public' },
+  { path: P.publications, title: 'Publications', section: 'public' },
+  { path: P.network, title: 'Network', section: 'public' },
+  { path: P.contact, title: 'Contact', section: 'public' },
+  { path: P.dashboard, title: 'Dashboard', section: 'portal' },
+  { path: P.personal, title: 'Personal', section: 'portal' },
+  { path: P.myItems, title: 'My Items', section: 'portal' },
+  { path: P.myTasks, title: 'Tasks', section: 'portal' },
+  { path: P.calendar, title: 'Calendar', section: 'portal' },
+  { path: P.deadlines, title: 'Deadlines', section: 'portal' },
+  { path: P.projects, title: 'Projects', section: 'portal' },
+  { path: P.manuscripts, title: 'Manuscripts', section: 'portal' },
+  { path: P.ideas, title: 'Ideas', section: 'portal' },
+  { path: P.digest, title: 'Digest', section: 'portal' },
+  { path: P.search, title: 'Search', section: 'portal' },
+  { path: P.meetings, title: 'Meetings', section: 'portal' },
+  { path: P.pulse, title: 'Pulse', section: 'portal' },
 ]
 
 test.describe('Smoke tests — all routes load', () => {
