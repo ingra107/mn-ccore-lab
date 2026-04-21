@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
-import { stageIndex } from '../lib/stageNormalize'
+import { stageIndex, toApiStage } from '../lib/stageNormalize'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
@@ -233,7 +233,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   function confirmStageChange() {
     if (!confirmStage) return
-    d1Update.mutate({ stage: confirmStage })
+    d1Update.mutate({ stage: toApiStage(confirmStage) })
     setConfirmStage(null)
   }
 
@@ -371,7 +371,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           <InlineSelect
             value={project.stage || 'Idea'}
             options={STAGES.map((s) => ({ value: s, label: s }))}
-            onChange={(val) => d1Update.mutate({ stage: val } as Partial<Project>)}
+            onChange={(val) => d1Update.mutate({ stage: toApiStage(val) } as Partial<Project>)}
           />
 
           {isAuthenticated && nextUpcomingMeeting && (

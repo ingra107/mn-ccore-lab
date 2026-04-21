@@ -41,3 +41,20 @@ export function stageIndex(stage: string | null | undefined): number {
   if (!normalized) return -1
   return CANONICAL_STAGES.indexOf(normalized)
 }
+
+// UI → API stage value. The API (api/routes/projects.ts PROJECT_STAGE_VALUES)
+// only accepts brain.db's canonical 7-stage vocabulary, which uses
+// "Data Analysis" / "Submitted" / "Accepted" where the UI strip shows
+// "Analysis" / "Review". Without this map, clicking "Analysis" or "Review"
+// in any stage picker sends an invalid value, the API returns 400, and the
+// optimistic update reverts silently (issue #19 reported 2026-04-21).
+const UI_TO_API_STAGE: Record<string, string> = {
+  Analysis: 'Data Analysis',
+  Review: 'Submitted',
+}
+
+export type ApiStage = 'Idea' | 'Data Collection' | 'Data Analysis' | 'Writing' | 'Submitted' | 'Accepted' | 'Published'
+
+export function toApiStage(uiStage: string): ApiStage {
+  return (UI_TO_API_STAGE[uiStage] ?? uiStage) as ApiStage
+}

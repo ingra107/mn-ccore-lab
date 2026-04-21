@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
 import DensityToggle, { useDensity, densityClass } from '../components/DensityToggle'
-import { stageIndex } from '../lib/stageNormalize'
+import { stageIndex, toApiStage } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
@@ -591,7 +591,7 @@ export default function Projects() {
                             <InlineSelect
                               value={project.stage || 'Idea'}
                               options={STAGES.map((s) => ({ value: s, label: s }))}
-                              onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
+                              onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: toApiStage(val) } })}
                             />
 
                             {/* PI (inline editable) */}
@@ -686,7 +686,7 @@ export default function Projects() {
                               <InlineSelect
                                 value={project.stage || 'Idea'}
                                 options={STAGES.map((s) => ({ value: s, label: s }))}
-                                onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: val } })}
+                                onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: toApiStage(val) } })}
                               />
                               <div onClick={(e) => e.preventDefault()} style={{ marginLeft: 'auto' }}>
                                 <InlineSelect
