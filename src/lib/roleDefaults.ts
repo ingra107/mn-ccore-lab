@@ -1,3 +1,5 @@
+import { emailToSlug } from './emailSlug'
+
 export type UserRole = 'pi' | 'fellow' | 'coordinator' | 'default'
 
 // Mentee/trainee slugs (from mentees.ts). Phase 36b renamed to preferred-last.
@@ -12,7 +14,7 @@ const FELLOW_SLUGS = ['dan-shyu', 'beret-fitzgerald', 'emma-bromley', 'casey-edd
 export function getUserRoleFromAuth(user: { email?: string; isPi?: boolean } | null | undefined): UserRole {
   if (!user?.email) return 'default'
   if (user.isPi) return 'pi'
-  const slug = user.email.split('@')[0].toLowerCase()
+  const slug = emailToSlug(user.email)
   if (FELLOW_SLUGS.includes(slug)) return 'fellow'
   if (user.email.endsWith('@umn.edu')) return 'coordinator'
   return 'default'

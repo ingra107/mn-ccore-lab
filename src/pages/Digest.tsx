@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
+import { emailToSlug } from '../lib/emailSlug'
 import { useDigest, useDigestDates, useProjects, useDigestComments, useDigestCommentCounts } from '../hooks/useApiData'
 import type { DigestPaper, DigestComment } from '../hooks/useApiData'
 import { useUpdateDigestStatus, useLinkPaper, useCreateDigestComment } from '../hooks/useMutations'
@@ -636,7 +637,7 @@ export default function Digest() {
   )
 
   const { user } = useAuth()
-  const userSlug = user?.email?.split('@')[0]?.toLowerCase() || ''
+  const userSlug = emailToSlug(user?.email)
 
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')

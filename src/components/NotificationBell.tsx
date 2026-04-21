@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Bell, AtSign, UserPlus, Clock, RefreshCw, CheckCheck, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
+import { emailToSlug } from '../lib/emailSlug'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import { formatRelativeTime, formatMediumDate } from '../lib/dateUtils'
 import { PATHS } from '../constants/paths'
@@ -17,7 +18,7 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
 
 export default function NotificationBell() {
   const { user, isAuthenticated } = useAuth()
-  const slug = useMemo(() => user?.email?.split('@')[0] || '', [user?.email])
+  const slug = useMemo(() => emailToSlug(user?.email), [user?.email])
   const { data: notifications = [] } = useNotifications(slug)
   const { data: unreadCount = 0 } = useUnreadCount(slug)
   const markRead = useMarkRead(slug)

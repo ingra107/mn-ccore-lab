@@ -15,6 +15,7 @@ import { useProjects } from '../../hooks/useApiData'
 import { useUpdateTaskStatus, useUpdateTask, useCreateIdea } from '../../hooks/useMutations'
 import { useTaskKeyboardShortcuts } from '../../hooks/useTaskKeyboardShortcuts'
 import { useAuth } from '../../hooks/useAuth'
+import { emailToSlug } from '../../lib/emailSlug'
 import { useUserRole } from '../../hooks/useUserRole'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
@@ -619,7 +620,7 @@ export default function Personal() {
   const { user: authUser, isAuthenticated } = useAuth()
   const currentUser = useMemo(() => {
     if (!authUser.email) return null
-    return authUser.email.split('@')[0].toLowerCase()
+    return emailToSlug(authUser.email)
   }, [authUser.email])
   const person = currentUser ? getPersonInfo(currentUser) : null
   const { role, setRoleOverride, clearRoleOverride } = useUserRole()

@@ -21,6 +21,7 @@ import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import { useUndoToast } from '../../components/UndoToast'
 import { useTasks } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
+import { emailToSlug } from '../../lib/emailSlug'
 import type { TaskRow } from '../../lib/api'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
@@ -136,7 +137,7 @@ export default function MyTasks() {
   }
 
   const { user } = useAuth()
-  const currentUser = user?.email?.split('@')[0]?.toLowerCase() || null
+  const currentUser = emailToSlug(user?.email) || null
 
   // Filter to current user's tasks (or all tasks when showAllTasks is true)
   const tasks = useMemo(() => {

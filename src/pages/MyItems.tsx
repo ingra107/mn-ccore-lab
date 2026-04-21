@@ -16,6 +16,7 @@ import {
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useAuth } from '../hooks/useAuth'
+import { emailToSlug } from '../lib/emailSlug'
 import { useActionItems } from '../hooks/useApiData'
 import type { ActionItemRow } from '../hooks/useApiData'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
@@ -550,7 +551,7 @@ export default function MyItems() {
 
   // Derive user slug from email; pre-launch (no CF Access cookie yet) defaults
   // to Nick so the page is useful instead of a sign-in wall.
-  const userSlug = user?.email ? user.email.split('@')[0] : 'nick-ingraham'
+  const userSlug = emailToSlug(user?.email) || 'nick-ingraham'
 
   // Data hooks
   const { data: allActionItems = [] } = useActionItems(

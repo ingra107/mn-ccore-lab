@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { User, Circle, CheckCircle2, ArrowRight, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { emailToSlug } from '../../lib/emailSlug'
 import { useActionItems } from '../../hooks/useApiData'
 import type { ActionItemRow } from '../../hooks/useApiData'
 import { useUnreadCount } from '../../hooks/useNotifications'
@@ -12,7 +13,7 @@ import { PATHS } from '../../constants/paths'
 
 function MyItemsCard() {
   const { user } = useAuth()
-  const userSlug = user?.email?.split('@')[0] || ''
+  const userSlug = emailToSlug(user?.email)
   const { data: allItems = [] } = useActionItems(
     userSlug ? { assignee: userSlug } : undefined
   )

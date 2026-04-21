@@ -37,6 +37,7 @@ import { useNextMeeting } from '../hooks/useApiData'
 import { PATHS } from '../constants/paths'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
+import { emailToSlug } from '../lib/emailSlug'
 
 interface SidebarProps {
   collapsed: boolean
@@ -101,7 +102,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const location = useLocation()
   const { user } = useAuth()
   const { isDark } = useDarkMode()
-  const userSlug = user?.email?.split('@')[0]?.toLowerCase()
+  const userSlug = emailToSlug(user?.email)
   const [showBugReport, setShowBugReport] = useState(false)
   const person = userSlug ? getPersonInfo(userSlug) : null
   const isPi = user?.isPi ?? false

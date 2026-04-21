@@ -5,6 +5,7 @@ import HermesMark from './HermesMark'
 import { useComments } from '../hooks/useApiData'
 import { useAddComment } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
+import { emailToSlug } from '../lib/emailSlug'
 import { formatRelativeTime } from '../lib/dateUtils'
 import Avatar from './Avatar'
 import MentionInput from './MentionInput'
@@ -29,7 +30,7 @@ export default function ProjectComments({ projectSlug }: Props) {
 
     addComment.mutate({
       content,
-      author: user?.email?.split('@')[0] || 'anonymous',
+      author: emailToSlug(user?.email) || 'anonymous',
     }, {
       onSuccess: () => showSuccess('Comment posted'),
     })

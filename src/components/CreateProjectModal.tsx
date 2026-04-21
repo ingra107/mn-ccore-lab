@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { emailToSlug } from '../lib/emailSlug'
 
 interface CreateProjectModalProps {
   open: boolean
@@ -48,7 +49,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('research')
   const [stage, setStage] = useState('Idea')
-  const [pi, setPi] = useState(user.email?.split('@')[0] || '')
+  const [pi, setPi] = useState(emailToSlug(user.email))
   const [description, setDescription] = useState('')
 
   const modalRef = useRef<HTMLDivElement>(null)
@@ -99,7 +100,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
     setTitle('')
     setCategory('research')
     setStage('Idea')
-    setPi(user.email?.split('@')[0] || '')
+    setPi(emailToSlug(user.email))
     setDescription('')
     onClose()
   }

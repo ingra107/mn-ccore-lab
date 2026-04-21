@@ -2,11 +2,12 @@ import { useMemo } from 'react'
 import { CalendarDays, CheckCircle2, AlertTriangle, Clock } from 'lucide-react'
 import { useTasks, useMeetingsApi } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
+import { emailToSlug } from '../../lib/emailSlug'
 import BentoCard from './BentoCard'
 
 export default function YourWeekCard() {
   const { user } = useAuth()
-  const slug = user?.email?.split('@')[0]?.toLowerCase() || ''
+  const slug = emailToSlug(user?.email)
   const { data: tasks = [] } = useTasks()
   const { data: meetings = [] } = useMeetingsApi()
 

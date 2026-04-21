@@ -4,6 +4,7 @@ import { useReactions } from '../hooks/useApiData'
 import type { Reaction } from '../hooks/useApiData'
 import { useToggleReaction } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
+import { emailToSlug } from '../lib/emailSlug'
 import { getPersonInfo } from '../data/team'
 
 const EMOJI_OPTIONS = [
@@ -24,7 +25,7 @@ interface ReactionBarProps {
 export default function ReactionBar({ targetType, targetId, compact }: ReactionBarProps) {
   const queryClient = useQueryClient()
   const { user } = useAuth()
-  const currentSlug = user?.email?.split('@')[0]?.toLowerCase() || ''
+  const currentSlug = emailToSlug(user?.email)
   const [showPicker, setShowPicker] = useState(false)
   const pickerRef = useRef<HTMLDivElement>(null)
 

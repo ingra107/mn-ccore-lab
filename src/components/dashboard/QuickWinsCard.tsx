@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Zap } from 'lucide-react'
 import { useTasks } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
+import { emailToSlug } from '../../lib/emailSlug'
 import BentoCard from './BentoCard'
 
 /**
@@ -10,7 +11,7 @@ import BentoCard from './BentoCard'
  */
 export default function QuickWinsCard() {
   const { user } = useAuth()
-  const slug = user?.email?.split('@')[0]?.toLowerCase() || ''
+  const slug = emailToSlug(user?.email)
   const { data: tasks = [] } = useTasks()
 
   const quickWins = useMemo(() => {

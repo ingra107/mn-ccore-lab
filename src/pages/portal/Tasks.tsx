@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Plus, List, LayoutGrid, Users, GanttChartSquare, CheckCircle2, Filter, ListTodo } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { emailToSlug } from '../../lib/emailSlug'
 import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../../lib/roleDefaults'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
@@ -41,7 +42,7 @@ export default function Tasks() {
   const { user } = useAuth()
   const role = getUserRoleFromAuth(user)
   const defaultView = useMemo(() => ROLE_DEFAULTS[role].taskView as ViewMode, [role])
-  const userSlug = user?.email?.split('@')[0]?.toLowerCase() || null
+  const userSlug = emailToSlug(user?.email) || null
 
   const [searchParams, setSearchParams] = useSearchParams()
   const [view, setView] = useState<ViewMode>(defaultView)
