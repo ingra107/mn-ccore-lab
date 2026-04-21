@@ -230,6 +230,39 @@ export default function App() {
                   <Route path="/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
                   <Route path="/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
 
+                  {/* Portal-prefixed canonical routes (2026-04-21 migration).
+                      Root-level equivalents above will become Navigate
+                      redirects after Phase 4. Both work during migration. */}
+                  <Route path="/portal/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Dashboard"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
+                  <Route path="/portal/personal" element={<ErrorBoundary><Personal /></ErrorBoundary>} />
+                  <Route path="/portal/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
+                  <Route path="/portal/my-tasks" element={<ErrorBoundary><MyTasks /></ErrorBoundary>} />
+                  <Route path="/portal/tasks" element={<Navigate to="/portal/my-tasks" replace />} />
+                  <Route path="/portal/calendar" element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
+                  <Route path="/portal/deadlines" element={<ErrorBoundary><Deadlines /></ErrorBoundary>} />
+                  <Route path="/portal/deadline-cascade" element={<ErrorBoundary><DeadlineCascadePage /></ErrorBoundary>} />
+                  <Route path="/portal/projects" element={<ErrorBoundary><Projects /></ErrorBoundary>} />
+                  <Route path="/portal/projects/:slug" element={<ErrorBoundary><PageErrorBoundary pageName="ProjectDetail"><ProjectDetail /></PageErrorBoundary></ErrorBoundary>} />
+                  <Route path="/portal/manuscripts" element={<ErrorBoundary><Manuscripts /></ErrorBoundary>} />
+                  <Route path="/portal/ideas" element={<ErrorBoundary><Ideas /></ErrorBoundary>} />
+                  <Route path="/portal/ask" element={<ErrorBoundary><AskTheLab /></ErrorBoundary>} />
+                  <Route path="/portal/decisions" element={<ErrorBoundary><PageErrorBoundary pageName="DecisionsPage"><DecisionsPage /></PageErrorBoundary></ErrorBoundary>} />
+                  <Route path="/portal/narratives" element={<ErrorBoundary><NarrativesPage /></ErrorBoundary>} />
+                  <Route path="/portal/digest" element={<ErrorBoundary><Digest /></ErrorBoundary>} />
+                  <Route path="/portal/search" element={<ErrorBoundary><SearchPage /></ErrorBoundary>} />
+                  <Route path="/portal/grants" element={<ErrorBoundary><PageErrorBoundary pageName="Grants"><GrantsPortal /></PageErrorBoundary></ErrorBoundary>} />
+                  <Route path="/portal/meetings" element={<ErrorBoundary><Meetings /></ErrorBoundary>} />
+                  <Route path="/portal/meetings/:id" element={<ErrorBoundary><MeetingDetail /></ErrorBoundary>} />
+                  <Route path="/portal/meetings/:id/prep" element={<ErrorBoundary><MeetingPrep /></ErrorBoundary>} />
+                  <Route path="/portal/meeting-notes" element={<ErrorBoundary><MeetingNotesPage /></ErrorBoundary>} />
+                  <Route path="/portal/activity" element={<ErrorBoundary><ActivityPage /></ErrorBoundary>} />
+                  <Route path="/portal/analytics" element={<ErrorBoundary><AnalyticsPage /></ErrorBoundary>} />
+                  <Route path="/portal/pi/analytics" element={<ErrorBoundary><PageErrorBoundary pageName="PIAnalytics"><PIAnalytics /></PageErrorBoundary></ErrorBoundary>} />
+                  <Route path="/portal/mentee-milestones" element={<ErrorBoundary><MenteeMilestones /></ErrorBoundary>} />
+                  <Route path="/portal/pb" element={<ErrorBoundary><PBSector /></ErrorBoundary>} />
+                  <Route path="/portal/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
+                  <Route path="/portal/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
+
                   {/* Team member pages — under portal layout when navigating
                       from inside the portal. Audit caught: clicking a teammate
                       from the sidebar would drop the logged-in user back into
@@ -241,7 +274,7 @@ export default function App() {
                 </Route>
 
                 {/* Catch-all: redirect unknown paths to dashboard */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/portal/dashboard" replace />} />
               </Routes>
             </Suspense>
           </ViewTransitionWrapper>
