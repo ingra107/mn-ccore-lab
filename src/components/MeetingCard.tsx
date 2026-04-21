@@ -7,6 +7,7 @@ import { getPersonInfo } from '../data/team'
 import { formatFullDate, formatShortDate } from '../lib/dateUtils'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import type { Meeting } from '../data/types'
+import { PATHS } from '../constants/paths'
 
 interface MeetingCardProps {
   meeting: Meeting
@@ -369,7 +370,7 @@ export default function MeetingCard({ meeting, onToggleAction }: MeetingCardProp
 
               {/* View Full Meeting link */}
               <Link
-                to={`/meetings/${meeting.id}`}
+                to={PATHS.meeting(meeting.id)}
                 className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md text-xs font-medium"
                 style={{
                   fontSize: 'var(--label-size)',

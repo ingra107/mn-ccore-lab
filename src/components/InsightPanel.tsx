@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
 import { useInsightSuggestions } from '../hooks/useApiData'
+import { PATHS } from '../constants/paths'
 
 interface InsightPanelProps {
   projectSlug: string
@@ -50,7 +51,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
           return (
             <Link
               key={s.slug}
-              to={`/projects/${s.slug}`}
+              to={PATHS.project(s.slug)}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
               style={{
                 background: 'var(--ice)',

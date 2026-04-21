@@ -4,6 +4,7 @@ import { Calendar, ArrowRight, CheckCircle2, UserCheck } from 'lucide-react'
 import { useMeetingsApi, useActionItems } from '../hooks/useApiData'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { getPersonInfo } from '../data/team'
+import { PATHS } from '../constants/paths'
 
 export default function UpcomingMeetingBanner() {
   const { data: meetings = [] } = useMeetingsApi()
@@ -47,7 +48,7 @@ export default function UpcomingMeetingBanner() {
     <div className="section-cream">
       <section className="py-6 sm:py-8 content-container">
         <Link
-          to={`/meetings/${nextMeeting.id}`}
+          to={PATHS.meeting(nextMeeting.id)}
           className="block rounded-2xl p-5 sm:p-6 lg:p-7 transition-all duration-300 group"
           style={{
             textDecoration: 'none',

@@ -35,6 +35,7 @@ import { formatMediumDate } from '../lib/dateUtils'
 import { TableSkeleton } from './LoadingSkeleton'
 import EmptyState from './EmptyState'
 import { getStatusBg } from '../lib/statusColors'
+import { PATHS } from '../constants/paths'
 
 // ── Constants ──
 
@@ -904,7 +905,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
             return (
               <motion.a
                 key={rev.id}
-                href={`/projects/${slug}?tab=revisions`}
+                href={`${PATHS.project(slug)}?tab=revisions`}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}

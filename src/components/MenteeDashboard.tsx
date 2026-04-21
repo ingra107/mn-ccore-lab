@@ -12,6 +12,7 @@ import HoverCard from './HoverCard'
 import type { HoverCardData } from './HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
 import { usePublications, useActionItems, useProjects } from '../hooks/useApiData'
+import { PATHS } from '../constants/paths'
 
 interface Props {
   slug: string
@@ -175,7 +176,7 @@ function MenteeProjectLink({ project }: { project: { slug: string; title: string
   return (
     <Link
       ref={hoverCard.triggerRef as React.RefObject<HTMLAnchorElement>}
-      to={`/projects/${project.slug}`}
+      to={PATHS.project(project.slug)}
       style={{ fontSize: '12px', color: 'var(--ink)', textDecoration: 'none', lineHeight: 1.3 }}
       className="hover:opacity-80"
       onMouseEnter={hoverCard.handlers.onMouseEnter}

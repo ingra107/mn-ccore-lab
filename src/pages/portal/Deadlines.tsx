@@ -1092,7 +1092,7 @@ function UpcomingConferencesSection() {
                 <td style={{ padding: 'var(--sp-sm)' }}>
                   {conf.project_slug ? (
                     <Link
-                      to={`/projects/${conf.project_slug}`}
+                      to={PATHS.project(conf.project_slug)}
                       style={{
                         fontSize: 'var(--label-size)',
                         color: 'var(--teal)',

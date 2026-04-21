@@ -13,6 +13,7 @@ import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useMeetingsApi } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
+import { PATHS } from '../../constants/paths'
 
 export default function MeetingNotesPage() {
   const [showCreate, setShowCreate] = useState(false)
@@ -114,7 +115,7 @@ export default function MeetingNotesPage() {
           {filteredMeetings.slice(0, 20).map((m) => (
             <motion.div key={m.id} variants={staggerItem}>
               <Link
-                to={`/meetings/${m.id}`}
+                to={PATHS.meeting(m.id)}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm"
                 style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
               >

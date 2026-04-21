@@ -79,7 +79,7 @@ export default function MeetingPrep() {
   return (
     <div style={{ minHeight: '100vh' }}>
       <div className="content-container" style={{ paddingBottom: '4rem' }}>
-        <Breadcrumb backTo={`/meetings/${meeting.id}`} backLabel={meeting.title} current="Prep View" />
+        <Breadcrumb backTo={PATHS.meeting(meeting.id)} backLabel={meeting.title} current="Prep View" />
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
@@ -300,7 +300,7 @@ export default function MeetingPrep() {
         {/* Back to meeting detail */}
         <div className="mt-8 text-center">
           <Link
-            to={`/meetings/${meeting.id}`}
+            to={PATHS.meeting(meeting.id)}
             style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}
           >
             Back to meeting details

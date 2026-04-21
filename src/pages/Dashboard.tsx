@@ -391,7 +391,7 @@ export default function Dashboard() {
                     <>
                       <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
                       <a
-                        href="/my-tasks"
+                        href={PATHS.myTasks}
                         className="portal-footer-link"
                         style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', whiteSpace: 'nowrap' }}
                       >
@@ -584,7 +584,7 @@ export default function Dashboard() {
         <div style={{ minHeight: '56px', contain: 'layout' }}>
         {upcomingMeeting && (
           <Link
-            to={`/meetings/${upcomingMeeting.id}/prep`}
+            to={PATHS.meetingPrep(upcomingMeeting.id)}
             className="flex items-center gap-3 mb-2 px-4 py-3 rounded-xl transition-all"
             style={{
               background: 'linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(45,138,138,0.06) 100%)',

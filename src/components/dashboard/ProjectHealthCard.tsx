@@ -176,7 +176,7 @@ function ProjectHealthCard() {
               {sortedAll.map((p) => (
                 <Link
                   key={p.slug}
-                  to={`/projects/${p.slug}`}
+                  to={PATHS.project(p.slug)}
                   title={`${p.title} · ${p.status} · ${p.score}/100`}
                   aria-label={`${p.title} · ${p.status} · score ${p.score} of 100`}
                   style={{
@@ -296,7 +296,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
 
   return (
     <Link
-      to={`/projects/${project.slug}`}
+      to={PATHS.project(project.slug)}
       className="flex items-center gap-2.5 py-2 group transition-colors hover:bg-[var(--gold-hover)]"
       style={{
         textDecoration: 'none',

@@ -7,6 +7,7 @@ import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useNarratives } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
+import { PATHS } from '../../constants/paths'
 
 // Brighter blue for Data Collection stage so the 10px label survives
 // opacity 0.85 on near-black bg (axe AA, 2026-04-18). Was #5b8abf (4.28:1).
@@ -134,7 +135,7 @@ export default function NarrativesPage() {
                 {arc.projects.map((p) => (
                   <Link
                     key={p.slug}
-                    to={`/projects/${p.slug}`}
+                    to={PATHS.project(p.slug)}
                     className="flex items-center gap-2 p-2 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                     style={{ textDecoration: 'none' }}
                   >

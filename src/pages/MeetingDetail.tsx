@@ -278,7 +278,7 @@ export default function MeetingDetail() {
             </span>
             <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
             <Link
-              to={`/meetings/${meeting.id}/prep`}
+              to={PATHS.meetingPrep(meeting.id)}
               className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs transition-colors"
               style={{
                 fontSize: 'var(--label-size)',
@@ -396,7 +396,7 @@ export default function MeetingDetail() {
               {projectSlugs.map((slug: string) => (
                 <a
                   key={slug}
-                  href={`/projects/${slug}`}
+                  href={PATHS.project(slug)}
                   style={{
                     fontSize: 'var(--label-size)',
                     padding: '2px 8px',
@@ -940,7 +940,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
             </span>
           )}
           {item.project_id && (
-            <Link to={`/projects/${item.project_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
+            <Link to={PATHS.project(item.project_id)} onClick={(e) => e.stopPropagation()} style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
               {item.project_id}
             </Link>
           )}
