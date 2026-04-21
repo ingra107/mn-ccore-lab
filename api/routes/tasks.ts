@@ -223,6 +223,14 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
     key_link_1?: string | null; key_link_1_desc?: string | null;
     key_link_2?: string | null; key_link_2_desc?: string | null;
     key_link_3?: string | null; key_link_3_desc?: string | null;
+    // 2026-04-20 Airtable Funeral Phase 1 (schema v47): richer fields
+    // sent by gmail-airtable.js Apps Script + peripheral-brain-mobile PWA.
+    // Previously only stored in Airtable; now stored structured in Hub.
+    notes?: string | null;
+    effort?: string | null;
+    short_title?: string | null;
+    source_thread_id?: string | null;
+    related_message_ids?: string | null;
   };
   if (!body.description || !body.assignee) return error('description and assignee required', 400);
 
@@ -259,7 +267,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
     ? body.status : 'todo';
 
   await env.DB.prepare(
-    'INSERT INTO tasks (id, title, description, assignee, assigned_by, meeting_id, project_id, due_date, priority, status, source, key_link_1, key_link_1_desc, key_link_2, key_link_2_desc, key_link_3, key_link_3_desc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO tasks (id, title, description, assignee, assigned_by, meeting_id, project_id, due_date, priority, status, source, key_link_1, key_link_1_desc, key_link_2, key_link_2_desc, key_link_3, key_link_3_desc, notes, effort, short_title, source_thread_id, related_message_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id, title, body.description, body.assignee, user.email,
     body.meeting_id ?? null, resolvedProjectId, body.due_date ?? null,
@@ -267,6 +275,9 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
     body.key_link_1 ?? null, body.key_link_1_desc ?? null,
     body.key_link_2 ?? null, body.key_link_2_desc ?? null,
     body.key_link_3 ?? null, body.key_link_3_desc ?? null,
+    // v47 fields (Airtable Funeral Phase 1)
+    body.notes ?? null, body.effort ?? null, body.short_title ?? null,
+    body.source_thread_id ?? null, body.related_message_ids ?? null,
   ).run();
 
   await logActivity(env, 'task', `Created task: "${title}" → ${body.assignee}`, user.email, id, 'task');
@@ -679,4 +690,117 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
 
   const created = await env.DB.prepare('SELECT * FROM task_updates WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
+}
+
+
+// POST /api/sync/mobile-tasks-to-hub — Airtable Funeral Phase 1 Blocker 2
+// Accepts a batch of PWA-created mobile_* tasks and inserts them into the
+// Hub D1 tasks table with source='mobile'. Returns id_map so the PWA can
+// update its local D1 (replace mobile_* with Hub-assigned canonical ID).
+//
+// Schema v47 fields (notes, effort, short_title, source_thread_id,
+// related_message_ids) accepted + stored structured. No lossy concat.
+//
+// Dedup rule: if a task with the same (title, project_id, assignee) is
+// already in Hub D1 (completed=0), skip creation and return its existing ID
+// in the map. Prevents the same PWA batch re-creating duplicates on retry.
+export async function handleMobileTasksToHub(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as {
+    tasks: Array<{
+      id: string;                       // PWA-side mobile_* id
+      title?: string;
+      name?: string;                    // PWA legacy field name
+      description?: string;
+      notes?: string | null;
+      due_date?: string | null;
+      effort?: string | null;
+      short_title?: string | null;
+      completed?: 0 | 1 | boolean;
+      priority?: string;
+      project_id?: string | null;
+      assignee?: string;
+      source_thread_id?: string | null;
+      related_message_ids?: string | null;
+    }>;
+  };
+
+  if (!Array.isArray(body.tasks) || body.tasks.length === 0) {
+    return error('tasks array required', 400);
+  }
+
+  const id_map: Record<string, string> = {};
+  const errors: string[] = [];
+  let created = 0;
+  let deduped = 0;
+
+  for (const pwaTask of body.tasks) {
+    if (!pwaTask.id || !pwaTask.id.startsWith('mobile_')) {
+      errors.push(`skip non-mobile id: ${pwaTask.id}`);
+      continue;
+    }
+    const title = pwaTask.title || pwaTask.name || '';
+    const description = pwaTask.description || pwaTask.notes || title;
+    const assignee = pwaTask.assignee || 'ningraha';
+
+    if (!title.trim()) {
+      errors.push(`skip empty-title: ${pwaTask.id}`);
+      continue;
+    }
+
+    // Dedup: same (title, assignee) already open in Hub?
+    const existing = await env.DB.prepare(
+      'SELECT id FROM tasks WHERE lower(trim(title)) = lower(trim(?)) AND assignee = ? AND completed = 0 AND deleted_at IS NULL LIMIT 1'
+    ).bind(title, assignee).first<{ id: string }>();
+
+    if (existing) {
+      id_map[pwaTask.id] = existing.id;
+      deduped++;
+      continue;
+    }
+
+    // Resolve project_id (PWA may send brain.db slug or id)
+    let resolvedProjectId: string | null = pwaTask.project_id ?? null;
+    if (resolvedProjectId) {
+      const proj = await env.DB.prepare(
+        'SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+      ).bind(resolvedProjectId, resolvedProjectId).first<{ id: string; slug: string | null }>();
+      resolvedProjectId = proj ? (proj.slug || proj.id) : null;
+    }
+
+    const id = generateId();
+    const completedInt = pwaTask.completed === true || pwaTask.completed === 1 ? 1 : 0;
+    const status = completedInt ? 'done' : 'todo';
+    const priority = pwaTask.priority || 'medium';
+
+    try {
+      await env.DB.prepare(
+        'INSERT INTO tasks (id, title, description, assignee, assigned_by, project_id, due_date, priority, status, source, completed, completed_at, notes, effort, short_title, source_thread_id, related_message_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(
+        id, title, description, assignee, user.email,
+        resolvedProjectId, pwaTask.due_date ?? null,
+        priority, status, 'mobile',
+        completedInt, completedInt ? new Date().toISOString() : null,
+        pwaTask.notes ?? null, pwaTask.effort ?? null,
+        pwaTask.short_title ?? null,
+        pwaTask.source_thread_id ?? null,
+        pwaTask.related_message_ids ?? null,
+      ).run();
+      id_map[pwaTask.id] = id;
+      created++;
+
+      await logActivity(env, 'task', `Mobile→Hub: "${title.slice(0, 80)}"`, user.email, id, 'task');
+    } catch (e: any) {
+      errors.push(`${pwaTask.id}: ${e.message || String(e)}`);
+    }
+  }
+
+  return json({
+    data: {
+      id_map,
+      created,
+      deduped,
+      errors,
+      total_attempted: body.tasks.length,
+    },
+  }, errors.length > 0 && created === 0 ? 500 : 200);
 }
