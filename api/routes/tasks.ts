@@ -162,7 +162,10 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 
 // POST /api/tasks/:id — update task fields
 // Hoisted to module scope — avoids allocation per request
-const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc']);
+// 2026-04-20 Airtable Funeral P2-1: added v47 fields (notes, effort,
+// short_title, source_thread_id, related_message_ids) so Gmail Apps
+// Script updateAirtableTasks → updateHubTasks can carry them through.
+const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'notes', 'effort', 'short_title', 'source_thread_id', 'related_message_ids']);
 const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee']);
 
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
