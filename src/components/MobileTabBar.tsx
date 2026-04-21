@@ -23,6 +23,7 @@ import {
   Settings,
   Bug,
 } from 'lucide-react'
+import { PATHS } from '../constants/paths'
 
 const BugReportModal = lazy(() => import('./BugReportModal'))
 
@@ -52,10 +53,10 @@ export default function MobileTabBar() {
   }, [overflowOpen])
 
   const primaryTabs = [
-    { to: '/dashboard', icon: Home, label: 'Home' },
-    { to: '/my-tasks', icon: ListChecks, label: 'Tasks' },
-    { to: '/projects', icon: FolderKanban, label: 'Projects' },
-    { to: '/search', icon: Search, label: 'Search' },
+    { to: PATHS.dashboard, icon: Home, label: 'Home' },
+    { to: PATHS.myTasks, icon: ListChecks, label: 'Tasks' },
+    { to: PATHS.projects, icon: FolderKanban, label: 'Projects' },
+    { to: PATHS.search, icon: Search, label: 'Search' },
   ]
 
   return (
@@ -279,34 +280,34 @@ const OVERFLOW_SECTIONS: {
   {
     title: 'Work',
     routes: [
-      { to: '/personal', icon: CheckSquare, label: 'Personal' },
-      { to: '/calendar', icon: Calendar, label: 'Calendar' },
-      { to: '/deadlines', icon: Clock, label: 'Deadlines' },
-      { to: '/my-items', icon: Target, label: 'My Items' },
+      { to: PATHS.personal, icon: CheckSquare, label: 'Personal' },
+      { to: PATHS.calendar, icon: Calendar, label: 'Calendar' },
+      { to: PATHS.deadlines, icon: Clock, label: 'Deadlines' },
+      { to: PATHS.myItems, icon: Target, label: 'My Items' },
     ],
   },
   {
     title: 'Research',
     routes: [
-      { to: '/manuscripts', icon: FileText, label: 'Manuscripts' },
-      { to: '/ideas', icon: Lightbulb, label: 'Ideas' },
-      { to: '/decisions', icon: HelpCircle, label: 'Decisions' },
-      { to: '/grants', icon: Award, label: 'Grants' },
-      { to: '/meetings', icon: Users, label: 'Meetings' },
-      { to: '/meeting-notes', icon: BookOpen, label: 'Meeting Notes' },
-      { to: '/digest', icon: Newspaper, label: 'Research Digest' },
-      { to: '/ask', icon: HelpCircle, label: 'Ask the Lab' },
-      { to: '/narratives', icon: BookOpen, label: 'Narratives' },
+      { to: PATHS.manuscripts, icon: FileText, label: 'Manuscripts' },
+      { to: PATHS.ideas, icon: Lightbulb, label: 'Ideas' },
+      { to: PATHS.decisions, icon: HelpCircle, label: 'Decisions' },
+      { to: PATHS.grants, icon: Award, label: 'Grants' },
+      { to: PATHS.meetings, icon: Users, label: 'Meetings' },
+      { to: PATHS.meetingNotes, icon: BookOpen, label: 'Meeting Notes' },
+      { to: PATHS.digest, icon: Newspaper, label: 'Research Digest' },
+      { to: PATHS.ask, icon: HelpCircle, label: 'Ask the Lab' },
+      { to: PATHS.narratives, icon: BookOpen, label: 'Narratives' },
     ],
   },
   {
     title: 'Lab',
     routes: [
-      { to: '/activity', icon: Activity, label: 'Activity' },
-      { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-      { to: '/pi-analytics', icon: BarChart3, label: 'PI Analytics' },
-      { to: '/mentee-milestones', icon: Target, label: 'Mentee Milestones' },
-      { to: '/settings', icon: Settings, label: 'Settings' },
+      { to: PATHS.activity, icon: Activity, label: 'Activity' },
+      { to: PATHS.analytics, icon: BarChart3, label: 'Analytics' },
+      { to: PATHS.piAnalytics, icon: BarChart3, label: 'PI Analytics' },
+      { to: PATHS.menteeMilestones, icon: Target, label: 'Mentee Milestones' },
+      { to: PATHS.settings, icon: Settings, label: 'Settings' },
     ],
   },
 ]
