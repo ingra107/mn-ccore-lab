@@ -6,11 +6,12 @@
  * Ideas is a portal page. h1 = dynamically set.
  */
 import { test, expect, go, vis } from './fixtures'
+import { P } from '../../helpers/paths'
 
 test.describe('Journey 5: Research Reader', () => {
   test('Digest → publications → ideas → vote → create idea', async ({ journeyPage: page }) => {
     // 1-3. Navigate to /digest — h1 = "Research Digest"
-    const errors = await go(page, '/digest')
+    const errors = await go(page, P.digest)
     expect(errors).toEqual([])
     await expect(page.locator('h1')).toContainText(/digest/i, { timeout: 5000 })
 
@@ -25,7 +26,7 @@ test.describe('Journey 5: Research Reader', () => {
     console.log(`Copy button: ${hasCopy}`)
 
     // 5-7. Navigate to /publications (PUBLIC page)
-    await go(page, '/publications')
+    await go(page, P.publications)
     await expect(page.locator('h1')).toContainText(/Publication/i, { timeout: 5000 })
 
     // Publications should show (either seeded or real data)
@@ -43,7 +44,7 @@ test.describe('Journey 5: Research Reader', () => {
     }
 
     // 10-13. Navigate to /ideas
-    await go(page, '/ideas')
+    await go(page, P.ideas)
     await expect(page.locator('h1')).toBeVisible({ timeout: 5000 })
 
     // Ideas should show (seeded or real)
