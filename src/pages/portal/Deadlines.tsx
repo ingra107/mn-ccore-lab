@@ -18,6 +18,7 @@ import { useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../ho
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
+import { PATHS } from '../../constants/paths'
 import { useQueryClient } from '@tanstack/react-query'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
@@ -225,7 +226,7 @@ export default function Deadlines() {
             })}
           </div>
           <Link
-            to="/deadline-cascade"
+            to={PATHS.deadlineCascade}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
             style={{
               fontSize: '12px',

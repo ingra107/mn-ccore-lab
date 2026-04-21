@@ -12,6 +12,7 @@ import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { formatBrandName } from '../../components/BrandName'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
+import { PATHS } from '../../constants/paths'
 
 interface SearchResult {
   id: string
@@ -138,16 +139,16 @@ export default function SearchPage() {
               Jump to
             </span>
             <div className="flex flex-col gap-1 mt-2">
-              <Link to="/my-tasks" className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+              <Link to={PATHS.myTasks} className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
                 <CheckSquare size={13} style={{ color: 'var(--teal)' }} /> My tasks
               </Link>
-              <Link to="/deadlines" className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+              <Link to={PATHS.deadlines} className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
                 <Activity size={13} style={{ color: 'var(--maroon)' }} /> Urgent deadlines
               </Link>
-              <Link to="/ideas" className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+              <Link to={PATHS.ideas} className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
                 <Lightbulb size={13} style={{ color: 'var(--gold)' }} /> New ideas
               </Link>
-              <Link to="/decisions" className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+              <Link to={PATHS.decisions} className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
                 <MessageSquare size={13} style={{ color: 'var(--slate)' }} /> Decisions log
               </Link>
             </div>

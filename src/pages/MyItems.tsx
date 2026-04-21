@@ -27,6 +27,7 @@ import type { CommitmentRow } from '../hooks/useCommitments'
 import { getPersonInfo } from '../data/team'
 import { formatRelativeTime, formatShortDate, isOverdue } from '../lib/dateUtils'
 import { parseCarriedForward } from '../lib/textUtils'
+import { PATHS } from '../constants/paths'
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -668,7 +669,7 @@ export default function MyItems() {
         {/* Back link */}
         <div style={{ paddingTop: '0.25rem', marginBottom: '0.5rem' }}>
           <Link
-            to="/dashboard"
+            to={PATHS.dashboard}
             className="hover:!opacity-100 transition-opacity"
             style={{
               display: 'inline-flex',

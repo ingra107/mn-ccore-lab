@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 import { useOnboarding } from '../hooks/useOnboarding'
 import { spring } from '../lib/animations'
 import { formatBrandName } from './BrandName'
+import { PATHS } from '../constants/paths'
 
 export default function WelcomeBanner() {
   const { dismissed, allComplete, dismiss } = useOnboarding()
@@ -36,7 +37,7 @@ export default function WelcomeBanner() {
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)', flexShrink: 0 }}>
           <Link
-            to="/personal"
+            to={PATHS.personal}
             className="portal-footer-link"
             style={{
               fontSize: 'var(--text-small)',

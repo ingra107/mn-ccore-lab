@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import { formatRelativeTime, formatMediumDate } from '../lib/dateUtils'
+import { PATHS } from '../constants/paths'
 
 const TYPE_ICONS: Record<string, typeof Bell> = {
   mention: AtSign,
@@ -339,7 +340,7 @@ export default function NotificationBell() {
 
             {/* View all link */}
             <Link
-              to="/my-items"
+              to={PATHS.myItems}
               onClick={() => setOpen(false)}
               style={{
                 display: 'block',

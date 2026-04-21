@@ -19,6 +19,7 @@ import { useTrajectory, useContributions } from '../hooks/useApiData'
 import type { TrajectoryData, ContributionsData } from '../hooks/useApiData'
 import { getMemberBySlug } from '../data/team'
 import ActivityHeatmap from '../components/ActivityHeatmap'
+import { PATHS } from '../constants/paths'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -90,7 +91,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
           Need 3+ indexed publications to draw a cadence curve.
         </p>
         <Link
-          to="/settings"
+          to={PATHS.settings}
           style={{ fontSize: '12px', color: 'var(--teal)', textDecoration: 'underline' }}
         >
           Link ORCID →

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Flag, AlertTriangle, Clock, CheckCircle2, Users, TrendingDown } from 'lucide-react'
 import CalendarTimeline from './CalendarTimeline'
+import { PATHS } from '../../constants/paths'
 
 interface CalendarEvent {
   id: string
@@ -178,7 +179,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
           {stats.overdue > 0 && (
             <div className="flex items-center gap-2 py-1">
               <AlertTriangle size={10} style={{ color: 'var(--maroon)', opacity: 0.85, flexShrink: 0 }} />
-              <Link to="/portal/tasks" style={{ fontSize: 'var(--label-size)', color: 'var(--maroon)', textDecoration: 'none' }}>
+              <Link to={PATHS.tasks} style={{ fontSize: 'var(--label-size)', color: 'var(--maroon)', textDecoration: 'none' }}>
                 {stats.overdue} task{stats.overdue !== 1 ? 's' : ''} overdue
               </Link>
             </div>
@@ -187,7 +188,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
           {staleProjects.length > 0 && (
             <div className="flex items-center gap-2 py-1">
               <TrendingDown size={10} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
-              <Link to="/projects" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none', opacity: 0.85 }}>
+              <Link to={PATHS.projects} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none', opacity: 0.85 }}>
                 {staleProjects.length} project{staleProjects.length !== 1 ? 's' : ''} stale
               </Link>
             </div>

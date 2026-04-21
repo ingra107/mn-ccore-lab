@@ -4,6 +4,7 @@ import { Scale } from 'lucide-react'
 import { useDecisions } from '../../hooks/useApiData'
 import type { DecisionRow } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
+import { PATHS } from '../../constants/paths'
 
 interface ProjectDecisionsProps {
   projectSlug: string
@@ -35,7 +36,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
           Decisions
         </h2>
         <Link
-          to="/decisions"
+          to={PATHS.decisions}
           style={{
             fontSize: 'var(--label-size)',
             color: 'var(--teal)',
@@ -127,7 +128,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
           ))}
           {decisions.length > 5 && (
             <Link
-              to="/decisions"
+              to={PATHS.decisions}
               style={{
                 fontSize: 'var(--label-size)',
                 color: 'var(--teal)',

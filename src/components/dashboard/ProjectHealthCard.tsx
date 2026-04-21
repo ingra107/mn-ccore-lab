@@ -7,6 +7,7 @@ import type { HoverCardData } from '../HoverCard'
 import { useHoverCard } from '../../hooks/useHoverCard'
 import { useProjectHealth } from '../../hooks/useApiData'
 import type { ProjectHealth, HealthFactors } from '../../hooks/useApiData'
+import { PATHS } from '../../constants/paths'
 
 const STATUS_COLORS: Record<string, string> = {
   'Healthy': 'var(--green)',
@@ -262,7 +263,7 @@ function ProjectHealthCard() {
 
         {/* Footer link */}
         <Link
-          to="/projects"
+          to={PATHS.projects}
           className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
           style={{
             fontSize: 'var(--label-size)',

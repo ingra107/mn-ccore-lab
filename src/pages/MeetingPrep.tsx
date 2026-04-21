@@ -13,6 +13,7 @@ import { getPersonInfo } from '../data/team'
 import { formatLongDate, formatShortDate } from '../lib/dateUtils'
 import { PRIORITY_COLORS } from '../lib/taskConstants'
 import { getMeetingFacilitator } from '../lib/facilitator'
+import { PATHS } from '../constants/paths'
 import { staggerContainer, staggerItem } from '../lib/animations'
 
 interface PrepData {
@@ -58,7 +59,7 @@ export default function MeetingPrep() {
   if (!data) {
     return (
       <div className="content-container" style={{ paddingTop: '2rem' }}>
-        <Link to="/meetings" className="inline-flex items-center gap-2 mb-6"
+        <Link to={PATHS.meetings} className="inline-flex items-center gap-2 mb-6"
           style={{ fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
           <ArrowLeft size={16} /> Back to Meetings
         </Link>
