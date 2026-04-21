@@ -157,3 +157,30 @@ CREATE TABLE IF NOT EXISTS _meta (
 -- ── 2 unique indexes that exist on prod ──
 CREATE UNIQUE INDEX IF NOT EXISTS idx_meetings_date_title ON meetings(date, title);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_unique   ON watchlist(member_slug, entity_type, entity_id);
+
+-- ── indexes on the tables just created above ──
+-- v48 shipped these earlier, but v48 runs BEFORE v49 in version order, so
+-- against a fresh-DB bootstrap (CI workflow) the CREATE INDEX silently
+-- failed because the target tables didn't exist yet. Duplicating them
+-- here (after table creation) fixes that. Idempotent — CREATE IF NOT
+-- EXISTS, so re-applying against prod is a no-op.
+CREATE INDEX IF NOT EXISTS idx_attachments_entity            ON file_attachments(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_contributions_member          ON contributions(member_slug, created_at);
+CREATE INDEX IF NOT EXISTS idx_contributions_type            ON contributions(type);
+CREATE INDEX IF NOT EXISTS idx_inbox_created                 ON inbox(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_inbox_synced                  ON inbox(synced_at);
+CREATE INDEX IF NOT EXISTS idx_narrative_projects_narrative  ON narrative_projects(narrative_id, position);
+CREATE INDEX IF NOT EXISTS idx_narrative_projects_slug       ON narrative_projects(project_slug);
+CREATE INDEX IF NOT EXISTS idx_nih_grants_lab                ON nih_grants(is_lab_grant);
+CREATE INDEX IF NOT EXISTS idx_nih_grants_section            ON nih_grants(study_section);
+CREATE INDEX IF NOT EXISTS idx_nih_grants_year               ON nih_grants(fiscal_year DESC);
+CREATE INDEX IF NOT EXISTS idx_osr_position                  ON open_science_resources(position);
+CREATE INDEX IF NOT EXISTS idx_osr_type                      ON open_science_resources(type, position);
+CREATE INDEX IF NOT EXISTS idx_pp_project                    ON project_publications(project_id);
+CREATE INDEX IF NOT EXISTS idx_pp_publication                ON project_publications(publication_id);
+CREATE INDEX IF NOT EXISTS idx_project_documents_project     ON project_documents(project_id);
+CREATE INDEX IF NOT EXISTS idx_pubmed_sync_log_date          ON pubmed_sync_log(synced_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trainee_milestones_slug       ON trainee_milestones(member_slug);
+CREATE INDEX IF NOT EXISTS idx_trainee_milestones_type       ON trainee_milestones(milestone_type);
+CREATE INDEX IF NOT EXISTS idx_watchlist_entity              ON watchlist(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_watchlist_member              ON watchlist(member_slug);

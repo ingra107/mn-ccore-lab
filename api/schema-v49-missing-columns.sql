@@ -28,3 +28,11 @@ ALTER TABLE projects ADD COLUMN stage_notes TEXT;
 
 -- ── grants: status (R9/R10 grant pipeline vocabulary) ──
 ALTER TABLE grants ADD COLUMN status TEXT DEFAULT 'planning';
+
+-- ── action_items: created_by + category + parent_task_id + idx_parent ──
+ALTER TABLE action_items ADD COLUMN created_by TEXT;
+ALTER TABLE action_items ADD COLUMN category TEXT;
+ALTER TABLE action_items ADD COLUMN parent_task_id TEXT;
+-- Indexes can run safely after columns exist. Still guarded by IF NOT EXISTS.
+CREATE INDEX IF NOT EXISTS idx_action_items_category ON action_items(category);
+CREATE INDEX IF NOT EXISTS idx_action_items_parent   ON action_items(parent_task_id);
