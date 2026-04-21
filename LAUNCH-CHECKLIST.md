@@ -130,26 +130,29 @@ Open the site on an actual phone (or DevTools 375×812):
 - MobileTabBar "More" drawer opens and closes cleanly.
 - No horizontal scroll.
 
-## Current state (2026-04-20)
+## Current state (2026-04-21)
 
 | Item | Status |
 |------|--------|
-| Code complete | Phase 36d shipped (design sprint — 12 brand primitives + capture infra) |
-| D1 schema | v46 applied (60 tables — +projects.deleted_at v45, +7 indexes v46, +lab_settings.pi_emails v44, +team_members.email v43) |
+| Code complete | Round-2 design + motion close shipped 2026-04-21 (43 tickets: P1/§0/P2/P3/motion). Phase 36d + round-1 all prior. |
+| D1 schema | v49 applied (60 tables — v47 Airtable funeral cols 2026-04-20, v48 27-index reconcile, v49 13 tables + 2 unique indexes reconcile 2026-04-21) |
+| Schema drift CI | 🟢 green (nightly 03 CT; `.github/workflows/schema-drift.yml`). Guardrail for post-launch drift. |
 | Audit framework | Live — `npx tsx scripts/hub-audit.ts`, 30+ asserted flows, 0 P1 |
-| Latest deploy | `6dc546d` (2026-04-20, Phase 36d docs + design handoff) |
+| Latest deploy | `cfc00ab0.mn-ccore-lab.pages.dev` (2026-04-21) — HEAD `2802fb7` includes post-deploy schema-drift fixes + docs refresh |
 | Dogfood page health | 14/14, 0 console errors |
 | Inspection suite | 213/213 vs prod |
+| Smoke suite | 27/27 (was 26/27 — /network flake fixed) |
 | Mobile smoke | 2/2 (Pixel 5 emulation) |
-| Desktop journey smoke | 1/1 |
-| Design handoff | Imported 2026-04-20 — `docs/design-handoff-2026-04-20/TICKETS.md` (33 tickets: 8 P1 · 14 P2 · 11 P3) |
+| Desktop journey smoke | 1/1 (was failing on intercept race — fixed) |
+| Design handoff | Round-1: 32/33 shipped (P2-14 is a data-entry ask, not design). Round-2: 43/43 shipped. |
 | Cloudflare Access | **NICK MUST CONFIGURE** |
 | CF_ACCESS_TEAM_DOMAIN + CF_ACCESS_AUD secrets | **NICK MUST SET (after CF Access config)** |
 | RESEND_API_KEY | **NICK MUST SET** |
-| GitHub secrets | **NICK MUST SET** |
+| GitHub secrets (Pages) | **NICK MUST SET** |
+| GitHub secrets (schema-drift CI) | ✅ CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID set 2026-04-21 |
 | Workers tier | Paid ($5/mo, 10M requests/day) |
 | Hermes polling | 60s |
-| Post-launch audit cadence | Weekly via `hub-audit.ts` |
+| Post-launch audit cadence | Weekly via `hub-audit.ts` + nightly schema-drift CI |
 
 ## Don't do at launch
 

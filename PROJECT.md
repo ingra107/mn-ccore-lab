@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: Work through `docs/design-handoff-2026-04-20/TICKETS.md` — 33 tickets (8 P1 ship-blockers, 14 P2 polish, 11 P3 new surfaces) from the Claude Design audit. P1 first. In parallel, configure CF Access + 4 secrets per LAUNCH-CHECKLIST.md sections 0 + 1 for team launch.
+next_action: Configure CF Access + 4 secrets per LAUNCH-CHECKLIST.md sections 0 + 1 for team launch. Round-1 and round-2 design handoffs are complete (37 of 38 tickets shipped; P2-14 Post-Award Milestones is a data-entry ask, not design — seed `grant_milestones` rows for Funded grants when ready).
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 
@@ -15,9 +15,9 @@ React 19 + Vite 8 + Tailwind v4 + Cloudflare Pages/D1 lab management
 platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (PI-only; team not yet onboarded)
-**Repo:** https://github.com/ingra107/mn-ccore-lab  (680+ commits)
-**Current deploy:** `ef604db` (2026-04-20) — Phase 36d close (design sprint)
-**Quality gate:** 🟢 GREEN — inspection 213/213 vs prod, deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, mobile smoke 2/2, desktop journey 1/1, /api/health 74ms.
+**Repo:** https://github.com/ingra107/mn-ccore-lab  (720+ commits)
+**Current deploy:** `cfc00ab0.mn-ccore-lab.pages.dev` (2026-04-21, round-2 + motion close; HEAD `2802fb7` on main includes post-deploy schema-drift reconciliation + docs refresh)
+**Quality gate:** 🟢 GREEN — inspection 213/213 vs prod, smoke 27/27, deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
 
 ## 🚨 Read these FIRST every session
 
