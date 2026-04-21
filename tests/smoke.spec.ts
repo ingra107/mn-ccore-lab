@@ -30,8 +30,15 @@ test.describe('Smoke tests — all routes load', () => {
       // HTTP status should be 200 (or 304)
       expect(response?.status()).toBeLessThan(400)
 
-      // Page should have content (not blank)
-      await page.waitForLoadState('networkidle')
+      // Page should have content (not blank). /network lazy-loads ~1.3MB
+      // three.js + reagraph WebGL — never settles to networkidle. Use a
+      // softer wait + dwell for that one route (matches the capture spec).
+      if (route.path === '/network') {
+        await page.waitForLoadState('domcontentloaded')
+        await page.waitForTimeout(4000)
+      } else {
+        await page.waitForLoadState('networkidle')
+      }
       const body = await page.locator('body').textContent()
       expect(body?.length).toBeGreaterThan(0)
 

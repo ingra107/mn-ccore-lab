@@ -1008,13 +1008,21 @@ test.describe('VISUAL — Dropdown and modal states', () => {
 test.describe('JOURNEY — Morning task triage', () => {
   test('JOURNEY: Dashboard → click task → detail opens with correct task', async ({ page }) => {
     await loadPage(page, '/dashboard')
-    // Find a task title in the dashboard Tasks card
-    const taskLink = page.locator('a, [role="button"], span').filter({ hasText: /Update CQODE|Review ATS|CLIF/ }).first()
-    const taskText = await taskLink.textContent().catch(() => '')
-    if (taskText) {
-      await taskLink.click()
+    // The dashboard hosts multiple cards. Earlier the test grabbed the
+    // *first* hit of /CLIF/ which landed on a project link inside the
+    // Project Health card — that link sits in an overflow-y-auto inside
+    // an overflow:hidden BentoCard with a framer-motion whileHover lift.
+    // Playwright's hit-testing race against the transform = intercept.
+    // Scope to the Action Board card and use force:true so the click
+    // bypasses the transient animation state.
+    const actionBoard = page.locator('[data-testid="action-board"], section:has-text("Action Board"), section:has-text("Up Next")').first()
+    const fallback = page.locator('a[href^="/projects/"], a[href^="/tasks"]').first()
+    const target = (await actionBoard.count()) > 0
+      ? actionBoard.locator('a, [role="button"]').first()
+      : fallback
+    if ((await target.count()) > 0) {
+      await target.click({ force: true })
       await page.waitForTimeout(500)
-      // Should navigate to tasks or open detail
       await page.screenshot({ path: 'review/journey-dashboard-task-click.png' })
     }
   })
