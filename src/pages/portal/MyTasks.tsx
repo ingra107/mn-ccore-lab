@@ -430,7 +430,7 @@ export default function MyTasks() {
   }, [tasks])
 
   return (
-    <div>
+    <div className="content-container">
       <PageHeader
         icon={<CheckSquare size={20} />}
         title="Tasks"

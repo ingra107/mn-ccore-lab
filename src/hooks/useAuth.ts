@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { emailToSlug } from '../lib/emailSlug'
+import { getPersonInfo } from '../data/team'
 
 export interface AuthUser {
   email: string
@@ -43,12 +45,29 @@ function getAuthFromCookie(): AuthUser {
 
   // Cookie-based path is a first-paint optimization; it cannot know isPi
   // (that answer lives server-side). Hydrates to true via /api/auth/me.
+  const email = (payload.email as string) || ''
   return {
-    email: (payload.email as string) || '',
-    name: (payload.name as string) || (payload.email as string)?.split('@')[0] || '',
+    email,
+    name: (payload.name as string) || nameFromEmail(email) || '',
     isAuthenticated: true,
     isPi: false,
   }
+}
+
+// Produce a readable display name from an email address. Routes through the
+// team LUT so `ingra107@umn.edu` renders as "Nicholas Ingraham" instead of
+// "Ingra107". Falls back to the raw local-part if the email prefix isn't
+// in the team directory.
+function nameFromEmail(email: string): string {
+  if (!email) return ''
+  const slug = emailToSlug(email)
+  if (slug) {
+    const person = getPersonInfo(slug)
+    if (person.name && person.name !== 'Unknown' && !person.name.includes('@')) {
+      return person.name
+    }
+  }
+  return email.split('@')[0]
 }
 
 // Also support fetching auth status from the API for more reliable detection

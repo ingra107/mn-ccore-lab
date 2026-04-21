@@ -1,4 +1,5 @@
 import type { Director, TeamMember } from './types'
+import { emailToSlug } from '../lib/emailSlug'
 
 export const directors: Director[] = [
   {
@@ -109,7 +110,18 @@ export function getPersonInfo(slug: string): { name: string; initials: string; p
   if (director) return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
   const member = getMemberBySlug(slug)
   if (member) return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
-  // Handle email addresses (from D1 auth)
-  const name = slug.includes('@') ? slug.split('@')[0] : slug
-  return { name, initials: name.slice(0, 2).toUpperCase(), photoUrl: undefined }
+  // Handle email addresses (from D1 auth) — try LUT-mapped slug first so
+  // `ingra107@umn.edu` finds the member row for `nick-ingraham`.
+  if (slug.includes('@')) {
+    const mapped = emailToSlug(slug)
+    if (mapped !== slug) {
+      const director2 = directors.find((d) => d.slug === mapped)
+      if (director2) return { name: director2.name, initials: director2.initials, photoUrl: director2.photoUrl }
+      const member2 = getMemberBySlug(mapped)
+      if (member2) return { name: member2.name, initials: member2.initials, photoUrl: member2.photoUrl }
+    }
+    const name = slug.split('@')[0]
+    return { name, initials: name.slice(0, 2).toUpperCase(), photoUrl: undefined }
+  }
+  return { name: slug, initials: slug.slice(0, 2).toUpperCase(), photoUrl: undefined }
 }

@@ -317,7 +317,7 @@ export default function Tasks() {
   }, [pendingCount])
 
   return (
-    <div>
+    <div className="content-container">
       <PageHeader
         icon={<ListTodo size={20} />}
         title="All Tasks"

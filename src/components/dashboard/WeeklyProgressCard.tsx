@@ -86,7 +86,7 @@ function MiniBarChart({ bars }: { bars: BarDatum[] }) {
             padding: '2px 6px',
             whiteSpace: 'nowrap',
             pointerEvents: 'none',
-            zIndex: 10,
+            zIndex: 'var(--z-sticky)',
           }}
         >
           <span style={{ fontWeight: 500 }}>{bars[hovered].label}</span>

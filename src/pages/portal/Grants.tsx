@@ -507,7 +507,7 @@ export default function Grants() {
   )
 
   return (
-    <div>
+    <div className="content-container">
       <PageHeader
         icon={<Wallet size={20} />}
         title="Grants & Funding"

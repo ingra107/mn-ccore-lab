@@ -196,7 +196,7 @@ export default function Deadlines() {
   }, [overdue.length])
 
   return (
-    <div>
+    <div className="content-container">
       <PageHeader
         icon={<Clock size={20} />}
         title="Deadlines & Milestones"

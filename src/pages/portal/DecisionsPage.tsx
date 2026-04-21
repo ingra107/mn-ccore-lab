@@ -910,7 +910,7 @@ export default function DecisionsPage() {
   }, [pendingCount])
 
   return (
-    <div>
+    <div className="content-container">
       <PageHeader
         icon={<Scale size={20} />}
         title="Decision Log"

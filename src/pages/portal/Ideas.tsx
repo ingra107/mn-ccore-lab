@@ -16,7 +16,6 @@ import { useToast } from '../../hooks/useToast'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { IdeaRow } from '../../lib/api'
-import PageLayout from '../../components/PageLayout'
 
 type SortKey = 'title' | 'submitter' | 'status' | 'votes' | 'created_at'
 
@@ -159,7 +158,7 @@ export default function Ideas() {
   const isEmpty = !isLoading && sortedIdeas.length === 0
 
   return (
-    <PageLayout>
+    <div className="content-container flex flex-col gap-4">
       <PageHeader
         icon={<Lightbulb size={20} />}
         title="Ideas Board"
@@ -488,7 +487,7 @@ export default function Ideas() {
 
       {/* Create modal */}
       <CreateIdeaModal open={showCreate} onClose={() => setShowCreate(false)} />
-    </PageLayout>
+    </div>
   )
 }
 

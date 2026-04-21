@@ -7,6 +7,7 @@ import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
+import { getPersonInfo } from '../data/team'
 import { useMeetingsApi, useTasks, useExpiringRegulatory } from '../hooks/useApiData'
 import { formatMediumDate } from '../lib/dateUtils'
 import { isProductionVisible } from '../lib/isProductionVisible'
@@ -317,14 +318,18 @@ export default function Dashboard() {
     window.location.reload()
   }, [userSlug])
 
-  // Time-of-day greeting
+  // Time-of-day greeting — prefer real first name from team data over email prefix
+  // (which for Nick produces "Ingra107", hence 2026-04-21 issue #19).
   const greeting = useMemo(() => {
     const hour = new Date().getHours()
-    const firstName = user?.email?.split('@')[0]?.split('.')[0]
-    const name = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : null
+    const person = userSlug ? getPersonInfo(userSlug) : null
+    const personFirstName = person && person.name !== 'Unknown' ? person.name.split(' ')[0] : null
+    const fallback = user?.email?.split('@')[0]?.split('.')[0]
+    const capitalized = fallback ? fallback.charAt(0).toUpperCase() + fallback.slice(1) : null
+    const name = personFirstName || capitalized
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
     return name ? `${timeGreeting}, ${name}` : timeGreeting
-  }, [user])
+  }, [user, userSlug])
 
   return (
     <DashboardMountedContext.Provider value={mounted}>

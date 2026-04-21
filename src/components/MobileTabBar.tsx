@@ -133,7 +133,7 @@ export default function MobileTabBar() {
           onClick={() => setOverflowOpen(false)}
           style={{
             background: 'rgba(0,0,0,0.5)',
-            zIndex: 'var(--z-modal, 1000)',
+            zIndex: 'var(--z-modal)',
             display: 'flex',
             alignItems: 'flex-end',
           }}

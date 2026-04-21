@@ -10,8 +10,10 @@ import {
 } from 'lucide-react'
 import { spring } from '../lib/animations'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
+import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import { PATHS, PUBLIC_PATHS } from '../constants/paths'
+import { emailToSlug } from '../lib/emailSlug'
 
 interface CommandItem {
   id: string
@@ -36,6 +38,8 @@ export default function CommandPalette() {
   const { data: projects = [] } = useProjects(undefined, { enabled: open })
   const { data: team = [] } = useTeam({ enabled: open })
   const { data: meetings = [] } = useMeetingsApi({ enabled: open })
+  const { user } = useAuth()
+  const currentUserSlug = emailToSlug(user?.email)
 
   // Global Cmd+K listener
   useEffect(() => {
@@ -216,9 +220,9 @@ export default function CommandPalette() {
       items.push({
         id: 'ctx-tasks-filter-mine',
         label: 'Show My Tasks Only',
-        sublabel: `${tasks.filter(t => !t.completed && t.assignee === 'nick-ingraham').length} tasks assigned to you`,
+        sublabel: `${tasks.filter(t => !t.completed && t.assignee === currentUserSlug).length} tasks assigned to you`,
         icon: User,
-        action: () => { navigate(`${PATHS.myTasks}?assignee=nick`); setOpen(false) },
+        action: () => { navigate(`${PATHS.myTasks}?assignee=${currentUserSlug}`); setOpen(false) },
         category: 'context',
       })
       items.push({
@@ -458,12 +462,12 @@ export default function CommandPalette() {
     <AnimatePresence>
       {open && (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]"
+      className="fixed inset-0 flex items-start justify-center pt-[15vh]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.1 }}
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', zIndex: 'var(--z-modal)' }}
       onClick={() => setOpen(false)}
     >
       <motion.div
