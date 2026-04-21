@@ -6,7 +6,7 @@ Before writing any code or answering any question about this project, read:
 
 1. **`SESSION-HANDOFF.md`** — current gate state, what-to-do-first, git HEADs, gotchas. One-page. Always.
 2. **`PROJECT.md`** — frontmatter has canonical `next_action` + `primary_folder`.
-3. **`LAUNCH-CHECKLIST.md`** — section 0 is the blocker for team launch (flip auth flags). Read if Nick mentions team / launch / go-live.
+3. **`LAUNCH-CHECKLIST.md`** — historical record of launch prerequisites + verification runbook. All prereqs shipped 2026-04-21; re-read if revisiting auth config, CF Access policies, or digest email setup.
 4. **`REFERENCE.md`** — API endpoints + D1 table list when you need one.
 5. **`CHANGELOG.md`** — top entry = most recent phase; jump here when asked "what changed."
 6. **`docs/OBSERVABILITY.md`** — `/api/health` runbook.
