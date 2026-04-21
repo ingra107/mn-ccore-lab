@@ -1,6 +1,7 @@
 import { test } from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
+import { P } from './helpers/paths'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
 const TS = process.env.AUDIT_TS || new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 12)
@@ -15,7 +16,7 @@ test('targeted', async ({ page, context }) => {
   test.setTimeout(180_000)
 
   // 1. /team/nick-ingraham — does it actually have portal chrome or just public site?
-  await page.goto(`${BASE}/team/nick-ingraham`, { waitUntil: 'domcontentloaded' })
+  await page.goto(`${BASE}${P.publicMember('nick-ingraham')}`, { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2000)
   const portalSidebar = await page.locator('nav').filter({ hasText: 'Dashboard' }).count()
   const publicNav = await page.locator('nav, header').filter({ hasText: /^Home Research/ }).count()
@@ -23,14 +24,14 @@ test('targeted', async ({ page, context }) => {
   await page.screenshot({ path: path.join(OUT, '01-team-member.png'), fullPage: true })
 
   // 2. /team in portal context (logged-in user expects portal shell)
-  await page.goto(`${BASE}/team`, { waitUntil: 'domcontentloaded' })
+  await page.goto(`${BASE}${P.publicTeam}`, { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(1500)
   const teamPortalSidebar = await page.locator('nav').filter({ hasText: 'Dashboard' }).count()
   log(`/team (portal expected): sidebar=${teamPortalSidebar}`)
   await page.screenshot({ path: path.join(OUT, '02-team.png'), fullPage: true })
 
   // 3. Does /tasks status pill actually open dropdown when clicked correctly?
-  await page.goto(`${BASE}/tasks`)
+  await page.goto(`${BASE}${P.myTasks}`)
   await page.waitForTimeout(2500)
   // Find a real status cell — they're inside table rows
   const statusCells = page.locator('td').filter({ hasText: /^(To Do|In Progress|Done|Blocked|Waiting)$/ })
@@ -45,7 +46,7 @@ test('targeted', async ({ page, context }) => {
   }
 
   // 4. Does inline title click open the detail panel?
-  await page.goto(`${BASE}/tasks`)
+  await page.goto(`${BASE}${P.myTasks}`)
   await page.waitForTimeout(2500)
   const titleSpan = page.locator('span').filter({ hasText: /^CQODE|^Run CRRT|^Fix dx/ }).first()
   if (await titleSpan.isVisible().catch(() => false)) {
@@ -58,7 +59,7 @@ test('targeted', async ({ page, context }) => {
   }
 
   // 5. Quick-add via Ctrl+N
-  await page.goto(`${BASE}/dashboard`)
+  await page.goto(`${BASE}${P.dashboard}`)
   await page.waitForTimeout(2000)
   await page.keyboard.press('Control+n')
   await page.waitForTimeout(500)
@@ -68,12 +69,12 @@ test('targeted', async ({ page, context }) => {
   await page.keyboard.press('Escape')
 
   // 6. /personal — does Personal/My Hub differ from /my-tasks?
-  await page.goto(`${BASE}/personal`)
+  await page.goto(`${BASE}${P.personal}`)
   await page.waitForTimeout(2000)
   await page.screenshot({ path: path.join(OUT, '06-personal.png'), fullPage: true })
 
   // 7. Tooltip — that "Press F to toggle filters" overlay — is it dismissable?
-  await page.goto(`${BASE}/dashboard`)
+  await page.goto(`${BASE}${P.dashboard}`)
   await page.waitForTimeout(2000)
   await page.screenshot({ path: path.join(OUT, '07-dashboard-tooltip.png') })
   // Try press F
@@ -83,7 +84,7 @@ test('targeted', async ({ page, context }) => {
 
   // 8. Sidebar Search button tooltip placement
   // 9. Dashboard At-a-glance numbers — check after refresh
-  await page.goto(`${BASE}/dashboard`)
+  await page.goto(`${BASE}${P.dashboard}`)
   await page.waitForTimeout(3000)
   const glance1 = await page
     .locator('text=/At a Glance/')
@@ -118,19 +119,19 @@ test('targeted', async ({ page, context }) => {
     userAgent: 'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
   })
   const mp = await mobileCtx.newPage()
-  await mp.goto(`${BASE}/my-tasks`, { waitUntil: 'domcontentloaded' })
+  await mp.goto(`${BASE}${P.myTasks}`, { waitUntil: 'domcontentloaded' })
   await mp.waitForTimeout(2500)
   await mp.screenshot({ path: path.join(OUT, '09-mobile-my-tasks.png'), fullPage: true })
-  await mp.goto(`${BASE}/personal`, { waitUntil: 'domcontentloaded' })
+  await mp.goto(`${BASE}${P.personal}`, { waitUntil: 'domcontentloaded' })
   await mp.waitForTimeout(2500)
   await mp.screenshot({ path: path.join(OUT, '10-mobile-personal.png'), fullPage: true })
-  await mp.goto(`${BASE}/calendar`, { waitUntil: 'domcontentloaded' })
+  await mp.goto(`${BASE}${P.calendar}`, { waitUntil: 'domcontentloaded' })
   await mp.waitForTimeout(2500)
   await mp.screenshot({ path: path.join(OUT, '11-mobile-calendar.png'), fullPage: true })
-  await mp.goto(`${BASE}/meetings`, { waitUntil: 'domcontentloaded' })
+  await mp.goto(`${BASE}${P.meetings}`, { waitUntil: 'domcontentloaded' })
   await mp.waitForTimeout(2500)
   await mp.screenshot({ path: path.join(OUT, '12-mobile-meetings.png'), fullPage: true })
-  await mp.goto(`${BASE}/projects/mesfin-k23-ihca-survivability-calculator`, { waitUntil: 'domcontentloaded' })
+  await mp.goto(`${BASE}${P.project('mesfin-k23-ihca-survivability-calculator')}`, { waitUntil: 'domcontentloaded' })
   await mp.waitForTimeout(2500)
   await mp.screenshot({ path: path.join(OUT, '13-mobile-project-detail.png'), fullPage: true })
   await mobileCtx.close()

@@ -116,7 +116,7 @@ async function main() {
   // ACTION 4: Inline priority change + undo
   // ────────────────────────────────────────────────────────────
   log('\n=== ACTION 4: Inline priority change + undo ===')
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
   await snap(page, 'mytasks-initial', 1500)
   const priorityCell = page.locator('[data-testid^="task-priority-"]').first()
   if (await priorityCell.count()) {
@@ -220,7 +220,7 @@ async function main() {
   // ACTION 9: Ideas — N key + Ctrl+Enter
   // ────────────────────────────────────────────────────────────
   log('\n=== ACTION 9: Ideas N-key + Ctrl+Enter ===')
-  await page.goto(`${BASE}/ideas`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/ideas`, { waitUntil: 'networkidle' })
   await snap(page, 'ideas-page', 1200)
   await page.keyboard.press('n')
   await snap(page, 'ideas-create-modal', 400)
@@ -242,7 +242,7 @@ async function main() {
   // ACTION 10: Decisions — N key + Ctrl+Enter
   // ────────────────────────────────────────────────────────────
   log('\n=== ACTION 10: Decisions N-key + Ctrl+Enter ===')
-  await page.goto(`${BASE}/decisions`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/decisions`, { waitUntil: 'networkidle' })
   await snap(page, 'decisions-page', 1200)
   await page.keyboard.press('n')
   await snap(page, 'decisions-create-modal', 400)
@@ -261,7 +261,7 @@ async function main() {
   // ACTION 11: Projects — create modal Ctrl+Enter
   // ────────────────────────────────────────────────────────────
   log('\n=== ACTION 11: Projects create modal Ctrl+Enter ===')
-  await page.goto(`${BASE}/projects`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/projects`, { waitUntil: 'networkidle' })
   await snap(page, 'projects-page', 1200)
   const newProjBtn = page.locator('button').filter({ hasText: /New Project/i }).first()
   if (await newProjBtn.count()) {
@@ -300,13 +300,13 @@ async function main() {
   await mPage.screenshot({ path: `${OUT}/${String(stepNum).padStart(2, '0')}-team-mobile.png` })
   log('  captured /team mobile')
 
-  await mPage.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await mPage.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
   await mPage.waitForTimeout(2000)
   stepNum++
   await mPage.screenshot({ path: `${OUT}/${String(stepNum).padStart(2, '0')}-mytasks-mobile.png` })
   log('  captured /my-tasks mobile')
 
-  await mPage.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  await mPage.goto(`${BASE}/portal/dashboard`, { waitUntil: 'networkidle' })
   await mPage.waitForTimeout(2000)
   stepNum++
   await mPage.screenshot({ path: `${OUT}/${String(stepNum).padStart(2, '0')}-dashboard-mobile.png` })

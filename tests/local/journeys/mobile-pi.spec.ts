@@ -3,13 +3,14 @@
  * Persona: Nick on iPhone (375x812 viewport), quick check between patients.
  */
 import { test, expect, go, vis } from './fixtures'
+import { P } from '../../helpers/paths'
 
 test.use({ viewport: { width: 375, height: 812 } })
 
 test.describe('Journey 6: Mobile PI', () => {
   test('Dashboard → tasks → overflow menu → calendar → decisions → ideas → search', async ({ journeyPage: page }) => {
     // 1. Navigate to /dashboard
-    const errors = await go(page, '/dashboard')
+    const errors = await go(page, P.dashboard)
     expect(errors).toEqual([])
 
     // 2. Page rendered at mobile viewport
@@ -22,7 +23,7 @@ test.describe('Journey 6: Mobile PI', () => {
     console.log(`Mobile "More" button visible: ${hasTabBar}`)
 
     // 5. Navigate to /my-tasks
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
     await expect(page.locator('h1')).toContainText(/task/i, { timeout: 5000 })
 
     // 6-7. Task content renders on mobile
@@ -62,14 +63,14 @@ test.describe('Journey 6: Mobile PI', () => {
           await page.waitForTimeout(2000)
         } else {
           await page.keyboard.press('Escape')
-          await go(page, '/calendar')
+          await go(page, P.calendar)
         }
       } else {
-        await go(page, '/calendar')
+        await go(page, P.calendar)
       }
     } else {
       // No MobileTabBar — navigate directly
-      await go(page, '/calendar')
+      await go(page, P.calendar)
     }
 
     // 12-15. Calendar page
@@ -92,7 +93,7 @@ test.describe('Journey 6: Mobile PI', () => {
     }
 
     // 16-19. Navigate to /decisions
-    await go(page, '/decisions')
+    await go(page, P.decisions)
     await expect(page.locator('h1')).toBeVisible({ timeout: 5000 })
 
     // Click a decision row if any exist
@@ -104,11 +105,11 @@ test.describe('Journey 6: Mobile PI', () => {
     }
 
     // 20-23. Navigate to /ideas
-    await go(page, '/ideas')
+    await go(page, P.ideas)
     await expect(page.locator('h1')).toBeVisible({ timeout: 5000 })
 
     // 24-26. Navigate to /search
-    await go(page, '/search')
+    await go(page, P.search)
     const searchInput = page.locator('input[type="text"], input[type="search"], input[placeholder*="earch"]').first()
     if (await searchInput.isVisible({ timeout: 5000 }).catch(() => false)) {
       await searchInput.fill('CLIF')

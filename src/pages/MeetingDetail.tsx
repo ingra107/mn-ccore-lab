@@ -45,6 +45,7 @@ import { useHoverCard } from '../hooks/useHoverCard'
 import { getPersonInfo, getMemberBySlug, directors, getAllMembers } from '../data/team'
 import { formatLongDate, formatShortDate } from '../lib/dateUtils'
 import { getMeetingFacilitator } from '../lib/facilitator'
+import { PATHS } from '../constants/paths'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -183,7 +184,7 @@ export default function MeetingDetail() {
   if (!meeting) {
     return (
       <div className="content-container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
-        <Link to="/meetings" className="inline-flex items-center gap-2 mb-6"
+        <Link to={PATHS.meetings} className="inline-flex items-center gap-2 mb-6"
           style={{ fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
           <ArrowLeft size={16} /> Back to Meetings
         </Link>
@@ -277,7 +278,7 @@ export default function MeetingDetail() {
             </span>
             <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
             <Link
-              to={`/meetings/${meeting.id}/prep`}
+              to={PATHS.meetingPrep(meeting.id)}
               className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs transition-colors"
               style={{
                 fontSize: 'var(--label-size)',
@@ -395,7 +396,7 @@ export default function MeetingDetail() {
               {projectSlugs.map((slug: string) => (
                 <a
                   key={slug}
-                  href={`/projects/${slug}`}
+                  href={PATHS.project(slug)}
                   style={{
                     fontSize: 'var(--label-size)',
                     padding: '2px 8px',
@@ -939,7 +940,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
             </span>
           )}
           {item.project_id && (
-            <Link to={`/projects/${item.project_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
+            <Link to={PATHS.project(item.project_id)} onClick={(e) => e.stopPropagation()} style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
               {item.project_id}
             </Link>
           )}

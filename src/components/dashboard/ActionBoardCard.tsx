@@ -9,6 +9,7 @@ import { useUpdateTaskStatus } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate } from '../../lib/dateUtils'
+import { PATHS } from '../../constants/paths'
 
 const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
   todo: { icon: Circle, color: 'var(--slate)' },
@@ -92,8 +93,8 @@ function ActionBoardCard() {
                                   {item.priority}
                                 </span>
                               )}
-                              {item.meeting_title && (
-                                <Link to={`/meetings/${item.meeting_id}`}
+                              {item.meeting_id && item.meeting_title && (
+                                <Link to={PATHS.meeting(item.meeting_id)}
                                   style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none', opacity: 0.85 }}
                                   onClick={(e) => e.stopPropagation()}>
                                   {formatBrandName(item.meeting_title?.split(':')[0] || '')}
@@ -118,7 +119,7 @@ function ActionBoardCard() {
           )}
         </div>
 
-        <Link to="/tasks" className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
+        <Link to={PATHS.myTasks} className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
           style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}>
           View all tasks <ArrowRight size={11} />
         </Link>

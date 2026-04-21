@@ -1,6 +1,7 @@
 import { Lightbulb } from 'lucide-react'
 import { useProactiveBrief } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
+import { PATHS } from '../../constants/paths'
 
 interface ProactiveBriefData {
   bullets: string[]
@@ -98,7 +99,7 @@ export default function ProactiveBriefCard() {
                 </p>
               </div>
               <a
-                href={`/tasks?id=${brief.suggested_focus.id}`}
+                href={`${PATHS.myTasks}?id=${brief.suggested_focus.id}`}
                 className="text-[10px] px-2 py-1 rounded-md font-medium flex-shrink-0"
                 style={{
                   color: 'var(--teal)',

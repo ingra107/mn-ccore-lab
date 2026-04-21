@@ -13,6 +13,7 @@
 import { test } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
+import { P } from './helpers/paths'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
 // Dated bundle dir, same pattern as capture-for-design.spec.ts. Set
@@ -27,7 +28,7 @@ const OUT = path.join('review', process.env.CAPTURE_BUNDLE ?? `claude-design-${T
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true })
 
 test('focus-01-quick-add-overview → new Quick Add on Task Detail Overview', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
   // Open the first task's detail panel by clicking its title.
   const firstTitle = page.locator('[data-testid^="task-row-"] [data-testid="task-title-cell"], [data-testid^="task-row-"]').first()
@@ -66,7 +67,7 @@ test('focus-01-quick-add-overview → new Quick Add on Task Detail Overview', as
 })
 
 test('focus-02-task-row-focus-outline → teal outline on selected task row', async ({ page }) => {
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
   // J key advances focus to first task — this triggers the teal outline.
   await page.keyboard.press('j')
@@ -90,19 +91,19 @@ test('focus-03-inline-arrow-density → audit inline ▾ chevrons', async ({ pag
   // Tasks page: status / priority / assignee / due / project all carry
   // inline ▾ indicators. Capture the current density so Claude Design
   // can recommend hover-only or single-arrow patterns.
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
   await page.screenshot({ path: path.join(OUT, 'focus-03-inline-arrows-tasks.png'), fullPage: true })
 
-  await page.goto(`${BASE}/projects`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.projects}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
   await page.screenshot({ path: path.join(OUT, 'focus-03-inline-arrows-projects.png'), fullPage: false })
 
-  await page.goto(`${BASE}/manuscripts`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.manuscripts}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
   await page.screenshot({ path: path.join(OUT, 'focus-03-inline-arrows-manuscripts.png'), fullPage: false })
 
-  await page.goto(`${BASE}/decisions`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${P.decisions}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
   await page.screenshot({ path: path.join(OUT, 'focus-03-inline-arrows-decisions.png'), fullPage: false })
 })

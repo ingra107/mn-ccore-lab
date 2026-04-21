@@ -18,13 +18,13 @@ async function main() {
 
   try {
     section(s, '1  Trainee lands on /my-tasks — sees only THEIR tasks')
-    await goto(s, '/my-tasks')
+    await goto(s, '/portal/my-tasks')
     await snap(s, 'trainee-my-tasks')
     // Without auth our test session sees all tasks; in prod they'd see filtered. Just verify page loads.
     await assertVisible(s, 'MyTasks page renders', 'h1', { severity: 'P1' })
 
     section(s, '2  /mentee-milestones exists and loads')
-    await goto(s, '/mentee-milestones')
+    await goto(s, '/portal/mentee-milestones')
     await snap(s, 'mentee-milestones', 1500)
     const st = await s.page.evaluate(() => document.title).catch(() => '')
     if (st.toLowerCase().includes('mentee') || st.toLowerCase().includes('milestone')) pass(s, `Page title: ${st}`)
@@ -56,7 +56,7 @@ async function main() {
     else record(s, { id: 'TEAM-FORMAL', severity: 'P1', scenario: 'Formal name on /team', observed: 'not found', expected: 'Nicholas Ingraham, MD format' })
 
     section(s, '5  Search — from trainee perspective, what comes up?')
-    await goto(s, '/search')
+    await goto(s, '/portal/search')
     await snap(s, 'search-blank')
     const searchInput = s.page.locator('input[placeholder*="search" i]').first()
     if (await searchInput.count()) {

@@ -15,6 +15,7 @@
  */
 import { test, expect, type Page } from '@playwright/test'
 import { cleanupTestTasks } from './test-cleanup'
+import { P } from './helpers/paths'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
 
@@ -201,29 +202,29 @@ test.describe('API — Schema Integrity', () => {
 test.describe('PAGE — Portal pages render without errors', () => {
   const portalPages: [string, string, string[]][] = [
     // [route, name, elements that MUST be present]
-    ['/dashboard', 'Dashboard', ['Good morning|Good afternoon|Good evening', 'Customize']],
-    ['/personal', 'My Hub', ['My Hub']],
-    ['/my-tasks', 'My Tasks', ['Tasks', 'active task']],
-    ['/tasks', 'All Tasks', ['Tasks']],  // /tasks redirects to /my-tasks (Phase 31.5)
-    ['/calendar', 'Calendar', ['Lab Calendar', 'Month']],
-    ['/deadlines', 'Deadlines', ['Deadlines']],
-    ['/projects', 'Projects', ['Research Pipeline', 'New Project']],
-    ['/manuscripts', 'Manuscripts', ['Manuscripts']],
-    ['/ideas', 'Ideas', ['Ideas Board', 'New Idea']],
-    ['/ask', 'Ask the Lab', ['Ask the Lab', 'New Question']],
-    ['/decisions', 'Decisions', ['Decision Log', 'Log Decision']],
-    ['/digest', 'Research Digest', ['Research Digest']],
-    ['/search', 'Search', ['Search']],
-    ['/grants', 'Grants', ['Grants', 'Funding']],
-    ['/meetings', 'Meetings', ['Meeting', 'Record Meeting']],
-    ['/meeting-notes', 'Meeting Transcripts', ['Meeting Transcripts', 'Upload Audio']],
-    ['/activity', 'Activity', ['Activity']],
-    ['/analytics', 'Analytics', ['Lab Analytics', 'Completed']],
-    ['/settings', 'Settings', ['Settings', 'Lab Name']],
-    ['/narratives', 'Narratives', ['Research Narratives']],
-    ['/sessions', 'Session History', ['Session History']],
-    ['/mentee-milestones', 'Mentee Milestones', ['Mentee Milestones']],
-    ['/pi/analytics', 'PI Analytics', ['PI Access Only|PI Dashboard']],
+    [P.dashboard, 'Dashboard', ['Good morning|Good afternoon|Good evening', 'Customize']],
+    [P.personal, 'My Hub', ['My Hub']],
+    [P.myTasks, 'My Tasks', ['Tasks', 'active task']],
+    [P.tasks, 'All Tasks', ['Tasks']],  // /portal/tasks redirects to /portal/my-tasks
+    [P.calendar, 'Calendar', ['Lab Calendar', 'Month']],
+    [P.deadlines, 'Deadlines', ['Deadlines']],
+    [P.projects, 'Projects', ['Research Pipeline', 'New Project']],
+    [P.manuscripts, 'Manuscripts', ['Manuscripts']],
+    [P.ideas, 'Ideas', ['Ideas Board', 'New Idea']],
+    [P.ask, 'Ask the Lab', ['Ask the Lab', 'New Question']],
+    [P.decisions, 'Decisions', ['Decision Log', 'Log Decision']],
+    [P.digest, 'Research Digest', ['Research Digest']],
+    [P.search, 'Search', ['Search']],
+    [P.grants, 'Grants', ['Grants', 'Funding']],
+    [P.meetings, 'Meetings', ['Meeting', 'Record Meeting']],
+    [P.meetingNotes, 'Meeting Transcripts', ['Meeting Transcripts', 'Upload Audio']],
+    [P.activity, 'Activity', ['Activity']],
+    [P.analytics, 'Analytics', ['Lab Analytics', 'Completed']],
+    [P.settings, 'Settings', ['Settings', 'Lab Name']],
+    [P.narratives, 'Narratives', ['Research Narratives']],
+    [P.sessions, 'Session History', ['Session History']],
+    [P.menteeMilestones, 'Mentee Milestones', ['Mentee Milestones']],
+    [P.piAnalytics, 'PI Analytics', ['PI Access Only|PI Dashboard']],
   ]
 
   for (const [route, name, mustHave] of portalPages) {
@@ -255,10 +256,10 @@ test.describe('PAGE — Portal pages render without errors', () => {
 
 test.describe('PAGE — Public pages render without errors', () => {
   const publicPages: [string, string][] = [
-    ['/', 'Homepage'],
-    ['/team', 'Team'],
-    ['/publications', 'Publications'],
-    ['/contact', 'Contact'],
+    [P.home, 'Homepage'],
+    [P.publicTeam, 'Team'],
+    [P.publications, 'Publications'],
+    [P.contact, 'Contact'],
   ]
 
   for (const [route, name] of publicPages) {
@@ -276,7 +277,7 @@ test.describe('PAGE — Detail pages render with real data', () => {
     // Pick a slug without special characters (parentheses break routing)
     const slug = projects.data?.find((p: any) => p.slug && /^[a-z0-9-]+$/.test(p.slug))?.slug
     if (!slug) { test.skip(); return }
-    const errors = await loadPage(page, `/projects/${slug}`)
+    const errors = await loadPage(page, P.project(slug))
     expect(errors).toEqual([])
     // Must have project name heading or tab
     await expect(page.locator('h1').first()).toBeVisible({ timeout: 5000 })
@@ -287,7 +288,7 @@ test.describe('PAGE — Detail pages render with real data', () => {
     const meetings = await (await request.get(`${BASE}/api/meetings`)).json()
     const id = meetings.data?.[0]?.id
     if (!id) { test.skip(); return }
-    const errors = await loadPage(page, `/meetings/${id}`)
+    const errors = await loadPage(page, P.meeting(id))
     // Note: MeetingDetail field-access crash (Phase 31.5 regression) fixed in commit 79d9e3e
     // Filter out the specific crash error if the fix isn't deployed yet
     const reactErrors = errors.filter((e: string) => !e.includes('Cannot read properties of undefined'))
@@ -296,7 +297,7 @@ test.describe('PAGE — Detail pages render with real data', () => {
   })
 
   test('PAGE: Member page renders', async ({ page }) => {
-    const errors = await loadPage(page, '/team/nick-ingraham')
+    const errors = await loadPage(page, P.publicMember('nick-ingraham'))
     expect(errors).toEqual([])
     // Formal display tier uses `full_name + credentials` ("Nicholas Ingraham, MD"),
     // not the preferred-name short form. Match either.
@@ -316,11 +317,11 @@ test.describe('VISUAL — Responsive breakpoints', () => {
     { name: 'desktop', w: 1280, h: 900 },
   ] as const
 
-  const keyPages = ['/dashboard', '/tasks', '/projects', '/my-tasks']
+  const keyPages = [P.dashboard, P.tasks, P.projects, P.myTasks]
 
   for (const bp of breakpoints) {
     for (const path of keyPages) {
-      const pageName = path.replace('/', '') || 'home'
+      const pageName = path.replace('/portal/', '').replace('/', '') || 'home'
       test(`VISUAL: ${pageName} at ${bp.name} (${bp.w}x${bp.h})`, async ({ page }) => {
         await page.setViewportSize({ width: bp.w, height: bp.h })
         await loadPage(page, path)
@@ -337,7 +338,7 @@ test.describe('VISUAL — Responsive breakpoints', () => {
 
   test('VISUAL: Mobile sidebar collapses', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     // Full sidebar text should not be visible
     const sidebarText = await page.locator('text=Research Digest').first().isVisible().catch(() => false)
     expect(sidebarText, 'Sidebar visible on mobile').toBe(false)
@@ -345,7 +346,7 @@ test.describe('VISUAL — Responsive breakpoints', () => {
 
   test('VISUAL: Touch targets >= 36px on mobile tasks', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const small = await page.evaluate(() => {
       const els = document.querySelectorAll('button, a, [role="button"], input, select')
       let count = 0
@@ -366,20 +367,20 @@ test.describe('VISUAL — Responsive breakpoints', () => {
 
 test.describe('VISUAL — Design system compliance', () => {
   test('VISUAL: Portal h1 font-weight is 600 (not 800)', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const weight = await page.evaluate(() => getComputedStyle(document.querySelector('h1')!).fontWeight)
     expect(weight, 'h1 weight should be 600').toBe('600')
   })
 
   test('VISUAL: Portal uses DM Sans, not Fraunces', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const font = await page.evaluate(() => getComputedStyle(document.querySelector('h1')!).fontFamily)
     expect(font).toContain('DM Sans')
     expect(font).not.toContain('Fraunces')
   })
 
   test('VISUAL: Dark mode bg is #0b1017 (not blue-tinted)', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const bg = await page.evaluate(() => {
       // Check if dark mode
       const main = document.querySelector('main') || document.body
@@ -390,7 +391,7 @@ test.describe('VISUAL — Design system compliance', () => {
   })
 
   test('VISUAL: Transition CSS variables are set', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const vars = await page.evaluate(() => {
       const root = getComputedStyle(document.documentElement)
       return {
@@ -404,7 +405,7 @@ test.describe('VISUAL — Design system compliance', () => {
   })
 
   test('VISUAL: No fontWeight 800 on portal h1s', { timeout: 90000 }, async ({ page }) => {
-    const portalPaths = ['/dashboard', '/tasks', '/projects', '/meetings', '/grants', '/digest', '/decisions']
+    const portalPaths = [P.dashboard, P.myTasks, P.projects, P.meetings, P.grants, P.digest, P.decisions]
     for (const path of portalPaths) {
       await page.goto(`${BASE}${path}`, { waitUntil: 'load', timeout: 15000 })
       await page.waitForTimeout(1000)
@@ -425,7 +426,7 @@ test.describe('VISUAL — Design system compliance', () => {
 
 test.describe('UX — Keyboard shortcuts', () => {
   test('UX: Ctrl+K opens command palette', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     await page.locator('body').click()
     await page.keyboard.press('Control+k')
     await page.waitForTimeout(300)
@@ -437,7 +438,7 @@ test.describe('UX — Keyboard shortcuts', () => {
   })
 
   test('UX: ? opens shortcut help', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.keyboard.press('?')
     await expect(page.locator('text=Keyboard Shortcuts')).toBeVisible({ timeout: 2000 })
     await page.screenshot({ path: 'review/ux-shortcut-help.png' })
@@ -445,7 +446,7 @@ test.describe('UX — Keyboard shortcuts', () => {
   })
 
   test('UX: C opens create task modal on Tasks page', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.keyboard.press('c')
     await expect(page.locator('text=Create New Task')).toBeVisible({ timeout: 2000 })
     await page.screenshot({ path: 'review/ux-create-task-modal.png' })
@@ -453,7 +454,7 @@ test.describe('UX — Keyboard shortcuts', () => {
   })
 
   test('UX: J/K navigates task rows', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.keyboard.press('j')
     // First row should be highlighted
     await page.screenshot({ path: 'review/ux-jk-nav.png' })
@@ -463,7 +464,7 @@ test.describe('UX — Keyboard shortcuts', () => {
   })
 
   test('UX: Enter opens TaskDetailPanel', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.locator('body').click()
     await page.keyboard.press('j') // Select first
     await page.waitForTimeout(300)
@@ -477,7 +478,7 @@ test.describe('UX — Keyboard shortcuts', () => {
   })
 
   test('UX: Shortcuts do NOT fire when input is focused', async ({ page }) => {
-    await loadPage(page, '/search')
+    await loadPage(page, P.search)
     const input = page.locator('input[placeholder*="Search"]').first()
     await input.click()
     await input.type('test query', { delay: 50 })
@@ -491,7 +492,7 @@ test.describe('UX — Keyboard shortcuts', () => {
 test.describe('UX — Task view modes', () => {
   // Phase 31.5: /tasks redirects to /my-tasks; view buttons are in a ViewDropdown
   test('UX: Board view renders Kanban columns', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     // Open the ViewDropdown trigger (shows "More views" when list is active)
     const trigger = page.locator('button:has-text("More views")').first()
     if (await trigger.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -508,7 +509,7 @@ test.describe('UX — Task view modes', () => {
   })
 
   test('UX: Timeline view renders Gantt chart', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     // Open ViewDropdown and select Timeline
     const trigger = page.locator('button:has-text("More views")').first()
     if (await trigger.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -522,7 +523,7 @@ test.describe('UX — Task view modes', () => {
   })
 
   test('UX: By Person view shows team workload', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     // Open ViewDropdown and select By Person
     const trigger = page.locator('button:has-text("More views")').first()
     if (await trigger.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -536,7 +537,7 @@ test.describe('UX — Task view modes', () => {
   })
 
   test('UX: MyTasks QuickFilter pills work', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     // Verify pills exist — use first() to handle multiple "All" matches
     // QuickFilter pills contain counts like "All 19", "Today 2"
     await expect(page.locator('button:has-text("All")').first()).toBeVisible()
@@ -545,7 +546,7 @@ test.describe('UX — Task view modes', () => {
   })
 
   test('UX: MyTasks Focus Next card visible', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     const focusNext = await page.locator('text=FOCUS NEXT').isVisible().catch(() => false)
     console.log(`Focus Next visible: ${focusNext}`)
     await page.screenshot({ path: 'review/ux-mytasks-focus.png' })
@@ -554,7 +555,7 @@ test.describe('UX — Task view modes', () => {
 
 test.describe('UX — Modals have focus trapping + Escape', () => {
   test('UX: CreateTaskModal — Escape closes', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.click('button:has-text("New Task")')
     await expect(page.locator('text=Create New Task')).toBeVisible({ timeout: 2000 })
     await page.keyboard.press('Escape')
@@ -562,7 +563,7 @@ test.describe('UX — Modals have focus trapping + Escape', () => {
   })
 
   test('UX: CreateIdeaModal — N key + Escape', async ({ page }) => {
-    await loadPage(page, '/ideas')
+    await loadPage(page, P.ideas)
     await page.keyboard.press('n')
     const visible = await page.locator('text=Submit').first().isVisible({ timeout: 2000 }).catch(() => false)
     if (visible) {
@@ -573,7 +574,7 @@ test.describe('UX — Modals have focus trapping + Escape', () => {
 
 test.describe('UX — Inline editing', () => {
   test('UX: InlineSelect status dropdown renders as portal', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Click a status dropdown. force: true bypasses Playwright's strict hit-test
     // which fails when the Focus Next section pushes rows near viewport edges.
     const statusBtn = page.locator('button:has-text("To Do")').first()
@@ -589,7 +590,7 @@ test.describe('UX — Inline editing', () => {
 
 test.describe('UX — Copy/Export buttons', () => {
   test('UX: Copy Bibliography button exists on Publications', async ({ page }) => {
-    await loadPage(page, '/publications')
+    await loadPage(page, P.publications)
     // Button only renders when filtered.length > 0 — skip if test DB has no publications
     const hasPubs = await page.locator('.publication-card, article, [data-testid="pub-card"]').first().isVisible({ timeout: 3000 }).catch(() => false)
     // Also check via API count
@@ -600,13 +601,13 @@ test.describe('UX — Copy/Export buttons', () => {
   })
 
   test('UX: Export .ics button exists on Deadlines', async ({ page }) => {
-    await loadPage(page, '/deadlines')
+    await loadPage(page, P.deadlines)
     const btn = page.locator('button:has-text("Export")')
     await expect(btn).toBeVisible()
   })
 
   test('UX: Copy Report button exists on Analytics', async ({ page }) => {
-    await loadPage(page, '/analytics')
+    await loadPage(page, P.analytics)
     const btn = page.locator('button:has-text("Copy Report")')
     const visible = await btn.isVisible({ timeout: 3000 }).catch(() => false)
     console.log(`Copy Report on Analytics: ${visible}`)
@@ -615,7 +616,7 @@ test.describe('UX — Copy/Export buttons', () => {
 
 test.describe('UX — Dashboard cards', () => {
   test('UX: Dashboard shows 6 bento cards', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     // Check for key cards
     const tasks = await page.locator('text=Tasks').first().isVisible().catch(() => false)
     const upcoming = await page.locator('text=Upcoming').first().isVisible().catch(() => false)
@@ -626,13 +627,13 @@ test.describe('UX — Dashboard cards', () => {
   })
 
   test('UX: Dashboard overdue banner visible when overdue tasks exist', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const banner = await page.locator('text=overdue tasks need attention').isVisible({ timeout: 3000 }).catch(() => false)
     console.log(`Overdue banner visible: ${banner}`)
   })
 
   test('UX: Dashboard time-of-day greeting', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const greeting = await page.evaluate(() => document.querySelector('h1')?.textContent)
     const valid = greeting?.includes('Good morning') || greeting?.includes('Good afternoon') || greeting?.includes('Good evening')
     expect(valid, `Greeting: "${greeting}"`).toBe(true)
@@ -641,7 +642,7 @@ test.describe('UX — Dashboard cards', () => {
 
 test.describe('UX — Search', () => {
   test('UX: Search returns results for "CLIF"', async ({ page }) => {
-    await loadPage(page, '/search')
+    await loadPage(page, P.search)
     const input = page.locator('input[placeholder*="Search"]').first()
     await input.click()
     await input.fill('CLIF')
@@ -655,7 +656,7 @@ test.describe('UX — Search', () => {
 
 test.describe('UX — Calendar', () => {
   test('UX: Calendar shows today highlighted', async ({ page }) => {
-    await loadPage(page, '/calendar')
+    await loadPage(page, P.calendar)
     // exact: true — otherwise 'Month' fuzzy-matches 'Previous month' + 'Next month'
     // aria-labels added in R12-H4 touch-target fix
     await expect(page.getByRole('button', { name: /^month$/i })).toBeVisible()
@@ -667,7 +668,7 @@ test.describe('UX — Calendar', () => {
 
 test.describe('UX — Sidebar navigation', () => {
   test('UX: All sidebar nav items are clickable', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     // Phase 31.5: sidebar consolidated 6→3 sections; "My Tasks"→"Tasks", "All Tasks" removed, "Search" removed
     const navItems = ['Dashboard', 'My Hub', 'Tasks', 'Calendar', 'Projects', 'Manuscripts', 'Ideas', 'Research Digest', 'Meetings', 'Deadlines', 'Grants']
     for (const item of navItems) {
@@ -678,7 +679,7 @@ test.describe('UX — Sidebar navigation', () => {
   })
 
   test('UX: Sidebar overdue badge on My Tasks', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     // My Tasks should have a badge count
     const badge = page.locator('nav >> text=/\\d+/').first()
     const visible = await badge.isVisible().catch(() => false)
@@ -693,7 +694,7 @@ test.describe('UX — Sidebar navigation', () => {
 test.describe('UX — Performance', () => {
   test('UX: Dashboard loads in under 10 seconds', async ({ page }) => {
     const start = Date.now()
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const elapsed = Date.now() - start
     console.log(`Dashboard load: ${elapsed}ms`)
     expect(elapsed).toBeLessThan(15000)
@@ -701,7 +702,7 @@ test.describe('UX — Performance', () => {
 
   test('UX: Tasks page loads in under 5 seconds', async ({ page }) => {
     const start = Date.now()
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const elapsed = Date.now() - start
     console.log(`Tasks load: ${elapsed}ms`)
     expect(elapsed).toBeLessThan(5000)
@@ -719,7 +720,7 @@ test.describe('UX — Performance', () => {
   })
 
   test('UX: No layout shift — content visible on load', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const opacity = await page.evaluate(() => {
       const h1 = document.querySelector('h1')
       return h1 ? getComputedStyle(h1).opacity : '0'
@@ -734,7 +735,7 @@ test.describe('UX — Performance', () => {
 
 test.describe('UX — Accessibility', () => {
   test('UX: Skip-to-content link exists', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const skip = await page.evaluate(() => {
       const links = document.querySelectorAll('a')
       return Array.from(links).some(a => a.textContent?.toLowerCase().includes('skip'))
@@ -743,7 +744,7 @@ test.describe('UX — Accessibility', () => {
   })
 
   test('UX: UndoToast has aria-live', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     const hasAriaLive = await page.evaluate(() => {
       const el = document.querySelector('[role="status"], [aria-live]')
       return !!el
@@ -752,7 +753,7 @@ test.describe('UX — Accessibility', () => {
   })
 
   test('UX: Page title updates dynamically', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const title = await page.title()
     expect(title).toContain('Tasks')
     expect(title).toContain('MN-CCORE')
@@ -765,7 +766,7 @@ test.describe('UX — Accessibility', () => {
 
 test.describe('UX — Undo system', () => {
   test('UX: Status change shows undo toast', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const statusBtn = page.locator('button:has-text("To Do")').first()
     if (await statusBtn.isVisible()) {
       await statusBtn.click({ force: true })
@@ -783,7 +784,7 @@ test.describe('UX — Undo system', () => {
 
 test.describe('VISUAL — Dropdown and modal states', () => {
   test('VISUAL: Status dropdown open state', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const btn = page.locator('button:has-text("To Do")').first()
     if (await btn.isVisible()) {
       await btn.click({ force: true })
@@ -800,7 +801,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: Priority dropdown open state', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const btn = page.locator('button:has-text("Medium")').first()
     if (await btn.isVisible()) {
       await btn.click({ force: true })
@@ -811,7 +812,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: Create Task modal all fields visible', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.keyboard.press('c')
     await page.waitForTimeout(500)
     await page.screenshot({ path: 'review/visual-create-task-modal.png' })
@@ -827,7 +828,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: Command palette with search results', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.keyboard.press('Control+k')
     await page.waitForTimeout(500)
     // Type a search query
@@ -838,7 +839,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: TaskDetailPanel all 5 tabs', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(300)
     await page.keyboard.press('Enter')
@@ -861,7 +862,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
 
   test('VISUAL: Board view columns and cards', async ({ page }) => {
     // Phase 31.5: /tasks → /my-tasks redirect; view buttons inside ViewDropdown
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     const trigger = page.locator('button:has-text("More views")').first()
     if (await trigger.isVisible({ timeout: 3000 }).catch(() => false)) {
       await trigger.click()
@@ -874,7 +875,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
 
   test('VISUAL: Timeline view with Gantt bars', async ({ page }) => {
     // Phase 31.5: /tasks → /my-tasks redirect; view buttons inside ViewDropdown
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     const trigger = page.locator('button:has-text("More views")').first()
     if (await trigger.isVisible({ timeout: 3000 }).catch(() => false)) {
       await trigger.click()
@@ -886,19 +887,19 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: Calendar month view', async ({ page }) => {
-    await loadPage(page, '/calendar')
+    await loadPage(page, P.calendar)
     await page.screenshot({ path: 'review/visual-calendar-month.png' })
   })
 
   test('VISUAL: Calendar week view', async ({ page }) => {
-    await loadPage(page, '/calendar')
+    await loadPage(page, P.calendar)
     await page.getByRole('button', { name: /^week$/i }).click()
     await page.waitForTimeout(500)
     await page.screenshot({ path: 'review/visual-calendar-week.png' })
   })
 
   test('VISUAL: Digest with paper cards expanded', async ({ page }) => {
-    await loadPage(page, '/digest')
+    await loadPage(page, P.digest)
     await page.screenshot({ path: 'review/visual-digest.png' })
     // Click show abstract on first paper
     const showAbstract = page.locator('text=Show abstract').first()
@@ -910,7 +911,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: Projects pipeline view', async ({ page }) => {
-    await loadPage(page, '/projects')
+    await loadPage(page, P.projects)
     const pipelineBtn = page.locator('button:has-text("Pipeline")')
     if (await pipelineBtn.isVisible().catch(() => false)) {
       await pipelineBtn.click()
@@ -920,7 +921,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: Ideas grid vs list view', async ({ page }) => {
-    await loadPage(page, '/ideas')
+    await loadPage(page, P.ideas)
     await page.screenshot({ path: 'review/visual-ideas-grid.png' })
     const listBtn = page.locator('button:has-text("List")')
     if (await listBtn.isVisible().catch(() => false)) {
@@ -931,7 +932,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: Decisions timeline view', async ({ page }) => {
-    await loadPage(page, '/decisions')
+    await loadPage(page, P.decisions)
     const timelineBtn = page.locator('button:has-text("Timeline")')
     if (await timelineBtn.isVisible().catch(() => false)) {
       await timelineBtn.click()
@@ -941,7 +942,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: Analytics charts render', async ({ page }) => {
-    await loadPage(page, '/analytics')
+    await loadPage(page, P.analytics)
     await page.screenshot({ path: 'review/visual-analytics-top.png' })
     // Scroll down to see charts
     await page.evaluate(() => window.scrollBy(0, 600))
@@ -953,7 +954,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: Grants timeline with TODAY marker', async ({ page }) => {
-    await loadPage(page, '/grants')
+    await loadPage(page, P.grants)
     await page.screenshot({ path: 'review/visual-grants-timeline.png' })
     // Scroll to details
     await page.evaluate(() => window.scrollBy(0, 400))
@@ -962,7 +963,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: Shortcut help modal all categories', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     await page.keyboard.press('?')
     await page.waitForTimeout(500)
     await page.screenshot({ path: 'review/visual-shortcut-help-top.png' })
@@ -977,19 +978,19 @@ test.describe('VISUAL — Dropdown and modal states', () => {
   })
 
   test('VISUAL: Settings theme preview cards', async ({ page }) => {
-    await loadPage(page, '/settings')
+    await loadPage(page, P.settings)
     await page.evaluate(() => window.scrollBy(0, 600))
     await page.waitForTimeout(300)
     await page.screenshot({ path: 'review/visual-settings-themes.png' })
   })
 
   test('VISUAL: MyTasks Focus Next card', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     await page.screenshot({ path: 'review/visual-mytasks-focusnext.png' })
   })
 
   test('VISUAL: Dashboard all cards', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     await page.screenshot({ path: 'review/visual-dashboard-top.png' })
     await page.evaluate(() => window.scrollBy(0, 500))
     await page.waitForTimeout(300)
@@ -1007,7 +1008,7 @@ test.describe('VISUAL — Dropdown and modal states', () => {
 
 test.describe('JOURNEY — Morning task triage', () => {
   test('JOURNEY: Dashboard → click task → detail opens with correct task', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     // The dashboard hosts multiple cards. Earlier the test grabbed the
     // *first* hit of /CLIF/ which landed on a project link inside the
     // Project Health card — that link sits in an overflow-y-auto inside
@@ -1028,7 +1029,7 @@ test.describe('JOURNEY — Morning task triage', () => {
   })
 
   test('JOURNEY: MyTasks → Today filter → only today tasks shown', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     const todayBtn = page.locator('button:has-text("Today")')
     if (await todayBtn.isVisible().catch(() => false)) {
       await todayBtn.click()
@@ -1042,7 +1043,7 @@ test.describe('JOURNEY — Morning task triage', () => {
   })
 
   test('JOURNEY: MyTasks → click task title → detail panel opens → add note → close', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     // Click a task title (not the status circle)
     const title = page.locator('span, div').filter({ hasText: /Update CQODE|Review ATS|Sign up/ }).first()
     if (await title.isVisible().catch(() => false)) {
@@ -1068,7 +1069,7 @@ test.describe('JOURNEY — Morning task triage', () => {
 
 test.describe('JOURNEY — Task manipulation', () => {
   test('JOURNEY: Show/hide completed tasks toggle', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Prior selector `button:has-text("Show"), button:has-text("done")` matched
     // every row's status pill ("Done" label) and flaked. The actual toggle is
     // labelled "Show completed" (or "Hide completed" when already on).
@@ -1088,7 +1089,7 @@ test.describe('JOURNEY — Task manipulation', () => {
   })
 
   test('JOURNEY: Sort tasks by clicking column header', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const dueHeader = page.locator('text=DUE DATE').first()
     if (await dueHeader.isVisible().catch(() => false)) {
       await dueHeader.click()
@@ -1102,7 +1103,7 @@ test.describe('JOURNEY — Task manipulation', () => {
   })
 
   test('JOURNEY: Filter toggle (F key) shows/hides filter panel', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     await page.screenshot({ path: 'review/journey-before-filter.png' })
     await page.keyboard.press('f')
     await page.waitForTimeout(500)
@@ -1115,7 +1116,7 @@ test.describe('JOURNEY — Task manipulation', () => {
 
 test.describe('JOURNEY — Navigation flows', () => {
   test('JOURNEY: Sidebar click navigates correctly', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     // Click each sidebar nav item and verify navigation
     const navTests = [
       ['My Tasks', '/my-tasks'],
@@ -1135,7 +1136,7 @@ test.describe('JOURNEY — Navigation flows', () => {
   })
 
   test('JOURNEY: Ctrl+K search → click result → lands on correct page', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     await page.keyboard.press('Control+k')
     await page.waitForTimeout(500)
     await page.keyboard.type('CLIF', { delay: 50 })
@@ -1152,7 +1153,7 @@ test.describe('JOURNEY — Navigation flows', () => {
   })
 
   test('JOURNEY: Project list → click project → detail page → tabs work', async ({ page }) => {
-    await loadPage(page, '/projects')
+    await loadPage(page, P.projects)
     // Click first project link
     const projLink = page.locator('a[href*="/projects/"]').first()
     if (await projLink.isVisible().catch(() => false)) {
@@ -1181,7 +1182,7 @@ test.describe('JOURNEY — Navigation flows', () => {
 
 test.describe('JOURNEY — Theme and display', () => {
   test('JOURNEY: Theme toggle Ctrl+. cycles through modes', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     await page.screenshot({ path: 'review/journey-theme-dark.png' })
 
     // Toggle theme
@@ -1196,7 +1197,7 @@ test.describe('JOURNEY — Theme and display', () => {
   })
 
   test('JOURNEY: ScrollToTop appears on scroll and works', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Scroll down
     await page.evaluate(() => window.scrollBy(0, 2000))
     await page.waitForTimeout(500)
@@ -1215,7 +1216,7 @@ test.describe('JOURNEY — Theme and display', () => {
   })
 
   test('JOURNEY: Focus mode (F) hides sidebar, F again restores', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     // Verify sidebar visible
     const sidebar = page.locator('nav').first()
     const beforeVisible = await sidebar.isVisible().catch(() => false)
@@ -1235,7 +1236,7 @@ test.describe('JOURNEY — Theme and display', () => {
 
 test.describe('JOURNEY — Digest workflow', () => {
   test('JOURNEY: Digest → filter by topic → bookmark paper', async ({ page }) => {
-    await loadPage(page, '/digest')
+    await loadPage(page, P.digest)
     await page.screenshot({ path: 'review/journey-digest-initial.png' })
 
     // Click a topic pill
@@ -1258,7 +1259,7 @@ test.describe('JOURNEY — Digest workflow', () => {
 
 test.describe('JOURNEY — Calendar navigation', () => {
   test('JOURNEY: Calendar → navigate months → click event', async ({ page }) => {
-    await loadPage(page, '/calendar')
+    await loadPage(page, P.calendar)
     await page.screenshot({ path: 'review/journey-calendar-current.png' })
 
     // Click previous month
@@ -1288,7 +1289,7 @@ test.describe('JOURNEY — Calendar navigation', () => {
 
 test.describe('JOURNEY — Dashboard role tabs', () => {
   test('JOURNEY: Dashboard tabs switch content', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     for (const tab of ['Projects', 'People', 'Deadlines']) {
       const tabBtn = page.locator(`button:has-text("${tab}")`).first()
       if (await tabBtn.isVisible().catch(() => false)) {
@@ -1302,7 +1303,7 @@ test.describe('JOURNEY — Dashboard role tabs', () => {
 
 test.describe('JOURNEY — Status badge colors', () => {
   test('JOURNEY: Status badges use correct colors', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const colors = await page.evaluate(() => {
       const badges: Record<string, string> = {}
       document.querySelectorAll('button, span').forEach(el => {
@@ -1320,7 +1321,7 @@ test.describe('JOURNEY — Status badge colors', () => {
 
 test.describe('JOURNEY — Hover states', () => {
   test('JOURNEY: Task row hover shows gold tint + action buttons', async ({ page }) => {
-    await loadPage(page, '/tasks')
+    await loadPage(page, P.myTasks)
     const firstRow = page.locator('[class*="row"], [class*="Row"]').first()
     if (await firstRow.isVisible().catch(() => false)) {
       await firstRow.hover()
@@ -1332,7 +1333,7 @@ test.describe('JOURNEY — Hover states', () => {
 
 test.describe('JOURNEY — Empty states', () => {
   test('JOURNEY: Ideas empty state', async ({ page }) => {
-    await loadPage(page, '/ideas')
+    await loadPage(page, P.ideas)
     const empty = page.locator('text=board is open, text=Submit an idea, text=No ideas')
     const visible = await empty.first().isVisible().catch(() => false)
     if (visible) {
@@ -1342,7 +1343,7 @@ test.describe('JOURNEY — Empty states', () => {
   })
 
   test('JOURNEY: Decisions empty state', async ({ page }) => {
-    await loadPage(page, '/decisions')
+    await loadPage(page, P.decisions)
     const empty = page.locator('text=No decisions, text=Log Decision')
     const visible = await empty.first().isVisible().catch(() => false)
     if (visible) {
@@ -1359,7 +1360,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── Column resize handles on MyTasks ──────────────────────────────
   test('FEATURE: Column resize handles exist on /my-tasks', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     const handles = page.locator('.resize-handle')
     const count = await handles.count()
     expect(count, 'resize-handle elements should exist on MyTasks grid').toBeGreaterThan(0)
@@ -1368,7 +1369,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── Cell focus CSS class ──────────────────────────────────────────
   test('FEATURE: Cell focus class (.cell-focused) exists in CSS', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     // Verify the class is defined in loaded stylesheets
     const hasCellFocused = await page.evaluate(() => {
       for (const sheet of document.styleSheets) {
@@ -1387,7 +1388,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── Pin to Focus Next button ──────────────────────────────────────
   test('FEATURE: Pin to Focus Next button on task row hover', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     // Hover over a task row to reveal hover actions
     const row = page.locator('[class*="row"], [class*="Row"], tr').filter({ hasText: /.+/ }).first()
     if (await row.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -1402,7 +1403,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── PROJECT column header on MyTasks ──────────────────────────────
   test('FEATURE: PROJECT column header on /my-tasks', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     const projectHeader = page.locator('text=PROJECT').first()
     const visible = await projectHeader.isVisible({ timeout: 3000 }).catch(() => false)
     expect(visible, 'PROJECT column header should exist on MyTasks').toBe(true)
@@ -1410,7 +1411,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
   })
 
   test('FEATURE: PROJECT column header on /deadlines', async ({ page }) => {
-    await loadPage(page, '/deadlines')
+    await loadPage(page, P.deadlines)
     const projectHeader = page.locator('text=PROJECT').first()
     const visible = await projectHeader.isVisible({ timeout: 3000 }).catch(() => false)
     expect(visible, 'PROJECT column header should exist on Deadlines').toBe(true)
@@ -1419,7 +1420,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── Multi-column sort indicators ──────────────────────────────────
   test('FEATURE: Sort indicators appear on column headers', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     // Use .col-header class (ColumnHeader component) to avoid matching filter pills
     // Column header labels: "DUE DATE", "STATUS", "PRIORITY"
     const header = page.locator('.col-header').first()
@@ -1435,7 +1436,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── Column drag handles ───────────────────────────────────────────
   test('FEATURE: Column drag handles (.col-drag-handle) on grid headers', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     const dragHandles = page.locator('.col-drag-handle')
     const count = await dragHandles.count()
     expect(count, 'col-drag-handle elements should exist on column headers').toBeGreaterThan(0)
@@ -1444,7 +1445,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── Waiting On filter pill ────────────────────────────────────────
   test('FEATURE: Waiting On filter pill on /my-tasks', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     const waitingPill = page.locator('button:has-text("Waiting On")')
     await expect(waitingPill, 'Waiting On filter pill should be visible').toBeVisible({ timeout: 3000 })
     await page.screenshot({ path: 'review/phase30-waiting-on-filter.png' })
@@ -1453,7 +1454,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
   // ── waiting_external status in dropdown ───────────────────────────
   test('FEATURE: waiting_external status appears in dropdown options', async ({ page }) => {
     // Phase 31.5: /tasks → /my-tasks redirect
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     // Open an inline status dropdown in the task grid
     const statusBtn = page.locator('button:has-text("To Do"), button:has-text("In Progress")').first()
     if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -1473,7 +1474,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
     const projects = await (await request.get(`${BASE}/api/projects`)).json()
     const slug = projects.data?.find((p: any) => p.slug && /^[a-z0-9-]+$/.test(p.slug))?.slug
     if (!slug) { test.skip(); return }
-    await loadPage(page, `/projects/${slug}`)
+    await loadPage(page, P.project(slug))
     const keyDocs = page.locator('text=Key Documents')
     const visible = await keyDocs.isVisible({ timeout: 5000 }).catch(() => false)
     expect(visible, 'Key Documents section should exist on project detail').toBe(true)
@@ -1482,7 +1483,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── Analytics time-range buttons ──────────────────────────────────
   test('FEATURE: Analytics time-range buttons (7d/4w/3m/All)', async ({ page }) => {
-    await loadPage(page, '/analytics')
+    await loadPage(page, P.analytics)
     for (const range of ['7D', '4W', '3M', 'All']) {
       const btn = page.locator(`button:has-text("${range}")`).first()
       const visible = await btn.isVisible({ timeout: 3000 }).catch(() => false)
@@ -1493,7 +1494,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── Recharts SVG elements on analytics ────────────────────────────
   test('FEATURE: Recharts SVG chart elements on /analytics', async ({ page }) => {
-    await loadPage(page, '/analytics')
+    await loadPage(page, P.analytics)
     // Recharts renders inside ResponsiveContainer → <svg> with class "recharts-surface"
     const rechartsWrapper = page.locator('.recharts-wrapper, .recharts-surface, .recharts-responsive-container')
     const count = await rechartsWrapper.count()
@@ -1503,7 +1504,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── MetricCard sparklines ─────────────────────────────────────────
   test('FEATURE: MetricCard sparkline polyline elements on /analytics', async ({ page }) => {
-    await loadPage(page, '/analytics')
+    await loadPage(page, P.analytics)
     // MetricCard sparklines render as <svg> with <polyline>
     const polylines = page.locator('svg polyline')
     const count = await polylines.count()
@@ -1521,7 +1522,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── Shared ColumnHeader component ─────────────────────────────────
   test('FEATURE: Shared ColumnHeader styling consistent across tables', async ({ page }) => {
-    await loadPage(page, '/my-tasks')
+    await loadPage(page, P.myTasks)
     // ColumnHeader renders uppercase, 11px column headers
     const headerStyles = await page.evaluate(() => {
       const headers = document.querySelectorAll('button')
@@ -1537,7 +1538,7 @@ test.describe('Phase 30: Visual QA + Enhancement Sprint', () => {
 
   // ── Dashboard card drag handles (GripVertical) ────────────────────
   test('FEATURE: Dashboard card drag handles (GripVertical)', async ({ page }) => {
-    await loadPage(page, '/dashboard')
+    await loadPage(page, P.dashboard)
     // GripVertical from lucide-react renders 6 circles in a 2x3 grid pattern
     const hasGrip = await page.evaluate(() => {
       const svgs = document.querySelectorAll('svg')
@@ -1566,7 +1567,7 @@ test.describe('VISUAL — Full page screenshots for visual regression', () => {
   for (const pg of allPortalPaths) {
     test(`VISUAL: Full screenshot — /${pg}`, async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 900 })
-      await loadPage(page, `/${pg}`)
+      await loadPage(page, `/portal/${pg}`)
       await page.screenshot({ path: `review/fullpage-${pg}.png`, fullPage: true })
     })
   }

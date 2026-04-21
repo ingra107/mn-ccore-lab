@@ -28,6 +28,7 @@ import { getPersonInfo } from '../../data/team'
 import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
 import { parseTagsString } from '../../lib/tagUtils'
 import { SENTIMENT_CONFIG } from '../../components/SentimentBadge'
+import { PATHS } from '../../constants/paths'
 import SentimentBadge from '../../components/SentimentBadge'
 import SimilarDecisionsPanel from '../../components/SimilarDecisionsPanel'
 import CreateDecisionModal from '../../components/CreateDecisionModal'
@@ -199,7 +200,7 @@ function DecisionTimeline({
               )}
               {projTitle && (
                 <Link
-                  to={`/projects/${decision.project_slug}`}
+                  to={PATHS.project(decision.project_slug!)}
                   className="flex items-center gap-1 mt-1"
                   style={{
                     fontSize: 'var(--text-label)',
@@ -305,7 +306,7 @@ function ReviewCard({
           )}
           {projectTitle && (
             <Link
-              to={`/projects/${decision.project_slug}`}
+              to={PATHS.project(decision.project_slug!)}
               className="flex items-center gap-1"
               style={{
                 fontSize: 'var(--text-label)',
@@ -586,7 +587,7 @@ function DecisionRowItem({
         >
           {projectTitle ? (
             <Link
-              to={`/projects/${decision.project_slug}`}
+              to={PATHS.project(decision.project_slug!)}
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-1 hover:underline"
               style={{

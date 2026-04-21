@@ -17,6 +17,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
 import Avatar from '../Avatar'
 import type { TaskRow } from '../../lib/api'
+import { PATHS } from '../../constants/paths'
 
 // ── Detail sub-modules ──────────────────────────────────────
 import { FieldBlock, EditableTitle, EditableTextarea, StatusSelect, PrioritySelect, AssigneeSelect, DateInput, ProjectSelect } from './detail/FieldControls'
@@ -252,7 +253,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             <button
               data-testid="copy-task-link"
               onClick={() => {
-                const url = `${window.location.origin}/tasks?open=${task.id}`
+                const url = `${window.location.origin}${PATHS.myTasks}?open=${task.id}`
                 navigator.clipboard.writeText(url).then(() => {
                   setCopied(true)
                   setTimeout(() => setCopied(false), 2000)

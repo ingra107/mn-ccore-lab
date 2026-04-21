@@ -11,6 +11,7 @@ import { parseTagsString } from '../lib/tagUtils'
 import { getPersonInfo } from '../data/team'
 import type { DecisionRow } from '../hooks/useApiData'
 import type { useUpdateDecisionOutcome } from '../hooks/useMutations'
+import { PATHS } from '../constants/paths'
 
 function daysAgo(dateStr: string): number {
   const d = new Date(dateStr)
@@ -119,7 +120,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
 
           {projectTitle && (
             <Link
-              to={`/projects/${decision.project_slug}`}
+              to={PATHS.project(decision.project_slug!)}
               className="flex items-center gap-1 hover:underline"
               style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', textDecoration: 'none' }}
             >
@@ -148,7 +149,7 @@ export default function DecisionCard({ decision, projects, onUpdateOutcome, onSt
               return (
                 <Link
                   key={slug}
-                  to={`/projects/${slug}`}
+                  to={PATHS.project(slug)}
                   className="text-[10px] px-1.5 py-0.5 rounded-full hover:underline"
                   style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)', textDecoration: 'none' }}
                 >

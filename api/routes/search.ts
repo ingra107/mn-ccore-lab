@@ -102,7 +102,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       type: 'task',
       title: t.title || t.description,
       subtitle: `${t.assignee} · ${t.status} · ${t.priority}`,
-      url: `/tasks?open=${t.id}`,
+      url: `/portal/my-tasks?open=${t.id}`,
       score,
       timestamp,
     });
@@ -119,7 +119,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       type: 'project',
       title: p.title,
       subtitle: `${p.stage} · ${p.category}`,
-      url: `/projects/${p.slug}`,
+      url: `/portal/projects/${p.slug}`,
       score,
       timestamp,
     });
@@ -136,7 +136,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       type: 'meeting',
       title: m.title,
       subtitle: m.date,
-      url: `/meetings/${m.id}`,
+      url: `/portal/meetings/${m.id}`,
       score,
       timestamp,
     });
@@ -153,7 +153,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       type: 'idea',
       title: i.title,
       subtitle: `${i.submitted_by} · ${i.status}`,
-      url: '/ideas',
+      url: '/portal/ideas',
       score,
       timestamp,
     });
@@ -170,7 +170,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       type: 'comment',
       title: c.content?.slice(0, 100),
       subtitle: `on ${c.project_title}`,
-      url: `/projects/${c.project_slug}`,
+      url: `/portal/projects/${c.project_slug}`,
       score,
       timestamp,
     });
@@ -187,7 +187,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       type: 'activity',
       title: a.description,
       subtitle: a.actor,
-      url: '/activity',
+      url: '/portal/activity',
       score,
       timestamp,
     });

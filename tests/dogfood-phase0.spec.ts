@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test'
+import { P } from './helpers/paths'
 
 /**
  * Phase 0 dogfood — targeted interactivity probes for R11/R12 gaps.
@@ -28,7 +29,7 @@ function captureConsole(page: Page, label: string) {
 test.describe('R11 interaction gaps (desktop)', () => {
   test('R11-4 Deadlines — due_date cell is plain text (gap)', async ({ page }) => {
     captureConsole(page, 'deadlines')
-    await page.goto('/deadlines')
+    await page.goto(P.deadlines)
     await expect(page.locator('body')).toBeVisible()
     // Wait for data to load (find any test_delete_ milestone)
     const milestoneRow = page.locator('text=/test_delete_/').first()
@@ -46,7 +47,7 @@ test.describe('R11 interaction gaps (desktop)', () => {
 
   test('R11-5 Manuscripts — PI + Category cells inspection', async ({ page }) => {
     captureConsole(page, 'manuscripts')
-    await page.goto('/manuscripts')
+    await page.goto(P.manuscripts)
     await expect(page.locator('body')).toBeVisible()
     // Wait for any test_delete_ row to be visible (row data loaded)
     const row = page.locator('text=/test_delete_/').first()
@@ -64,7 +65,7 @@ test.describe('R11 interaction gaps (desktop)', () => {
 
   test('R11-6 Ideas — title click should open detail panel', async ({ page }) => {
     captureConsole(page, 'ideas')
-    await page.goto('/ideas')
+    await page.goto(P.ideas)
     await expect(page.locator('body')).toBeVisible()
     const idea = page.locator('text=/test_delete_PI mentor match program/').first()
     await expect(idea).toBeVisible({ timeout: 15000 })
@@ -78,7 +79,7 @@ test.describe('R11 interaction gaps (desktop)', () => {
 
   test('R11-8 Grants — row click should open detail', async ({ page }) => {
     captureConsole(page, 'grants')
-    await page.goto('/grants')
+    await page.goto(P.grants)
     await expect(page.locator('body')).toBeVisible()
     const grant = page.locator('text=/test_delete_K99 Fake/').first()
     await expect(grant).toBeVisible({ timeout: 15000 })
@@ -92,7 +93,7 @@ test.describe('R11 interaction gaps (desktop)', () => {
 
   test('Decisions — N-key opens create modal (false claim check)', async ({ page }) => {
     captureConsole(page, 'decisions')
-    await page.goto('/decisions')
+    await page.goto(P.decisions)
     await expect(page.locator('body')).toBeVisible()
     await page.waitForTimeout(1000) // let page settle
     // Press 'N' and check if a modal opens
@@ -104,7 +105,7 @@ test.describe('R11 interaction gaps (desktop)', () => {
 
   test('Ideas — N-key opens create modal (positive check)', async ({ page }) => {
     captureConsole(page, 'ideas-n')
-    await page.goto('/ideas')
+    await page.goto(P.ideas)
     await expect(page.locator('body')).toBeVisible()
     await page.waitForTimeout(1000)
     await page.keyboard.press('KeyN')
@@ -119,7 +120,7 @@ test.describe('R12 mobile viewport checks', () => {
 
   test('R12-H4 Calendar — prev/next hit-target size', async ({ page }) => {
     captureConsole(page, 'calendar-mobile')
-    await page.goto('/calendar')
+    await page.goto(P.calendar)
     await expect(page.locator('body')).toBeVisible()
     await page.waitForTimeout(1500)
     // Find prev button via aria or role; fall back to SVG parent
@@ -139,7 +140,7 @@ test.describe('R12 mobile viewport checks', () => {
 
   test('MobileTabBar — count visible routes', async ({ page }) => {
     captureConsole(page, 'tabbar')
-    await page.goto('/dashboard')
+    await page.goto(P.dashboard)
     await expect(page.locator('body')).toBeVisible()
     await page.waitForTimeout(1500)
     // MobileTabBar renders nav with links
@@ -149,7 +150,7 @@ test.describe('R12 mobile viewport checks', () => {
 
   test('Dashboard mobile — scan for sub-44px tap targets', async ({ page }) => {
     captureConsole(page, 'dashboard-mobile')
-    await page.goto('/dashboard')
+    await page.goto(P.dashboard)
     await expect(page.locator('body')).toBeVisible()
     await page.waitForTimeout(2000)
     const buttons = page.locator('button, a[href], [role="button"]')
@@ -174,20 +175,20 @@ test.describe('R12 mobile viewport checks', () => {
 
 test.describe('Basic page health', () => {
   const pages = [
-    '/projects',
-    '/tasks',
-    '/my-tasks',
-    '/deadlines',
-    '/manuscripts',
-    '/ideas',
-    '/decisions',
-    '/grants',
-    '/meetings',
-    '/publications',
-    '/digest',
-    '/personal',
-    '/calendar',
-    '/dashboard',
+    P.projects,
+    P.tasks,
+    P.myTasks,
+    P.deadlines,
+    P.manuscripts,
+    P.ideas,
+    P.decisions,
+    P.grants,
+    P.meetings,
+    P.publications,
+    P.digest,
+    P.personal,
+    P.calendar,
+    P.dashboard,
   ]
 
   for (const path of pages) {

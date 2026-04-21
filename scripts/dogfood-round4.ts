@@ -96,7 +96,7 @@ async function main() {
     }
 
     // Verify on /projects list
-    await page.goto(`${BASE}/projects`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/portal/projects`, { waitUntil: 'networkidle' })
     await snap(page, 'projects-list-after-create')
     const onProjectsList = await page.locator(`text="${projectTitle}"`).first().isVisible().catch(() => false)
     if (onProjectsList) pass('1.1 Project visible on /projects list')
@@ -114,7 +114,7 @@ async function main() {
     await page.keyboard.press('Escape')
 
     // Verify in task create modal project picker
-    await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(800)
     const newTaskBtn = page.locator('button:has-text("New Task"), button[data-testid*="new-task"], button[aria-label*="new task" i]').first()
     if (await newTaskBtn.isVisible().catch(() => false)) {
@@ -165,7 +165,7 @@ async function main() {
 
     // Verify task appears on project detail page
     if (projectSlug) {
-      await page.goto(`${BASE}/projects/${projectSlug}`, { waitUntil: 'networkidle' })
+      await page.goto(`${BASE}/portal/projects/${projectSlug}`, { waitUntil: 'networkidle' })
       await snap(page, 'project-detail-has-task', 1200)
       const taskOnDetail = await page.locator(`text="${taskTitle}"`).first().isVisible().catch(() => false)
       if (taskOnDetail) pass('2.1 Task visible on project detail page')
@@ -173,14 +173,14 @@ async function main() {
     }
 
     // Verify task appears on /my-tasks (assignee=nick)
-    await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
     await snap(page, 'my-tasks-has-new-task', 1200)
     const taskOnMyTasks = await page.locator(`text="${taskTitle}"`).first().isVisible().catch(() => false)
     if (taskOnMyTasks) pass('2.2 Task visible on /my-tasks (auto-filter assignee)')
     else bug('2.2 Task NOT on /my-tasks', 'title not found', `"${taskTitle}" visible`, 'P1')
 
     // Project task count check — open /projects list, find row, look for count badge
-    await page.goto(`${BASE}/projects`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/portal/projects`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(1200)
     const projectRow = page.locator(`a, div`).filter({ hasText: projectTitle }).first()
     if (await projectRow.isVisible().catch(() => false)) {
@@ -214,7 +214,7 @@ async function main() {
       bug('3.0 Idea API POST failed', `${ideaResp.status()}`, '200 OK', 'P2')
     }
 
-    await page.goto(`${BASE}/ideas`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/portal/ideas`, { waitUntil: 'networkidle' })
     await snap(page, 'ideas-list-has-idea', 800)
     const ideaOnList = await page.locator(`text="${ideaTitle}"`).first().isVisible().catch(() => false)
     if (ideaOnList) pass('3.1 Idea visible on /ideas list')
@@ -243,7 +243,7 @@ async function main() {
       bug('4.0 Decision API POST failed', `${decResp.status()}`, '200 OK', 'P2')
     }
 
-    await page.goto(`${BASE}/decisions`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/portal/decisions`, { waitUntil: 'networkidle' })
     await snap(page, 'decisions-list-has-decision', 800)
     const decOnList = await page.locator(`text="${decisionTitle}"`).first().isVisible().catch(() => false)
     if (decOnList) pass('4.1 Decision visible on /decisions list')
@@ -256,7 +256,7 @@ async function main() {
     log('\n=== SCENARIO 5: Task completion cross-surface propagation ===')
     const taskId = createdTaskIds[0]
     if (taskId) {
-      await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+      await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
       await page.waitForTimeout(1200)
       // Find the task row and click its status circle
       const taskRow = page.locator(`[data-testid="task-row-${taskId}"], text="${taskTitle}"`).first()
@@ -311,7 +311,7 @@ async function main() {
     //             (visual — screenshot; manual review)
     // ─────────────────────────────────────────────────────────
     log('\n=== SCENARIO 7: Manuscripts stage dots visual check ===')
-    await page.goto(`${BASE}/manuscripts`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/portal/manuscripts`, { waitUntil: 'networkidle' })
     await snap(page, 'manuscripts-stage-dots', 1200)
     // Scroll through a few rows
     await page.evaluate(() => window.scrollTo(0, 400))
@@ -324,7 +324,7 @@ async function main() {
     // SCENARIO 8: AssigneeSelect typeahead actually works (GH #9 fix verify)
     // ─────────────────────────────────────────────────────────
     log('\n=== SCENARIO 8: AssigneeSelect typeahead (post GH#9 fix) ===')
-    await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(1200)
     // Find first row title and click to open detail panel
     const firstTitle = page.locator('[data-testid^="task-"] a, [data-testid^="task-"] span').first()
@@ -364,7 +364,7 @@ async function main() {
     log('\n=== SCENARIO 9: TaskDetailPanel live sync (post GH#7 fix) ===')
     if (createdTaskIds[0]) {
       // Use /tasks (all tasks) to find the row
-      await page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' })
+      await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
       await page.waitForTimeout(1200)
       // Search or filter for our task
       await page.keyboard.press('Control+k')
@@ -384,7 +384,7 @@ async function main() {
     // SCENARIO 10: /activity surfaces recent changes
     // ─────────────────────────────────────────────────────────
     log('\n=== SCENARIO 10: Activity feed integrity ===')
-    await page.goto(`${BASE}/activity`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/portal/activity`, { waitUntil: 'networkidle' })
     await snap(page, 'activity-feed', 1200)
     pass('10.0 Activity page captured — review screenshot for recent change visibility')
 

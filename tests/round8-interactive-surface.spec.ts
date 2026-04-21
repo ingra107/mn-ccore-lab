@@ -1,6 +1,7 @@
 import { test, expect, Page } from '@playwright/test'
 import fs from 'fs'
 import path from 'path'
+import { P } from './helpers/paths'
 
 // Round 8 — Interactive surface scan (Agent D3)
 // Discovery only. No mutations beyond what's needed to verify persistence.
@@ -29,7 +30,7 @@ test.describe('Interactive surface scan', () => {
   test.setTimeout(180_000)
 
   test('Tasks page — row click, inline editors, column headers', async ({ page }) => {
-    await goto(page, '/tasks')
+    await goto(page, P.myTasks)
     await shot(page, 'tasks-initial')
 
     // Row click → detail panel (measure latency)
@@ -108,7 +109,7 @@ test.describe('Interactive surface scan', () => {
   })
 
   test('MyTasks — date picker flash bug, stale focus, click target', async ({ page }) => {
-    await goto(page, '/my-tasks')
+    await goto(page, P.myTasks)
     await shot(page, 'mytasks-initial')
 
     const rows = page.locator('[data-testid^="task-row-"]')
@@ -223,7 +224,7 @@ test.describe('Interactive surface scan', () => {
   })
 
   test('TaskDetailPanel — project picker panel corruption', async ({ page }) => {
-    await goto(page, '/tasks')
+    await goto(page, P.myTasks)
     const title = page.locator('[data-testid^="task-title-"]').first()
     if ((await title.count()) === 0) {
       push({ page: 'TaskDetailPanel', element: 'project-picker', action: 'open panel', result: 'FAIL', notes: 'no tasks' })
@@ -262,7 +263,7 @@ test.describe('Interactive surface scan', () => {
   })
 
   test('Projects — inline Status/Stage/PI/Category editors', async ({ page }) => {
-    await goto(page, '/projects')
+    await goto(page, P.projects)
     await shot(page, 'projects-initial')
     // find a project row with inline-select-trigger
     const triggers = page.locator('.inline-select-trigger')
@@ -288,7 +289,7 @@ test.describe('Interactive surface scan', () => {
   })
 
   test('Manuscripts — Status + Stage inline', async ({ page }) => {
-    await goto(page, '/manuscripts')
+    await goto(page, P.manuscripts)
     const triggers = page.locator('.inline-select-trigger')
     const c = await triggers.count()
     push({
@@ -312,7 +313,7 @@ test.describe('Interactive surface scan', () => {
   })
 
   test('Deadlines — Status inline for tasks', async ({ page }) => {
-    await goto(page, '/deadlines')
+    await goto(page, P.deadlines)
     await shot(page, 'deadlines-initial')
     const triggers = page.locator('.inline-select-trigger')
     const c = await triggers.count()
@@ -329,7 +330,7 @@ test.describe('Interactive surface scan', () => {
   })
 
   test('Grants — ZERO inline editors on main table', async ({ page }) => {
-    await goto(page, '/grants')
+    await goto(page, P.grants)
     await shot(page, 'grants-initial')
     // Grants main table: count inline-select-triggers WITHIN the main grants rows
     // (milestones below do have one inline select)
@@ -357,7 +358,7 @@ test.describe('Interactive surface scan', () => {
   })
 
   test('Ideas — Status inline + vote button', async ({ page }) => {
-    await goto(page, '/ideas')
+    await goto(page, P.ideas)
     const triggers = await page.locator('.inline-select-trigger').count()
     push({ page: 'Ideas', element: 'status-inline', action: 'count', result: triggers > 0 ? 'PASS' : 'FAIL', notes: `${triggers} triggers` })
     const voteBtn = page.locator('button[aria-label^="Vote"]').first()
@@ -366,7 +367,7 @@ test.describe('Interactive surface scan', () => {
   })
 
   test('Decisions — Outcome status inline', async ({ page }) => {
-    await goto(page, '/decisions')
+    await goto(page, P.decisions)
     const triggers = await page.locator('.inline-select-trigger').count()
     push({ page: 'Decisions', element: 'outcome-inline', action: 'count', result: triggers > 0 ? 'PASS' : 'FAIL', notes: `${triggers} triggers` })
   })

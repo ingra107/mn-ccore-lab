@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PATHS } from '../constants/paths'
 
 /**
  * Global keyboard shortcuts for the portal.
@@ -72,22 +73,22 @@ export function useKeyboardShortcuts() {
         // Spec chords (F-07) + preserved legacy aliases
         const navMap: Record<string, string> = {
           // F-07 spec
-          d: '/dashboard',
-          t: '/my-tasks',
-          p: '/projects',
-          m: '/meetings',
-          e: '/deadlines',
-          i: '/ideas',
-          s: '/settings',
-          c: '/calendar',
+          d: PATHS.dashboard,
+          t: PATHS.myTasks,
+          p: PATHS.projects,
+          m: PATHS.meetings,
+          e: PATHS.deadlines,
+          i: PATHS.ideas,
+          s: PATHS.settings,
+          c: PATHS.calendar,
           h: '/',
-          r: '/digest',
+          r: PATHS.digest,
           // Legacy aliases (backward compat)
-          y: '/my-tasks',
-          l: '/digest',
-          g: '/grants',
-          k: '/deadlines',
-          a: '/activity',
+          y: PATHS.myTasks,
+          l: PATHS.digest,
+          g: PATHS.grants,
+          k: PATHS.deadlines,
+          a: PATHS.activity,
         }
 
         const path = navMap[e.key.toLowerCase()]
@@ -112,21 +113,21 @@ export function useKeyboardShortcuts() {
 
         case 'c':
           e.preventDefault()
-          navigate('/my-tasks?create=true')
+          navigate(`${PATHS.myTasks}?create=true`)
           break
 
         case 'n':
-          // Only fire globally on /my-tasks — Ideas/Decisions pages have their own local n handlers
-          if (window.location.pathname.startsWith('/my-tasks')) {
+          // Only fire globally on my-tasks — Ideas/Decisions pages have their own local n handlers
+          if (window.location.pathname.startsWith(PATHS.myTasks)) {
             e.preventDefault()
-            navigate('/my-tasks?create=true')
+            navigate(`${PATHS.myTasks}?create=true`)
           }
           break
 
         case 'f':
           e.preventDefault()
           // On task pages, F toggles filter panel; elsewhere, focus mode
-          if (window.location.pathname === '/tasks' || window.location.pathname === '/my-tasks') {
+          if (window.location.pathname === PATHS.tasks || window.location.pathname === PATHS.myTasks) {
             document.dispatchEvent(new CustomEvent('toggle-filters'))
           } else {
             document.dispatchEvent(new CustomEvent('toggle-focus'))

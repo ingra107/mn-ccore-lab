@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PATHS } from '../constants/paths'
 
 interface UseProjectKeyboardNavOptions {
   /** Total number of projects in the list */
@@ -92,7 +93,7 @@ export function useProjectKeyboardNav({
       case 'Enter': {
         if (idx >= 0 && idx < slugsRef.current.length) {
           e.preventDefault()
-          navigate(`/projects/${slugsRef.current[idx]}`)
+          navigate(PATHS.project(slugsRef.current[idx]))
         }
         break
       }

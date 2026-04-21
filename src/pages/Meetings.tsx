@@ -20,6 +20,7 @@ import { parseCarriedForward } from '../lib/textUtils'
 import { formatFullDate, formatShortDate } from '../lib/dateUtils'
 import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
+import { PATHS } from '../constants/paths'
 
 type FilterMode = 'all' | 'decisions' | 'actions'
 
@@ -383,7 +384,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
       </div>
 
       <Link
-        to={`/meetings/${meeting.id}`}
+        to={PATHS.meeting(meeting.id)}
         className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md text-xs font-medium"
         style={{ fontSize: 'var(--label-size)', background: 'var(--gold)', color: '#0f1923', textDecoration: 'none', transition: 'opacity 0.2s' }}
       >

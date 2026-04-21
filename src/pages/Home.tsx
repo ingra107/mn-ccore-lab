@@ -20,6 +20,7 @@ import CLIFMap from '../components/CLIFMap'
 import UpcomingMeetingBanner from '../components/UpcomingMeetingBanner'
 import LatestDigest from '../components/LatestDigest'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { PATHS } from '../constants/paths'
 
 // Lazy-loaded: pulls recharts (PublicationTimeline) — deferred until scrolled into view
 const ResearchImpact = lazy(() => import('../components/ResearchImpact'))
@@ -257,7 +258,7 @@ export default function Home() {
             }}
           >
             <a
-              href="/dashboard"
+              href={PATHS.dashboard}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm"
               style={{
                 background: 'var(--gold)',

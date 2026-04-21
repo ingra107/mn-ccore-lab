@@ -19,6 +19,7 @@ import { useTrajectory, useContributions } from '../hooks/useApiData'
 import type { TrajectoryData, ContributionsData } from '../hooks/useApiData'
 import { getMemberBySlug } from '../data/team'
 import ActivityHeatmap from '../components/ActivityHeatmap'
+import { PATHS } from '../constants/paths'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -90,7 +91,7 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
           Need 3+ indexed publications to draw a cadence curve.
         </p>
         <Link
-          to="/settings"
+          to={PATHS.settings}
           style={{ fontSize: '12px', color: 'var(--teal)', textDecoration: 'underline' }}
         >
           Link ORCID →
@@ -205,7 +206,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
                 <Link
-                  to={`/projects/${project.slug}`}
+                  to={PATHS.project(project.slug)}
                   style={{
                     fontSize: 'var(--value-size)',
                     fontWeight: 500,
@@ -674,7 +675,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
             transition={{ delay: i * 0.04, duration: 0.25 }}
           >
             <Link
-              to={`/projects/${project.slug}`}
+              to={PATHS.project(project.slug)}
               className="card block trajectory-project-card"
               style={{
                 padding: '1.25rem',

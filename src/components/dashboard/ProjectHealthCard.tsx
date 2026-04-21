@@ -7,6 +7,7 @@ import type { HoverCardData } from '../HoverCard'
 import { useHoverCard } from '../../hooks/useHoverCard'
 import { useProjectHealth } from '../../hooks/useApiData'
 import type { ProjectHealth, HealthFactors } from '../../hooks/useApiData'
+import { PATHS } from '../../constants/paths'
 
 const STATUS_COLORS: Record<string, string> = {
   'Healthy': 'var(--green)',
@@ -175,7 +176,7 @@ function ProjectHealthCard() {
               {sortedAll.map((p) => (
                 <Link
                   key={p.slug}
-                  to={`/projects/${p.slug}`}
+                  to={PATHS.project(p.slug)}
                   title={`${p.title} · ${p.status} · ${p.score}/100`}
                   aria-label={`${p.title} · ${p.status} · score ${p.score} of 100`}
                   style={{
@@ -262,7 +263,7 @@ function ProjectHealthCard() {
 
         {/* Footer link */}
         <Link
-          to="/projects"
+          to={PATHS.projects}
           className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
           style={{
             fontSize: 'var(--label-size)',
@@ -295,7 +296,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
 
   return (
     <Link
-      to={`/projects/${project.slug}`}
+      to={PATHS.project(project.slug)}
       className="flex items-center gap-2.5 py-2 group transition-colors hover:bg-[var(--gold-hover)]"
       style={{
         textDecoration: 'none',

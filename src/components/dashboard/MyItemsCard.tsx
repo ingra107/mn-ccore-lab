@@ -8,6 +8,7 @@ import { useUnreadCount } from '../../hooks/useNotifications'
 import { getPersonInfo } from '../../data/team'
 import { isOverdue } from '../../lib/dateUtils'
 import BentoCard from './BentoCard'
+import { PATHS } from '../../constants/paths'
 
 function MyItemsCard() {
   const { user } = useAuth()
@@ -133,7 +134,7 @@ function MyItemsCard() {
 
         {/* View all link */}
         <Link
-          to="/my-items"
+          to={PATHS.myItems}
           className="inline-flex items-center gap-1 mt-auto pt-2 portal-footer-link"
           style={{
             fontSize: '10px',

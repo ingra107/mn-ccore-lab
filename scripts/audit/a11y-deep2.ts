@@ -18,7 +18,7 @@ async function main() {
   page.setDefaultTimeout(15000)
 
   console.log('\n=== Probe 1: Cmd+K Escape close ===')
-  await page.goto(BASE + '/dashboard', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/dashboard', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(1500)
   await page.keyboard.press('Control+k')
   await page.waitForTimeout(600)
@@ -45,7 +45,7 @@ async function main() {
   console.log('After Esc:', JSON.stringify(afterEsc))
 
   console.log('\n=== Probe 2: TaskGridView row semantics ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2500)
   const rows: any = await page.evaluate(`(function(){
     var rows = Array.prototype.slice.call(document.querySelectorAll('.task-grid-row'));
@@ -67,7 +67,7 @@ async function main() {
   console.log('Rows:', JSON.stringify(rows, null, 2))
 
   console.log('\n=== Probe 3: TaskDetailPanel close button placement ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2500)
   // Click first task row
   await page.evaluate(`(function(){
@@ -129,7 +129,7 @@ async function main() {
   console.log('AfterPanelClose:', JSON.stringify(afterClose))
 
   console.log('\n=== Probe 6: Sidebar text-on-bg contrast (inactive) ===')
-  await page.goto(BASE + '/dashboard', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/dashboard', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(1500)
   const sb: any = await page.evaluate(`(function(){
     var nav = document.querySelector('aside nav, nav');
@@ -150,7 +150,7 @@ async function main() {
   console.log('Sidebar:', JSON.stringify(sb, null, 2))
 
   console.log('\n=== Probe 7: Dashboard "Drag to reorder" button keyboard test ===')
-  await page.goto(BASE + '/dashboard', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/dashboard', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2000)
   const drag: any = await page.evaluate(`(function(){
     var b = document.querySelector('button[aria-label*="reorder" i], button[aria-label*="Drag" i], button[aria-label*="customize" i]');
@@ -166,7 +166,7 @@ async function main() {
   console.log('Drag button:', JSON.stringify(drag, null, 2))
 
   console.log('\n=== Probe 8: TaskDetailPanel inside-content (rich text editor focus trap?) ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2500)
   await page.evaluate(`(function(){
     var rows = document.querySelectorAll('.task-grid-row');
@@ -192,7 +192,7 @@ async function main() {
   console.log('After 30 tabs in panel:', JSON.stringify(inside))
 
   console.log('\n=== Probe 9: H1 headings per page ===')
-  for (const path of ['/dashboard', '/tasks', '/projects', '/meetings', '/personal', '/team', '/settings']) {
+  for (const path of ['/portal/dashboard', '/portal/my-tasks', '/portal/projects', '/portal/meetings', '/portal/personal', '/team', '/portal/settings']) {
     await page.goto(BASE + path, { waitUntil: 'domcontentloaded' })
     await page.waitForTimeout(1000)
     const h: any = await page.evaluate(`(function(){
@@ -204,7 +204,7 @@ async function main() {
 
   console.log('\n=== Probe 10: Mobile bottom tab bar ===')
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(1500)
   const mt: any = await page.evaluate(`(function(){
     var tabs = Array.prototype.slice.call(document.querySelectorAll('a, [role=tab]'));

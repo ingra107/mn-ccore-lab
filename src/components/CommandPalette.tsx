@@ -11,6 +11,7 @@ import {
 import { spring } from '../lib/animations'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { getPersonInfo } from '../data/team'
+import { PATHS, PUBLIC_PATHS } from '../constants/paths'
 
 interface CommandItem {
   id: string
@@ -86,30 +87,30 @@ export default function CommandPalette() {
 
     // Navigation commands
     const navItems: { path: string; label: string; icon: typeof Search; shortcut?: string }[] = [
-      { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, shortcut: 'G D' },
-      { path: '/personal', label: 'My Hub', icon: User, shortcut: 'G H' },
-      { path: '/tasks', label: 'All Tasks', icon: ListTodo, shortcut: 'G T' },
-      { path: '/my-tasks', label: 'My Tasks', icon: CheckSquare, shortcut: 'G Y' },
-      { path: '/calendar', label: 'Calendar', icon: Calendar, shortcut: 'G C' },
-      { path: '/deadlines', label: 'Deadlines', icon: Clock, shortcut: 'G K' },
-      { path: '/deadline-cascade', label: 'Deadline Cascade', icon: GitBranch },
-      { path: '/projects', label: 'Projects', icon: FolderKanban, shortcut: 'G P' },
-      { path: '/manuscripts', label: 'Manuscripts', icon: FileText },
-      { path: '/ideas', label: 'Ideas', icon: Lightbulb },
-      { path: '/ask', label: 'Ask the Lab', icon: HelpCircle },
-      { path: '/decisions', label: 'Decisions', icon: Scale },
-      { path: '/digest', label: 'Research Digest', icon: BookOpen, shortcut: 'G L' },
-      { path: '/grants', label: 'Grants', icon: DollarSign },
-      { path: '/meetings', label: 'Meetings', icon: Users, shortcut: 'G M' },
-      { path: '/activity', label: 'Activity', icon: Activity },
-      { path: '/analytics', label: 'Analytics', icon: BarChart3 },
-      { path: '/pi/analytics', label: 'PI Analytics', icon: BarChart3 },
-      { path: '/settings', label: 'Settings', icon: Settings },
-      { path: '/team', label: 'Team', icon: Users },
-      { path: '/search', label: 'Search', icon: Search, shortcut: 'G S' },
-      { path: '/sessions', label: 'Session History', icon: Clock },
-      { path: '/narratives', label: 'Narratives', icon: BookOpen },
-      { path: '/meeting-notes', label: 'Transcripts', icon: FileText },
+      { path: PATHS.dashboard, label: 'Dashboard', icon: LayoutDashboard, shortcut: 'G D' },
+      { path: PATHS.personal, label: 'My Hub', icon: User, shortcut: 'G H' },
+      { path: PATHS.tasks, label: 'All Tasks', icon: ListTodo, shortcut: 'G T' },
+      { path: PATHS.myTasks, label: 'My Tasks', icon: CheckSquare, shortcut: 'G Y' },
+      { path: PATHS.calendar, label: 'Calendar', icon: Calendar, shortcut: 'G C' },
+      { path: PATHS.deadlines, label: 'Deadlines', icon: Clock, shortcut: 'G K' },
+      { path: PATHS.deadlineCascade, label: 'Deadline Cascade', icon: GitBranch },
+      { path: PATHS.projects, label: 'Projects', icon: FolderKanban, shortcut: 'G P' },
+      { path: PATHS.manuscripts, label: 'Manuscripts', icon: FileText },
+      { path: PATHS.ideas, label: 'Ideas', icon: Lightbulb },
+      { path: PATHS.ask, label: 'Ask the Lab', icon: HelpCircle },
+      { path: PATHS.decisions, label: 'Decisions', icon: Scale },
+      { path: PATHS.digest, label: 'Research Digest', icon: BookOpen, shortcut: 'G L' },
+      { path: PATHS.grants, label: 'Grants', icon: DollarSign },
+      { path: PATHS.meetings, label: 'Meetings', icon: Users, shortcut: 'G M' },
+      { path: PATHS.activity, label: 'Activity', icon: Activity },
+      { path: PATHS.analytics, label: 'Analytics', icon: BarChart3 },
+      { path: PATHS.piAnalytics, label: 'PI Analytics', icon: BarChart3 },
+      { path: PATHS.settings, label: 'Settings', icon: Settings },
+      { path: PUBLIC_PATHS.publicTeam, label: 'Team', icon: Users },
+      { path: PATHS.search, label: 'Search', icon: Search, shortcut: 'G S' },
+      { path: PATHS.sessions, label: 'Session History', icon: Clock },
+      { path: PATHS.narratives, label: 'Narratives', icon: BookOpen },
+      { path: PATHS.meetingNotes, label: 'Transcripts', icon: FileText },
     ]
     for (const nav of navItems) {
       items.push({
@@ -129,7 +130,7 @@ export default function CommandPalette() {
       label: 'Create Task',
       sublabel: 'Add a new task',
       icon: Plus,
-      action: () => { navigate('/tasks?create=true'); setOpen(false) },
+      action: () => { navigate(`${PATHS.myTasks}?create=true`); setOpen(false) },
       category: 'action',
       shortcut: 'C',
     })
@@ -138,7 +139,7 @@ export default function CommandPalette() {
       label: 'Submit Idea',
       sublabel: 'Add a new research idea',
       icon: Lightbulb,
-      action: () => { navigate('/ideas?create=true'); setOpen(false) },
+      action: () => { navigate(`${PATHS.ideas}?create=true`); setOpen(false) },
       category: 'action',
     })
     items.push({
@@ -146,7 +147,7 @@ export default function CommandPalette() {
       label: 'Ask the Lab',
       sublabel: 'Post a question for anyone to answer',
       icon: HelpCircle,
-      action: () => { navigate('/ask?create=true'); setOpen(false) },
+      action: () => { navigate(`${PATHS.ask}?create=true`); setOpen(false) },
       category: 'action',
     })
     items.push({
@@ -154,7 +155,7 @@ export default function CommandPalette() {
       label: 'Schedule Meeting',
       sublabel: 'Create a new meeting',
       icon: CalendarPlus,
-      action: () => { navigate('/meetings?create=true'); setOpen(false) },
+      action: () => { navigate(`${PATHS.meetings}?create=true`); setOpen(false) },
       category: 'action',
       shortcut: 'M',
     })
@@ -163,7 +164,7 @@ export default function CommandPalette() {
       label: 'Log Decision',
       sublabel: 'Record a research decision',
       icon: Scale,
-      action: () => { navigate('/decisions?create=true'); setOpen(false) },
+      action: () => { navigate(`${PATHS.decisions}?create=true`); setOpen(false) },
       category: 'action',
     })
 
@@ -173,7 +174,7 @@ export default function CommandPalette() {
       label: 'Completed Tasks',
       sublabel: `${tasks.filter(t => t.completed).length} tasks done`,
       icon: CheckCircle2,
-      action: () => { navigate('/tasks?status=done'); setOpen(false) },
+      action: () => { navigate(`${PATHS.myTasks}?status=done`); setOpen(false) },
       category: 'filter',
     })
     items.push({
@@ -181,7 +182,7 @@ export default function CommandPalette() {
       label: 'In Progress Tasks',
       sublabel: `${tasks.filter(t => t.status === 'in_progress').length} tasks active`,
       icon: CircleDot,
-      action: () => { navigate('/tasks?status=in_progress'); setOpen(false) },
+      action: () => { navigate(`${PATHS.myTasks}?status=in_progress`); setOpen(false) },
       category: 'filter',
     })
     items.push({
@@ -189,7 +190,7 @@ export default function CommandPalette() {
       label: 'High Priority',
       sublabel: `${tasks.filter(t => !t.completed && (t.priority === 'high' || t.priority === 'urgent')).length} high/urgent tasks`,
       icon: Flag,
-      action: () => { navigate('/tasks?priority=high'); setOpen(false) },
+      action: () => { navigate(`${PATHS.myTasks}?priority=high`); setOpen(false) },
       category: 'filter',
     })
     items.push({
@@ -197,7 +198,7 @@ export default function CommandPalette() {
       label: 'Due Today',
       sublabel: `${tasks.filter(t => !t.completed && t.due_date === new Date().toISOString().split('T')[0]).length} tasks due today`,
       icon: Clock,
-      action: () => { navigate('/my-tasks'); setOpen(false) },
+      action: () => { navigate(PATHS.myTasks); setOpen(false) },
       category: 'filter',
     })
     items.push({
@@ -205,19 +206,19 @@ export default function CommandPalette() {
       label: 'Overdue Tasks',
       sublabel: `${tasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()).length} tasks past due`,
       icon: AlertTriangle,
-      action: () => { navigate('/tasks?status=todo'); setOpen(false) },
+      action: () => { navigate(`${PATHS.myTasks}?status=todo`); setOpen(false) },
       category: 'filter',
     })
 
     // Contextual actions based on current page
     const currentPath = location.pathname
-    if (currentPath === '/tasks' || currentPath === '/my-tasks') {
+    if (currentPath === PATHS.tasks || currentPath === PATHS.myTasks) {
       items.push({
         id: 'ctx-tasks-filter-mine',
         label: 'Show My Tasks Only',
         sublabel: `${tasks.filter(t => !t.completed && t.assignee === 'nick-ingraham').length} tasks assigned to you`,
         icon: User,
-        action: () => { navigate('/tasks?assignee=nick'); setOpen(false) },
+        action: () => { navigate(`${PATHS.myTasks}?assignee=nick`); setOpen(false) },
         category: 'context',
       })
       items.push({
@@ -225,33 +226,33 @@ export default function CommandPalette() {
         label: 'Show Blocked Tasks',
         sublabel: `${tasks.filter(t => t.status === 'blocked').length} tasks blocked`,
         icon: AlertTriangle,
-        action: () => { navigate('/tasks?status=blocked'); setOpen(false) },
+        action: () => { navigate(`${PATHS.myTasks}?status=blocked`); setOpen(false) },
         category: 'context',
       })
     }
-    if (currentPath === '/projects') {
+    if (currentPath === PATHS.projects) {
       items.push({
         id: 'ctx-projects-clif',
         label: 'Filter CLIF Projects',
         icon: FolderKanban,
-        action: () => { navigate('/projects?category=CLIF'); setOpen(false) },
+        action: () => { navigate(`${PATHS.projects}?category=CLIF`); setOpen(false) },
         category: 'context',
       })
       items.push({
         id: 'ctx-projects-lab',
         label: 'Filter Lab Projects',
         icon: FolderKanban,
-        action: () => { navigate('/projects?category=Lab'); setOpen(false) },
+        action: () => { navigate(`${PATHS.projects}?category=Lab`); setOpen(false) },
         category: 'context',
       })
     }
-    if (currentPath.startsWith('/meetings')) {
+    if (currentPath.startsWith(PATHS.meetings)) {
       items.push({
         id: 'ctx-meetings-next',
         label: 'Go to Next Meeting',
         sublabel: meetings[0]?.title,
         icon: Calendar,
-        action: () => { if (meetings[0]) navigate(`/meetings/${meetings[0].id}`); setOpen(false) },
+        action: () => { if (meetings[0]) navigate(PATHS.meeting(meetings[0].id)); setOpen(false) },
         category: 'context',
       })
       items.push({
@@ -259,7 +260,7 @@ export default function CommandPalette() {
         label: 'Open Meeting Prep View',
         sublabel: 'Facilitator dashboard',
         icon: ListTodo,
-        action: () => { if (meetings[0]) navigate(`/meetings/${meetings[0].id}/prep`); setOpen(false) },
+        action: () => { if (meetings[0]) navigate(PATHS.meetingPrep(meetings[0].id)); setOpen(false) },
         category: 'context',
       })
     }
@@ -273,7 +274,7 @@ export default function CommandPalette() {
         label: task.title || task.description,
         sublabel: `${person.name} · ${task.status}`,
         icon: CheckSquare,
-        action: () => { navigate(`/tasks?open=${task.id}`); setOpen(false) },
+        action: () => { navigate(`${PATHS.myTasks}?open=${task.id}`); setOpen(false) },
         category: 'task',
       })
     }
@@ -285,7 +286,7 @@ export default function CommandPalette() {
         label: project.title,
         sublabel: `${project.stage || 'Active'} · ${project.category}`,
         icon: FolderKanban,
-        action: () => { navigate(`/projects/${project.slug}`); setOpen(false) },
+        action: () => { navigate(PATHS.project(project.slug)); setOpen(false) },
         category: 'project',
       })
     }
@@ -297,7 +298,7 @@ export default function CommandPalette() {
         label: member.name,
         sublabel: member.role,
         icon: User,
-        action: () => { navigate(`/portal/team/${member.slug}`); setOpen(false) },
+        action: () => { navigate(PATHS.teamMember(member.slug!)); setOpen(false) },
         category: 'person',
       })
     }
@@ -309,7 +310,7 @@ export default function CommandPalette() {
         label: meeting.title,
         sublabel: meeting.date,
         icon: Users,
-        action: () => { navigate(`/meetings/${meeting.id}`); setOpen(false) },
+        action: () => { navigate(PATHS.meeting(meeting.id)); setOpen(false) },
         category: 'meeting',
       })
     }
@@ -350,7 +351,7 @@ export default function CommandPalette() {
         label: project.title,
         sublabel: `${stagePart}${stagePart ? ' · ' : ''}${countPart}${nextPart}`,
         icon: FolderKanban,
-        action: () => { navigate(`/projects/${project.slug}`); setOpen(false) },
+        action: () => { navigate(PATHS.project(project.slug)); setOpen(false) },
         category: 'project' as const,
         _taskCount: count,
         _stage: project.stage || '',

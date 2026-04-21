@@ -21,10 +21,10 @@ async function main() {
 
   // === WORKFLOW 1: PI Morning ===
   console.log('\n=== Workflow 1: PI Morning ===')
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/dashboard`, { waitUntil: 'load' })
   await snap('01-dashboard-dark')
 
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'load' })
   await snap('02-my-tasks-list')
 
   // Click first task title -> detail panel
@@ -46,7 +46,7 @@ async function main() {
 
   // === WORKFLOW 2: Projects ===
   console.log('\n=== Workflow 2: Projects ===')
-  await page.goto(`${BASE}/projects`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/projects`, { waitUntil: 'load' })
   await snap('05-projects-pipeline')
 
   const projRow = page.locator('tr').filter({ has: page.locator('td') }).first()
@@ -57,7 +57,7 @@ async function main() {
 
   // === WORKFLOW 3: Grants ===
   console.log('\n=== Workflow 3: Grants ===')
-  await page.goto(`${BASE}/grants`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/grants`, { waitUntil: 'load' })
   await snap('07-grants-list')
 
   const grantRow = page.locator('[role="button"]').first()
@@ -75,7 +75,7 @@ async function main() {
 
   // === WORKFLOW 4: Ideas ===
   console.log('\n=== Workflow 4: Ideas ===')
-  await page.goto(`${BASE}/ideas`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/ideas`, { waitUntil: 'load' })
   await snap('10-ideas-page')
 
   const ideaRow = page.locator('[role="button"], tr, div').filter({ hasText: /journal club|office hours/ }).first()
@@ -87,7 +87,7 @@ async function main() {
 
   // === WORKFLOW 5: Decisions ===
   console.log('\n=== Workflow 5: Decisions ===')
-  await page.goto(`${BASE}/decisions`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/decisions`, { waitUntil: 'load' })
   await snap('12-decisions-page')
 
   const decRow = page.locator('[role="button"], tr, div').filter({ hasText: /design pivot|D1 as cloud/ }).first()
@@ -99,7 +99,7 @@ async function main() {
 
   // === WORKFLOW 6: Meetings ===
   console.log('\n=== Workflow 6: Meetings ===')
-  await page.goto(`${BASE}/meetings`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/meetings`, { waitUntil: 'load' })
   await snap('14-meetings-hub')
 
   const meetingItem = page.locator('button, div').filter({ hasText: /Biweekly/ }).first()
@@ -111,12 +111,12 @@ async function main() {
 
   // === WORKFLOW 7: Digest ===
   console.log('\n=== Workflow 7: Digest ===')
-  await page.goto(`${BASE}/digest`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/digest`, { waitUntil: 'load' })
   await snap('16-digest-page')
 
   // === WORKFLOW 8: Deadlines ===
   console.log('\n=== Workflow 8: Deadlines ===')
-  await page.goto(`${BASE}/deadlines`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/deadlines`, { waitUntil: 'load' })
   await snap('17-deadlines')
 
   // === WORKFLOW 9: Team ===
@@ -131,7 +131,7 @@ async function main() {
 
   // === WORKFLOW 11: Analytics ===
   console.log('\n=== Workflow 11: Analytics ===')
-  await page.goto(`${BASE}/analytics`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/analytics`, { waitUntil: 'load' })
   await snap('20-analytics')
 
   // === WORKFLOW 12: Light Mode ===
@@ -144,17 +144,17 @@ async function main() {
   const lightPage = await lightCtx.newPage()
   lightPage.on('pageerror', () => {})
 
-  await lightPage.goto(`${BASE}/dashboard`, { waitUntil: 'load' })
+  await lightPage.goto(`${BASE}/portal/dashboard`, { waitUntil: 'load' })
   await lightPage.waitForTimeout(2500)
   await lightPage.screenshot({ path: `${OUT}/21-dashboard-light.png` })
   console.log('  21-dashboard-light')
 
-  await lightPage.goto(`${BASE}/my-tasks`, { waitUntil: 'load' })
+  await lightPage.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'load' })
   await lightPage.waitForTimeout(2000)
   await lightPage.screenshot({ path: `${OUT}/22-my-tasks-light.png` })
   console.log('  22-my-tasks-light')
 
-  await lightPage.goto(`${BASE}/projects`, { waitUntil: 'load' })
+  await lightPage.goto(`${BASE}/portal/projects`, { waitUntil: 'load' })
   await lightPage.waitForTimeout(2000)
   await lightPage.screenshot({ path: `${OUT}/23-projects-light.png` })
   console.log('  23-projects-light')
@@ -170,12 +170,12 @@ async function main() {
   mobilePage.on('pageerror', () => {})
 
   for (const [path, name] of [
-    ['/dashboard', '24-mobile-dashboard'],
-    ['/my-tasks', '25-mobile-tasks'],
-    ['/ideas', '26-mobile-ideas'],
-    ['/grants', '27-mobile-grants'],
-    ['/meetings', '28-mobile-meetings'],
-    ['/decisions', '29-mobile-decisions'],
+    ['/portal/dashboard', '24-mobile-dashboard'],
+    ['/portal/my-tasks', '25-mobile-tasks'],
+    ['/portal/ideas', '26-mobile-ideas'],
+    ['/portal/grants', '27-mobile-grants'],
+    ['/portal/meetings', '28-mobile-meetings'],
+    ['/portal/decisions', '29-mobile-decisions'],
   ] as const) {
     await mobilePage.goto(`${BASE}${path}`, { waitUntil: 'load' })
     await mobilePage.waitForTimeout(2000)
@@ -185,7 +185,7 @@ async function main() {
 
   // === WORKFLOW 14: Modals & Overlays ===
   console.log('\n=== Workflow 14: Modals & Overlays ===')
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'load' })
   await page.waitForTimeout(2000)
 
   // Command palette

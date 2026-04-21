@@ -5,11 +5,12 @@
  * CreateTaskModal requires Owner (assignee) field. Submit button = "Create Task".
  */
 import { test, expect, go, vis, waitForToast, clickUndo } from './fixtures'
+import { P } from '../../helpers/paths'
 
 test.describe('Journey 4: Data Entry Workflow', () => {
   test('Create task → edit → status cycle → undo', async ({ journeyPage: page }) => {
     // 1. Navigate to /my-tasks
-    const errors = await go(page, '/my-tasks')
+    const errors = await go(page, P.myTasks)
     expect(errors).toEqual([])
     await expect(page.locator('h1')).toContainText(/task/i, { timeout: 5000 })
 
@@ -114,8 +115,8 @@ test.describe('Journey 4: Data Entry Workflow', () => {
       }
     }
 
-    // 21-22. Navigate to /tasks → should redirect to /my-tasks
-    await page.goto('/tasks', { waitUntil: 'load' })
+    // 21-22. Navigate to /tasks → should redirect to /portal/my-tasks
+    await page.goto(P.tasks, { waitUntil: 'load' })
     await page.waitForTimeout(2000)
     expect(page.url()).toContain('/my-tasks')
   })

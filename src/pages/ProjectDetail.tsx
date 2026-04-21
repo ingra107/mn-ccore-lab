@@ -42,6 +42,7 @@ import InsightPanel from '../components/InsightPanel'
 import ProjectLiterature from './project/ProjectLiterature'
 import ProjectActivity from './project/ProjectActivity'
 import ProjectDocuments from './project/ProjectDocuments'
+import { PATHS } from '../constants/paths'
 
 type Tab = 'overview' | 'tasks' | 'revisions' | 'activity' | 'literature'
 
@@ -74,7 +75,7 @@ export default function ProjectDetail() {
     return (
       <div className="content-container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
         <Link
-          to="/projects"
+          to={PATHS.projects}
           className="inline-flex items-center gap-2 mb-6"
           style={{
             fontSize: '14px',

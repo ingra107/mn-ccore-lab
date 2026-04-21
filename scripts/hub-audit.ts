@@ -117,7 +117,7 @@ async function auditTasks(ctx: Ctx) {
   console.log(`\n━━━ [${ctx.section}] Task lifecycle ━━━`)
 
   // 1.1 Create task via modal
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
   await snap(ctx, 'mytasks-initial', 1500)
 
   const newBtn = page.locator('button').filter({ hasText: /New Task/ }).first()
@@ -531,7 +531,7 @@ async function auditIdeas(ctx: Ctx) {
   const { page } = ctx
   console.log(`\n━━━ [${ctx.section}] Ideas ━━━`)
 
-  await page.goto(`${BASE}/ideas`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/ideas`, { waitUntil: 'networkidle' })
   await snap(ctx, 'ideas-initial', 1500)
 
   // 3.1 N-key create — modal has placeholder "What's the idea?" (not "title")
@@ -575,7 +575,7 @@ async function auditDecisions(ctx: Ctx) {
   const { page } = ctx
   console.log(`\n━━━ [${ctx.section}] Decisions ━━━`)
 
-  await page.goto(`${BASE}/decisions`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/decisions`, { waitUntil: 'networkidle' })
   await snap(ctx, 'decisions-initial', 1500)
 
   // 4.1 N-key create
@@ -616,7 +616,7 @@ async function auditGrants(ctx: Ctx) {
   const { page } = ctx
   console.log(`\n━━━ [${ctx.section}] Grants ━━━`)
 
-  await page.goto(`${BASE}/grants`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/grants`, { waitUntil: 'networkidle' })
   await snap(ctx, 'grants-initial', 1500)
 
   // 8.1 Row expand (R11-8)
@@ -670,7 +670,7 @@ async function auditDeadlines(ctx: Ctx) {
   const { page } = ctx
   console.log(`\n━━━ [${ctx.section}] Deadlines ━━━`)
 
-  await page.goto(`${BASE}/deadlines`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/deadlines`, { waitUntil: 'networkidle' })
   await snap(ctx, 'deadlines-initial', 1500)
 
   // 9.1 InlineDatePicker on task rows
@@ -703,7 +703,7 @@ async function auditManuscripts(ctx: Ctx) {
   const { page } = ctx
   console.log(`\n━━━ [${ctx.section}] Manuscripts ━━━`)
 
-  await page.goto(`${BASE}/manuscripts`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/manuscripts`, { waitUntil: 'networkidle' })
   await snap(ctx, 'manuscripts-initial', 1500)
 
   // 10.1 PI inline — needs an InlineSelect around a team slug
@@ -748,7 +748,7 @@ async function auditDashboard(ctx: Ctx) {
   const { page } = ctx
   console.log(`\n━━━ [${ctx.section}] Dashboard ━━━`)
 
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/dashboard`, { waitUntil: 'networkidle' })
   await snap(ctx, 'dashboard-initial', 2000)
 
   // 11.1 Quick Capture via Ctrl+I — full end-to-end with API verification
@@ -836,7 +836,7 @@ async function auditGlobal(ctx: Ctx) {
   const { page } = ctx
   console.log(`\n━━━ [${ctx.section}] Global features ━━━`)
 
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/dashboard`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(1500)
 
   // 13.1 Command palette
@@ -859,7 +859,7 @@ async function auditGlobal(ctx: Ctx) {
   // Hub uses `<html class="dark">` (Tailwind dark-mode-class strategy), NOT
   // `data-theme` attribute. localStorage key is `mn-ccore-theme` (managed by
   // src/hooks/useDarkMode.ts).
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/dashboard`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
   const themeBefore = await page.evaluate(() => ({
     dark: document.documentElement.classList.contains('dark'),
@@ -876,7 +876,7 @@ async function auditGlobal(ctx: Ctx) {
   await snap(ctx, 'theme-toggled', 400)
 
   // 13.7 Report a Bug
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/dashboard`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
   const bugBtn = page.locator('a, button').filter({ hasText: /Report a Bug/i }).first()
   if (await bugBtn.count()) {
@@ -903,7 +903,7 @@ async function auditGlobal(ctx: Ctx) {
     ['p', '/projects'],
   ]
   for (const [letter, expectedPath] of chords) {
-    await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/portal/dashboard`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(500)
     // Chord: g then letter, quick succession (within ~500ms handler window)
     await page.keyboard.press('g')
@@ -916,7 +916,7 @@ async function auditGlobal(ctx: Ctx) {
   }
 
   // 13.6 Search page real query
-  await page.goto(`${BASE}/search`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/search`, { waitUntil: 'networkidle' })
   await snap(ctx, 'search-initial', 1200)
   const searchInput = page.locator('input[type="search"], input[placeholder*="search" i]').first()
   if (await searchInput.count()) {
@@ -953,15 +953,30 @@ async function auditMobile(ctx: Ctx) {
   ctx.page = mPage
   ctx.browser = mCtx
 
-  const pages = ['dashboard', 'my-tasks', 'tasks', 'deadlines', 'manuscripts', 'ideas', 'decisions', 'grants', 'meetings', 'publications', 'digest', 'personal', 'calendar', 'team']
-  for (const p of pages) {
-    await mPage.goto(`${BASE}/${p}`, { waitUntil: 'networkidle' }).catch(() => {})
+  const pages: Array<[string, string]> = [
+    ['dashboard', '/portal/dashboard'],
+    ['my-tasks', '/portal/my-tasks'],
+    ['tasks', '/portal/my-tasks'],
+    ['deadlines', '/portal/deadlines'],
+    ['manuscripts', '/portal/manuscripts'],
+    ['ideas', '/portal/ideas'],
+    ['decisions', '/portal/decisions'],
+    ['grants', '/portal/grants'],
+    ['meetings', '/portal/meetings'],
+    ['publications', '/publications'],
+    ['digest', '/portal/digest'],
+    ['personal', '/portal/personal'],
+    ['calendar', '/portal/calendar'],
+    ['team', '/team'],
+  ]
+  for (const [label, path] of pages) {
+    await mPage.goto(`${BASE}${path}`, { waitUntil: 'networkidle' }).catch(() => {})
     await mPage.waitForTimeout(1200)
-    await snap(ctx, `mobile-${p}`, 600)
+    await snap(ctx, `mobile-${label}`, 600)
   }
 
   // MobileTabBar More drawer
-  await mPage.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  await mPage.goto(`${BASE}/portal/dashboard`, { waitUntil: 'networkidle' })
   await mPage.waitForTimeout(1200)
   const moreBtn = mPage.locator('button').filter({ hasText: /^More$/ }).first()
   if (await moreBtn.count()) {
@@ -1040,7 +1055,7 @@ async function auditProjects(ctx: Ctx) {
   const { page } = ctx
   console.log(`\n━━━ [${ctx.section}] Project lifecycle ━━━`)
 
-  await page.goto(`${BASE}/projects`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/projects`, { waitUntil: 'networkidle' })
   await snap(ctx, 'projects-initial', 2000)
 
   // Click first project row → detail page
@@ -1085,7 +1100,7 @@ async function auditAskTheLab(ctx: Ctx) {
   const { page } = ctx
   console.log(`\n━━━ [${ctx.section}] Ask the Lab ━━━`)
 
-  await page.goto(`${BASE}/ask`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/ask`, { waitUntil: 'networkidle' })
   await snap(ctx, 'asklab-initial', 1500)
 
   // Find create question button
@@ -1120,7 +1135,7 @@ async function auditMeetings(ctx: Ctx) {
   const { page } = ctx
   console.log(`\n━━━ [${ctx.section}] Meetings ━━━`)
 
-  await page.goto(`${BASE}/meetings`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/meetings`, { waitUntil: 'networkidle' })
   await snap(ctx, 'meetings-initial', 2000)
 
   // Click first meeting
@@ -1165,7 +1180,7 @@ async function auditDigest(ctx: Ctx) {
   const { page } = ctx
   console.log(`\n━━━ [${ctx.section}] Digest ━━━`)
 
-  await page.goto(`${BASE}/digest`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/digest`, { waitUntil: 'networkidle' })
   await snap(ctx, 'digest-initial', 2000)
 
   // Open comment on first paper

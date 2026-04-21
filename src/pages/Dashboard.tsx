@@ -12,6 +12,7 @@ import { isProductionVisible } from '../lib/isProductionVisible'
 import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
 import PhaseReleaseBanner from '../components/PhaseReleaseBanner'
+import { PATHS } from '../constants/paths'
 import PageTooltip from '../components/PageTooltip'
 import PipelineCard from '../components/dashboard/PipelineCard'
 import StatsCard from '../components/dashboard/StatsCard'
@@ -390,7 +391,7 @@ export default function Dashboard() {
                     <>
                       <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
                       <a
-                        href="/my-tasks"
+                        href={PATHS.myTasks}
                         className="portal-footer-link"
                         style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', whiteSpace: 'nowrap' }}
                       >
@@ -551,7 +552,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <Link
-              to="/tasks?create=true"
+              to={`${PATHS.myTasks}?create=true`}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors portal-footer-link"
               style={{ color: 'var(--ink-bright, #fff)', backgroundColor: 'var(--teal-solid)', textDecoration: 'none' }}
             >
@@ -559,7 +560,7 @@ export default function Dashboard() {
               Task
             </Link>
             <Link
-              to="/meetings"
+              to={PATHS.meetings}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5 portal-footer-link"
               style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
             >
@@ -567,7 +568,7 @@ export default function Dashboard() {
               Meeting
             </Link>
             <Link
-              to="/ideas?create=true"
+              to={`${PATHS.ideas}?create=true`}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5 portal-footer-link"
               style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
             >
@@ -583,7 +584,7 @@ export default function Dashboard() {
         <div style={{ minHeight: '56px', contain: 'layout' }}>
         {upcomingMeeting && (
           <Link
-            to={`/meetings/${upcomingMeeting.id}/prep`}
+            to={PATHS.meetingPrep(upcomingMeeting.id)}
             className="flex items-center gap-3 mb-2 px-4 py-3 rounded-xl transition-all"
             style={{
               background: 'linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(45,138,138,0.06) 100%)',
@@ -612,7 +613,7 @@ export default function Dashboard() {
 
         {expiringRegulatory.length > 0 && (
           <Link
-            to="/personal"
+            to={PATHS.personal}
             className="flex items-center gap-3 mb-2 px-4 py-2.5 rounded-xl"
             style={{
               background: 'var(--maroon-hover)',

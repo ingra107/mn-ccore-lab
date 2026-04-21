@@ -23,6 +23,7 @@ import TaskTitle from '../../components/tasks/TaskTitle'
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed'
 import { ROLE_LABELS } from '../../lib/roleDefaults'
 import type { UserRole } from '../../lib/roleDefaults'
+import { PATHS } from '../../constants/paths'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import { useUndoToast } from '../../components/UndoToast'
 import type { TaskRow } from '../../lib/api'
@@ -274,7 +275,7 @@ function MyTasksColumn({
           )}
         </div>
         <Link
-          to="/tasks"
+          to={PATHS.myTasks}
           className="flex items-center gap-1 portal-footer-link"
           style={{ fontSize: 'var(--text-label)', color: 'var(--gold)', textDecoration: 'none' }}
         >
@@ -329,7 +330,7 @@ function MyTasksColumn({
 
       {tasks.length > MAX_TASKS && (
         <Link
-          to="/tasks"
+          to={PATHS.myTasks}
           className="flex items-center gap-1 pt-2 mt-1 portal-footer-link"
           style={{
             fontSize: 'var(--text-label)',
@@ -835,7 +836,7 @@ export default function Personal() {
         >
           {/* Summary row */}
           <Link
-            to="/projects"
+            to={PATHS.projects}
             className="flex items-center gap-3 px-4 py-2.5"
             style={{ textDecoration: 'none', borderRadius: 'var(--radius-xl)' }}
           >

@@ -21,6 +21,7 @@ import { formatShortDate, isOverdue } from '../lib/dateUtils'
 import { displayName as formatTier, fullNameForSlug } from '../lib/nameUtils'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 import WatchButton from '../components/WatchButton'
+import { PATHS } from '../constants/paths'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -908,7 +909,7 @@ function MemberMilestones({ slug }: { slug: string }) {
             </span>
           )}
           <Link
-            to="/mentee-milestones"
+            to={PATHS.menteeMilestones}
             style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--teal)', textDecoration: 'none' }}
           >
             View all

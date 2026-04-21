@@ -4,6 +4,7 @@ import { Sparkles, RefreshCw } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { useInsightConnections } from '../../hooks/useApiData'
 import { useQueryClient } from '@tanstack/react-query'
+import { PATHS } from '../../constants/paths'
 
 function InsightsCard() {
   const { data: connections = [], isLoading } = useInsightConnections()
@@ -93,7 +94,7 @@ function InsightsCard() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <Link
-                      to={`/projects/${edge.from}`}
+                      to={PATHS.project(edge.from)}
                       style={{
                         fontSize: '12px',
                         fontWeight: 500,
@@ -119,7 +120,7 @@ function InsightsCard() {
                       &harr;
                     </span>
                     <Link
-                      to={`/projects/${edge.to}`}
+                      to={PATHS.project(edge.to)}
                       style={{
                         fontSize: '12px',
                         fontWeight: 500,

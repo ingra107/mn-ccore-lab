@@ -23,6 +23,7 @@ import type { Stage } from '../components/StageSelector'
 import { staggerContainer, staggerItem } from '../lib/animations'
 import PageTooltip from '../components/PageTooltip'
 import { stripConsortiumPrefix } from '../lib/textUtils'
+import { PATHS } from '../constants/paths'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
 
@@ -440,7 +441,7 @@ export default function Projects() {
                         )}
 
                         <Link
-                          to={`/projects/${project.slug}`}
+                          to={PATHS.project(project.slug)}
                           style={{ textDecoration: 'none', display: 'block' }}
                           onClick={() => setFocusedIndex(index)}
                         >

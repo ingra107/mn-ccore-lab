@@ -28,6 +28,7 @@ import { useCreateSubmissionEvent, useDeleteSubmissionEvent } from '../hooks/use
 import { formatRelativeTime, getDaysUntil } from '../lib/dateUtils'
 import EmptyState from './EmptyState'
 import { getStatusColor, getStatusBg } from '../lib/statusColors'
+import { PATHS } from '../constants/paths'
 
 // ── Event config ──
 
@@ -594,7 +595,7 @@ export function ActiveSubmissionsDashboard({
         return (
           <a
             key={sub.id}
-            href={`/projects/${sub.project_slug || sub.project_id}?tab=revisions`}
+            href={`${PATHS.project(sub.project_slug || sub.project_id)}?tab=revisions`}
             className="active-submission-row"
             style={{
               textDecoration: 'none',

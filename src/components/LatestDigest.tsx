@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Newspaper, ArrowRight } from 'lucide-react'
 import { useDigest } from '../hooks/useApiData'
 import type { DigestPaper } from '../hooks/useApiData'
+import { PATHS } from '../constants/paths'
 
 function relevanceColor(score: number): string {
   if (score >= 80) return 'var(--teal)'
@@ -136,7 +137,7 @@ export default function LatestDigest() {
             </p>
           </div>
           <Link
-            to="/digest"
+            to={PATHS.digest}
             className="hidden sm:flex items-center gap-1.5 text-xs transition-colors duration-200"
             style={{
               color: 'var(--gold)',
@@ -158,7 +159,7 @@ export default function LatestDigest() {
         {/* Mobile link */}
         <div className="mt-6 text-center sm:hidden">
           <Link
-            to="/digest"
+            to={PATHS.digest}
             className="inline-flex items-center gap-2 text-sm font-medium transition-opacity duration-200 hover:opacity-80"
             style={{
               color: 'var(--gold)',

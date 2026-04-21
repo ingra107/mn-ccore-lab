@@ -5,11 +5,12 @@
  * Grants page h1 = "Grants & Funding". Deadlines h1 = "Deadlines & Milestones".
  */
 import { test, expect, go, vis, waitForToast } from './fixtures'
+import { P } from '../../helpers/paths'
 
 test.describe('Journey 3: Grant Manager', () => {
   test('Grants → detail → deadlines → inline edits', async ({ journeyPage: page }) => {
     // 1-3. Navigate to /grants
-    const errors = await go(page, '/grants')
+    const errors = await go(page, P.grants)
     expect(errors).toEqual([])
     await expect(page.locator('h1')).toContainText(/Grant/i, { timeout: 5000 })
 
@@ -47,7 +48,7 @@ test.describe('Journey 3: Grant Manager', () => {
     }
 
     // 9. Navigate to /deadlines
-    await go(page, '/deadlines')
+    await go(page, P.deadlines)
     await expect(page.locator('h1')).toContainText(/Deadline/i, { timeout: 5000 })
 
     // 10. Check for any deadline/task rows

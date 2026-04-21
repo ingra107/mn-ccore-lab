@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { P } from './helpers/paths';
 
 const BASE = 'https://mn-ccore-lab.pages.dev';
 
@@ -19,10 +20,10 @@ test('desktop user journey: dashboard → tasks → detail → projects → team
     if (r.status() >= 500) failed5xx.push(`${r.status()} ${r.url()}`);
   });
 
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}${P.dashboard}`, { waitUntil: 'networkidle' });
   await expect(page.locator('h1')).toBeVisible();
 
-  await page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' });
   const firstRow = page.locator('[data-testid^="task-row-"]').first();
   await firstRow.waitFor({ state: 'visible', timeout: 10000 });
 
@@ -32,23 +33,23 @@ test('desktop user journey: dashboard → tasks → detail → projects → team
   await page.locator('[data-testid="close-detail-panel"]').click();
   await expect(panel).toBeHidden({ timeout: 3000 });
 
-  await page.goto(`${BASE}/projects`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}${P.projects}`, { waitUntil: 'networkidle' });
   await expect(page.locator('h1')).toBeVisible();
 
-  await page.goto(`${BASE}/team`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}${P.publicTeam}`, { waitUntil: 'networkidle' });
   await expect(page.locator('h1')).toBeVisible();
 
   // Director profile — MUST render the MemberPage, NOT redirect back to
   // /team. Phase 36b renamed the slug to `nick-ingraham` (preferred-last
   // format). /team/nick now redirects to /team because that slug is gone.
-  await page.goto(`${BASE}/team/nick-ingraham`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}${P.publicMember('nick-ingraham')}`, { waitUntil: 'networkidle' });
   await expect(page).toHaveURL(/\/team\/nick-ingraham/);
   await expect(page.locator('body')).toContainText(/Nick Ingraham/i, { timeout: 10000 });
 
-  await page.goto(`${BASE}/meetings`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}${P.meetings}`, { waitUntil: 'networkidle' });
   await expect(page.locator('h1')).toBeVisible();
 
-  await page.goto(`${BASE}/personal`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}${P.personal}`, { waitUntil: 'networkidle' });
   await expect(page.locator('h1')).toBeVisible();
 
   expect(jsErrors, `JS errors: ${jsErrors.join(' | ')}`).toEqual([]);

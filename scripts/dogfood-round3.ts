@@ -60,7 +60,7 @@ async function main() {
   // ACTION 1: Command palette navigation — every entry lands on a rendered page
   // ────────────────────────────────────────────────────────────
   log('\n=== ACTION 1: Command palette exhaustive navigation ===')
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/dashboard`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(1500)
   await page.keyboard.press('Control+k')
   await snap(page, 'cmdk-open', 600)
@@ -75,7 +75,7 @@ async function main() {
   // Test a set of known nav targets via the palette
   const navTargets = ['Analytics', 'Activity', 'Settings', 'Team', 'Search', 'Sessions', 'Narratives', 'Transcripts', 'PI Analytics', 'Dashboard', 'Tasks', 'Projects', 'Meetings', 'Calendar', 'Grants', 'Manuscripts', 'Deadlines', 'Ideas', 'Decisions', 'Digest', 'Publications', 'Personal', 'Network']
   for (const target of navTargets) {
-    await page.goto(`${BASE}/dashboard`, { waitUntil: 'domcontentloaded' })
+    await page.goto(`${BASE}/portal/dashboard`, { waitUntil: 'domcontentloaded' })
     await page.waitForTimeout(400)
     await page.keyboard.press('Control+k')
     await page.waitForTimeout(300)
@@ -105,7 +105,7 @@ async function main() {
   // ACTION 2: Long title layout — create and observe
   // ────────────────────────────────────────────────────────────
   log('\n=== ACTION 2: Long-title task layout ===')
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
   await snap(page, 'mytasks-before-long', 1200)
   const newTaskBtn = page.locator('button').filter({ hasText: /New Task/ }).first()
   if (await newTaskBtn.count()) {
@@ -129,7 +129,7 @@ async function main() {
   // ACTION 3: Rapid status changes — undo stack behavior
   // ────────────────────────────────────────────────────────────
   log('\n=== ACTION 3: Rapid status changes ===')
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(1200)
   const statusCircles = page.locator('[data-testid^="task-status-circle-"]')
   const circleCount = await statusCircles.count()
@@ -155,8 +155,8 @@ async function main() {
   log('\n=== ACTION 4: Two tabs — change on A, verify on B ===')
   const page2 = await ctx.newPage()
   await Promise.all([
-    page.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' }),
-    page2.goto(`${BASE}/my-tasks`, { waitUntil: 'networkidle' }),
+    page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' }),
+    page2.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' }),
   ])
   await Promise.all([page.waitForTimeout(1500), page2.waitForTimeout(1500)])
   // Tab A captures title list
@@ -172,7 +172,7 @@ async function main() {
   // ────────────────────────────────────────────────────────────
   log('\n=== ACTION 5: Offline mode — loading skeletons, no blank page ===')
   await ctx.setOffline(true)
-  await page.goto(`${BASE}/projects`, { waitUntil: 'domcontentloaded' }).catch(() => {})
+  await page.goto(`${BASE}/portal/projects`, { waitUntil: 'domcontentloaded' }).catch(() => {})
   await snap(page, 'offline-projects', 2500)
   const bodyOffline = (await page.locator('body').textContent()) || ''
   if (bodyOffline.length < 100) {
@@ -189,7 +189,7 @@ async function main() {
   log('\n=== ACTION 6: Empty project detail page ===')
   // pick a newly-created bucket project (no tasks yet) — admin-tasks probably has many,
   // try ice-fishing or uofc-pccm-grand-rounds (status=done, no tasks)
-  await page.goto(`${BASE}/projects/uofc-pccm-grand-rounds`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/projects/uofc-pccm-grand-rounds`, { waitUntil: 'networkidle' })
   await snap(page, 'empty-project', 2000)
   const emptyBody = await page.locator('body').textContent()
   if (emptyBody?.includes('UofC') || emptyBody?.includes('Grand Rounds')) {
@@ -202,7 +202,7 @@ async function main() {
   // ACTION 7: Tasks page virtual scroll — scroll to bottom
   // ────────────────────────────────────────────────────────────
   log('\n=== ACTION 7: Tasks page full virtual scroll ===')
-  await page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(1500)
   await snap(page, 'tasks-top', 800)
   await page.keyboard.press('End')
@@ -217,7 +217,7 @@ async function main() {
   // ACTION 8: Bug report flow (open modal, DON'T submit)
   // ────────────────────────────────────────────────────────────
   log('\n=== ACTION 8: Bug report modal opens + Ctrl+Enter wiring ===')
-  await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/portal/dashboard`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(1000)
   // Bug report button is typically a "?" or fixed-position FAB; look for aria-label
   const bugBtn = page.getByRole('button', { name: /report.*bug|bug report|feedback/i }).first()

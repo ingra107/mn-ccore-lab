@@ -5,6 +5,7 @@ import { GitBranch, Plus, ArrowRight, Trash2 } from 'lucide-react'
 import { useProjects, useProjectDependencies } from '../../hooks/useApiData'
 import { useCreateDependency, useDeleteDependency } from '../../hooks/useMutations'
 import type { Project } from '../../data/types'
+import { PATHS } from '../../constants/paths'
 
 interface ProjectDependenciesProps {
   project: Project
@@ -333,7 +334,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 </span>
                 <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', flexShrink: 0 }} />
                 <Link
-                  to={`/projects/${dep.to_slug}`}
+                  to={PATHS.project(dep.to_slug)}
                   style={{
                     fontSize: 'var(--value-size)',
                     color: 'var(--ink)',
@@ -390,7 +391,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 }}
               >
                 <Link
-                  to={`/projects/${dep.from_slug}`}
+                  to={PATHS.project(dep.from_slug)}
                   style={{
                     fontSize: 'var(--value-size)',
                     color: 'var(--ink)',

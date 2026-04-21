@@ -10,7 +10,7 @@ async function main() {
   })).newPage()
   page.on('pageerror', () => {})
 
-  await page.goto('https://mn-ccore-lab.pages.dev/my-tasks', { waitUntil: 'load' })
+  await page.goto('https://mn-ccore-lab.pages.dev/portal/my-tasks', { waitUntil: 'load' })
   await page.waitForTimeout(3000)
 
   // Take raw screenshot

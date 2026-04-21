@@ -6,11 +6,12 @@
  * sidebar shows detail on the right. URL stays at /meetings (no navigation).
  */
 import { test, expect, go, vis } from './fixtures'
+import { P } from '../../helpers/paths'
 
 test.describe('Journey 2: Coordinator Workflow', () => {
   test('Meetings → split-panel detail → action items → meeting notes', async ({ journeyPage: page }) => {
     // 1-2. Navigate to /meetings — h1 is "Meeting Hub"
-    const errors = await go(page, '/meetings')
+    const errors = await go(page, P.meetings)
     expect(errors).toEqual([])
     await expect(page.locator('h1')).toContainText(/Meeting Hub/i, { timeout: 5000 })
 
@@ -47,11 +48,11 @@ test.describe('Journey 2: Coordinator Workflow', () => {
     console.log(`View Full Meeting link: ${hasViewFull}`)
 
     // 11-12. Navigate to /meeting-notes
-    await go(page, '/meeting-notes')
+    await go(page, P.meetingNotes)
     await expect(page.locator('h1')).toContainText(/Transcript|Note/i, { timeout: 5000 })
 
     // 13-14. Navigate back to /meetings
-    await go(page, '/meetings')
+    await go(page, P.meetings)
     await expect(page.locator('h1')).toContainText(/Meeting Hub/i, { timeout: 5000 })
   })
 })

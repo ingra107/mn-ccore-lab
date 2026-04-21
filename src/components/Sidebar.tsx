@@ -34,6 +34,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { useUnreadCount } from '../hooks/useNotifications'
 import { useNextMeeting } from '../hooks/useApiData'
+import { PATHS } from '../constants/paths'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
 
@@ -66,32 +67,32 @@ const navGroups: NavGroup[] = [
   {
     title: '',
     items: [
-      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { to: '/personal', label: 'My Hub', icon: User },
-      { to: '/my-tasks', label: 'Tasks', icon: CheckSquare },
-      { to: '/calendar', label: 'Calendar', icon: Calendar },
+      { to: PATHS.dashboard, label: 'Dashboard', icon: LayoutDashboard },
+      { to: PATHS.personal, label: 'My Hub', icon: User },
+      { to: PATHS.myTasks, label: 'Tasks', icon: CheckSquare },
+      { to: PATHS.calendar, label: 'Calendar', icon: Calendar },
     ],
   },
   {
     title: 'Research',
     items: [
-      { to: '/projects', label: 'Projects', icon: FolderKanban },
-      { to: '/manuscripts', label: 'Manuscripts', icon: FileText },
-      { to: '/grants', label: 'Grants', icon: DollarSign },
-      { to: '/deadlines', label: 'Deadlines', icon: Clock },
-      { to: '/ideas', label: 'Ideas', icon: Lightbulb },
-      { to: '/digest', label: 'Research Digest', icon: BookOpen },
+      { to: PATHS.projects, label: 'Projects', icon: FolderKanban },
+      { to: PATHS.manuscripts, label: 'Manuscripts', icon: FileText },
+      { to: PATHS.grants, label: 'Grants', icon: DollarSign },
+      { to: PATHS.deadlines, label: 'Deadlines', icon: Clock },
+      { to: PATHS.ideas, label: 'Ideas', icon: Lightbulb },
+      { to: PATHS.digest, label: 'Research Digest', icon: BookOpen },
     ],
   },
   {
     title: 'Lab',
     items: [
-      { to: '/meetings', label: 'Meetings', icon: UsersIcon },
-      { to: '/meeting-notes', label: 'Transcripts', icon: FileText },
+      { to: PATHS.meetings, label: 'Meetings', icon: UsersIcon },
+      { to: PATHS.meetingNotes, label: 'Transcripts', icon: FileText },
       { to: '/team', label: 'Team', icon: UsersIcon },
-      { to: '/activity', label: 'Activity', icon: Activity },
-      { to: '/analytics', label: 'Analytics', icon: BarChart3 },
-      { to: '/settings', label: 'Settings', icon: Settings },
+      { to: PATHS.activity, label: 'Activity', icon: Activity },
+      { to: PATHS.analytics, label: 'Analytics', icon: BarChart3 },
+      { to: PATHS.settings, label: 'Settings', icon: Settings },
     ],
   },
 ]
@@ -141,10 +142,10 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         {
           title: 'PI View',
           items: [
-            { to: '/pi-analytics', label: 'PI Analytics', icon: TrendingUp },
-            { to: '/mentee-milestones', label: 'Mentee Milestones', icon: GraduationCap },
-            { to: '/deadline-cascade', label: 'Deadline Cascade', icon: GitBranch },
-            { to: '/meeting-prep', label: 'Meeting Prep', icon: ClipboardList },
+            { to: PATHS.piAnalytics, label: 'PI Analytics', icon: TrendingUp },
+            { to: PATHS.menteeMilestones, label: 'Mentee Milestones', icon: GraduationCap },
+            { to: PATHS.deadlineCascade, label: 'Deadline Cascade', icon: GitBranch },
+            { to: PATHS.meetings, label: 'Meeting Prep', icon: ClipboardList },
           ],
         },
         {
@@ -152,9 +153,9 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           items: [
             // PB Sector hidden until Peripheral Brain integration ships (P2-07).
             // Route /pb still resolves for direct-link access.
-            ...(FEATURE_FLAGS.peripheralBrain ? [{ to: '/pb', label: 'Daily Plan', icon: Terminal }] : []),
-            { to: '/sessions', label: 'Session History', icon: History },
-            { to: '/pi/analytics', label: 'PI Dashboard', icon: Shield },
+            ...(FEATURE_FLAGS.peripheralBrain ? [{ to: PATHS.pb, label: 'Daily Plan', icon: Terminal }] : []),
+            { to: PATHS.sessions, label: 'Session History', icon: History },
+            { to: PATHS.piAnalytics, label: 'PI Dashboard', icon: Shield },
           ],
         },
       ]
@@ -164,15 +165,15 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const navWithBadges = useMemo(() => allGroups.map(group => ({
     ...group,
     items: group.items.map(item => {
-      if (item.to === '/personal' && unreadCount > 0) return { ...item, badge: unreadCount }
-      if (item.to === '/my-tasks' && myOverdue > 0) return { ...item, badge: myOverdue }
-      if (item.to === '/meetings' && nextMeetingLabel) return { ...item, hint: nextMeetingLabel }
+      if (item.to === PATHS.personal && unreadCount > 0) return { ...item, badge: unreadCount }
+      if (item.to === PATHS.myTasks && myOverdue > 0) return { ...item, badge: myOverdue }
+      if (item.to === PATHS.meetings && nextMeetingLabel) return { ...item, hint: nextMeetingLabel }
       return item
     }),
   })), [allGroups, unreadCount, myOverdue])
 
   const isActive = (path: string) => {
-    if (path === '/dashboard') return location.pathname === '/dashboard'
+    if (path === PATHS.dashboard) return location.pathname === PATHS.dashboard
     return location.pathname.startsWith(path)
   }
 
@@ -298,7 +299,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         {/* Search hint */}
         {!collapsed && (
           <Link
-            to="/search"
+            to={PATHS.search}
             prefetch="intent"
             className="flex items-center gap-2.5 px-2.5 py-2 mb-1 rounded-md text-sm transition-colors"
             style={{ color: 'var(--slate)', opacity: 0.75 }}
@@ -329,7 +330,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         {/* User profile */}
         {person && !collapsed && (
           <Link
-            to={`/portal/team/${userSlug}`}
+            to={PATHS.teamMember(userSlug || '')}
             prefetch="intent"
             className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
             style={{ color: 'var(--ink)', textDecoration: 'none' }}

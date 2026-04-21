@@ -15,33 +15,33 @@ import AxeBuilder from '@axe-core/playwright'
 // using known live data so the axe scan catches rendering for content-rich
 // pages, not just empty shells.
 const PORTAL_PAGES = [
-  '/dashboard',
-  '/my-tasks',
-  '/tasks',
-  '/projects',
-  '/manuscripts',
-  '/meetings',
-  '/deadlines',
-  '/ideas',
-  '/decisions',
-  '/grants',
-  '/analytics',
-  '/pi-analytics',
+  '/portal/dashboard',
+  '/portal/my-tasks',
+  '/portal/my-tasks',
+  '/portal/projects',
+  '/portal/manuscripts',
+  '/portal/meetings',
+  '/portal/deadlines',
+  '/portal/ideas',
+  '/portal/decisions',
+  '/portal/grants',
+  '/portal/analytics',
+  '/portal/pi-analytics',
   '/team',
-  '/settings',
+  '/portal/settings',
   // Extended coverage added 2026-04-18 — catches pages whose a11y hadn't
   // been validated by axe yet.
   '/pulse',
-  '/personal',
-  '/calendar',
-  '/digest',
-  '/search',
-  '/ask',
-  '/narratives',
-  '/deadline-cascade',
+  '/portal/personal',
+  '/portal/calendar',
+  '/portal/digest',
+  '/portal/search',
+  '/portal/ask',
+  '/portal/narratives',
+  '/portal/deadline-cascade',
   '/network',
   '/publications',
-  '/activity',
+  '/portal/activity',
 ]
 
 async function main() {
@@ -64,8 +64,8 @@ async function main() {
     const proj = projResp.ok() ? ((await projResp.json()) as { data?: Array<{ slug: string }> }).data?.[0]?.slug : null
     const mtg = mtgResp.ok() ? ((await mtgResp.json()) as { data?: Array<{ id: string }> }).data?.[0]?.id : null
     const mem = teamResp.ok() ? ((await teamResp.json()) as { data?: Array<{ slug: string }> }).data?.find((m) => m.slug)?.slug : null
-    if (proj) detailPages.push(`/projects/${proj}`)
-    if (mtg) detailPages.push(`/meetings/${mtg}`)
+    if (proj) detailPages.push(`/portal/projects/${proj}`)
+    if (mtg) detailPages.push(`/portal/meetings/${mtg}`)
     if (mem) detailPages.push(`/team/${mem}`)
     if (mem) detailPages.push(`/team/${mem}/trajectory`)
   } catch { /* proceed without detail pages */ }

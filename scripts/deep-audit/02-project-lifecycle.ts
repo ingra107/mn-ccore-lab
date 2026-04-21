@@ -72,14 +72,14 @@ async function main() {
     }
 
     section(s, '2.C  Appears on /projects list')
-    await goto(s, '/projects')
+    await goto(s, '/portal/projects')
     await snap(s, 'C-projects-list')
     const onList = await s.page.locator(`text=${JSON.stringify(title)}`).first().isVisible({ timeout: 3000 }).catch(() => false)
     if (onList) pass(s, '2.C Project visible on /projects list')
     else bug(s, 'PROJ-LIST-MISSING', 'P1', '2.C Project on /projects list', 'title not found', `"${title}" visible`)
 
     section(s, '2.D  Project detail page loads')
-    await goto(s, `/projects/${p.slug}`)
+    await goto(s, `/portal/projects/${p.slug}`)
     await snap(s, 'D-project-detail')
     const onDetail = await s.page.locator(`h1:has-text("${title}"), h2:has-text("${title}")`).first().isVisible({ timeout: 3000 }).catch(() => false)
     if (onDetail) pass(s, '2.D Project detail heading renders title')
@@ -117,7 +117,7 @@ async function main() {
     else bug(s, 'PROJ-KEYLINKS-DESC-DRIFT', 'P1', '2.F all 3 key_link descs round-trip', JSON.stringify({ d1: rb3?.key_link_1_desc, d2: rb3?.key_link_2_desc, d3: rb3?.key_link_3_desc }).slice(0, 200), 'all 3 descs match')
 
     section(s, '2.G  key_links render on /projects list row')
-    await goto(s, '/projects')
+    await goto(s, '/portal/projects')
     await snap(s, 'G-projects-list-with-link')
     // Look for any link icon or href matching our project slug row
     const rowHasLinkHref = await s.page.evaluate((targetUrl) => {
@@ -143,7 +143,7 @@ async function main() {
     // Wait for sync + reload. Overview tab shows task COUNTS, not titles
     // — click the Tasks tab to surface the linked task's title.
     await s.page.waitForTimeout(800)
-    await goto(s, `/projects/${p.slug}`)
+    await goto(s, `/portal/projects/${p.slug}`)
     await s.page.getByRole('button', { name: /^Tasks(\s|\()/ }).first().click({ timeout: 5000 }).catch(() => {})
     await s.page.waitForTimeout(800)
     await snap(s, 'H-project-detail-with-task')
@@ -161,7 +161,7 @@ async function main() {
       else pass(s, '2.I Task reassigned project_id=admin-tasks')
       // Verify disappeared from original project detail
       await s.page.waitForTimeout(800)
-      await goto(s, `/projects/${p.slug}`)
+      await goto(s, `/portal/projects/${p.slug}`)
       await snap(s, 'I-project-detail-after-reassign')
       const stillOnOld = await s.page.locator(`text=${JSON.stringify(taskTitle)}`).first().isVisible({ timeout: 2000 }).catch(() => false)
       if (!stillOnOld) pass(s, '2.I Task removed from old project detail after reassign')

@@ -18,7 +18,7 @@ async function main() {
 
   try {
     section(s, '1  Dashboard landing — the first thing I see every morning')
-    await goto(s, '/dashboard')
+    await goto(s, '/portal/dashboard')
     await snap(s, 'dashboard')
     // Dashboard h1 is the time-of-day greeting ("Good morning/afternoon/evening, Nick"), not literally "Dashboard".
     await assertVisible(s, 'Dashboard greeting heading', 'h1', { severity: 'P1' })
@@ -47,7 +47,7 @@ async function main() {
     else record(s, { id: 'CMDK-NAV', severity: 'P1', scenario: 'Ctrl+K Enter navigation', observed: s.page.url(), expected: 'URL includes /analytics' })
 
     section(s, '3  Chord navigation — g+p (go projects)')
-    await goto(s, '/dashboard')
+    await goto(s, '/portal/dashboard')
     await s.page.keyboard.press('g')
     await s.page.waitForTimeout(150)
     await s.page.keyboard.press('p')
@@ -56,7 +56,7 @@ async function main() {
     else record(s, { id: 'CHORD-GP', severity: 'P2', scenario: 'g+p chord nav', observed: s.page.url(), expected: '/projects' })
 
     section(s, '4  Decision log — create + record outcome')
-    await goto(s, '/decisions')
+    await goto(s, '/portal/decisions')
     await snap(s, 'decisions-list')
     await s.page.keyboard.press('n').catch(() => {})
     await s.page.waitForTimeout(800)
@@ -70,7 +70,7 @@ async function main() {
     }
 
     section(s, '5  Multi-project view — /projects lists all my active work')
-    await goto(s, '/projects')
+    await goto(s, '/portal/projects')
     await snap(s, 'projects-list')
     const projCount = await s.page.locator('a[href*="/projects/"], [data-testid^="project-"]').count().catch(() => 0)
     if (projCount > 10) pass(s, `Projects list shows ${projCount} clickable project rows`)
@@ -87,14 +87,14 @@ async function main() {
     }
 
     section(s, '7  Analytics — charts render without errors')
-    await goto(s, '/analytics')
+    await goto(s, '/portal/analytics')
     await snap(s, 'analytics', 1500)
     const charts = await s.page.locator('svg, canvas').count().catch(() => 0)
     if (charts >= 3) pass(s, `Analytics page renders ${charts} chart elements`)
     else record(s, { id: 'ANALYTICS-EMPTY', severity: 'P2', scenario: 'Analytics has charts', observed: `${charts} svg/canvas`, expected: '≥3 charts' })
 
     section(s, '8  PI Analytics — personal scorecards')
-    await goto(s, '/pi-analytics')
+    await goto(s, '/portal/pi-analytics')
     await snap(s, 'pi-analytics', 1500)
     const piCards = await s.page.locator('.bento-card, [class*="card"], [class*="Card"]').count().catch(() => 0)
     if (piCards > 0) pass(s, `PI Analytics renders ${piCards} card-like panels`)
@@ -109,7 +109,7 @@ async function main() {
       const tid = ((await tResp.json()) as { data?: { id: string } }).data?.id
       if (tid) cleanupTasks.push(tid)
       pass(s, `Urgent task created via API id=${tid}`)
-      await goto(s, '/dashboard')
+      await goto(s, '/portal/dashboard')
       await s.page.waitForTimeout(1500)
       await snap(s, 'dashboard-with-urgent')
       const onFocus = await s.page.locator(`text=${JSON.stringify(taskTitle)}`).first().isVisible({ timeout: 3000 }).catch(() => false)
@@ -118,12 +118,12 @@ async function main() {
     }
 
     section(s, '10  Meetings — the upcoming biweekly')
-    await goto(s, '/meetings')
+    await goto(s, '/portal/meetings')
     await snap(s, 'meetings')
     await assertVisible(s, 'Meeting rows', 'a[href*="/meetings/"], [data-testid*="meeting"]', { severity: 'P1' })
 
     section(s, '11  Ideas board — vote + comment')
-    await goto(s, '/ideas')
+    await goto(s, '/portal/ideas')
     await snap(s, 'ideas')
     await assertVisible(s, 'Ideas content', '[data-testid*="idea"], h1:has-text("Ideas")', { severity: 'P2' })
 

@@ -315,31 +315,31 @@ def generate_test_stub(feature: dict) -> str:
     desc = feature.get("description", f"{ftype} in {filepath}")
 
     # Determine a good page to test on
-    page_path = "/dashboard"
+    page_path = "/portal/dashboard"
     if "tasks" in filepath.lower():
-        page_path = "/tasks"
+        page_path = "/portal/my-tasks"
     elif "project" in filepath.lower():
-        page_path = "/projects"
+        page_path = "/portal/projects"
     elif "meeting" in filepath.lower():
-        page_path = "/meetings"
+        page_path = "/portal/meetings"
     elif "idea" in filepath.lower():
-        page_path = "/ideas"
+        page_path = "/portal/ideas"
     elif "decision" in filepath.lower():
-        page_path = "/decisions"
+        page_path = "/portal/decisions"
     elif "digest" in filepath.lower():
-        page_path = "/digest"
+        page_path = "/portal/digest"
     elif "calendar" in filepath.lower():
-        page_path = "/calendar"
+        page_path = "/portal/calendar"
     elif "setting" in filepath.lower():
-        page_path = "/settings"
+        page_path = "/portal/settings"
     elif "grant" in filepath.lower():
-        page_path = "/grants"
+        page_path = "/portal/grants"
     elif "publication" in filepath.lower():
         page_path = "/publications"
     elif "search" in filepath.lower():
-        page_path = "/search"
+        page_path = "/portal/search"
     elif "pb" in filepath.lower() or "sector" in filepath.lower():
-        page_path = "/pb"
+        page_path = "/portal/pb"
 
     if ftype == "api":
         return f"""  test('API: {desc}', async ({{ request }}) => {{

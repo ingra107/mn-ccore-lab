@@ -41,7 +41,7 @@ async function main() {
 
   // ── Probe A: focus visibility on TaskGridView rows (Tab to land on .task-grid-row)
   console.log('\n=== A: Focus indicator on .task-grid-row (Tab through to a row) ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2500)
   // Tab until we land on a task-grid-row
   let landed = false
@@ -73,7 +73,7 @@ async function main() {
 
   // ── Probe B: Inactive sidebar text contrast against actual sidebar bg
   console.log('\n=== B: Sidebar inactive text contrast (rgb(176,181,185) on actual sidebar bg) ===')
-  await page.goto(BASE + '/dashboard', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/dashboard', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(1500)
   const sb: any = await page.evaluate(`(function(){
     var aside = document.querySelector('aside');
@@ -110,7 +110,7 @@ async function main() {
 
   // ── Probe C: Tab leak from panel
   console.log('\n=== C: TaskDetailPanel — does tab cycle properly inside? ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2500)
   await page.evaluate(`(function(){
     var rows = document.querySelectorAll('.task-grid-row');
@@ -138,7 +138,7 @@ async function main() {
 
   // ── Probe D: ProjectDetail page inline editing
   console.log('\n=== D: ProjectDetail page status field ===')
-  await page.goto(BASE + '/projects', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/projects', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2000)
   // Find first project link
   const proj: any = await page.evaluate(`(function(){
@@ -150,7 +150,7 @@ async function main() {
 
   // ── Probe E: Realtime sync — when /api/version updates, is anything announced?
   console.log('\n=== E: Realtime sync — aria-live announcements? ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2000)
   const liveRegions: any = await page.evaluate(`(function(){
     var regions = Array.prototype.slice.call(document.querySelectorAll('[aria-live], [role=status], [role=alert]'));
@@ -169,7 +169,7 @@ async function main() {
 
   // ── Probe F: Skip to content link visibility on focus
   console.log('\n=== F: Skip to content link on Tab ===')
-  await page.goto(BASE + '/dashboard', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/dashboard', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(1500)
   await page.keyboard.press('Tab')
   const skip: any = await page.evaluate(`(function(){
@@ -195,7 +195,7 @@ async function main() {
 
   // ── Probe G: Status pill in row — look for plain status (not project)
   console.log('\n=== G: All combobox semantics inside .task-grid-row ===')
-  await page.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(2500)
   const combos: any = await page.evaluate(`(function(){
     var row = document.querySelector('.task-grid-row');
@@ -223,7 +223,7 @@ async function main() {
   await ctxL.addInitScript(`window.localStorage.setItem('mn-ccore-theme', 'light');`)
   const page2 = await ctxL.newPage()
   page2.setDefaultTimeout(15000)
-  await page2.goto(BASE + '/tasks', { waitUntil: 'domcontentloaded' })
+  await page2.goto(BASE + '/portal/my-tasks', { waitUntil: 'domcontentloaded' })
   await page2.waitForTimeout(2500)
   for (let i = 0; i < 50; i++) {
     await page2.keyboard.press('Tab')

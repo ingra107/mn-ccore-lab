@@ -5,6 +5,7 @@
 import { test, expect, Page } from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
+import { P } from './helpers/paths'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
 const TS = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 12)
@@ -27,23 +28,23 @@ const log = (f: Finding) => {
 }
 
 const PORTAL_PAGES = [
-  '/dashboard',
-  '/tasks',
-  '/my-tasks',
-  '/projects',
-  '/meetings',
-  '/personal',
-  '/team',
-  '/team/nick-ingraham',
-  '/deadlines',
-  '/ideas',
-  '/decisions',
-  '/calendar',
-  '/analytics',
-  '/settings',
+  P.dashboard,
+  P.tasks,
+  P.myTasks,
+  P.projects,
+  P.meetings,
+  P.personal,
+  P.publicTeam,
+  P.publicMember('nick-ingraham'),
+  P.deadlines,
+  P.ideas,
+  P.decisions,
+  P.calendar,
+  P.analytics,
+  P.settings,
 ]
 
-const MOBILE_PAGES = ['/dashboard', '/tasks', '/projects', '/team']
+const MOBILE_PAGES = [P.dashboard, P.myTasks, P.projects, P.publicTeam]
 
 async function shotPath(viewport: string, slug: string) {
   return path.join(OUT, `${viewport}-${slug.replace(/\//g, '_') || 'root'}.png`)
@@ -195,7 +196,7 @@ test('new-team-member desktop walkthrough', async ({ browser }) => {
     // skip on desktop
 
     // 6. Inline-edit affordance — look for ▾ or aria role for combobox in tables
-    if (['/tasks', '/my-tasks', '/projects', '/deadlines', '/ideas', '/decisions'].includes(route)) {
+    if ([P.tasks, P.myTasks, P.projects, P.deadlines, P.ideas, P.decisions].includes(route as any)) {
       const tableExists = await page.locator('table, [role="table"], [data-testid*="grid"]').count()
       const dropdownAffordance = await page
         .locator('text=▾, [aria-haspopup="listbox"], [data-testid*="inline-select"]')
@@ -227,7 +228,7 @@ test('new-team-member desktop walkthrough', async ({ browser }) => {
   }
 
   // Specific deeper checks on /tasks
-  await gotoAndWait(page, `${BASE}/tasks`)
+  await gotoAndWait(page, `${BASE}${P.myTasks}`)
   // J/K nav check
   const beforeFocus = await page.evaluate(() => document.activeElement?.tagName ?? '')
   await page.keyboard.press('j')
@@ -384,7 +385,7 @@ test('new-team-member mobile walkthrough', async ({ browser }) => {
 
     // Bottom tab bar present?
     const tabBar = await page.locator('[data-testid="mobile-tab-bar"], nav[aria-label*="mobile" i]').count()
-    if (tabBar === 0 && route !== '/' && !route.includes('/team/')) {
+    if (tabBar === 0 && route !== '/' && !route.includes('/team/') && !route.includes('/portal/team/')) {
       log({
         severity: 'P2',
         area: 'mobile-nav',

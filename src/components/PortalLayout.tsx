@@ -18,6 +18,7 @@ import { useFavicon } from '../hooks/useFavicon'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { UndoToastProvider } from './UndoToast'
 import StatusBar from './StatusBar'
+import { PATHS } from '../constants/paths'
 
 export default function PortalLayout() {
   const { mode, setTheme } = useDarkMode()
@@ -149,7 +150,7 @@ export default function PortalLayout() {
           {/* Mobile brand mark — only below lg, kept tight (28px) so the
               top bar stays usable. Tapping returns to /dashboard. */}
           <Link
-            to="/dashboard"
+            to={PATHS.dashboard}
             aria-label="MN-CCORE Lab Hub — Dashboard"
             className="lg:hidden flex items-center mr-1"
             style={{ color: 'inherit' }}

@@ -3,11 +3,12 @@
  * Persona: Nick (PI), checking in at 7am, quick overview then priority work.
  */
 import { test, expect, go, vis, waitForToast } from './fixtures'
+import { P } from '../../helpers/paths'
 
 test.describe('Journey 1: PI Morning Workflow', () => {
   test('Dashboard → triage → tasks → projects → grants', async ({ journeyPage: page }) => {
     // 1. Navigate to /dashboard
-    const errors = await go(page, '/dashboard')
+    const errors = await go(page, P.dashboard)
     expect(errors).toEqual([])
 
     // 2. Greeting visible (time-appropriate)
@@ -21,7 +22,7 @@ test.describe('Journey 1: PI Morning Workflow', () => {
     expect(hasTaskCard).toBe(true)
 
     // 6. Navigate to /my-tasks
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
 
     // 10-11. My Tasks page — task list shows tasks
     await expect(page.locator('h1')).toContainText(/task/i, { timeout: 5000 })
@@ -48,7 +49,7 @@ test.describe('Journey 1: PI Morning Workflow', () => {
     await expect(detailPanel).not.toBeVisible({ timeout: 3000 })
 
     // 15-17. Navigate to /projects — h1 is "Research Pipeline"
-    await go(page, '/projects')
+    await go(page, P.projects)
     await expect(page.locator('h1')).toContainText(/Research Pipeline/i, { timeout: 5000 })
 
     // Click any project row → navigates to /projects/:slug
@@ -60,7 +61,7 @@ test.describe('Journey 1: PI Morning Workflow', () => {
     }
 
     // 18-22. Navigate to /grants — h1 is "Grants & Funding"
-    await go(page, '/grants')
+    await go(page, P.grants)
     await expect(page.locator('h1')).toContainText(/grant/i, { timeout: 5000 })
 
     // Click any grant row → detail expands (R11-8)

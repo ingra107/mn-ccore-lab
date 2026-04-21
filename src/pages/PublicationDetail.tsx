@@ -5,6 +5,7 @@ import { usePublications, useLinkedProjects } from '../hooks/useApiData'
 import { usePageMeta } from '../hooks/usePageMeta'
 import Avatar from '../components/Avatar'
 import { getPersonInfo } from '../data/team'
+import { PATHS } from '../constants/paths'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -363,7 +364,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
             return (
               <Link
                 key={project.link_id}
-                to={`/projects/${project.slug}`}
+                to={PATHS.project(project.slug)}
                 className="flex items-center gap-3 py-2 transition-colors"
                 style={{
                   textDecoration: 'none',

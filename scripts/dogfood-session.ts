@@ -37,7 +37,7 @@ async function main() {
   // ACTION 1: Create a task via modal
   // ========================================
   console.log('\n=== ACTION 1: Create task via modal ===')
-  await page.goto(`${BASE}/my-tasks`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/my-tasks`, { waitUntil: 'load' })
   await snap(page, 'mytasks-initial')
 
   // Click + New Task button
@@ -117,7 +117,7 @@ async function main() {
   // ACTION 4: Create an idea
   // ========================================
   console.log('\n=== ACTION 4: Create idea via N key ===')
-  await page.goto(`${BASE}/ideas`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/ideas`, { waitUntil: 'load' })
   await snap(page, 'ideas-page')
 
   await page.keyboard.press('n')
@@ -145,7 +145,7 @@ async function main() {
   // ACTION 5: Create a decision
   // ========================================
   console.log('\n=== ACTION 5: Create decision ===')
-  await page.goto(`${BASE}/decisions`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/decisions`, { waitUntil: 'load' })
   await snap(page, 'decisions-page')
 
   // Try Log Decision button
@@ -184,7 +184,7 @@ async function main() {
   // ACTION 6: Navigate projects → click into detail
   // ========================================
   console.log('\n=== ACTION 6: Project detail deep dive ===')
-  await page.goto(`${BASE}/projects`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/projects`, { waitUntil: 'load' })
   await snap(page, 'projects-page')
 
   // Click a real project (not first row which might be header)
@@ -216,7 +216,7 @@ async function main() {
   // ACTION 7: Grants → expand detail → check timeline
   // ========================================
   console.log('\n=== ACTION 7: Grant expand + timeline ===')
-  await page.goto(`${BASE}/grants`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/grants`, { waitUntil: 'load' })
   await snap(page, 'grants-page')
 
   // Click a grant
@@ -239,7 +239,7 @@ async function main() {
   // ACTION 8: Meeting detail → toggle action item
   // ========================================
   console.log('\n=== ACTION 8: Meeting action items ===')
-  await page.goto(`${BASE}/meetings`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/meetings`, { waitUntil: 'load' })
   await snap(page, 'meetings-page')
 
   // Click a meeting
@@ -263,7 +263,7 @@ async function main() {
   // ACTION 9: Search for something
   // ========================================
   console.log('\n=== ACTION 9: Search ===')
-  await page.goto(`${BASE}/search`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/search`, { waitUntil: 'load' })
   await snap(page, 'search-page')
 
   const searchInput = page.locator('input[type="text"], input[type="search"]').first()
@@ -295,7 +295,7 @@ async function main() {
   // ACTION 11: Digest page → check comment button
   // ========================================
   console.log('\n=== ACTION 11: Digest comments ===')
-  await page.goto(`${BASE}/digest`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/digest`, { waitUntil: 'load' })
   await snap(page, 'digest-page')
 
   // Find comment button (MessageCircle icon)
@@ -330,7 +330,7 @@ async function main() {
   // ACTION 12: Calendar page
   // ========================================
   console.log('\n=== ACTION 12: Calendar ===')
-  await page.goto(`${BASE}/calendar`, { waitUntil: 'load' })
+  await page.goto(`${BASE}/portal/calendar`, { waitUntil: 'load' })
   await snap(page, 'calendar-page')
 
   // Click prev/next month

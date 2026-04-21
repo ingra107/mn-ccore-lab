@@ -12,6 +12,7 @@ import { getPersonInfo } from '../../data/team'
 import { formatLongDate, formatShortDate } from '../../lib/dateUtils'
 import type { CalendarEvent } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
+import { PATHS } from '../../constants/paths'
 
 type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 
@@ -355,7 +356,7 @@ function DayCellRender({ dateStr, today, dayEvents }: { dateStr: string; today: 
         {dayEvents.slice(0, 3).map((e) => {
           const config = eventColors[e.type] || eventColors.task
           const Wrapper = e.type === 'meeting' ? Link : 'div' as any
-          const wrapperProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
+          const wrapperProps = e.type === 'meeting' ? { to: PATHS.meeting(e.id) } : {}
           return (
             <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
               {(() => { const t = formatBrandName(e.title); return t.length > 20 ? t.slice(0, 20) + '...' : t })()}
@@ -465,7 +466,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
               const Icon = eventIcons[e.type] || Calendar
               const assignee = e.meta?.assignee as string | undefined
               const Wrapper = e.type === 'meeting' ? Link : 'div' as any
-              const wrapperProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
+              const wrapperProps = e.type === 'meeting' ? { to: PATHS.meeting(e.id) } : {}
 
               return (
                 <motion.div key={e.id} variants={staggerItem}>
@@ -533,7 +534,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                 const Icon = eventIcons[e.type] || Calendar
                 const assignee = e.meta?.assignee as string | undefined
                 const AgendaWrapper = e.type === 'meeting' ? Link : 'div' as any
-                const agendaProps = e.type === 'meeting' ? { to: `/meetings/${e.id}` } : {}
+                const agendaProps = e.type === 'meeting' ? { to: PATHS.meeting(e.id) } : {}
                 return (
                   <motion.div key={e.id} variants={staggerItem}>
                     <AgendaWrapper {...agendaProps} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors" style={{ textDecoration: 'none' }}>

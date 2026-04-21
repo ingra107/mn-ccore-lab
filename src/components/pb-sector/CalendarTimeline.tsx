@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar } from 'lucide-react'
+import { PATHS } from '../../constants/paths'
 
 interface CalendarEvent {
   id: string
@@ -98,7 +99,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
           return (
             <Link
               key={event.id}
-              to={`/meetings/${event.id}`}
+              to={PATHS.meeting(event.id)}
               className="absolute block"
               style={{
                 left: 44, right: 4, top: top + 2, height: height - 4,

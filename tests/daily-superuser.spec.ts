@@ -13,6 +13,7 @@
  */
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
 import { cleanupTestTasks } from './test-cleanup'
+import { P } from './helpers/paths'
 
 const BASE = 'https://mn-ccore-lab.pages.dev'
 
@@ -48,7 +49,7 @@ async function createTestTask(request: APIRequestContext, suffix: string) {
 
 test.describe('MORNING — Dashboard triage', () => {
   test('Dashboard loads with greeting, cards, and no crashes', { timeout: 60000 }, async ({ page }) => {
-    const errors = await go(page, '/dashboard')
+    const errors = await go(page, P.dashboard)
     expect(errors).toEqual([])
 
     // Time-of-day greeting
@@ -68,7 +69,7 @@ test.describe('MORNING — Dashboard triage', () => {
   })
 
   test('Dashboard → click task in Tasks card → navigates to task context', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     // ActionBoardCard has a "View all tasks →" link at the bottom
     const taskLink = page.locator('a[href="/tasks"], a[href*="/my-tasks"]').first()
     if (await taskLink.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -80,7 +81,7 @@ test.describe('MORNING — Dashboard triage', () => {
   })
 
   test('Customize dashboard cards — toggle cards on/off', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const btn = page.locator('button:has-text("Customize")')
     if (await btn.isVisible().catch(() => false)) {
       await btn.click()
@@ -97,7 +98,7 @@ test.describe('MORNING — Dashboard triage', () => {
   })
 
   test('Dashboard role tabs switch content', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     for (const tab of ['Projects', 'People', 'Deadlines']) {
       const btn = page.locator(`button:has-text("${tab}")`).first()
       if (await btn.isVisible().catch(() => false)) {
@@ -120,7 +121,7 @@ test.describe('TASK — Inline status change via dropdown', () => {
     const task = await createTestTask(request, 'status-dropdown')
     if (!task.id) { test.skip(); return }
 
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.waitForTimeout(1000)
 
     // Find a "To Do" status button
@@ -152,7 +153,7 @@ test.describe('TASK — Inline status change via dropdown', () => {
 
 test.describe('TASK — Inline priority change', () => {
   test('Click priority dropdown → change low to high → verifies save', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
 
     const prioBtn = page.locator('button:has-text("Low"), button:has-text("Medium")').first()
     if (await prioBtn.isVisible().catch(() => false)) {
@@ -178,7 +179,7 @@ test.describe('TASK — Inline priority change', () => {
 
 test.describe('TASK — Inline date change', () => {
   test('Click due date → use Tomorrow preset → date updates', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
 
     // Find a date cell
     const dateCell = page.locator('button').filter({ hasText: /\d{1,2}\/\d{1,2}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/ }).first()
@@ -199,7 +200,7 @@ test.describe('TASK — Inline date change', () => {
 
 test.describe('TASK — Inline assignee change', () => {
   test('Click assignee → team dropdown → shows team members', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
 
     // Find assignee cell (avatar or name)
     const assignee = page.locator('[class*="assignee"], [class*="avatar"]').filter({ has: page.locator('img, svg') }).first()
@@ -218,7 +219,7 @@ test.describe('TASK — Inline assignee change', () => {
 
 test.describe('TASK — Detail panel full interaction', () => {
   test('Open detail → read all 5 tabs → add note → add comment → close', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
 
     // J to select, Enter to open
     await page.keyboard.press('j')
@@ -272,7 +273,7 @@ test.describe('TASK — Detail panel full interaction', () => {
 
 test.describe('TASK — Subtask interaction', () => {
   test('Expand subtasks → see subtask list → add input visible → collapse', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
 
     // Focus first task
     await page.keyboard.press('j')
@@ -305,7 +306,7 @@ test.describe('TASK — Subtask interaction', () => {
 
 test.describe('TASK — Keyboard-driven workflow', () => {
   test('J/K navigate → S cycles status → Z snoozes → B blocks → X selects', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
 
     // J down twice, K back up once
     await page.keyboard.press('j')
@@ -340,7 +341,7 @@ test.describe('TASK — Keyboard-driven workflow', () => {
 
 test.describe('TASK — Board view drag visual', () => {
   test('Switch to Board → see Kanban columns → cards in columns → visual check', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.locator('button:has-text("Board")').click()
     await page.waitForTimeout(1000)
 
@@ -364,7 +365,7 @@ test.describe('TASK — Board view drag visual', () => {
 
 test.describe('TASK — Timeline view', () => {
   test('Switch to Timeline → see Gantt bars → TODAY marker', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.locator('button:has-text("Timeline")').click()
     await page.waitForTimeout(1000)
 
@@ -377,7 +378,7 @@ test.describe('TASK — Timeline view', () => {
 
 test.describe('TASK — By Person view', () => {
   test('Switch to By Person → see team workload → task counts per person', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.locator('button:has-text("By Person")').click()
     await page.waitForTimeout(1000)
 
@@ -389,7 +390,7 @@ test.describe('TASK — By Person view', () => {
 
 test.describe('TASK — Create task modal full flow', () => {
   test('C key → fill all fields → template chip → don\'t submit', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.keyboard.press('c')
     await page.waitForTimeout(500)
 
@@ -420,7 +421,7 @@ test.describe('TASK — Create task modal full flow', () => {
 
 test.describe('TASK — Filter and sort', () => {
   test('F key toggles filter panel → column header click sorts → show/hide done', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
 
     // F key — filter panel (ensure body focus first)
     await page.locator('body').click()
@@ -456,7 +457,7 @@ test.describe('TASK — Filter and sort', () => {
 
 test.describe('TASK — Right-click context menu', () => {
   test('Right-click task → see Open, Status, Snooze, Archive → Escape closes', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const row = page.locator('[class*="row"], tr').filter({ hasText: /\w{5,}/ }).first()
     if (await row.isVisible().catch(() => false)) {
       await row.click({ button: 'right' })
@@ -479,7 +480,7 @@ test.describe('TASK — Right-click context menu', () => {
 
 test.describe('MYTASKS — Daily triage', () => {
   test('All filter pills work: All, Today, This Week, Overdue, No Date', async ({ page }) => {
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
     for (const pill of ['All', 'Today', 'This Week', 'Overdue', 'No Date']) {
       const btn = page.locator(`button:has-text("${pill}")`).first()
       if (await btn.isVisible().catch(() => false)) {
@@ -494,7 +495,7 @@ test.describe('MYTASKS — Daily triage', () => {
   })
 
   test('Focus Next card shows highest-urgency task', async ({ page }) => {
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
     const focusNext = page.locator('text=FOCUS NEXT, text=Focus Next').first()
     const visible = await focusNext.isVisible({ timeout: 3000 }).catch(() => false)
     console.log(`Focus Next card: ${visible}`)
@@ -502,7 +503,7 @@ test.describe('MYTASKS — Daily triage', () => {
   })
 
   test('Streak counter visible', async ({ page }) => {
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
     const streak = page.locator('text=streak, text=day').first()
     console.log(`Streak counter: ${await streak.isVisible().catch(() => false)}`)
   })
@@ -514,7 +515,7 @@ test.describe('MYTASKS — Daily triage', () => {
 
 test.describe('MEETING — Full lifecycle', () => {
   test('Meetings page → next meeting card → countdown → action items', async ({ page }) => {
-    await go(page, '/meetings')
+    await go(page, P.meetings)
 
     // Next meeting card
     const nextMeeting = page.locator('text=Next Meeting, text=Upcoming').first()
@@ -532,7 +533,7 @@ test.describe('MEETING — Full lifecycle', () => {
     const id = meetings.data?.[0]?.id
     if (!id) { test.skip(); return }
 
-    const errors = await go(page, `/meetings/${id}`)
+    const errors = await go(page, P.meeting(id))
     expect(errors).toEqual([])
     await page.screenshot({ path: 'review/daily-meeting-detail.png' })
 
@@ -559,7 +560,7 @@ test.describe('MEETING — Full lifecycle', () => {
     const id = meetings.data?.[0]?.id
     if (!id) { test.skip(); return }
 
-    const errors = await go(page, `/meetings/${id}/prep`)
+    const errors = await go(page, P.meetingPrep(id))
     expect(errors).toEqual([])
 
     // Prep view should show action items, overdue, suggested agenda
@@ -575,7 +576,7 @@ test.describe('MEETING — Full lifecycle', () => {
 
 test.describe('PROJECT — Full exploration', () => {
   test('Projects list → category filter → inline stage edit → pipeline view', async ({ page }) => {
-    await go(page, '/projects')
+    await go(page, P.projects)
 
     // Category filters
     for (const cat of ['All', 'CLIF', 'Lab', 'Mentees']) {
@@ -600,7 +601,7 @@ test.describe('PROJECT — Full exploration', () => {
     const slug = (await (await request.get(`${BASE}/api/projects`)).json()).data?.[0]?.slug
     if (!slug) { test.skip(); return }
 
-    const errors = await go(page, `/projects/${slug}`)
+    const errors = await go(page, P.project(slug))
     expect(errors).toEqual([])
 
     // All 5 tabs
@@ -625,7 +626,7 @@ test.describe('PROJECT — Full exploration', () => {
 
 test.describe('DIGEST — Reading flow', () => {
   test('Digest → progress bar → topic pills → abstract expand → bookmark → dismiss', async ({ page }) => {
-    await go(page, '/digest')
+    await go(page, P.digest)
 
     // Progress bar
     const progress = page.locator('[class*="progress"], [role="progressbar"]').first()
@@ -670,7 +671,7 @@ test.describe('DIGEST — Reading flow', () => {
 
 test.describe('NAV — Global shortcuts', () => {
   test('Ctrl+K command palette → search → navigate to result', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     await page.keyboard.press('Control+k')
     await page.waitForTimeout(500)
 
@@ -692,7 +693,7 @@ test.describe('NAV — Global shortcuts', () => {
   })
 
   test('? key shows shortcut help with all categories', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.keyboard.press('?')
     await page.waitForTimeout(500)
 
@@ -709,7 +710,7 @@ test.describe('NAV — Global shortcuts', () => {
   })
 
   test('Ctrl+. cycles theme: dark → light → system', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
 
     // Capture initial state
     const initialBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
@@ -729,7 +730,7 @@ test.describe('NAV — Global shortcuts', () => {
   })
 
   test('Focus mode (F key) hides sidebar, restores on F again', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
 
     const sidebar = page.locator('nav').first()
     const beforeWidth = await sidebar.evaluate(el => el.getBoundingClientRect().width).catch(() => 0)
@@ -747,7 +748,7 @@ test.describe('NAV — Global shortcuts', () => {
   })
 
   test('[ key collapses sidebar to icons-only', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
 
     await page.keyboard.press('[')
     await page.waitForTimeout(500)
@@ -759,7 +760,7 @@ test.describe('NAV — Global shortcuts', () => {
   })
 
   test('ScrollToTop appears after scrolling and works', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.evaluate(() => window.scrollBy(0, 3000))
     await page.waitForTimeout(500)
 
@@ -782,7 +783,7 @@ test.describe('NAV — Global shortcuts', () => {
 
 test.describe('IDEAS — Submit and vote', () => {
   test('Ideas page → grid/list toggle → vote → new idea modal', async ({ page }) => {
-    await go(page, '/ideas')
+    await go(page, P.ideas)
 
     // Grid/List toggle
     const listBtn = page.locator('button:has-text("List")')
@@ -806,7 +807,7 @@ test.describe('IDEAS — Submit and vote', () => {
 
 test.describe('DECISIONS — Log and search', () => {
   test('Decisions → timeline view → tag filter → log decision modal', async ({ page }) => {
-    await go(page, '/decisions')
+    await go(page, P.decisions)
 
     // Timeline view
     const timeline = page.locator('button:has-text("Timeline")')
@@ -830,7 +831,7 @@ test.describe('DECISIONS — Log and search', () => {
 
 test.describe('VISUAL — Look and feel', () => {
   test('Task row hover shows gold tint + reveals action buttons', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const row = page.locator('[class*="row"]').filter({ hasText: /\w{5,}/ }).first()
     if (await row.isVisible().catch(() => false)) {
       // Get bg before hover
@@ -844,7 +845,7 @@ test.describe('VISUAL — Look and feel', () => {
   })
 
   test('Status badge colors are correct per status', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const colors = await page.evaluate(() => {
       const result: Record<string, string> = {}
       document.querySelectorAll('button, span').forEach(el => {
@@ -860,7 +861,7 @@ test.describe('VISUAL — Look and feel', () => {
   })
 
   test('Dark mode: bg is #0b1017, text is #e2e8f0, not blue-tinted', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const styles = await page.evaluate(() => {
       const main = document.querySelector('main') || document.body
       const bg = getComputedStyle(main).backgroundColor
@@ -873,7 +874,7 @@ test.describe('VISUAL — Look and feel', () => {
   })
 
   test('Typography: body weight 400, h1 weight 600, no 800', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const weights = await page.evaluate(() => {
       const h1 = document.querySelector('h1')
       const body = document.querySelector('p, span, td')
@@ -888,7 +889,7 @@ test.describe('VISUAL — Look and feel', () => {
   })
 
   test('Fonts: DM Sans on portal, not Fraunces', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const font = await page.evaluate(() => getComputedStyle(document.querySelector('h1')!).fontFamily)
     expect(font).toContain('DM Sans')
   })
@@ -899,7 +900,7 @@ test.describe('VISUAL — Look and feel', () => {
       await new Promise(r => setTimeout(r, 1500))
       await route.continue()
     })
-    await page.goto(`${BASE}/tasks`, { waitUntil: 'domcontentloaded', timeout: 15000 })
+    await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'domcontentloaded', timeout: 15000 })
     await page.waitForTimeout(300)
 
     const skeleton = page.locator('[class*="skeleton"], [class*="Skeleton"], [class*="animate-pulse"]')
@@ -934,7 +935,7 @@ test.describe('MOBILE — Phone experience', () => {
   })
 
   test('Dashboard mobile — single column, no overflow, greeting visible', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)
     const h1 = await page.locator('h1').first().textContent()
     expect(h1).toMatch(/Good/)
@@ -943,7 +944,7 @@ test.describe('MOBILE — Phone experience', () => {
   })
 
   test('Tasks mobile — card layout, touch targets >= 36px', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.screenshot({ path: 'review/daily-mobile-tasks.png' })
 
     // Check touch targets
@@ -959,7 +960,7 @@ test.describe('MOBILE — Phone experience', () => {
   })
 
   test('Mobile hamburger menu opens sidebar', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const hamburger = page.locator('button[aria-label*="menu"], button[aria-label*="nav"]').first()
     if (await hamburger.isVisible().catch(() => false)) {
       await hamburger.click()
@@ -969,7 +970,7 @@ test.describe('MOBILE — Phone experience', () => {
   })
 
   test('My Tasks mobile — filter pills scrollable, no overflow', async ({ page }) => {
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)
     await page.screenshot({ path: 'review/daily-mobile-mytasks.png' })
     console.log(`Mobile My Tasks overflow: ${overflow}`)
@@ -978,7 +979,7 @@ test.describe('MOBILE — Phone experience', () => {
   test('Meeting detail mobile — readable without horizontal scroll', async ({ page, request }) => {
     const id = (await (await request.get(`${BASE}/api/meetings`)).json()).data?.[0]?.id
     if (!id) { test.skip(); return }
-    await go(page, `/meetings/${id}`)
+    await go(page, P.meeting(id))
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)
     await page.screenshot({ path: 'review/daily-mobile-meeting.png' })
     console.log(`Mobile meeting overflow: ${overflow}`)
@@ -987,12 +988,12 @@ test.describe('MOBILE — Phone experience', () => {
   test('Project detail mobile — tabs stack properly', async ({ page, request }) => {
     const slug = (await (await request.get(`${BASE}/api/projects`)).json()).data?.[0]?.slug
     if (!slug) { test.skip(); return }
-    await go(page, `/projects/${slug}`)
+    await go(page, P.project(slug))
     await page.screenshot({ path: 'review/daily-mobile-project.png' })
   })
 
   test('Calendar mobile — month view readable', async ({ page }) => {
-    await go(page, '/calendar')
+    await go(page, P.calendar)
     await page.screenshot({ path: 'review/daily-mobile-calendar.png' })
   })
 })
@@ -1005,7 +1006,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 1. Drag-and-drop on Board view
   test('Board view: drag task card between columns', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.locator('button:has-text("Board")').click()
     await page.waitForTimeout(1000)
     // Find a card in any column
@@ -1027,7 +1028,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 2. FAB quick-add button (bottom-right +)
   test('FAB quick-add button opens task creation', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const fab = page.locator('button[title*="Quick add"], button[aria-label*="Quick add"]').first()
     const visible = await fab.isVisible().catch(() => false)
     console.log(`FAB visible: ${visible}`)
@@ -1042,7 +1043,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 3. Publication list → click → detail page
   test('Publications list: click publication → lands on detail page', async ({ page }) => {
-    await go(page, '/publications')
+    await go(page, P.publications)
     const pubLink = page.locator('a[href*="/publications/"]').first()
     if (await pubLink.isVisible().catch(() => false)) {
       await pubLink.click()
@@ -1054,7 +1055,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 4. Compact density toggle
   test('Density toggle: switch to compact → layout changes', async ({ page }) => {
-    await go(page, '/settings')
+    await go(page, P.settings)
     const densityToggle = page.locator('text=Compact, text=Density, button:has-text("Compact"), [class*="density"]').first()
     if (await densityToggle.isVisible().catch(() => false)) {
       await densityToggle.click()
@@ -1067,7 +1068,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 5. Subtask: expand → check off → progress bar updates
   test('Subtask: expand → check off subtask → progress updates', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
     await page.keyboard.press('ArrowRight')
@@ -1087,7 +1088,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 6. Right-click → snooze → verify due date changed
   test('Context menu: snooze +3 days → due date actually changes', async ({ page, request }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const row = page.locator('[class*="row"]').filter({ hasText: /\w{5,}/ }).first()
     if (await row.isVisible().catch(() => false)) {
       await row.click({ button: 'right' })
@@ -1103,7 +1104,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 7. Bulk select 3 → mark done → undo → all 3 revert
   test('Bulk select: X on 3 tasks → toolbar appears → count correct', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     // Select 3 tasks
     for (let i = 0; i < 3; i++) {
       await page.keyboard.press('j')
@@ -1123,7 +1124,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 8. Dashboard task click → status change → card count updates
   test('Dashboard: task interaction updates card state', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     // Capture initial state of Tasks card
     const tasksCard = page.locator('text=Tasks').first()
     if (await tasksCard.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -1133,7 +1134,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 9. MyTasks mark done → streak counter
   test('MyTasks: streak counter visible and shows number', async ({ page }) => {
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
     const streak = page.locator('[class*="streak"], text=/\\d+.*streak/i, text=/streak.*\\d+/i').first()
     const visible = await streak.isVisible().catch(() => false)
     console.log(`Streak counter visible: ${visible}`)
@@ -1146,7 +1147,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 10. Digest dismiss → count decrements
   test('Digest: dismiss paper → count changes', async ({ page }) => {
-    await go(page, '/digest')
+    await go(page, P.digest)
     const beforeCount = await page.locator('[class*="card"], [class*="paper"]').count()
     const dismissBtn = page.locator('button[aria-label*="dismiss"], button:has-text("Dismiss"), button[title*="dismiss"]').first()
     if (await dismissBtn.isVisible().catch(() => false)) {
@@ -1159,7 +1160,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 11. Calendar click event → navigate to meeting detail
   test('Calendar: click meeting event → navigates to meeting detail', async ({ page }) => {
-    await go(page, '/calendar')
+    await go(page, P.calendar)
     const event = page.locator('a[href*="/meetings/"], [class*="event"]').first()
     if (await event.isVisible().catch(() => false)) {
       await event.click()
@@ -1174,7 +1175,7 @@ test.describe('GAPS — Previously untested workflows', () => {
   test('Project detail: post an update via UI', async ({ page, request }) => {
     const slug = (await (await request.get(`${BASE}/api/projects`)).json()).data?.[0]?.slug
     if (!slug) { test.skip(); return }
-    await go(page, `/projects/${slug}`)
+    await go(page, P.project(slug))
     // Click Activity tab
     const actTab = page.locator('button:has-text("Activity")').first()
     if (await actTab.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -1192,7 +1193,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 13. Manuscript stage: click stage → see options
   test('Manuscripts: inline stage edit shows options', async ({ page }) => {
-    await go(page, '/manuscripts')
+    await go(page, P.manuscripts)
     const stageBtn = page.locator('button:has-text("Writing"), button:has-text("Analysis"), button:has-text("Submitted"), button:has-text("Draft")').first()
     if (await stageBtn.isVisible().catch(() => false)) {
       await stageBtn.click()
@@ -1204,7 +1205,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 14. File upload UI exists
   test('File upload: drag-drop zone visible in task detail', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
     await page.keyboard.press('Enter')
@@ -1222,7 +1223,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 15. Handoff UI exists on task detail
   test('Task detail: handoff section visible', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
     await page.keyboard.press('Enter')
@@ -1234,7 +1235,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 16. Completion animation visual
   test('Task completion: visual feedback when marking done', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     // Focus a task and press S to cycle to done
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
@@ -1251,7 +1252,7 @@ test.describe('GAPS — Previously untested workflows', () => {
 
   // 17. Print layout
   test('PI Analytics: print button triggers print-ready layout', async ({ page }) => {
-    await go(page, '/pi/analytics')
+    await go(page, P.piAnalytics)
     const printBtn = page.locator('button:has-text("Print")')
     if (await printBtn.isVisible().catch(() => false)) {
       // Emulate print media
@@ -1267,7 +1268,7 @@ test.describe('GAPS — Previously untested workflows', () => {
     const meetings = await (await request.get(`${BASE}/api/meetings`)).json()
     const id = meetings.data?.[0]?.id
     if (!id) { test.skip(); return }
-    await go(page, `/meetings/${id}`)
+    await go(page, P.meeting(id))
     // Look for action item creation or NLP input
     const nlp = page.locator('input[placeholder*="@"], input[placeholder*="action"]').first()
     if (await nlp.isVisible().catch(() => false)) {
@@ -1286,7 +1287,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   // ── Dashboard Interactions (6 tests) ─────────────────────────────
 
   test('1. Pin/unpin card: click pin icon → verify gold color → verify localStorage', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const pinBtn = page.locator('button[aria-label*="pin"], button[title*="Pin"], button[title*="pin"]').first()
     if (await pinBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await pinBtn.click()
@@ -1307,7 +1308,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('2. Show more button: click → secondary cards appear → click Show less → they hide', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const showMore = page.locator('button:has-text("Show more"), button:has-text("Show More")').first()
     if (await showMore.isVisible({ timeout: 3000 }).catch(() => false)) {
       const beforeCount = await page.locator('[class*="card"], [class*="Card"]').count()
@@ -1329,7 +1330,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('3. Tab switch: click Projects tab → verify different cards visible than Overview tab', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const overviewContent = await page.locator('[class*="card"], [class*="Card"]').allTextContents()
     const projectsTab = page.locator('button:has-text("Projects")').first()
     if (await projectsTab.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -1343,7 +1344,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('4. Card version reset: verify localStorage keys exist for dashboard preferences', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     await page.waitForTimeout(1000)
     const keys = await page.evaluate(() => {
       const allKeys = Object.keys(localStorage)
@@ -1356,7 +1357,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   // ── MyTasks Interactions (5 tests) ────────────────────────────────
 
   test('5. Group By dropdown: change to priority → tasks regroup visually', async ({ page }) => {
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
     const groupBy = page.locator('select, button:has-text("Group"), [class*="group-by"]').first()
     if (await groupBy.isVisible({ timeout: 3000 }).catch(() => false)) {
       const beforeHTML = await page.locator('main').innerHTML()
@@ -1374,7 +1375,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('6. Sort By dropdown: change to title → verify order changes', async ({ page }) => {
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
     const sortBy = page.locator('select, button:has-text("Sort"), [class*="sort-by"]').first()
     if (await sortBy.isVisible({ timeout: 3000 }).catch(() => false)) {
       const beforeTitles = await page.locator('[class*="task-title"], [class*="taskTitle"], td:first-child').allTextContents()
@@ -1392,7 +1393,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('7. Quick filter verify: click Today → count task rows → click All → count >= Today count', async ({ page }) => {
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
     const todayBtn = page.locator('button:has-text("Today")').first()
     const allBtn = page.locator('button:has-text("All")').first()
     if (await todayBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -1412,7 +1413,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('8. Document title: navigate to /my-tasks → verify document.title contains task count', async ({ page }) => {
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
     await page.waitForTimeout(1000)
     const title = await page.title()
     console.log(`MyTasks document.title: "${title}"`)
@@ -1422,7 +1423,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('9. Bulk done + undo revert: select 2 tasks → bulk complete → undo → verify status reverted', async ({ page }) => {
-    await go(page, '/my-tasks')
+    await go(page, P.myTasks)
     // Capture original statuses
     const originalStatuses = await page.evaluate(() => {
       const btns = Array.from(document.querySelectorAll('button'))
@@ -1461,7 +1462,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   // ── Command Palette (4 tests) ─────────────────────────────────────
 
   test('10. Arrow navigation: open Cmd+K → ArrowDown 3 times → verify 4th item highlighted', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     await page.keyboard.press('Control+k')
     await page.waitForTimeout(500)
     // Arrow down 3 times
@@ -1480,7 +1481,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('11. Project mode: open Cmd+K → type "/" → verify results filtered to projects/pages', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     await page.keyboard.press('Control+k')
     await page.waitForTimeout(500)
     await page.keyboard.type('/', { delay: 30 })
@@ -1495,7 +1496,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('12. Focus trap: open Cmd+K → Tab many times → verify activeElement stays inside dialog', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     await page.keyboard.press('Control+k')
     await page.waitForTimeout(500)
     // Tab 10 times
@@ -1520,7 +1521,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('13. Open/close animation: open Cmd+K → verify dialog visible → Escape → verify gone', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     await page.locator('body').click()
     await page.keyboard.press('Control+k')
     await page.waitForTimeout(500)
@@ -1543,7 +1544,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   // ── Task Detail Panel (6 tests) ──────────────────────────────────
 
   test('14. Alt+Arrow navigation: open detail → Alt+ArrowDown → verify task changed', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     // Click first task row to open detail panel (more reliable than j+Enter)
     const firstRow = page.locator('.task-grid-row').first()
     if (await firstRow.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -1568,7 +1569,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('15. Click outside closes: open detail → click on backdrop → panel should close', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.locator('body').click()
     await page.keyboard.press('j')
     await page.waitForTimeout(300)
@@ -1587,7 +1588,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('16. Copy link feedback: open detail → click copy → verify checkmark icon appears', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     // Click first task row directly (more reliable than keyboard nav)
     const firstRow = page.locator('.task-grid-row').first()
     if (await firstRow.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -1607,7 +1608,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('17. Acknowledge button: open detail → check if ack button exists → screenshot', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
     await page.keyboard.press('Enter')
@@ -1622,7 +1623,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('18. Description editing: open detail → click description area → verify Tiptap toolbar appears', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
     await page.keyboard.press('Enter')
@@ -1641,7 +1642,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('19. Details tab fields: open detail → Details tab → verify Due Date, Project, Priority, Assignee, Key Links', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
     await page.keyboard.press('Enter')
@@ -1662,7 +1663,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   // ── Inline Components (7 tests) ──────────────────────────────────
 
   test('20. InlineSelect hover: hover over status button → verify background color changes', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const statusBtn = page.locator('button:has-text("To Do"), button:has-text("In Progress")').first()
     if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       const beforeBg = await statusBtn.evaluate(el => getComputedStyle(el).backgroundColor)
@@ -1675,7 +1676,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('21. InlineSelect outside click: open dropdown → click elsewhere → dropdown closes', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const statusBtn = page.locator('button:has-text("To Do"), button:has-text("In Progress")').first()
     if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await statusBtn.click()
@@ -1694,7 +1695,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('22. InlineSelect scroll closes: open dropdown → scroll page → dropdown closes', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const statusBtn = page.locator('button:has-text("To Do"), button:has-text("In Progress")').first()
     if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await statusBtn.click()
@@ -1712,7 +1713,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('23. InlineDatePicker presets work: click date → click Tomorrow → verify date text changed', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const dateCell = page.locator('button').filter({ hasText: /\d{1,2}\/\d{1,2}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/ }).first()
     if (await dateCell.isVisible({ timeout: 3000 }).catch(() => false)) {
       const beforeText = await dateCell.textContent()
@@ -1736,7 +1737,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('24. InlineDatePicker Escape: click date → press Escape → picker closes without changing', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const dateCell = page.locator('button').filter({ hasText: /\d{1,2}\/\d{1,2}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/ }).first()
     if (await dateCell.isVisible({ timeout: 3000 }).catch(() => false)) {
       const beforeText = await dateCell.textContent()
@@ -1754,7 +1755,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('25. InlineAssigneePicker shows team: click assignee → verify at least 3 team members listed', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     // InlineAssigneePicker trigger button has class "inline-assignee-btn"
     const assignee = page.locator('button.inline-assignee-btn, [class*="assignee-picker"]').first()
     if (await assignee.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -1770,7 +1771,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('26. InlineAssigneePicker select: click assignee → click a team member → verify avatar changed', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const assignee = page.locator('[class*="assignee"], [class*="avatar"]').filter({ has: page.locator('img, svg') }).first()
     if (await assignee.isVisible({ timeout: 3000 }).catch(() => false)) {
       const beforeImg = await assignee.locator('img').first().getAttribute('src').catch(() => '')
@@ -1796,7 +1797,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   // ── Undo System (4 tests) ────────────────────────────────────────
 
   test('27. Undo REVERTS change: change status → note original → click Undo → verify status back', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const statusBtn = page.locator('button:has-text("To Do")').first()
     if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       const originalText = await statusBtn.textContent()
@@ -1822,7 +1823,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('28. Auto-dismiss: trigger a success toast → wait 4 seconds → verify toast gone', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     // Trigger a status change to get a toast
     await page.keyboard.press('j')
     await page.waitForTimeout(150)
@@ -1840,7 +1841,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('29. Multiple toasts: trigger 2 status changes quickly → verify 2 toasts visible simultaneously', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     // Use JS to click dropdown options (Playwright click is intercepted by task row)
     const triggered = await page.evaluate(() => {
       const cells = document.querySelectorAll('[data-testid^="task-status-"]')
@@ -1873,7 +1874,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('30. Dismiss button: trigger toast → click X/dismiss → verify toast removed before timeout', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(150)
     await page.keyboard.press('s')
@@ -1903,7 +1904,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   // ── Optimistic Updates (3 tests) ──────────────────────────────────
 
   test('31. Instant UI: change priority dropdown → verify button text changed IMMEDIATELY', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     // Use JS to click dropdown (Playwright click is intercepted by task row)
     const prioCell = page.locator('[data-testid^="task-priority-"]').first()
     const prioBtn = prioCell.locator('button').first()
@@ -1939,7 +1940,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('32. Mutation invalidation: change task status → wait 2s → verify API returns updated status', async ({ page, request }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     // Get a task ID from the page
     const taskId = await page.evaluate(() => {
       const link = document.querySelector('a[href*="/tasks/"]') as HTMLAnchorElement
@@ -1974,7 +1975,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
     })
     console.log(`Nonexistent task update status: ${res.status()}`)
     // Now verify the page still works
-    const errors = await go(page, '/tasks')
+    const errors = await go(page, P.myTasks)
     expect(errors).toEqual([])
     const taskRows = await page.locator('[class*="row"], [class*="task"]').filter({ hasText: /\w{3,}/ }).count()
     console.log(`Tasks page still has ${taskRows} rows after error`)
@@ -1985,7 +1986,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   // ── PB Sector (3 tests) ──────────────────────────────────────────
 
   test('34. PB Sector loads with sections: navigate to /pb → verify Star, Focus, Quick, Evening sections', async ({ page }) => {
-    await go(page, '/pb')
+    await go(page, P.pb)
     for (const section of ['Star', 'Focus', 'Quick', 'Evening']) {
       const found = await page.locator(`text=${section}`).first().isVisible({ timeout: 3000 }).catch(() => false)
       console.log(`PB section "${section}": ${found}`)
@@ -1994,7 +1995,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('35. PB Sector pomodoro circles: verify PomodoroCircles component renders', async ({ page }) => {
-    await go(page, '/pb')
+    await go(page, P.pb)
     const circles = page.locator('[class*="pomodoro"], [class*="Pomodoro"], circle, [class*="circle"]').first()
     const visible = await circles.isVisible({ timeout: 3000 }).catch(() => false)
     console.log(`Pomodoro circles visible: ${visible}`)
@@ -2006,7 +2007,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('36. PB quick capture: type in capture bar → verify text appears', async ({ page }) => {
-    await go(page, '/pb')
+    await go(page, P.pb)
     const input = page.locator('input[placeholder*="capture"], input[placeholder*="Capture"], input[placeholder*="add"], textarea').first()
     if (await input.isVisible({ timeout: 3000 }).catch(() => false)) {
       await input.click()
@@ -2022,7 +2023,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   // ── Other Pages (4 tests) ────────────────────────────────────────
 
   test('37. Ideas pagination: go to /ideas → if more than 1 page, verify pagination controls exist', async ({ page }) => {
-    await go(page, '/ideas')
+    await go(page, P.ideas)
     const ideas = await page.locator('[class*="card"], [class*="idea"]').filter({ hasText: /\w{3,}/ }).count()
     console.log(`Ideas count: ${ideas}`)
     const pagination = page.locator('button:has-text("Next"), button:has-text("Previous"), [class*="pagination"], nav[aria-label*="page"]')
@@ -2032,7 +2033,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('38. Deadlines page filters: go to /deadlines → verify filter buttons (All Types, Urgent, etc.)', async ({ page }) => {
-    await go(page, '/deadlines')
+    await go(page, P.deadlines)
     for (const filter of ['All', 'Urgent', 'Upcoming', 'Past']) {
       const btn = page.locator(`button:has-text("${filter}")`).first()
       const visible = await btn.isVisible({ timeout: 2000 }).catch(() => false)
@@ -2042,7 +2043,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('39. Decisions similar panel: go to /decisions → click a decision → look for Similar Decisions section', async ({ page }) => {
-    await go(page, '/decisions')
+    await go(page, P.decisions)
     const decisionLink = page.locator('a[href*="/decisions/"], [class*="decision"]').filter({ hasText: /\w{5,}/ }).first()
     if (await decisionLink.isVisible({ timeout: 3000 }).catch(() => false)) {
       await decisionLink.click()
@@ -2055,7 +2056,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('40. Grants milestone: go to /grants → verify TODAY marker + progress bars visible', async ({ page }) => {
-    await go(page, '/grants')
+    await go(page, P.grants)
     const todayMarker = page.locator('text=TODAY, [class*="today-marker"], [class*="todayMarker"]').first()
     const hasTodayMarker = await todayMarker.isVisible({ timeout: 3000 }).catch(() => false)
     console.log(`Grants TODAY marker: ${hasTodayMarker}`)
@@ -2068,7 +2069,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   // ── localStorage Persistence (2 tests) ───────────────────────────
 
   test('41. Theme persists: toggle theme with Ctrl+. → reload page → verify same theme applied', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     // Toggle theme
     await page.keyboard.press('Control+.')
     await page.waitForTimeout(500)
@@ -2091,7 +2092,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
   })
 
   test('42. Sidebar state persists: collapse with [ → reload → verify sidebar still collapsed', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     // Get sidebar width before collapse
     const beforeWidth = await page.locator('nav').first().evaluate(el => el.getBoundingClientRect().width).catch(() => 0)
     // Collapse sidebar
@@ -2120,7 +2121,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
 test.describe('E2E — Simulated daily session', () => {
   test('Full morning routine: dashboard → my tasks → work on task → meeting prep → digest', async ({ page }) => {
     // 1. Dashboard
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     await page.screenshot({ path: 'review/daily-e2e-01-dashboard.png' })
 
     // 2. My Tasks via G+Y
@@ -2154,7 +2155,7 @@ test.describe('E2E — Simulated daily session', () => {
     await page.keyboard.press('Escape')
 
     // 6. Navigate to digest
-    await page.goto(`${BASE}/digest`, { waitUntil: 'networkidle', timeout: 15000 })
+    await page.goto(`${BASE}${P.digest}`, { waitUntil: 'networkidle', timeout: 15000 })
     await page.screenshot({ path: 'review/daily-e2e-06-digest.png' })
 
     console.log('✓ Full daily session simulation complete — 6 screenshots captured')
@@ -2167,7 +2168,7 @@ test.describe('E2E — Simulated daily session', () => {
 
 test.describe('FEATURE — New dashboard cards (v37)', () => {
   test('Proactive Brief card renders with bullets', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const brief = page.locator('text=Your Brief, text=Brief').first()
     const visible = await brief.isVisible({ timeout: 5000 }).catch(() => false)
     console.log(`Proactive Brief card: ${visible}`)
@@ -2177,28 +2178,28 @@ test.describe('FEATURE — New dashboard cards (v37)', () => {
   })
 
   test('Pomodoro Stats card renders (if enabled)', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const pomo = page.locator('text=Focus Time, text=Pomodoro').first()
     const visible = await pomo.isVisible({ timeout: 3000 }).catch(() => false)
     console.log(`Pomodoro Stats card: ${visible}`)
   })
 
   test('Email Drafts card renders (if enabled)', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const email = page.locator('text=Email Drafts, text=Drafts').first()
     const visible = await email.isVisible({ timeout: 3000 }).catch(() => false)
     console.log(`Email Drafts card: ${visible}`)
   })
 
   test('System Health mini card renders (if enabled)', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const health = page.locator('text=System Health').first()
     const visible = await health.isVisible({ timeout: 3000 }).catch(() => false)
     console.log(`System Health card: ${visible}`)
   })
 
   test('File Activity card renders (if enabled)', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const files = page.locator('text=File Activity').first()
     const visible = await files.isVisible({ timeout: 3000 }).catch(() => false)
     console.log(`File Activity card: ${visible}`)
@@ -2207,7 +2208,7 @@ test.describe('FEATURE — New dashboard cards (v37)', () => {
 
 test.describe('FEATURE — Quick Capture bar', () => {
   test('Quick Capture input visible on Dashboard', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const input = page.locator('input[placeholder*="capture"], input[placeholder*="Capture"], input[placeholder*="task"]').first()
     const visible = await input.isVisible({ timeout: 5000 }).catch(() => false)
     console.log(`Quick Capture bar: ${visible}`)
@@ -2217,7 +2218,7 @@ test.describe('FEATURE — Quick Capture bar', () => {
   })
 
   test('Quick Capture → type text → shows input value', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const input = page.locator('input[placeholder*="capture"], input[placeholder*="Capture"], input[placeholder*="task"]').first()
     if (await input.isVisible({ timeout: 3000 }).catch(() => false)) {
       await input.click()
@@ -2231,7 +2232,7 @@ test.describe('FEATURE — Quick Capture bar', () => {
   })
 
   test('Quick Capture → Ctrl+N focuses input', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     await page.keyboard.press('Control+n')
     await page.waitForTimeout(300)
     const focused = await page.evaluate(() => {
@@ -2244,7 +2245,7 @@ test.describe('FEATURE — Quick Capture bar', () => {
 
 test.describe('FEATURE — Key links on tasks', () => {
   test('Task grid shows key link icons when present', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     // Look for key link icons (folder, external link, play icons)
     const keyLinks = page.locator('[class*="key-link"], [class*="keyLink"], a[href*="mnccore://"], a[href*="mail.google"]')
     const count = await keyLinks.count()
@@ -2255,7 +2256,7 @@ test.describe('FEATURE — Key links on tasks', () => {
   })
 
   test('Task detail panel shows key links in Details tab', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
     await page.keyboard.press('Enter')
@@ -2277,7 +2278,7 @@ test.describe('FEATURE — Key links on tasks', () => {
   })
 
   test('Key link copy button copies path to clipboard', async ({ page }) => {
-    await go(page, '/tasks')
+    await go(page, P.myTasks)
     const copyBtn = page.locator('button[aria-label*="copy"], button[title*="copy"], button[title*="Copy"]').first()
     if (await copyBtn.isVisible().catch(() => false)) {
       await copyBtn.click()
@@ -2293,7 +2294,7 @@ test.describe('FEATURE — Key links on tasks', () => {
 
 test.describe('DATA — Dashboard cards show real data', () => {
   test('Your Week card shows actual numbers (not all zeros)', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const weekCard = page.locator('text=Your Week').first()
     if (await weekCard.isVisible({ timeout: 5000 }).catch(() => false)) {
       // Find number elements near the card
@@ -2308,7 +2309,7 @@ test.describe('DATA — Dashboard cards show real data', () => {
   })
 
   test('Action Board card shows tasks grouped by person', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const board = page.locator('text=Action Board').first()
     if (await board.isVisible({ timeout: 5000 }).catch(() => false)) {
       const nick = await vis(page, 'text=Nick')
@@ -2317,7 +2318,7 @@ test.describe('DATA — Dashboard cards show real data', () => {
   })
 
   test('Project Health card shows non-zero health scores', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const health = page.locator('text=Project Health').first()
     if (await health.isVisible({ timeout: 5000 }).catch(() => false)) {
       await page.screenshot({ path: 'review/data-project-health.png' })
@@ -2325,7 +2326,7 @@ test.describe('DATA — Dashboard cards show real data', () => {
   })
 
   test('Weekly Progress card shows 7-day bar chart with data', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const weekly = page.locator('text=Weekly Progress, text=Weekly').first()
     if (await weekly.isVisible({ timeout: 5000 }).catch(() => false)) {
       await page.screenshot({ path: 'review/data-weekly-progress.png' })
@@ -2333,7 +2334,7 @@ test.describe('DATA — Dashboard cards show real data', () => {
   })
 
   test('Quick Wins card shows actionable tasks', async ({ page }) => {
-    await go(page, '/dashboard')
+    await go(page, P.dashboard)
     const wins = page.locator('text=Quick Wins').first()
     if (await wins.isVisible({ timeout: 5000 }).catch(() => false)) {
       await page.screenshot({ path: 'review/data-quick-wins.png' })

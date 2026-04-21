@@ -5,6 +5,7 @@ import { useMeetingsApi, useActionItems, useMeetingCadence } from '../../hooks/u
 import { getMeetingFacilitator } from '../../lib/facilitator'
 import { getPersonInfo } from '../../data/team'
 import BentoCard from './BentoCard'
+import { PATHS } from '../../constants/paths'
 
 interface Deadline {
   date: string
@@ -174,7 +175,7 @@ function UpcomingCard() {
               </div>
             )}
             <Link
-              to={`/meetings/${nextMeeting.id}`}
+              to={PATHS.meeting(nextMeeting.id)}
               className="inline-flex items-center gap-1"
               style={{
                 fontSize: '10px',

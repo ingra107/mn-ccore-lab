@@ -22,6 +22,7 @@ import EmptyState from '../../components/EmptyState'
 
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
+import { PATHS } from '../../constants/paths'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
@@ -381,7 +382,7 @@ export default function Manuscripts() {
                         </div>
                       )}
 
-                      <Link to={`/projects/${project.slug}`} className={isFocused ? 'task-row-focused' : ''} style={{ textDecoration: 'none', display: 'block' }}>
+                      <Link to={PATHS.project(project.slug)} className={isFocused ? 'task-row-focused' : ''} style={{ textDecoration: 'none', display: 'block' }}>
                         {/* Desktop: 6-column grid */}
                         <div
                           className="manuscript-list-row hidden sm:grid"
@@ -645,7 +646,7 @@ export default function Manuscripts() {
                         const pi = getPersonInfo(p.pi)
                         const dotColor = CATEGORY_DOT[p.category] ?? 'var(--slate)'
                         return (
-                          <Link key={p.slug} to={`/projects/${p.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
+                          <Link key={p.slug} to={PATHS.project(p.slug)} style={{ textDecoration: 'none', display: 'block' }}>
                             <motion.div
                               layout
                               initial={{ opacity: 0, y: 8 }}

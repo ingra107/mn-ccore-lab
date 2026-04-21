@@ -4,6 +4,7 @@ import Avatar from './Avatar'
 import CategoryIcon from './CategoryIcon'
 import { getPersonInfo } from '../data/team'
 import type { Project } from '../data/types'
+import { PATHS } from '../constants/paths'
 
 interface ProjectCardProps {
   project: Project
@@ -77,7 +78,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   if (project.slug) {
     return (
       <Link
-        to={`/projects/${project.slug}`}
+        to={PATHS.project(project.slug)}
         style={{ textDecoration: 'none', display: 'block' }}
       >
         {cardContent}
