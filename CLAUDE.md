@@ -15,15 +15,16 @@ These six plus this file are authoritative. Historical material lives
 in `docs/archived/` (and PB-side `Projects/mn-ccore-lab-hub/_archived/`) —
 safe to ignore unless explicitly spelunking history.
 
-## Current state (2026-04-20)
+## Current state (2026-04-21)
 
+- **Round-2 design shipped + schema-drift CI now useful.** Claude Design's round-2 review (43 tickets) shipped across three deploys (`ff7b766a` → `36e0ca34` → `cfc00ab0`): 7 P1 ship-blockers + § 0 Quick Add / chevron polish + 13 P2 + 4 motion fixes + 2 pre-existing test fixes surfaced during verification. Schema-drift CI workflow was failing silently for a week — fixed secrets, replaced `.schema` CLI command with real SQL, rewrote normalizer; then reconciled real drift via v48 (27 indexes) + v49 (13 tables + 2 unique indexes + 9 columns) applied to prod, plus edits to v14/v22 and deletion of v35. See CHANGELOG.md.
 - **Phase 36d shipped.** Design sprint — 12 reusable brand primitives + cinematic Pulse Kiosk rewrite + per-route OG share cards + capture infrastructure for Claude Design. Plus Phase 36c audit fixes, Phase 36b slug rename, Phase 36 consultant close-out.
 - **Quality gate: 🟢 GREEN.** Inspection 213/213, deep-audit 14/14 (0 bugs), axe 29 pages × 2 schemes (0 findings), mobile smoke 2/2, desktop journey 1/1, `/api/health` ~74ms.
 - **Not yet live for the team.** Nick is the only active user. Going live requires CF Access config + `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` + `REQUIRE_AUTH` + `TEST_MODE_KEY` + `VITE_REQUIRE_AUTH` secrets — see `LAUNCH-CHECKLIST.md` sections 0 + 1.
 - **Team slugs:** all 19 members use `preferred_name-last_name` format (`nick-ingraham`, `emma-bromley`, ...). `actorSlug(email)` in `api/helpers.ts` maps email prefix → canonical slug via `EMAIL_PREFIX_TO_SLUG`. Adding a new team member = D1 row + team.ts entry + LUT entry.
 - **Routing:** `/portal/team/:slug` keeps logged-in users in portal chrome. `/team/:slug` stays for the public marketing site.
 - **Brand primitives** live in `src/components/` — use them instead of rolling your own: `HeartbeatLine` / `HeartbeatDivider` (the lab's ECG motif), `HermesMark` (AI assistant avatar, replaces lucide Sparkles), `CategoryIcon` (lungs/flask/heartbeat/cap for CLIF/Lab/Nate/Mentee), `EmptyStateArt` (8 illustrations), `PhaseReleaseBanner` (what-shipped card), `RequireAuth` (sign-in splash).
-- **Current HEAD:** `ef604db` on `main`, pushed.
+- **Current HEAD:** `6f9ed08` on `main`, pushed (post round-2 + schema-drift reconciliation).
 
 ## Vision
 
@@ -35,16 +36,17 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev (PI-only; team not yet onboarded) |
 | Repo | github.com/ingra107/mn-ccore-lab (685+ commits) |
-| Current deploy | `ef604db` (2026-04-20, Phase 36d close — preview `dba34ad1`) |
+| Current deploy | `cfc00ab0.mn-ccore-lab.pages.dev` (2026-04-21, round-2 + motion close; `6f9ed08` on main includes post-deploy client_updated_at guard) |
 | Quality gate | 🟢 GREEN — inspection 213/213, deep-audit 14/14, axe 29×2 = 0, mobile smoke 2/2, desktop journey 1/1. |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + **Hono v4.12 (API router)** |
 | Testing | Playwright 1.59 (E2E, 213+ inspection + mobile smoke + desktop journey) + Vitest 4.1 (component, browser mode) |
 | Data | TanStack Query v5 + Cloudflare D1 (60 tables, ~225 endpoints via Hono) + Recharts -- ALL LIVE |
-| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. 601 tasks, 64 projects, 19 team_members (schema v46). |
+| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. 601 tasks, 64 projects, 19 team_members (schema v49). |
 | D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
 | D1 tables | 60 (live count via `/api/health`; +d1_task_comments in Phase 35) |
-| D1 schema versions applied to prod | v1-v44 + v45 (projects.deleted_at, Phase 36) + v46 (7 missing indexes, Phase 36c) |
+| D1 schema versions applied to prod | v1-v44 + v45 (projects.deleted_at, Phase 36) + v46 (7 missing indexes, Phase 36c) + v47 (5 cols for Airtable funeral, 2026-04-20) + v48 (27-index reconcile, 2026-04-21) + v49 (13 tables + 2 unique indexes reconcile, 2026-04-21) |
+| Schema drift CI | `.github/workflows/schema-drift.yml` — nightly 03 CT. Dumps prod sqlite_master, diffs against committed bundle. Guardrail against silent prod migrations. Requires `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` secrets. |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
 | Reference | `REFERENCE.md` in this repo -- D1 tables, API endpoints, key files, feature list |
@@ -474,7 +476,7 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 - Print CSS: enhanced @media print rules
 - Ctrl+. theme cycle on PortalLayout
 
-*Pending:* Schema v35 migration (recurrence + recurrence_parent_id) — planned but not yet needed. No code depends on it.
+*Pending:* ~~Schema v35 migration (recurrence + recurrence_parent_id) — planned but not yet needed. No code depends on it.~~ **Removed 2026-04-21** during schema-drift reconciliation — migration file deleted from repo since it was never applied to prod and no code depended on it.
 
 **Phase 27: COMPLETE** (4 commits, 2026-04-08). Task notes/updates + activity tab:
 - **Schema v36**: `task_updates` table (mirrors `project_updates` pattern) with task_id, author_slug, content, update_type, created_at

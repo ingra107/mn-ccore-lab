@@ -1,8 +1,12 @@
-# Session Handoff — 2026-04-20
+# Session Handoff — 2026-04-21
 
-> Last worked: Phase 36e (Claude Design handoff imported — 33 tickets
-> at `docs/design-handoff-2026-04-20/TICKETS.md`). Next session works
-> those tickets. One-glance state + what to do first.
+> Last worked: Round-2 design handoff (43 tickets shipped across
+> `ff7b766a` → `36e0ca34` → `cfc00ab0`) + D1 schema-drift CI
+> reconciliation (v48 + v49 applied to prod; workflow 🟢 green for the
+> first time since 2026-04-16). Current HEAD `6f9ed08`. Round-1 P2-14
+> (Post-Award Milestones populated state) still outstanding — that's a
+> data-entry ask, not a design one. See CHANGELOG.md top two entries
+> for the full record.
 
 ## 📖 Session bootstrap — read these in order before writing anything
 
@@ -14,7 +18,7 @@
 6. **`CHANGELOG.md`** top entry — Phase 36c full record.
 7. **`docs/OBSERVABILITY.md`** — `/api/health` + runbook.
 
-## Gate — all green as of commit `ef604db`
+## Gate — all green as of commit `6f9ed08` (deployed `cfc00ab0`)
 
 | Check | Result |
 |---|---|

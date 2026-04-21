@@ -2,6 +2,119 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Schema-drift CI reconciliation (2026-04-21)
+
+**Unblocked a guard that had been failing silently since it shipped.** The
+`D1 Schema Drift Check` workflow (`.github/workflows/schema-drift.yml`)
+started emailing daily failures 2026-04-16. Three stacked issues hid
+real drift beneath them:
+
+1. **Missing credentials** — `CLOUDFLARE_API_TOKEN` +
+   `CLOUDFLARE_ACCOUNT_ID` GitHub secrets weren't set. Fixed.
+2. **Workflow used `.schema` (sqlite3 CLI dot-command)** — D1 HTTP API
+   rejects with SQLITE_ERROR 7500. Rewrote to query sqlite_master.
+3. **Normalizer compared multi-line CREATE to single-line sqlite_master
+   output** → 100% phantom diff. Rewrote to bootstrap a fresh SQLite,
+   apply schema.sql + all migrations (tolerate duplicate-column errors),
+   dump result, normalize whitespace, alphabetically sort CREATE TABLE
+   columns, then diff.
+
+Once working, it surfaced **real drift accumulated over a year+** from
+schema changes shipped via `wrangler d1 execute` or `/api/admin/migrate`
+without committing the SQL:
+
+- **v48-index-reconcile** — 27 indexes (24 prod-only, 3 phantom-committed).
+  Applied to prod, 121 rows written.
+- **v49-missing-tables** — 13 tables + 2 unique indexes that backed
+  live features (inbox/iOS Shortcut, nih_grants/RePORTER tab,
+  file_attachments/R2, narrative_projects, contributions,
+  trainee_milestones, watchlist, open_science_resources,
+  project_documents, project_publications, pubmed_sync_log,
+  research_narratives, _meta). Applied to prod, 0 rows written
+  (all already existed).
+- **v49-missing-columns** (bootstrap-only) — 9 columns: tasks.blocked_by,
+  tasks.description_json, team_members.expertise_tags, meetings.facilitator,
+  projects.stage_notes, grants.status, action_items.created_by +
+  category + parent_task_id. ALTER TABLE ADD COLUMN isn't idempotent in
+  SQLite; columns already existed on prod; workflow tolerates
+  duplicate-column errors during replay.
+- **Edit v14** — `project_dependencies` rewritten to match prod's live
+  structure (composite PK `(from_slug, to_slug)`, `DEFAULT 'related_to'`).
+- **Edit v22** — `tasks.updated_at` DEFAULT dropped to match prod (table
+  was rebuilt at some point; write paths set `updated_at` explicitly).
+- **Delete v35** — `recurrence + recurrence_parent_id` never applied to
+  prod and no code depended on it.
+
+**Result:** workflow 🟢 green as of 2026-04-21 13:40 UTC. Now a useful
+guardrail — next time a migration lands on prod without commit (the R10
+failure mode from 2026-04-14), the 03 CT cron catches it.
+
+Files touched: `.github/workflows/schema-drift.yml`, `api/schema-v14.sql`,
+`api/schema-v22.sql`, `api/schema-v35.sql` (deleted),
+`api/schema-v48-index-reconcile.sql` (new), `api/schema-v49-missing-tables.sql`
+(new), `api/schema-v49-missing-columns.sql` (new).
+
+## Round-2 design handoff (2026-04-20 → 2026-04-21)
+
+**43 tickets implemented across three deploys.** Claude Design's round-2
+review (`review/design_handoff_round2/`) returned 34 new tickets + 4
+focus-area asks + 6 motion polish items. Round-2 verification also
+exposed 2 pre-existing test failures that were fixed.
+
+Deployed at `ff7b766a` → `36e0ca34` → `cfc00ab0`.
+
+**P1 (7, ship-blockers):**
+- `P1-R2-01` My Items sign-in wall: drop early return, default slug
+  to `nick-ingraham` pre-launch, small banner for unauthed.
+- `P1-R2-02` Ask the Lab fixtures: extend `isProductionVisible()`
+  patterns, filter at source.
+- `P1-R2-03` Settings emoji → 10-icon Lucide picker.
+- `P1-R2-04` Narratives: label every pipeline dot with stage abbrev.
+- `P1-R2-05` J/K paints nothing (WCAG fail): 3px inset edge + 6% bg;
+  click-selected gets 4px edge + 10% bg + soft border; forced-colors
+  fallback.
+- `P1-R2-07` Mobile swipe-to-dismiss inert on Pixel 5: ripped swipe
+  state, enlarged X to 44×44, sticky Done pill.
+- `P1-R2-08` Board drag never fires: added `TouchSensor` +
+  `KeyboardSensor` to `@dnd-kit`. Propagated same fix to MeetingDetail,
+  MyTasks Focus, PBSector, SubtaskSection, TaskGridView (column + row).
+
+**§ 0 focus-area asks:** segmented Quick Add pills + tooltips; inline ▾
+chevrons hidden by default with `alwaysShowChevron` opt-in (Decisions
+Outcome uses it).
+
+**P2 (13):** CLIF prefix variants, detail-panel width clamp, Sessions
+empty state, filter anonymous trainees on public Lab, Trajectory
+`Connect publications` CTA + Y-axis label, rename `Deadline Cascade` →
+`Deadlines by Project`, Search idle Jump-to + tips, decision fixtures,
+`PageTooltip` auto-dismiss + Settings "Restore product tips", active-
+funding stub filter, Ideas lopsided-board banner, `STAGE_ALIASES`
+lifted to `lib/stageNormalize` (consumed by ProjectDetail + Projects
+stage dots), Meetings `<details>` disclosure, aria-label on hover
+icons.
+
+**P3:** activity-feed substring fixture filter.
+
+**Motion (4):**
+- `M-03` TaskDetailPanel tab cross-fade: 140ms class-flash pattern so
+  keyframe re-plays per activeTab; divs stay mounted so Quick Add
+  drafts survive.
+- `M-09` CollapsibleSection: 250→180ms ease-out + reduced-motion guard.
+- `M-11` HermesMark `pulse` prop: 600ms scale-in + micro-rotate + gold
+  halo; Avatar passes `pulse` for `slug==='claude-ai'`.
+- `M-12` Pulse kiosk scene cross-fade: was `<div>` inside `AnimatePresence`
+  (no motion fired); now `motion.div` with 400ms + 2% scale.
+
+**Test fixes (2 pre-existing, surfaced during verification):**
+- Smoke /network: per-route override `domcontentloaded` + 4s dwell
+  (three.js never settles networkidle).
+- Inspection Journey `Dashboard → click task`: selector race with
+  BentoCard `whileHover` transform + scroll clip; scoped to Action
+  Board first, `force: true` click.
+
+**Verification (deploy `cfc00ab0`):** Smoke 27/27 · Inspection 213/213 ·
+Build + TypeScript clean.
+
 ## Phase 36e: Claude Design Handoff Imported (2026-04-20)
 
 **Not a code phase — a backlog import.** Nick ran the Hub through
