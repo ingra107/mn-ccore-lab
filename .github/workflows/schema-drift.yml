@@ -54,9 +54,13 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          # `.schema` is a sqlite3 CLI dot-command, NOT SQL — D1's HTTP API
+          # rejects it with SQLITE_ERROR 7500. Query sqlite_master directly
+          # for the equivalent (every CREATE TABLE/INDEX/TRIGGER/VIEW with
+          # a non-null sql definition).
           wrangler d1 execute mnccore-lab \
             --remote \
-            --command ".schema" \
+            --command "SELECT sql FROM sqlite_master WHERE type IN ('table','index','trigger','view') AND sql IS NOT NULL ORDER BY type, name" \
             --json > prod-schema.json
           # Extract the raw statements into one sortable file
           node -e "const j=require('./prod-schema.json');const rows=(j[0]&&j[0].results)||[];const sql=rows.map(r=>r.sql||Object.values(r)[0]).filter(Boolean).sort().join('\n');require('fs').writeFileSync('prod-schema.sql',sql+'\n')"
