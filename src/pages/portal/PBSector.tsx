@@ -5,6 +5,7 @@ import {
   DragOverlay,
   closestCorners,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragStartEvent,
@@ -83,9 +84,10 @@ export default function PBSector() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  // Drag sensors
+  // Drag sensors — TouchSensor for mobile parity (P1-R2-08)
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
   )
 
   // ── Derived state ───────────────────────────────────────

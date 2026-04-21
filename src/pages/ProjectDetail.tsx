@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
+import { stageIndex } from '../lib/stageNormalize'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
@@ -194,15 +195,9 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Stage changer state
   const [confirmStage, setConfirmStage] = useState<Stage | null>(null)
-  // Map brain.db granular stages onto the 6 strip stages so projects with
-  // stage="Submitted"/"Accepted" still light up a current dot. P2-R2-14.
-  const STAGE_ALIASES: Record<string, Stage> = {
-    Submitted: 'Review',
-    'Under Review': 'Review',
-    Accepted: 'Published',
-  }
-  const normalizedStage = ((project.stage && STAGE_ALIASES[project.stage]) ?? project.stage ?? '') as Stage
-  const currentStageIndex = STAGES.indexOf(normalizedStage)
+  // Brain.db's granular stages map onto the 6 canonical strip stages
+  // (lib/stageNormalize). P2-R2-14.
+  const currentStageIndex = stageIndex(project.stage)
 
   // Inline editing
   const [editingDescription, setEditingDescription] = useState(false)

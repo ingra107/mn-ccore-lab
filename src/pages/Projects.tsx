@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
 import DensityToggle, { useDensity, densityClass } from '../components/DensityToggle'
+import { stageIndex } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
@@ -545,7 +546,8 @@ export default function Projects() {
                               {/* Stage progress dots */}
                               <span className="inline-flex items-center gap-0.5 ml-1" title={`Stage: ${project.stage || 'Idea'}`}>
                                 {STAGES.map((s, si) => {
-                                  const currentIdx = STAGES.indexOf(project.stage as typeof STAGES[number]) ?? 0
+                                  // Brain.db granular stages → 6-stage canonical (P2-R2-14)
+                                  const currentIdx = stageIndex(project.stage)
                                   return (
                                     <span
                                       key={s}

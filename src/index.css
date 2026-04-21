@@ -1101,6 +1101,48 @@ a:hover {
   transition: color 150ms ease, background-color 150ms ease;
 }
 
+/* HermesMark pulse — Hermes ack moment. M-11.
+   600ms scale-in + micro-rotate + brief gold halo via box-shadow.
+   Plays once per mount. Reduced-motion drops the transform/halo and
+   keeps a 150ms opacity fade only. */
+@keyframes hermes-pulse-in {
+  0%   { transform: scale(0.7) rotate(-18deg); opacity: 0; box-shadow: 0 0 0 0 rgba(220, 179, 85, 0); }
+  35%  { transform: scale(1.12) rotate(4deg);  opacity: 1; box-shadow: 0 0 0 8px rgba(220, 179, 85, 0.18); }
+  70%  { transform: scale(0.98) rotate(-1deg); box-shadow: 0 0 0 14px rgba(220, 179, 85, 0.06); }
+  100% { transform: scale(1) rotate(0);        box-shadow: 0 0 0 0 rgba(220, 179, 85, 0); }
+}
+.hermes-mark-pulse {
+  animation: hermes-pulse-in 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes hermes-pulse-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .hermes-mark-pulse { animation: hermes-pulse-in 150ms linear; }
+}
+
+/* CollapsibleSection — drop height transition under reduced-motion. M-09. */
+@media (prefers-reduced-motion: reduce) {
+  .collapsible-section-content { transition: none !important; }
+}
+
+/* TaskDetailPanel tab content cross-fade. M-03.
+   Class is briefly applied (~140ms) when activeTab changes, then removed,
+   so the keyframe re-plays on every tab switch. Tab divs stay mounted
+   (display:none for inactive) so unsaved Quick Add drafts survive. */
+@keyframes task-detail-tab-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.task-detail-tab-content {
+  animation: task-detail-tab-enter 120ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-detail-tab-content { animation: none !important; }
+}
+
 /* InlineSelect chevron — hidden by default to reduce table clutter.
    Reveals on row hover, cell focus, button hover, or when the dropdown is
    open (aria-expanded). Decisions Outcome opts back in via

@@ -79,6 +79,15 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   const { showUndo } = useUndoToast()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [copied, setCopied] = useState(false)
+  // Brief class flash on tab change so the CSS keyframe re-plays. Class
+  // is added when activeTab changes, removed ~140ms later. Tab content
+  // stays mounted (display:none) so unsaved Quick Add drafts survive. M-03.
+  const [tabAnimating, setTabAnimating] = useState<Tab | null>(null)
+  useEffect(() => {
+    setTabAnimating(activeTab)
+    const t = setTimeout(() => setTabAnimating(null), 140)
+    return () => clearTimeout(t)
+  }, [activeTab])
 
   // Swipe-to-dismiss removed 2026-04-20 (P1-R2-07). On Pixel 5 the gesture
   // fired but the panel never moved (inert), and the iOS Safari edge-swipe-back
@@ -337,7 +346,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         <div className="p-5 flex flex-col" style={{ gap: 'var(--sp-xl)' }}>
 
           {/* ── Overview Tab ── */}
-          <div style={{ display: activeTab === 'overview' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}>
+          <div
+            className={tabAnimating === 'overview' ? 'task-detail-tab-content' : ''}
+            style={{ display: activeTab === 'overview' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}
+          >
 
             {/* Acknowledge button (compact) */}
             {task.assignee && !task.acknowledged_at && task.status !== 'done' && (
@@ -432,7 +444,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           </div>
 
           {/* ── Details Tab ── */}
-          <div style={{ display: activeTab === 'details' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}>
+          <div
+            className={tabAnimating === 'details' ? 'task-detail-tab-content' : ''}
+            style={{ display: activeTab === 'details' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}
+          >
 
             {/* Row: Watchers + Reminder */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
@@ -538,17 +553,26 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           </div>
 
           {/* ── Notes Tab ── */}
-          <div style={{ display: activeTab === 'notes' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-lg)' }}>
+          <div
+            className={tabAnimating === 'notes' ? 'task-detail-tab-content' : ''}
+            style={{ display: activeTab === 'notes' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-lg)' }}
+          >
             <TaskUpdateFeed taskId={task.id} />
           </div>
 
           {/* ── Comments Tab ── */}
-          <div style={{ display: activeTab === 'comments' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}>
+          <div
+            className={tabAnimating === 'comments' ? 'task-detail-tab-content' : ''}
+            style={{ display: activeTab === 'comments' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}
+          >
             <TaskComments taskId={task.id} taskTitle={task.title} projectSlug={task.project_id} />
           </div>
 
           {/* ── Activity Tab ── */}
-          <div style={{ display: activeTab === 'activity' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-sm)' }}>
+          <div
+            className={tabAnimating === 'activity' ? 'task-detail-tab-content' : ''}
+            style={{ display: activeTab === 'activity' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-sm)' }}
+          >
             <TaskActivityFeed taskId={task.id} />
           </div>
 

@@ -25,6 +25,10 @@ interface HermesMarkProps {
   className?: string
   style?: CSSProperties
   title?: string
+  /** When true, plays a one-shot 600ms entrance animation (scale-in +
+   *  micro-rotate + gold halo). Useful on freshly-arrived AI surfaces.
+   *  M-11 — Hermes ack moment. */
+  pulse?: boolean
 }
 
 export default function HermesMark({
@@ -35,12 +39,15 @@ export default function HermesMark({
   className,
   style,
   title = 'Hermes — AI research assistant',
+  pulse = false,
 }: HermesMarkProps) {
+  const pulseClass = pulse ? 'hermes-mark-pulse' : ''
+  const composedClass = [className, pulseClass].filter(Boolean).join(' ') || undefined
   if (variant === 'avatar') {
     const ringBg = bg ?? 'color-mix(in srgb, var(--gold) 18%, transparent)'
     return (
       <span
-        className={className}
+        className={composedClass}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -63,7 +70,7 @@ export default function HermesMark({
   }
   return (
     <span
-      className={className}
+      className={composedClass}
       style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', ...style }}
       role="img"
       aria-label={title}

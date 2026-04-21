@@ -467,12 +467,19 @@ export default function Pulse() {
         </div>
       </header>
 
-      {/* ── Scene canvas (1.6s crossfade) ───────────────────── */}
+      {/* ── Scene canvas (400ms crossfade + 2% scale per M-12) ───── */}
       <div className="absolute inset-0 flex items-center justify-center">
         <AnimatePresence mode="wait">
-          <div key={sceneKey} className="absolute inset-0">
+          <motion.div
+            key={sceneKey}
+            className="absolute inset-0"
+            initial={{ opacity: 0, scale: 1.02 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
+          >
             {scene?.render()}
-          </div>
+          </motion.div>
         </AnimatePresence>
       </div>
 

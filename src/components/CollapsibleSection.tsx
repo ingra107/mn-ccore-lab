@@ -44,6 +44,8 @@ export default function CollapsibleSection({
     if (open) {
       const h = contentRef.current.scrollHeight
       setHeight(h)
+      // Match transition duration below (180ms) before clearing to 'auto'
+      // so dynamically-arriving content (lazy data) can grow naturally.
       const timer = setTimeout(() => setHeight(undefined), 200)
       return () => clearTimeout(timer)
     } else {
@@ -106,10 +108,13 @@ export default function CollapsibleSection({
       </button>
       <div
         ref={contentRef}
+        className="collapsible-section-content"
         style={{
           height: height !== undefined ? `${height}px` : 'auto',
           overflow: 'hidden',
-          transition: 'height 250ms ease',
+          // M-09: 180ms ease-out matches ticket spec; reduced-motion drops
+          // the transition entirely (CSS handles via media query below).
+          transition: 'height 180ms cubic-bezier(0.25, 0.1, 0.25, 1)',
         }}
       >
         <div style={{ paddingTop: 6 }}>

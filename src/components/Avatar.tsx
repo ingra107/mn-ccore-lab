@@ -177,7 +177,7 @@ export default function Avatar({
             color: 'var(--gold)',
           }}
         >
-          <HermesMark variant="icon" size={32} color="var(--gold)" />
+          <HermesMark variant="icon" size={32} color="var(--gold)" pulse />
         </span>
       ) : photoUrl ? (
         <img
