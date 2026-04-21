@@ -101,36 +101,37 @@ jobs:
 
       - name: Build committed schema reference
         run: |
-          # api/schema.sql holds the canonical TABLE definitions (every
-          # column ever added is reflected inline). Indexes live in
-          # api/schema-v*.sql migration files. We:
-          #   1. Bootstrap a fresh SQLite from schema.sql (gets all tables)
-          #   2. Apply only CREATE [UNIQUE] INDEX statements from
-          #      migrations (skip ALTER TABLE ADD COLUMN — those would
-          #      duplicate schema.sql)
-          #   3. Dump the resulting schema for diff against prod
+          # Reality check (audit found 2026-04-21): api/schema.sql only has
+          # ~7 tables. The other ~43 tables + every index live in migration
+          # files (api/schema-v*.sql). Migrations were never designed to
+          # replay against each other — some add a column that schema.sql
+          # also declares. So we apply schema.sql + every migration in
+          # version order, but *tolerate* duplicate-column / table-exists
+          # errors (expected overlap). Real SQL syntax errors would show
+          # up as missing tables in the final diff.
           rm -f committed.db
-          sqlite3 committed.db < api/schema.sql
-          # Extract index statements from migrations and apply.
           node -e "
             const fs = require('fs'); const path = require('path');
             const dir = 'api';
-            const mig = fs.readdirSync(dir)
+            const base = fs.readFileSync(path.join(dir, 'schema.sql'), 'utf8');
+            const migFiles = fs.readdirSync(dir)
               .map(f => { const m = f.match(/^schema-v(\d+)(?:-([^.]+))?\.sql\$/); return m ? { file: f, version: +m[1], variant: m[2] ? 1 : 0 } : null })
               .filter(Boolean)
-              .sort((a, b) => a.version - b.version || a.variant - b.variant)
-              .map(x => fs.readFileSync(path.join(dir, x.file), 'utf8'))
-              .join('\n');
-            // Strip block + line comments first, then split on ';'
-            const stripped = mig.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
-            const indexStmts = stripped.split(';')
-              .map(s => s.replace(/\s+/g, ' ').trim())
-              .filter(s => /^CREATE\s+(UNIQUE\s+)?INDEX\b/i.test(s))
-              .map(s => s + ';')
-              .join('\n');
-            fs.writeFileSync('committed-indexes.sql', indexStmts + '\n');
+              .sort((a, b) => a.version - b.version || a.variant - b.variant);
+            const parts = [base, ...migFiles.map(x => fs.readFileSync(path.join(dir, x.file), 'utf8'))];
+            fs.writeFileSync('committed-bundle.sql', parts.join('\n') + '\n');
           "
-          sqlite3 committed.db < committed-indexes.sql
+          # Apply with -bail off (default); redirect errors we expect to
+          # see (duplicate column, table already exists) — keep other
+          # errors visible. Suppress exit code: the meaningful check is
+          # whether the resulting schema matches prod, not whether every
+          # historical migration replayed cleanly against current base.
+          sqlite3 committed.db < committed-bundle.sql 2> sqlite-errors.log || true
+          # Show only unexpected errors (not the known overlap cases).
+          if grep -v -E "duplicate column name|table [a-z_]+ already exists|index [a-z_]+ already exists" sqlite-errors.log | grep -q "error"; then
+            echo "::warning::Unexpected sqlite errors during committed schema build (see log below)"
+            grep -v -E "duplicate column name|table [a-z_]+ already exists|index [a-z_]+ already exists" sqlite-errors.log | head -20 || true
+          fi
           sqlite3 committed.db .schema > committed-raw.sql
           node -e "
             const { normalizeSql } = require('./normalize-sql.cjs');
