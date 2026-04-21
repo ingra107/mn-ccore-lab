@@ -11,8 +11,10 @@
 > `.env.production`. GitHub Actions secrets (`CLOUDFLARE_API_TOKEN` +
 > `CLOUDFLARE_ACCOUNT_ID`) set for schema-drift CI. Prior session also
 > landed round-2 design (43 tickets) + schema-drift CI reconciliation
-> (v48 + v49). Current HEAD `143c1db`. See CHANGELOG.md Phase 37 for
-> full record.
+> (v48 + v49). Post-launch bug-fix sprint landed 4 commits (emailToSlug
+> class fix + stage UI↔API mapper + JWT cookie fallback + visual bugs);
+> current HEAD `a8537ad`, deploy `65b166d7`. See CHANGELOG.md Phase 37 +
+> the post-Phase-37 bug-fix entry for full record.
 
 ## 📖 Session bootstrap — read these in order before writing anything
 
@@ -24,7 +26,7 @@
 6. **`CHANGELOG.md`** top entry — Phase 37 full record.
 7. **`docs/OBSERVABILITY.md`** — `/api/health` + runbook.
 
-## Gate — all green as of commit `143c1db` (deployed `c5e46630`)
+## Gate — all green as of commit `a8537ad` (deployed `65b166d7`)
 
 | Check | Result |
 |---|---|
@@ -45,6 +47,44 @@ Rerun mobile smoke: `npx playwright test --config=playwright.config.mobile.ts`
 Rerun journey smoke: `npx playwright test --config=playwright.config.phase36.ts`
 
 ## What's new since the previous handoff
+
+**Post-Phase-37 bug-fix sprint (2026-04-21).** Four follow-up commits
+after launch closing class bugs surfaced via in-app bug reports:
+
+- **emailToSlug class fix (`8ae27f9`)** — 17 call sites rewired. `email.
+  split('@')[0]` produced the wrong slug (`ingra107` instead of the
+  canonical `nick-ingraham`). New util at `src/lib/emailSlug.ts` with an
+  `EMAIL_PREFIX_TO_SLUG` LUT — client mirror of `api/helpers.ts`. Closed
+  issues #20 (user profile pointed to wrong slug) + #21 (MyTasks filter).
+- **Stage UI↔API mapper (`a8537ad`)** — `toApiStage()` in `src/lib/
+  stageNormalize.ts`. UI strip shows 6 stages but API stores 7 (brain.db
+  canonical: 'Data Analysis'/'Submitted'/'Accepted'). Clicking Analysis
+  or Review → 400 from API → optimistic revert. Mapper invoked on 4
+  submit paths. `Project.stage` type union widened to accept both UI +
+  API values. Bug reported via in-app modal on ADHERE-LPV Trial.
+- **JWT cookie fallback (`b0021c1`)** — `getAuthUser()` in `api/helpers.ts`
+  now reads the `CF_Authorization` cookie as fallback when the
+  `Cf-Access-Jwt-Assertion` header is absent. This matters because
+  CF Access is scoped to `/portal/*` only — all `/api/*` requests bypass
+  the CF Access proxy and never receive the assertion header. Without
+  the cookie path, every authed POST (bug reports, project edits, task
+  mutations) from the browser would 401.
+- **Visual bugs + container width (`b0021c1` + `89c00ad`)** — Ideas row
+  `height: 44px` → `minHeight` (research_area label was bleeding into
+  next row); same fix applied to DecisionsPage. Network page `height:
+  100vh` → `minHeight: 100vh` (allows scroll past canvas). MyTasks CLS
+  reservation tuned `calc(100vh - 320px)` → `420px`. Container width
+  standardized on `.content-container` (1440px) across MyTasks, Tasks,
+  Deadlines, DecisionsPage, Grants, Ideas (Ideas dropped PageLayout).
+  Closed issues #14, #15, #16, #18.
+- **Post-launch polish (`89c00ad`)** — Dashboard greeting "Ingra107" →
+  "Nicholas" (routes through `getPersonInfo(emailToSlug(email)).name`).
+  `useAuth` name fallback uses the same path. `getPersonInfo(slug)`
+  handles `@`-containing slugs via `emailToSlug`. CommandPalette "Show
+  My Tasks Only" keys on the current user's canonical slug. 4 zIndex
+  literals → CSS tokens. Likely closed #19 (Dashboard "horrendous").
+
+Deploy: `65b166d7.mn-ccore-lab.pages.dev` on HEAD `a8537ad`.
 
 **Phase 37 — Portal URL Migration + launch go-live.** All 27 gated Hub
 routes migrated under `/portal/*` prefix so a single Cloudflare Access
@@ -241,6 +281,26 @@ needed.
 - **`actorSlug(email)` maps via `EMAIL_PREFIX_TO_SLUG` LUT.** Adding a
   new team member requires THREE updates: D1 `team_members` row,
   `src/data/team.ts` static fallback, and `EMAIL_PREFIX_TO_SLUG` entry.
+- **Email prefix is NOT a team slug — use `emailToSlug()`.** Client-side
+  mirror of the same LUT lives at `src/lib/emailSlug.ts`. `email.split(
+  '@')[0]` returns `ingra107` but the canonical slug is `nick-ingraham`.
+  Every site that turns an email into a slug (profile links, MyTasks
+  filter, NotificationBell, dashboard cards, CommandPalette "my tasks"
+  toggle, CreateProjectModal default PI, etc.) must route through
+  `emailToSlug`. This is a LUT update on BOTH sides when adding a member.
+- **UI stage labels differ from API values. Route through
+  `toApiStage()` on submit.** UI strip in `src/lib/stageNormalize.ts`
+  shows 6 labels but API stores 7 (brain.db canonical). Submit paths
+  must map `'Analysis' → 'Data Analysis'` and `'Review' → 'Submitted'`
+  via `toApiStage()` before the mutation hits the wire, or the API's
+  `PROJECT_STAGE_VALUES` guard 400s and the optimistic update silently
+  reverts. Display paths use `normalizeStage()` for the reverse fold.
+- **`getAuthUser()` reads JWT from header OR `CF_Authorization` cookie.**
+  `/api/*` is OUTSIDE the CF Access scope (CF Access gates `/portal/*`
+  only), so the `Cf-Access-Jwt-Assertion` header isn't set on API
+  requests. The browser sends the `CF_Authorization` cookie on all
+  same-domain requests regardless of proxy scope — that's the fallback
+  path, and it's required for every authed POST from the browser.
 - **All 19 team slugs are `preferred_name-last_name`** (`nick-ingraham`,
   `emma-bromley`, etc.). Phase 36b D1 + brain.db migration. Don't
   reintroduce the old short forms.
@@ -396,7 +456,7 @@ Hotfix: `api/index.ts` — `/api/bug-report` gate now piggybacks on `REQUIRE_AUT
 
 ## Git state
 
-Hub: `main` at `143c1db` (pushed to origin; clean).
+Hub: `main` at `a8537ad` (pushed to origin; clean).
 PB: unchanged this session — see PB-side `work_status.md` for PB-specific state.
 
 Re-check before modifying: `git status --short` should be empty in both repos.

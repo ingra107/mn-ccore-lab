@@ -2,6 +2,44 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Post-Phase-37 bug-fix sprint (2026-04-21)
+
+Four commits after launch fixing class bugs surfaced via in-app bug reports + triage.
+
+**`8ae27f9` — emailToSlug class fix (17 files).** `email.split('@')[0]`
+produced wrong slug (`ingra107` instead of canonical `nick-ingraham`).
+Added `src/lib/emailSlug.ts` util with `EMAIL_PREFIX_TO_SLUG` LUT.
+Rewired 17 call sites: Sidebar, MyTasks filter, NotificationBell,
+dashboard cards, CreateProjectModal, etc. Closed issues #20 + #21.
+
+**`89c00ad` — post-launch polish (13 files).** Dashboard greeting +
+useAuth name fallback + getPersonInfo all route through emailToSlug +
+team data. CommandPalette "Show My Tasks" keys on current user's slug.
+4 zIndex literals → CSS tokens. Container width standardized on
+`.content-container` (1440px) across MyTasks, Tasks, Deadlines,
+DecisionsPage, Grants, Ideas. Closed #14; likely closed #19.
+
+**`b0021c1` — visual bugs + JWT cookie fallback (5 files).** Ideas row
+had fixed `height: 44px`; research_area label overflowed to next row.
+Changed to `minHeight` + `display: block` label. Same fix applied to
+DecisionsPage. Network page `height: 100vh` → `minHeight: 100vh`
+(allows scroll past canvas). MyTasks CLS-prevention minHeight reduced
+from 320px to 420px reservation. **getAuthUser() reads CF_Authorization
+cookie as fallback** — critical fix because /api/* bypasses CF Access
+scope, so the Cf-Access-Jwt-Assertion header isn't set on API requests
+anymore. Unlocks every authed POST from browser (bug reports, project
+edits, task mutations). Closed #15, #16, #18.
+
+**`a8537ad` — project stage UI↔API mismatch (4 files).** UI STAGES list
+had 'Analysis'/'Review'; API only accepts brain.db canonical
+'Data Analysis'/'Submitted'/'Accepted'. Clicking Analysis/Review → 400
+→ silent revert. Added `toApiStage()` in src/lib/stageNormalize.ts;
+wired to 4 call sites (ProjectDetail strip + inline select, Projects
+list 2x inline selects). Widened `Project.stage` type union. Bug
+reported via in-app modal on ADHERE-LPV Trial.
+
+**Deploy:** `65b166d7.mn-ccore-lab.pages.dev` on HEAD `a8537ad`.
+
 ## Phase 37 — Portal URL Migration (2026-04-21)
 
 Moved all 27 gated Hub routes under a `/portal/*` URL prefix so a single
