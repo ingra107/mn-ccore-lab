@@ -10,36 +10,41 @@ interface RecentPage {
   timestamp: number
 }
 
-// Map paths to human-readable labels
+import { PATHS } from '../constants/paths'
+
+// Map paths (both portal canonical + legacy root equivalents) to human-readable labels
 const PATH_LABELS: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/personal': 'My Hub',
-  '/tasks': 'Tasks',
-  '/my-tasks': 'My Tasks',
-  '/calendar': 'Calendar',
-  '/deadlines': 'Deadlines',
-  '/projects': 'Projects',
-  '/manuscripts': 'Manuscripts',
-  '/ideas': 'Ideas',
-  '/digest': 'Research Digest',
-  '/grants': 'Grants',
-  '/meetings': 'Meetings',
-  '/activity': 'Activity',
-  '/analytics': 'Analytics',
-  '/search': 'Search',
-  '/settings': 'Settings',
-  '/meeting-notes': 'Meeting Transcripts',
+  [PATHS.dashboard]: 'Dashboard',
+  [PATHS.personal]: 'My Hub',
+  [PATHS.tasks]: 'Tasks',
+  [PATHS.myTasks]: 'My Tasks',
+  [PATHS.calendar]: 'Calendar',
+  [PATHS.deadlines]: 'Deadlines',
+  [PATHS.projects]: 'Projects',
+  [PATHS.manuscripts]: 'Manuscripts',
+  [PATHS.ideas]: 'Ideas',
+  [PATHS.digest]: 'Research Digest',
+  [PATHS.grants]: 'Grants',
+  [PATHS.meetings]: 'Meetings',
+  [PATHS.activity]: 'Activity',
+  [PATHS.analytics]: 'Analytics',
+  [PATHS.search]: 'Search',
+  [PATHS.settings]: 'Settings',
+  [PATHS.meetingNotes]: 'Meeting Transcripts',
 }
 
 function labelForPath(path: string): string | null {
-  // Exact match
+  // Exact match (covers both /portal/x and /x if the legacy redirects haven't fired yet)
   if (PATH_LABELS[path]) return PATH_LABELS[path]
 
-  // Dynamic routes
-  if (path.startsWith('/projects/')) return path.split('/')[2]?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Project'
-  if (path.startsWith('/meetings/')) return 'Meeting Detail'
+  // Dynamic routes — check /portal/<prefix>/ first, then legacy root as fallback
+  if (path.startsWith(`${PATHS.projects}/`)) {
+    return path.split('/').pop()?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Project'
+  }
+  if (path.startsWith(`${PATHS.meetings}/`)) return 'Meeting Detail'
   if (path.startsWith('/publications/')) return 'Publication'
   if (path.startsWith('/team/')) return 'Team Member'
+  if (path.startsWith('/portal/team/')) return 'Team Member'
 
   return null
 }

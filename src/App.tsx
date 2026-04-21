@@ -10,6 +10,7 @@ import PageErrorBoundary from './components/PageErrorBoundary'
 import RequireAuth from './components/RequireAuth'
 const Home = lazy(() => import('./pages/Home'))
 import { AuthProvider } from './context/AuthContext'
+import { PATHS } from './constants/paths'
 
 // Error boundary to prevent one page crash from taking down the app
 class ErrorBoundary extends Component<
@@ -53,7 +54,7 @@ class ErrorBoundary extends Component<
               Try again
             </button>
             <button
-              onClick={() => { window.location.href = '/dashboard' }}
+              onClick={() => { window.location.href = PATHS.dashboard }}
               style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', backgroundColor: 'transparent', color: 'var(--slate)', cursor: 'pointer' }}
             >
               Go to Dashboard

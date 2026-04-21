@@ -433,7 +433,7 @@ export default function TaskContextMenu({
 
       {/* Copy link */}
       <MenuItem onClick={() => handleAction(() => {
-        const url = `${window.location.origin}/portal/tasks?task=${task.id}`
+        const url = `${window.location.origin}${PATHS.tasks}?task=${task.id}`
         copyToClipboard(url)
       })}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
