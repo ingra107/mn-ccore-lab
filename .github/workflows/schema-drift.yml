@@ -49,48 +49,91 @@ jobs:
       - name: Install wrangler
         run: npm install -g wrangler@^4.14.0
 
+      - name: Write SQL normalizer
+        # Both prod (via sqlite_master) and committed (via files) need the
+        # same canonical form before diff. Without this, multi-line CREATE
+        # in schema.sql vs single-line in sqlite_master produces phantom
+        # drift on every comparison.
+        run: |
+          cat > normalize-sql.cjs <<'EOF'
+          // normalizeSql(rawSqlText) -> sorted canonical statements joined by '\n'
+          //   - strips line comments (--) and block comments (/* */)
+          //   - splits on semicolons (statement terminator)
+          //   - collapses all whitespace runs to single space
+          //   - removes "IF NOT EXISTS" (D1 doesn't preserve it in sqlite_master)
+          //   - drops empty statements + sqlite_sequence (auto-generated)
+          //   - sorts case-insensitively for stable diff
+          function normalizeSql(text) {
+            const stripped = text
+              .replace(/\/\*[\s\S]*?\*\//g, ' ')   // block comments
+              .replace(/--[^\n]*/g, ' ')           // line comments
+            const stmts = stripped
+              .split(';')
+              .map(s => s.replace(/\s+/g, ' ').trim())
+              .map(s => s.replace(/\bIF NOT EXISTS\b/gi, '').replace(/\s+/g, ' ').trim())
+              .filter(s => s.length > 0)
+              .filter(s => !/^CREATE TABLE\s+sqlite_sequence\b/i.test(s))
+              .filter(s => !/^CREATE TABLE\s+_cf_KV\b/i.test(s))   // CF internal
+              .filter(s => !/^CREATE TABLE\s+d1_migrations\b/i.test(s))
+            return stmts.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' })).join('\n')
+          }
+          module.exports = { normalizeSql }
+          EOF
+
       - name: Dump prod D1 schema
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          # `.schema` is a sqlite3 CLI dot-command, NOT SQL — D1's HTTP API
-          # rejects it with SQLITE_ERROR 7500. Query sqlite_master directly
-          # for the equivalent (every CREATE TABLE/INDEX/TRIGGER/VIEW with
-          # a non-null sql definition).
+          # `.schema` is a sqlite3 CLI dot-command — D1's HTTP API rejects
+          # with SQLITE_ERROR 7500. Query sqlite_master directly.
           wrangler d1 execute mnccore-lab \
             --remote \
             --command "SELECT sql FROM sqlite_master WHERE type IN ('table','index','trigger','view') AND sql IS NOT NULL ORDER BY type, name" \
             --json > prod-schema.json
-          # Extract the raw statements into one sortable file
-          node -e "const j=require('./prod-schema.json');const rows=(j[0]&&j[0].results)||[];const sql=rows.map(r=>r.sql||Object.values(r)[0]).filter(Boolean).sort().join('\n');require('fs').writeFileSync('prod-schema.sql',sql+'\n')"
+          node -e "
+            const { normalizeSql } = require('./normalize-sql.cjs');
+            const j = require('./prod-schema.json');
+            const rows = (j[0] && j[0].results) || [];
+            const raw = rows.map(r => r.sql || Object.values(r)[0]).filter(Boolean).join(';\n') + ';';
+            require('fs').writeFileSync('prod-schema.sql', normalizeSql(raw) + '\n');
+          "
 
       - name: Build committed schema reference
         run: |
-          # Concatenate api/schema.sql + every schema-v*.sql in version order.
-          # Uses the same ordering rule as scripts/local-db-bootstrap.ts:
-          # base schema.sql first, then vN.sql before any vN-variant.sql.
+          # Execute committed schema + migrations against a local SQLite
+          # database, then dump the resulting CREATE statements. This
+          # produces exactly the same shape as prod (CREATE TABLE with
+          # all final columns merged) — apples-to-apples comparison.
+          # Pure-text diff fails because committed has CREATE + ALTER
+          # statements while prod has the merged CREATE only.
           node -e "
-            const fs=require('fs');const path=require('path');
-            const dir='api';
-            const base=fs.readFileSync(path.join(dir,'schema.sql'),'utf8');
-            const mig=fs.readdirSync(dir)
-              .map(f=>{const m=f.match(/^schema-v(\d+)(?:-([^.]+))?\.sql$/);return m?{file:f,version:+m[1],variant:m[2]?1:0}:null})
+            const fs = require('fs');
+            const path = require('path');
+            const dir = 'api';
+            const base = fs.readFileSync(path.join(dir, 'schema.sql'), 'utf8');
+            const mig = fs.readdirSync(dir)
+              .map(f => { const m = f.match(/^schema-v(\d+)(?:-([^.]+))?\.sql\$/); return m ? { file: f, version: +m[1], variant: m[2] ? 1 : 0 } : null })
               .filter(Boolean)
-              .sort((a,b)=>a.version-b.version||a.variant-b.variant)
-              .map(x=>fs.readFileSync(path.join(dir,x.file),'utf8'))
+              .sort((a, b) => a.version - b.version || a.variant - b.variant)
+              .map(x => fs.readFileSync(path.join(dir, x.file), 'utf8'))
               .join('\n');
-            // Strip comments + blanks + normalize whitespace for a coarse diff
-            const norm=(base+'\n'+mig).split('\n')
-              .map(l=>l.trim())
-              .filter(l=>l && !l.startsWith('--'))
-              .join('\n');
-            fs.writeFileSync('committed-schema.sql',norm+'\n');
+            fs.writeFileSync('committed-bundle.sql', base + '\n' + mig + '\n');
+          "
+          # Execute against a fresh SQLite db, then .dump to get all CREATEs
+          # in canonical re-executable form (each statement terminated by ';').
+          rm -f committed.db
+          sqlite3 committed.db < committed-bundle.sql
+          sqlite3 committed.db .schema > committed-raw.sql
+          node -e "
+            const { normalizeSql } = require('./normalize-sql.cjs');
+            const raw = require('fs').readFileSync('committed-raw.sql', 'utf8');
+            require('fs').writeFileSync('committed-schema.sql', normalizeSql(raw) + '\n');
           "
 
       - name: Diff prod vs committed
         run: |
-          # Coarse whitespace-insensitive comparison.  Exits non-zero on diff.
+          # Both sides are now canonical — true line-by-line diff.
           if ! diff -u committed-schema.sql prod-schema.sql > schema-drift.diff; then
             echo "::error::D1 schema drift detected — prod diverges from committed api/schema*.sql"
             echo "--- committed-schema.sql vs prod-schema.sql ---"
