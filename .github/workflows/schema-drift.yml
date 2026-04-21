@@ -101,29 +101,15 @@ jobs:
 
       - name: Build committed schema reference
         run: |
-          # Execute committed schema + migrations against a local SQLite
-          # database, then dump the resulting CREATE statements. This
-          # produces exactly the same shape as prod (CREATE TABLE with
-          # all final columns merged) — apples-to-apples comparison.
-          # Pure-text diff fails because committed has CREATE + ALTER
-          # statements while prod has the merged CREATE only.
-          node -e "
-            const fs = require('fs');
-            const path = require('path');
-            const dir = 'api';
-            const base = fs.readFileSync(path.join(dir, 'schema.sql'), 'utf8');
-            const mig = fs.readdirSync(dir)
-              .map(f => { const m = f.match(/^schema-v(\d+)(?:-([^.]+))?\.sql\$/); return m ? { file: f, version: +m[1], variant: m[2] ? 1 : 0 } : null })
-              .filter(Boolean)
-              .sort((a, b) => a.version - b.version || a.variant - b.variant)
-              .map(x => fs.readFileSync(path.join(dir, x.file), 'utf8'))
-              .join('\n');
-            fs.writeFileSync('committed-bundle.sql', base + '\n' + mig + '\n');
-          "
-          # Execute against a fresh SQLite db, then .dump to get all CREATEs
-          # in canonical re-executable form (each statement terminated by ';').
+          # api/schema.sql is the *canonical* state — every column added
+          # by a migration is also reflected here. Migration files
+          # (schema-v*.sql) are HISTORICAL archive of how prod got there;
+          # replaying them against a fresh DB produces "duplicate column"
+          # errors because schema.sql already has the additions inline.
+          # So we bootstrap from schema.sql alone, then dump the result
+          # for apples-to-apples comparison with prod's sqlite_master.
           rm -f committed.db
-          sqlite3 committed.db < committed-bundle.sql
+          sqlite3 committed.db < api/schema.sql
           sqlite3 committed.db .schema > committed-raw.sql
           node -e "
             const { normalizeSql } = require('./normalize-sql.cjs');
