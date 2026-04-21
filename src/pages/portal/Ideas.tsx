@@ -524,7 +524,7 @@ function IdeaRowView({
           padding: 'var(--row-padding-y, 10px) var(--sp-lg)',
           alignItems: 'center',
           gap: 'var(--sp-md)',
-          height: 'var(--row-height, 44px)',
+          minHeight: 'var(--row-height, 44px)',
           boxSizing: 'border-box' as const,
           transition: 'background-color var(--duration-fast)',
         }}
@@ -559,9 +559,11 @@ function IdeaRowView({
           {idea.research_area && (
             <span
               style={{
+                display: 'block',
                 fontSize: 'var(--text-label)',
                 color: 'var(--gold)',
                 opacity: 0.85,
+                marginTop: 2,
               }}
             >
               {idea.research_area}

@@ -96,7 +96,7 @@ export default function Network() {
     <div
       className="flex flex-col"
       style={{
-        height: '100vh',
+        minHeight: '100vh',
         background: 'linear-gradient(135deg, oklch(0.12 0.005 250) 0%, oklch(0.16 0.005 250) 40%, oklch(0.25 0.01 230) 100%)',
       }}
     >

@@ -29,7 +29,18 @@ export interface AuthUser {
 }
 
 export async function getAuthUser(request: Request, env: Env): Promise<AuthUser | null> {
-  const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
+  // Prefer the header (set by CF Access when it proxies a request — only on
+  // CF-Access-gated destinations). Fall back to the CF_Authorization cookie
+  // so endpoints OUTSIDE the CF Access scope (e.g. /api/* after Phase 37
+  // scoped CF Access to /portal/*) can still authenticate browser users.
+  let jwt = request.headers.get('Cf-Access-Jwt-Assertion');
+  if (!jwt) {
+    const cookieHeader = request.headers.get('Cookie');
+    if (cookieHeader) {
+      const match = cookieHeader.match(/(?:^|;\s*)CF_Authorization=([^;]+)/);
+      if (match) jwt = decodeURIComponent(match[1]);
+    }
+  }
   if (!jwt) return null;
 
   const payload = await verifyCfAccessJwt(jwt, env);
