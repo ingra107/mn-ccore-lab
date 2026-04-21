@@ -1,6 +1,6 @@
 import { lazy, Suspense, Component } from 'react'
 import type { ReactNode, ErrorInfo } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MotionConfig } from 'framer-motion'
 import Layout from './components/Layout'
@@ -158,6 +158,21 @@ function PageLoader() {
   )
 }
 
+/**
+ * Navigate helper that expands `:slug`-style path params into the target URL.
+ * React Router's plain <Navigate to="/x/:slug"> does NOT substitute params.
+ * Used by the legacy-path redirect shims so that e.g. /projects/foo bounces
+ * correctly to /portal/projects/foo instead of /portal/projects/:slug.
+ */
+function NavigateWithParams({ to }: { to: string }) {
+  const params = useParams()
+  let resolved = to
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) resolved = resolved.replace(`:${key}`, value)
+  }
+  return <Navigate to={resolved} replace />
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -185,55 +200,49 @@ export default function App() {
                   <Route path="/contact" element={<ErrorBoundary><Contact /></ErrorBoundary>} />
                 </Route>
 
+                {/* Legacy root-path redirects (2026-04-21 migration).
+                    Anyone hitting an old URL bounces to the /portal/*
+                    equivalent. Placed OUTSIDE RequireAuth so the bounce
+                    happens before any auth gate — the portal URL handles
+                    auth. Kept indefinitely; cost is negligible. */}
+                <Route path="/dashboard" element={<Navigate to="/portal/dashboard" replace />} />
+                <Route path="/personal" element={<Navigate to="/portal/personal" replace />} />
+                <Route path="/my-items" element={<Navigate to="/portal/my-items" replace />} />
+                <Route path="/my-tasks" element={<Navigate to="/portal/my-tasks" replace />} />
+                <Route path="/tasks" element={<Navigate to="/portal/my-tasks" replace />} />
+                <Route path="/calendar" element={<Navigate to="/portal/calendar" replace />} />
+                <Route path="/deadlines" element={<Navigate to="/portal/deadlines" replace />} />
+                <Route path="/deadline-cascade" element={<Navigate to="/portal/deadline-cascade" replace />} />
+                <Route path="/projects" element={<Navigate to="/portal/projects" replace />} />
+                <Route path="/projects/:slug" element={<NavigateWithParams to="/portal/projects/:slug" />} />
+                <Route path="/manuscripts" element={<Navigate to="/portal/manuscripts" replace />} />
+                <Route path="/ideas" element={<Navigate to="/portal/ideas" replace />} />
+                <Route path="/ask" element={<Navigate to="/portal/ask" replace />} />
+                <Route path="/decisions" element={<Navigate to="/portal/decisions" replace />} />
+                <Route path="/narratives" element={<Navigate to="/portal/narratives" replace />} />
+                <Route path="/digest" element={<Navigate to="/portal/digest" replace />} />
+                <Route path="/research-digest" element={<Navigate to="/portal/digest" replace />} />
+                <Route path="/search" element={<Navigate to="/portal/search" replace />} />
+                <Route path="/grants" element={<Navigate to="/portal/grants" replace />} />
+                <Route path="/meetings" element={<Navigate to="/portal/meetings" replace />} />
+                <Route path="/meetings/:id" element={<NavigateWithParams to="/portal/meetings/:id" />} />
+                <Route path="/meetings/:id/prep" element={<NavigateWithParams to="/portal/meetings/:id/prep" />} />
+                <Route path="/meeting-prep" element={<Navigate to="/portal/meetings" replace />} />
+                <Route path="/meeting-notes" element={<Navigate to="/portal/meeting-notes" replace />} />
+                <Route path="/activity" element={<Navigate to="/portal/activity" replace />} />
+                <Route path="/analytics" element={<Navigate to="/portal/analytics" replace />} />
+                <Route path="/pi/analytics" element={<Navigate to="/portal/pi/analytics" replace />} />
+                <Route path="/pi-analytics" element={<Navigate to="/portal/pi/analytics" replace />} />
+                <Route path="/mentee-milestones" element={<Navigate to="/portal/mentee-milestones" replace />} />
+                <Route path="/pb" element={<Navigate to="/portal/pb" replace />} />
+                <Route path="/sessions" element={<Navigate to="/portal/sessions" replace />} />
+                <Route path="/settings" element={<Navigate to="/portal/settings" replace />} />
+
                 {/* Portal pages: sidebar layout — wrapped in RequireAuth so
                     flipping VITE_REQUIRE_AUTH=1 or appending ?strict=1 to
                     the URL instantly gates portal access (2026-04-18). */}
                 <Route element={<RequireAuth><PortalLayout /></RequireAuth>}>
-                  {/* Workspace */}
-                  <Route path="/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Dashboard"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/personal" element={<ErrorBoundary><Personal /></ErrorBoundary>} />
-                  <Route path="/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
-
-                  {/* Planning */}
-                  <Route path="/my-tasks" element={<ErrorBoundary><MyTasks /></ErrorBoundary>} />
-                  <Route path="/tasks" element={<Navigate to="/my-tasks" replace />} />
-                  <Route path="/calendar" element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
-                  <Route path="/deadlines" element={<ErrorBoundary><Deadlines /></ErrorBoundary>} />
-                  <Route path="/deadline-cascade" element={<ErrorBoundary><DeadlineCascadePage /></ErrorBoundary>} />
-
-                  {/* Research */}
-                  <Route path="/projects" element={<ErrorBoundary><Projects /></ErrorBoundary>} />
-                  <Route path="/projects/:slug" element={<ErrorBoundary><PageErrorBoundary pageName="ProjectDetail"><ProjectDetail /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/manuscripts" element={<ErrorBoundary><Manuscripts /></ErrorBoundary>} />
-                  <Route path="/ideas" element={<ErrorBoundary><Ideas /></ErrorBoundary>} />
-                  <Route path="/ask" element={<ErrorBoundary><AskTheLab /></ErrorBoundary>} />
-                  <Route path="/decisions" element={<ErrorBoundary><PageErrorBoundary pageName="DecisionsPage"><DecisionsPage /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/narratives" element={<ErrorBoundary><NarrativesPage /></ErrorBoundary>} />
-                  <Route path="/digest" element={<ErrorBoundary><Digest /></ErrorBoundary>} />
-                  <Route path="/research-digest" element={<Navigate to="/digest" replace />} />
-                  <Route path="/search" element={<ErrorBoundary><SearchPage /></ErrorBoundary>} />
-                  <Route path="/grants" element={<ErrorBoundary><PageErrorBoundary pageName="Grants"><GrantsPortal /></PageErrorBoundary></ErrorBoundary>} />
-
-                  {/* Meetings */}
-                  <Route path="/meetings" element={<ErrorBoundary><Meetings /></ErrorBoundary>} />
-                  <Route path="/meetings/:id" element={<ErrorBoundary><MeetingDetail /></ErrorBoundary>} />
-                  <Route path="/meetings/:id/prep" element={<ErrorBoundary><MeetingPrep /></ErrorBoundary>} />
-                  <Route path="/meeting-prep" element={<Navigate to="/meetings" replace />} />
-                  <Route path="/meeting-notes" element={<ErrorBoundary><MeetingNotesPage /></ErrorBoundary>} />
-
-                  {/* Lab */}
-                  <Route path="/activity" element={<ErrorBoundary><ActivityPage /></ErrorBoundary>} />
-                  <Route path="/analytics" element={<ErrorBoundary><AnalyticsPage /></ErrorBoundary>} />
-                  <Route path="/pi/analytics" element={<ErrorBoundary><PageErrorBoundary pageName="PIAnalytics"><PIAnalytics /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/pi-analytics" element={<ErrorBoundary><PageErrorBoundary pageName="PIAnalytics"><PIAnalytics /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/mentee-milestones" element={<ErrorBoundary><MenteeMilestones /></ErrorBoundary>} />
-                  <Route path="/pb" element={<ErrorBoundary><PBSector /></ErrorBoundary>} />
-                  <Route path="/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
-                  <Route path="/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
-
-                  {/* Portal-prefixed canonical routes (2026-04-21 migration).
-                      Root-level equivalents above will become Navigate
-                      redirects after Phase 4. Both work during migration. */}
+                  {/* Portal-prefixed canonical routes (2026-04-21 migration). */}
                   <Route path="/portal/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Dashboard"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/personal" element={<ErrorBoundary><Personal /></ErrorBoundary>} />
                   <Route path="/portal/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
