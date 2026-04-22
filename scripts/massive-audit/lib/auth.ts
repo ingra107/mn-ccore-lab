@@ -13,10 +13,12 @@ export interface AuditAuth {
   pbApiKey: string
 }
 
+import { requirePbApiKey } from '../../_lib/load-secrets.js'
+
 export function loadAuth(): AuditAuth {
   const cfAccessId = process.env.CF_ACCESS_CLIENT_ID
   const cfAccessSecret = process.env.CF_ACCESS_CLIENT_SECRET
-  const pbApiKey = process.env.PB_API_KEY || 'Bsn6ra_KI_QX8yqGPbqhGPyPBI0mT1DGWdcWJszf6XU'
+  const pbApiKey = requirePbApiKey()
 
   if (!cfAccessId) {
     throw new Error(

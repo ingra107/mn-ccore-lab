@@ -16,9 +16,10 @@
 import { chromium, type Page, type BrowserContext } from '@playwright/test'
 import { writeFileSync, mkdirSync, existsSync, appendFileSync } from 'fs'
 import { join } from 'path'
+import { requirePbApiKey } from './_lib/load-secrets.js'
 
 const BASE = process.env.HUB_AUDIT_BASE || 'https://mn-ccore-lab.pages.dev'
-const AUTH_TOKEN = process.env.PB_API_KEY || 'Bsn6ra_KI_QX8yqGPbqhGPyPBI0mT1DGWdcWJszf6XU'
+const AUTH_TOKEN = requirePbApiKey()
 const TIMESTAMP = new Date().toISOString().replace(/[-T:]/g, '').slice(0, 13) // YYYYMMDDTHHMM
 const ROOT = `review/audit/${TIMESTAMP}`
 

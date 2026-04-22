@@ -17,9 +17,11 @@ const TS = new Date().toISOString().replace(/[-T:]/g, '').slice(0, 13)
 const OUT = `review/audit/e2e-validation/${TS}`
 mkdirSync(OUT, { recursive: true })
 
+import { requirePbApiKey } from './_lib/load-secrets.js'
+
 const CFID = process.env.CF_ACCESS_CLIENT_ID
 const CFSEC = process.env.CF_ACCESS_CLIENT_SECRET
-const PBKEY = process.env.PB_API_KEY || 'Bsn6ra_KI_QX8yqGPbqhGPyPBI0mT1DGWdcWJszf6XU'
+const PBKEY = requirePbApiKey()
 
 if (!CFID || !CFSEC) {
   console.error('FAIL: CF_ACCESS_CLIENT_ID / CF_ACCESS_CLIENT_SECRET env required')
