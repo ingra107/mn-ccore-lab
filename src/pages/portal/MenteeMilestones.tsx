@@ -802,6 +802,7 @@ function FilterSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      aria-label={placeholder}
       className="rounded-full border px-3 py-1.5 text-xs"
       style={{
         fontSize: '12px',
@@ -894,10 +895,11 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
         <div className="flex flex-col gap-4">
           {/* Mentee */}
           <div>
-            <label style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
+            <label htmlFor="mentee-milestone-mentee" style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
               Mentee
             </label>
             <select
+              id="mentee-milestone-mentee"
               value={menteeSlug}
               onChange={(e) => setMenteeSlug(e.target.value)}
               style={{
@@ -920,10 +922,11 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
 
           {/* Type */}
           <div>
-            <label style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
+            <label htmlFor="mentee-milestone-type" style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
               Milestone Type
             </label>
             <select
+              id="mentee-milestone-type"
               value={milestoneType}
               onChange={(e) => setMilestoneType(e.target.value)}
               style={{

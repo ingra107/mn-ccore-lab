@@ -1189,10 +1189,10 @@ function AddGrantMilestoneModal({
 
         <div className="flex flex-col gap-3">
           <div>
-            <label style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+            <label htmlFor="grant-milestone-grant" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
               Grant
             </label>
-            <select value={grantId} onChange={(e) => setGrantId(e.target.value)} style={inputStyle}>
+            <select id="grant-milestone-grant" value={grantId} onChange={(e) => setGrantId(e.target.value)} style={inputStyle}>
               {grants.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.mechanism} - {g.title}
@@ -1202,10 +1202,10 @@ function AddGrantMilestoneModal({
           </div>
 
           <div>
-            <label style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+            <label htmlFor="grant-milestone-type" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
               Milestone Type
             </label>
-            <select value={milestoneType} onChange={(e) => setMilestoneType(e.target.value)} style={inputStyle}>
+            <select id="grant-milestone-type" value={milestoneType} onChange={(e) => setMilestoneType(e.target.value)} style={inputStyle}>
               {MILESTONE_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
               ))}

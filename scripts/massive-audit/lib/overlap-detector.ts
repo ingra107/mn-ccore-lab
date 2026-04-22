@@ -73,6 +73,14 @@ const OVERLAP_DETECTOR_SCRIPT = `(() => {
       if (occlusion < 0.05) continue;
       const upperCls = ((upper.className && typeof upper.className === 'string') ? upper.className : '').toLowerCase();
       const lowerCls = ((lower.className && typeof lower.className === 'string') ? lower.className : '').toLowerCase();
+      const upperTag = upper.tagName.toLowerCase();
+      // Semantic landmarks (nav/header/aside) + ARIA roles are chrome — by
+      // definition they overlay content. Skip any overlap where the upper is
+      // one of these, regardless of what's beneath. Prevents MobileTabBar from
+      // spamming every page with nav-over-content "hits".
+      const upperRole = upper.getAttribute && upper.getAttribute('role');
+      if (upperTag === 'nav' || upperTag === 'header' || upperTag === 'aside') continue;
+      if (upperRole === 'navigation' || upperRole === 'banner' || upperRole === 'complementary') continue;
       if ((upperCls.includes('header') || upperCls.includes('nav') || upperCls.includes('sidebar')) &&
           (lowerCls.includes('main') || lowerCls.includes('content'))) continue;
       if (lowerCls.includes('backdrop') || lowerCls.includes('overlay')) continue;

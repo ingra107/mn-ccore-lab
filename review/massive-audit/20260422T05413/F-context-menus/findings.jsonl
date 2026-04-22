@@ -1,0 +1,4 @@
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"PASS","scenario":"F context menu opens (7 items)"}
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"PASS","scenario":"F context menu shows Status submenu trigger"}
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"PASS","scenario":"F context menu shows Priority submenu trigger"}
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"PASS","scenario":"F Escape closes context menu"}

@@ -1,0 +1,1 @@
+{"section":"C-entities/C13-lab_question","viewport":"desktop","theme":"dark","level":"BUG","id":"C13.1","sev":"P1","scenario":"lab_question reachable in API after create","observed":"not in /api/questions after submit","expected":"entity present"}

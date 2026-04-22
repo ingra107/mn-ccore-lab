@@ -39,7 +39,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
           fontSize: 14,
         }}
       >
-        <span style={{ opacity: 0.55 }}>Checking your session…</span>
+        <span style={{ opacity: 0.85 }}>Checking your session…</span>
       </div>
     )
   }
@@ -196,7 +196,7 @@ function SignInWall() {
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               color: '#e2e8f0',
-              opacity: 0.55,
+              opacity: 0.85,
             }}
           >
             What you&rsquo;ll get
@@ -252,7 +252,7 @@ function SignInWall() {
           fontSize: 11,
           letterSpacing: '0.04em',
           color: '#e2e8f0',
-          opacity: 0.4,
+          opacity: 0.8,
           padding: '0 24px',
         }}
       >

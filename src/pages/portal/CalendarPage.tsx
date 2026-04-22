@@ -316,7 +316,7 @@ function MonthView({ currentDate, events, denseWeek = false }: { currentDate: Da
             <div
               key={`week-${wi}`}
               className="border-b px-3 py-1.5 text-[10px] uppercase tracking-wider"
-              style={{ color: 'var(--slate)', opacity: 0.55, borderColor: 'var(--border-subtle)', background: 'var(--hover-subtle)' }}
+              style={{ color: 'var(--slate)', opacity: 0.85, borderColor: 'var(--border-subtle)', background: 'var(--hover-subtle)' }}
             >
               {label} · no events
             </div>

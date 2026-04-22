@@ -1,0 +1,3 @@
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"PASS","scenario":"F context menu shows Status submenu"}
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"PASS","scenario":"F context menu shows Priority submenu"}
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"BUG","id":"F.3","sev":"P2","scenario":"Escape closes context menu","observed":"menu still in DOM","expected":"closed"}

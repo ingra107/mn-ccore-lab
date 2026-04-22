@@ -297,6 +297,7 @@ export default function SessionHistory() {
           <select
             value={projectFilter}
             onChange={(e) => setProjectFilter(e.target.value)}
+            aria-label="Filter by project"
             style={{
               fontSize: 12,
               padding: '5px 10px',

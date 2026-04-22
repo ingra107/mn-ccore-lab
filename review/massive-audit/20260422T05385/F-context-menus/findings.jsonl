@@ -1,0 +1,4 @@
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"PASS","scenario":"F context menu opens (7 items)"}
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"BUG","id":"F.2a","sev":"P1","scenario":"context menu Status trigger","observed":"no item titled Status","expected":"Status submenu trigger"}
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"BUG","id":"F.2b","sev":"P1","scenario":"context menu Priority trigger","observed":"no item titled Priority","expected":"Priority submenu trigger"}
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"PASS","scenario":"F Escape closes context menu"}

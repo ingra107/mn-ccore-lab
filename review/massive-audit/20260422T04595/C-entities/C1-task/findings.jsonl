@@ -1,0 +1,14 @@
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.1 modal opens with data-testid"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.1 task row appears in list (_TEST_DELETE_c1task_mo9lgyb1_msi2)"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.2 status InlineSelect change succeeded"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.2 API reflects status=in_progress"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.3 priority InlineSelect change succeeded"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.3 API reflects priority=high"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.4 API reflects due_date=2026-04-23"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.5 API reflects assignee=nate-mesfin"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.6 status listbox attached to DOM after click"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.6 listbox still in DOM after 800ms (no auto-close race)"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.7 task row visible after reload"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.7 status cell shows In Progress after reload"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.8 batch soft-delete returned ok"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.8 task no longer in default list (filtered by deleted_at)"}

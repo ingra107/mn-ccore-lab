@@ -270,10 +270,11 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
 
           {/* Link to meeting */}
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            <label htmlFor="meeting-notes-link" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Link to Meeting (optional)
             </label>
             <select
+              id="meeting-notes-link"
               value={meetingId}
               onChange={(e) => setMeetingId(e.target.value)}
               className="w-full rounded-md border px-3 py-2 text-sm"

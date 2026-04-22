@@ -1,0 +1,2 @@
+{"section":"L-search","viewport":"desktop","theme":"dark","level":"PASS","scenario":"L search page renders search input"}
+{"section":"L-search","viewport":"desktop","theme":"dark","level":"PASS","scenario":"L Ctrl+K opens command palette with search input"}

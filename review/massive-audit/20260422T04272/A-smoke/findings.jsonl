@@ -1,0 +1,6 @@
+{"section":"A-smoke","viewport":"desktop","theme":"dark","level":"PASS","scenario":"A1 /api/health OK (checks=6)"}
+{"section":"A-smoke","viewport":"desktop","theme":"dark","level":"PASS","scenario":"A2 unauth /portal/dashboard returned 302 (gate active)"}
+{"section":"A-smoke","viewport":"desktop","theme":"dark","level":"PASS","scenario":"A3 service-token /portal/dashboard returned 200"}
+{"section":"A-smoke","viewport":"desktop","theme":"dark","level":"PASS","scenario":"A4 noBearer POST gated correctly (401)"}
+{"section":"A-smoke","viewport":"desktop","theme":"dark","level":"PASS","scenario":"A5 task created via Bearer auth (id=613d3c5d335c…)"}
+{"section":"A-smoke","viewport":"desktop","theme":"dark","level":"PASS","scenario":"A6 dashboard renders in headless browser with auth headers"}

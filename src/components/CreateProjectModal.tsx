@@ -173,12 +173,14 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label
+                htmlFor="create-project-category"
                 className="block text-xs font-medium mb-1"
                 style={{ color: 'var(--slate)' }}
               >
                 Category
               </label>
               <select
+                id="create-project-category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full rounded-md border px-2.5 py-2 text-sm"
@@ -191,12 +193,14 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
             </div>
             <div>
               <label
+                htmlFor="create-project-stage"
                 className="block text-xs font-medium mb-1"
                 style={{ color: 'var(--slate)' }}
               >
                 Stage
               </label>
               <select
+                id="create-project-stage"
                 value={stage}
                 onChange={(e) => setStage(e.target.value)}
                 className="w-full rounded-md border px-2.5 py-2 text-sm"

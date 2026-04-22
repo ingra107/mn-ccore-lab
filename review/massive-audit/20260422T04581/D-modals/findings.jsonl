@@ -1,0 +1,11 @@
+{"section":"D-modals","viewport":"desktop","theme":"dark","level":"PASS","scenario":"D CreateTaskModal renders dialog"}
+{"section":"D-modals","viewport":"desktop","theme":"dark","level":"PASS","scenario":"D CreateTaskModal Escape closes"}
+{"section":"D-modals","viewport":"desktop","theme":"dark","level":"PASS","scenario":"D CreateProjectModal renders dialog"}
+{"section":"D-modals","viewport":"desktop","theme":"dark","level":"PASS","scenario":"D CreateProjectModal Escape closes"}
+{"section":"D-modals","viewport":"desktop","theme":"dark","level":"PASS","scenario":"D CreateIdeaModal renders dialog"}
+{"section":"D-modals","viewport":"desktop","theme":"dark","level":"PASS","scenario":"D CreateIdeaModal Escape closes"}
+{"section":"D-modals","viewport":"desktop","theme":"dark","level":"PASS","scenario":"D CreateQuestionModal renders dialog"}
+{"section":"D-modals","viewport":"desktop","theme":"dark","level":"PASS","scenario":"D CreateQuestionModal Escape closes"}
+{"section":"D-modals","viewport":"desktop","theme":"dark","level":"BUG","id":"D.CommandPalette.1","sev":"P1","scenario":"CommandPalette renders dialog","observed":"no dialog/testid in DOM","expected":"role=dialog"}
+{"section":"D-modals","viewport":"desktop","theme":"dark","level":"PASS","scenario":"D ShortcutHelp renders dialog"}
+{"section":"D-modals","viewport":"desktop","theme":"dark","level":"BUG","id":"D.ShortcutHelp.2","sev":"P2","scenario":"ShortcutHelp Escape closes","observed":"still in DOM","expected":"closed"}

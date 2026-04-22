@@ -1,0 +1,5 @@
+{"section":"C-entities/C2-project","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C2.1 project created (5476e6c7f3a8…, slug=test-delete-c2proj-mo9lhkrq-m538)"}
+{"section":"C-entities/C2-project","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C2.2 API reflects stage=Data Collection"}
+{"section":"C-entities/C2-project","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C2.3 project visible after reload"}
+{"section":"C-entities/C2-project","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C2.4 soft-delete returned ok"}
+{"section":"C-entities/C2-project","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C2.4 project absent from default list after delete"}

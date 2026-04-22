@@ -894,8 +894,8 @@ export default function Meetings() {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label style={labelStyle}>Assignee</label>
-                        <select value={newActionAssignee} onChange={(e) => setNewActionAssignee(e.target.value)} style={inputStyle}>
+                        <label htmlFor="meeting-action-assignee" style={labelStyle}>Assignee</label>
+                        <select id="meeting-action-assignee" value={newActionAssignee} onChange={(e) => setNewActionAssignee(e.target.value)} style={inputStyle}>
                           {TEAM_OPTIONS.map((m) => <option key={m.slug} value={m.slug}>{m.name}</option>)}
                         </select>
                       </div>
@@ -905,8 +905,8 @@ export default function Meetings() {
                       </div>
                     </div>
                     <div>
-                      <label style={labelStyle}>Project (optional)</label>
-                      <select value={newActionProject} onChange={(e) => setNewActionProject(e.target.value)} style={inputStyle}>
+                      <label htmlFor="meeting-action-project" style={labelStyle}>Project (optional)</label>
+                      <select id="meeting-action-project" value={newActionProject} onChange={(e) => setNewActionProject(e.target.value)} style={inputStyle}>
                         <option value="">No project link</option>
                         {projectOptions.map((p) => <option key={p.title} value={p.title}>{p.title}</option>)}
                       </select>

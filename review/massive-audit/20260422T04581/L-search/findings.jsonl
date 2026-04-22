@@ -1,0 +1,2 @@
+{"section":"L-search","viewport":"desktop","theme":"dark","level":"PASS","scenario":"L search page renders search input"}
+{"section":"L-search","viewport":"desktop","theme":"dark","level":"BUG","id":"L.1","sev":"P1","scenario":"command palette renders","observed":"no command-search input","expected":"palette input visible"}

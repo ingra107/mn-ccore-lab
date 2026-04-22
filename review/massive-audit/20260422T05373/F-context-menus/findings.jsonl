@@ -1,0 +1,3 @@
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"BUG","id":"F.1","sev":"P1","scenario":"context menu opens","observed":"no menu/listbox with Status text in DOM","expected":"menu portal visible"}
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"BUG","id":"F.2","sev":"P1","scenario":"context menu Priority item","observed":"not found in menu portal","expected":"Priority item visible"}
+{"section":"F-context-menus","viewport":"desktop","theme":"dark","level":"PASS","scenario":"F Escape closes context menu"}

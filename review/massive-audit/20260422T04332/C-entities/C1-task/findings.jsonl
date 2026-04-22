@@ -1,0 +1,6 @@
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.1 modal opens with data-testid"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.1 task row appears in list (_TEST_DELETE_c1task_mo9k4ymi_wwdd)"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.2 status InlineSelect change succeeded"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.2 API reflects status=in_progress"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.3 priority InlineSelect change succeeded"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.3 API reflects priority=high"}

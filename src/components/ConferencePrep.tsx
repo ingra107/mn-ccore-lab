@@ -289,8 +289,8 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         opacity: 0.75,
                         padding: '2px',
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.color = 'var(--maroon)' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.3'; e.currentTarget.style.color = 'var(--slate)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--maroon)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.color = 'var(--slate)' }}
                     >
                       <Trash2 size={12} />
                     </button>

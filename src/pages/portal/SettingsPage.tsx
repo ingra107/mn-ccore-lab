@@ -164,7 +164,7 @@ export default function SettingsPage() {
   if (settingsLoading) return <TextSkeleton lines={8} />
 
   return (
-    <div>
+    <div className="content-container">
       <PageHeader icon={<Settings size={20} />} title="Settings" subtitle="Changes are saved automatically" />
 
       {/* Team Directory shortcut */}
@@ -495,7 +495,7 @@ export default function SettingsPage() {
               </div>
               <button
                 role="switch"
-                aria-checked={showDebugItems}
+                aria-checked={showDebugItems ? "true" : "false"}
                 onClick={() => {
                   const next = !showDebugItems
                   setShowDebugItems(next)

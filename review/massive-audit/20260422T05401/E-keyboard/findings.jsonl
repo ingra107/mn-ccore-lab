@@ -1,0 +1,9 @@
+{"section":"E-keyboard","viewport":"desktop","theme":"dark","level":"PASS","scenario":"E G+D → /portal/dashboard"}
+{"section":"E-keyboard","viewport":"desktop","theme":"dark","level":"PASS","scenario":"E G+T → /portal/my-tasks"}
+{"section":"E-keyboard","viewport":"desktop","theme":"dark","level":"PASS","scenario":"E G+P → /portal/projects"}
+{"section":"E-keyboard","viewport":"desktop","theme":"dark","level":"PASS","scenario":"E G+M → /portal/meetings"}
+{"section":"E-keyboard","viewport":"desktop","theme":"dark","level":"PASS","scenario":"E G+I → /portal/ideas"}
+{"section":"E-keyboard","viewport":"desktop","theme":"dark","level":"PASS","scenario":"E G+C → /portal/calendar"}
+{"section":"E-keyboard","viewport":"desktop","theme":"dark","level":"PASS","scenario":"E G+S → /portal/settings#profile"}
+{"section":"E-keyboard","viewport":"desktop","theme":"dark","level":"PASS","scenario":"E Ctrl+K opens dialog"}
+{"section":"E-keyboard","viewport":"desktop","theme":"dark","level":"BUG","id":"E.qmark","sev":"P1","scenario":"? opens shortcut help","observed":"no dialog rendered","expected":"help dialog"}

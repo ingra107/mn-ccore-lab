@@ -1,0 +1,1 @@
+{"section":"C-entities/C4-decision","viewport":"desktop","theme":"dark","level":"BUG","id":"C4.0","sev":"P1","scenario":"decision New button visible","observed":"no button matched","expected":"button matching ^Log a Decision|^New Decision|^Record Decision"}

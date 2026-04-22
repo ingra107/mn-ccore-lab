@@ -1,0 +1,1634 @@
+{
+  "desktop-dark-/": [
+    {
+      "upper": {
+        "tag": "nav",
+        "classes": "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "z": "50",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 71
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 518.65625
+        }
+      },
+      "occlusionPct": 14
+    }
+  ],
+  "desktop-dark-/pulse": [
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 14
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 14
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 14
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 14
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 784.8125,
+          "width": 1440,
+          "height": 115.1875
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute left-0 right-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 740,
+          "width": 1440,
+          "height": 120
+        }
+      },
+      "occlusionPct": 63
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 784.8125,
+          "width": 1440,
+          "height": 115.1875
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 13
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 784.8125,
+          "width": 1440,
+          "height": 115.1875
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 13
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 784.8125,
+          "width": 1440,
+          "height": 115.1875
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 13
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 784.8125,
+          "width": 1440,
+          "height": 115.1875
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 13
+    }
+  ],
+  "desktop-light-/": [
+    {
+      "upper": {
+        "tag": "nav",
+        "classes": "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "z": "50",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 71
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 518.65625
+        }
+      },
+      "occlusionPct": 14
+    }
+  ],
+  "desktop-light-/pulse": [
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 14
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 14
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 14
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 14
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 784.8125,
+          "width": 1440,
+          "height": 115.1875
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute left-0 right-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 740,
+          "width": 1440,
+          "height": 120
+        }
+      },
+      "occlusionPct": 63
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 784.8125,
+          "width": 1440,
+          "height": 115.1875
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 13
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 784.8125,
+          "width": 1440,
+          "height": 115.1875
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 13
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 784.8125,
+          "width": 1440,
+          "height": 115.1875
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 13
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 784.8125,
+          "width": 1440,
+          "height": 115.1875
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      },
+      "occlusionPct": 13
+    }
+  ],
+  "tablet-dark-/": [
+    {
+      "upper": {
+        "tag": "nav",
+        "classes": "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "z": "50",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 77
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 404.21875
+        }
+      },
+      "occlusionPct": 19
+    }
+  ],
+  "tablet-dark-/pulse": [
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 900,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute left-0 right-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 854.09375,
+          "width": 768,
+          "height": 120
+        }
+      },
+      "occlusionPct": 62
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 900,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 900,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 900,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 900,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    }
+  ],
+  "tablet-light-/": [
+    {
+      "upper": {
+        "tag": "nav",
+        "classes": "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "z": "50",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 77
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 404.21875
+        }
+      },
+      "occlusionPct": 19
+    }
+  ],
+  "tablet-light-/pulse": [
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 900,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute left-0 right-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 854.09375,
+          "width": 768,
+          "height": 120
+        }
+      },
+      "occlusionPct": 62
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 900,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 900,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 900,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 900,
+          "width": 768,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 1024
+        }
+      },
+      "occlusionPct": 12
+    }
+  ],
+  "mobile-dark-/portal/activity": [
+    {
+      "upper": {
+        "tag": "nav",
+        "classes": "md:hidden fixed bottom-0 left-0 right-0 flex items-stretch justify-around border",
+        "z": "100",
+        "box": {
+          "x": 0,
+          "y": 755,
+          "width": 375,
+          "height": 57
+        }
+      },
+      "lower": {
+        "tag": "svg",
+        "classes": "",
+        "z": "auto",
+        "box": {
+          "x": 39,
+          "y": 749.578125,
+          "width": 22,
+          "height": 22
+        }
+      },
+      "occlusionPct": 75
+    }
+  ],
+  "mobile-dark-/portal/mentee-milestones": [
+    {
+      "upper": {
+        "tag": "nav",
+        "classes": "md:hidden fixed bottom-0 left-0 right-0 flex items-stretch justify-around border",
+        "z": "100",
+        "box": {
+          "x": 0,
+          "y": 755,
+          "width": 375,
+          "height": 57
+        }
+      },
+      "lower": {
+        "tag": "svg",
+        "classes": "",
+        "z": "auto",
+        "box": {
+          "x": 50,
+          "y": 799.75,
+          "width": 18,
+          "height": 18
+        }
+      },
+      "occlusionPct": 68
+    }
+  ],
+  "mobile-dark-/": [
+    {
+      "upper": {
+        "tag": "nav",
+        "classes": "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "z": "50",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 77
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 462.65625
+        }
+      },
+      "occlusionPct": 17
+    }
+  ],
+  "mobile-dark-/pulse": [
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 15
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 15
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 15
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 15
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 661.625,
+          "width": 375,
+          "height": 150.375
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute left-0 right-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 659.046875,
+          "width": 375,
+          "height": 120
+        }
+      },
+      "occlusionPct": 98
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 661.625,
+          "width": 375,
+          "height": 150.375
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 19
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 661.625,
+          "width": 375,
+          "height": 150.375
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 19
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 661.625,
+          "width": 375,
+          "height": 150.375
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 19
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 661.625,
+          "width": 375,
+          "height": 150.375
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 19
+    }
+  ],
+  "mobile-light-/portal/activity": [
+    {
+      "upper": {
+        "tag": "nav",
+        "classes": "md:hidden fixed bottom-0 left-0 right-0 flex items-stretch justify-around border",
+        "z": "100",
+        "box": {
+          "x": 0,
+          "y": 755,
+          "width": 375,
+          "height": 57
+        }
+      },
+      "lower": {
+        "tag": "svg",
+        "classes": "",
+        "z": "auto",
+        "box": {
+          "x": 39,
+          "y": 749.578125,
+          "width": 22,
+          "height": 22
+        }
+      },
+      "occlusionPct": 75
+    }
+  ],
+  "mobile-light-/portal/mentee-milestones": [
+    {
+      "upper": {
+        "tag": "nav",
+        "classes": "md:hidden fixed bottom-0 left-0 right-0 flex items-stretch justify-around border",
+        "z": "100",
+        "box": {
+          "x": 0,
+          "y": 755,
+          "width": 375,
+          "height": 57
+        }
+      },
+      "lower": {
+        "tag": "svg",
+        "classes": "",
+        "z": "auto",
+        "box": {
+          "x": 50,
+          "y": 799.75,
+          "width": 18,
+          "height": 18
+        }
+      },
+      "occlusionPct": 68
+    }
+  ],
+  "mobile-light-/": [
+    {
+      "upper": {
+        "tag": "nav",
+        "classes": "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "z": "50",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 77
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 462.65625
+        }
+      },
+      "occlusionPct": 17
+    }
+  ],
+  "mobile-light-/pulse": [
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 15
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 15
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 15
+    },
+    {
+      "upper": {
+        "tag": "header",
+        "classes": "absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 124
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 15
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 661.625,
+          "width": 375,
+          "height": 150.375
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute left-0 right-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 659.046875,
+          "width": 375,
+          "height": 120
+        }
+      },
+      "occlusionPct": 98
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 661.625,
+          "width": 375,
+          "height": 150.375
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 pointer-events-none",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 19
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 661.625,
+          "width": 375,
+          "height": 150.375
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0 flex items-center justify-center",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 19
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 661.625,
+          "width": 375,
+          "height": 150.375
+        }
+      },
+      "lower": {
+        "tag": "div",
+        "classes": "absolute inset-0",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 19
+    },
+    {
+      "upper": {
+        "tag": "footer",
+        "classes": "absolute bottom-0 left-0 right-0 flex items-center justify-between px-16 py-10 z",
+        "z": "10",
+        "box": {
+          "x": 0,
+          "y": 661.625,
+          "width": 375,
+          "height": 150.375
+        }
+      },
+      "lower": {
+        "tag": "section",
+        "classes": "absolute inset-0 flex flex-col items-center justify-center px-16 py-12",
+        "z": "auto",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 375,
+          "height": 812
+        }
+      },
+      "occlusionPct": 19
+    }
+  ]
+}

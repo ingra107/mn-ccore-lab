@@ -255,8 +255,9 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
 
           <div className="flex gap-4">
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Primary Project (optional)</label>
+              <label htmlFor="create-decision-project" style={labelStyle}>Primary Project (optional)</label>
               <select
+                id="create-decision-project"
                 value={projectSlug}
                 onChange={(e) => setProjectSlug(e.target.value)}
                 style={{ ...inputStyle, padding: '8px 10px' }}

@@ -1,0 +1,3 @@
+{"section":"H-realtime","viewport":"desktop","theme":"dark","level":"PASS","scenario":"H /api/version returns 200"}
+{"section":"H-realtime","viewport":"desktop","theme":"dark","level":"PASS","scenario":"H /api/version Cache-Control includes 10s edge cache (public, max-age=10, s-maxage=10)"}
+{"section":"H-realtime","viewport":"desktop","theme":"dark","level":"PASS","scenario":"H /api/version returns version field"}

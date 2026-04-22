@@ -525,10 +525,11 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            <label htmlFor="ask-lab-related-project" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Related Project
             </label>
             <select
+              id="ask-lab-related-project"
               value={projectSlug}
               onChange={(e) => setProjectSlug(e.target.value)}
               className="w-full rounded-md border px-2.5 py-2 text-sm"

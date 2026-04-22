@@ -1,0 +1,15 @@
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.1 modal opens with data-testid"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.1 task row appears in list (_TEST_DELETE_c1task_mo9kh1q8_qqa5)"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.2 status InlineSelect change succeeded"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.2 API reflects status=in_progress"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.3 priority InlineSelect change succeeded"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.3 API reflects priority=high"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"BUG","id":"C1.4.1","sev":"P1","scenario":"due_date API readback","observed":"actual=null","expected":"2026-04-23"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"BUG","id":"C1.5.2","sev":"P1","scenario":"assignee listbox renders on trigger click","observed":"no listbox in DOM","expected":"aria-label=Select assignee listbox"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"BUG","id":"C1.5.3","sev":"P1","scenario":"assignee option in listbox","observed":"no [role=option] matched Nate","expected":"option button visible"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.6 status listbox attached to DOM after click"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.6 listbox still in DOM after 800ms (no auto-close race)"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.7 task row visible after reload"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.7 status cell shows In Progress after reload"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.8 batch soft-delete returned ok"}
+{"section":"C-entities/C1-task","viewport":"desktop","theme":"dark","level":"PASS","scenario":"C1.8 task no longer in default list (filtered by deleted_at)"}
