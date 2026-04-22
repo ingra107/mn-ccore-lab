@@ -142,6 +142,7 @@ export async function runSectionB(runId: string, rootDir: string) {
         t.includes('Access to font') ||
         t.includes('Access to CSS stylesheet') ||
         t.includes('Access to XMLHttpRequest at \'https://fonts') ||
+        t.includes('maps.googleapis.com') ||
         t.includes('partysocket')
       ) return
       consoleErrors.push({ path: page.url(), text: t.slice(0, 240) })

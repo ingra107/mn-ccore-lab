@@ -204,7 +204,6 @@ export default function SettingsPage() {
               key={tab.key}
               role="tab"
               aria-selected={isActive ? "true" : "false"}
-              aria-controls={`settings-tab-${tab.key}`}
               onClick={() => setActiveTab(tab.key)}
               className="px-3 py-2 text-sm transition-colors flex-shrink-0 whitespace-nowrap"
               style={{
