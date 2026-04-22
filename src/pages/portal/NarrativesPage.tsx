@@ -9,12 +9,12 @@ import { usePageMeta } from '../../hooks/usePageMeta'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
 
-// Stage colors tuned for light-mode AA at 10px. Was #7fa8d6 / green-light —
-// fine on dark bg but failed 4.5:1 on white. Darkened so full-opacity text
-// passes in both modes. 2026-04-22.
+// Stage colors. Data Collection blue needs theme-aware token because
+// neither a single light blue nor a single dark blue passes AA in both
+// modes — flipped via CSS var in index.css. 2026-04-22.
 const STAGE_COLORS: Record<string, string> = {
   Idea: 'var(--slate)',
-  'Data Collection': '#2d5c8f',  // 7.3:1 on #fff; 13:1 on #0b1017
+  'Data Collection': 'var(--stage-data-collection)',
   Analysis: 'var(--teal)',
   Writing: 'var(--gold)',
   Review: 'var(--maroon)',

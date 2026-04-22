@@ -1032,9 +1032,10 @@ export default function Grants() {
           <button
             onClick={() => setActiveSearch(searchKeywords)}
             style={{
-              background: 'var(--gold)',
-              // Fixed-dark text: --ink is light in dark mode (1.9:1 on gold).
-              // Gold bg is identical in both themes, so a literal dark works.
+              // Pin to literal #dcb355 (light gold) — var(--gold) actually
+              // flips #6b5420 (light) ↔ #dcb355 (dark), breaking dark text
+              // in light mode (1.5:1). 2026-04-22 gold-bg class-bug.
+              background: '#dcb355',
               color: '#1a1a1a',
               border: 'none',
               borderRadius: 'var(--radius-lg)',

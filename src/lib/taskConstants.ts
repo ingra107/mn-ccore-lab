@@ -85,7 +85,7 @@ export function isProjectActive(value: string | null | undefined): boolean {
 // these brighter tints survive opacity 0.85 and still contrast on white.
 export const STAGE_COLORS: Record<string, string> = {
   Idea: '#8591a0',
-  'Data Collection': '#7fa8d6',
+  'Data Collection': 'var(--stage-data-collection)',
   Analysis: '#4db5b0',
   Writing: '#dcb355',
   Review: '#d65c66',

@@ -592,8 +592,9 @@ function DecisionRowItem({
               className="flex items-center gap-1 hover:underline"
               style={{
                 fontSize: 'var(--text-small)',
+                // Drop --ink-label (0.55): teal at 0.55 on white = 2.1:1
+                // FAIL. Full opacity teal = 5.8:1 AA pass.
                 color: 'var(--teal)',
-                opacity: 'var(--ink-label)',
                 textDecoration: 'none',
               }}
             >

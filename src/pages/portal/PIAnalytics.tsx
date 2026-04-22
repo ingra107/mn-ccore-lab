@@ -625,7 +625,10 @@ export default function PIAnalytics() {
                         >
                           <span
                             className="text-[10px] font-semibold"
-                            style={{ color: '#1a1a1a' }}
+                            // Stage bar fills (slate/gold) are mid-to-dark —
+                            // white text gives AA headroom. #1a1a1a failed
+                            // on --slate (1:1) in light mode.
+                            style={{ color: '#fff' }}
                           >
                             {member.actions}
                           </span>

@@ -38,7 +38,7 @@
   --font-sans: 'DM Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --muted: #6b7280; /* WCAG AA: ~5.0:1 on white — was rgba(148,163,184,0.76) @ 1.98:1 */
+  --muted: #5a6370; /* 6.0:1 on #fff, 5.6:1 on #f5f5f5 — was #6b7280 (4.2:1 on grey panels, edge failure). 2026-04-22 */
 
   --border-light: rgba(201, 168, 76, 0.12);
   --border-subtle: rgba(15, 25, 35, 0.06);
@@ -443,7 +443,12 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   background: color-mix(in oklch, var(--cream), white 4%);
 }
 
-/* Carried forward badge */
+/* Carried forward badge.
+   color: var(--gold) flips #6b5420 (light) ↔ #dcb355 (dark). On the
+   10% gold-tinted bg (= faint cream in light mode, faint gold-dark in
+   dark mode) light-mode was 4.3:1 on #f1ede4 — JUST under AA.
+   Darker #5a4518 in light mode gives 5.8:1, keeps visual gold family.
+   Dark-mode override keeps bright. 2026-04-22. */
 .carried-badge {
   display: inline-flex;
   align-items: center;
@@ -453,10 +458,13 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   padding: 2px 6px;
   border-radius: 9999px;
   background: rgba(201, 168, 76, 0.12);
-  color: var(--gold);
+  color: #5a4518;
   white-space: nowrap;
   vertical-align: middle;
   margin-right: 6px;
+}
+.dark .carried-badge {
+  color: #dcb355;
 }
 
 /* ── Tiptap rich text editor styles ── */
@@ -913,6 +921,14 @@ a:hover {
 }
 .dark .section-ink {
   background-color: #070b10;
+}
+
+/* ── Theme-aware stage colors (AA on the matching bg in both modes) ── */
+:root {
+  --stage-data-collection: #2d5c8f;  /* dark blue for light bg (7.3:1 on #fff) */
+}
+.dark {
+  --stage-data-collection: #9ab7d9;  /* light blue for dark bg (9+:1 on #0b1017) */
 }
 
 /* ── Cream section divider — slight tint in dark mode for visibility ── */

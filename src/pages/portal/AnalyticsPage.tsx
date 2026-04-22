@@ -580,7 +580,9 @@ export default function AnalyticsPage() {
                   <span className="text-xs w-28" style={{ color: 'var(--ink)' }}>{stage}</span>
                   <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
                     <div className="h-full rounded transition-all flex items-center px-2" style={{ width: `${width}%`, backgroundColor: stageColors[stage] || 'var(--teal)', minWidth: 24 }}>
-                      <span className="text-[10px] font-semibold" style={{ color: '#1a1a1a' }}>{count}</span>
+                      {/* Stage bar fills are dark-saturated (teal/maroon/slate); white
+                          text gives 6+:1 AA. #1a1a1a on dark fills was invisible. */}
+                      <span className="text-[10px] font-semibold" style={{ color: '#fff' }}>{count}</span>
                     </div>
                   </div>
                 </div>
