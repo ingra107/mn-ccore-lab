@@ -338,6 +338,22 @@ export default function Pulse() {
     return () => clearInterval(t)
   }, [scenes.length, paused])
 
+  // Pin body + html bg to the kiosk deep-neutral while on /pulse. The kiosk
+  // scene sets its own bg on a child div, but axe-core walks to body for
+  // contrast calcs and saw body=#f5f5f5 (default) behind cream hero text =
+  // false 1.05:1 fail. Set the ancestor bg directly so axe + any under-
+  // scrolled overflow both match. Restore on unmount.
+  useEffect(() => {
+    const prevBody = document.body.style.backgroundColor
+    const prevHtml = document.documentElement.style.backgroundColor
+    document.body.style.backgroundColor = '#0b1017'
+    document.documentElement.style.backgroundColor = '#0b1017'
+    return () => {
+      document.body.style.backgroundColor = prevBody
+      document.documentElement.style.backgroundColor = prevHtml
+    }
+  }, [])
+
   // Spacebar toggles pause — works on the kiosk via wireless presenter remote.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

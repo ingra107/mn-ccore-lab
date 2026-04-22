@@ -110,7 +110,9 @@ export default function ResearchImpact() {
                         <span
                           className="text-xs truncate"
                           style={{
-                            color: isHighImpact ? 'var(--gold)' : 'rgba(255, 255, 255, 0.7)',
+                            // Fixed #dcb355 (light gold) on section-ink dark bg
+                            // for AA in both themes. See Home.tsx:484 note.
+                            color: isHighImpact ? '#dcb355' : 'rgba(255, 255, 255, 0.7)',
                             fontWeight: isHighImpact ? 500 : 400,
                           }}
                         >

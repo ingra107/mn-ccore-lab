@@ -711,7 +711,7 @@ export default function MeetingDetail() {
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     onClick={() => { updateNotes.mutate(notesDraft); setEditingNotes(false) }}
-                    style={{ background: 'var(--gold)', color: 'var(--ink)', border: 'none', borderRadius: 'var(--radius-md)', padding: '6px 16px', fontSize: 'var(--value-size)', fontWeight: 600, cursor: 'pointer' }}
+                    style={{ background: '#dcb355', color: '#1a1a1a', border: 'none', borderRadius: 'var(--radius-md)', padding: '6px 16px', fontSize: 'var(--value-size)', fontWeight: 600, cursor: 'pointer' }}
                   >
                     Save Notes
                   </button>

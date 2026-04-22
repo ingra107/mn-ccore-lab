@@ -71,8 +71,11 @@ export default function FeaturedResearch() {
                 <span
                   className="inline-block px-2 py-0.5 rounded text-xs"
                   style={{
-                    background: 'var(--gold)',
-                    color: 'var(--ink)',
+                    // var(--gold) bg flips dark↔light with theme; var(--ink)
+                    // text does the same → both themes fail AA (2.72 light,
+                    // 1.56 dark). Use fixed light gold + dark literal text.
+                    background: '#dcb355',
+                    color: '#1a1a1a',
                   }}
                 >
                   {pub.year}

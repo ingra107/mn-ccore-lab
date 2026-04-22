@@ -79,8 +79,8 @@ const OVERLAP_DETECTOR_SCRIPT = `(() => {
       // one of these, regardless of what's beneath. Prevents MobileTabBar from
       // spamming every page with nav-over-content "hits".
       const upperRole = upper.getAttribute && upper.getAttribute('role');
-      if (upperTag === 'nav' || upperTag === 'header' || upperTag === 'aside') continue;
-      if (upperRole === 'navigation' || upperRole === 'banner' || upperRole === 'complementary') continue;
+      if (upperTag === 'nav' || upperTag === 'header' || upperTag === 'aside' || upperTag === 'footer') continue;
+      if (upperRole === 'navigation' || upperRole === 'banner' || upperRole === 'complementary' || upperRole === 'contentinfo') continue;
       if ((upperCls.includes('header') || upperCls.includes('nav') || upperCls.includes('sidebar')) &&
           (lowerCls.includes('main') || lowerCls.includes('content'))) continue;
       if (lowerCls.includes('backdrop') || lowerCls.includes('overlay')) continue;

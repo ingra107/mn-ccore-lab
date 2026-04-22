@@ -261,8 +261,12 @@ export default function Home() {
               href={PATHS.dashboard}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm"
               style={{
-                background: 'var(--gold)',
-                color: '#0b1017',
+                // Use literal #dcb355 (= dark-mode --gold) + fixed dark text:
+                // var(--gold) flips light↔dark across themes so any fixed text
+                // color fails in one theme. Gold button bg should stay LIGHT
+                // in both modes; pair with dark literal text for 6+:1 AA.
+                background: '#dcb355',
+                color: '#1a1a1a',
                 fontWeight: 500,
                 textDecoration: 'none',
                 letterSpacing: '0.01em',
@@ -481,7 +485,10 @@ export default function Home() {
             <p
               className="text-xs mb-2"
               style={{
-                color: 'var(--gold)',
+                // section-ink is fixed dark bg in both themes, so gold text
+                // needs the LIGHT gold (#dcb355) for AA. var(--gold) flips
+                // dark↔light with theme and fails in light mode (2.46:1).
+                color: '#dcb355',
                 textTransform: 'uppercase',
                 letterSpacing: '0.15em',
               }}
