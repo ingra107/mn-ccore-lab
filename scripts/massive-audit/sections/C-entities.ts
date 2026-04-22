@@ -67,7 +67,7 @@ const LIGHTWEIGHT_ENTITIES: LightweightEntity[] = [
     code: 'C4',
     label: 'decision',
     page: '/portal/decisions',
-    newButtonText: /^Log a Decision|^New Decision|^Record Decision/i,
+    newButtonText: /^Log Decision|^Log a Decision|^New Decision|^Record Decision/i,
     apiList: '/api/decisions',
     titleField: 'title',
     bodyField: 'rationale',
@@ -100,13 +100,17 @@ async function runLightweight(runId: string, rootDir: string, ent: LightweightEn
     await newBtn.click()
     await snap(s, `${ent.label}-modal-open`, 500)
     const marker = makeMarker(ent.label.replace(/\W/g, ''))
-    // Fill title (look for textarea or input)
-    const titleInput = s.page.locator('textarea, input[type="text"]').first()
+    // Scope inputs to the open modal dialog to avoid matching page-level
+    // search boxes (AskTheLab has a search input that previously matched
+    // ahead of the modal textarea).
+    const dialog = s.page.locator('[role="dialog"]').first()
+    const dialogScope = (await dialog.count()) > 0 ? dialog : s.page
+    const titleInput = dialogScope.locator('textarea, input[type="text"]').first()
     if (await titleInput.count()) {
       await titleInput.fill(marker)
     }
     if (ent.bodyField) {
-      const bodyInput = s.page.locator('textarea').nth(1)
+      const bodyInput = dialogScope.locator('textarea').nth(1)
       if (await bodyInput.count()) {
         await bodyInput.fill(`massive-audit ${ent.code} probe — describes the test ${ent.label}`)
       }
