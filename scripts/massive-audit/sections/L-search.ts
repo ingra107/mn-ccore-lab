@@ -24,7 +24,7 @@ export async function runSectionL(runId: string, rootDir: string) {
     // CommandPalette via Ctrl+K
     log(s, 'L — Ctrl+K command palette open + type')
     await goto(s, '/portal/dashboard')
-    await s.page.keyboard.press('Control+K')
+    await s.page.keyboard.press('Control+k')
     await s.page.waitForTimeout(500)
     const cmdInput = s.page.locator('[data-testid="command-search"], input[placeholder*="search" i]').first()
     if (await cmdInput.count()) {

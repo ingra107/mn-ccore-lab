@@ -17,20 +17,30 @@ export async function runSectionF(runId: string, rootDir: string) {
     await firstRow.click({ button: 'right' })
     await snap(s, 'task-context-menu', 500)
 
-    // Look for Status / Priority / Snooze submenu triggers
-    const statusItem = s.page.locator('text=/^Status/').first()
-    const priorityItem = s.page.locator('text=/^Priority/').first()
-    if (await statusItem.count()) pass(s, 'F context menu shows Status submenu')
-    else bug(s, 'F.1', 'P1', 'context menu Status item', 'not found', 'Status submenu visible')
-    if (await priorityItem.count()) pass(s, 'F context menu shows Priority submenu')
-    else bug(s, 'F.2', 'P1', 'context menu Priority item', 'not found', 'Priority submenu visible')
+    // TaskContextMenu has no role attribute, but its items have
+    // class="context-menu-item". Use that as the identifier.
+    const items = s.page.locator('.context-menu-item')
+    const itemCount = await items.count()
+    if (itemCount > 0) pass(s, `F context menu opens (${itemCount} items)`)
+    else bug(s, 'F.1', 'P1', 'context menu opens', 'no .context-menu-item in DOM', 'menu items rendered')
+
+    // SubmenuItem (Status/Priority/Snooze) doesn't carry .context-menu-item
+    // — its label is in a <span> inside a positioned div. Look for that.
+    const statusSpan = s.page.locator('span').filter({ hasText: /^Status$/ })
+    const prioritySpan = s.page.locator('span').filter({ hasText: /^Priority$/ })
+    const statusInMenu = await statusSpan.count()
+    const priorityInMenu = await prioritySpan.count()
+    if (statusInMenu > 0) pass(s, 'F context menu shows Status submenu trigger')
+    else bug(s, 'F.2a', 'P1', 'context menu Status trigger', 'no item titled Status', 'Status submenu trigger')
+    if (priorityInMenu > 0) pass(s, 'F context menu shows Priority submenu trigger')
+    else bug(s, 'F.2b', 'P1', 'context menu Priority trigger', 'no item titled Priority', 'Priority submenu trigger')
 
     // Esc closes
     await s.page.keyboard.press('Escape')
     await s.page.waitForTimeout(300)
-    const stillOpen = await statusItem.count()
-    if (stillOpen === 0) pass(s, 'F Escape closes context menu')
-    else bug(s, 'F.3', 'P2', 'Escape closes context menu', 'menu still in DOM', 'closed')
+    const itemsAfter = await s.page.locator('.context-menu-item').count()
+    if (itemsAfter === 0) pass(s, 'F Escape closes context menu')
+    else bug(s, 'F.3', 'P2', 'Escape closes context menu', `${itemsAfter} .context-menu-item still in DOM`, 'menu portal closed')
   } finally {
     return finalize(s)
   }

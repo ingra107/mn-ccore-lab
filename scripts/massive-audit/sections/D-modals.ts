@@ -18,8 +18,8 @@ const MODALS: ModalSpec[] = [
   { name: 'CreateProjectModal', trigger: { page: '/portal/projects', buttonText: /^New Project|^Add Project/i }, closeKey: 'Escape' },
   { name: 'CreateIdeaModal', trigger: { page: '/portal/ideas', buttonText: /^Submit Idea|^New Idea|^Add Idea/i }, closeKey: 'Escape' },
   { name: 'CreateQuestionModal', trigger: { page: '/portal/ask', buttonText: /^Ask|^New Question/i }, closeKey: 'Escape' },
-  { name: 'CommandPalette', trigger: { keyboard: 'Control+K' }, closeKey: 'Escape' },
-  { name: 'ShortcutHelp', trigger: { keyboard: '?' }, closeKey: 'Escape' },
+  { name: 'CommandPalette', trigger: { keyboard: 'Control+k' }, testid: 'command-palette', closeKey: 'Escape' },
+  { name: 'ShortcutHelp', trigger: { keyboard: 'Shift+/' }, closeKey: 'Escape' },
 ]
 
 export async function runSectionD(runId: string, rootDir: string) {
@@ -30,7 +30,7 @@ export async function runSectionD(runId: string, rootDir: string) {
       try {
         if ('keyboard' in m.trigger) {
           await goto(s, '/portal/dashboard')
-          await s.page.waitForTimeout(300)
+          await s.page.waitForTimeout(800) // wait for prior modal exit anim
           await s.page.keyboard.press(m.trigger.keyboard)
         } else {
           await goto(s, m.trigger.page)
@@ -41,7 +41,7 @@ export async function runSectionD(runId: string, rootDir: string) {
           }
           await btn.click()
         }
-        await snap(s, `${m.name}-open`, 600)
+        await snap(s, `${m.name}-open`, 1200) // wait for AnimatePresence enter
 
         // Dialog role check
         const dialog = m.testid
@@ -51,10 +51,10 @@ export async function runSectionD(runId: string, rootDir: string) {
         if (dialogCount > 0) pass(s, `D ${m.name} renders dialog`)
         else bug(s, `D.${m.name}.1`, 'P1', `${m.name} renders dialog`, 'no dialog/testid in DOM', m.testid || 'role=dialog')
 
-        // Escape closes
+        // Escape closes — wait for AnimatePresence exit anim
         if (m.closeKey && dialogCount > 0) {
           await s.page.keyboard.press(m.closeKey)
-          await s.page.waitForTimeout(400)
+          await s.page.waitForTimeout(800)
           const stillOpen = await dialog.count()
           if (stillOpen === 0) pass(s, `D ${m.name} ${m.closeKey} closes`)
           else bug(s, `D.${m.name}.2`, 'P2', `${m.name} ${m.closeKey} closes`, `still in DOM`, 'closed')

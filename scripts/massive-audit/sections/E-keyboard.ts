@@ -46,7 +46,7 @@ export async function runSectionE(runId: string, rootDir: string) {
     // Cmd+K opens CommandPalette
     log(s, 'E — Ctrl+K opens command palette')
     await goto(s, '/portal/dashboard')
-    await s.page.keyboard.press('Control+K')
+    await s.page.keyboard.press('Control+k')
     await s.page.waitForTimeout(500)
     await snap(s, 'cmd-k-open')
     const palette = s.page.locator('[data-testid="command-palette"], [role="dialog"]').first()
@@ -54,9 +54,10 @@ export async function runSectionE(runId: string, rootDir: string) {
     else bug(s, 'E.cmd-k', 'P1', 'Ctrl+K opens command palette', 'no dialog rendered', 'palette dialog')
     await s.page.keyboard.press('Escape')
 
-    // ? opens ShortcutHelp
+    // ? opens ShortcutHelp (Shift+/ on US keyboard)
     log(s, 'E — ? opens shortcut help')
-    await s.page.keyboard.press('?')
+    await s.page.waitForTimeout(800)
+    await s.page.keyboard.press('Shift+/')
     await s.page.waitForTimeout(500)
     await snap(s, 'q-open')
     const help = s.page.getByRole('dialog').first()
