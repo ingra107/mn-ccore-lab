@@ -257,7 +257,7 @@ export default function RelayCard() {
                   onClick={() => setFormOpen(true)}
                   className="flex items-center gap-1 mt-0.5"
                   style={{
-                    fontSize: '10px', color: 'var(--teal)', opacity: 0.85,
+                    fontSize: '10px', color: 'var(--teal)',
                     background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                   }}
                 >

@@ -407,7 +407,7 @@ export default function Manuscripts() {
                               {project.title}
                             </span>
                             {tc > 0 && (
-                              <span style={{ fontSize: '11px', color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }}>
+                              <span style={{ fontSize: '11px', color: 'var(--teal)', flexShrink: 0 }}>
                                 {tc}
                               </span>
                             )}
@@ -517,7 +517,7 @@ export default function Manuscripts() {
                               {project.title}
                             </span>
                             {tc > 0 && (
-                              <span style={{ fontSize: '11px', color: 'var(--teal)', opacity: 0.85, flexShrink: 0, marginTop: '4px' }}>
+                              <span style={{ fontSize: '11px', color: 'var(--teal)', flexShrink: 0, marginTop: '4px' }}>
                                 {tc}
                               </span>
                             )}

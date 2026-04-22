@@ -259,12 +259,12 @@ function CascadeRow({
           {statusLabel(status)}
         </span>
 
-        {/* Type badge */}
+        {/* Type badge — no opacity: var(--teal/--gold) at 0.55 opacity
+            drops to ~2.1:1 on white. Full opacity passes AA (5.8:1). */}
         <span style={{
           fontSize: '10px',
           fontWeight: 500,
           color: node.type === 'milestone' ? 'var(--gold)' : 'var(--teal)',
-          opacity: 'var(--ink-label)',
           flexShrink: 0,
         }}>
           {node.type === 'milestone' ? 'Milestone' : 'Task'}

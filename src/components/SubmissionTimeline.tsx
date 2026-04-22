@@ -641,7 +641,7 @@ export function ActiveSubmissionsDashboard({
               </span>
 
               {/* Days since submission */}
-              <span style={{ fontSize: '12px', color: 'var(--teal)', opacity: 0.85 }}>
+              <span style={{ fontSize: '12px', color: 'var(--teal)' }}>
                 {sub.days_since_submission}d ago
               </span>
 

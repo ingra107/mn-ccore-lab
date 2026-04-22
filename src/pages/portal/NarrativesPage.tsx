@@ -9,15 +9,16 @@ import { usePageMeta } from '../../hooks/usePageMeta'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
 
-// Brighter blue for Data Collection stage so the 10px label survives
-// opacity 0.85 on near-black bg (axe AA, 2026-04-18). Was #5b8abf (4.28:1).
+// Stage colors tuned for light-mode AA at 10px. Was #7fa8d6 / green-light —
+// fine on dark bg but failed 4.5:1 on white. Darkened so full-opacity text
+// passes in both modes. 2026-04-22.
 const STAGE_COLORS: Record<string, string> = {
   Idea: 'var(--slate)',
-  'Data Collection': '#7fa8d6',
+  'Data Collection': '#2d5c8f',  // 7.3:1 on #fff; 13:1 on #0b1017
   Analysis: 'var(--teal)',
   Writing: 'var(--gold)',
   Review: 'var(--maroon)',
-  Published: 'var(--green-light)',
+  Published: 'var(--green)',      // was --green-light (#16a34a = 3:1 on white)
 }
 
 const STAGE_ABBREV: Record<string, string> = {
@@ -143,7 +144,7 @@ export default function NarrativesPage() {
                     <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', flex: 1 }}>
                       {p.title}
                     </span>
-                    <span style={{ fontSize: '10px', color: STAGE_COLORS[p.stage], opacity: 0.85 }}>
+                    <span style={{ fontSize: '10px', color: STAGE_COLORS[p.stage] }}>
                       {p.stage}
                     </span>
                   </Link>

@@ -354,7 +354,7 @@ export default function Ideas() {
                               {person.name.split(' ')[0]}
                             </span>
                             {idea.votes > 0 && (
-                              <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.85 }}>
+                              <span style={{ fontSize: '10px', color: 'var(--teal)' }}>
                                 ▲ {idea.votes}
                               </span>
                             )}

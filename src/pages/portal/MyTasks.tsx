@@ -686,7 +686,7 @@ export default function MyTasks() {
         <div className="mt-3">
           <div className="flex items-center gap-2 mb-2">
             <Zap size={14} style={{ color: 'var(--gold)' }} />
-            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--teal)', opacity: 0.85 }}>
+            <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--teal)' }}>
               Focus Next
             </span>
             <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
@@ -865,7 +865,7 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
       >
         <GripVertical size={14} />
       </button>
-      <span className="text-[10px] font-medium" style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0, width: '14px', textAlign: 'center' }}>
+      <span className="text-[10px] font-medium" style={{ color: 'var(--teal)', flexShrink: 0, width: '14px', textAlign: 'center' }}>
         {index + 1}
       </span>
       <div

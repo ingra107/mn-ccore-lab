@@ -1034,7 +1034,7 @@ function UpcomingConferencesSection() {
         >
           Upcoming Conferences
         </span>
-        <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.85 }}>
+        <span style={{ fontSize: '10px', color: 'var(--teal)' }}>
           ({conferences.length})
         </span>
       </div>

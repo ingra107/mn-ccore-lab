@@ -197,7 +197,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
           {deepWorkHours !== null && (
             <div className="flex items-center gap-2 py-1 mt-1" style={{ borderTop: '1px solid rgba(201,168,76,0.06)', paddingTop: 6 }}>
               <Clock size={10} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
-              <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.85 }}>
+              <span style={{ fontSize: '10px', color: 'var(--teal)' }}>
                 {deepWorkHours}h deep work available
               </span>
             </div>

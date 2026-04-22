@@ -514,7 +514,7 @@ export default function Projects() {
                               {(() => {
                                 const tc = taskCountByProject.get(project.slug) || 0
                                 return tc > 0 ? (
-                                  <span style={{ fontSize: '10px', color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} title={`${tc} open task${tc !== 1 ? 's' : ''}`}>
+                                  <span style={{ fontSize: '10px', color: 'var(--teal)', flexShrink: 0 }} title={`${tc} open task${tc !== 1 ? 's' : ''}`}>
                                     {tc}
                                   </span>
                                 ) : null

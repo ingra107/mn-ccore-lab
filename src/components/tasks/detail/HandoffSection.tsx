@@ -281,7 +281,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                   </div>
                   <div className="mt-2">
                     {h.acknowledged ? (
-                      <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--teal)', opacity: 0.85 }}>
+                      <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--teal)' }}>
                         <Check size={10} /> Acknowledged {h.acknowledged_at ? formatRelativeTime(h.acknowledged_at) : ''}
                       </span>
                     ) : (
