@@ -20,15 +20,245 @@ interface SubResult {
 export async function runSectionC(runId: string, rootDir: string) {
   const subResults: SubResult[] = []
 
-  // C1 — task lifecycle
+  // C1 — task lifecycle (full)
   subResults.push(await runC1Task(runId, rootDir))
 
-  // C2-C14 — pending. Stubbed here so the runner reports them.
-  // Will fold in incrementally as patterns prove out.
+  // C2 — project lifecycle (full)
+  subResults.push(await runC2Project(runId, rootDir))
+
+  // C3-C14 — lightweight create + API-verify (modal trigger + list-appearance)
+  for (const ent of LIGHTWEIGHT_ENTITIES) {
+    subResults.push(await runLightweight(runId, rootDir, ent))
+  }
 
   const totalPasses = subResults.reduce((acc, r) => acc + r.passes, 0)
   const totalBugs = subResults.reduce((acc, r) => acc + r.bugs, 0)
   return { name: 'C-entities', passes: totalPasses, bugs: totalBugs }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Lightweight entity definitions (C3-C14)
+// ─────────────────────────────────────────────────────────────────────────
+
+interface LightweightEntity {
+  code: string                  // C3, C4, etc
+  label: string                 // human-readable
+  page: string                  // /portal/x
+  newButtonText: RegExp         // pattern for "New X" button
+  modalTitleSelector?: string   // optional textbox for the title field
+  apiList: string               // /api/x
+  titleField: string            // 'title' | 'question' | etc
+  bodyField?: string            // optional 'description' / 'rationale'
+  deleteEndpoint?: (id: string) => string  // POST /api/x/:id/delete
+}
+
+const LIGHTWEIGHT_ENTITIES: LightweightEntity[] = [
+  {
+    code: 'C3',
+    label: 'idea',
+    page: '/portal/ideas',
+    newButtonText: /^New Idea|^Submit Idea|^Add Idea/i,
+    apiList: '/api/ideas',
+    titleField: 'title',
+    bodyField: 'description',
+    deleteEndpoint: (id) => `/api/ideas/${id}/delete`,
+  },
+  {
+    code: 'C4',
+    label: 'decision',
+    page: '/portal/decisions',
+    newButtonText: /^Log a Decision|^New Decision|^Record Decision/i,
+    apiList: '/api/decisions',
+    titleField: 'title',
+    bodyField: 'rationale',
+    deleteEndpoint: (id) => `/api/decisions/${id}/delete`,
+  },
+  {
+    code: 'C13',
+    label: 'lab_question',
+    page: '/portal/ask',
+    newButtonText: /^Ask|^New Question/i,
+    apiList: '/api/questions',
+    titleField: 'question',
+    deleteEndpoint: (id) => `/api/questions/${id}/delete`,
+  },
+]
+
+async function runLightweight(runId: string, rootDir: string, ent: LightweightEntity): Promise<SubResult> {
+  const sectionName = `C-entities/${ent.code}-${ent.label}`
+  const s = await openSession({ section: sectionName, runId, rootDir, viewport: 'desktop', theme: 'dark' })
+  const createdIds: string[] = []
+  try {
+    log(s, `${ent.code} — ${ent.label} create + API verify`)
+    await goto(s, ent.page)
+    await snap(s, `${ent.label}-page`)
+    const newBtn = s.page.locator('button').filter({ hasText: ent.newButtonText }).first()
+    if (!(await newBtn.count())) {
+      bug(s, `${ent.code}.0`, 'P1', `${ent.label} New button visible`, 'no button matched', `button matching ${ent.newButtonText.source}`)
+      return { name: sectionName, passes: 0, bugs: 1, createdIds }
+    }
+    await newBtn.click()
+    await snap(s, `${ent.label}-modal-open`, 500)
+    const marker = makeMarker(ent.label.replace(/\W/g, ''))
+    // Fill title (look for textarea or input)
+    const titleInput = s.page.locator('textarea, input[type="text"]').first()
+    if (await titleInput.count()) {
+      await titleInput.fill(marker)
+    }
+    if (ent.bodyField) {
+      const bodyInput = s.page.locator('textarea').nth(1)
+      if (await bodyInput.count()) {
+        await bodyInput.fill(`massive-audit ${ent.code} probe — describes the test ${ent.label}`)
+      }
+    }
+    await snap(s, `${ent.label}-modal-filled`)
+    // Submit via Ctrl+Enter
+    await s.page.keyboard.press('Control+Enter')
+    await snap(s, `${ent.label}-after-submit`, 1800)
+    // Verify in API
+    const list = await s.api.get(ent.apiList)
+    const items = (await list.json())?.data ?? []
+    const ours = items.find((x: any) => x[ent.titleField] === marker)
+    if (ours) {
+      pass(s, `${ent.code} ${ent.label} created via modal + appears in API`)
+      createdIds.push(ours.id)
+      // Schedule cleanup
+      s.cleanup.push(async () => {
+        if (ent.deleteEndpoint && createdIds.length) {
+          for (const id of createdIds) {
+            await s.api.post(ent.deleteEndpoint!(id), { data: {} }).catch(() => {})
+          }
+        }
+      })
+    } else {
+      bug(s, `${ent.code}.1`, 'P1', `${ent.label} reachable in API after create`, `not in ${ent.apiList} after submit`, `entity present`)
+    }
+  } catch (e) {
+    bug(s, `${ent.code}.thrown`, 'P0', `${ent.label} sub-test threw`, (e as Error).message.slice(0, 200), 'no exception')
+  } finally {
+    persistFindingsJson(s)
+    await closeSession(s)
+  }
+  const passes = s.findings.filter((f) => f.level === 'PASS').length
+  const bugs = s.findings.filter((f) => f.level === 'BUG').length
+  return { name: sectionName, passes, bugs, createdIds }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// C2 — project lifecycle
+// ─────────────────────────────────────────────────────────────────────────
+
+async function runC2Project(runId: string, rootDir: string): Promise<SubResult> {
+  const s = await openSession({ section: 'C-entities/C2-project', runId, rootDir, viewport: 'desktop', theme: 'dark' })
+  const createdIds: string[] = []
+
+  try {
+    log(s, 'C2 — project lifecycle')
+    await goto(s, '/portal/projects')
+    await snap(s, 'projects-pre-create')
+
+    // C2.1 Create via CreateProjectModal
+    log(s, 'C2.1 Create project via CreateProjectModal')
+    const newBtn = s.page.locator('button').filter({ hasText: /^New Project|^Add Project/i }).first()
+    if (!(await newBtn.count())) {
+      bug(s, 'C2.1.0', 'P0', 'New Project button visible', 'not found', 'button labeled New Project')
+      await closeSession(s)
+      return { name: 'C2-project', passes: 0, bugs: 1, createdIds }
+    }
+    await newBtn.click()
+    await snap(s, 'projects-modal-open', 500)
+    const marker = makeMarker('c2proj')
+    // Title
+    const titleInput = s.page.locator('input[type="text"], textarea').first()
+    if (await titleInput.count()) {
+      await titleInput.fill(marker)
+    }
+    await snap(s, 'projects-modal-filled')
+    // Submit via Ctrl+Enter
+    await s.page.keyboard.press('Control+Enter')
+    await snap(s, 'projects-after-submit', 1800)
+
+    // Verify in API
+    const list = await s.api.get('/api/projects')
+    const proj = (await list.json())?.data?.find((p: any) => p.title === marker)
+    if (!proj) {
+      bug(s, 'C2.1.1', 'P0', 'project appears in API after create', `not in /api/projects (looked for title=${marker})`, 'entity present')
+      await closeSession(s)
+      return { name: 'C2-project', passes: 0, bugs: 1, createdIds }
+    }
+    const projectId = proj.id
+    const projectSlug = proj.slug
+    createdIds.push(projectId)
+    pass(s, `C2.1 project created (${projectId.slice(0, 12)}…, slug=${projectSlug})`)
+
+    // Cleanup callback
+    s.cleanup.push(async () => {
+      for (const id of createdIds) {
+        await s.api.post(`/api/projects/${id}/delete`, { data: {} }).catch(() => {})
+      }
+    })
+
+    // C2.2 Inline edit stage on /portal/projects list
+    log(s, 'C2.2 inline edit stage')
+    // Find row containing our title
+    await goto(s, '/portal/projects') // refresh to ensure new project visible
+    await snap(s, 'projects-after-reload', 800)
+    const titleNode = s.page.getByText(marker, { exact: false }).first()
+    if (await titleNode.count()) {
+      await titleNode.scrollIntoViewIfNeeded()
+      // Find the row's stage InlineSelect button (currently shows "Idea")
+      // InlineSelect buttons have aria-haspopup="listbox"
+      const rowAncestor = titleNode.locator('xpath=ancestor::*[descendant::button[@aria-haspopup="listbox"]][1]')
+      const stageBtn = rowAncestor.locator('button[aria-haspopup="listbox"]').filter({ hasText: /^Idea$/ }).first()
+      if (await stageBtn.count()) {
+        await clickViaDispatch(stageBtn)
+        await s.page.waitForTimeout(300)
+        await snap(s, 'stage-dropdown-open')
+        const dataCollOpt = s.page.locator('[role="listbox"] button').filter({ hasText: /^Data Collection$/i }).first()
+        if (await dataCollOpt.count()) {
+          await clickViaDispatch(dataCollOpt)
+          await snap(s, 'stage-edited', 2500)
+          const after = (await (await s.api.get('/api/projects')).json())?.data?.find((p: any) => p.id === projectId)
+          if (after?.stage === 'Data Collection') pass(s, 'C2.2 API reflects stage=Data Collection')
+          else bug(s, 'C2.2.1', 'P1', 'project stage API readback', `actual=${after?.stage}`, 'Data Collection')
+        } else {
+          bug(s, 'C2.2.2', 'P1', 'Data Collection option in listbox', 'option not found', 'option button visible')
+        }
+      } else {
+        bug(s, 'C2.2.3', 'P1', 'project row stage InlineSelect (currently Idea)', 'button not found in row scope', 'button[aria-haspopup=listbox] with text Idea')
+      }
+    } else {
+      bug(s, 'C2.2.4', 'P0', 'project visible in list', `text "${marker}" not found`, 'project title visible on /portal/projects')
+    }
+
+    // C2.3 Reload persistence
+    log(s, 'C2.3 reload persistence')
+    await s.page.reload({ waitUntil: 'networkidle' })
+    await s.page.waitForTimeout(800)
+    const titleAfter = s.page.getByText(marker, { exact: false }).first()
+    if (await titleAfter.count()) pass(s, 'C2.3 project visible after reload')
+    else bug(s, 'C2.3.1', 'P0', 'project survives reload', 'title missing after reload', 'visible')
+
+    // C2.4 Soft-delete via API
+    log(s, 'C2.4 soft-delete via POST :id/delete')
+    const del = await s.api.post(`/api/projects/${projectId}/delete`, { data: {} })
+    if (del.ok()) {
+      pass(s, 'C2.4 soft-delete returned ok')
+      const after = (await (await s.api.get('/api/projects')).json())?.data?.find((p: any) => p.id === projectId)
+      if (!after) pass(s, 'C2.4 project absent from default list after delete')
+      else bug(s, 'C2.4.1', 'P1', 'soft-deleted project hidden', 'still visible', 'absent')
+      createdIds.length = 0 // already deleted
+    } else {
+      bug(s, 'C2.4.2', 'P1', 'soft-delete API call', `status=${del.status()}`, 'ok')
+    }
+  } finally {
+    persistFindingsJson(s)
+    await closeSession(s)
+  }
+
+  const passes = s.findings.filter((f) => f.level === 'PASS').length
+  const bugs = s.findings.filter((f) => f.level === 'BUG').length
+  return { name: 'C2-project', passes, bugs, createdIds }
 }
 
 async function runC1Task(runId: string, rootDir: string): Promise<SubResult> {
