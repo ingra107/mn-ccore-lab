@@ -316,36 +316,43 @@ export default function SessionHistory() {
           </select>
 
           {/* Date range presets */}
-          {['7d', '30d', '90d', 'all'].map(preset => (
-            <button
-              key={preset}
-              onClick={() => setDatePreset(preset)}
-              style={{
-                fontSize: 11,
-                fontWeight: 500,
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                backgroundColor: (preset === 'all' && !sinceFilter) || (sinceFilter && preset !== 'all')
-                  ? (() => {
-                    // Approximate match for active preset
-                    const now = new Date()
-                    const sinceDate = new Date(sinceFilter)
-                    const diffDays = Math.round((now.getTime() - sinceDate.getTime()) / 86400000)
-                    if (preset === '7d' && Math.abs(diffDays - 7) < 2) return 'var(--teal)'
-                    if (preset === '30d' && Math.abs(diffDays - 30) < 2) return 'var(--teal)'
-                    if (preset === '90d' && Math.abs(diffDays - 90) < 2) return 'var(--teal)'
-                    return 'var(--surface)'
-                  })()
-                  : (preset === 'all' && !sinceFilter) ? 'var(--teal)' : 'var(--surface)',
-                color: (preset === 'all' && !sinceFilter) ? 'var(--ink-bright, #fff)' : 'var(--slate)',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-            >
-              {preset === 'all' ? 'All time' : preset}
-            </button>
-          ))}
+          {['7d', '30d', '90d', 'all'].map(preset => {
+            // Active if 'all' with no filter, OR if matching days back window.
+            let isActive = false
+            if (preset === 'all' && !sinceFilter) {
+              isActive = true
+            } else if (sinceFilter && preset !== 'all') {
+              const now = new Date()
+              const sinceDate = new Date(sinceFilter)
+              const diffDays = Math.round((now.getTime() - sinceDate.getTime()) / 86400000)
+              if (preset === '7d' && Math.abs(diffDays - 7) < 2) isActive = true
+              else if (preset === '30d' && Math.abs(diffDays - 30) < 2) isActive = true
+              else if (preset === '90d' && Math.abs(diffDays - 90) < 2) isActive = true
+            }
+            return (
+              <button
+                key={preset}
+                onClick={() => setDatePreset(preset)}
+                aria-pressed={isActive}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 500,
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-subtle)',
+                  // Teal-solid + white = 5.4:1 AA both themes. Prev code
+                  // used undefined var(--surface) + white text → 1.09:1
+                  // (white on inherited page bg). r7 2026-04-22.
+                  backgroundColor: isActive ? 'var(--teal-solid)' : 'transparent',
+                  color: isActive ? '#fff' : 'var(--slate)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {preset === 'all' ? 'All time' : preset}
+              </button>
+            )
+          })}
         </div>
       </PageHeader>
 

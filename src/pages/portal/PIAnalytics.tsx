@@ -337,15 +337,17 @@ export default function PIAnalytics() {
 
   const maxEngagement = data ? Math.max(...data.teamEngagement.map(m => m.actions), 1) : 1
 
-  // Stage color mapping
+  // Stage color mapping — theme-agnostic fills so #fff text passes AA in
+  // BOTH modes. --slate/--teal/--gold flip to LIGHT dark-mode variants
+  // where white text fails 2:1. r7 2026-04-22.
   const stageColors: Record<string, string> = {
-    'Idea': 'var(--slate)',
-    'Data Collection': 'var(--teal)',
-    'Analysis': 'var(--gold)',
-    'Writing': 'var(--maroon)',
-    'Review': 'var(--gold)',
-    'Published': 'var(--green)',
-    'Submitted': 'var(--teal)',
+    'Idea': 'var(--stage-fill-idea)',
+    'Data Collection': 'var(--stage-fill-data-collection)',
+    'Analysis': 'var(--stage-fill-analysis)',
+    'Writing': 'var(--stage-fill-writing)',
+    'Review': 'var(--stage-fill-review)',
+    'Published': 'var(--stage-fill-published)',
+    'Submitted': 'var(--stage-fill-submitted)',
   }
 
   return (
@@ -617,17 +619,18 @@ export default function PIAnalytics() {
                           className="h-full rounded flex items-center px-2"
                           style={{
                             width: `${Math.max(barWidth, 8)}%`,
-                            backgroundColor: member.actions < 3 ? 'var(--slate)' : 'var(--gold)',
-                            opacity: member.actions < 3 ? 0.85 : 1,
+                            // Theme-agnostic dark fills so #fff passes AA in
+                            // both modes. --slate/--gold flip to LIGHT
+                            // dark-mode variants (#dcb355 gold dark, #b0b5b9
+                            // slate dark) where white text fails ~2:1.
+                            // r7 2026-04-22.
+                            backgroundColor: member.actions < 3 ? 'var(--stage-fill-idea)' : 'var(--stage-fill-analysis)',
                             transition: 'width 0.6s ease',
                             minWidth: 24,
                           }}
                         >
                           <span
                             className="text-[10px] font-semibold"
-                            // Stage bar fills (slate/gold) are mid-to-dark —
-                            // white text gives AA headroom. #1a1a1a failed
-                            // on --slate (1:1) in light mode.
                             style={{ color: '#fff' }}
                           >
                             {member.actions}

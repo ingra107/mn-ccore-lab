@@ -430,11 +430,12 @@ export default function Dashboard() {
                         border: 'none',
                         fontSize: '12px',
                         fontWeight: activeTab === tab.id ? 600 : 400,
-                        // Active tab uses gold bg; fixed-dark text keeps AA
-                        // in both themes (--ink is light in dark mode, --cream
-                        // is light in light mode — neither passes on gold).
-                        color: activeTab === tab.id ? '#1a1a1a' : 'var(--slate)',
-                        backgroundColor: activeTab === tab.id ? 'var(--gold)' : 'transparent',
+                        // Active tab: theme-agnostic dark-gold fill + white
+                        // text = 7.5:1 AA both themes. --gold flips
+                        // (#6b5420 light / #dcb355 dark) so #1a1a1a text
+                        // failed on light mode. r7 2026-04-22.
+                        color: activeTab === tab.id ? '#fff' : 'var(--slate)',
+                        backgroundColor: activeTab === tab.id ? 'var(--stage-fill-analysis)' : 'transparent',
                         opacity: activeTab === tab.id ? 1 : 0.85,
                         cursor: 'pointer',
                         transition: 'color 150ms ease, background-color 150ms ease, opacity 150ms ease',

@@ -429,7 +429,9 @@ export default function Home() {
                         fontSize: '32px',
                         fontWeight: 400,
                         color: pillar.color,
-                        opacity: 0.6,
+                        // 0.75 — large-text 3:1 AA (prev 0.6 = 2.84:1 fail).
+                        // r7 2026-04-22.
+                        opacity: 0.75,
                         lineHeight: 1,
                       }}
                     >

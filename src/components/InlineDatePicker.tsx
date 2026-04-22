@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, CalendarDays } from 'lucide-react'
 import { formatShortDate } from '../lib/dateUtils'
 
@@ -85,6 +86,9 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
   })()
 
   if (editing) {
+    // Position preset dropdown via portal to escape row overflow. GH #24:
+    // in-flow dropdown overlapped with row below. r7 2026-04-22.
+    const rect = containerRef.current?.getBoundingClientRect()
     return (
       <div ref={containerRef} style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
         <input
@@ -105,15 +109,20 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
             cursor: 'pointer',
           }}
         />
+        {rect && createPortal(
         <div
-          className="absolute z-50 mt-1 flex gap-1 p-1 rounded-lg border"
+          className="flex gap-1 p-1 rounded-lg border"
           style={{
-            top: '100%',
-            left: 0,
+            position: 'fixed',
+            top: rect.bottom + 4,
+            left: rect.left,
             background: 'var(--cream)',
             borderColor: 'var(--border-subtle)',
-            boxShadow: 'var(--shadow-card)',
+            boxShadow: 'var(--shadow-menu)',
+            zIndex: 'var(--z-toast)',
           }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
         >
           {presets.map(p => (
             <button
@@ -140,7 +149,9 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
               Clear
             </button>
           )}
-        </div>
+        </div>,
+        document.body,
+        )}
       </div>
     )
   }

@@ -460,7 +460,7 @@ function MenteeGroup({
   const isQuiet  = silenceDays !== null && silenceDays > SILENCE_AMBER_DAYS && !isSilent
 
   return (
-    <motion.div variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}>
+    <motion.div variants={{ hidden: { y: 8 }, visible: { y: 0 } }}>
       {/* Group header */}
       <button
         onClick={() => setExpanded(!expanded)}

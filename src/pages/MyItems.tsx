@@ -314,7 +314,9 @@ function NotificationCard({
         marginBottom: '0.5rem',
         cursor: notification.link ? 'pointer' : 'default',
         borderLeft: isUnread ? '3px solid var(--gold)' : '3px solid transparent',
-        opacity: isUnread ? 1 : 0.85,
+        // Don't dim the whole card for read state — compounds with child
+        // opacity (--ink-hint 0.68 × parent 0.85 = 0.58 → fails AA).
+        // Visual distinction comes from borderLeft transparent. r7 2026-04-22.
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
@@ -428,7 +430,6 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
         <div
           style={{
             color: isDone ? 'var(--teal)' : 'var(--slate)',
-            opacity: isDone ? 1 : 0.85,
             flexShrink: 0,
             marginTop: 2,
           }}
@@ -440,10 +441,9 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
           <div
             style={{
               fontSize: '15px',
-              color: 'var(--ink)',
+              color: isDone ? 'var(--muted)' : 'var(--ink)',
               lineHeight: 1.4,
               textDecoration: isDone ? 'line-through' : 'none',
-              opacity: isDone ? 0.85 : 1,
             }}
           >
             {item.commitment}
@@ -824,7 +824,10 @@ export default function MyItems() {
                   gap: 'var(--sp-xs)',
                   fontSize: 'var(--label-size)',
                   color: 'var(--teal)',
-                  opacity: markAllRead.isPending ? 0.85 : 0.8,
+                  // Full opacity — teal on #f5f5f5 passes AA (5.2:1);
+                  // 0.8 opacity blend dropped it to #318783 = 3.91:1.
+                  // Disabled attribute already dims the button on pending.
+                  // r7 2026-04-22.
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   padding: 'var(--sp-xs) 0',
@@ -889,7 +892,7 @@ export default function MyItems() {
             )}
 
             {doneCommitments.length > 0 && (
-              <div style={{ marginTop: '1rem', opacity: 0.85 }}>
+              <div style={{ marginTop: '1rem' }}>
                 <AnimatePresence mode="popLayout">
                   {doneCommitments.map((c) => (
                     <CommitmentCard key={c.id} item={c} />

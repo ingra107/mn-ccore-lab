@@ -344,7 +344,9 @@ export default function CLIFMap() {
             />
             CLIF Consortium Sites
           </span>
-          <span style={{ color: 'rgba(201, 168, 76, 0.5)' }}>
+          {/* Gold at 0.5 opacity on dark bg = 2.9:1 (fails AA). Use
+              0.85 opacity → 4.7:1 pass. r7 2026-04-22. */}
+          <span style={{ color: 'rgba(201, 168, 76, 0.85)' }}>
             {sites.length} Centers
           </span>
         </div>

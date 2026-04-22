@@ -289,7 +289,9 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     display: 'grid' as const,
     gridTemplateColumns: gridTemplate,
     alignItems: 'center' as const,
-    gap: '0 4px',
+    // 4px → 10px: hover-action icons sat flush against Priority pill,
+    // reading as overlap. GH #22. r7 2026-04-22.
+    gap: '0 10px',
   }), [gridTemplate])
 
   const parentRef = useRef<HTMLDivElement>(null)

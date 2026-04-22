@@ -567,13 +567,16 @@ export default function AnalyticsPage() {
             {projectsByStage.map(([stage, count]) => {
               const maxCount = Math.max(...projectsByStage.map(([, c]) => c))
               const width = (count / maxCount) * 100
+              // Theme-agnostic fills so #fff text passes AA in BOTH modes.
+              // --slate/--teal/--gold flip to LIGHT dark-mode variants (e.g.
+              // --teal dark = #5cbcb4), where white text fails 2:1. r7 2026-04-22.
               const stageColors: Record<string, string> = {
-                'Idea': 'var(--slate)',
-                'Data Collection': 'var(--teal)',
-                'Analysis': 'var(--gold)',
-                'Writing': 'var(--orange)',
-                'Review': 'var(--maroon)',
-                'Published': 'var(--green)',
+                'Idea': 'var(--stage-fill-idea)',
+                'Data Collection': 'var(--stage-fill-data-collection)',
+                'Analysis': 'var(--stage-fill-analysis)',
+                'Writing': 'var(--stage-fill-writing)',
+                'Review': 'var(--stage-fill-review)',
+                'Published': 'var(--stage-fill-published)',
               }
               return (
                 <div key={stage} className="flex items-center gap-3">

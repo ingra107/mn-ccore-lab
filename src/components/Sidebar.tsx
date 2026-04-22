@@ -328,10 +328,12 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           {!collapsed && <span>Back to Website</span>}
         </Link>
 
-        {/* User profile */}
+        {/* User profile — link to personal workspace (my-items) rather than
+            public team-member page. GH #20: avatar click routed to team
+            profile, but Nick expected his own working page. r7 2026-04-22. */}
         {person && !collapsed && (
           <Link
-            to={PATHS.teamMember(userSlug || '')}
+            to={PATHS.myItems}
             prefetch="intent"
             className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
             style={{ color: 'var(--ink)', textDecoration: 'none' }}

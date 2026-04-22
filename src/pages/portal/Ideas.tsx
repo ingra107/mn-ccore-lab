@@ -378,7 +378,7 @@ export default function Ideas() {
                       )
                     })}
                     {colIdeas.length === 0 && (
-                      <div style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, padding: '12px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--muted)', padding: '12px', textAlign: 'center' }}>
                         Empty
                       </div>
                     )}
@@ -522,7 +522,11 @@ function IdeaRowView({
         style={{
           gridTemplateColumns: GRID_COLS,
           padding: 'var(--row-padding-y, 10px) var(--sp-lg)',
-          alignItems: 'center',
+          // align-items: center truncates rows with research_area sub-text
+          // (title + 2px margin + 11px label = ~45px, overflows 44px row).
+          // Switch to start + minHeight auto-grow keeps sub-text in its row.
+          // GH #18. r7 2026-04-22.
+          alignItems: 'start',
           gap: 'var(--sp-md)',
           minHeight: 'var(--row-height, 44px)',
           boxSizing: 'border-box' as const,

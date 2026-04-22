@@ -30,10 +30,13 @@ export default function MetricCard({ icon: Icon, label, value, color, subtitle, 
       </div>
       <div className="text-lg sm:text-xl tabular-nums" style={{ fontWeight: 600, color: 'var(--ink)' }}>{value}</div>
       {showDelta && delta !== null && (
-        <div className="mt-1 flex items-center gap-1" style={{ fontSize: 'var(--text-micro)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+        // Parent must not carry opacity — it multiplies with child green/
+        // maroon span colors, dropping them below 4.5:1 on light-mode card
+        // bg. Use --muted directly (passes AA without opacity). r7 2026-04-22.
+        <div className="mt-1 flex items-center gap-1" style={{ fontSize: 'var(--text-micro)', color: 'var(--muted)' }}>
           {delta > 0 && <span style={{ color: 'var(--green)', fontWeight: 500 }}>▲ {delta}</span>}
           {delta < 0 && <span style={{ color: 'var(--maroon)', fontWeight: 500 }}>▼ {Math.abs(delta)}</span>}
-          {delta === 0 && <span style={{ opacity: 0.7 }}>→ no change</span>}
+          {delta === 0 && <span>→ no change</span>}
           <span>{previousLabel ?? 'vs prior'}</span>
         </div>
       )}

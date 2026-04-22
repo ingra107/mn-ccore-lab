@@ -1244,12 +1244,13 @@ export default function DecisionsPage() {
                   { label: 'Pending', value: pendingCount, color: 'var(--gold)' },
                   { label: 'Recorded', value: recordedCount, color: 'var(--teal)' },
                 ].map((s) => (
+                  // Parent opacity compounds with gold/teal count → fails AA.
+                  // Use --muted (no opacity). r7 2026-04-22.
                   <span
                     key={s.label}
                     style={{
                       fontSize: 'var(--text-label)',
-                      color: 'var(--slate)',
-                      opacity: 'var(--ink-label)',
+                      color: 'var(--muted)',
                     }}
                   >
                     {s.label}{' '}
@@ -1257,7 +1258,6 @@ export default function DecisionsPage() {
                       style={{
                         fontWeight: 600,
                         color: (s as { color?: string }).color || 'var(--slate)',
-                        opacity: 1,
                       }}
                     >
                       {s.value}

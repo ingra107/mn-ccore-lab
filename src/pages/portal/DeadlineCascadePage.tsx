@@ -126,7 +126,7 @@ export default function DeadlineCascadePage() {
               return (
                 <motion.div
                   key={group.projectId}
-                  variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}
+                  variants={{ hidden: { y: 8 }, visible: { y: 0 } }}
                   className="table-container"
                   style={{ overflow: 'visible' }}
                 >

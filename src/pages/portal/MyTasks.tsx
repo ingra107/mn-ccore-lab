@@ -438,7 +438,7 @@ export default function MyTasks() {
           <span className="flex items-center gap-2">
             {pendingCount} active task{pendingCount !== 1 ? 's' : ''}
             {streak >= 2 && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: 'var(--gold-emphasis)', color: 'var(--gold)' }}>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: 'var(--gold-emphasis)', color: 'var(--gold-on-emphasis)' }}>
                 <Flame size={10} />
                 {streak}d streak
               </span>
@@ -648,7 +648,9 @@ export default function MyTasks() {
             }}
           >
             {f.label}
-            {f.count > 0 && <span style={{ opacity: 0.9 }}>{f.count}</span>}
+            {/* No opacity — teal count span at 0.9 fails AA on faint-teal
+                active bg (4.32:1). Full opacity passes. r7 2026-04-22. */}
+            {f.count > 0 && <span>{f.count}</span>}
           </button>
           )
         })}

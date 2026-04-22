@@ -20,10 +20,12 @@ export const staggerContainer = {
   visible: { transition: { staggerChildren: 0.04 } },
 }
 
+// Content visible by default (CLAUDE.md Rule 1). Animate y only —
+// opacity:0 hidden state triggers axe color-contrast false positives
+// when audit runs mid-animation. r7 2026-04-22.
 export const staggerItem = {
-  hidden: { opacity: 0, y: 12 },
+  hidden: { y: 12 },
   visible: {
-    opacity: 1,
     y: 0,
     transition: spring.default,
   },

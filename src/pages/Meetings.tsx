@@ -369,8 +369,11 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
                 }}
               />
               <div className="flex gap-2">
+                {/* Theme-agnostic dark-gold fill + white text = 7.5:1
+                    AA both modes. --gold light (#6b5420) failed with
+                    dark text (2.46:1). r7 2026-04-22. */}
                 <button type="submit"
-                  style={{ background: 'var(--gold)', color: '#0f1923', border: 'none', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                  style={{ background: 'var(--stage-fill-analysis)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                   Save
                 </button>
                 <button type="button" onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale('') }}
@@ -386,7 +389,9 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
       <Link
         to={PATHS.meeting(meeting.id)}
         className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md text-xs font-medium"
-        style={{ fontSize: 'var(--label-size)', background: 'var(--gold)', color: '#0f1923', textDecoration: 'none', transition: 'opacity 0.2s' }}
+        // Theme-agnostic dark-gold fill + white text = 7.5:1 AA both
+        // modes. --gold light failed with dark text (2.46:1). r7 2026-04-22.
+        style={{ fontSize: 'var(--label-size)', background: 'var(--stage-fill-analysis)', color: '#fff', textDecoration: 'none', transition: 'opacity 0.2s' }}
       >
         View Full Meeting <ArrowRight size={11} />
       </Link>
@@ -703,7 +708,7 @@ export default function Meetings() {
                     </span>
                   )}
                   {rest.length > 0 && (
-                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.6, marginLeft: 'auto' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--muted)', marginLeft: 'auto' }}>
                       +{rest.length} more
                     </span>
                   )}
@@ -730,7 +735,9 @@ export default function Meetings() {
               {FILTER_OPTIONS.map((f) => (
                 <motion.button key={f.key} type="button" onClick={() => setFilter(f.key)}
                   className="cursor-pointer inline-flex items-center px-2.5 py-1 rounded-full text-xs"
-                  style={{ background: filter === f.key ? 'var(--gold)' : 'var(--ice)', color: filter === f.key ? '#0f1923' : 'var(--slate)', border: 'none', transitionProperty: 'background-color, color', transitionDuration: '150ms', transitionTimingFunction: 'ease' }}
+                  // Active: theme-agnostic dark-gold + white text =
+                  // AA both modes. r7 2026-04-22.
+                  style={{ background: filter === f.key ? 'var(--stage-fill-analysis)' : 'var(--ice)', color: filter === f.key ? '#fff' : 'var(--slate)', border: 'none', transitionProperty: 'background-color, color', transitionDuration: '150ms', transitionTimingFunction: 'ease' }}
                   whileTap={{ scale: 0.95 }} aria-pressed={filter === f.key}>
                   {f.label}
                 </motion.button>

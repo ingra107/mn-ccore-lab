@@ -409,7 +409,7 @@ export default function Deadlines() {
                 { title: 'Later', items: later, color: 'var(--slate)' },
                 { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
               ].filter(g => g.items.length > 0).map((group) => (
-                <motion.div key={group.title} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } }}>
+                <motion.div key={group.title} variants={{ hidden: { y: 8 }, visible: { y: 0 } }}>
                   <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onDueDateChange={handleDueDateChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
                 </motion.div>
               ))}
@@ -442,9 +442,11 @@ export default function Deadlines() {
                   { label: 'Later', value: later.length },
                   { label: 'Done', value: completed.length, color: 'var(--green)' },
                 ].map(s => (
-                  <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                  // Parent opacity compounds with green/gold count span →
+                  // fails AA. Use --muted directly, no opacity. r7 2026-04-22.
+                  <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--muted)' }}>
                     {s.label}{' '}
-                    <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)', opacity: 1 }}>
+                    <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)' }}>
                       {s.value}
                     </span>
                   </span>

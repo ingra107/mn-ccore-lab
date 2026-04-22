@@ -63,10 +63,13 @@ export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps
   return (
     <AnimatePresence>
       {visible && (
+        // Scale + y transform only — keep opacity at 1 throughout so axe
+        // doesn't catch the tooltip mid-animation (false-positive contrast
+        // fail: partially-transparent --ink bg over page bg). r7 2026-04-22.
         <motion.div
-          initial={{ opacity: 0, y: 4, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 4, scale: 0.97 }}
+          initial={{ y: 4, scale: 0.97 }}
+          animate={{ y: 0, scale: 1 }}
+          exit={{ y: 4, scale: 0.97 }}
           transition={spring.snappy}
           className="flex items-center gap-2 page-tooltip"
           style={{

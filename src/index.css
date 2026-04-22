@@ -265,8 +265,8 @@ html[data-density="relaxed"] {
   /* Contrast hierarchy — labels recede, values pop */
   /* Light mode: opacity values raised to meet WCAG AA 4.5:1 on white bg */
   --ink-primary: 1.0;
-  --ink-label: 0.70;      /* WCAG AA light mode: ~5.3:1 on white — was 0.55 @ 3.94:1 */
-  --ink-hint: 0.62;       /* WCAG AA light mode: ~4.6:1 on white — was 0.40 @ 2.54:1 */
+  --ink-label: 0.70;      /* WCAG AA light mode: ~5.6:1 on white — was 0.55 @ 3.94:1 */
+  --ink-hint: 0.68;       /* WCAG AA light mode: ~5.4:1 on white — was 0.62 @ 4.35:1 (60+ notif/mobile-card hits). r7 2026-04-22 */
   --ink-muted: 0.7;       /* secondary text, metadata, inactive icons */
   --ink-disabled: 0.3;    /* disabled controls, decorative elements */
   --label-weight: var(--weight-heading);
@@ -642,10 +642,14 @@ a:hover {
   transform: translateY(0);
 }
 
+/* Transform-only entry — opacity stays at 1 so axe doesn't catch
+   elements mid-transition with partial alpha (slate × 0.58 on dark
+   bg fails AA). CLAUDE.md Rule 1: content visible by default.
+   r7 2026-04-22. */
 .fade-in-up.will-animate {
-  opacity: 0;
+  opacity: 1;
   transform: translateY(20px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition: transform 0.6s ease;
 }
 
 .fade-in-up.will-animate.visible {
@@ -929,6 +933,31 @@ a:hover {
 }
 .dark {
   --stage-data-collection: #9ab7d9;  /* light blue for dark bg (9+:1 on #0b1017) */
+}
+
+/* ── Stage bar FILL tokens — theme-agnostic dark so #fff text passes AA
+      in both modes. Must NOT use --slate/--teal/--gold etc. which flip to
+      LIGHT dark-mode variants (white text on light teal fails). r7 2026-04-22. */
+:root {
+  --stage-fill-idea: #4b5563;          /* slate-600: 6.3:1 with #fff */
+  --stage-fill-data-collection: #0d6f68; /* teal-solid: 5.4:1 with #fff */
+  --stage-fill-analysis: #6b5420;       /* gold-dark: 7.5:1 with #fff */
+  --stage-fill-writing: #a23d08;        /* orange light-hex: 5.3:1 with #fff */
+  --stage-fill-review: #8a1f2e;         /* maroon-solid: 7.3:1 with #fff */
+  --stage-fill-submitted: #0d6f68;      /* same as data-collection */
+  --stage-fill-published: #066e2f;      /* green light-hex: 5.9:1 with #fff */
+}
+
+/* ── Gold-on-emphasis text token — gold pill text on gold-emphasis bg.
+      --gold-emphasis is rgba(201,168,76,0.15) = #efebdf on white light-bg
+      and #2a2618 on dark bg. --gold flips #6b5420 light / #dcb355 dark,
+      giving 4.25:1 light (fails AA) / ~8:1 dark. Token pins to darker
+      gold in light mode (5.8:1 on #efebdf). r7 2026-04-22. */
+:root {
+  --gold-on-emphasis: #5a4518;
+}
+.dark {
+  --gold-on-emphasis: #dcb355;
 }
 
 /* ── Cream section divider — slight tint in dark mode for visibility ── */
