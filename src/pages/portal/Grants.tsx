@@ -547,7 +547,7 @@ export default function Grants() {
             <button
               key={tab.key}
               role="tab"
-              aria-selected={isActive}
+              aria-selected={isActive ? "true" : "false"}
               onClick={() => setActiveTab(tab.key)}
               className="px-3 py-2 text-sm transition-colors"
               style={{

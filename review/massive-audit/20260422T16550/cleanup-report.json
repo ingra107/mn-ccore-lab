@@ -1,0 +1,14 @@
+{
+  "tasksDeleted": 0,
+  "projectsDeleted": 0,
+  "ideasDeleted": 0,
+  "decisionsDeleted": 0,
+  "questionsDeleted": 0,
+  "errors": [
+    "tasks sweep: apiRequestContext.get: getaddrinfo ENOTFOUND mn-ccore-lab.pages.dev\nCall log:\n\u001b[2m  - → GET https://mn-ccore-lab.pages.dev/api/tasks?limit=5000\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.59.1 (x64; windo",
+    "projects sweep: apiRequestContext.get: getaddrinfo ENOTFOUND mn-ccore-lab.pages.dev\nCall log:\n\u001b[2m  - → GET https://mn-ccore-lab.pages.dev/api/projects\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.59.1 (x64; windows 10.0)",
+    "ideas sweep: apiRequestContext.get: getaddrinfo ENOTFOUND mn-ccore-lab.pages.dev\nCall log:\n\u001b[2m  - → GET https://mn-ccore-lab.pages.dev/api/ideas\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.59.1 (x64; windows 10.0) no",
+    "decisions sweep: apiRequestContext.get: getaddrinfo ENOTFOUND mn-ccore-lab.pages.dev\nCall log:\n\u001b[2m  - → GET https://mn-ccore-lab.pages.dev/api/decisions\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.59.1 (x64; windows 10.0",
+    "questions sweep: apiRequestContext.get: getaddrinfo ENOTFOUND mn-ccore-lab.pages.dev\nCall log:\n\u001b[2m  - → GET https://mn-ccore-lab.pages.dev/api/questions\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.59.1 (x64; windows 10.0"
+  ]
+}

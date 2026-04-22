@@ -267,7 +267,7 @@ export default function QuickCaptureInbox() {
                 key={t.value}
                 type="button"
                 role="radio"
-                aria-checked={active}
+                aria-checked={active ? "true" : "false"}
                 onClick={() => setTag(t.value)}
                 style={{
                   padding: '4px 10px',

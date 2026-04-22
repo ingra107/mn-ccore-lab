@@ -1,0 +1,218 @@
+{
+  "desktop-dark-/portal/deadlines": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 1
+    }
+  ],
+  "desktop-dark-/portal/settings": [
+    {
+      "id": "aria-valid-attr-value",
+      "impact": "critical",
+      "help": "ARIA attributes must conform to valid values",
+      "nodes": 1
+    }
+  ],
+  "desktop-dark-/": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 1
+    }
+  ],
+  "desktop-dark-/pulse": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 6
+    }
+  ],
+  "desktop-light-/portal/dashboard": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 1
+    }
+  ],
+  "desktop-light-/portal/meetings": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 4
+    }
+  ],
+  "desktop-light-/portal/sessions": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 1
+    }
+  ],
+  "desktop-light-/portal/settings": [
+    {
+      "id": "aria-valid-attr-value",
+      "impact": "critical",
+      "help": "ARIA attributes must conform to valid values",
+      "nodes": 1
+    }
+  ],
+  "desktop-light-/": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 6
+    }
+  ],
+  "desktop-light-/nick": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 29
+    }
+  ],
+  "desktop-light-/nate": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 12
+    }
+  ],
+  "desktop-light-/pulse": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 6
+    }
+  ],
+  "tablet-dark-/portal/settings": [
+    {
+      "id": "aria-valid-attr-value",
+      "impact": "critical",
+      "help": "ARIA attributes must conform to valid values",
+      "nodes": 1
+    }
+  ],
+  "tablet-dark-/": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 1
+    }
+  ],
+  "tablet-dark-/pulse": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 7
+    }
+  ],
+  "tablet-light-/portal/dashboard": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 1
+    }
+  ],
+  "tablet-light-/portal/meetings": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 4
+    }
+  ],
+  "tablet-light-/portal/sessions": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 1
+    }
+  ],
+  "tablet-light-/portal/settings": [
+    {
+      "id": "aria-valid-attr-value",
+      "impact": "critical",
+      "help": "ARIA attributes must conform to valid values",
+      "nodes": 1
+    }
+  ],
+  "tablet-light-/": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 6
+    }
+  ],
+  "tablet-light-/nick": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 29
+    }
+  ],
+  "tablet-light-/nate": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 12
+    }
+  ],
+  "tablet-light-/pulse": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 7
+    }
+  ],
+  "mobile-dark-/portal/settings": [
+    {
+      "id": "aria-valid-attr-value",
+      "impact": "critical",
+      "help": "ARIA attributes must conform to valid values",
+      "nodes": 1
+    }
+  ],
+  "mobile-dark-/": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 1
+    }
+  ],
+  "mobile-dark-/pulse": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 6
+    }
+  ],
+  "mobile-light-/portal/dashboard": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 1
+    }
+  ]
+}

@@ -188,10 +188,12 @@ export default function SettingsPage() {
         <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
       </Link>
 
-      {/* Tab strip — P2-05 */}
+      {/* Tab strip — P2-05. overflow-x:auto + flex-shrink-0 on buttons so
+          the 5-tab strip scrolls horizontally at <400px instead of pushing
+          the page and causing horizontal body overflow (audit 2026-04-22). */}
       <div
-        className="flex gap-1 border-b mb-4"
-        style={{ borderColor: 'var(--border-subtle)' }}
+        className="flex gap-1 border-b mb-4 overflow-x-auto"
+        style={{ borderColor: 'var(--border-subtle)', WebkitOverflowScrolling: 'touch' }}
         role="tablist"
         aria-label="Settings sections"
       >
@@ -201,10 +203,10 @@ export default function SettingsPage() {
             <button
               key={tab.key}
               role="tab"
-              aria-selected={isActive}
+              aria-selected={isActive ? "true" : "false"}
               aria-controls={`settings-tab-${tab.key}`}
               onClick={() => setActiveTab(tab.key)}
-              className="px-3 py-2 text-sm transition-colors"
+              className="px-3 py-2 text-sm transition-colors flex-shrink-0 whitespace-nowrap"
               style={{
                 color: isActive ? 'var(--teal)' : 'var(--slate)',
                 borderBottom: `2px solid ${isActive ? 'var(--teal)' : 'transparent'}`,

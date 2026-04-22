@@ -179,7 +179,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
             <button
               key={opt.value}
               role="option"
-              aria-selected={opt.value === value}
+              aria-selected={opt.value === value ? "true" : "false"}
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()

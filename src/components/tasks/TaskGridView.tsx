@@ -1732,7 +1732,7 @@ function InlineCellSelect({
                 key={opt.value}
                 id={`${listboxId.current}-opt-${idx}`}
                 role="option"
-                aria-selected={opt.value === value}
+                aria-selected={opt.value === value ? "true" : "false"}
                 onClick={(e) => { e.stopPropagation(); onChange(opt.value); setOpen(false) }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px', width: '100%',

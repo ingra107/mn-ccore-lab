@@ -1025,7 +1025,7 @@ function OverviewQuickAdd({
                 key={m}
                 type="button"
                 role="tab"
-                aria-selected={isActive}
+                aria-selected={isActive ? "true" : "false"}
                 onClick={() => setMode(m)}
                 title={TOOLTIPS[m]}
                 className="cursor-pointer inline-flex items-center gap-1 transition-all"

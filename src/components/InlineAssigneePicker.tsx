@@ -182,7 +182,7 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
                 <button
                   key={m.slug}
                   role="option"
-                  aria-selected={isSelected}
+                  aria-selected={isSelected ? "true" : "false"}
                   onClick={(e) => { e.stopPropagation(); onChange(m.slug); setOpen(false) }}
                   onMouseEnter={() => setFocusedIdx(idx)}
                   style={{

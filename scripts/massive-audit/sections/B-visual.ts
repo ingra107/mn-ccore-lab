@@ -138,7 +138,10 @@ export async function runSectionB(runId: string, rootDir: string) {
         t.includes('hub-realtime') ||
         t.includes('Failed to load resource') ||
         t.includes('fonts.gstatic.com') ||
+        t.includes('fonts.googleapis.com') ||
         t.includes('Access to font') ||
+        t.includes('Access to CSS stylesheet') ||
+        t.includes('Access to XMLHttpRequest at \'https://fonts') ||
         t.includes('partysocket')
       ) return
       consoleErrors.push({ path: page.url(), text: t.slice(0, 240) })
