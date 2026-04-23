@@ -13,7 +13,6 @@ import { formatMediumDate } from '../lib/dateUtils'
 import { isProductionVisible } from '../lib/isProductionVisible'
 import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
-import PhaseReleaseBanner from '../components/PhaseReleaseBanner'
 import { PATHS } from '../constants/paths'
 import PageTooltip from '../components/PageTooltip'
 import PipelineCard from '../components/dashboard/PipelineCard'
@@ -497,7 +496,7 @@ export default function Dashboard() {
         })()}
 
         {/* Welcome banner (first-visit onboarding — conditional, rarely shown) */}
-        <PhaseReleaseBanner />
+        {/* PhaseReleaseBanner moved to PortalLayout top bar as a pill (R4-10). */}
         <WelcomeBanner />
 
         {/* Customize panel */}

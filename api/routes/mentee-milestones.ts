@@ -1,11 +1,13 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
+import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/mentee-milestones?mentee=&status=&type=
 export async function handleMenteeMilestones(url: URL, env: Env): Promise<Response> {
   const mentee = url.searchParams.get('mentee');
   const status = url.searchParams.get('status');
   const type = url.searchParams.get('type');
+  const includeFixtures = url.searchParams.get('include_fixtures') === '1';
 
   let query = 'SELECT * FROM mentee_milestones WHERE 1=1';
   const params: string[] = [];
@@ -17,7 +19,8 @@ export async function handleMenteeMilestones(url: URL, env: Env): Promise<Respon
   query += ' ORDER BY CASE status WHEN \'overdue\' THEN 0 WHEN \'in_progress\' THEN 1 WHEN \'upcoming\' THEN 2 WHEN \'completed\' THEN 3 END, due_date ASC, created_at DESC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results || [], count: result.results?.length || 0 });
+  const rows = filterFixtures(result.results || [], 'title', includeFixtures);
+  return json({ data: rows, count: rows.length });
 }
 
 // GET /api/mentee-milestones/overview — all mentees with upcoming/overdue counts

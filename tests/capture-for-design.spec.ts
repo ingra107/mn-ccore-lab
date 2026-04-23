@@ -140,9 +140,23 @@ for (const p of PAGES) {
     // gated by IntersectionObserver / virtualizer (activity feeds,
     // year-bucket charts, large task/project lists, etc.).
     await scrollThroughEverything(page)
-    await page.screenshot({
-      path: path.join(OUT_DIR, `${DEVICE}-${p.slug}.png`),
-      fullPage: true,
-    })
+    // Mobile uses top-of-viewport capture, not fullPage, because
+    // Playwright stitches fullPage by scrolling — sticky headers
+    // re-render in every slice and appear duplicated in the output
+    // PNG (round-4 false-positive). Scroll-chunks spec handles the
+    // below-the-fold content for long mobile pages when needed.
+    if (DEVICE === 'mobile') {
+      await page.evaluate(() => window.scrollTo(0, 0))
+      await page.waitForTimeout(150)
+      await page.screenshot({
+        path: path.join(OUT_DIR, `${DEVICE}-${p.slug}.png`),
+        fullPage: false,
+      })
+    } else {
+      await page.screenshot({
+        path: path.join(OUT_DIR, `${DEVICE}-${p.slug}.png`),
+        fullPage: true,
+      })
+    }
   })
 }

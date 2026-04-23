@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
+import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
@@ -26,6 +27,9 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
   // Sync pipelines need to see soft-deletes to mirror them into brain.db.
   // Default: hide deleted tasks (existing UI contract). Opt-in via flag.
   const includeDeleted = url.searchParams.get('include_deleted') === '1';
+  // Sync pipelines also need to see QA fixtures to detect their status.
+  // UI views never want them (R4-P1-01).
+  const includeFixtures = url.searchParams.get('include_fixtures') === '1' || includeDeleted;
 
   const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
   let query = `SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}`;
@@ -47,7 +51,8 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
   query += ' ORDER BY t.completed ASC, t.due_date ASC, t.created_at DESC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results, count: result.results.length });
+  const rows = filterFixtures(result.results, 'title', includeFixtures);
+  return json({ data: rows, count: rows.length });
 }
 
 // POST /api/tasks/:id/status — change task status (todo/in_progress/done/blocked/waiting_external)

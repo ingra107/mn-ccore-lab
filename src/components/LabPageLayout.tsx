@@ -29,6 +29,9 @@ interface LabPageLayoutProps {
   photoUrl?: string
   children: ReactNode
   breadcrumb?: ReactNode
+  /** R4-P2-03: portal context uses DM Sans on the name + muted caption.
+   *  Public marketing context keeps Fraunces display. */
+  portalChrome?: boolean
 }
 
 export default function LabPageLayout({
@@ -43,6 +46,7 @@ export default function LabPageLayout({
   photoUrl,
   children,
   breadcrumb,
+  portalChrome = false,
 }: LabPageLayoutProps) {
   const [activeSection, setActiveSection] = useState<string>('')
 
@@ -99,11 +103,12 @@ export default function LabPageLayout({
 
             <div className="text-center lg:text-left">
               <h1
-                className="text-2xl sm:text-3xl mb-1"
+                className={portalChrome ? 'text-2xl mb-1' : 'text-2xl sm:text-3xl mb-1'}
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: portalChrome ? 'var(--font-sans)' : 'var(--font-display)',
                   fontWeight: 600,
                   color: 'var(--ink)',
+                  letterSpacing: portalChrome ? '-0.01em' : undefined,
                 }}
               >
                 {credentials ? `${name}, ${credentials}` : name}
@@ -111,7 +116,8 @@ export default function LabPageLayout({
               <p
                 className="text-sm mb-1"
                 style={{
-                  color: 'var(--gold)',
+                  /* R4-P2-03: muted caption replaces gold in portal chrome. */
+                  color: portalChrome ? 'var(--ink-muted, var(--slate))' : 'var(--gold)',
                   fontSize: '12px',
                 }}
               >

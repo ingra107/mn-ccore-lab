@@ -1,20 +1,29 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
+import { isTestFixture } from '../lib/fixtures';
 
 // GET /api/activity?limit=20&actor=slug
 export async function handleActivity(url: URL, env: Env): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const actor = url.searchParams.get('actor');
+  const includeFixtures = url.searchParams.get('include_fixtures') === '1';
   let query = 'SELECT * FROM activity_log';
   const params: (string | number)[] = [];
   if (actor) {
     query += ' WHERE actor = ?';
     params.push(actor);
   }
+  // Over-fetch when filtering so the final count still honours the caller's limit.
+  const fetchLimit = includeFixtures ? limit : Math.min(limit * 3, 500);
   query += ' ORDER BY timestamp DESC LIMIT ?';
-  params.push(limit);
+  params.push(fetchLimit);
   const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results, count: result.results.length });
+  let rows = result.results as Array<{ description: string | null }>;
+  if (!includeFixtures) {
+    rows = rows.filter((r) => !isTestFixture(r.description));
+  }
+  rows = rows.slice(0, limit);
+  return json({ data: rows, count: rows.length });
 }
 
 // GET /api/activity/heatmap?slug=&days=

@@ -1,9 +1,13 @@
 // Predicate to filter QA test fixtures from production-facing surfaces.
 // Toggle off via Settings → Show debug/test items (localStorage `showDebugItems=true`).
 
+// Leading underscore is optional: matches both `test_delete_...` AND
+// `_TEST_DELETE_...` (the seed-script variant). Prior regex with no
+// `_?` missed the uppercase-leading-underscore form, which is what
+// Round 4 surfaced on Ask the Lab / Decisions / Meeting Prep.
 const HIDDEN_TITLE_PATTERNS = [
-  /^test_delete_/i,
-  /^deep-audit-sync-/i,
+  /^_?test_delete_/i,
+  /^deep-audit-/i,
   /___cli_edit$/i,
   /^test\s*q\b/i,
   /^test$/i,
@@ -32,7 +36,8 @@ export function isProductionVisible(title: string | null | undefined): boolean {
 // against a short allow-list of known fixture phrases.
 const HIDDEN_ACTIVITY_SUBSTRINGS = [
   'test_delete_',
-  'deep-audit-sync-',
+  '_test_delete_',      // matches `_TEST_DELETE_...` after toLowerCase()
+  'deep-audit-',        // broader than -sync- to cover -probe- too
   '___cli_edit',
   ': test q',
   ': test$',

@@ -18,6 +18,7 @@ import { useFavicon } from '../hooks/useFavicon'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { UndoToastProvider } from './UndoToast'
 import StatusBar from './StatusBar'
+import PhaseReleaseBanner from './PhaseReleaseBanner'
 import { PATHS } from '../constants/paths'
 
 export default function PortalLayout() {
@@ -179,6 +180,13 @@ export default function PortalLayout() {
 
           {/* Spacer */}
           <div className="flex-1" />
+
+          {/* Phase-release pill (R4-10) — lives here across every portal
+              page so the announcement isn't Dashboard-only. Dismissal
+              persists per-user in localStorage. */}
+          <div className="hidden sm:flex items-center mr-2">
+            <PhaseReleaseBanner />
+          </div>
 
           {/* Density toggle */}
           <button

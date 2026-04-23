@@ -1703,7 +1703,7 @@ function InlineCellSelect({
         onMouseLeave={(e) => { if (!open) { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' } }}
       >
         {renderValue(value)}
-        <ChevronDown size={10} style={{ opacity: 0.85, marginLeft: '2px' }} />
+        <ChevronDown size={10} className="inline-select-chevron" />
       </button>
 
       {open && createPortal(
