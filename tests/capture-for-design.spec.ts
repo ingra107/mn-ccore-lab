@@ -13,8 +13,11 @@ import { test } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
 import { P } from './helpers/paths'
+import { injectFakeAuth } from './helpers/capture-auth'
 
-const BASE = 'https://mn-ccore-lab.pages.dev'
+// CF Access gates prod `/portal/*` — use CAPTURE_BASE_URL to point at an
+// ungated preview deploy (e.g. https://<hash>.mn-ccore-lab.pages.dev).
+const BASE = process.env.CAPTURE_BASE_URL ?? 'https://mn-ccore-lab.pages.dev'
 
 const TS = new Date()
   .toISOString()
@@ -56,8 +59,8 @@ const HERO_PAGES: PageCapture[] = [
   { slug: '23-network',               path: P.network },
   { slug: '24-pulse-kiosk',           path: P.pulse },
   // Round 2 additions — surfaces Claude Design didn't see last pass.
-  { slug: '25-nick-lab',              path: '/nick' },
-  { slug: '26-nate-lab',              path: '/nate' },
+  { slug: '25-nick-lab',              path: P.nickLab },
+  { slug: '26-nate-lab',              path: P.nateLab },
   { slug: '27-my-items',              path: P.myItems },
   { slug: '28-deadline-cascade',      path: P.deadlineCascade },
   { slug: '29-ask-the-lab',           path: P.ask },
@@ -66,7 +69,13 @@ const HERO_PAGES: PageCapture[] = [
   { slug: '32-meeting-notes',         path: P.meetingNotes },
   { slug: '33-sessions',              path: P.sessions },
   { slug: '34-activity',              path: P.activity },
-  { slug: '35-trajectory',            path: `/team/nick-ingraham/trajectory` },
+  { slug: '35-trajectory-public',     path: P.publicTrajectory('nick-ingraham') },
+  // Round 3 additions (2026-04-22) — post-launch surfaces + chrome variants.
+  { slug: '36-trajectory-portal',     path: P.teamTrajectory('nick-ingraham') },
+  { slug: '37-contact',               path: P.contact },
+  { slug: '38-meeting-detail',        path: P.meeting('mtg-2026-03-25') },
+  { slug: '39-meeting-prep',          path: P.meetingPrep('mtg-2026-03-25') },
+  { slug: '40-publication-detail',    path: P.publication('ingraham-2026-adhere-lpv') },
 ]
 
 const MOBILE_SLUGS = new Set([
@@ -112,6 +121,10 @@ async function scrollThroughEverything(page: import('@playwright/test').Page) {
     await sleep(200)
   })
 }
+
+test.beforeEach(async ({ context }) => {
+  await injectFakeAuth(context, BASE)
+})
 
 for (const p of PAGES) {
   test(`${DEVICE} ${p.slug}`, async ({ page }) => {

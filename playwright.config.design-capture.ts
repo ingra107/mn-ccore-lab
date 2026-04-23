@@ -10,7 +10,13 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   testDir: './tests',
-  testMatch: ['**/capture-for-design.spec.ts', '**/capture-focus-asks.spec.ts'],
+  testMatch: [
+    '**/capture-for-design.spec.ts',
+    '**/capture-focus-asks.spec.ts',
+    '**/capture-scroll-chunks.spec.ts',
+    '**/capture-theme-light.spec.ts',
+    '**/capture-rich-states.spec.ts',
+  ],
   timeout: 60_000,
   retries: 0,
   workers: 4,
