@@ -376,25 +376,25 @@ export default function Dashboard() {
                   >
                     {greeting}
                   </h1>
-                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
+                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
                   <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.75, whiteSpace: 'nowrap' }}>
                     {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                   </span>
                   {todayProgress.completedToday > 0 && (
                     <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
                       <span style={{ fontSize: '12px', color: 'var(--green)', whiteSpace: 'nowrap' }}>{todayProgress.completedToday} done</span>
                     </>
                   )}
                   {todayProgress.dueToday > 0 && (
                     <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
                       <span style={{ fontSize: '12px', color: 'var(--teal)', whiteSpace: 'nowrap' }}>{todayProgress.dueToday} due</span>
                     </>
                   )}
                   {overdue.length > 0 && (
                     <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
                       <a
                         href={PATHS.myTasks}
                         className="portal-footer-link"
@@ -413,7 +413,7 @@ export default function Dashboard() {
                       </a>
                     </>
                   )}
-                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
+                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
                   <LabHealthScore />
                 </div>
 
@@ -555,7 +555,7 @@ export default function Dashboard() {
               </p>
               <div className="mb-4">
                 <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.7, letterSpacing: '0.06em' }}>
-                  Core \u00b7 recommended
+                  Core - recommended
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {alwaysOn.map(renderPill)}
@@ -563,7 +563,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.7, letterSpacing: '0.06em' }}>
-                  Optional \u00b7 turn on as needed
+                  Optional - turn on as needed
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {optional.map(renderPill)}
