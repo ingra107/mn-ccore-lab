@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import { stageIndex, toApiStage } from '../lib/stageNormalize'
@@ -19,7 +20,7 @@ import {
   Link2,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions } from '../hooks/useApiData'
+import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments } from '../hooks/useApiData'
 import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
@@ -46,7 +47,7 @@ import ProjectComments from '../components/ProjectComments'
 import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
 
-type Tab = 'overview' | 'tasks' | 'revisions' | 'activity' | 'literature'
+type Tab = 'overview' | 'tasks' | 'notes' | 'comments' | 'activity' | 'revisions' | 'literature'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
 type Stage = (typeof STAGES)[number]
@@ -122,6 +123,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   const d1Update = useUpdateProject(project.slug)
   const { showUndo } = useUndoToast()
   const { data: projectUpdates = [] } = useProjectUpdates(project.slug)
+  const { data: projectComments = [] } = useComments(project.slug)
   const { isAuthenticated, user } = useAuth()
   const isPi = user?.isPi ?? false
 
@@ -129,7 +131,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   const initialTab = (() => {
     const params = new URLSearchParams(window.location.search)
     const tab = params.get('tab')
-    if (tab && ['overview', 'tasks', 'revisions', 'activity', 'literature'].includes(tab)) return tab as Tab
+    if (tab && ['overview', 'tasks', 'notes', 'comments', 'activity', 'revisions', 'literature'].includes(tab)) return tab as Tab
     return 'overview' as Tab
   })()
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
@@ -213,6 +215,55 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Task detail panel
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
+
+  const queryClient = useQueryClient()
+
+  // Landing-card merged Recent Activity: last 3 notes + comments (GH #27)
+  const recentActivity = useMemo(() => {
+    type RecentItem = { id: string; kind: 'note' | 'comment'; content: string; author: string; created_at: string; update_type?: string }
+    const notes: RecentItem[] = projectUpdates.map((u) => ({
+      id: `note-${u.id}`, kind: 'note', content: u.content, author: u.author, created_at: u.created_at, update_type: u.update_type,
+    }))
+    const comments: RecentItem[] = projectComments.map((c) => ({
+      id: `comment-${c.id}`, kind: 'comment', content: c.content, author: c.author_slug || c.author_name || '', created_at: c.created_at,
+    }))
+    return [...notes, ...comments]
+      .sort((a, b) => (b.created_at > a.created_at ? 1 : -1))
+      .slice(0, 3)
+  }, [projectUpdates, projectComments])
+
+  // Quick compose state — inline on landing card, defers to ProjectUpdateFeed-style mutation
+  const [quickComposeText, setQuickComposeText] = useState('')
+  const [quickComposeKind, setQuickComposeKind] = useState<'note' | 'comment'>('note')
+  const [quickComposeSubmitting, setQuickComposeSubmitting] = useState(false)
+  const handleQuickCompose = async () => {
+    const text = quickComposeText.trim()
+    if (!text || quickComposeSubmitting) return
+    setQuickComposeSubmitting(true)
+    try {
+      const endpoint = quickComposeKind === 'note'
+        ? `/api/projects/${project.slug}/updates`
+        : `/api/projects/${project.slug}/comments`
+      const body = quickComposeKind === 'note'
+        ? { content: text, update_type: 'progress' }
+        : { content: text }
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) {
+        setQuickComposeText('')
+        if (quickComposeKind === 'note') {
+          queryClient.invalidateQueries({ queryKey: ['project-updates', project.slug] })
+        } else {
+          queryClient.invalidateQueries({ queryKey: ['comments', project.slug] })
+        }
+      }
+    } finally {
+      setQuickComposeSubmitting(false)
+    }
+  }
 
   // Add to meeting agenda
   const [showAgendaForm, setShowAgendaForm] = useState(false)
@@ -526,8 +577,10 @@ function ProjectDetailInner({ project }: InnerProps) {
         {([
           { id: 'overview' as Tab, label: 'Overview' },
           { id: 'tasks' as Tab, label: `Tasks${pendingTasks.length ? ` (${pendingTasks.length})` : ''}` },
-          { id: 'revisions' as Tab, label: `Revisions${revisions.length ? ` (${revisions.length})` : ''}` },
+          { id: 'notes' as Tab, label: `Notes${projectUpdates.length ? ` (${projectUpdates.length})` : ''}` },
+          { id: 'comments' as Tab, label: 'Comments' },
           { id: 'activity' as Tab, label: 'Activity' },
+          { id: 'revisions' as Tab, label: `Revisions${revisions.length ? ` (${revisions.length})` : ''}` },
           { id: 'literature' as Tab, label: 'Literature' },
         ]).map((tab) => (
           <button
@@ -549,6 +602,229 @@ function ProjectDetailInner({ project }: InnerProps) {
 
       {/* ── OVERVIEW TAB ── */}
       {activeTab === 'overview' && (<>
+
+      {/* ── Landing Card: first-glance utility (GH #27, #29, #33) ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        style={{
+          background: 'var(--surface-1)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-xl)',
+          padding: '16px 20px',
+          marginBottom: '1.5rem',
+        }}
+      >
+        {/* Key Links strip — hoisted from Details (#29) */}
+        <div style={{ marginBottom: '14px' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <Link2 size={13} style={{ color: 'var(--teal)' }} />
+            <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Key Links
+            </span>
+          </div>
+          <KeyLinksEditor
+            links={[
+              { url: project.key_link_1, desc: project.key_link_1_desc },
+              { url: project.key_link_2, desc: project.key_link_2_desc },
+              { url: project.key_link_3, desc: project.key_link_3_desc },
+            ]}
+            onSave={(next) => {
+              d1Update.mutate({
+                key_link_1: next[0]?.url || null,
+                key_link_1_desc: next[0]?.desc || null,
+                key_link_2: next[1]?.url || null,
+                key_link_2_desc: next[1]?.desc || null,
+                key_link_3: next[2]?.url || null,
+                key_link_3_desc: next[2]?.desc || null,
+              } as Partial<Project>)
+            }}
+          />
+        </div>
+
+        {/* Recent Activity — last 3 merged notes + comments (#27) */}
+        <div style={{ marginBottom: '14px' }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Clock size={13} style={{ color: 'var(--gold)' }} />
+              <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Recent Activity
+              </span>
+            </div>
+            {recentActivity.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('activity')}
+                style={{ fontSize: '11px', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                View all →
+              </button>
+            )}
+          </div>
+          {recentActivity.length === 0 ? (
+            <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.7, margin: 0, padding: '8px 0' }}>
+              No activity yet.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {recentActivity.map((item) => {
+                const info = getPersonInfo(item.author)
+                const dt = new Date(item.created_at)
+                const rel = formatShortDate(item.created_at)
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => setActiveTab(item.kind === 'note' ? 'notes' : 'comments')}
+                    style={{
+                      display: 'flex', alignItems: 'flex-start', gap: '8px',
+                      fontSize: '12px', color: 'var(--ink)', lineHeight: 1.4,
+                      padding: '6px 8px', borderRadius: 'var(--radius-md)',
+                      cursor: 'pointer', transition: 'background 150ms ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    title={dt.toLocaleString()}
+                  >
+                    <span
+                      style={{
+                        flexShrink: 0, marginTop: 3, width: 6, height: 6,
+                        borderRadius: 'var(--radius-circle)',
+                        background: item.kind === 'note' ? 'var(--teal)' : 'var(--gold)',
+                      }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', marginBottom: 1 }}>
+                        <span style={{ textTransform: 'capitalize' }}>{item.kind}</span> · {info.name} · {rel}
+                      </div>
+                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.content}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Top 3 open tasks (#27) */}
+        {pendingTasks.length > 0 && (
+          <div style={{ marginBottom: '14px' }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={13} style={{ color: 'var(--teal)' }} />
+                <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Open Tasks
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('tasks')}
+                style={{ fontSize: '11px', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                View all ({pendingTasks.length}) →
+              </button>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {pendingTasks
+                .slice()
+                .sort((a, b) => {
+                  const ad = a.due_date || '9999-12-31'
+                  const bd = b.due_date || '9999-12-31'
+                  return ad.localeCompare(bd)
+                })
+                .slice(0, 3)
+                .map((task) => (
+                  <div key={task.id} style={{ minWidth: 0 }}>
+                    <TaskCard
+                      task={task}
+                      onStatusChange={(id, status) => {
+                        const prev = task.status
+                        updateTaskStatus.mutate({ id, status })
+                        showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
+                      }}
+                      onClick={() => setSelectedTask(task)}
+                    />
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Quick compose — note or comment inline, no modal (Nick principle 2) */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div style={{ display: 'inline-flex', gap: 4, padding: 2, borderRadius: 'var(--radius-full)', background: 'var(--surface-2)' }}>
+              <button
+                type="button"
+                onClick={() => setQuickComposeKind('note')}
+                style={{
+                  fontSize: '10px', fontWeight: 500, padding: '4px 10px',
+                  borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
+                  background: quickComposeKind === 'note' ? 'var(--teal-solid)' : 'transparent',
+                  color: quickComposeKind === 'note' ? 'var(--ink-bright, #fff)' : 'var(--slate)',
+                }}
+              >
+                Note
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuickComposeKind('comment')}
+                style={{
+                  fontSize: '10px', fontWeight: 500, padding: '4px 10px',
+                  borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
+                  background: quickComposeKind === 'comment' ? 'var(--gold)' : 'transparent',
+                  color: quickComposeKind === 'comment' ? '#0f1923' : 'var(--slate)',
+                }}
+              >
+                Comment
+              </button>
+            </div>
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>
+              {quickComposeKind === 'note' ? 'Your progress log' : 'Team discussion'}
+            </span>
+          </div>
+          <div className="flex items-start gap-2">
+            <textarea
+              value={quickComposeText}
+              onChange={(e) => setQuickComposeText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault()
+                  handleQuickCompose()
+                }
+              }}
+              placeholder={quickComposeKind === 'note' ? 'Post a note... (Cmd+Enter to send)' : 'Comment to team... (Cmd+Enter to send)'}
+              rows={2}
+              style={{
+                flex: 1, minWidth: 0, fontSize: '13px', color: 'var(--ink)',
+                background: 'var(--cream)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-md)', padding: '8px 10px',
+                resize: 'none', outline: 'none', lineHeight: 1.4,
+                transition: 'border-color 0.2s',
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+            />
+            {quickComposeText.trim() && (
+              <button
+                type="button"
+                onClick={handleQuickCompose}
+                disabled={quickComposeSubmitting}
+                style={{
+                  flexShrink: 0, padding: '8px 10px', borderRadius: 'var(--radius-md)',
+                  background: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)',
+                  border: 'none', cursor: 'pointer', opacity: quickComposeSubmitting ? 0.6 : 1,
+                }}
+              >
+                <Send size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
 
       {/* Project Timeline */}
       <div className="mt-6 mb-6" style={{ padding: '0 var(--sp-xs)' }}>
@@ -947,6 +1223,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       opacity: project.description ? 1 : 0.85,
                       borderBottom: '1px dashed transparent',
                       transition: 'border-color 0.2s',
+                      whiteSpace: 'pre-wrap',
                       ...(!descExpanded && project.description && project.description.length > 200 ? {
                         overflow: 'hidden',
                         display: '-webkit-box',
@@ -984,26 +1261,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               )}
             </div>
 
-            {/* Key Links — editable inline (add/edit/remove up to 3) */}
-            <div style={{ marginBottom: '16px' }}>
-              <KeyLinksEditor
-                links={[
-                  { url: project.key_link_1, desc: project.key_link_1_desc },
-                  { url: project.key_link_2, desc: project.key_link_2_desc },
-                  { url: project.key_link_3, desc: project.key_link_3_desc },
-                ]}
-                onSave={(next) => {
-                  d1Update.mutate({
-                    key_link_1: next[0]?.url || null,
-                    key_link_1_desc: next[0]?.desc || null,
-                    key_link_2: next[1]?.url || null,
-                    key_link_2_desc: next[1]?.desc || null,
-                    key_link_3: next[2]?.url || null,
-                    key_link_3_desc: next[2]?.desc || null,
-                  } as Partial<Project>)
-                }}
-              />
-            </div>
+            {/* Key Links moved to landing card above (Track A §A1, #29) */}
 
             {/* Team */}
             {project.team && project.team.length > 0 && (
@@ -1112,34 +1370,39 @@ function ProjectDetailInner({ project }: InnerProps) {
         <ConferencePrep projectId={project.slug} />
       </div>
 
-      {/* Quick-access Updates + Comments on Overview (GH #10). Notes = your
-          private progress log (auto-timestamped). Comments = team-visible
-          discussion thread. Full history still lives on the Activity tab. */}
-      <div
-        style={{
-          marginTop: '2rem',
-          padding: '12px 16px',
-          borderRadius: 'var(--radius-lg)',
-          background: 'var(--surface-1)',
-          border: '1px solid var(--border-subtle)',
-          fontSize: '12px',
-          color: 'var(--muted)',
-          lineHeight: 1.5,
-        }}
-      >
-        <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>Notes vs Comments:</strong>{' '}
-        <span><strong>Notes</strong> are your own progress log (private, auto-timestamped — e.g. "Talked with Peter, he'll run the script and get back next week"). <strong>Comments</strong> are team discussion (visible to everyone, @mentions notify).</span>
-      </div>
-
-      <div id="updates" style={{ scrollMarginTop: '60px', marginTop: '1rem' }}>
-        <ProjectUpdateFeed projectSlug={project.slug} />
-      </div>
-
-      <div id="comments" style={{ scrollMarginTop: '60px', marginTop: '1rem' }}>
-        <ProjectComments projectSlug={project.slug} />
-      </div>
-
       </>)}
+
+      {/* ── NOTES TAB ── */}
+      {activeTab === 'notes' && (
+        <>
+          {/* Notes vs Comments explainer — dismissible one-time banner */}
+          <div
+            style={{
+              marginBottom: '1rem',
+              padding: '12px 16px',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--surface-1)',
+              border: '1px solid var(--border-subtle)',
+              fontSize: '12px',
+              color: 'var(--muted)',
+              lineHeight: 1.5,
+            }}
+          >
+            <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>Notes vs Comments:</strong>{' '}
+            <span><strong>Notes</strong> are your own progress log (private, auto-timestamped — e.g. "Talked with Peter, he'll run the script and get back next week"). <strong>Comments</strong> are team discussion (visible to everyone, @mentions notify).</span>
+          </div>
+          <div id="updates" style={{ scrollMarginTop: '60px' }}>
+            <ProjectUpdateFeed projectSlug={project.slug} />
+          </div>
+        </>
+      )}
+
+      {/* ── COMMENTS TAB ── */}
+      {activeTab === 'comments' && (
+        <div id="comments" style={{ scrollMarginTop: '60px' }}>
+          <ProjectComments projectSlug={project.slug} />
+        </div>
+      )}
 
       {/* ── TASKS TAB ── */}
       {activeTab === 'tasks' && (
