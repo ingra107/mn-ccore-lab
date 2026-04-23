@@ -272,5 +272,3 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
   )
 }
 
-// Re-export from shared constants for backwards compatibility
-export { STATUS_OPTIONS, PRIORITY_CONFIG } from '../../lib/taskConstants'

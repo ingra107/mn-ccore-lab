@@ -21,12 +21,6 @@ export interface Env {
   AIRTABLE_TASKS_TABLE?: string;
 }
 
-export interface ApiResponse<T = unknown> {
-  data: T;
-  count?: number;
-  error?: string;
-}
-
 export interface PublicationRow {
   id: string;
   title: string;
@@ -40,19 +34,6 @@ export interface PublicationRow {
   topics: string | null;
   featured: number;
   author_slugs: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ProjectRow {
-  id: string;
-  title: string;
-  status: string;
-  description: string | null;
-  category: string | null;
-  pi: string | null;
-  slug: string | null;
-  stage: string;
   created_at: string;
   updated_at: string;
 }
@@ -71,19 +52,6 @@ export interface TeamMemberRow {
   department: string | null;
   member_type: string | null;
   email: string | null;
-  created_at: string;
-}
-
-export interface GrantRow {
-  id: string;
-  mechanism: string | null;
-  title: string;
-  agency: string | null;
-  pi: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  proposed: number;
-  total_funding: number | null;
   created_at: string;
 }
 
