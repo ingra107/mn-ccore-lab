@@ -21,7 +21,7 @@ import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import { useUndoToast } from '../../components/UndoToast'
 import { useTasks, useProjects } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
-import { emailToSlug } from '../../lib/emailSlug'
+import { emailToSlug, canonicalSlug } from '../../lib/emailSlug'
 import type { TaskRow } from '../../lib/api'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
@@ -140,11 +140,14 @@ export default function MyTasks() {
   const { user } = useAuth()
   const currentUser = emailToSlug(user?.email) || null
 
-  // Filter to current user's tasks (or all tasks when showAllTasks is true)
+  // Filter to current user's tasks (or all tasks when showAllTasks is true).
+  // canonicalSlug() on the assignee side catches legacy short-form slugs
+  // (`nick` -> `nick-ingraham`) that predate Phase 36b — otherwise the
+  // filter silently excludes tasks stamped with the pre-rename slug.
   const tasks = useMemo(() => {
     if (showAllTasks) return allTasks
     if (!currentUser) return allTasks // Show all if no auth
-    return allTasks.filter((t) => t.assignee === currentUser)
+    return allTasks.filter((t) => canonicalSlug(t.assignee) === currentUser)
   }, [allTasks, currentUser, showAllTasks])
 
   const handleStatusChange = useCallback((id: string, status: string) => {

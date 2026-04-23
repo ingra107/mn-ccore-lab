@@ -23,3 +23,20 @@ export function emailToSlug(email: string | undefined | null): string {
   const prefix = email.split('@')[0]?.toLowerCase() ?? ''
   return EMAIL_PREFIX_TO_SLUG[prefix] ?? prefix
 }
+
+/**
+ * Canonicalize a bare legacy slug to its post-Phase-36b canonical form.
+ * Historical D1 data holds short forms like `nick` or `nate` predating the
+ * preferred_name-last_name rename. Display surfaces (assignee dropdown,
+ * avatars, MyTasks self-filter) call this to avoid rendering both `nick`
+ * and `Nick Ingraham` as distinct entries.
+ *
+ * If the slug is already canonical (or unknown), it is returned unchanged.
+ * API write paths should still validate against team_members — this is a
+ * READ-side safety net.
+ */
+export function canonicalSlug(slug: string | undefined | null): string {
+  if (!slug) return ''
+  const key = slug.toLowerCase()
+  return EMAIL_PREFIX_TO_SLUG[key] ?? slug
+}
