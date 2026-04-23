@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, createContext, useContext } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo, createContext, useContext } from 'react'
 import { Undo2, X, Check } from 'lucide-react'
 
 interface UndoToast {
@@ -87,8 +87,14 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     dismiss(toast.id)
   }, [dismiss])
 
+  // Stable context value — showUndo/showSuccess are useCallback'd so the
+  // memo key never changes. Without this, every state-driven re-render of
+  // UndoToastProvider hands consumers a fresh object and re-renders them
+  // (PortalLayout wraps all portal pages — expensive).
+  const contextValue = useMemo(() => ({ showUndo, showSuccess }), [showUndo, showSuccess])
+
   return (
-    <ToastContext.Provider value={{ showUndo, showSuccess }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
 
       {/* Toast container — fixed bottom-center */}
