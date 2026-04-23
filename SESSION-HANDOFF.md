@@ -1,20 +1,12 @@
-# Session Handoff — 2026-04-21
+# Session Handoff — 2026-04-23
 
-> Last worked: **Phase 37 — Portal URL Migration shipped + CF Access
-> configured + launch secrets set. Hub is LIVE for the team as of
-> 2026-04-21.** All 27 gated routes now live under `/portal/*`; legacy
-> root paths redirect via `<Navigate>` shims. CF Access app gates
-> `mn-ccore-lab.pages.dev/portal/*` with `UMN Team` + `Nick Only` +
-> `Audit Service Token` policies. Server secrets set:
-> `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `REQUIRE_AUTH=1`,
-> `TEST_MODE_KEY`. Client-side `VITE_REQUIRE_AUTH=1` in
-> `.env.production`. GitHub Actions secrets (`CLOUDFLARE_API_TOKEN` +
-> `CLOUDFLARE_ACCOUNT_ID`) set for schema-drift CI. Prior session also
-> landed round-2 design (43 tickets) + schema-drift CI reconciliation
-> (v48 + v49). Post-launch bug-fix sprint landed 4 commits (emailToSlug
-> class fix + stage UI↔API mapper + JWT cookie fallback + visual bugs);
-> current HEAD `a8537ad`, deploy `65b166d7`. See CHANGELOG.md Phase 37 +
-> the post-Phase-37 bug-fix entry for full record.
+> Last worked: **Audit r7 + GH-issue sweep.** B-visual contrast
+> 37 → 0 violations across 204 page×viewport×theme combos (six
+> iteration rounds). Closed 14 in-app GH bug reports (#8, #10, #14,
+> #15, #16, #17, #18, #19, #20, #21, #22, #23, #24, #25). Bulk-
+> reassigned 602 tasks → `nick-ingraham`. Current HEAD `d7091ec`,
+> deploy `a519de60`. See CHANGELOG.md "Audit r7 + GH-issue sweep" for
+> full record.
 
 ## 📖 Session bootstrap — read these in order before writing anything
 
@@ -26,20 +18,21 @@
 6. **`CHANGELOG.md`** top entry — Phase 37 full record.
 7. **`docs/OBSERVABILITY.md`** — `/api/health` + runbook.
 
-## Gate — all green as of commit `a8537ad` (deployed `65b166d7`)
+## Gate — all green as of commit `d7091ec` (deployed `a519de60`)
 
 | Check | Result |
 |---|---|
-| `/api/health` (live prod) | 200 ok, 601 tasks / 64 projects / 19 team / ~74ms |
-| `/og/team/nick-ingraham` | 200 `image/svg+xml`, Cache-Control `max-age=3600` (per-route OG cards live) |
+| `/api/health` (live prod) | 200 ok, 602 tasks / 64 projects / 19 team / ~74ms |
+| Massive audit — B-visual | **204 PASS / 0 BUGS** across 34 pages × 6 viewport+theme combos (r7, 2026-04-23) |
+| `/og/team/nick-ingraham` | 200 `image/svg+xml`, Cache-Control `max-age=3600` |
 | `/api/version` Cache-Control | `public, max-age=10, s-maxage=10` (edge-cached) |
-| `/api/pi/analytics` projectsByStage | 5 rows (was silently 0 before 'Active' fix) |
-| Mobile smoke (Pixel 5) | 2/2 ✓ |
-| Desktop journey | 1/1 ✓ |
+| Open GH bug reports | **0** (11 closed in r7 sweep) |
+| Mobile smoke (Pixel 5) | 2/2 ✓ (Phase 37 baseline) |
+| Desktop journey | 1/1 ✓ (Phase 37 baseline) |
 | Inspection (full suite vs prod) | 213/213 (Phase 36b baseline) |
 | Deep-audit (14 suites) | 14/14 clean, 0 bugs (Phase 36 baseline) |
-| Axe WCAG 2.1 AA | 29 pages × 2 schemes, 0 findings (Phase 35 baseline) |
 
+Rerun massive audit B-visual: `npx tsx scripts/massive-audit/run.ts --section=B` (~8 min, runs against live prod)
 Rerun gate: `npx tsx scripts/pre-flight/00-orchestrator.ts`
 Rerun axe light: `npx tsx scripts/pre-flight/persona-axe.ts --light`
 Rerun deep-audits: `for f in scripts/deep-audit/0*-*.ts scripts/deep-audit/1[0-5]-*.ts; do npx tsx "$f" 2>&1 | tail -2; done`
@@ -48,8 +41,36 @@ Rerun journey smoke: `npx playwright test --config=playwright.config.phase36.ts`
 
 ## What's new since the previous handoff
 
-**Post-Phase-37 bug-fix sprint (2026-04-21).** Four follow-up commits
-after launch closing class bugs surfaced via in-app bug reports:
+**Audit r7 + GH-issue sweep (2026-04-22 → 2026-04-23).** Three commits
+across two days:
+
+- **`d366464` — r7 audit + 4 GH issues.** Massive audit B-visual
+  contrast 37 → 0 across 204 combos, six iteration rounds. Closed #18
+  (Ideas row overlap), #20 (avatar → my-items), #22 (hover gap), #24
+  (date picker portal). Plus systemic `--stage-fill-*` token family,
+  `--ink-hint` light bump 0.62→0.68, `--gold-on-emphasis` token,
+  transform-only mount animations across `animations.ts` + `.fade-in-up`
+  + PageTooltip + 3 motion.div variants, compound-opacity removal on
+  MetricCard / Deadlines / Decisions / MyItems cards. Bulk reassigned
+  602 tasks → `nick-ingraham` via batch API.
+- **`394fbd7` — 3 more GH.** #17 Research dropdown opaque bg (killed
+  backdrop-filter bleed-through), #19 CLIFMap rewrite (regional card
+  grid replaces blobby SVG), #25 1-click complete (circle completes
+  on bare click, Ctrl/⌘+click selects for bulk).
+- **`d7091ec` — final 4 GH.** #8 mobile photo attach (removed
+  `capture="environment"` so picker shows library), #10 notes-vs-
+  comments Overview embed + legend, #16 Network `minHeight`→`height`
+  so GraphCanvas sizes right, #23 dropped TaskGridView minHeight
+  reservation.
+
+**Superseded:** CLAUDE.md Rule 16 (TaskGridView parentRef minHeight
+must be stable) — r7 #23 removes the reservation entirely. Loading
+skeleton now bounds CLS, so short task lists no longer leave dead
+space below. The Rule should be updated/removed on next CLAUDE.md pass.
+
+**Previously (Post-Phase-37 bug-fix sprint, 2026-04-21).** Four
+follow-up commits after launch closing class bugs surfaced via in-app
+bug reports:
 
 - **emailToSlug class fix (`8ae27f9`)** — 17 call sites rewired. `email.
   split('@')[0]` produced the wrong slug (`ingra107` instead of the

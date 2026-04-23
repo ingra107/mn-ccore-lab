@@ -15,18 +15,19 @@ These six plus this file are authoritative. Historical material lives
 in `docs/archived/` (and PB-side `Projects/mn-ccore-lab-hub/_archived/`) —
 safe to ignore unless explicitly spelunking history.
 
-## Current state (2026-04-21)
+## Current state (2026-04-23)
 
 - **🎉 LIVE FOR THE TEAM as of 2026-04-21.** CF Access gates `mn-ccore-lab.pages.dev/portal/*` with policies `UMN Team` (@umn.edu), `Nick Only` (nicholas.ingraham@gmail.com), `Audit Service Token`. All 4 server secrets set: `CF_ACCESS_TEAM_DOMAIN=peripheral-brain.cloudflareaccess.com`, `CF_ACCESS_AUD=47b7d48e...40139c`, `REQUIRE_AUTH=1`, `TEST_MODE_KEY=<32-char hex>`. JWT signature verification active. Client-side `VITE_REQUIRE_AUTH=1` in `.env.production`. See CHANGELOG.md Phase 37 for detail.
+- **Audit r7 + GH-issue sweep (2026-04-23).** Massive-audit B-visual contrast **37 → 0 violations** across 204 page×viewport×theme combos (six iteration rounds). Closed 14 in-app GH bug reports (#8, #10, #14-22, #23, #24, #25). New CSS tokens: `--stage-fill-*` family (theme-agnostic dark fills), `--gold-on-emphasis` (gold text on gold pills). `--ink-hint` light bumped 0.62→0.68. Transform-only mount animations across `animations.ts`, `.fade-in-up`, PageTooltip, Deadlines/MenteeMilestones/DeadlineCascadePage. Bulk reassigned 602 tasks → `nick-ingraham`. CLIFMap rewritten as regional card grid. Rule 16 superseded (TaskGridView minHeight removed).
 - **Phase 37 shipped — portal URL migration.** All 27 gated routes now live under `/portal/*`. `src/constants/paths.ts` + `tests/helpers/paths.ts` are single source of truth. Legacy root paths redirect via `<Navigate>` shims.
 - **Round-2 design shipped + schema-drift CI now useful.** Claude Design's round-2 review (43 tickets) shipped across three deploys (`ff7b766a` → `36e0ca34` → `cfc00ab0`). Schema-drift CI reconciled via v48 (27 indexes) + v49 (13 tables + 2 unique indexes + 9 columns).
 - **Phase 36d shipped.** Design sprint — 12 reusable brand primitives + cinematic Pulse Kiosk rewrite + per-route OG share cards + capture infrastructure for Claude Design. Plus Phase 36c audit fixes, Phase 36b slug rename, Phase 36 consultant close-out.
-- **Quality gate: 🟢 GREEN.** Inspection 213/213, deep-audit 14/14 (0 bugs), axe 29 pages × 2 schemes (0 findings), mobile smoke 2/2, desktop journey 1/1, `/api/health` ~74ms.
-- **Team slugs:** all 19 members use `preferred_name-last_name` format (`nick-ingraham`, `emma-bromley`, ...). `actorSlug(email)` in `api/helpers.ts` maps email prefix → canonical slug via `EMAIL_PREFIX_TO_SLUG`. Adding a new team member = D1 row + team.ts entry + LUT entry.
-- **Routing:** all gated routes under `/portal/*` (Phase 37). `/portal/team/:slug` keeps logged-in users in portal chrome; `/team/:slug` stays for the public marketing site. Use `PATHS` constant from `src/constants/paths.ts` in any new internal nav.
+- **Quality gate: 🟢 GREEN.** Massive-audit B-visual 204/204 PASS / 0 BUGS (r7), inspection 213/213, deep-audit 14/14 (0 bugs), axe 29 pages × 2 schemes (0 findings), mobile smoke 2/2, desktop journey 1/1, `/api/health` ~74ms.
+- **Team slugs:** all 19 members use `preferred_name-last_name` format (`nick-ingraham`, `emma-bromley`, ...). `actorSlug(email)` in `api/helpers.ts` maps email prefix → canonical slug via `EMAIL_PREFIX_TO_SLUG`. Adding a new team member = D1 row + team.ts entry + LUT entry. All 602 tasks currently assigned to `nick-ingraham` (r7 bulk reassign).
+- **Routing:** all gated routes under `/portal/*` (Phase 37). `/portal/team/:slug` keeps logged-in users in portal chrome; `/team/:slug` stays for the public marketing site. Sidebar avatar routes to `/portal/my-items` (workspace) not team profile. Use `PATHS` constant from `src/constants/paths.ts` in any new internal nav.
 - **Brand primitives** live in `src/components/` — use them instead of rolling your own: `HeartbeatLine` / `HeartbeatDivider` (the lab's ECG motif), `HermesMark` (AI assistant avatar, replaces lucide Sparkles), `CategoryIcon` (lungs/flask/heartbeat/cap for CLIF/Lab/Nate/Mentee), `EmptyStateArt` (8 illustrations), `PhaseReleaseBanner` (what-shipped card), `RequireAuth` (sign-in splash).
-- **Current HEAD:** `a8537ad` on `main`, pushed (post Phase 37 + post-launch bug-fix sprint).
-- **Current deploy:** `65b166d7.mn-ccore-lab.pages.dev`.
+- **Current HEAD:** `d7091ec` on `main`, pushed (r7 audit + GH sweep).
+- **Current deploy:** `a519de60.mn-ccore-lab.pages.dev`.
 
 ## Vision
 
@@ -38,8 +39,8 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev (LIVE — CF Access gated via @umn.edu policy on `/portal/*`) |
 | Repo | github.com/ingra107/mn-ccore-lab (720+ commits) |
-| Current deploy | `c5e46630.mn-ccore-lab.pages.dev` (2026-04-21, Phase 37 portal URL migration + VITE_REQUIRE_AUTH; HEAD `143c1db`) |
-| Quality gate | 🟢 GREEN — inspection 213/213, deep-audit 14/14, axe 29×2 = 0, mobile smoke 2/2, desktop journey 1/1. |
+| Current deploy | `a519de60.mn-ccore-lab.pages.dev` (2026-04-23, r7 audit + GH sweep; HEAD `d7091ec`) |
+| Quality gate | 🟢 GREEN — massive-audit B-visual 204/204 PASS / 0 BUGS (r7), inspection 213/213, deep-audit 14/14, axe 29×2 = 0, mobile smoke 2/2, desktop journey 1/1. |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + **Hono v4.12 (API router)** |
 | Testing | Playwright 1.59 (E2E, 213+ inspection + mobile smoke + desktop journey) + Vitest 4.1 (component, browser mode) |
@@ -95,10 +96,25 @@ OKLCH remains only on pure-bg tokens (`--cream`, `--ice`, `--gold-light`).
 | `--green` | `#066e2f` | `#6ee89a` |
 | `--teal-solid` | `#0d6f68` (both) | — |
 | `--maroon-solid` | `#8a1f2e` (both) | — |
+| `--stage-fill-idea` | `#4b5563` (both) | — |
+| `--stage-fill-data-collection` | `#0d6f68` (both) | — |
+| `--stage-fill-analysis` | `#6b5420` (both) | — |
+| `--stage-fill-writing` | `#a23d08` (both) | — |
+| `--stage-fill-review` | `#8a1f2e` (both) | — |
+| `--stage-fill-submitted` | `#0d6f68` (both) | — |
+| `--stage-fill-published` | `#066e2f` (both) | — |
+| `--gold-on-emphasis` | `#5a4518` | `#dcb355` |
 
 - `--teal-solid` + `--maroon-solid` are for solid button/badge bg where
   white text sits on top (6-7:1 with #fff). Separate token from `--teal`
   because a button bg has opposite contrast needs than same-color text.
+- `--stage-fill-*` tokens are for ANY bar/pill/button fill where white
+  text sits on top and the color should not flip between themes.
+  `--slate`/`--teal`/`--gold` flip to LIGHT dark-mode variants where
+  `#fff` text fails ~2:1. r7 2026-04-22.
+- `--gold-on-emphasis` — gold text on `--gold-emphasis` pill. `--gold`
+  light (`#6b5420`) on `#efebdf` = 4.25:1 fail; pinned to darker `#5a4518`
+  (5.8:1). Used on streak badges etc. r7 2026-04-22.
 - Sidebar-bg: `color-mix(in oklch, var(--cream), black 12%)` — pulse bg:
   `var(--ink)` (inverts between modes).
 - Category dots: 6px, 0.7 opacity — maroon=CLIF, teal=Lab, gold=Mesfin
@@ -109,6 +125,24 @@ Inline `opacity: 0.30-0.55` on slate/teal/maroon/gold text fails AA with
 our hex-pinned colors. Codemod run 2026-04-18 bumped 640+ sites to 0.85.
 Use 0.85 as the floor for secondary text; reserve 0.55-0.70 for decorative
 (borders, inactive dots). Never go below 0.30 on readable text.
+
+### Opacity policy (light mode AA on white card bg)
+
+`--ink-label` light = 0.70, `--ink-hint` light = 0.68 (bumped from 0.62
+2026-04-23 after r7 audit — 0.62 × slate on white = 4.35:1 fail).
+`--muted` light = `#5a6370` (bumped from `#6b7280` 2026-04-22 — 4.2:1 on
+grey panels was edge failure). Avoid `opacity <= 0.70` on slate text
+when the bg is white or near-white; prefer `color: var(--muted)` which
+passes AA without opacity math.
+
+### Compound-opacity is forbidden
+
+Parent `opacity` multiplies with children. A card with `opacity: 0.85`
+(for "read" or "done" visual state) + a child green/maroon span with
+`--ink-label` (0.70) compounds to effective alpha 0.595, dropping
+contrast below AA. Never dim a whole card for state — use
+`borderLeft: transparent`, strikethrough, or `color: var(--muted)` on
+the title. See CLAUDE.md Rule 43.
 
 ### On gold buttons (both themes)
 
@@ -300,7 +334,7 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 13. **Build verification after batch edits.** After editing 3+ files or any shared module/type, run `npm run build` and fix all TypeScript errors before continuing. After fixing test failures, re-run the full affected test suite (`npx playwright test tests/<suite>`) to confirm zero regressions. Do not commit code that doesn't build.
 14. **`--ink-bright` is WHITE in BOTH modes.** It is a white-fill-on-dark token, NOT a "stronger than ink" token. Setting it to black in light mode breaks 84 call sites. It exists for white text/icons on dark accent surfaces (teal buttons, maroon pills) regardless of page theme.
 15. **Row height CSS must be `@media (min-width: 768px)` scoped.** Mobile uses `height: auto; min-height`. Unscoped fixed heights break stacked card layout on mobile.
-16. **TaskGridView `parentRef` minHeight must be STABLE.** Use a single `calc(100vh - Npx)` unconditionally — not conditional on data state. Conditional minHeight causes CLS flip when data arrives. Current value in `src/pages/portal/MyTasks.tsx` is `calc(100vh - 420px)` (tuned down from 320px 2026-04-21 to reduce empty space when few tasks, issue #15); tune the constant if needed but never the conditional pattern.
+16. **TaskGridView wrapper has NO minHeight reservation.** Short task lists no longer leave 100+ px of dead space — container sizes to content. CLS is bounded by the loading skeleton's placeholder height (skeleton → content swap is atomic). Prior rule required a stable `calc(100vh - Npx)` to avoid flip; removed 2026-04-23 (GH #23). If re-introducing a minHeight, make sure it's either larger than typical content OR only applied during loading.
 17. **Data pages vs dashboard pages taxonomy.** Data pages (Tasks, MyTasks, Deadlines, Projects, Manuscripts, Ideas, Decisions, Grants, Meetings, Publications) use columnar `TableContainer` + `ColumnHeader`. Dashboard pages (Dashboard, Personal, PIAnalytics, Analytics) use card layouts. Never mix.
 18. **Detail panels must subscribe to cache, not parent state.** TaskDetailPanel and any future detail panel that receives a row object as prop MUST look up fresh data from the React Query cache using `queryClient.getQueryCache().subscribe(...)`. Parent pages hold `selectedTask` as `useState<TaskRow | null>` — that snapshot goes stale after any mutation updates the `['tasks']` cache, and the panel shows old assignee/priority/status. **Reference implementation:** `src/components/tasks/TaskDetailPanel.tsx` post-GH#7 fix (commit `087ba42`). Apply the same pattern to any ProjectDetailPanel, IdeaDetailPanel, DecisionDetailPanel that takes a full row as prop.
 19. **`refetchIntervalInBackground: true` on `/api/version` polling.** `useRealtimeSync` polls /api/version every 15s for cross-user realtime. React Query's default pauses polling when the tab isn't focused — which is constant for real users who park the Hub in background tabs. Without this flag, team member A edits a task and team member B doesn't see it until they refocus the tab. Deep-audit Suite 7 uncovered this. Ref: `src/hooks/useRealtimeSync.ts`.
@@ -325,6 +359,12 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 38. **Every `<select>` must have `aria-label` or a matching `<label htmlFor>`/`<select id>` pair.** Bare `<select>` adjacent to a bare `<label>` trips axe `select-name` critical. Class sweep 2026-04-22 found 13 unlabeled selects across MenteeMilestones, SessionHistory, Meetings, CreateProjectModal, CreateDecisionModal, AskTheLab, MeetingNotesPage, Grants — all fixed with `id`/`htmlFor` pairing. Same applies to new form selects going forward. `FilterChip.tsx` is dead code (zero imports); delete rather than retrofit if it resurfaces.
 39. **`role="switch"` with `aria-checked` must use string `"true"`/`"false"`, not boolean.** React normally coerces booleans to the right attribute value, but axe-core `aria-valid-attr-value` flags `aria-checked={showDebugItems}` where `showDebugItems` is a JS boolean. Fix: `aria-checked={showDebugItems ? "true" : "false"}`. `aria-expanded`/`aria-pressed` boolean bindings are fine — only `aria-checked` (on role=switch/checkbox/radio) is strict about string form.
 40. **Overlap detector (`scripts/massive-audit/lib/overlap-detector.ts`) skips semantic landmarks.** `<nav>`/`<header>`/`<aside>` tags + `role="navigation|banner|complementary"` are treated as chrome — they legitimately overlay content, so intersection with page content never counts as a bug. Don't remove the tag-based filter; without it MobileTabBar spams a fake overlap hit on every mobile page.
+41. **Stage-bar fills use `--stage-fill-*` tokens, not `--slate/--teal/--gold`.** The accent tokens flip to LIGHT dark-mode variants (`--teal` dark = `#5cbcb4`, `--gold` dark = `#dcb355`, `--slate` dark = `#b0b5b9`), so `#fff` text on those fails ~2:1 in dark mode. Use `--stage-fill-{idea,data-collection,analysis,writing,review,submitted,published}` — dark hex values stable across themes, 5.4-7.5:1 with white. Applies to AnalyticsPage + PIAnalytics stage bars, member workload bars, Dashboard active tab, Meetings save/filter/view buttons. r7 2026-04-22.
+42. **Gold pill bg + gold text uses `--gold-on-emphasis`, not `--gold`.** `--gold-emphasis` (rgba 201,168,76,0.15) resolves to `#efebdf` in light, `#2a2618` in dark. `--gold` light (`#6b5420`) on `#efebdf` = 4.25:1 fail. `--gold-on-emphasis` pins to `#5a4518` light / `#dcb355` dark for AA on both. Used on MyTasks streak badge + any future gold-on-gold pill.
+43. **Parent `opacity` on a card multiplies with child colored spans.** A card wrapper with `opacity: 0.85` (e.g. "read" or "done" visual) + a green/maroon/gold child span with its own opacity compounds to fail AA (0.85 × 0.70 = 0.595 effective alpha → ratio ~3.3:1). Don't dim whole cards for state. Use `borderLeft: transparent` / strikethrough / `color: var(--muted)` on the title instead. Fixed across `MetricCard`, `Deadlines` stat row, `DecisionsPage` stat row, `MyItems` NotificationCard + CommitmentCard (r7 2026-04-22).
+44. **Mount animations must use transform-only, not opacity: 0 → 1.** Axe-core's contrast checker catches elements mid-transition and reports false-positive contrast fails. `staggerItem.hidden` (`animations.ts`), `.fade-in-up.will-animate` CSS, PageTooltip AnimatePresence, and several Deadlines / MenteeMilestones / DeadlineCascadePage motion.div variants all animate via `y` / `scale` only now. CLAUDE.md Rule 1 ("content visible by default") applies to animation entry states too.
+45. **Dropdowns use fully-opaque bg, not semi-transparent + backdrop-filter.** 98%/95% opacity + `backdrop-filter: blur(Npx)` looks clean against uniform bg, but when a page has a dark header band behind the dropdown, the band bleeds through as a horizontal shadow. Use `#ffffff` / `#0f1923` (full opaque) with `box-shadow` for depth. Ref: Research dropdown fix (Layout.tsx, GH #17).
+46. **Flex-col pages with canvas children need `height: 100vh`, not `minHeight: 100vh`.** `minHeight` lets the container match content height, which doesn't give `flex-1` children a determined size to stretch into. Canvas elements (reagraph GraphCanvas, three.js, etc.) fall back to their intrinsic 300×150. Use `height: 100vh` when the intent is "fill the viewport". Ref: Network.tsx fix (GH #16).
 
 ## Roadmap
 

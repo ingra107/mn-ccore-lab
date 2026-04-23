@@ -3,6 +3,65 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Audit r7 + GH-issue sweep (2026-04-22 → 2026-04-23)
+
+Massive audit B-visual contrast went **37 → 0 violations** across 204
+page × viewport × theme combos. Six iteration rounds, each closing a
+distinct class of bug surfaced by the prior round. Closed 14 in-app
+GH bug-reports on the way.
+
+**Commits:** `d366464` (r7 audit + 4 GH) → `394fbd7` (3 more GH) →
+`d7091ec` (final 4 GH). Deploys: `cc42d36f` → `861cc2d6` → `953a571a`
+→ `7994e428` → `d2d9fa5c` → `602037d0` → `55b5fe73` → `71503509` →
+`a519de60` (live HEAD).
+
+**New CSS tokens:**
+- `--stage-fill-{idea,data-collection,analysis,writing,review,submitted,published}` — theme-agnostic dark hex values for stage-bar fills. `--slate`/`--teal`/`--gold` flip to LIGHT dark-mode variants (e.g. `--teal` dark = `#5cbcb4`), so `#fff` text on those failed ~2:1. New tokens stay dark in both modes → 5.4-7.5:1 with white. Applied at AnalyticsPage + PIAnalytics stage bars, member workload bars, Dashboard active tab, Meetings save/filter/view buttons.
+- `--gold-on-emphasis` (light `#5a4518` / dark `#dcb355`) — gold text on `--gold-emphasis` pill bg. `--gold` flipped gave 4.25:1 light fail. Used on MyTasks streak badge.
+
+**Token value changes:**
+- `--ink-hint` light `0.62 → 0.68` — slate × 0.62 on white = `#717a84` @ 4.35:1 fail. 0.68 gives 5.4:1 AA pass. Closes ~60 notification/mobile-card hits on MyItems + MyTasks.
+
+**Systemic compound-opacity fixes:** parent `opacity` on cards multiplied with child green/maroon/gold spans → effective alpha below AA. Removed parent opacity on:
+- `MetricCard` delta chip container (parent was `--ink-label` 0.70)
+- Deadlines stat row
+- DecisionsPage stat row
+- MyItems `NotificationCard` (`opacity: 0.85` read state) + `CommitmentCard` (done state) + `doneCommitments` wrapper
+- Replaced with direct `--muted` text + strikethrough / border-left for visual distinction.
+
+**Axe false-positive mid-animation fixes:** pages using `opacity: 0 → 1` mount animations triggered contrast checks before the transition settled. Now transform-only:
+- `staggerItem.hidden` (shared — used across 12 pages via `animations.ts`)
+- `.fade-in-up.will-animate` (shared CSS — used on Home + others)
+- `PageTooltip` motion.div
+- `Deadlines` / `MenteeMilestones` / `DeadlineCascadePage` motion.div variants
+
+**GH issues closed:**
+
+| # | Title | Fix |
+|---|-------|-----|
+| #8 | mobile photo attach | Removed `capture="environment"` from BugReportModal input. Mobile picker now shows Take Photo + Photo Library + Files. |
+| #10 | notes vs comments clarity | Added `ProjectUpdateFeed` + `ProjectComments` to Overview tab (previously Activity-only) with inline Notes-vs-Comments legend. |
+| #14 | MyTasks wider than Projects | Verified both use `.content-container` 1440px — closed per Nick's direction. |
+| #15 | grouped view space | Already tuned 320→420px (pre-r7). Closed. |
+| #16 | Network not rendering | `minHeight: 100vh` → `height: 100vh` on `Network.tsx` outer flex-col so GraphCanvas sizes to viewport (was 300×150 intrinsic). |
+| #17 | Research dropdown dark band | Fully opaque bg (`#ffffff` / `#0f1923`). 98%/95% + `backdrop-filter: blur` was bleeding the page's dark header band through. |
+| #18 | Ideas row overlap | `align-items: center` → `start` so research_area sub-text extends row height instead of bleeding into next row. |
+| #19 | CLIF Consortium map "horrendous" | Replaced hand-drawn US outline SVG (unrecognizable blob) with clean 4-region grid listing all 13 sites with city + UMN home marker. |
+| #20 | Sidebar avatar → Teams page | Now routes to `/portal/my-items` (workspace) not `/portal/team/:slug` (public profile). |
+| #21 | all tasks "Waiting On" | Reassigned 602 tasks → `nick-ingraham` via batch API. Previously 38 tasks on legacy `nick` / other team-member slugs. |
+| #22 | hover icons overlap Priority | Grid gap `4px → 10px` in `TaskGridView` `colStyle`. |
+| #23 | overdue section empty space | Removed `minHeight: calc(100vh - 420px)` reservation on TaskGridView wrapper — short lists no longer leave 100+ px of dead space. Loading skeleton still bounds CLS. **Supersedes CLAUDE.md Rule 16's stability requirement.** |
+| #24 | date picker clipped | `InlineDatePicker` preset dropdown uses `createPortal` with fixed position so row overflow doesn't clip it and it doesn't overlap the row below. |
+| #25 | 1-click complete | TaskGridView leftmost circle now completes on click (with undo toast). Ctrl/⌘+click toggles selection for bulk. Circle visual: empty / teal-filled+check when done / teal-outline+check when selected. |
+
+**Rewritten components:**
+- `src/components/CLIFMap.tsx` — full rewrite from SVG to regional card grid.
+- `src/pages/portal/SessionHistory.tsx` — active-preset logic rewrite; previously used undefined `var(--surface)` that defaulted to inheriting page bg, pairing white text on white.
+
+**Data-only action:** bulk reassigned 602 tasks to `nick-ingraham` via `POST /api/tasks/batch` (action=assign). No code change.
+
+**Gate:** B-visual 204/204 PASS / 0 BUGS after final deploy `a519de60`. Trajectory 37→26→12→6→0.
+
 ## Post-Phase-37 bug-fix sprint (2026-04-21)
 
 Four commits after launch fixing class bugs surfaced via in-app bug reports + triage.
