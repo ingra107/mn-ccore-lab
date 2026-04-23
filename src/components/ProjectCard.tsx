@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import Avatar from './Avatar'
 import CategoryIcon from './CategoryIcon'
 import { getPersonInfo } from '../data/team'
+import { displayName } from '../lib/nameUtils'
 import type { Project } from '../data/types'
 import { PATHS } from '../constants/paths'
 
@@ -69,7 +70,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             opacity: 0.75,
           }}
         >
-          {pi.name.split(' ').pop()}
+          {project.pi ? displayName(project.pi, 'short') : pi.name}
         </span>
       </div>
     </motion.div>
