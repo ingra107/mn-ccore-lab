@@ -502,6 +502,9 @@ export default function SettingsPage() {
                   setShowDebugItems(next)
                   if (next) localStorage.setItem('showDebugItems', 'true')
                   else localStorage.removeItem('showDebugItems')
+                  // Invalidate the same-tab isProductionVisible cache so
+                  // filter rows flip immediately without reload.
+                  window.dispatchEvent(new Event('showDebugItems-changed'))
                   setSaved(true)
                   setTimeout(() => setSaved(false), 2000)
                 }}

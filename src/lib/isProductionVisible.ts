@@ -15,13 +15,35 @@ const HIDDEN_TITLE_PATTERNS = [
   /^@claude\s+hi$/i,
 ]
 
-function debugItemsEnabled(): boolean {
+// Cache the localStorage read — this predicate is called per-row across
+// 600+ tasks on hot filter paths (Dashboard, ActivityPage, Personal).
+// localStorage.getItem is ~1µs but the reads add up and also invalidate
+// some browser caches. We refresh on 'storage' events so the Settings
+// toggle still works cross-tab.
+let cachedDebugEnabled: boolean | null = null
+function readDebugFromStorage(): boolean {
   if (typeof window === 'undefined') return false
   try {
     return window.localStorage.getItem('showDebugItems') === 'true'
   } catch {
     return false
   }
+}
+function debugItemsEnabled(): boolean {
+  if (cachedDebugEnabled === null) {
+    cachedDebugEnabled = readDebugFromStorage()
+    if (typeof window !== 'undefined') {
+      // Cross-tab sync: another tab toggles the setting -> invalidate.
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'showDebugItems') cachedDebugEnabled = e.newValue === 'true'
+      })
+      // Same-tab toggle from Settings dispatches a custom event.
+      window.addEventListener('showDebugItems-changed', () => {
+        cachedDebugEnabled = readDebugFromStorage()
+      })
+    }
+  }
+  return cachedDebugEnabled
 }
 
 export function isProductionVisible(title: string | null | undefined): boolean {
