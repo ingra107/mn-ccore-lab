@@ -135,10 +135,6 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
     )
   )
 
-  const memberOptions = team
-    .filter((m) => m.slug)
-    .sort((a, b) => a.name.localeCompare(b.name))
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !assignee) return
