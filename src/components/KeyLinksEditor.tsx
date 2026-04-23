@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link2, Plus, Pencil, Trash2, Check, X } from 'lucide-react'
 import { classifyUrl } from '../lib/urlClassify'
+import { useToast } from '../hooks/useToast'
 
 // Shared editor for the 3-slot key_link_1/2/3 + _desc pattern used on tasks
 // and projects. Display mode shows teal underlined links; edit mode swaps in
@@ -35,32 +36,57 @@ function LinkRow({
 }) {
   const url = link.url || ''
   const { href, Icon, typeLabel, isHttp } = classifyUrl(url)
+  const { showSuccess } = useToast()
+
+  // Local paths + .bat scripts use the `mnccore://` custom protocol that
+  // requires a Windows URL handler registration on the user's machine. If
+  // the handler isn't installed the browser silently does nothing, so
+  // click-to-copy is the reliable fallback: the path lands in clipboard,
+  // user can paste into Win+R or File Explorer. The protocol nav still
+  // fires (fire-and-forget) in case the handler IS installed.
+  const handleNonHttpClick = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    try {
+      await navigator.clipboard.writeText(url)
+      showSuccess(`${typeLabel} path copied — paste in Win+R or Explorer`)
+    } catch {
+      window.prompt('Copy path:', url)
+    }
+    try {
+      window.location.href = href
+    } catch {
+      // ignore — custom protocol without handler is a no-op on most systems
+    }
+  }
+
   return (
     <div
       className="group flex items-center gap-2 px-3 py-2 rounded-lg"
       style={{ backgroundColor: 'var(--ice)' }}
     >
       <a
-        href={href}
+        href={isHttp ? href : url}
         target={isHttp ? '_blank' : undefined}
         rel={isHttp ? 'noopener noreferrer' : undefined}
+        onClick={isHttp ? undefined : handleNonHttpClick}
         style={{ color: 'var(--teal)', display: 'flex', alignItems: 'center', flexShrink: 0 }}
       >
         <Icon size={14} />
       </a>
       <div className="flex-1 min-w-0">
         <a
-          href={href}
+          href={isHttp ? href : url}
           target={isHttp ? '_blank' : undefined}
           rel={isHttp ? 'noopener noreferrer' : undefined}
+          onClick={isHttp ? undefined : handleNonHttpClick}
           className="text-sm truncate block hover:underline"
           style={{ color: 'var(--teal)', textDecoration: 'underline', textUnderlineOffset: '2px', fontWeight: 500 }}
-          title={url}
+          title={isHttp ? url : `Click to copy path: ${url}`}
         >
           {link.desc || url}
         </a>
         <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-          {typeLabel}
+          {typeLabel}{!isHttp ? ' · click to copy' : ''}
         </span>
       </div>
       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">

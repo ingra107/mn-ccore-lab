@@ -47,15 +47,23 @@ export default function LinkifiedText({ text, className, style }: Props) {
       parts.push(text.slice(lastIdx, start))
     }
 
-    const { href, Icon, isHttp } = classifyUrl(rawUrl)
+    const { href, Icon, isHttp, typeLabel } = classifyUrl(rawUrl)
     const label = shortLabelForUrl(rawUrl)
+    const handleClick = (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (isHttp) return
+      e.preventDefault()
+      navigator.clipboard.writeText(rawUrl).catch(() => window.prompt('Copy path:', rawUrl))
+      try { window.location.href = href } catch { /* no-op */ }
+    }
     parts.push(
       <a
         key={`url-${start}`}
-        href={href}
+        href={isHttp ? href : rawUrl}
         target={isHttp ? '_blank' : undefined}
         rel={isHttp ? 'noopener noreferrer' : undefined}
-        onClick={(e) => e.stopPropagation()}
+        onClick={handleClick}
+        title={isHttp ? rawUrl : `Click to copy ${typeLabel.toLowerCase()} path: ${rawUrl}`}
         className="inline-flex items-center gap-1 align-baseline"
         style={{
           fontSize: 'inherit',
@@ -69,7 +77,6 @@ export default function LinkifiedText({ text, className, style }: Props) {
           overflow: 'hidden',
           textOverflow: 'ellipsis',
         }}
-        title={rawUrl}
       >
         <Icon size={11} />
         <span>{label}</span>
